@@ -1,0 +1,1560 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 23,
+  "filesSkipped": [
+    "containers/web.Dockerfile",
+    "packages/raptix-core/raptix_core/py.typed"
+  ],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 23,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 7,
+      "failed": 0,
+      "skipped": 16
+    }
+  },
+  "results": [
+    {
+      "path": "docs/architecture/context-engineering.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 307,
+      "nonEmptyLines": 225,
+      "sections": [
+        {
+          "heading": "Raptix Context Engineering Architecture",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. 설계 원칙",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "1.1 컨텍스트는 유한 자원이다",
+          "level": 3,
+          "line": 11
+        },
+        {
+          "heading": "1.2 Progressive Disclosure",
+          "level": 3,
+          "line": 17
+        },
+        {
+          "heading": "1.3 Attention-Favored Positioning",
+          "level": 3,
+          "line": 34
+        },
+        {
+          "heading": "2. 컨텍스트 최적화 전략",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "2.1 Observation Masking",
+          "level": 3,
+          "line": 53
+        },
+        {
+          "heading": "2.2 Filesystem as Scratch Pad",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "2.3 KV-Cache 최적화",
+          "level": 3,
+          "line": 94
+        },
+        {
+          "heading": "3. 컨텍스트 압축 전략",
+          "level": 2,
+          "line": 110
+        },
+        {
+          "heading": "3.1 /compact 명령어",
+          "level": 3,
+          "line": 112
+        },
+        {
+          "heading": "3.2 자동 경고",
+          "level": 3,
+          "line": 126
+        },
+        {
+          "heading": "3.3 Anchored Iterative Summarization (향후)",
+          "level": 3,
+          "line": 135
+        },
+        {
+          "heading": "4. 도구 설계 원칙",
+          "level": 2,
+          "line": 170
+        },
+        {
+          "heading": "4.1 What/When/Returns 패턴",
+          "level": 3,
+          "line": 172
+        },
+        {
+          "heading": "4.2 Consolidation Principle",
+          "level": 3,
+          "line": 183
+        },
+        {
+          "heading": "4.3 에러 메시지 → 자가 복구",
+          "level": 3,
+          "line": 192
+        },
+        {
+          "heading": "5. 메모리 아키텍처",
+          "level": 2,
+          "line": 204
+        },
+        {
+          "heading": "5.1 Backend Routing (CompositeBackend)",
+          "level": 3,
+          "line": 206
+        },
+        {
+          "heading": "5.2 InMemoryStore (크로스세션 메모리)",
+          "level": 3,
+          "line": 216
+        },
+        {
+          "heading": "5.3 Checkpointer (대화 히스토리)",
+          "level": 3,
+          "line": 230
+        },
+        {
+          "heading": "6. Skills 시스템",
+          "level": 2,
+          "line": 241
+        },
+        {
+          "heading": "6.1 Progressive Disclosure 흐름",
+          "level": 3,
+          "line": 243
+        },
+        {
+          "heading": "6.2 Description 설계",
+          "level": 3,
+          "line": 252
+        },
+        {
+          "heading": "6.3 Quick Reference 패턴",
+          "level": 3,
+          "line": 268
+        },
+        {
+          "heading": "7. 데이터 흐름 요약",
+          "level": 2,
+          "line": 280
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 26
+      }
+    },
+    {
+      "path": "docs/architecture/red-team-infrastructure.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 650,
+      "nonEmptyLines": 500,
+      "sections": [
+        {
+          "heading": "Raptix 레드팀 인프라 아키텍처",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. 현업 레드팀 인프라 개념",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "1.1 Three-Space 모델",
+          "level": 3,
+          "line": 10
+        },
+        {
+          "heading": "1.2 핵심 용어",
+          "level": 3,
+          "line": 48
+        },
+        {
+          "heading": "2. Raptix 인프라 매핑",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "2.1 현업 vs Raptix 대응 관계",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "2.2 설계 결정: C2 분리 + 리다이렉터 제외",
+          "level": 3,
+          "line": 76
+        },
+        {
+          "heading": "3. 인프라 토폴로지",
+          "level": 2,
+          "line": 94
+        },
+        {
+          "heading": "3.1 전체 구성도",
+          "level": 3,
+          "line": 96
+        },
+        {
+          "heading": "3.2 네트워크 격리 구조",
+          "level": 3,
+          "line": 145
+        },
+        {
+          "heading": "4. 모듈형 C2 아키텍처",
+          "level": 2,
+          "line": 177
+        },
+        {
+          "heading": "4.1 설계 원칙",
+          "level": 3,
+          "line": 179
+        },
+        {
+          "heading": "4.2 지원 C2 프레임워크",
+          "level": 3,
+          "line": 187
+        },
+        {
+          "heading": "4.3 C2 사용법",
+          "level": 3,
+          "line": 215
+        },
+        {
+          "heading": "4.4 컨테이너 구성",
+          "level": 3,
+          "line": 229
+        },
+        {
+          "heading": "5. 에이전트 파이프라인과 인프라 사용",
+          "level": 2,
+          "line": 245
+        },
+        {
+          "heading": "5.1 킬 체인 단계별 실행 모델",
+          "level": 3,
+          "line": 247
+        },
+        {
+          "heading": "5.2 단계별 실행 상세",
+          "level": 3,
+          "line": 287
+        },
+        {
+          "heading": "Phase 1: Planning (도구 없음)",
+          "level": 4,
+          "line": 289
+        },
+        {
+          "heading": "Phase 2: Reconnaissance (직접 실행)",
+          "level": 4,
+          "line": 299
+        },
+        {
+          "heading": "Phase 3: Exploitation (직접 실행 + 비콘 배포)",
+          "level": 4,
+          "line": 322
+        },
+        {
+          "heading": "Phase 4: Post-Exploitation (C2 클라이언트 → 서버 → 비콘)",
+          "level": 4,
+          "line": 349
+        },
+        {
+          "heading": "6. 컨테이너 상세 구성",
+          "level": 2,
+          "line": 389
+        },
+        {
+          "heading": "6.1 Kali Sandbox (공격 박스)",
+          "level": 3,
+          "line": 391
+        },
+        {
+          "heading": "6.2 C2 Server — Sliver (팀 서버)",
+          "level": 3,
+          "line": 413
+        },
+        {
+          "heading": "6.3 C2 데이터 영속성",
+          "level": 3,
+          "line": 436
+        },
+        {
+          "heading": "7. 네트워크 통신 흐름",
+          "level": 2,
+          "line": 452
+        },
+        {
+          "heading": "7.1 전체 데이터 흐름",
+          "level": 3,
+          "line": 454
+        },
+        {
+          "heading": "7.2 포트 매핑",
+          "level": 3,
+          "line": 485
+        },
+        {
+          "heading": "8. Engagement 실행 흐름",
+          "level": 2,
+          "line": 499
+        },
+        {
+          "heading": "8.1 전체 워크플로우",
+          "level": 3,
+          "line": 501
+        },
+        {
+          "heading": "8.2 C2 세션 라이프사이클",
+          "level": 3,
+          "line": 558
+        },
+        {
+          "heading": "9. Workspace 디렉토리 구조",
+          "level": 2,
+          "line": 592
+        },
+        {
+          "heading": "10. 향후 확장 가능성",
+          "level": 2,
+          "line": 620
+        },
+        {
+          "heading": "10.1 추가 C2 프레임워크",
+          "level": 3,
+          "line": 622
+        },
+        {
+          "heading": "10.2 리다이렉터 도입",
+          "level": 3,
+          "line": 630
+        },
+        {
+          "heading": "10.3 Purple Team 확장",
+          "level": 3,
+          "line": 648
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 37
+      }
+    },
+    {
+      "path": "docs/decisions/0003-independent-api-owner.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 103,
+      "nonEmptyLines": 94,
+      "sections": [
+        {
+          "heading": "0003. Independent API owner from day one (web-raptix-server)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 88
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/engineering/ci-arsenal.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 95,
+      "nonEmptyLines": 75,
+      "sections": [
+        {
+          "heading": "CI/CD Pipeline",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "`ci.yml` — the gate",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "`security.yml` — consolidated security",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "Custom Semgrep rules",
+          "level": 2,
+          "line": 54
+        },
+        {
+          "heading": "Suppression syntax",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "Local pre-commit hooks",
+          "level": 2,
+          "line": 82
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/features/blue-cell.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 255,
+      "nonEmptyLines": 207,
+      "sections": [
+        {
+          "heading": "Blue Cell — closing the Offensive Vaccine loop",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "The gap this closes",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Architecture",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "Components",
+          "level": 2,
+          "line": 77
+        },
+        {
+          "heading": "`raptix.blue_cell.tap.BlueCellTap`",
+          "level": 3,
+          "line": 79
+        },
+        {
+          "heading": "`raptix.blue_cell.rule_match`",
+          "level": 3,
+          "line": 89
+        },
+        {
+          "heading": "`raptix.blue_cell.sample_rules.jsonl`",
+          "level": 3,
+          "line": 139
+        },
+        {
+          "heading": "Knowledge graph integration",
+          "level": 3,
+          "line": 147
+        },
+        {
+          "heading": "Adaptive feedback loop",
+          "level": 2,
+          "line": 176
+        },
+        {
+          "heading": "Defense Brief format",
+          "level": 2,
+          "line": 192
+        },
+        {
+          "heading": "What ships in this commit vs. follow-up",
+          "level": 2,
+          "line": 222
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 245
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "docs/migration/from-0.0.x.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 206,
+      "nonEmptyLines": 163,
+      "sections": [
+        {
+          "heading": "Migration: `raptix` 0.0.x → core/framework/sdk split",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "What changed",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Import-path mapping",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "New public surface for plugin authors",
+          "level": 2,
+          "line": 65
+        },
+        {
+          "heading": "New extension points",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "`make_agent_backend(extra_routes=...)` — gap §8 #1",
+          "level": 3,
+          "line": 108
+        },
+        {
+          "heading": "`RoleRegistry.register()` — gap §8 #5",
+          "level": 3,
+          "line": 126
+        },
+        {
+          "heading": "`PluginRegistry.introspect_role()` — gap §8 #7",
+          "level": 3,
+          "line": 148
+        },
+        {
+          "heading": "`SafetyDeclaration` — gap §8 #10",
+          "level": 3,
+          "line": 165
+        },
+        {
+          "heading": "Scaffolding a new plugin",
+          "level": 2,
+          "line": 181
+        },
+        {
+          "heading": "Removal timeline",
+          "level": 2,
+          "line": 200
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "docs/migration/raptix-rename-and-redesign.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 617,
+      "nonEmptyLines": 503,
+      "sections": [
+        {
+          "heading": "Hướng dẫn: Đổi tên `decepticon → raptix` + Thiết kế lại kiến trúc",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Phần 0 — Trước khi bắt đầu (bắt buộc đọc)",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "0.1. Đây là một CHIẾN DỊCH nhiều PR, không phải một PR",
+          "level": 3,
+          "line": 21
+        },
+        {
+          "heading": "0.2. Các quyết định cần con người chốt TRƯỚC khi gõ phím `[QUYẾT ĐỊNH]`",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "0.2.1. Ghi chú sau khi merge `main` (cập nhật thực tế)",
+          "level": 3,
+          "line": 45
+        },
+        {
+          "heading": "0.2.2. Toolchain cho khâu verify (đã kiểm tra trong môi trường này)",
+          "level": 3,
+          "line": 54
+        },
+        {
+          "heading": "0.3. Chuẩn bị môi trường",
+          "level": 3,
+          "line": 63
+        },
+        {
+          "heading": "Phần 1 — Bảng ánh xạ tên (case‑map) & danh sách \"survivor\"",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "1.1. Case‑map (dùng đúng 6 quy tắc này, KHÔNG lowercase mù)",
+          "level": 3,
+          "line": 82
+        },
+        {
+          "heading": "1.2. SURVIVOR — tuyệt đối KHÔNG đổi (đưa vào allowlist của codemod)",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Phần 2 — Kiến trúc mục tiêu (thiết kế lại)",
+          "level": 2,
+          "line": 104
+        },
+        {
+          "heading": "2.1. Vì sao cấu trúc 2 cấp `packages/raptix-core/raptix_core/` là ĐÚNG (đừng \"sửa\")",
+          "level": 3,
+          "line": 153
+        },
+        {
+          "heading": "Phần 3 — GUARDRAIL: những gì KHÔNG được phá (đọc kỹ)",
+          "level": 2,
+          "line": 164
+        },
+        {
+          "heading": "3.1. KHÔNG đổi LOGIC (chỉ đổi định danh, cần sign‑off theo AGENTS.md)",
+          "level": 3,
+          "line": 169
+        },
+        {
+          "heading": "3.2. Guardrail được thực thi bằng CÔNG CỤ — phải giữ hiệu lực sau rename",
+          "level": 3,
+          "line": 175
+        },
+        {
+          "heading": "Phần 4 — Chia PR & thứ tự thực hiện",
+          "level": 2,
+          "line": 193
+        },
+        {
+          "heading": "Phần 5 — Codemod an toàn (script sao chép‑dán)",
+          "level": 2,
+          "line": 208
+        },
+        {
+          "heading": "Phần 6 — Các sửa THỦ CÔNG mà codemod không lo hết",
+          "level": 2,
+          "line": 350
+        },
+        {
+          "heading": "Phần 7 — Hạ tầng có STATE (đừng làm mất dữ liệu)",
+          "level": 2,
+          "line": 372
+        },
+        {
+          "heading": "Phần 8 — TEST FLOW hoàn chỉnh (các cổng G0–G15)",
+          "level": 2,
+          "line": 402
+        },
+        {
+          "heading": "Phần 9 — Rollback & checklist chốt",
+          "level": 2,
+          "line": 491
+        },
+        {
+          "heading": "9.1. Rollback nhanh",
+          "level": 3,
+          "line": 493
+        },
+        {
+          "heading": "9.2. Checklist trước khi mở mỗi PR",
+          "level": 3,
+          "line": 501
+        },
+        {
+          "heading": "9.3. Thứ tự merge",
+          "level": 3,
+          "line": 511
+        },
+        {
+          "heading": "Phụ lục A — Cây target hoàn chỉnh (sau rename + redesign)",
+          "level": 2,
+          "line": 518
+        },
+        {
+          "heading": "Phụ lục B — Lệnh thật của repo dùng trong hướng dẫn",
+          "level": 2,
+          "line": 599
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 26
+      }
+    },
+    {
+      "path": "docs/tools/open-web.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 71,
+      "nonEmptyLines": 56,
+      "sections": [
+        {
+          "heading": "Open-web acquisition: `web_search` / `web_fetch`",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "The tools",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "How it works",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "RoE & safety (three layers)",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "No-Site-Name rule",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "Provenance",
+          "level": 2,
+          "line": 64
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix-core/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 20,
+      "nonEmptyLines": 15,
+      "sections": [
+        {
+          "heading": "raptix-core",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Install",
+          "level": 2,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix-core/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 51,
+      "nonEmptyLines": 44,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.urls",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 46
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 50
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix-core/raptix_core/types/dispatch_outcome.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 38,
+      "nonEmptyLines": 29,
+      "functions": [
+        {
+          "name": "classify_dispatch_failure",
+          "startLine": 30,
+          "endLine": 38,
+          "params": [
+            "error"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "FailureKind",
+          "startLine": 9,
+          "endLine": 13,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "DispatchFailureOutcome",
+          "startLine": 16,
+          "endLine": 27,
+          "methods": [],
+          "properties": [
+            "status",
+            "failure_kind",
+            "terminal_for_this_dispatch",
+            "objective_id",
+            "dispatch_id",
+            "consecutive_failure_count",
+            "error_type",
+            "error_message",
+            "partial_state_refs"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FailureKind",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "DispatchFailureOutcome",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "classify_dispatch_failure",
+          "line": 30,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "classify_dispatch_failure",
+          "callee": "isinstance",
+          "lineNumber": 32
+        },
+        {
+          "caller": "classify_dispatch_failure",
+          "callee": "isinstance",
+          "lineNumber": 34
+        },
+        {
+          "caller": "classify_dispatch_failure",
+          "callee": "type",
+          "lineNumber": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 1,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix-core/raptix_core/types/foothold.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 79,
+      "nonEmptyLines": 65,
+      "functions": [
+        {
+          "name": "assess_access",
+          "startLine": 49,
+          "endLine": 79,
+          "params": [
+            "operation",
+            "reference",
+            "target",
+            "required_privilege",
+            "verifier",
+            "now"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AccessOperation",
+          "startLine": 12,
+          "endLine": 18,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "AccessObservation",
+          "startLine": 21,
+          "endLine": 31,
+          "methods": [],
+          "properties": [
+            "reference",
+            "verified_at",
+            "session_live",
+            "controlled_execution",
+            "privilege",
+            "reachable_targets",
+            "source"
+          ]
+        },
+        {
+          "name": "AccessVerifier",
+          "startLine": 34,
+          "endLine": 35,
+          "methods": [
+            "observe"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "AccessOperation",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "AccessObservation",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "AccessVerifier",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "assess_access",
+          "line": 49,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "assess_access",
+          "callee": "verifier.observe",
+          "lineNumber": 63
+        },
+        {
+          "caller": "assess_access",
+          "callee": "datetime.now",
+          "lineNumber": 66
+        },
+        {
+          "caller": "assess_access",
+          "callee": "timedelta",
+          "lineNumber": 68
+        },
+        {
+          "caller": "assess_access",
+          "callee": "_RANK.get",
+          "lineNumber": 75
+        },
+        {
+          "caller": "assess_access",
+          "callee": "required_privilege.lower",
+          "lineNumber": 75
+        },
+        {
+          "caller": "assess_access",
+          "callee": "_RANK.get",
+          "lineNumber": 76
+        },
+        {
+          "caller": "assess_access",
+          "callee": "observation.privilege.lower",
+          "lineNumber": 76
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 1,
+        "classCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-core/raptix_core/utils/engagement_scope.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 71,
+      "nonEmptyLines": 53,
+      "functions": [
+        {
+          "name": "is_valid_engagement_label",
+          "startLine": 34,
+          "endLine": 40,
+          "params": [
+            "label"
+          ]
+        },
+        {
+          "name": "set_active_engagement",
+          "startLine": 43,
+          "endLine": 49,
+          "params": [
+            "label"
+          ]
+        },
+        {
+          "name": "reset_active_engagement",
+          "startLine": 52,
+          "endLine": 54,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "get_active_engagement",
+          "startLine": 57,
+          "endLine": 71,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "is_valid_engagement_label",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "set_active_engagement",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "reset_active_engagement",
+          "line": 52,
+          "isDefault": false
+        },
+        {
+          "name": "get_active_engagement",
+          "line": 57,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "is_valid_engagement_label",
+          "callee": "bool",
+          "lineNumber": 40
+        },
+        {
+          "caller": "is_valid_engagement_label",
+          "callee": "_ENGAGEMENT_LABEL_RE.match",
+          "lineNumber": 40
+        },
+        {
+          "caller": "set_active_engagement",
+          "callee": "is_valid_engagement_label",
+          "lineNumber": 45
+        },
+        {
+          "caller": "set_active_engagement",
+          "callee": "ValueError",
+          "lineNumber": 46
+        },
+        {
+          "caller": "set_active_engagement",
+          "callee": "_active_engagement.set",
+          "lineNumber": 49
+        },
+        {
+          "caller": "reset_active_engagement",
+          "callee": "_active_engagement.reset",
+          "lineNumber": 54
+        },
+        {
+          "caller": "get_active_engagement",
+          "callee": "_active_engagement.get",
+          "lineNumber": 65
+        },
+        {
+          "caller": "get_active_engagement",
+          "callee": "os.environ.get(\"RAPTIX_ENGAGEMENT\", \"\").strip",
+          "lineNumber": 68
+        },
+        {
+          "caller": "get_active_engagement",
+          "callee": "os.environ.get",
+          "lineNumber": 68
+        },
+        {
+          "caller": "get_active_engagement",
+          "callee": "is_valid_engagement_label",
+          "lineNumber": 69
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-core/tests/test_no_runtime_deps.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 74,
+      "nonEmptyLines": 62,
+      "functions": [
+        {
+          "name": "test_core_has_no_runtime_deps",
+          "startLine": 56,
+          "endLine": 74,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_core_has_no_runtime_deps",
+          "line": 56,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_core_has_no_runtime_deps",
+          "callee": "subprocess.run",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_core_has_no_runtime_deps",
+          "callee": "result.stdout.strip",
+          "lineNumber": 71
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-core/tests/test_public_api_stability.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 144,
+      "nonEmptyLines": 132,
+      "functions": [
+        {
+          "name": "test_public_name_importable",
+          "startLine": 116,
+          "endLine": 128,
+          "params": [
+            "module_name",
+            "attr"
+          ]
+        },
+        {
+          "name": "test_manifest_count_unchanged",
+          "startLine": 131,
+          "endLine": 144,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_public_name_importable",
+          "line": 115,
+          "isDefault": false
+        },
+        {
+          "name": "test_manifest_count_unchanged",
+          "line": 131,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_public_name_importable",
+          "callee": "importlib.import_module",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_public_name_importable",
+          "callee": "getattr",
+          "lineNumber": 124
+        },
+        {
+          "caller": "test_manifest_count_unchanged",
+          "callee": "len",
+          "lineNumber": 140
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 24,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "raptix-sdk",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Install",
+          "level": 2,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 41,
+      "nonEmptyLines": 32,
+      "sections": [
+        {
+          "heading": "raptix-sdk examples",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Try one",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Regenerate",
+          "level": 2,
+          "line": 26
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/agent/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 23,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "raptix-example-agent",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Build + install",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Test",
+          "level": 2,
+          "line": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/agent/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.entry-points.\"raptix.agents\"",
+          "level": 4,
+          "line": 13
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/agent/src/raptix_example_agent/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 13,
+      "functions": [
+        {
+          "name": "get_agent",
+          "startLine": 6,
+          "endLine": 15,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "get_agent",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "get_agent",
+          "callee": "NotImplementedError",
+          "lineNumber": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/callback/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 23,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "raptix-example-callback",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Build + install",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Test",
+          "level": 2,
+          "line": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/callback/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.entry-points.\"raptix.callbacks\"",
+          "level": 4,
+          "line": 13
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/callback/src/raptix_example_callback/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 16,
+      "functions": [
+        {
+          "name": "get_callbacks",
+          "startLine": 22,
+          "endLine": 25,
+          "params": [
+            "role"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "HelloCallback",
+          "startLine": 6,
+          "endLine": 19,
+          "methods": [
+            "on_llm_start",
+            "on_llm_end",
+            "on_tool_start",
+            "on_tool_end"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "HelloCallback",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "get_callbacks",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "get_callbacks",
+          "callee": "HelloCallback",
+          "lineNumber": 25
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    }
+  ]
+}

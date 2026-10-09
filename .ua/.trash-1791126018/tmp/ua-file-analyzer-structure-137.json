@@ -1,0 +1,2244 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 25,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 25
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/iot/lorawan-otaa/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 256,
+      "nonEmptyLines": 208,
+      "sections": [
+        {
+          "heading": "LoRaWAN OTAA / ABP Security Assessment",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "LoRaWAN Frequency Reference",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "Phase 1: Passive Air Capture",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "Phase 2: OTAA Join Analysis",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "Phase 3: AppKey Brute-Force / Known-Key Verification",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "Phase 4: ABP Replay (Frame-Counter Disabled)",
+          "level": 2,
+          "line": 139
+        },
+        {
+          "heading": "Phase 5: Downlink Injection via Rogue Gateway",
+          "level": 2,
+          "line": 159
+        },
+        {
+          "heading": "Phase 6: Bit-Flip Attack on Unconfirmed Uplinks (ABP, no MIC validation)",
+          "level": 2,
+          "line": 198
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 213
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 2,
+          "line": 238
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 250
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/iot/ros2-dds-attack/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 196,
+      "nonEmptyLines": 152,
+      "sections": [
+        {
+          "heading": "ROS2 / DDS Attack Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Background",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Phase 1 — Discovery",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Network prerequisites",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "ROS2 node and topic enumeration",
+          "level": 3,
+          "line": 48
+        },
+        {
+          "heading": "Shodan / Censys pivot (remote assessment)",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "Phase 2 — Telemetry Interception",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "Phase 3 — Message Injection (GATED — write-scope only)",
+          "level": 2,
+          "line": 113
+        },
+        {
+          "heading": "MiR (Mobile Industrial Robot) ROS1 variant",
+          "level": 3,
+          "line": 131
+        },
+        {
+          "heading": "Phase 4 — Credential and Key Extraction",
+          "level": 2,
+          "line": 145
+        },
+        {
+          "heading": "ATT&CK Mapping",
+          "level": 2,
+          "line": 169
+        },
+        {
+          "heading": "Detection",
+          "level": 2,
+          "line": 180
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 191
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/iot/sub-ghz/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 288,
+      "nonEmptyLines": 228,
+      "sections": [
+        {
+          "heading": "Sub-GHz ISM Band Capture and Replay",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "Frequency and Modulation Quick Reference",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Phase 1: Passive Capture and Signal Identification",
+          "level": 2,
+          "line": 58
+        },
+        {
+          "heading": "RTL-SDR (receive only)",
+          "level": 3,
+          "line": 60
+        },
+        {
+          "heading": "HackRF capture",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Flipper Zero (fastest field method)",
+          "level": 3,
+          "line": 83
+        },
+        {
+          "heading": "Phase 2: Signal Analysis with inspectrum and URH",
+          "level": 2,
+          "line": 96
+        },
+        {
+          "heading": "Phase 3: Fixed-Code Replay",
+          "level": 2,
+          "line": 114
+        },
+        {
+          "heading": "With HackRF",
+          "level": 3,
+          "line": 116
+        },
+        {
+          "heading": "With YARD Stick One / rfcat",
+          "level": 3,
+          "line": 140
+        },
+        {
+          "heading": "With Flipper Zero",
+          "level": 3,
+          "line": 160
+        },
+        {
+          "heading": "Phase 4: Rolling Code Analysis (KeeLoq / HiTag2)",
+          "level": 2,
+          "line": 166
+        },
+        {
+          "heading": "Phase 5: OOK Signal Crafting for Specific Protocols",
+          "level": 2,
+          "line": 211
+        },
+        {
+          "heading": "Chamberlain / LiftMaster (Security+ 2.0 — fixed encoder PT2262)",
+          "level": 3,
+          "line": 213
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 237
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 2,
+          "line": 263
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 280
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 18
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/iot/z-wave/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 211,
+      "nonEmptyLines": 166,
+      "sections": [
+        {
+          "heading": "Z-Wave S0/S2 Security Assessment",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "Z-Wave Frequency Reference",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "Phase 1: Passive Capture with RTL-SDR + gr-zwave",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "Phase 2: S0 Key Extraction During Inclusion",
+          "level": 2,
+          "line": 69
+        },
+        {
+          "heading": "Phase 3: Replay Attack on Unauthenticated Nodes (No-Security / S0 with extracted key)",
+          "level": 2,
+          "line": 99
+        },
+        {
+          "heading": "Phase 4: S2 DSK MITM Analysis",
+          "level": 2,
+          "line": 122
+        },
+        {
+          "heading": "Phase 5: Z-Force Active Fuzzing",
+          "level": 2,
+          "line": 151
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 167
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 2,
+          "line": 193
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 205
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/iot/zigbee-touchlink/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 219,
+      "nonEmptyLines": 174,
+      "sections": [
+        {
+          "heading": "Zigbee Touchlink Commissioning Abuse",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Phase 1: Passive Channel Scan (zbstumbler)",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "Phase 2: Decode the ZLL Well-Known Transport Key",
+          "level": 2,
+          "line": 59
+        },
+        {
+          "heading": "Phase 3: Touchlink Scan + Factory Reset",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "Phase 4: ZCL Command Injection (no network join required)",
+          "level": 2,
+          "line": 128
+        },
+        {
+          "heading": "Phase 5: Network Key Extraction via Touchlink",
+          "level": 2,
+          "line": 160
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 177
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 2,
+          "line": 202
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 214
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/mobile/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 87,
+      "nonEmptyLines": 73,
+      "sections": [
+        {
+          "heading": "Mobile Operator Skill Catalog",
+          "level": 1,
+          "line": 18
+        },
+        {
+          "heading": "Playbooks — Android",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Playbooks — iOS",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "Cross-platform",
+          "level": 2,
+          "line": 53
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "Tools sandbox",
+          "level": 2,
+          "line": 79
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/mobile/android/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 224,
+      "nonEmptyLines": 183,
+      "sections": [
+        {
+          "heading": "Android Pentest Playbook",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "1. Static — decompile + inspect",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "Pull APK",
+          "level": 3,
+          "line": 20
+        },
+        {
+          "heading": "Decompile",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "MobSF automated triage",
+          "level": 3,
+          "line": 45
+        },
+        {
+          "heading": "Manifest review",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Secrets sweep",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "2. Dynamic — Frida + Objection",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "Setup",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "Bypass SSL pinning (Frida codeshare scripts)",
+          "level": 3,
+          "line": 89
+        },
+        {
+          "heading": "Bypass root detection",
+          "level": 3,
+          "line": 98
+        },
+        {
+          "heading": "Intercept TLS",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "Hook arbitrary functions",
+          "level": 3,
+          "line": 112
+        },
+        {
+          "heading": "3. Common Android-specific attack surface",
+          "level": 2,
+          "line": 124
+        },
+        {
+          "heading": "3.1 Insecure deeplinks / intents",
+          "level": 3,
+          "line": 126
+        },
+        {
+          "heading": "3.2 WebView vulnerabilities",
+          "level": 3,
+          "line": 137
+        },
+        {
+          "heading": "3.3 Insecure storage",
+          "level": 3,
+          "line": 142
+        },
+        {
+          "heading": "3.4 Keystore extraction",
+          "level": 3,
+          "line": 151
+        },
+        {
+          "heading": "3.5 PIN brute / passkey",
+          "level": 3,
+          "line": 158
+        },
+        {
+          "heading": "3.6 Backup-restore confusion",
+          "level": 3,
+          "line": 162
+        },
+        {
+          "heading": "4. Tools cheat-sheet",
+          "level": 2,
+          "line": 171
+        },
+        {
+          "heading": "5. PoC framing",
+          "level": 2,
+          "line": 188
+        },
+        {
+          "heading": "6. Severity",
+          "level": 2,
+          "line": 195
+        },
+        {
+          "heading": "7. Defender",
+          "level": 2,
+          "line": 207
+        },
+        {
+          "heading": "Cross-references",
+          "level": 2,
+          "line": 215
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 220
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 26
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/mobile/android/il2cpp/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 305,
+      "nonEmptyLines": 241,
+      "sections": [
+        {
+          "heading": "Unity IL2CPP Game Reversing Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Step 1: Identify Unity IL2CPP App",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Step 2: Recover Symbols with Il2CppDumper",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "Step 3: Apply Symbols in Ghidra / IDA",
+          "level": 2,
+          "line": 83
+        },
+        {
+          "heading": "Ghidra (via MCP ghidra server — batch mode)",
+          "level": 3,
+          "line": 85
+        },
+        {
+          "heading": "IDA (host-side)",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "Step 4: Frida Runtime Hooking",
+          "level": 2,
+          "line": 118
+        },
+        {
+          "heading": "Hook via RVA from dump.cs",
+          "level": 3,
+          "line": 120
+        },
+        {
+          "heading": "Static libil2cpp.so patch (persistent, no Frida needed)",
+          "level": 3,
+          "line": 149
+        },
+        {
+          "heading": "Step 5: Encrypted / Obfuscated global-metadata.dat",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "Detect obfuscation",
+          "level": 3,
+          "line": 180
+        },
+        {
+          "heading": "Common obfuscation patterns",
+          "level": 3,
+          "line": 188
+        },
+        {
+          "heading": "zygisk-il2cpp-dumper (runtime dump, bypasses all static obfuscation)",
+          "level": 3,
+          "line": 202
+        },
+        {
+          "heading": "Step 6: Il2CppInspector (Alternative — Richer Output)",
+          "level": 2,
+          "line": 223
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 238
+        },
+        {
+          "heading": "ZFP",
+          "level": 2,
+          "line": 267
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 2,
+          "line": 274
+        },
+        {
+          "heading": "Severity Table",
+          "level": 2,
+          "line": 288
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 298
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 20
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/mobile/flutter/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 267,
+      "nonEmptyLines": 210,
+      "sections": [
+        {
+          "heading": "Flutter App Reversing Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Step 1: Identify a Flutter App",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Step 2: reFlutter Workflow — Patch BoringSSL Pinning",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "Flutter <= 3.23.x (hardcoded proxy IP)",
+          "level": 3,
+          "line": 58
+        },
+        {
+          "heading": "Flutter >= 3.24.0 (no hardcoded proxy IP — breaking change)",
+          "level": 3,
+          "line": 77
+        },
+        {
+          "heading": "iOS Flutter.framework patching",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "Step 3: BoringSSL Bypass Mechanism",
+          "level": 2,
+          "line": 121
+        },
+        {
+          "heading": "Step 4: Static Native RE — libapp.so in Ghidra / radare2",
+          "level": 2,
+          "line": 147
+        },
+        {
+          "heading": "Step 5: Dart Snapshot Dump (Hit-or-Miss)",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "Step 6: Flutter Plugin Identification",
+          "level": 2,
+          "line": 196
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 214
+        },
+        {
+          "heading": "ZFP",
+          "level": 2,
+          "line": 232
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 2,
+          "line": 239
+        },
+        {
+          "heading": "Severity Table",
+          "level": 2,
+          "line": 251
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 260
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 16
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/mobile/ios/dynamic/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 308,
+      "nonEmptyLines": 247,
+      "sections": [
+        {
+          "heading": "iOS Dynamic Instrumentation Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "Path A: SSL Pinning Bypass",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "SSL Kill Switch 2 / 3",
+          "level": 3,
+          "line": 43
+        },
+        {
+          "heading": "Objection pinning disable (preferred for on-demand toggle)",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Frida codeshare scripts (NSURLSession / AFNetworking / TrustKit)",
+          "level": 3,
+          "line": 63
+        },
+        {
+          "heading": "Manual Frida script for custom pinners",
+          "level": 3,
+          "line": 77
+        },
+        {
+          "heading": "Path B: Jailbreak-Detection Bypass",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Objection built-in",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "Common detection patterns to hook manually",
+          "level": 3,
+          "line": 108
+        },
+        {
+          "heading": "Liberty Lite / A-Bypass (tweak-side)",
+          "level": 3,
+          "line": 136
+        },
+        {
+          "heading": "Path C: Keychain Dump",
+          "level": 2,
+          "line": 141
+        },
+        {
+          "heading": "Objection keychain dump",
+          "level": 3,
+          "line": 143
+        },
+        {
+          "heading": "Frida hook on SecItemCopyMatching",
+          "level": 3,
+          "line": 154
+        },
+        {
+          "heading": "`kSecAttrAccessible` misconfig findings",
+          "level": 3,
+          "line": 171
+        },
+        {
+          "heading": "Path D: Biometric / LAContext Bypass",
+          "level": 2,
+          "line": 181
+        },
+        {
+          "heading": "Hook evaluatePolicy to always succeed",
+          "level": 3,
+          "line": 183
+        },
+        {
+          "heading": "Objection biometric bypass",
+          "level": 3,
+          "line": 203
+        },
+        {
+          "heading": "Path E: ObjC Runtime Method Swizzling (License / Auth Checks)",
+          "level": 2,
+          "line": 210
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 233
+        },
+        {
+          "heading": "ZFP",
+          "level": 2,
+          "line": 265
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 2,
+          "line": 276
+        },
+        {
+          "heading": "Severity Table",
+          "level": 2,
+          "line": 291
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 301
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 24
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/osint/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 85,
+      "nonEmptyLines": 72,
+      "sections": [
+        {
+          "heading": "OSINT-Only Operator Skill Catalog",
+          "level": 1,
+          "line": 19
+        },
+        {
+          "heading": "Playbooks",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "Network policy",
+          "level": 2,
+          "line": 65
+        },
+        {
+          "heading": "Why split from Recon",
+          "level": 2,
+          "line": 79
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 73,
+      "nonEmptyLines": 62,
+      "sections": [
+        {
+          "heading": "Phishing / Social-Engineering Skill Catalog",
+          "level": 1,
+          "line": 25
+        },
+        {
+          "heading": "Playbooks",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Infrastructure pattern",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "Deconfliction (mandatory)",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Failsafe",
+          "level": 2,
+          "line": 68
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/evilginx2-proxy/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 83,
+      "nonEmptyLines": 68,
+      "sections": [
+        {
+          "heading": "evilginx2 Phishlet (AiTM)",
+          "level": 1,
+          "line": 21
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Deploy",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "Authoring a phishlet (when none ships for the target)",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "Capture + replay",
+          "level": 2,
+          "line": 59
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 77
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/gophish-campaign/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 80,
+      "nonEmptyLines": 64,
+      "sections": [
+        {
+          "heading": "GoPhish Campaign",
+          "level": 1,
+          "line": 18
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Flow (REST API)",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 69
+        },
+        {
+          "heading": "OPSEC / failsafe",
+          "level": 2,
+          "line": 75
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/html-smuggling-lure/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 310,
+      "nonEmptyLines": 260,
+      "sections": [
+        {
+          "heading": "HTML Smuggling Lure",
+          "level": 1,
+          "line": 19
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "1. Basic HTML Smuggling Template",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "2. Generator Script",
+          "level": 2,
+          "line": 98
+        },
+        {
+          "heading": "3. Obfuscation Layers",
+          "level": 2,
+          "line": 162
+        },
+        {
+          "heading": "3a. XOR + base64",
+          "level": 3,
+          "line": 167
+        },
+        {
+          "heading": "3b. Chunked Reassembly",
+          "level": 3,
+          "line": 188
+        },
+        {
+          "heading": "3c. Fetch from External URL",
+          "level": 3,
+          "line": 200
+        },
+        {
+          "heading": "4. Payload File Type Selection",
+          "level": 2,
+          "line": 216
+        },
+        {
+          "heading": "5. Delivery via GoPhish",
+          "level": 2,
+          "line": 226
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 246
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 258
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 268
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 277
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 289
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 305
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 18
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/lookalike-domain/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 87,
+      "nonEmptyLines": 70,
+      "sections": [
+        {
+          "heading": "Lookalike Domain",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "Choose the name",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "DNS",
+          "level": 2,
+          "line": 46
+        },
+        {
+          "heading": "TLS",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Verify before sending",
+          "level": 2,
+          "line": 67
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Failsafe",
+          "level": 2,
+          "line": 83
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/lure-deconfliction/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 137,
+      "nonEmptyLines": 106,
+      "sections": [
+        {
+          "heading": "Lure Deconfliction",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Why this is mandatory",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Inputs you need",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Handshake payload",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "Send it via the configured channel",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Wait for ack",
+          "level": 2,
+          "line": 84
+        },
+        {
+          "heading": "Record evidence",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "Failure modes",
+          "level": 2,
+          "line": 118
+        },
+        {
+          "heading": "ZFP",
+          "level": 2,
+          "line": 130
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/mfa-fatigue-social/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 326,
+      "nonEmptyLines": 262,
+      "sections": [
+        {
+          "heading": "MFA Fatigue / Push-Bombing + Help-Desk Social Engineering",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 58
+        },
+        {
+          "heading": "1. MFA Push-Bombing Automation",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "1a. Microsoft Entra ID (Azure AD)",
+          "level": 3,
+          "line": 68
+        },
+        {
+          "heading": "1b. Okta",
+          "level": 3,
+          "line": 116
+        },
+        {
+          "heading": "1c. Duo",
+          "level": 3,
+          "line": 146
+        },
+        {
+          "heading": "2. Timing Strategy",
+          "level": 2,
+          "line": 158
+        },
+        {
+          "heading": "3. Help-Desk Impersonation (Vishing)",
+          "level": 2,
+          "line": 173
+        },
+        {
+          "heading": "Call Script",
+          "level": 3,
+          "line": 178
+        },
+        {
+          "heading": "Script Variants",
+          "level": 3,
+          "line": 189
+        },
+        {
+          "heading": "Caller ID Spoofing",
+          "level": 3,
+          "line": 205
+        },
+        {
+          "heading": "4. Number-Matching Bypass",
+          "level": 2,
+          "line": 215
+        },
+        {
+          "heading": "5. SIM-Swap Coordination (SMS MFA Bypass)",
+          "level": 2,
+          "line": 234
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 252
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 265
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 276
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 286
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 301
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 320
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 21
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/o365-credential-harvest/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 78,
+      "nonEmptyLines": 64,
+      "sections": [
+        {
+          "heading": "O365 / Entra Credential & Token Harvest",
+          "level": 1,
+          "line": 21
+        },
+        {
+          "heading": "Device-code flow",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Token replay (TokenTactics pattern)",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Validate",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "RoE / OPSEC",
+          "level": 2,
+          "line": 72
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/pdf-credential-harvest/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 267,
+      "nonEmptyLines": 218,
+      "sections": [
+        {
+          "heading": "PDF Credential Harvest",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "1. SharePoint-Themed PDF",
+          "level": 2,
+          "line": 63
+        },
+        {
+          "heading": "2. M365 Voicemail-Themed PDF",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "3. Full-Page Click Overlay",
+          "level": 2,
+          "line": 148
+        },
+        {
+          "heading": "4. Credential-Capture Landing Page",
+          "level": 2,
+          "line": 168
+        },
+        {
+          "heading": "5. GoPhish Email Template with PDF Attachment",
+          "level": 2,
+          "line": 186
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 202
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 215
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 225
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 234
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 247
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 263
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/pretext-engineering/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 69,
+      "nonEmptyLines": 57,
+      "sections": [
+        {
+          "heading": "Pretext Engineering",
+          "level": 1,
+          "line": 21
+        },
+        {
+          "heading": "Inputs",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Build the pretext",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Target shortlist",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "Forbidden lure patterns",
+          "level": 2,
+          "line": 58
+        },
+        {
+          "heading": "Output",
+          "level": 2,
+          "line": 64
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/phisher/quishing/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 260,
+      "nonEmptyLines": 215,
+      "sections": [
+        {
+          "heading": "QR-Code Phishing (Quishing)",
+          "level": 1,
+          "line": 19
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "1. QR Code Generation",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "2. Embedding in PDF",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "3. Embedding in Email Body (Inline Image)",
+          "level": 2,
+          "line": 138
+        },
+        {
+          "heading": "4. Credential-Harvest Landing Page",
+          "level": 2,
+          "line": 163
+        },
+        {
+          "heading": "5. EvilQR — Dynamic QR with URL Rotation",
+          "level": 2,
+          "line": 181
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 198
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 210
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 220
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 229
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 241
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 255
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-alternative-channels/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 488,
+      "nonEmptyLines": 407,
+      "sections": [
+        {
+          "heading": "Alternative C2 Channels",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "1. Discord Webhook C2",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "Setup",
+          "level": 3,
+          "line": 44
+        },
+        {
+          "heading": "Implant Logic (Python)",
+          "level": 3,
+          "line": 56
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "2. Telegram Bot C2",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "Setup",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "Implant Logic (Python)",
+          "level": 3,
+          "line": 123
+        },
+        {
+          "heading": "Features",
+          "level": 3,
+          "line": 171
+        },
+        {
+          "heading": "3. DNS-over-HTTPS (DoH) C2",
+          "level": 2,
+          "line": 177
+        },
+        {
+          "heading": "Architecture",
+          "level": 3,
+          "line": 181
+        },
+        {
+          "heading": "Implant Logic (Bash)",
+          "level": 3,
+          "line": 189
+        },
+        {
+          "heading": "DoH Providers",
+          "level": 3,
+          "line": 225
+        },
+        {
+          "heading": "Limitations",
+          "level": 3,
+          "line": 232
+        },
+        {
+          "heading": "4. Blockchain-Based C2 (Ethereum Smart Contract)",
+          "level": 2,
+          "line": 237
+        },
+        {
+          "heading": "Smart Contract (Solidity)",
+          "level": 3,
+          "line": 241
+        },
+        {
+          "heading": "Implant Logic (Python)",
+          "level": 3,
+          "line": 273
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 3,
+          "line": 300
+        },
+        {
+          "heading": "5. Email-Based C2 (IMAP/SMTP)",
+          "level": 2,
+          "line": 307
+        },
+        {
+          "heading": "Implant Logic (Python)",
+          "level": 3,
+          "line": 311
+        },
+        {
+          "heading": "OPSEC Notes",
+          "level": 3,
+          "line": 360
+        },
+        {
+          "heading": "6. Cloud Function Dead Drops (Serverless C2)",
+          "level": 2,
+          "line": 367
+        },
+        {
+          "heading": "AWS Lambda Relay",
+          "level": 3,
+          "line": 371
+        },
+        {
+          "heading": "Azure Functions Relay",
+          "level": 3,
+          "line": 404
+        },
+        {
+          "heading": "Implant Calling Pattern",
+          "level": 3,
+          "line": 412
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 425
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 437
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 450
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 477
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 31
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-cobalt-strike/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 429,
+      "nonEmptyLines": 346,
+      "sections": [
+        {
+          "heading": "Cobalt Strike Beacon Operations",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "1. Teamserver Setup",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "2. Listener Configuration",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "HTTPS Listener",
+          "level": 3,
+          "line": 64
+        },
+        {
+          "heading": "DNS Listener",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "SMB Listener (Peer-to-Peer)",
+          "level": 3,
+          "line": 89
+        },
+        {
+          "heading": "TCP Listener (Bind/Reverse)",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "3. Beacon Generation",
+          "level": 2,
+          "line": 109
+        },
+        {
+          "heading": "Stageless Payloads (Preferred for OPSEC)",
+          "level": 3,
+          "line": 111
+        },
+        {
+          "heading": "Staged Payloads",
+          "level": 3,
+          "line": 127
+        },
+        {
+          "heading": "DLL Payloads (Sideloading)",
+          "level": 3,
+          "line": 137
+        },
+        {
+          "heading": "Service EXE (Persistence)",
+          "level": 3,
+          "line": 148
+        },
+        {
+          "heading": "4. Malleable C2 Profiles",
+          "level": 2,
+          "line": 157
+        },
+        {
+          "heading": "Profile Structure",
+          "level": 3,
+          "line": 161
+        },
+        {
+          "heading": "Profile Validation",
+          "level": 3,
+          "line": 238
+        },
+        {
+          "heading": "OPSEC-Critical Profile Settings",
+          "level": 3,
+          "line": 247
+        },
+        {
+          "heading": "5. Sleep and Jitter Configuration",
+          "level": 2,
+          "line": 267
+        },
+        {
+          "heading": "6. Process Injection",
+          "level": 2,
+          "line": 291
+        },
+        {
+          "heading": "Fork & Run (Default)",
+          "level": 3,
+          "line": 293
+        },
+        {
+          "heading": "Inline Execution (BOF)",
+          "level": 3,
+          "line": 302
+        },
+        {
+          "heading": "Manual Injection",
+          "level": 3,
+          "line": 310
+        },
+        {
+          "heading": "Process Hollowing",
+          "level": 3,
+          "line": 322
+        },
+        {
+          "heading": "7. Arsenal Kit Integration",
+          "level": 2,
+          "line": 338
+        },
+        {
+          "heading": "8. OPSEC Considerations",
+          "level": 2,
+          "line": 362
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 375
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 387
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 399
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 419
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 30
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-domain-fronting/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 488,
+      "nonEmptyLines": 402,
+      "sections": [
+        {
+          "heading": "Domain Fronting & CDN Abuse for C2",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "1. The Domain Fronting Technique",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "How It Works",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "Requirements",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "2. CloudFront Domain Fronting",
+          "level": 2,
+          "line": 72
+        },
+        {
+          "heading": "Setup",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "CloudFront Configuration",
+          "level": 3,
+          "line": 96
+        },
+        {
+          "heading": "Current Status (CloudFront)",
+          "level": 3,
+          "line": 136
+        },
+        {
+          "heading": "3. Azure CDN Domain Fronting",
+          "level": 2,
+          "line": 142
+        },
+        {
+          "heading": "Setup",
+          "level": 3,
+          "line": 146
+        },
+        {
+          "heading": "Azure-Specific Notes",
+          "level": 3,
+          "line": 169
+        },
+        {
+          "heading": "4. Fastly Domain Fronting",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "Setup",
+          "level": 3,
+          "line": 179
+        },
+        {
+          "heading": "5. CDN-Based Redirectors",
+          "level": 2,
+          "line": 206
+        },
+        {
+          "heading": "Cloudflare Worker Redirector",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "Nginx Redirector (On CDN Origin)",
+          "level": 3,
+          "line": 247
+        },
+        {
+          "heading": "6. Cobalt Strike Integration",
+          "level": 2,
+          "line": 281
+        },
+        {
+          "heading": "Malleable C2 Profile for Domain Fronting",
+          "level": 3,
+          "line": 283
+        },
+        {
+          "heading": "Beacon Configuration",
+          "level": 3,
+          "line": 361
+        },
+        {
+          "heading": "7. Sliver Integration",
+          "level": 2,
+          "line": 374
+        },
+        {
+          "heading": "Sliver HTTPS with Domain Fronting",
+          "level": 3,
+          "line": 376
+        },
+        {
+          "heading": "Sliver HTTP C2 Profile for Fronting",
+          "level": 3,
+          "line": 392
+        },
+        {
+          "heading": "8. TLS SNI vs Host Header",
+          "level": 2,
+          "line": 413
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 428
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 440
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 453
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 477
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 29
+      }
+    }
+  ]
+}

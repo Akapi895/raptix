@@ -1,0 +1,65 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "clients/desktop/src/config.mjs",
+                           "language":  "javascript",
+                           "sizeLines":  343,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/desktop/src/config.test.mjs",
+                           "language":  "javascript",
+                           "sizeLines":  294,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/desktop/src/main.mjs",
+                           "language":  "javascript",
+                           "sizeLines":  287,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/desktop/src/platform.mjs",
+                           "language":  "javascript",
+                           "sizeLines":  156,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/desktop/src/platform.test.mjs",
+                           "language":  "javascript",
+                           "sizeLines":  138,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/desktop/src/ui.mjs",
+                           "language":  "javascript",
+                           "sizeLines":  330,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "clients/desktop/src/config.mjs":  [
+
+                                                               ],
+                            "clients/desktop/src/config.test.mjs":  [
+                                                                        "clients/desktop/src/config.mjs",
+                                                                        "clients/desktop/src/ui.mjs"
+                                                                    ],
+                            "clients/desktop/src/main.mjs":  [
+                                                                 "clients/desktop/src/config.mjs",
+                                                                 "clients/desktop/src/platform.mjs",
+                                                                 "clients/desktop/src/ui.mjs"
+                                                             ],
+                            "clients/desktop/src/platform.mjs":  [
+
+                                                                 ],
+                            "clients/desktop/src/platform.test.mjs":  [
+                                                                          "clients/desktop/src/config.mjs",
+                                                                          "clients/desktop/src/platform.mjs"
+                                                                      ],
+                            "clients/desktop/src/ui.mjs":  [
+
+                                                           ]
+                        }
+}

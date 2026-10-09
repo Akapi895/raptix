@@ -1,0 +1,249 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 5,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 5
+    }
+  },
+  "results": [
+    {
+      "path": "benchmark/configs/buttercup-smoke.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 24,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "description",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "filters",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "per_challenge_timeout_seconds",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "model_profile",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "assistant",
+          "level": 1,
+          "line": 18
+        },
+        {
+          "heading": "retain_artifacts",
+          "level": 1,
+          "line": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "benchmark/configs/cybergym-subset.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 45,
+      "nonEmptyLines": 39,
+      "sections": [
+        {
+          "heading": "benchmark_id",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "server",
+          "level": 1,
+          "line": 24
+        },
+        {
+          "heading": "data_dir",
+          "level": 1,
+          "line": 27
+        },
+        {
+          "heading": "difficulty",
+          "level": 1,
+          "line": 30
+        },
+        {
+          "heading": "api_key",
+          "level": 1,
+          "line": 33
+        },
+        {
+          "heading": "task_ids",
+          "level": 1,
+          "line": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "benchmark/configs/decepticon-bench-v1.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 34,
+      "nonEmptyLines": 26,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "description",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 18
+        },
+        {
+          "heading": "filters",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "per_challenge_timeout_seconds",
+          "level": 1,
+          "line": 23
+        },
+        {
+          "heading": "model_profile",
+          "level": 1,
+          "line": 25
+        },
+        {
+          "heading": "assistant",
+          "level": 1,
+          "line": 27
+        },
+        {
+          "heading": "retain_artifacts",
+          "level": 1,
+          "line": 29
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "benchmark/configs/exploitbench-smoke.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 27,
+      "nonEmptyLines": 23,
+      "sections": [
+        {
+          "heading": "benchmark_id",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "init_prompt",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "envs",
+          "level": 1,
+          "line": 22
+        },
+        {
+          "heading": "seeds",
+          "level": 1,
+          "line": 27
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "benchmark/configs/exploitbench-v8-small.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 72,
+      "nonEmptyLines": 68,
+      "sections": [
+        {
+          "heading": "benchmark_id",
+          "level": 1,
+          "line": 17
+        },
+        {
+          "heading": "init_prompt",
+          "level": 1,
+          "line": 19
+        },
+        {
+          "heading": "envs",
+          "level": 1,
+          "line": 26
+        },
+        {
+          "heading": "seeds",
+          "level": 1,
+          "line": 72
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    }
+  ]
+}

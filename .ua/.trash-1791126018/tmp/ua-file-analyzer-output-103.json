@@ -1,0 +1,701 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 17,
+  "filesSkipped": [
+    ".gitattributes",
+    ".github/renovate.json5",
+    ".gitmodules",
+    ".markdownlintignore",
+    ".pip-audit-ignore",
+    ".python-version",
+    ".shellcheckrc",
+    "benchmark/results/.gitkeep"
+  ],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 17,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 3,
+      "failed": 0,
+      "skipped": 14
+    }
+  },
+  "results": [
+    {
+      "path": ".github/FUNDING.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 1,
+      "nonEmptyLines": 1,
+      "sections": [
+        {
+          "heading": "github",
+          "level": 1,
+          "line": 1
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 70,
+      "nonEmptyLines": 63,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "description",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "labels",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "body",
+          "level": 1,
+          "line": 4
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 53,
+      "nonEmptyLines": 48,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "description",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "labels",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "body",
+          "level": 1,
+          "line": 4
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".github/actions/raptix-scan/action.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 166,
+      "nonEmptyLines": 159,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "description",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "author",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "branding",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "inputs",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "outputs",
+          "level": 1,
+          "line": 65
+        },
+        {
+          "heading": "runs",
+          "level": 1,
+          "line": 76
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 111,
+      "nonEmptyLines": 81,
+      "sections": [
+        {
+          "heading": "Summary",
+          "level": 2,
+          "line": 1
+        },
+        {
+          "heading": "Changes",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Intent",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Blast radius",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Diff budget",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "End-to-end verification",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "Testing",
+          "level": 2,
+          "line": 63
+        },
+        {
+          "heading": "Quality Bar self-check",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "AI-assisted contribution attestation",
+          "level": 2,
+          "line": 90
+        },
+        {
+          "heading": "Related Issues",
+          "level": 2,
+          "line": 109
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": ".semgrep/raptix-rules.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 114,
+      "nonEmptyLines": 109,
+      "sections": [
+        {
+          "heading": "rules",
+          "level": 1,
+          "line": 1
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": ".ua/config.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 1,
+      "nonEmptyLines": 1,
+      "sections": [
+        {
+          "heading": "outputLanguage",
+          "level": 1,
+          "line": 1
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "benchmark/configs/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 8,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "benchmark/cve_bench/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 71,
+      "nonEmptyLines": 56,
+      "sections": [
+        {
+          "heading": "CVE-Bench harness for Raptix",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Layout",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Dry run (offline, mocked)",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Full run, live mode",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "Leaderboard submission",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 66
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 137,
+      "nonEmptyLines": 105,
+      "sections": [
+        {
+          "heading": "DreadGOAD Benchmark Runner",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Quick start",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Configs included",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "Lab lifecycle (`lab_mode`)",
+          "level": 2,
+          "line": 89
+        },
+        {
+          "heading": "Cleanup",
+          "level": 2,
+          "line": 106
+        },
+        {
+          "heading": "Known gap — outer-timeout teardown",
+          "level": 2,
+          "line": 119
+        },
+        {
+          "heading": "See also",
+          "level": 2,
+          "line": 133
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 7,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/providers/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 5,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "benchmark/results/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 180,
+      "nonEmptyLines": 159,
+      "sections": [
+        {
+          "heading": "Raptix — XBOW Validation Benchmark Passes",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Summary — 102 / 104 (98.08 %) · L1 100 % · L2 98.0 % · L3 87.5 %",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Confirmed Exploit Coverage by Web Attack Class",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Level 1 — 45 / 45 (100 %)",
+          "level": 2,
+          "line": 58
+        },
+        {
+          "heading": "Level 2 — 50 / 51 (98.0 %)",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "Level 3 — 7 / 8 (87.5 %)",
+          "level": 2,
+          "line": 168
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-001-24/evidence/summary.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 19,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 17
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 18
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-001-24/evidence/summary.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 26,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "XBEN-001-24: XBEN-001-24 IDOR - Trading Platform - Authorization",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Challenge Complete — XBEN-001-24 IDOR Trading Platform",
+          "level": 2,
+          "line": 22
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-001-24/report.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 19,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 17
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 18
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-001-24/report.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 26,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "XBEN-001-24: XBEN-001-24 IDOR - Trading Platform - Authorization",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Challenge Complete — XBEN-001-24 IDOR Trading Platform",
+          "level": 2,
+          "line": 22
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    }
+  ]
+}

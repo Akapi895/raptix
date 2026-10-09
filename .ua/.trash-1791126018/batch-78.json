@@ -1,0 +1,698 @@
+{
+  "batchIndex": 78,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/docs/integration/w10-live.json",
+      "language": "json",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w11-controls.md",
+      "language": "markdown",
+      "sizeLines": 104,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w11-live.json",
+      "language": "json",
+      "sizeLines": 24,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w12-findings.md",
+      "language": "markdown",
+      "sizeLines": 29,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w12-live.json",
+      "language": "json",
+      "sizeLines": 22,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w13-graph.md",
+      "language": "markdown",
+      "sizeLines": 27,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w13-live.json",
+      "language": "json",
+      "sizeLines": 22,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w14-live.json",
+      "language": "json",
+      "sizeLines": 22,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w14-logs-reports.md",
+      "language": "markdown",
+      "sizeLines": 78,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w15-live.json",
+      "language": "json",
+      "sizeLines": 24,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w15-settings.md",
+      "language": "markdown",
+      "sizeLines": 71,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w16-cutover.md",
+      "language": "markdown",
+      "sizeLines": 84,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w17-campaigns.md",
+      "language": "markdown",
+      "sizeLines": 56,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w17-live.json",
+      "language": "json",
+      "sizeLines": 24,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w18-live.json",
+      "language": "json",
+      "sizeLines": 25,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w18-vault.md",
+      "language": "markdown",
+      "sizeLines": 54,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w19-live.json",
+      "language": "json",
+      "sizeLines": 23,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w19-members.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w20-retirement.md",
+      "language": "markdown",
+      "sizeLines": 79,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:clients/web-raptix/docs/integration/w11-controls.md",
+      "type": "document",
+      "name": "w11-controls.md",
+      "filePath": "clients/web-raptix/docs/integration/w11-controls.md",
+      "summary": "Gate W11 về điều khiển run: POST resume cho graph-interrupt question (validate answer, conflict 409, tạo run mới command resume), cancel qua SDK action=interrupt, và approvals HITL file-backed đọc/ghi decisions.jsonl với mutex per-engagement chống double-append.",
+      "tags": [
+        "hitl",
+        "resume",
+        "cancel",
+        "approvals",
+        "w11"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        1,
+        104
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w12-findings.md",
+      "type": "document",
+      "name": "w12-findings.md",
+      "filePath": "clients/web-raptix/docs/integration/w12-findings.md",
+      "summary": "Gate W12 Findings & Evidence: findings-service parse FIND-*.md giữ parser-quality flags (defaultSeverity/placeholder), artifacts-service allowlist 5 thư mục với realpath/symlink containment, cap 256KB, routes no-store và frontend hiển thị provenance parsed thật.",
+      "tags": [
+        "findings",
+        "artifacts",
+        "parser",
+        "w12"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        29
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w13-graph.md",
+      "type": "document",
+      "name": "w13-graph.md",
+      "filePath": "clients/web-raptix/docs/integration/w13-graph.md",
+      "summary": "Gate W13 Graph & Assets: Cypher qua Neo4j HTTP với projection redact trước response (allowlist key, drop credential keys, JWT/base64 → [REDACTED]), giới hạn 400 nodes/1200 edges, AssetSummaryView dedupe theo hostname+ip và 503 khi graph unavailable.",
+      "tags": [
+        "graph",
+        "neo4j",
+        "redaction",
+        "assets",
+        "w13"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        27
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w14-logs-reports.md",
+      "type": "document",
+      "name": "w14-logs-reports.md",
+      "filePath": "clients/web-raptix/docs/integration/w14-logs-reports.md",
+      "summary": "Gate W14 Operations Log & Reports: timeline gộp 3 nguồn có nhãn (runtime/checkpoint/workspace) bounds 250 entries, export JSON/Markdown nghiêm ngặt (format lạ → 400, bỏ fallback Markdown âm thầm của legacy) và frontend không telemetry giả.",
+      "tags": [
+        "timeline",
+        "export",
+        "reports",
+        "w14"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        78
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w15-settings.md",
+      "type": "document",
+      "name": "w15-settings.md",
+      "filePath": "clients/web-raptix/docs/integration/w15-settings.md",
+      "summary": "Gate W15 Settings & core E2E: GET settings là view persisted với target-change policy stated up front, save tái dùng PATCH, DELETE engagement trả 409 khi còn activeThreadId và xóa DB trong một transaction; core E2E thật create → planning → run → report qua UI.",
+      "tags": [
+        "settings",
+        "e2e",
+        "delete",
+        "w15"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        71
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w16-cutover.md",
+      "type": "document",
+      "name": "w16-cutover.md",
+      "filePath": "clients/web-raptix/docs/integration/w16-cutover.md",
+      "summary": "Gate W16 cutover deployment new-stack: Dockerfile server (node:22-slim, prisma migrate deploy lúc boot) + UI nginx, proxy same-origin (/api → 8081, SPA fallback), compose riêng với DB dedicated raptix_web_raptix, Makefile/CI lanes webraptix-* và health checks.",
+      "tags": [
+        "deployment",
+        "cutover",
+        "docker",
+        "w16"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        84
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w17-campaigns.md",
+      "type": "document",
+      "name": "w17-campaigns.md",
+      "filePath": "clients/web-raptix/docs/integration/w17-campaigns.md",
+      "summary": "Gate W17 Campaign Persistence & scoped C2: CRUD campaign drafts DB-bounded (name ≤120, vector phishing/web/mobile), CampaignJob status unavailable trung thực khi provider chưa cấu hình (không bao giờ fake Generated/Delivered), C2 sessions trả 503 provider_unavailable.",
+      "tags": [
+        "campaigns",
+        "c2",
+        "persistence",
+        "w17"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        56
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w18-vault.md",
+      "type": "document",
+      "name": "w18-vault.md",
+      "filePath": "clients/web-raptix/docs/integration/w18-vault.md",
+      "summary": "Gate W18 Credentials Vault: AES-256-GCM với VAULT_ENCRYPTION_KEY base64 32-byte validate lúc khởi động (thiếu key → 503, không bao giờ downgrade plaintext), metadata redacted by construction, reveal một lần có audit VaultAudit survive deletion và revoke audited.",
+      "tags": [
+        "vault",
+        "encryption",
+        "audit",
+        "w18"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        54
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w19-members.md",
+      "type": "document",
+      "name": "w19-members.md",
+      "filePath": "clients/web-raptix/docs/integration/w19-members.md",
+      "summary": "Gate W19 Members identity design: GET members trả topology trung thực mode local-single-user (một operator, inviteSupported:false), invite/remove trả 503 với lý do thiếu hosted auth/CSRF/RBAC — không fabricate Owner/Viewer hierarchy.",
+      "tags": [
+        "members",
+        "rbac",
+        "identity",
+        "w19"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        53
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w20-retirement.md",
+      "type": "document",
+      "name": "w20-retirement.md",
+      "filePath": "clients/web-raptix/docs/integration/w20-retirement.md",
+      "summary": "Gate W20 legacy retirement: giữ clients/web làm reference-only nhưng loại khỏi mọi lane active (compose, Makefile, CI, CLI /web), image raptix-web GHCR chỉ còn pull-only cho rollback khẩn cấp; zero tham chiếu build/runtime/CI tới folder cũ.",
+      "tags": [
+        "retirement",
+        "legacy",
+        "decommission",
+        "w20"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        79
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w10-live.json",
+      "type": "config",
+      "name": "w10-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w10-live.json",
+      "summary": "Bằng chứng live gate W10: Console session thật — 7 checks selector/hydrate/stream, streamCursor và 4 publicEvents từ planning run trên API 5284/PostgreSQL/LangGraph 2400.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "console",
+        "w10"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        20
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w11-live.json",
+      "type": "config",
+      "name": "w11-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w11-live.json",
+      "summary": "Bằng chứng live gate W11: 10 checks resume/cancel/approvals trên planning run thật, ghi nhận trung thực resumeRoundTrip=false trong lane này.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "controls",
+        "w11"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        24
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w12-live.json",
+      "type": "config",
+      "name": "w12-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w12-live.json",
+      "summary": "Bằng chứng live gate W12: 9 checks findings/artifacts round-trip trên workspace thật (parse, quality flags, traversal 400, foreign 404).",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "findings",
+        "w12"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        22
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w13-live.json",
+      "type": "config",
+      "name": "w13-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w13-live.json",
+      "summary": "Bằng chứng live gate W13: 9 checks graph/assets với Neo4j thật 7475 — seed nodes, redaction verifier-secret không rò rỉ, cross-engagement isolation.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "graph",
+        "w13"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        22
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w14-live.json",
+      "type": "config",
+      "name": "w14-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w14-live.json",
+      "summary": "Bằng chứng live gate W14: 9 checks timeline merged và export JSON/Markdown với Content-Disposition đúng tên file.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "timeline",
+        "w14"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        22
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w15-live.json",
+      "type": "config",
+      "name": "w15-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w15-live.json",
+      "summary": "Bằng chứng live gate W15: 11 checks settings + core E2E create → planning → run → report trên UI/API/database thật.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "settings",
+        "w15"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        24
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w17-live.json",
+      "type": "config",
+      "name": "w17-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w17-live.json",
+      "summary": "Bằng chứng live gate W17: 11 checks campaign drafts + C2 503 provider_unavailable trung thực trên stack thật.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "campaigns",
+        "w17"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        24
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w18-live.json",
+      "type": "config",
+      "name": "w18-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w18-live.json",
+      "summary": "Bằng chứng live gate W18: 12 checks vault store/reveal/revoke, plaintext không bao giờ xuất hiện trong list responses.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "vault",
+        "w18"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        25
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w19-live.json",
+      "type": "config",
+      "name": "w19-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w19-live.json",
+      "summary": "Bằng chứng live gate W19: 10 checks members topology local-single-user và invite/remove 503 có reason rõ ràng.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "members",
+        "w19"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        23
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:clients/web-raptix/docs/integration/w11-controls.md",
+      "target": "config:clients/web-raptix/docs/integration/w11-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w11-controls.md",
+      "target": "file:packages/raptix/raptix/middleware/hitl.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w12-findings.md",
+      "target": "config:clients/web-raptix/docs/integration/w12-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w12-findings.md",
+      "target": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w12-findings.md",
+      "target": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w12-findings.md",
+      "target": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w13-graph.md",
+      "target": "config:clients/web-raptix/docs/integration/w13-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w13-graph.md",
+      "target": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w13-graph.md",
+      "target": "file:clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w13-graph.md",
+      "target": "file:clients/web-raptix/server/src/config/env.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w14-logs-reports.md",
+      "target": "config:clients/web-raptix/docs/integration/w14-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w14-logs-reports.md",
+      "target": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w14-logs-reports.md",
+      "target": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w14-logs-reports.md",
+      "target": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w15-settings.md",
+      "target": "config:clients/web-raptix/docs/integration/w15-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w15-settings.md",
+      "target": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w16-cutover.md",
+      "target": "service:containers/web-raptix-server.Dockerfile",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w16-cutover.md",
+      "target": "service:containers/web-raptix.Dockerfile",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w16-cutover.md",
+      "target": "service:docker-compose.web-raptix.yml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w16-cutover.md",
+      "target": "file:Makefile",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w16-cutover.md",
+      "target": "file:.github/workflows/ci.yml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w17-campaigns.md",
+      "target": "config:clients/web-raptix/docs/integration/w17-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w17-campaigns.md",
+      "target": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w17-campaigns.md",
+      "target": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w18-vault.md",
+      "target": "config:clients/web-raptix/docs/integration/w18-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w18-vault.md",
+      "target": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w18-vault.md",
+      "target": "file:clients/web-raptix/server/src/config/env.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w19-members.md",
+      "target": "config:clients/web-raptix/docs/integration/w19-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w19-members.md",
+      "target": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w20-retirement.md",
+      "target": "service:docker-compose.yml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w20-retirement.md",
+      "target": "file:.github/workflows/release.yml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w20-retirement.md",
+      "target": "file:clients/cli/src/commands/web.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w20-retirement.md",
+      "target": "file:Makefile",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

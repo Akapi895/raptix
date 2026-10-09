@@ -1,0 +1,76 @@
+% =====================================================================
+%  File: sections/3_3_khao_sat_he_thong.tex
+%  Mục đích: Phần 3.3 - Khảo sát các hệ thống liên quan
+% =====================================================================
+
+\subsection{Khảo sát các hệ thống liên quan}
+\label{sec:khao-sat-he-thong}
+
+Để có cơ sở thiết kế cho prototype Raptix, em đã khảo sát hai nhóm hệ thống: (i) các hệ thống red team tự động tiên tiến, đóng vai trò là nguồn cảm hứng chính; và (ii) các hệ thống pentest mã nguồn mở, đóng vai trò tham chiếu cho các pattern kiến trúc về orchestration, tool execution và verification. Trong đó, Decepticon và Incalmo là hai đối tượng nghiên cứu trọng tâm, vì chúng đại diện cho hai cách tiếp cận khác nhau nhưng bổ sung cho nhau trong việc giải quyết bài toán red team đa host.
+
+% ---------------------------------------------------------------
+\subsubsection{Decepticon -- Red team agent đa tác tử}
+
+\textbf{Decepticon}~\cite{decepticon} là một framework red team tự động mã nguồn mở được phát triển bởi BitterSecurity, định vị là một ``red team agent chuyên nghiệp'' thay vì một công cụ pentest thông thường. Decepticon thực thi các chuỗi tấn công thực tế bao gồm trinh sát, khai thác, leo thang đặc quyền, di chuyển ngang và C2 — theo cách mà một kẻ tấn công thực sự sẽ làm, chứ không phải theo cách một scanner hoạt động. Điểm khác biệt căn bản của Decepticon so với các công cụ ``AI + hacking'' khác nằm ở kỷ luật vận hành: trước khi gửi bất kỳ gói tin nào, Decepticon tạo ra một gói engagement hoàn chỉnh bao gồm Rules of Engagement (RoE), Concept of Operations (CONOPS), Deconfliction Plan và OPPLAN với ánh xạ MITRE ATT\&CK.
+
+\paragraph{Kiến trúc đa tác tử theo pha kill chain}
+
+Decepticon tổ chức hệ thống của mình như một \textbf{multi-agent stack} được phân chia theo từng pha của kill chain, bao gồm ba orchestrator chính và một dàn sub-agent chuyên biệt:
+
+\begin{itemize}
+    \item \textbf{Decepticon:} orchestrator trung tâm của red team, có nhiệm vụ đọc OPPLAN, điều phối các sub-agent và theo dõi chuyển đổi trạng thái của từng objective. Bản thân orchestrator này không có tool nào — mọi công việc tấn công đều được thực hiện thông qua cơ chế delegation đến các sub-agent.
+    \item \textbf{Vulnresearch:} orchestrator phụ trách nghiên cứu lỗ hổng, vận hành pipeline năm giai đoạn (scanner → detector → verifier → patcher → exploiter) với state được truyền giữa các giai đoạn \emph{độc quyền thông qua knowledge graph}.
+    \item \textbf{Soundwave:} orchestrator phụ trách tương tác với người vận hành để xây dựng OPPLAN và các tài liệu engagement khi chưa có sẵn.
+    \item \textbf{Sub-agent chuyên biệt:} dưới quyền Decepticon có một dàn sub-agent như \texttt{recon}, \texttt{exploit}, \texttt{postexploit}, \texttt{ad\_operator} (Active Directory), \texttt{cloud\_hunter}, \texttt{phisher}, \texttt{contract\_auditor} (smart contract), \texttt{reverser} (phân tích binary), và nhiều agent khác cho các lĩnh vực như IoT, ICS, wireless, mobile và OSINT.
+\end{itemize}
+
+Mỗi sub-agent được thiết kế để khởi động với một \textbf{context window hoàn toàn mới} cho từng mục tiêu, tránh tích tụ ``nhiễu'' và suy giảm khả năng suy luận của LLM. Các phát hiện (findings) được lưu trữ trên đĩa (thư mục \texttt{workspace/}) và trong knowledge graph, \emph{không} lưu trong bộ nhớ của agent. Đây là một quyết định thiết kế quan trọng, cho phép Decepticon duy trì tính nhất quán của state qua các phiên làm việc dài mà không bị giới hạn bởi context window của LLM.
+
+\paragraph{Knowledge graph và attack chain planning}
+
+Decepticon sử dụng \textbf{Neo4j} làm persistent attack graph. Mọi host, service, vulnerability, credential và finding được phát hiện trong một engagement đều trở thành một \textbf{typed node} với các \textbf{typed relationship} tương ứng. Đồ thị này không chỉ là nơi lưu trữ thụ động mà còn là công cụ suy luận chủ động:
+
+\begin{itemize}
+    \item \textbf{Truy vấn đường đi:} công cụ \texttt{kg\_query\_paths(start\_id, end\_id)} tìm tất cả các đường đi giữa hai node, phục vụ việc khám phá attack chain.
+    \item \textbf{Lập kế hoạch attack chain:} công cụ \texttt{plan\_attack\_chains()} sinh ra các multi-hop exploit path được xếp hạng bằng thuật toán weighted shortest-path. Trọng số của cạnh được dùng để biểu diễn mức độ dễ khai thác (lower = easier exploitation).
+    \item \textbf{Đánh giá critical path:} công cụ \texttt{critical\_path\_score(chain)} cho phép đánh giá mức độ quan trọng của một attack chain cụ thể.
+    \item \textbf{Cypher-native path search:} planner sử dụng APOC (Awesome Procedures on Cypher) của Neo4j để tìm đường đi ngắn nhất có trọng số từ các \texttt{Entrypoint} node đến các \texttt{CrownJewel} node.
+\end{itemize}
+
+Đáng chú ý, Neo4j container được thiết kế \textbf{dual-homed} trên cả hai mạng \texttt{sandbox-net} và \texttt{decepticon-net}, cho phép orchestrator trên management plane đọc được các finding do agent ghi từ bên trong sandbox. Đây là một giải pháp kiến trúc cho phép tách biệt mặt phẳng thực thi và mặt phẳng quản lý mà vẫn duy trì được state chia sẻ.
+
+\paragraph{Sandbox và hạn chế}
+
+Decepticon thực thi lệnh trong sandbox Kali Linux biệt lập qua phiên tmux liên tục, cho phép tương tác với \texttt{msfconsole}, \texttt{sliver-client}, \texttt{evil-winrm} một cách tự nhiên. Neo4j được cấu hình dual-homed để agent trong sandbox ghi findings và orchestrator trên management plane đọc được.
+
+Hạn chế chính là \textbf{chưa có cơ chế chuyển pha tường minh}: việc chuyển giữa các giai đoạn kill chain dựa vào quyết định của orchestrator đọc OPPLAN, không dựa trên trạng thái thực tế của knowledge graph. Knowledge graph cũng chưa được tận dụng cho suy luận attack vector thời gian thực, mà chỉ dùng cho path planning tĩnh.
+
+% ---------------------------------------------------------------
+\subsubsection{Incalmo -- Red team đa host với LLM hỗ trợ}
+
+\textbf{Incalmo} là một hệ thống red team đa host do LLM hỗ trợ, được phát triển bởi nhóm nghiên cứu tại Đại học Carnegie Mellon (CMU) và Anthropic. Khác với Decepticon (là một framework hoàn chỉnh), Incalmo là một \emph{high-level abstraction layer} đóng vai trò trung gian giữa LLM và môi trường tấn công. Triết lý thiết kế của Incalmo xuất phát từ một quan sát quan trọng: các hệ thống LLM-assisted offense hiện đại (như PentestGPT, CyberSecEval3) với các LLM hàng đầu (Sonnet 4, Gemini 2.5 Pro) \textbf{không thể} tự động thực thi các bài toán red team đa host nếu không có sự hỗ trợ của abstraction layer phù hợp.
+
+\paragraph{Tách biệt planning và execution}
+
+Đóng góp cốt lõi của Incalmo là việc \textbf{tách biệt rõ ràng lớp planning và lớp execution}. Thay vì để một LLM vừa lập kế hoạch vừa sinh ra các lệnh shell cấp thấp, Incalmo chia bài toán thành hai lớp:
+
+\begin{itemize}
+    \item \textbf{Lớp planning (LLM-assisted):} quyết định ``làm gì'' ở mức trừu tượng cao. Planner không sinh ra lệnh shell mà chỉ chọn từ một \textbf{vocabulary hữu hạn các high-level attack verbs} như: \texttt{scan network}, \texttt{move laterally}, \texttt{gain persistence}, \texttt{escalate privileges}, \texttt{exfiltrate data}, \texttt{discover local information}.
+    \item \textbf{Lớp execution (domain-specific task agents):} quyết định ``thực thi như thế nào''. Khi planner chọn một verb, một \textbf{translation layer} sẽ ánh xạ verb đó thành implementation cấp thấp phù hợp, gọi đến task agent chuyên biệt (port scanner, credential dumper, lateral movement toolkit, v.v.).
+\end{itemize}
+
+Cách tiếp cận này mang lại hai lợi ích quan trọng. Thứ nhất, nó \textbf{thu hẹp không gian quyết định} của LLM, giúp model tập trung vào strategic reasoning thay vì phải nhớ cú pháp của hàng trăm công cụ khác nhau. Thứ hai, nó cho phép \textbf{thay thế hoặc nâng cấp task agent mà không cần huấn luyện lại planner} — một tính chất quan trọng cho khả năng bảo trì và mở rộng hệ thống.
+
+\paragraph{Auxiliary services, kết quả và hạn chế}
+
+Để giải quyết context bloat, Incalmo đưa vào ba auxiliary services: \emph{environment state service} (host, service, credential đã thu được), \emph{attack graph service} (đề xuất attack path tiềm năng) và \emph{C2 service} (quản lý kênh liên lạc với host đã bị chiếm). Nhờ đó, planner chỉ truy vấn những gì cần thiết tại thời điểm quyết định, không cần nhồi toàn bộ lịch sử vào context.
+
+Trên benchmark MHBench (40 mạng mô phỏng 22--50 host), Incalmo chiếm được critical asset trong \textbf{37/40} môi trường, so với 3/40 của SOTA khác. Thí nghiệm ablation Incalmo-WAP (bỏ action planner) cho thấy \textbf{tất cả 6 LLM đều không thể hoàn thành}, khẳng định vai trò thiết yếu của planning layer tách biệt.
+
+Hạn chế: Incalmo chưa có verifier độc lập (kết quả dựa trên output của task agent) và attack graph service chưa hỗ trợ audit/replay theo event stream.
+
+% ---------------------------------------------------------------
+\subsubsection{Tham chiếu từ các hệ thống pentest}
+
+Ba hệ thống pentest mã nguồn mở bổ sung thêm pattern kiến trúc: \textbf{CyberStrikeAI}~\cite{cyberstrike} (MCP/tool registry, audit-oriented workspace), \textbf{Strix}~\cite{strix} (sandbox + skill + graph of agents) và \textbf{Pentest-AI}~\cite{pentestai} (verification-centric lifecycle với oracle, proof replay và scope guard). Bài học quan trọng nhất từ Pentest-AI là tách ``suy luận của LLM'' khỏi ``điều kiện xác nhận kết quả'' --- điểm yếu mà cả Decepticon lẫn Incalmo đều chưa giải quyết triệt để. Decepticon~\cite{decepticon} (tự báo cáo XBOW 98.08\%, knowledge graph làm state store) và Incalmo~\cite{incalmo} (MHBench 37/40, tách planning/execution) cùng nhau cung cấp nền tảng cho hai đóng góp cốt lõi của Raptix: AKG hợp nhất và mô hình khai thác hai pha.
+

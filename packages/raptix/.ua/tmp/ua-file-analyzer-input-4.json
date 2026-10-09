@@ -1,0 +1,287 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+ "batchFiles": [
+  {
+   "path": "raptix/cli/__init__.py",
+   "language": "python",
+   "sizeLines": 22,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/cli/auth.py",
+   "language": "python",
+   "sizeLines": 186,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/cli/scan.py",
+   "language": "python",
+   "sizeLines": 421,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/core/dispatch_context.py",
+   "language": "python",
+   "sizeLines": 17,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/core/logging.py",
+   "language": "python",
+   "sizeLines": 36,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/core/subagent_streaming.py",
+   "language": "python",
+   "sizeLines": 745,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/llm/factory.py",
+   "language": "python",
+   "sizeLines": 1796,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/llm/router.py",
+   "language": "python",
+   "sizeLines": 40,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/dispatch.py",
+   "language": "python",
+   "sizeLines": 255,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/model_override.py",
+   "language": "python",
+   "sizeLines": 204,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/proxy_key_override.py",
+   "language": "python",
+   "sizeLines": 172,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/state_reducers.py",
+   "language": "python",
+   "sizeLines": 50,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/subagent_transcript_state.py",
+   "language": "python",
+   "sizeLines": 67,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cli/test_auth.py",
+   "language": "python",
+   "sizeLines": 151,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cli/test_auth_branches.py",
+   "language": "python",
+   "sizeLines": 347,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cli/test_scan.py",
+   "language": "python",
+   "sizeLines": 188,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cli/test_scan_extra.py",
+   "language": "python",
+   "sizeLines": 632,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/core/test_dispatch_boundary.py",
+   "language": "python",
+   "sizeLines": 197,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/core/test_subagent_streaming.py",
+   "language": "python",
+   "sizeLines": 294,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/core/test_subagent_streaming_guard.py",
+   "language": "python",
+   "sizeLines": 157,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/core/test_subagent_transcript_state.py",
+   "language": "python",
+   "sizeLines": 211,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/llm/test_factory.py",
+   "language": "python",
+   "sizeLines": 1528,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/llm/test_factory_attribution.py",
+   "language": "python",
+   "sizeLines": 121,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/llm/test_factory_classify_errors.py",
+   "language": "python",
+   "sizeLines": 276,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/llm/test_factory_fallback_execution.py",
+   "language": "python",
+   "sizeLines": 169,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/llm/test_factory_url_redaction.py",
+   "language": "python",
+   "sizeLines": 35,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/llm/test_provider_controls.py",
+   "language": "python",
+   "sizeLines": 32,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/llm/test_role_model_override.py",
+   "language": "python",
+   "sizeLines": 82,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/llm/test_router.py",
+   "language": "python",
+   "sizeLines": 67,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_model_override.py",
+   "language": "python",
+   "sizeLines": 481,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_proxy_key_override.py",
+   "language": "python",
+   "sizeLines": 168,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "raptix/cli/__init__.py": [
+   "raptix/cli/scan.py"
+  ],
+  "raptix/cli/auth.py": [],
+  "raptix/cli/scan.py": [],
+  "raptix/core/dispatch_context.py": [],
+  "raptix/core/logging.py": [],
+  "raptix/core/subagent_streaming.py": [
+   "raptix/core/logging.py"
+  ],
+  "raptix/llm/factory.py": [
+   "raptix/llm/router.py"
+  ],
+  "raptix/llm/router.py": [],
+  "raptix/middleware/dispatch.py": [
+   "raptix/core/dispatch_context.py",
+   "raptix/core/subagent_streaming.py",
+   "raptix/middleware/subagent_transcript_state.py"
+  ],
+  "raptix/middleware/model_override.py": [
+   "raptix/llm/factory.py",
+   "raptix/middleware/state_reducers.py"
+  ],
+  "raptix/middleware/proxy_key_override.py": [
+   "raptix/llm/factory.py",
+   "raptix/middleware/state_reducers.py"
+  ],
+  "raptix/middleware/state_reducers.py": [],
+  "raptix/middleware/subagent_transcript_state.py": [
+   "raptix/middleware/state_reducers.py"
+  ],
+  "tests/unit/cli/test_auth.py": [
+   "raptix/cli/auth.py",
+   "raptix/llm/__init__.py",
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/cli/test_auth_branches.py": [
+   "raptix/cli/__init__.py",
+   "raptix/cli/auth.py",
+   "raptix/llm/__init__.py",
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/cli/test_scan.py": [
+   "raptix/cli/scan.py"
+  ],
+  "tests/unit/cli/test_scan_extra.py": [
+   "raptix/cli/scan.py"
+  ],
+  "tests/unit/core/test_dispatch_boundary.py": [
+   "raptix/core/subagent_streaming.py",
+   "raptix/middleware/dispatch.py"
+  ],
+  "tests/unit/core/test_subagent_streaming.py": [
+   "raptix/core/subagent_streaming.py"
+  ],
+  "tests/unit/core/test_subagent_streaming_guard.py": [
+   "raptix/core/subagent_streaming.py"
+  ],
+  "tests/unit/core/test_subagent_transcript_state.py": [
+   "raptix/core/subagent_streaming.py",
+   "raptix/middleware/state_reducers.py",
+   "raptix/middleware/subagent_transcript_state.py"
+  ],
+  "tests/unit/llm/test_factory.py": [
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/llm/test_factory_attribution.py": [
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/llm/test_factory_classify_errors.py": [
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/llm/test_factory_fallback_execution.py": [
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/llm/test_factory_url_redaction.py": [
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/llm/test_provider_controls.py": [
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/llm/test_role_model_override.py": [
+   "raptix/agents/build.py",
+   "raptix/llm/factory.py"
+  ],
+  "tests/unit/llm/test_router.py": [
+   "raptix/llm/router.py"
+  ],
+  "tests/unit/middleware/test_model_override.py": [
+   "raptix/middleware/model_override.py"
+  ],
+  "tests/unit/middleware/test_proxy_key_override.py": [
+   "raptix/middleware/proxy_key_override.py"
+  ]
+ }
+}

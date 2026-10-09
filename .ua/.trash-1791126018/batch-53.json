@@ -1,0 +1,52 @@
+{
+  "batchIndex": 53,
+  "batchFiles": [
+    {
+      "path": "containers/campaign-bridge/Dockerfile",
+      "language": "dockerfile",
+      "sizeLines": 18,
+      "fileCategory": "infra"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:containers/campaign-bridge/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "containers/campaign-bridge/Dockerfile",
+      "summary": "Multi-stage build image campaign-bridge: stage native clone evilginx2 ở commit pin 5557960 (verify bằng git rev-parse trước khi build) và go build CGO_ENABLED=0; runtime python:3.13-slim chạy user non-root bridge (uid 10001), copy binary evilginx, profile lab.yaml và evilginx_bridge.py, EXPOSE 9000/8443, CMD python /app/evilginx_bridge.py.",
+      "tags": [
+        "dockerfile",
+        "phishing",
+        "evilginx2",
+        "campaign",
+        "non-root"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Commit pin được verify bằng rev-parse (chống supply-chain); HOME=/state để evilginx ghi state vào volume; /profiles mount lab.yaml."
+    },
+    {
+      "id": "service:containers/campaign-bridge/Dockerfile:campaign-bridge",
+      "type": "service",
+      "name": "campaign-bridge",
+      "filePath": "containers/campaign-bridge/Dockerfile",
+      "summary": "Service phishing-lab chạy evilginx2 làm campaign bridge cho Raptix: serving phishing site qua cổng 9000/8443, state/profiles/redirectors nằm ở /state /profiles /redirectors, được điều khiển bởi evilginx_bridge.py.",
+      "tags": [
+        "service",
+        "phishing",
+        "evilginx2",
+        "container"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:containers/campaign-bridge/Dockerfile",
+      "target": "service:containers/campaign-bridge/Dockerfile:campaign-bridge",
+      "type": "deploys",
+      "direction": "forward",
+      "weight": 0.9
+    }
+  ]
+}

@@ -1,0 +1,944 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 15,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 15,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 15
+    }
+  },
+  "results": [
+    {
+      "path": "benchmark/dreadgoad/configs/apt-grid-15runs.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 32,
+      "nonEmptyLines": 28,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/apt-grid-full.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 23,
+      "nonEmptyLines": 23,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "personas",
+          "level": 1,
+          "line": 11
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/apt-shared-lab-grid.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 45,
+      "nonEmptyLines": 40,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "lab_mode",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 21
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/apt10.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/apt28.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 23,
+      "nonEmptyLines": 23,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 14
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/apt29.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 25,
+      "nonEmptyLines": 25,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 16
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/apt36.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/apt41.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/apt44.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 26,
+      "nonEmptyLines": 26,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "extra_opplan_concessions",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/kimsuky.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/lazarus.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/muddywater.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/mustang-panda.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/salt-typhoon.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "benchmark/dreadgoad/configs/turla.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "provider",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "lab_profile",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "rounds",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "parallel",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "timeout_per_run_seconds",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "langgraph_url",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "agents",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "operator_message_template",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    }
+  ]
+}

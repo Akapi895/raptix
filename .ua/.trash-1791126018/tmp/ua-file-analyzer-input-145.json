@@ -1,0 +1,133 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "scripts/check_basedpyright_errors.py",
+   "language": "python",
+   "sizeLines": 59,
+   "fileCategory": "code"
+  },
+  {
+   "path": "scripts/init_neo4j.cypher",
+   "language": "cypher",
+   "sizeLines": 74,
+   "fileCategory": "code"
+  },
+  {
+   "path": "scripts/next_version.py",
+   "language": "python",
+   "sizeLines": 87,
+   "fileCategory": "code"
+  },
+  {
+   "path": "scripts/render_benchmark_charts.py",
+   "language": "python",
+   "sizeLines": 292,
+   "fileCategory": "code"
+  },
+  {
+   "path": "telemetry-gateway/build_dashboard.py",
+   "language": "python",
+   "sizeLines": 308,
+   "fileCategory": "code"
+  },
+  {
+   "path": "telemetry-gateway/export_corpus.py",
+   "language": "python",
+   "sizeLines": 237,
+   "fileCategory": "code"
+  },
+  {
+   "path": "telemetry-gateway/redact_corpus.py",
+   "language": "python",
+   "sizeLines": 452,
+   "fileCategory": "code"
+  },
+  {
+   "path": "telemetry-gateway/vitest.config.ts",
+   "language": "typescript",
+   "sizeLines": 8,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/local/README.md",
+   "language": "markdown",
+   "sizeLines": 40,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "tests/local/harnesses/juice_shop_t2.py",
+   "language": "python",
+   "sizeLines": 1439,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/local/harnesses/lab_collect.py",
+   "language": "python",
+   "sizeLines": 394,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/local/harnesses/lab_run.py",
+   "language": "python",
+   "sizeLines": 564,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/local/harnesses/t2_probe.py",
+   "language": "python",
+   "sizeLines": 38,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/local/manual/test_b0_session_isolation_live.py",
+   "language": "python",
+   "sizeLines": 191,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/test_compose_langgraph_command.py",
+   "language": "python",
+   "sizeLines": 92,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/test_compose_network_isolation.py",
+   "language": "python",
+   "sizeLines": 331,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/test_web_raptix_ci.py",
+   "language": "python",
+   "sizeLines": 85,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/test_web_raptix_release.py",
+   "language": "python",
+   "sizeLines": 54,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "scripts/check_basedpyright_errors.py": [],
+  "scripts/init_neo4j.cypher": [],
+  "scripts/next_version.py": [],
+  "scripts/render_benchmark_charts.py": [],
+  "telemetry-gateway/build_dashboard.py": [],
+  "telemetry-gateway/export_corpus.py": [],
+  "telemetry-gateway/redact_corpus.py": [],
+  "telemetry-gateway/vitest.config.ts": [],
+  "tests/local/README.md": [],
+  "tests/local/harnesses/juice_shop_t2.py": [],
+  "tests/local/harnesses/lab_collect.py": [],
+  "tests/local/harnesses/lab_run.py": [],
+  "tests/local/harnesses/t2_probe.py": [],
+  "tests/local/manual/test_b0_session_isolation_live.py": [],
+  "tests/test_compose_langgraph_command.py": [],
+  "tests/test_compose_network_isolation.py": [],
+  "tests/test_web_raptix_ci.py": [],
+  "tests/test_web_raptix_release.py": []
+ }
+}

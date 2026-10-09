@@ -1,0 +1,2948 @@
+================================================================================
+RAPTIX - CAU TRUC REPO (repo-structure.txt)
+Sinh ngay: 2026-10-05  |  Thu muc goc: D:\.VTNet\redteam\raptix
+--------------------------------------------------------------------------------
+Quy tac presenting:
+- Bo folder an (bat dau bang "."), va __pycache__
+- benchmark/ chi ghi chung (khong liet ke chi tiet)
+- docs/ (goc) chi liet ke cac folder con
+- dist/, node_modules/ chi ke ten (build/dependencies)
+- workspace/, run/, telemetry/ la runtime artifact (khong git-track)
+
+File gom 2 phan:
+  PHAN 1 - Cay rut gon: kien truc + vi du mau (de doc nhanh)
+  PHAN 2 - Cay chi tiet day du (2700+ dong, gom ca skills)
+================================================================================
+
+
+PHAN 1 - CAU TRUC RUT GON (KIEN TRUC + VI DU MAU)
+================================================================================
+
+raptix/
+|
+|_ assets/                          (banner, demo, screenshots)
+|  |_ benchmark/                    (anh ket qua benchmark: coverage, donut, difficulty, leaderboard)
+|_ benchmark/                       (cac benchmark suite: configs, cve_bench, dreadgoad, MHBench,
+|                                    providers, results, xbow-validation-benchmarks - bo chi tiet)
+|_ clients/                         (Node workspace: CLI, Web, Desktop, Launcher)
+|  |_ cli/                          (TUI CLI - Ink/React + TS)
+|  |  |_ src/
+|  |  |  |_ commands/               (agent, file, help, model, plugins, quit, registry, resume, web, ...)
+|  |  |  |_ components/             (agents/, messages/, shell/, Prompt, SessionPicker, TodoList, ...)
+|  |  |  |_ hooks/                  (useAgent, useOpplan, useSubAgentSessions, useTerminalSize, ...)
+|  |  |  |_ keybindings/ (shortcuts.ts)
+|  |  |  |_ screens/ (REPL.tsx)
+|  |  |  |_ state/ (AppState.ts, store.ts)
+|  |  |  |_ utils/                  (agents, format, groupEvents, markdown, theme, threadStore, ...)
+|  |  |  |_ app.tsx, index.tsx, types.ts
+|  |  |_ package.json, tsconfig.json, vitest.config.ts
+|  |_ desktop/                      (Electron shell: src/{main, platform, preload, ui}.mjs, assets/icon.png)
+|  |_ launcher/                     (Go launcher + opscontrol daemon)
+|  |  |_ bin/raptix
+|  |  |_ cmd/
+|  |  |  |_ opscontrol/             (daemon, install, uninstall, supervisor_unix/windows, status, ...)
+|  |  |  |_ (health, logs, onboard, ollama_models, opscontrol_register, start, stop, status, update, web, ...)
+|  |  |_ internal/                  (compose, config, engagement, health, migrate, opscontrol,
+|  |  |                              platform, runtime, starprompt, ui, updater)
+|  |  |_ go.mod, go.sum, main.go
+|  |_ shared/
+|  |  |_ streaming/                 (@raptix/streaming - SSE: src/{constants, index, normalize, sessions, sse, types, utils}, tests/)
+|  |  |_ web-contracts/             (TS contracts: c2, capabilities, engagements, errors, guards,
+|  |                                 ownership, planning, run-api, runtime*, stream-events + tests/)
+|  |_ web/                          (legacy Next.js app - reference only, da retirement o W20)
+|  |  |_ prisma/ (2 migrations, schema.prisma), public/, server/ (terminal-server.ts)
+|  |  |_ src/app/                   ((dashboard)/engagements|findings|graph|settings, api/*, components, hooks, lib, styles)
+|  |  |_ next.config.ts, package.json, ...
+|  |_ web-raptix/                   (Web UI hien tai: Vite/React SPA + Fastify server)
+|  |  |_ docs/                      (decisions/, design-reference/, integration/ w00-w20, + 4 md goc)
+|  |  |_ server/
+|  |  |  |_ prisma/                 (schema.prisma + 13 migrations)
+|  |  |  |_ src/
+|  |  |  |  |_ auth/ (identity-provider.ts), config/, db/
+|  |  |  |  |_ generated/prisma/    (client sinh tu dong)
+|  |  |  |  |_ http/routes/         (approvals, campaign, capabilities, events, findings, graph,
+|  |  |  |  |                        health, members, projects, runs, settings, timeline, vault)
+|  |  |  |  |_ integrations/        (c2/sliver-client, campaigns/evilginx+gophish, runtime/{execution,join,read}-client)
+|  |  |  |  |_ security/            (project-policy, request-fingerprint, run-policy, workspace-policy)
+|  |  |  |  |_ services/            (runtime/{history,interrupt,stream}-projection, run-service, runtime-context,
+|  |  |  |  |                        approvals, artifacts, c2, campaign*, export, findings, graph, members,
+|  |  |  |  |                        planning, projects, settings, timeline, vault)
+|  |  |  |  |_ app.ts, main.ts
+|  |  |  |_ tests/                  (25 test: iw08-*, iw09-*, w11-*, w17-*, ...)
+|  |  |  |_ eslint.config.mjs, package.json, prisma.config.ts, tsconfig*, vitest.config.ts
+|  |  |_ src/
+|  |  |  |_ app/                    (config, navigation, providers, RealApp, real-capabilities, router)
+|  |  |  |_ components/             (Header, HitlModal, Icons, NewChatModal, NewProjectModal, Sidebar)
+|  |  |  |_ features/               (agent-runs, c2, campaigns, findings-evidence, infrastructure, members,
+|  |  |  |                            operations-log, operator-console, planning, projects, reports, settings, vault)
+|  |  |  |_ mocks/ (adapters/, fixtures/), screens/ (12 man hinh), shared/ (api/, hooks/, ui/)
+|  |  |  |_ App.tsx, index.css, main.tsx, types.ts
+|  |  |_ test-results*/             (artifacts playwright: anh + json)
+|  |  |_ tests/                     (contracts/ 14 test, e2e/ 21 spec real-*, fixtures/ w00+w06)
+|  |  |_ tools/                     (capture-*, generate-planning-schemas.py, verify-*.mjs)
+|  |  |_ AGENTS.md, CLAUDE.md, index.html, package.json, playwright.*.config.ts (10),
+|  |  |_ tsconfig*, vite.config.ts, vitest.config.ts
+|_ config/                          (LLM provider handlers + LiteLLM)
+|  |_ auth_handler.py, claude_code_handler.py, claude4_compat.yaml, codex_chatgpt_handler.py,
+|  |_ copilot_handler.py, gemini_handler.py, grok_handler.py, http_client.py, litellm.yaml,
+|  |_ litellm_dynamic_config.py, litellm_startup.py, oauth_token_store.py, ollama_probe.py,
+|  |_ perplexity_handler.py
+|_ containers/                      (Dockerfile cac service)
+|  |_ campaign-bridge/ (evilginx_bridge.py, lab.yaml), postgres-init/ (3 script SQL/sh),
+|  |_ sliver-bridge/ (sliver_bridge.py)
+|  |_ c2-sliver.Dockerfile, cli.Dockerfile, langgraph.Dockerfile, litellm.Dockerfile,
+|  |_ sandbox.Dockerfile (+entrypoint), skillogy.Dockerfile, web.Dockerfile (+entrypoint),
+|  |_ web-raptix.Dockerfile (+proxy.conf, +server.Dockerfile)
+|_ docs/                            (adr, architecture, decisions, design, engineering, features,
+|                                    integrations, migration, proposals, red-team, reports, security,
+|                                    superpowers, tools - chi ke ten folder con)
+|_ integrations/
+|  |_ agent-skills/decepticon/      (SKILL.md, examples.md, reference.md)
+|_ node_modules/                    (npm dependencies - bo)
+|_ packages/                        (uv workspace - 3 package Python)
+|  |_ raptix-core/                  (CONTRACTS THUAN - khong duoc import langchain/http/fastapi)
+|  |  |_ raptix_core/
+|  |  |  |_ contracts/              (contributions.py, slots.py)
+|  |  |  |_ protocols/              (agent, backend, callback, llm, middleware, sandbox, tool)
+|  |  |  |_ registry/               (conflict, plugins, resolution, roles, safety, skills)
+|  |  |  |_ types/                  (dispatch_outcome, engagement, foothold, kg, llm, roe)
+|  |  |  |_ utils/                  (config, engagement_scope, logging)
+|  |  |  |_ __init__.py, plugin_loader.py, py.typed
+|  |  |_ tests/                     (no_runtime_deps, public_api_stability, safety_registry, ...)
+|  |  |_ pyproject.toml, README.md
+|  |_ raptix/                       (FRAMEWORK + RUNTIME CHINH)
+|  |  |_ raptix/
+|  |  |  |_ agents/
+|  |  |  |  |_ plugins/             (detector, exploiter, patcher, scanner, verifier, vulnresearch)
+|  |  |  |  |_ prompts/
+|  |  |  |  |  |_ plugins/          (*.md prompt cho tung plugin tren)
+|  |  |  |  |  |_ standard/         (*.md prompt cho tung role: recon, exploit, phisher, postexploit, ...)
+|  |  |  |  |  |_ workflows/        (exploit, mobile_operator, phisher, postexploit, raptix, recon,
+|  |  |  |  |                        soundwave, wireless_operator)
+|  |  |  |  |  |_ builder.py, registry.py, claude4_compat.py, language.md
+|  |  |  |  |_ standard/            (agent factory tung role: ad_operator, analyst, autohunt, blue_cell,
+|  |  |  |  |                        cloud_hunter, contract_auditor, decepticon, exploit, forensicator,
+|  |  |  |  |                        ics/iot/mobile/osint_operator, phisher, postexploit, recon, reverser,
+|  |  |  |  |                        soundwave, supply_chain_operator, surface_exploit, wireless_operator
+|  |  |  |  |                        + _surface_{dispatch,reexpand,registry}.py)
+|  |  |  |  |_ build.py, middleware_slots.py, task_spec.py, _benchmark_mode.py
+|  |  |  |_ backends/               (factory.py, http_sandbox.py - sandbox dispatch)
+|  |  |  |_ blue_cell/              (rule_match.py, tap.py, sample_rules.jsonl)
+|  |  |  |_ capabilities/           (contracts, evidence, scorecards)
+|  |  |  |_ cli/                    (audit, auth, export_transcript, scan, telemetry, zip)
+|  |  |  |_ compat/
+|  |  |  |_ core/                   (config, dispatch_context, logging, schemas, subagent_streaming)
+|  |  |  |_ llm/                    (factory, models, router)
+|  |  |  |_ mcp_server/             (auth, config, conversation, engagements, findings, server,
+|  |  |  |                            streaming, tools_interactive, tools_lifecycle)
+|  |  |  |_ middleware/
+|  |  |  |  |_ kg_internal/         (migrations/V001-V006.cypher, ai_surface, ingest, migration_runner,
+|  |  |  |  |                        operational_state, state, store, summary, tools)
+|  |  |  |  |_ (26 middleware: budget, dispatch, egress, engagement, event_logging, filesystem,
+|  |  |  |     hitl, kg, kg_autoingest, model_override, notifications, opplan,
+|  |  |  |     opscontrol_notifications, prompt_injection_shield, proxy_key_override, roe,
+|  |  |  |     skillogy, skills, state_reducers, subagent_transcript_state, tried_edges,
+|  |  |  |     untrusted_output, ...)
+|  |  |  |_ runtime/                (cart, event_log, recording, shutdown, task_spec)
+|  |  |  |_ sandbox_kernel/         (base, daemon, egress, jobs, tmux)
+|  |  |  |_ sandbox_server/         (app.py + __main__.py)
+|  |  |  |_ sandbox_web/            (templates/playwright_*.js, executor, fetch_chain, providers,
+|  |  |  |                            safety, transport, validators, waf_detector, waf_profiles.yaml)
+|  |  |  |_ server/                 (checkpointer.py, plugins_api.py)
+|  |  |  |_ skills/
+|  |  |  |  |_ audit/               (skill audit CI: aliases, canonical, frontmatter, mitre, path_kind,
+|  |  |  |  |                        rules, subdomains.yaml)
+|  |  |  |  |_ defs/                (*** CAY SKILL LON - bo chi tiet. Cau truc:
+|  |  |  |  |                        benchmark/ | plugins/{detector, exploiter, patcher, scanner,
+|  |  |  |  |                        verifier, vulnresearch} | llm-redteam/t01..t15 |
+|  |  |  |  |                        shared/{adversary-emulation (25+ APT group), defense-evasion,
+|  |  |  |  |                        finding-protocol, opsec, references, stealth-infra} |
+|  |  |  |  |                        standard/{ad, analyst, cloud, contracts, decepticon, dfir, exploit,
+|  |  |  |  |                        ics, iot, mobile, osint, phisher, post-exploit, recon, reverser,
+|  |  |  |  |                        soundwave, supply-chain, surface_exploit, wireless} -
+|  |  |  |  |                        moi skill 1 folder chua SKILL.md (+references/))
+|  |  |  |  |_ engine/              (skillogy: builder/{seeds/*.yaml, emit, mitre_stix, stix_bootstrap},
+|  |  |  |  |                        client/rest, proto/skillogy.proto, server/{app, neo4j_backend},
+|  |  |  |  |                        embed_ingest, embeddings)
+|  |  |  |_ telemetry/              (config, exporter, otel, redact, sanitizer, sink)
+|  |  |  |_ tools/
+|  |  |  |  |_ ad/                  (adcs, bloodhound, dcsync, delegation, gpo, kerberos, shadow_creds)
+|  |  |  |  |_ bash/ (bash.py, prompt.py)          <- exploit-execution path, khong duoc sua
+|  |  |  |  |_ browser/ (tools.py)
+|  |  |  |  |_ cloud/               (aws, k8s, metadata, terraform)
+|  |  |  |  |_ contracts/           (foundry, patterns, slither)
+|  |  |  |  |_ defense/             (blue_cell, brief, conops, edr, elastic, sentinel, splunk)
+|  |  |  |  |_ evidence/ (asciicast)
+|  |  |  |  |_ interaction/         (ask_user, complete_planning)
+|  |  |  |  |_ mcp/ (client.py)
+|  |  |  |  |_ network/             (protocols, scanners, vulnerability)
+|  |  |  |  |_ ops/ (client, tools)
+|  |  |  |  |_ proxy/ (tools.py)
+|  |  |  |  |_ references/          (catalog, cve_poc_index, fetch, h1_corpus, hydrate, killchain,
+|  |  |  |  |                        methodology, oneliners, payloads*)
+|  |  |  |  |_ reporting/           (bugcrowd, cvss, executive, hackerone, kg_adapter, sarif, timeline)
+|  |  |  |  |_ research/            (bounty, chain, cve, dedupe, fuzz, graph, health, osint, patch,
+|  |  |  |  |                        poc, sarif*, scanner_tools, secret_scanner, tech_detection)
+|  |  |  |  |_ reversing/           (binary, ghidra, packer, rop, scripts, strings, symbols)
+|  |  |  |  |_ web/                 (graphql, http, jwt, oauth, search, session)
+|  |  |  |  |_ filesystem.py, opplan.py, skills.py, skills_registry.py, verification.py
+|  |  |  |_ __init__.py, _boot.py, graph_registry.py, plugin_loader.py, py.typed
+|  |  |_ tests/
+|  |  |  |_ fixtures/ (capabilities/held-out.jsonl)
+|  |  |  |_ integration/kg/         (5 test KG live)
+|  |  |  |_ unit/                   (31 nhom test dung voi tung module: ad, agents, backends,
+|  |  |                              benchmark, blue_cell, capabilities, cli, cloud, contracts, core,
+|  |  |                              installer, llm, mcp_server, middleware, ops, prompts, references,
+|  |  |                              reporting, research, reversing, runtime, sandbox_kernel,
+|  |  |                              sandbox_server, sandbox_web, schemas, server, skill_audit,
+|  |  |                              skillogy, telemetry, tools, web)
+|  |  |_ pyproject.toml, README.md
+|  |_ raptix-sdk/                   (API cho tac gia plugin - khong duoc cham vao framework internals)
+|  |  |_ examples/                  (6 plugin mau: agent, callback, middleware, prompt, skill, tool)
+|  |  |_ raptix_sdk/                (scaffold/, testing/)
+|  |  |_ tests/                     (sdk_surface, sdk_api_stability, framework_import_smoke, ...)
+|  |  |_ pyproject.toml, README.md
+|_ run/                             (runtime output - trong)
+|_ scripts/
+|  |_ bootstrap_skillogy_stix.py, check_basedpyright_errors.py, init_neo4j.cypher,
+|  |_ init-web-db.sql, install.ps1, install.sh, next_version.py, render_benchmark_charts.py,
+|  |_ web-hotswap.sh
+|_ telemetry/                       (runtime output - trong)
+|_ telemetry-gateway/               (Cloudflare Worker - PostHog: src/{index, posthog, schema, tierc},
+|                                    test/ 3 test, build_dashboard.py, export/redact_corpus.py,
+|                                    schema.json, wrangler.toml)
+|_ tests/                           (test o cap repo)
+|  |_ local/                        (artifacts/workspaces/, harnesses/{juice_shop_t2, lab_collect,
+|  |                                 lab_run, t2_probe}, manual/)
+|  |_ test_compose_*.py, test_cve_bench_*.py, test_web_raptix_{ci,release}.py
+|_ workspace/                       (scratch runtime cua cac lan chay: t2-*, iw-*, w*-* - khong git-track)
+|
+|_ AGENTS.md, CLAUDE.md, CONTRIBUTING(.AGENT).md, SECURITY.md, SPEC.md, CHANGELOG.md, RELEASE.md
+|_ README.md, README_KO.md, LICENSE, THIRD_PARTY_LICENSES.md, CODE_OF_CONDUCT.md
+|_ ARCHITECTURE_AUDIT.md, ARCHITECTURE_AUDIT_FIX.md, TELEMETRY.md, prompt.txt, bp.json
+|_ pyproject.toml, uv.lock, langgraph.json, Makefile
+|_ package.json, package-lock.json
+|_ docker-compose.yml, docker-compose.dev.yml, docker-compose.watch.yml,
+|_ docker-compose.opscontrol.yml, docker-compose.web-raptix.yml
+
+Tom tat phan lop (doc theo huong phu thuoc):
+- packages/raptix-core  : contracts/protocols/registry/types, ZERO dependency framework;
+                          moi package khac import xuong day.
+- packages/raptix       : phan nang: agents (role + plugin + prompts), middleware stack
+                          (RoE, HITL, egress, KG, budget...), tools (bash/ad/web/cloud/
+                          reversing/...), sandbox, skills (audit + defs + engine), CLI, MCP server.
+- packages/raptix-sdk   : mat API cong khai cho plugin author + examples.
+- clients/*             : giao dien: cli (TUI), web-raptix (SPA + Fastify, dung chung
+                          @raptix/streaming + web-contracts), launcher (Go), desktop (Electron);
+                          web/ la legacy.
+- config/ + containers/ + root compose/langgraph.json : cau hinh LLM provider va ha tang Docker.
+- benchmark/, tests/, scripts/, telemetry-gateway/ : do luong, CI, harness chay lab.
+
+
+PHAN 2 - CAY CHI TIET DAY DU
+================================================================================
+raptix/
+|_ assets/
+|  |_ benchmark/
+|     (benchmark - khong liet ke chi tiet)
+|  |_ cli.png
+|  |_ decepticon_infra.svg
+|  |_ demo.gif
+|  |_ demo.mp4
+|  |_ issue1.png
+|  |_ issue2.png
+|  |_ issue3.png
+|  |_ logo_banner.png
+|  |_ main.png
+|_ benchmark/
+   (cac benchmark suite: configs, cve_bench, dreadgoad, MHBench,
+    providers, results, xbow-validation-benchmarks - khong liet ke chi tiet)
+|_ clients/
+|  |_ cli/
+|  |  |_ dist/
+|  |  |_ node_modules/
+|  |  |_ src/
+|  |  |  |_ commands/
+|  |  |  |  |_ agent.ts
+|  |  |  |  |_ assistantOverride.ts
+|  |  |  |  |_ clear.ts
+|  |  |  |  |_ file.ts
+|  |  |  |  |_ help.ts
+|  |  |  |  |_ model.ts
+|  |  |  |  |_ modelOverride.ts
+|  |  |  |  |_ plugins.ts
+|  |  |  |  |_ quit.ts
+|  |  |  |  |_ registry.ts
+|  |  |  |  |_ resume.ts
+|  |  |  |  |_ types.ts
+|  |  |  |  |_ web.test.ts
+|  |  |  |  |_ web.ts
+|  |  |  |_ components/
+|  |  |  |  |_ agents/
+|  |  |  |  |  |_ AgentSessionGroup.tsx
+|  |  |  |  |  |_ CoordinatorPanel.tsx
+|  |  |  |  |_ messages/
+|  |  |  |  |  |_ AIMessage.tsx
+|  |  |  |  |  |_ BackgroundCompleteMessage.tsx
+|  |  |  |  |  |_ DelegateMessage.tsx
+|  |  |  |  |  |_ DiffResult.tsx
+|  |  |  |  |  |_ ErrorMessage.tsx
+|  |  |  |  |  |_ QAMessage.tsx
+|  |  |  |  |  |_ SystemMessage.tsx
+|  |  |  |  |  |_ ToolCallMessage.tsx
+|  |  |  |  |  |_ ToolGroupSummary.tsx
+|  |  |  |  |  |_ UserMessage.tsx
+|  |  |  |  |_ shell/
+|  |  |  |  |  |_ CtrlOToExpand.tsx
+|  |  |  |  |  |_ ExpandOutputContext.tsx
+|  |  |  |  |  |_ ScreenContext.tsx
+|  |  |  |  |  |_ SubAgentContext.tsx
+|  |  |  |  |_ ActivityIndicator.tsx
+|  |  |  |  |_ Banner.tsx
+|  |  |  |  |_ BashResult.tsx
+|  |  |  |  |_ EventItem.tsx
+|  |  |  |  |_ ObjectiveList.tsx
+|  |  |  |  |_ OpplanStatus.tsx
+|  |  |  |  |_ Prompt.tsx
+|  |  |  |  |_ QuestionPicker.tsx
+|  |  |  |  |_ SessionPicker.tsx
+|  |  |  |  |_ SpinnerIcon.tsx
+|  |  |  |  |_ TodoList.tsx
+|  |  |  |_ hooks/
+|  |  |  |  |_ __fixtures__/
+|  |  |  |  |  |_ mockStream.ts
+|  |  |  |  |_ sub-agent-sessions.test.ts
+|  |  |  |  |_ useAgent.test.tsx
+|  |  |  |  |_ useAgent.ts
+|  |  |  |  |_ useGlobalKeybindings.ts
+|  |  |  |  |_ useOpplan.ts
+|  |  |  |  |_ useSpinnerFrame.ts
+|  |  |  |  |_ useSubAgentSessions.ts
+|  |  |  |  |_ useTerminalSize.ts
+|  |  |  |_ keybindings/
+|  |  |  |  |_ shortcuts.ts
+|  |  |  |_ screens/
+|  |  |  |  |_ REPL.tsx
+|  |  |  |_ state/
+|  |  |  |  |_ AppState.ts
+|  |  |  |  |_ store.ts
+|  |  |  |_ utils/
+|  |  |  |  |_ agents.ts
+|  |  |  |  |_ format.test.ts
+|  |  |  |  |_ format.ts
+|  |  |  |  |_ groupEvents.ts
+|  |  |  |  |_ markdown.ts
+|  |  |  |  |_ marked-terminal.d.ts
+|  |  |  |  |_ theme.ts
+|  |  |  |  |_ threadStore.ts
+|  |  |  |  |_ version.ts
+|  |  |  |_ app.tsx
+|  |  |  |_ index.tsx
+|  |  |  |_ types.ts
+|  |  |_ package.json
+|  |  |_ tsconfig.json
+|  |  |_ vitest.config.ts
+|  |_ desktop/
+|  |  |_ assets/
+|  |  |  |_ icon.png
+|  |  |_ src/
+|  |  |  |_ config.mjs
+|  |  |  |_ config.test.mjs
+|  |  |  |_ main.mjs
+|  |  |  |_ platform.mjs
+|  |  |  |_ platform.test.mjs
+|  |  |  |_ preload.cjs
+|  |  |  |_ ui.mjs
+|  |  |_ package.json
+|  |  |_ README.md
+|  |_ launcher/
+|  |  |_ bin/
+|  |  |  |_ raptix
+|  |  |_ cmd/
+|  |  |  |_ opscontrol/
+|  |  |  |  |_ daemon.go
+|  |  |  |  |_ install.go
+|  |  |  |  |_ opscontrol.go
+|  |  |  |  |_ status.go
+|  |  |  |  |_ supervisor.go
+|  |  |  |  |_ supervisor_unix.go
+|  |  |  |  |_ supervisor_windows.go
+|  |  |  |  |_ uninstall.go
+|  |  |  |_ health.go
+|  |  |  |_ logs.go
+|  |  |  |_ ollama_models.go
+|  |  |  |_ ollama_models_test.go
+|  |  |  |_ onboard.go
+|  |  |  |_ onboard_secrets_test.go
+|  |  |  |_ opscontrol_register.go
+|  |  |  |_ remove.go
+|  |  |  |_ root.go
+|  |  |  |_ start.go
+|  |  |  |_ start_test.go
+|  |  |  |_ status.go
+|  |  |  |_ stop.go
+|  |  |  |_ update.go
+|  |  |  |_ web.go
+|  |  |_ internal/
+|  |  |  |_ compose/
+|  |  |  |  |_ compose.go
+|  |  |  |  |_ compose_test.go
+|  |  |  |  |_ web_test.go
+|  |  |  |_ config/
+|  |  |  |  |_ config.go
+|  |  |  |  |_ config_test.go
+|  |  |  |  |_ env.example
+|  |  |  |  |_ secrets.go
+|  |  |  |  |_ secrets_test.go
+|  |  |  |_ engagement/
+|  |  |  |  |_ picker.go
+|  |  |  |  |_ picker_test.go
+|  |  |  |_ health/
+|  |  |  |  |_ health.go
+|  |  |  |  |_ health_test.go
+|  |  |  |_ migrate/
+|  |  |  |  |_ migrate.go
+|  |  |  |  |_ migrate_test.go
+|  |  |  |  |_ steps.go
+|  |  |  |_ opscontrol/
+|  |  |  |  |_ allowlist.go
+|  |  |  |  |_ allowlist_test.go
+|  |  |  |  |_ backend.go
+|  |  |  |  |_ docker_compose_backend.go
+|  |  |  |  |_ docker_compose_labels_test.go
+|  |  |  |  |_ launchd.go
+|  |  |  |  |_ paths.go
+|  |  |  |  |_ registry.go
+|  |  |  |  |_ server.go
+|  |  |  |  |_ server_test.go
+|  |  |  |  |_ service.go
+|  |  |  |  |_ service_test.go
+|  |  |  |  |_ systemd.go
+|  |  |  |  |_ systemd_test.go
+|  |  |  |_ platform/
+|  |  |  |  |_ platform.go
+|  |  |  |  |_ platform_test.go
+|  |  |  |  |_ system.go
+|  |  |  |  |_ system_test.go
+|  |  |  |_ runtime/
+|  |  |  |  |_ runtime.go
+|  |  |  |  |_ runtime_test.go
+|  |  |  |_ starprompt/
+|  |  |  |  |_ browser.go
+|  |  |  |  |_ gh.go
+|  |  |  |  |_ starprompt.go
+|  |  |  |  |_ starprompt_test.go
+|  |  |  |_ ui/
+|  |  |  |  |_ theme.go
+|  |  |  |_ updater/
+|  |  |  |  |_ checksums_test.go
+|  |  |  |  |_ reexec_unix.go
+|  |  |  |  |_ reexec_windows.go
+|  |  |  |  |_ updater.go
+|  |  |  |  |_ updater_test.go
+|  |  |  |  |_ web_config_test.go
+|  |  |_ go.mod
+|  |  |_ go.sum
+|  |  |_ main.go
+|  |_ shared/
+|  |  |_ streaming/
+|  |  |  |_ dist/
+|  |  |  |_ node_modules/
+|  |  |  |_ src/
+|  |  |  |  |_ constants.ts
+|  |  |  |  |_ index.ts
+|  |  |  |  |_ normalize.ts
+|  |  |  |  |_ sessions.ts
+|  |  |  |  |_ sse.ts
+|  |  |  |  |_ types.ts
+|  |  |  |  |_ utils.ts
+|  |  |  |_ tests/
+|  |  |  |  |_ normalize.test.ts
+|  |  |  |  |_ sse.test.ts
+|  |  |  |_ package.json
+|  |  |  |_ tsconfig.build.json
+|  |  |  |_ tsconfig.json
+|  |  |_ web-contracts/
+|  |  |  |_ dist/
+|  |  |  |_ node_modules/
+|  |  |  |_ src/
+|  |  |  |  |_ c2.ts
+|  |  |  |  |_ capabilities.ts
+|  |  |  |  |_ engagements.ts
+|  |  |  |  |_ errors.ts
+|  |  |  |  |_ guards.ts
+|  |  |  |  |_ index.ts
+|  |  |  |  |_ ownership.ts
+|  |  |  |  |_ planning.ts
+|  |  |  |  |_ run-api.ts
+|  |  |  |  |_ runtime.ts
+|  |  |  |  |_ runtime-context.ts
+|  |  |  |  |_ stream-events.ts
+|  |  |  |_ tests/
+|  |  |  |  |_ contracts.test.ts
+|  |  |  |  |_ ownership.test.ts
+|  |  |  |  |_ planning.test.ts
+|  |  |  |  |_ run-api.test.ts
+|  |  |  |  |_ runtime-context.test.ts
+|  |  |  |  |_ stream-events.test.ts
+|  |  |  |_ package.json
+|  |  |  |_ tsconfig.build.json
+|  |  |  |_ tsconfig.json
+|  |_ web/
+|  |  |_ node_modules/
+|  |  |_ prisma/
+|  |  |  |_ migrations/
+|  |  |  |  |_ 20260412164158_init/
+|  |  |  |  |  |_ migration.sql
+|  |  |  |  |_ 20260826090000_engagement_authorization_confirmation/
+|  |  |  |  |  |_ migration.sql
+|  |  |  |  |_ migration_lock.toml
+|  |  |  |_ schema.prisma
+|  |  |_ public/
+|  |  |  |_ agents/
+|  |  |  |  |_ decepticon.png
+|  |  |  |_ file.svg
+|  |  |  |_ globe.svg
+|  |  |  |_ logo.png
+|  |  |  |_ next.svg
+|  |  |  |_ vercel.svg
+|  |  |  |_ window.svg
+|  |  |_ server/
+|  |  |  |_ terminal-server.ts
+|  |  |_ src/
+|  |  |  |_ app/
+|  |  |  |  |_ (dashboard)/
+|  |  |  |  |  |_ engagements/
+|  |  |  |  |  |  |_ [id]/
+|  |  |  |  |  |  |  |_ documents/
+|  |  |  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |  |  |_ findings/
+|  |  |  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |  |  |_ graph/
+|  |  |  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |  |  |_ live/
+|  |  |  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |  |  |_ plan/
+|  |  |  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |  |  |_ timeline/
+|  |  |  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |  |  |_ layout.tsx
+|  |  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |  |_ new/
+|  |  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |_ findings/
+|  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |_ graph/
+|  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |_ settings/
+|  |  |  |  |  |  |_ page.tsx
+|  |  |  |  |  |_ error.tsx
+|  |  |  |  |  |_ layout.tsx
+|  |  |  |  |  |_ loading.tsx
+|  |  |  |  |  |_ page.tsx
+|  |  |  |  |_ api/
+|  |  |  |  |  |_ agents/
+|  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |_ engagements/
+|  |  |  |  |  |  |_ [id]/
+|  |  |  |  |  |  |  |_ approvals/
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |_ export/
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |_ findings/
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |_ graph/
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |_ opplan/
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |_ plan-docs/
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |_ threads/
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |_ timeline/
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |_ health/
+|  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |_ workspace/
+|  |  |  |  |  |  |_ [name]/
+|  |  |  |  |  |  |  |_ files/
+|  |  |  |  |  |  |  |  |_ [...path]/
+|  |  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |  |  |  |  |_ route.ts
+|  |  |  |  |_ error.tsx
+|  |  |  |  |_ globals.css
+|  |  |  |  |_ icon.png
+|  |  |  |  |_ layout.tsx
+|  |  |  |  |_ loading.tsx
+|  |  |  |_ components/
+|  |  |  |  |_ agents/
+|  |  |  |  |  |_ agent-avatar.tsx
+|  |  |  |  |  |_ agent-card.tsx
+|  |  |  |  |  |_ agent-graph-canvas.tsx
+|  |  |  |  |  |_ agent-grid.tsx
+|  |  |  |  |  |_ agent-node.tsx
+|  |  |  |  |  |_ graph-edge.tsx
+|  |  |  |  |  |_ index.ts
+|  |  |  |  |  |_ session-node.tsx
+|  |  |  |  |_ graph/
+|  |  |  |  |  |_ attack-graph-canvas.tsx
+|  |  |  |  |  |_ graph-node.tsx
+|  |  |  |  |_ layout/
+|  |  |  |  |  |_ command-palette.tsx
+|  |  |  |  |  |_ header.tsx
+|  |  |  |  |  |_ sidebar.tsx
+|  |  |  |  |_ panels/
+|  |  |  |  |  |_ document-panel.tsx
+|  |  |  |  |_ streaming/
+|  |  |  |  |  |_ agent-detail-panel.tsx
+|  |  |  |  |  |_ approval-gate.tsx
+|  |  |  |  |  |_ live-activity-feed.tsx
+|  |  |  |  |  |_ opplan-live-overlay.tsx
+|  |  |  |  |_ terminal/
+|  |  |  |  |  |_ web-terminal.tsx
+|  |  |  |  |_ ui/
+|  |  |  |  |  |_ alert.tsx
+|  |  |  |  |  |_ avatar.tsx
+|  |  |  |  |  |_ badge.tsx
+|  |  |  |  |  |_ button.tsx
+|  |  |  |  |  |_ card.tsx
+|  |  |  |  |  |_ command.tsx
+|  |  |  |  |  |_ dialog.tsx
+|  |  |  |  |  |_ dropdown-menu.tsx
+|  |  |  |  |  |_ input.tsx
+|  |  |  |  |  |_ input-group.tsx
+|  |  |  |  |  |_ label.tsx
+|  |  |  |  |  |_ popover.tsx
+|  |  |  |  |  |_ scroll-area.tsx
+|  |  |  |  |  |_ select.tsx
+|  |  |  |  |  |_ separator.tsx
+|  |  |  |  |  |_ sheet.tsx
+|  |  |  |  |  |_ skeleton.tsx
+|  |  |  |  |  |_ table.tsx
+|  |  |  |  |  |_ tabs.tsx
+|  |  |  |  |  |_ textarea.tsx
+|  |  |  |  |  |_ tooltip.tsx
+|  |  |  |_ hooks/
+|  |  |  |  |_ useAgentActivity.ts
+|  |  |  |  |_ useAgents.ts
+|  |  |  |  |_ useCanvasTransform.ts
+|  |  |  |  |_ useForceSimulation.ts
+|  |  |  |  |_ useRunObserver.ts
+|  |  |  |_ lib/
+|  |  |  |  |_ chat/
+|  |  |  |  |  |_ index.ts
+|  |  |  |  |  |_ markdown-renderer.tsx
+|  |  |  |  |  |_ types.ts
+|  |  |  |  |_ graph/
+|  |  |  |  |  |_ types.ts
+|  |  |  |  |_ agents.ts
+|  |  |  |  |_ auth-bridge.ts
+|  |  |  |  |_ engagement-context.tsx
+|  |  |  |  |_ engagement-slug.test.ts
+|  |  |  |  |_ engagement-slug.ts
+|  |  |  |  |_ prisma.ts
+|  |  |  |  |_ utils.ts
+|  |  |  |  |_ workspace.ts
+|  |  |  |_ styles/
+|  |  |  |  |_ canvas-graph.css
+|  |  |_ AGENTS.md
+|  |  |_ components.json
+|  |  |_ eslint.config.mjs
+|  |  |_ LICENSE
+|  |  |_ next.config.ts
+|  |  |_ next-env.d.ts
+|  |  |_ package.json
+|  |  |_ postcss.config.mjs
+|  |  |_ prisma.config.ts
+|  |  |_ README.md
+|  |  |_ tsconfig.json
+|  |_ web-raptix/
+|  |  |_ dist/
+|  |  |_ docs/
+|  |  |  |_ decisions/
+|  |  |  |  |_ 0001-single-user-scope-and-canonical-screens.md
+|  |  |  |  |_ 0002-brand-token.md
+|  |  |  |  |_ 0004-fresh-thread-context-bootstrap.md
+|  |  |  |_ design-reference/
+|  |  |  |  |_ imports/
+|  |  |  |  |  |_ pasted_text/
+|  |  |  |  |  |  |_ project-workspace-updates.md
+|  |  |  |  |  |  |_ raptix-dashboard-design.md
+|  |  |  |  |  |_ d3-visualization.md
+|  |  |  |  |  |_ design-md.md
+|  |  |  |  |  |_ product-design-and-ux.md
+|  |  |  |  |  |_ ui-animation.md
+|  |  |  |  |  |_ web-accessibility.md
+|  |  |  |  |  |_ webapp-ui-skill.md
+|  |  |  |  |_ pre-web-correct/
+|  |  |  |  |  |_ screens/
+|  |  |  |  |  |  |_ AgentRun.tsx
+|  |  |  |  |  |  |_ Assets.tsx
+|  |  |  |  |  |  |_ AttackGraph.tsx
+|  |  |  |  |  |  |_ Chat.tsx
+|  |  |  |  |  |  |_ Credentials.tsx
+|  |  |  |  |  |  |_ Evidence.tsx
+|  |  |  |  |  |  |_ KnowledgeGraph.tsx
+|  |  |  |  |  |  |_ Orchestrator.tsx
+|  |  |  |  |  |  |_ Phases.tsx
+|  |  |  |  |  |  |_ ProjectList.tsx
+|  |  |  |  |  |  |_ ProjectOverview.tsx
+|  |  |  |_ integration/
+|  |  |  |  |_ interactive-web-readiness-backlog.md
+|  |  |  |  |_ p1-release-runbook.md
+|  |  |  |  |_ progress.md
+|  |  |  |  |_ w00-inventory.md
+|  |  |  |  |_ w01-http.json
+|  |  |  |  |_ w01-independence.json
+|  |  |  |  |_ w02-fresh-api.json
+|  |  |  |  |_ w02-independence.json
+|  |  |  |  |_ w02-oldcopy-api.json
+|  |  |  |  |_ w04-independence.json
+|  |  |  |  |_ w04-planning.md
+|  |  |  |  |_ w05-fresh.json
+|  |  |  |  |_ w05-independence.json
+|  |  |  |  |_ w05-oldcopy.json
+|  |  |  |  |_ w05-ownership.md
+|  |  |  |  |_ w06-independence.json
+|  |  |  |  |_ w06-live.json
+|  |  |  |  |_ w06-migration-fresh.json
+|  |  |  |  |_ w06-migration-oldcopy.json
+|  |  |  |  |_ w06-runtime-context.md
+|  |  |  |  |_ w07-faults.json
+|  |  |  |  |_ w07-hydrated-context.json
+|  |  |  |  |_ w07-hydration-failure.json
+|  |  |  |  |_ w07-independence.json
+|  |  |  |  |_ w07-live.json
+|  |  |  |  |_ w07-migration-fresh.json
+|  |  |  |  |_ w07-migration-oldcopy.json
+|  |  |  |  |_ w07-oldcopy-faults.json
+|  |  |  |  |_ w07-pristine-state.json
+|  |  |  |  |_ w07-runs.md
+|  |  |  |  |_ w08-faults.json
+|  |  |  |  |_ w08-independence.json
+|  |  |  |  |_ w08-live.json
+|  |  |  |  |_ w08-oldcopy-faults.json
+|  |  |  |  |_ w08-streaming.md
+|  |  |  |  |_ w09-faults.json
+|  |  |  |  |_ w09-history.md
+|  |  |  |  |_ w09-live.json
+|  |  |  |  |_ w09-oldcopy-faults.json
+|  |  |  |  |_ w10-console.md
+|  |  |  |  |_ w10-live.json
+|  |  |  |  |_ w11-controls.md
+|  |  |  |  |_ w11-live.json
+|  |  |  |  |_ w12-findings.md
+|  |  |  |  |_ w12-live.json
+|  |  |  |  |_ w13-graph.md
+|  |  |  |  |_ w13-live.json
+|  |  |  |  |_ w14-live.json
+|  |  |  |  |_ w14-logs-reports.md
+|  |  |  |  |_ w15-live.json
+|  |  |  |  |_ w15-settings.md
+|  |  |  |  |_ w16-cutover.md
+|  |  |  |  |_ w17-campaigns.md
+|  |  |  |  |_ w17-live.json
+|  |  |  |  |_ w18-live.json
+|  |  |  |  |_ w18-vault.md
+|  |  |  |  |_ w19-live.json
+|  |  |  |  |_ w19-members.md
+|  |  |  |  |_ w20-retirement.md
+|  |  |  |_ api-mapping.md
+|  |  |  |_ correct-frontend-scope.md
+|  |  |  |_ implementation-checklist.md
+|  |  |  |_ screen-inventory.md
+|  |  |_ node_modules/
+|  |  |_ server/
+|  |  |  |_ dist/
+|  |  |  |_ node_modules/
+|  |  |  |_ prisma/
+|  |  |  |  |_ migrations/
+|  |  |  |  |  |_ 20260412164158_init/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20260826090000_engagement_authorization_confirmation/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261001000000_engagement_display_name/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261002000000_runtime_ownership/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261002010000_runtime_context_proof/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261002020000_runtime_dispatch_recovery/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261002030000_campaign_drafts/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261002031000_vault_storage/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261003000000_campaign_request_identity/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261003010000_campaign_delivery_outcomes/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ 20261004000000_c2_commands/
+|  |  |  |  |  |  |_ migration.sql
+|  |  |  |  |  |_ migration_lock.toml
+|  |  |  |  |_ schema.prisma
+|  |  |  |_ src/
+|  |  |  |  |_ auth/
+|  |  |  |  |  |_ identity-provider.ts
+|  |  |  |  |_ config/
+|  |  |  |  |  |_ env.ts
+|  |  |  |  |  |_ runtime.ts
+|  |  |  |  |_ db/
+|  |  |  |  |  |_ client.ts
+|  |  |  |  |_ generated/
+|  |  |  |  |  |_ prisma/
+|  |  |  |  |  |  |_ internal/
+|  |  |  |  |  |  |  |_ class.ts
+|  |  |  |  |  |  |  |_ prismaNamespace.ts
+|  |  |  |  |  |  |  |_ prismaNamespaceBrowser.ts
+|  |  |  |  |  |  |_ models/
+|  |  |  |  |  |  |  |_ C2Command.ts
+|  |  |  |  |  |  |  |_ Campaign.ts
+|  |  |  |  |  |  |  |_ CampaignJob.ts
+|  |  |  |  |  |  |  |_ Engagement.ts
+|  |  |  |  |  |  |  |_ EngagementThread.ts
+|  |  |  |  |  |  |  |_ VaultAudit.ts
+|  |  |  |  |  |  |  |_ VaultSecret.ts
+|  |  |  |  |  |  |  |_ WebRequestLedger.ts
+|  |  |  |  |  |  |_ browser.ts
+|  |  |  |  |  |  |_ client.ts
+|  |  |  |  |  |  |_ commonInputTypes.ts
+|  |  |  |  |  |  |_ enums.ts
+|  |  |  |  |  |  |_ models.ts
+|  |  |  |  |_ http/
+|  |  |  |  |  |_ routes/
+|  |  |  |  |  |  |_ approvals.routes.ts
+|  |  |  |  |  |  |_ campaign.routes.ts
+|  |  |  |  |  |  |_ capabilities.routes.ts
+|  |  |  |  |  |  |_ events.routes.ts
+|  |  |  |  |  |  |_ findings.routes.ts
+|  |  |  |  |  |  |_ graph.routes.ts
+|  |  |  |  |  |  |_ health.routes.ts
+|  |  |  |  |  |  |_ members.routes.ts
+|  |  |  |  |  |  |_ projects.routes.ts
+|  |  |  |  |  |  |_ runs.routes.ts
+|  |  |  |  |  |  |_ settings.routes.ts
+|  |  |  |  |  |  |_ timeline.routes.ts
+|  |  |  |  |  |  |_ vault.routes.ts
+|  |  |  |  |  |_ error-handler.ts
+|  |  |  |  |_ integrations/
+|  |  |  |  |  |_ c2/
+|  |  |  |  |  |  |_ sliver-client.ts
+|  |  |  |  |  |_ campaigns/
+|  |  |  |  |  |  |_ evilginx-client.ts
+|  |  |  |  |  |  |_ gophish-client.ts
+|  |  |  |  |  |_ runtime/
+|  |  |  |  |  |  |_ execution-client.ts
+|  |  |  |  |  |  |_ join-client.ts
+|  |  |  |  |  |  |_ read-client.ts
+|  |  |  |  |_ repositories/
+|  |  |  |  |  |_ engagements-repository.ts
+|  |  |  |  |_ security/
+|  |  |  |  |  |_ project-policy.ts
+|  |  |  |  |  |_ request-fingerprint.ts
+|  |  |  |  |  |_ run-policy.ts
+|  |  |  |  |  |_ workspace-policy.ts
+|  |  |  |  |_ services/
+|  |  |  |  |  |_ runtime/
+|  |  |  |  |  |  |_ history-projection.ts
+|  |  |  |  |  |  |_ interrupt-projection.ts
+|  |  |  |  |  |  |_ run-service.ts
+|  |  |  |  |  |  |_ runtime-context.ts
+|  |  |  |  |  |  |_ stream-projection.ts
+|  |  |  |  |  |  |_ stream-service.ts
+|  |  |  |  |  |_ approvals-service.ts
+|  |  |  |  |  |_ artifacts-service.ts
+|  |  |  |  |  |_ c2-service.ts
+|  |  |  |  |  |_ campaign-deployment-service.ts
+|  |  |  |  |  |_ campaign-job-ledger.ts
+|  |  |  |  |  |_ campaign-service.ts
+|  |  |  |  |  |_ evilginx-campaign-service.ts
+|  |  |  |  |  |_ export-service.ts
+|  |  |  |  |  |_ findings-service.ts
+|  |  |  |  |  |_ graph-service.ts
+|  |  |  |  |  |_ members-service.ts
+|  |  |  |  |  |_ planning-schemas.json
+|  |  |  |  |  |_ planning-service.ts
+|  |  |  |  |  |_ projects-service.ts
+|  |  |  |  |  |_ runtime-ownership.ts
+|  |  |  |  |  |_ settings-service.ts
+|  |  |  |  |  |_ timeline-service.ts
+|  |  |  |  |  |_ vault-service.ts
+|  |  |  |  |_ app.ts
+|  |  |  |  |_ main.ts
+|  |  |  |_ tests/
+|  |  |  |  |_ approvals-service.test.ts
+|  |  |  |  |_ bootstrap.test.ts
+|  |  |  |  |_ execution-client.test.ts
+|  |  |  |  |_ findings-artifacts.test.ts
+|  |  |  |  |_ graph-service.test.ts
+|  |  |  |  |_ history-projection.test.ts
+|  |  |  |  |_ iw08-campaign-job-ledger.test.ts
+|  |  |  |  |_ iw08-evilginx-client.test.ts
+|  |  |  |  |_ iw08-evilginx-service.test.ts
+|  |  |  |  |_ iw08-gophish-deployment.test.ts
+|  |  |  |  |_ iw08-gophish-preparation.test.ts
+|  |  |  |  |_ iw09-c2.test.ts
+|  |  |  |  |_ planning.test.ts
+|  |  |  |  |_ project-policy.test.ts
+|  |  |  |  |_ projects.test.ts
+|  |  |  |  |_ request-fingerprint.test.ts
+|  |  |  |  |_ run-policy.test.ts
+|  |  |  |  |_ runtime-context.test.ts
+|  |  |  |  |_ runtime-read-client.test.ts
+|  |  |  |  |_ stream-projection.test.ts
+|  |  |  |  |_ stream-service.test.ts
+|  |  |  |  |_ w05-live.ts
+|  |  |  |  |_ w07-faults.ts
+|  |  |  |  |_ w11-controls.test.ts
+|  |  |  |  |_ w14-logs-reports.test.ts
+|  |  |  |  |_ w15-settings.test.ts
+|  |  |  |  |_ w17-campaigns.test.ts
+|  |  |  |  |_ w18-vault.test.ts
+|  |  |  |  |_ w19-members.test.ts
+|  |  |  |_ eslint.config.mjs
+|  |  |  |_ package.json
+|  |  |  |_ prisma.config.ts
+|  |  |  |_ tsconfig.build.json
+|  |  |  |_ tsconfig.json
+|  |  |  |_ vitest.config.ts
+|  |  |_ src/
+|  |  |  |_ app/
+|  |  |  |  |_ config.ts
+|  |  |  |  |_ navigation.ts
+|  |  |  |  |_ providers.tsx
+|  |  |  |  |_ RealApp.tsx
+|  |  |  |  |_ real-capabilities.ts
+|  |  |  |  |_ router.ts
+|  |  |  |_ assets/
+|  |  |  |  |_ raptix-reference.png
+|  |  |  |  |_ update-ref.png
+|  |  |  |_ components/
+|  |  |  |  |_ Header.tsx
+|  |  |  |  |_ HitlModal.tsx
+|  |  |  |  |_ Icons.tsx
+|  |  |  |  |_ NewChatModal.tsx
+|  |  |  |  |_ NewProjectModal.tsx
+|  |  |  |  |_ Sidebar.tsx
+|  |  |  |_ features/
+|  |  |  |  |_ agent-runs/
+|  |  |  |  |  |_ AgentDetailPanel.tsx
+|  |  |  |  |  |_ console-view.ts
+|  |  |  |  |  |_ history-merge.ts
+|  |  |  |  |  |_ MessageContent.tsx
+|  |  |  |  |  |_ model.ts
+|  |  |  |  |  |_ observe-stream.ts
+|  |  |  |  |  |_ RealConsole.tsx
+|  |  |  |  |  |_ store.ts
+|  |  |  |  |  |_ stream-reducer.ts
+|  |  |  |  |  |_ use-console-session.ts
+|  |  |  |  |_ c2/
+|  |  |  |  |  |_ RealC2.tsx
+|  |  |  |  |_ campaigns/
+|  |  |  |  |  |_ RealCampaigns.tsx
+|  |  |  |  |  |_ real-campaigns-api.ts
+|  |  |  |  |_ findings-evidence/
+|  |  |  |  |  |_ findings-view.ts
+|  |  |  |  |  |_ RealFindings.tsx
+|  |  |  |  |  |_ real-findings-api.ts
+|  |  |  |  |  |_ use-real-findings.ts
+|  |  |  |  |_ infrastructure/
+|  |  |  |  |  |_ graph-view.ts
+|  |  |  |  |  |_ RealAssets.tsx
+|  |  |  |  |  |_ real-graph-api.ts
+|  |  |  |  |  |_ RealInfrastructure.tsx
+|  |  |  |  |  |_ use-real-graph.ts
+|  |  |  |  |_ members/
+|  |  |  |  |  |_ RealMembers.tsx
+|  |  |  |  |  |_ real-members-api.ts
+|  |  |  |  |_ operations-log/
+|  |  |  |  |  |_ logs-view.ts
+|  |  |  |  |  |_ RealLogs.tsx
+|  |  |  |  |  |_ real-logs-api.ts
+|  |  |  |  |  |_ use-real-logs.ts
+|  |  |  |  |_ operator-console/
+|  |  |  |  |  |_ mocks/
+|  |  |  |  |  |  |_ fixtures/
+|  |  |  |  |  |  |  |_ console.ts
+|  |  |  |  |_ planning/
+|  |  |  |  |  |_ RealPlanning.tsx
+|  |  |  |  |  |_ styles.ts
+|  |  |  |  |  |_ types.ts
+|  |  |  |  |  |_ ui.tsx
+|  |  |  |  |_ projects/
+|  |  |  |  |  |_ api/
+|  |  |  |  |  |  |_ projects-api.ts
+|  |  |  |  |  |  |_ projects-real.ts
+|  |  |  |  |  |_ components/
+|  |  |  |  |  |  |_ RealNewProjectModal.tsx
+|  |  |  |  |  |  |_ RealProjectsHome.tsx
+|  |  |  |  |  |_ hooks/
+|  |  |  |  |  |  |_ use-real-projects.ts
+|  |  |  |  |  |_ real-project.types.ts
+|  |  |  |  |  |_ summary.ts
+|  |  |  |  |_ reports/
+|  |  |  |  |  |_ export.ts
+|  |  |  |  |  |_ RealReports.tsx
+|  |  |  |  |  |_ real-reports-api.ts
+|  |  |  |  |  |_ ReportDocument.tsx
+|  |  |  |  |  |_ ReportsTable.tsx
+|  |  |  |  |  |_ styles.ts
+|  |  |  |  |  |_ types.ts
+|  |  |  |  |  |_ ui.tsx
+|  |  |  |  |  |_ useMediaQuery.ts
+|  |  |  |  |_ settings/
+|  |  |  |  |  |_ RealSettings.tsx
+|  |  |  |  |  |_ real-settings-api.ts
+|  |  |  |  |  |_ use-real-settings.ts
+|  |  |  |  |_ vault/
+|  |  |  |  |  |_ RealVault.tsx
+|  |  |  |  |  |_ real-vault-api.ts
+|  |  |  |_ mocks/
+|  |  |  |  |_ adapters/
+|  |  |  |  |  |_ projects.ts
+|  |  |  |  |  |_ visual-projects.ts
+|  |  |  |  |_ fixtures/
+|  |  |  |  |  |_ agent-runs.ts
+|  |  |  |  |  |_ correct-projects.ts
+|  |  |  |  |  |_ evidence.ts
+|  |  |  |  |  |_ findings.ts
+|  |  |  |  |  |_ graphs.ts
+|  |  |  |  |  |_ planning.ts
+|  |  |  |  |  |_ projects.ts
+|  |  |  |  |  |_ reports.ts
+|  |  |  |_ screens/
+|  |  |  |  |_ C2Sessions.tsx
+|  |  |  |  |_ Charter.tsx
+|  |  |  |  |_ Findings.tsx
+|  |  |  |  |_ Home.tsx
+|  |  |  |  |_ InfrastructureData.tsx
+|  |  |  |  |_ Logs.tsx
+|  |  |  |  |_ Members.tsx
+|  |  |  |  |_ OperatorConsole.tsx
+|  |  |  |  |_ ProjectSettings.tsx
+|  |  |  |  |_ Reports.tsx
+|  |  |  |  |_ ScopeBoundaries.tsx
+|  |  |  |  |_ VectorCampaigns.tsx
+|  |  |  |_ shared/
+|  |  |  |  |_ api/
+|  |  |  |  |  |_ errors.ts
+|  |  |  |  |  |_ http.ts
+|  |  |  |  |_ hooks/
+|  |  |  |  |  |_ useNarrowViewport.ts
+|  |  |  |  |_ ui/
+|  |  |  |  |  |_ CapabilityButton.tsx
+|  |  |  |  |  |_ Dialog.tsx
+|  |  |  |_ App.tsx
+|  |  |  |_ index.css
+|  |  |  |_ main.tsx
+|  |  |  |_ types.ts
+|  |  |  |_ vite-env.d.ts
+|  |  |_ test-results/
+|  |  |  |_ single-user-mobile-navigat-fac51--and-records-visual-preview/
+|  |  |  |  |_ charter-mobile.png
+|  |  |  |  |_ console-mobile.png
+|  |  |  |  |_ credentials-mobile.png
+|  |  |  |  |_ members-mobile.png
+|  |  |  |  |_ reports-mobile.png
+|  |  |  |  |_ sessions-mobile.png
+|  |  |  |_ single-user-sidebar-has-ex-626e0-rs-without-backend-requests/
+|  |  |  |  |_ assets-desktop.png
+|  |  |  |  |_ campaigns-desktop.png
+|  |  |  |  |_ charter-desktop.png
+|  |  |  |  |_ console-desktop.png
+|  |  |  |  |_ credentials-desktop.png
+|  |  |  |  |_ findings-desktop.png
+|  |  |  |  |_ infrastructure-desktop.png
+|  |  |  |  |_ logs-desktop.png
+|  |  |  |  |_ members-desktop.png
+|  |  |  |  |_ reports-desktop.png
+|  |  |  |  |_ scope-desktop.png
+|  |  |  |  |_ sessions-desktop.png
+|  |  |  |  |_ settings-desktop.png
+|  |  |_ test-results-console/
+|  |  |  |_ real-console-live-console--9cc07-ry-and-recovers-over-reload/
+|  |  |  |  |_ w10-real-console-live.png
+|  |  |_ test-results-core/
+|  |  |_ test-results-deployed/
+|  |  |  |_ deployed-smoke-Docker-real-25fcf--use-persisted-new-API-data/
+|  |  |  |  |_ docker-real-project.png
+|  |  |  |  |_ iw-deployed-1790998292055-export.json
+|  |  |  |_ iw05/
+|  |  |  |  |_ negative-demo/
+|  |  |  |  |  |_ failure.png
+|  |  |  |  |  |_ smoke.json
+|  |  |  |  |_ docker-real-mode.png
+|  |  |  |  |_ smoke.json
+|  |  |  |_ iw07/
+|  |  |  |  |_ independence.json
+|  |  |  |  |_ independent-live-console.png
+|  |  |  |  |_ live.json
+|  |  |  |_ iw08/
+|  |  |  |  |_ evilginx/
+|  |  |  |  |  |_ bridge.json
+|  |  |  |  |  |_ failed.json
+|  |  |  |  |_ preparation/
+|  |  |  |  |  |_ failed.json
+|  |  |  |  |  |_ native.json
+|  |  |  |  |  |_ native-ui-deployed.png
+|  |  |  |  |  |_ native-ui-failed.png
+|  |  |  |  |  |_ native-ui-prepared.png
+|  |  |  |_ iw09/
+|  |  |  |  |_ native.json
+|  |  |  |  |_ native-c2.png
+|  |  |  |_ iw13/
+|  |  |  |  |_ core/
+|  |  |  |  |  |_ iw-final-core.json
+|  |  |  |  |  |_ iw-final-execution.png
+|  |  |  |  |  |_ iw-final-export.json
+|  |  |  |  |  |_ iw-final-interrupt.png
+|  |  |  |  |  |_ iw-final-report.png
+|  |  |  |_ p1/
+|  |  |  |  |_ readiness.json
+|  |  |  |  |_ settings-readiness.png
+|  |  |_ test-results-findings/
+|  |  |_ test-results-graph/
+|  |  |_ test-results-logs/
+|  |  |_ test-results-planning/
+|  |  |  |_ real-planning-live-new-API-d2e55-eload-scope-and-no-fallback/
+|  |  |  |  |_ w04-real-planning-mobile.png
+|  |  |_ test-results-real/
+|  |  |_ tests/
+|  |  |  |_ contracts/
+|  |  |  |  |_ console-view.test.ts
+|  |  |  |  |_ findings-view.test.ts
+|  |  |  |  |_ graph-view.test.ts
+|  |  |  |  |_ history-merge.test.ts
+|  |  |  |  |_ logs-view.test.ts
+|  |  |  |  |_ observe-stream.test.ts
+|  |  |  |  |_ projects.test.ts
+|  |  |  |  |_ projects-real.test.ts
+|  |  |  |  |_ real-app.test.ts
+|  |  |  |  |_ real-project-types.test.ts
+|  |  |  |  |_ router.test.ts
+|  |  |  |  |_ run-store.test.ts
+|  |  |  |  |_ stream-reducer.test.ts
+|  |  |  |  |_ visual-projects.test.ts
+|  |  |  |  |_ w00-captures.test.ts
+|  |  |  |_ e2e/
+|  |  |  |  |_ deployed-smoke.spec.ts
+|  |  |  |  |_ real-campaigns.spec.ts
+|  |  |  |  |_ real-console.spec.ts
+|  |  |  |  |_ real-console-live.spec.ts
+|  |  |  |  |_ real-controls-live.spec.ts
+|  |  |  |  |_ real-core-flow-live.spec.ts
+|  |  |  |  |_ real-findings.spec.ts
+|  |  |  |  |_ real-findings-live.spec.ts
+|  |  |  |  |_ real-graph.spec.ts
+|  |  |  |  |_ real-graph-live.spec.ts
+|  |  |  |  |_ real-logs.spec.ts
+|  |  |  |  |_ real-logs-reports-live.spec.ts
+|  |  |  |  |_ real-members.spec.ts
+|  |  |  |  |_ real-mode.spec.ts
+|  |  |  |  |_ real-planning-live.spec.ts
+|  |  |  |  |_ real-projects.spec.ts
+|  |  |  |  |_ real-projects-live.spec.ts
+|  |  |  |  |_ real-reports.spec.ts
+|  |  |  |  |_ real-settings.spec.ts
+|  |  |  |  |_ real-vault.spec.ts
+|  |  |  |  |_ single-user.spec.ts
+|  |  |  |_ fixtures/
+|  |  |  |  |_ w00/
+|  |  |  |  |  |_ http/
+|  |  |  |  |  |  |_ 001-health.json
+|  |  |  |  |  |  |_ 002-catalog.json
+|  |  |  |  |  |  |_ 003-create-invalid-400.json
+|  |  |  |  |  |  |_ 004-create-201.json
+|  |  |  |  |  |  |_ 005-create-duplicate-409.json
+|  |  |  |  |  |  |_ 006-list.json
+|  |  |  |  |  |  |_ 007-detail.json
+|  |  |  |  |  |  |_ 008-patch-status.json
+|  |  |  |  |  |  |_ 009-plan-docs.json
+|  |  |  |  |  |  |_ 010-opplan.json
+|  |  |  |  |  |  |_ 011-findings.json
+|  |  |  |  |  |  |_ 012-timeline.json
+|  |  |  |  |  |  |_ 013-files.json
+|  |  |  |  |  |  |_ 014-file-content.json
+|  |  |  |  |  |  |_ 015-approvals-pending.json
+|  |  |  |  |  |  |_ 016-approval-allow.json
+|  |  |  |  |  |  |_ 017-approval-duplicate-409.json
+|  |  |  |  |  |  |_ 018-export-json.json
+|  |  |  |  |  |  |_ 019-export-markdown.json
+|  |  |  |  |  |  |_ 020-export-invalid-format.json
+|  |  |  |  |  |  |_ 021-graph.json
+|  |  |  |  |  |  |_ 022-threads.json
+|  |  |  |  |  |  |_ index.json
+|  |  |  |  |  |_ runtime/
+|  |  |  |  |  |  |_ README.md
+|  |  |  |  |  |  |_ runtime-catalog.json
+|  |  |  |  |  |  |_ runtime-emitter-capture.json
+|  |  |  |  |_ w06/
+|  |  |  |  |  |_ cli-context.json
+|  |  |  |  |  |_ runtime-thread.json
+|  |  |_ tools/
+|  |  |  |_ capture-legacy.ts
+|  |  |  |_ capture-runtime.py
+|  |  |  |_ capture-runtime-metadata.ts
+|  |  |  |_ capture-w06-parity.mjs
+|  |  |  |_ configure-local-vault-key.mjs
+|  |  |  |_ generate-planning-schemas.py
+|  |  |  |_ verify-docker-real-mode.mjs
+|  |  |  |_ verify-iw07-independence.mjs
+|  |  |  |_ verify-iw07-live.mjs
+|  |  |  |_ verify-p1-readiness.mjs
+|  |  |  |_ verify-runtime-durability.mjs
+|  |  |  |_ verify-sliver-lab.mjs
+|  |  |  |_ verify-vault-deployed.mjs
+|  |  |  |_ verify-w01-http.mjs
+|  |  |  |_ verify-w01-independence.mjs
+|  |  |  |_ verify-w02-projects.mjs
+|  |  |  |_ verify-w05.mjs
+|  |  |  |_ verify-w06-live.mjs
+|  |  |  |_ verify-w07-live.mjs
+|  |  |_ AGENTS.md
+|  |  |_ CLAUDE.md
+|  |  |_ eslint.config.mjs
+|  |  |_ index.html
+|  |  |_ package.json
+|  |  |_ playwright.config.ts
+|  |  |_ playwright.console.config.ts
+|  |  |_ playwright.controls.config.ts
+|  |  |_ playwright.core.config.ts
+|  |  |_ playwright.deployed.config.ts
+|  |  |_ playwright.findings.config.ts
+|  |  |_ playwright.graph.config.ts
+|  |  |_ playwright.logs.config.ts
+|  |  |_ playwright.planning.config.ts
+|  |  |_ playwright.real.config.ts
+|  |  |_ README.md
+|  |  |_ tsconfig.json
+|  |  |_ tsconfig.node.json
+|  |  |_ tsconfig.tests.json
+|  |  |_ vite.config.ts
+|  |  |_ vitest.config.ts
+|  |_ instruction.raptix.txt
+|_ config/
+|  |_ auth_handler.py
+|  |_ claude_code_handler.py
+|  |_ claude4_compat.yaml
+|  |_ codex_chatgpt_handler.py
+|  |_ copilot_handler.py
+|  |_ gemini_handler.py
+|  |_ grok_handler.py
+|  |_ http_client.py
+|  |_ litellm.yaml
+|  |_ litellm_dynamic_config.py
+|  |_ litellm_startup.py
+|  |_ oauth_token_store.py
+|  |_ ollama_probe.py
+|  |_ perplexity_handler.py
+|_ containers/
+|  |_ campaign-bridge/
+|  |  |_ Dockerfile
+|  |  |_ evilginx_bridge.py
+|  |  |_ lab.yaml
+|  |_ postgres-init/
+|  |  |_ 01-create-web-db.sql
+|  |  |_ 02-bloodhound-db.sh
+|  |  |_ 03-create-t2bench-db.sql
+|  |_ sliver-bridge/
+|  |  |_ Dockerfile
+|  |  |_ entrypoint.sh
+|  |  |_ README.md
+|  |  |_ sliver_bridge.py
+|  |_ c2-sliver.Dockerfile
+|  |_ c2-sliver-entrypoint.sh
+|  |_ cli.Dockerfile
+|  |_ langgraph.Dockerfile
+|  |_ litellm.Dockerfile
+|  |_ sandbox.Dockerfile
+|  |_ sandbox-entrypoint.sh
+|  |_ skillogy.Dockerfile
+|  |_ web.Dockerfile
+|  |_ web-entrypoint.sh
+|  |_ web-raptix.Dockerfile
+|  |_ web-raptix-proxy.conf
+|  |_ web-raptix-server.Dockerfile
+|_ docs/
+|  |_ adr/
+|  |_ architecture/
+|  |_ decisions/
+|  |_ design/
+|  |_ engineering/
+|  |_ features/
+|  |_ integrations/
+|  |_ migration/
+|  |_ proposals/
+|  |_ red-team/
+|  |_ reports/
+|  |_ security/
+|  |_ superpowers/
+|  |_ tools/
+|_ integrations/
+|  |_ agent-skills/
+|  |  |_ decepticon/
+|  |  |  |_ examples.md
+|  |  |  |_ reference.md
+|  |  |  |_ SKILL.md
+|_ node_modules/
+|_ packages/
+|  |_ raptix/
+|  |  |_ raptix/
+|  |  |  |_ agents/
+|  |  |  |  |_ plugins/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ detector.py
+|  |  |  |  |  |_ exploiter.py
+|  |  |  |  |  |_ patcher.py
+|  |  |  |  |  |_ scanner.py
+|  |  |  |  |  |_ verifier.py
+|  |  |  |  |  |_ vulnresearch.py
+|  |  |  |  |_ prompts/
+|  |  |  |  |  |_ plugins/
+|  |  |  |  |  |  |_ detector.md
+|  |  |  |  |  |  |_ exploiter.md
+|  |  |  |  |  |  |_ patcher.md
+|  |  |  |  |  |  |_ scanner.md
+|  |  |  |  |  |  |_ verifier.md
+|  |  |  |  |  |  |_ vulnresearch.md
+|  |  |  |  |  |_ standard/
+|  |  |  |  |  |  |_ ad_operator.md
+|  |  |  |  |  |  |_ analyst.md
+|  |  |  |  |  |  |_ autohunt.md
+|  |  |  |  |  |  |_ blue_cell.md
+|  |  |  |  |  |  |_ cloud_hunter.md
+|  |  |  |  |  |  |_ contract_auditor.md
+|  |  |  |  |  |  |_ exploit.md
+|  |  |  |  |  |  |_ forensicator.md
+|  |  |  |  |  |  |_ ics_operator.md
+|  |  |  |  |  |  |_ iot_operator.md
+|  |  |  |  |  |  |_ mobile_operator.md
+|  |  |  |  |  |  |_ osint_operator.md
+|  |  |  |  |  |  |_ phisher.md
+|  |  |  |  |  |  |_ postexploit.md
+|  |  |  |  |  |  |_ raptix.md
+|  |  |  |  |  |  |_ recon.md
+|  |  |  |  |  |  |_ reverser.md
+|  |  |  |  |  |  |_ soundwave.md
+|  |  |  |  |  |  |_ supply_chain_operator.md
+|  |  |  |  |  |  |_ surface_exploit.md
+|  |  |  |  |  |  |_ wireless_operator.md
+|  |  |  |  |  |_ workflows/
+|  |  |  |  |  |  |_ exploit.md
+|  |  |  |  |  |  |_ mobile_operator.md
+|  |  |  |  |  |  |_ phisher.md
+|  |  |  |  |  |  |_ postexploit.md
+|  |  |  |  |  |  |_ raptix.md
+|  |  |  |  |  |  |_ recon.md
+|  |  |  |  |  |  |_ soundwave.md
+|  |  |  |  |  |  |_ wireless_operator.md
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ builder.py
+|  |  |  |  |  |_ claude4_compat.py
+|  |  |  |  |  |_ language.md
+|  |  |  |  |  |_ registry.py
+|  |  |  |  |_ standard/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ _surface_dispatch.py
+|  |  |  |  |  |_ _surface_reexpand.py
+|  |  |  |  |  |_ _surface_registry.py
+|  |  |  |  |  |_ ad_operator.py
+|  |  |  |  |  |_ analyst.py
+|  |  |  |  |  |_ autohunt.py
+|  |  |  |  |  |_ blue_cell.py
+|  |  |  |  |  |_ cloud_hunter.py
+|  |  |  |  |  |_ contract_auditor.py
+|  |  |  |  |  |_ decepticon.py
+|  |  |  |  |  |_ exploit.py
+|  |  |  |  |  |_ forensicator.py
+|  |  |  |  |  |_ ics_operator.py
+|  |  |  |  |  |_ iot_operator.py
+|  |  |  |  |  |_ mobile_operator.py
+|  |  |  |  |  |_ osint_operator.py
+|  |  |  |  |  |_ phisher.py
+|  |  |  |  |  |_ postexploit.py
+|  |  |  |  |  |_ recon.py
+|  |  |  |  |  |_ reverser.py
+|  |  |  |  |  |_ soundwave.py
+|  |  |  |  |  |_ supply_chain_operator.py
+|  |  |  |  |  |_ surface_exploit.py
+|  |  |  |  |  |_ wireless_operator.py
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ _benchmark_mode.py
+|  |  |  |  |_ build.py
+|  |  |  |  |_ middleware_slots.py
+|  |  |  |  |_ task_spec.py
+|  |  |  |_ backends/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ factory.py
+|  |  |  |  |_ http_sandbox.py
+|  |  |  |_ blue_cell/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ rule_match.py
+|  |  |  |  |_ sample_rules.jsonl
+|  |  |  |  |_ tap.py
+|  |  |  |_ capabilities/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ contracts.py
+|  |  |  |  |_ evidence.py
+|  |  |  |  |_ scorecards.py
+|  |  |  |_ cli/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ __main__.py
+|  |  |  |  |_ audit.py
+|  |  |  |  |_ auth.py
+|  |  |  |  |_ export_transcript.py
+|  |  |  |  |_ scan.py
+|  |  |  |  |_ telemetry.py
+|  |  |  |  |_ zip.py
+|  |  |  |_ compat/
+|  |  |  |  |_ __init__.py
+|  |  |  |_ core/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ config.py
+|  |  |  |  |_ dispatch_context.py
+|  |  |  |  |_ logging.py
+|  |  |  |  |_ schemas.py
+|  |  |  |  |_ subagent_streaming.py
+|  |  |  |_ llm/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ factory.py
+|  |  |  |  |_ models.py
+|  |  |  |  |_ router.py
+|  |  |  |_ mcp_server/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ __main__.py
+|  |  |  |  |_ auth.py
+|  |  |  |  |_ config.py
+|  |  |  |  |_ conversation.py
+|  |  |  |  |_ engagements.py
+|  |  |  |  |_ findings.py
+|  |  |  |  |_ models.py
+|  |  |  |  |_ server.py
+|  |  |  |  |_ streaming.py
+|  |  |  |  |_ tools_interactive.py
+|  |  |  |  |_ tools_lifecycle.py
+|  |  |  |_ middleware/
+|  |  |  |  |_ kg_internal/
+|  |  |  |  |  |_ migrations/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |  |_ V001__initial_schema.cypher
+|  |  |  |  |  |  |_ V002__engagement_composite_indexes_and_provenance.cypher
+|  |  |  |  |  |  |_ V003__bloodhound_and_slither_schema.cypher
+|  |  |  |  |  |  |_ V004__technology_node.cypher
+|  |  |  |  |  |  |_ V005__surface_inventory_schema.cypher
+|  |  |  |  |  |  |_ V006__engagement_revision_counter.cypher
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ ai_surface.py
+|  |  |  |  |  |_ ingest.py
+|  |  |  |  |  |_ migration_runner.py
+|  |  |  |  |  |_ operational_state.py
+|  |  |  |  |  |_ state.py
+|  |  |  |  |  |_ store.py
+|  |  |  |  |  |_ summary.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ _audit_sink.py
+|  |  |  |  |_ _command_targets.py
+|  |  |  |  |_ _injection_detector.py
+|  |  |  |  |_ budget.py
+|  |  |  |  |_ dispatch.py
+|  |  |  |  |_ egress.py
+|  |  |  |  |_ engagement.py
+|  |  |  |  |_ event_logging.py
+|  |  |  |  |_ filesystem.py
+|  |  |  |  |_ hitl.py
+|  |  |  |  |_ kg.py
+|  |  |  |  |_ kg_autoingest.py
+|  |  |  |  |_ model_override.py
+|  |  |  |  |_ notifications.py
+|  |  |  |  |_ opplan.py
+|  |  |  |  |_ opscontrol_notifications.py
+|  |  |  |  |_ prompt_injection_shield.py
+|  |  |  |  |_ proxy_key_override.py
+|  |  |  |  |_ roe.py
+|  |  |  |  |_ skillogy.py
+|  |  |  |  |_ skills.py
+|  |  |  |  |_ state_reducers.py
+|  |  |  |  |_ subagent_transcript_state.py
+|  |  |  |  |_ tried_edges.py
+|  |  |  |  |_ untrusted_output.py
+|  |  |  |_ runtime/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ cart.py
+|  |  |  |  |_ event_log.py
+|  |  |  |  |_ recording.py
+|  |  |  |  |_ shutdown.py
+|  |  |  |  |_ task_spec.py
+|  |  |  |_ sandbox_kernel/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ base.py
+|  |  |  |  |_ daemon.py
+|  |  |  |  |_ egress.py
+|  |  |  |  |_ jobs.py
+|  |  |  |  |_ tmux.py
+|  |  |  |_ sandbox_server/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ __main__.py
+|  |  |  |  |_ app.py
+|  |  |  |_ sandbox_web/
+|  |  |  |  |_ templates/
+|  |  |  |  |  |_ package.json
+|  |  |  |  |  |_ playwright_mobile_chrome.js
+|  |  |  |  |  |_ playwright_real_chrome.js
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ __main__.py
+|  |  |  |  |_ bias_check.py
+|  |  |  |  |_ executor.py
+|  |  |  |  |_ fetch_chain.py
+|  |  |  |  |_ INSANE_SEARCH_LICENSE
+|  |  |  |  |_ learning.py
+|  |  |  |  |_ NOTICE.md
+|  |  |  |  |_ phase0.py
+|  |  |  |  |_ providers.py
+|  |  |  |  |_ safety.py
+|  |  |  |  |_ transport.py
+|  |  |  |  |_ url_transforms.py
+|  |  |  |  |_ validators.py
+|  |  |  |  |_ waf_detector.py
+|  |  |  |  |_ waf_profiles.yaml
+|  |  |  |_ server/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ checkpointer.py
+|  |  |  |  |_ plugins_api.py
+|  |  |  |_ skills/
+|  |  |  |  |_ audit/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ __main__.py
+|  |  |  |  |  |_ aliases.py
+|  |  |  |  |  |_ canonical.py
+|  |  |  |  |  |_ cli.py
+|  |  |  |  |  |_ frontmatter.py
+|  |  |  |  |  |_ mitre.py
+|  |  |  |  |  |_ path_kind.py
+|  |  |  |  |  |_ rules.py
+|  |  |  |  |  |_ subdomains.yaml
+|  |  |  |  |_ defs/
+|  |  |  |  |  |_ benchmark/
+|  |  |  |  |     (benchmark - khong liet ke chi tiet)
+|  |  |  |  |  |_ plugins/
+|  |  |  |  |  |  |_ detector/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ exploiter/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ llm-redteam/
+|  |  |  |  |  |  |  |_ t01-prompt-injection/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t02-linguistic-evasion/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t03-reasoning-exploit/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t04-memory-manipulation/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t05-api-exploitation/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t06-training-poisoning/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t07-output-exfil/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t08-deception/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t09-multimodal/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t10-confidentiality-breach/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t11-agentic-exploit/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t12-rag-poisoning/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t13-supply-chain/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t14-infra-warfare/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ t15-human-ai-coupling/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ patcher/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ scanner/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ verifier/
+|  |  |  |  |  |  |  |_ bounty-report/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ seven-question-gate/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ vulnresearch/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |_ shared/
+|  |  |  |  |  |  |_ adversary-emulation/
+|  |  |  |  |  |  |  |_ apt10-stone-panda/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ apt28-fancy-bear/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ apt29-cozy-bear/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ apt33-elfin/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ apt34-oilrig/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ apt36-transparent-tribe/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ apt37-reaper/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ apt41-double-dragon/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ dark-caracal/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ fin7-carbanak/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ kimsuky/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ lazarus-group/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ muddywater/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ mustang-panda/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ patchwork/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ pink-sandstorm/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |_ anyrun-free-iocs.md
+|  |  |  |  |  |  |  |  |_ cve-apt-mapping.md
+|  |  |  |  |  |  |  |_ salt-typhoon/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ sandworm-team/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ scattered-spider/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ sidewinder/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ turla/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ volt-typhoon/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ defense-evasion/
+|  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |_ amsi-bypass-techniques.md
+|  |  |  |  |  |  |  |  |_ modern-evasion-techniques.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ finding-protocol/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ opsec/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ stealth-infra/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |_ standard/
+|  |  |  |  |  |  |_ ad/
+|  |  |  |  |  |  |  |_ adcs-esc1/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ asrep-roasting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ bloodhound-bhce/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ bloodhound-query/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ certipy-esc-chain/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ coercer/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ dcsync/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ kerberoasting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ laps/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ netexec/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ntlm-relay/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ analyst/
+|  |  |  |  |  |  |  |_ adversarial-ml-evasion/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ auth-bypass/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ bounty-hunting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ chains/
+|  |  |  |  |  |  |  |  |_ cred-reuse/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ idor-to-priv-esc/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ ssrf-to-rce/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ xss-to-takeover/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ command-injection/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ data-and-model-poisoning/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ deserialization/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ excessive-agency/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ idor/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ improper-output-handling/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ misinformation/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ml-model-extraction/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ patch-diff/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ path-traversal/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ pattern-exhaustion/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ prompt-injection/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ prototype-pollution/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ redos/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ sensitive-information-disclosure/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ sql-injection/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ssrf/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ssti/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ supply-chain/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ system-prompt-leakage/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ti-anyrun-lookup/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ti-ioc-extraction/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ti-yara-hunting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ trust-boundary/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ unbounded-consumption/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ vector-and-embedding-weaknesses/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ xxe/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ cloud/
+|  |  |  |  |  |  |  |_ aws-iam-enum/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ aws-iam-passrole-chain/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ azure-managed-identity/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ container/
+|  |  |  |  |  |  |  |  |_ container-cve/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ docker-socket-mount/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ k8s-pod-escape/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ k8s-rbac-abuse/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ entra-conditional-access-bypass/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ entra-device-code-phishing/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ entra-enum/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ entra-privesc/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ gcp-org-escalation/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ gcp-svc-account-impersonation/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ imds-pivot/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ k8s-pivot/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ m365-mailbox-compromise/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ s3-takeover/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ terraform-state-leak/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ contracts/
+|  |  |  |  |  |  |  |_ access-control/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ bridge-exploit/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ flash-loan/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ governance-attack/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ mev-sandwich/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ oracle-manipulation/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ reentrancy/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ signature-replay/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ upgradeable-proxy/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ decepticon/
+|  |  |  |  |  |  |  |_ engagement-lifecycle/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ engagement-startup/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ final-report/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ kali-mcp-bridge/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ kill-chain-analysis/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ orchestration/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ pentest-task-tree/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ dfir/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ exploit/
+|  |  |  |  |  |  |  |_ ad/
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ attack-paths.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ api/
+|  |  |  |  |  |  |  |  |_ grpc/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ server-sent-events/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ soap-wsdl/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ websocket/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ cicd/
+|  |  |  |  |  |  |  |  |_ cicd-secrets-exfil/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ github-actions-injection/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ poisoned-pipeline-execution/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ self-hosted-runner-abuse/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ crypto/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ edge-device-exploitation/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ics-ot/
+|  |  |  |  |  |  |  |  |_ bacnet/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ dnp3/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ enip-cip/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ modbus/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ opcua/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ profinet/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ s7comm/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ reporting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ rmm-tool-abuse/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ supplychain/
+|  |  |  |  |  |  |  |  |_ dep-confusion/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ web/
+|  |  |  |  |  |  |  |  |_ ato-methodology/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ bfla/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ blind-sqli/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ business-logic/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ cache-deception/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ clickjacking/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ command-injection/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ cors/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ crypto/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ csrf/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ cve/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ deserialization/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ dns-rebinding/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ dom-clobbering/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ graphql/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ header-injection/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ hpp/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ idor/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ jwt/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ ldapi/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ lfi/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ mass-assignment/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ mfa-bypass/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ nosqli/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ oauth/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ open-redirect/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ php-type-juggling/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ proxy-misconfig/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ race-condition/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ saml/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ smuggling/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ sqli/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ ssrf/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ ssti/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ verb-tampering/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ waf-bypass/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ web-cache-poisoning/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ xpath-xslt/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ xs-leaks/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ xss/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ xxe/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ ics/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ iot/
+|  |  |  |  |  |  |  |_ binwalk-extract/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ble-gatt/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ bootloader-uboot/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ dev-mem/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ firmware-acquisition/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ hardcoded-creds/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ lorawan-otaa/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ros2-dds-attack/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ sub-ghz/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ zigbee-touchlink/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ z-wave/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ mobile/
+|  |  |  |  |  |  |  |_ android/
+|  |  |  |  |  |  |  |  |_ il2cpp/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ flutter/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ios/
+|  |  |  |  |  |  |  |  |_ dynamic/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ osint/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ phisher/
+|  |  |  |  |  |  |  |_ evilginx2-proxy/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ gophish-campaign/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ html-smuggling-lure/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ lookalike-domain/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ lure-deconfliction/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ mfa-fatigue-social/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ o365-credential-harvest/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ pdf-credential-harvest/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ pretext-engineering/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ quishing/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ post-exploit/
+|  |  |  |  |  |  |  |_ c2/
+|  |  |  |  |  |  |  |  |_ havoc/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ mythic/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ c2-alternative-channels/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ c2-cobalt-strike/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ c2-domain-fronting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ c2-sliver/
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ sliver-quickstart.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ credential-access/
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ lsass-techniques.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ lateral-movement/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ linux-privesc-enum/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ macos/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ network-replay/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ privilege-escalation/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ reporting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ recon/
+|  |  |  |  |  |  |  |_ active-recon/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ cloud-recon/
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ cloud-ip-ranges.md
+|  |  |  |  |  |  |  |  |  |_ cloud-naming-patterns.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ iot-security/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ mobile-security/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ open-web/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ osint/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ passive-recon/
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ dns-techniques.md
+|  |  |  |  |  |  |  |  |_ scripts/
+|  |  |  |  |  |  |  |  |  |_ parse_subdomains.py
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ reporting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ web-recon/
+|  |  |  |  |  |  |  |  |_ api-enumeration/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ auth-mapping/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ cms-scanning/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ cookie-audit/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ discovery/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ subdomain-takeover/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ waf-detection/
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ wireless-security/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ reverser/
+|  |  |  |  |  |  |  |_ android-malware/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ anti-debug-bypass/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ctf-triage/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ deep-analysis/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ dotnet-malware/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ fileless-malware/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ firmware/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ fuzzing/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ game-security/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ghidra/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ios-static/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ malware-triage/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ packer-unpacking/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ransomware-analysis/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ rootkit-analysis/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ rop-chain/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ triage/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ virtualized-protectors/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ windows-internals/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ yara-hunting/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ soundwave/
+|  |  |  |  |  |  |  |_ abort-template/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ cleanup-template/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ conops-template/
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ kill-chain-templates.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ contact-template/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ data-handling-template/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ opplan-converter/
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ objective-rules.md
+|  |  |  |  |  |  |  |  |  |_ objective-templates.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |_ schema-quick-reference.md
+|  |  |  |  |  |  |  |_ roe-template/
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ roe-example.json
+|  |  |  |  |  |  |  |  |  |_ validation-checklist.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ structured-questions/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ threat-profile/
+|  |  |  |  |  |  |  |  |_ emulation/
+|  |  |  |  |  |  |  |  |  |_ apt29/
+|  |  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |  |_ fin7/
+|  |  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |  |_ lazarus/
+|  |  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |  |_ lockbit/
+|  |  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |  |_ sandworm/
+|  |  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |  |_ scattered-spider/
+|  |  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |  |_ volt-typhoon/
+|  |  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |  |_ references/
+|  |  |  |  |  |  |  |  |  |_ adversary-archetypes.md
+|  |  |  |  |  |  |  |  |  |_ apt-groups.md
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ supply-chain/
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ surface_exploit/
+|  |  |  |  |  |  |  |_ authn_jwt/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ authz/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ graphql/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ idor/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ open_redirect/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ sqli/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ssrf/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ ssti/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ xss/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ xxe/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |_ wireless/
+|  |  |  |  |  |  |  |_ deauth-pmf/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ evil-twin-karma/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ krack-fragattacks/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ wpa2-psk/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ wpa3-sae/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ wpa-enterprise-eap/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ wps-pixie-dust/
+|  |  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |  |  |  |_ SKILL.md
+|  |  |  |  |_ engine/
+|  |  |  |  |  |_ builder/
+|  |  |  |  |  |  |_ seeds/
+|  |  |  |  |  |  |  |_ asset_types.yaml
+|  |  |  |  |  |  |  |_ moc.yaml
+|  |  |  |  |  |  |  |_ phases.yaml
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |  |_ __main__.py
+|  |  |  |  |  |  |_ cli.py
+|  |  |  |  |  |  |_ emit.py
+|  |  |  |  |  |  |_ mitre_stix.py
+|  |  |  |  |  |  |_ model.py
+|  |  |  |  |  |  |_ seeds.py
+|  |  |  |  |  |  |_ seeds_to_graph.py
+|  |  |  |  |  |  |_ skills.py
+|  |  |  |  |  |  |_ stix_bootstrap.py
+|  |  |  |  |  |_ client/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |  |_ rest.py
+|  |  |  |  |  |_ proto/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |  |_ skillogy.proto
+|  |  |  |  |  |_ server/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |  |_ app.py
+|  |  |  |  |  |  |_ neo4j_backend.py
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ __main__.py
+|  |  |  |  |  |_ embed_ingest.py
+|  |  |  |  |  |_ embeddings.py
+|  |  |  |  |_ __init__.py
+|  |  |  |_ telemetry/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ config.py
+|  |  |  |  |_ exporter.py
+|  |  |  |  |_ otel.py
+|  |  |  |  |_ redact.py
+|  |  |  |  |_ sanitizer.py
+|  |  |  |  |_ sink.py
+|  |  |  |_ tools/
+|  |  |  |  |_ ad/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ adcs.py
+|  |  |  |  |  |_ adcs_post.py
+|  |  |  |  |  |_ bh_tools.py
+|  |  |  |  |  |_ bhce_client.py
+|  |  |  |  |  |_ bloodhound.py
+|  |  |  |  |  |_ dcsync.py
+|  |  |  |  |  |_ delegation.py
+|  |  |  |  |  |_ gpo.py
+|  |  |  |  |  |_ kerberos.py
+|  |  |  |  |  |_ shadow_creds.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ bash/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ bash.py
+|  |  |  |  |  |_ prompt.py
+|  |  |  |  |_ browser/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ cloud/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ aws.py
+|  |  |  |  |  |_ k8s.py
+|  |  |  |  |  |_ metadata.py
+|  |  |  |  |  |_ terraform.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ contracts/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ foundry.py
+|  |  |  |  |  |_ patterns.py
+|  |  |  |  |  |_ slither.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ defense/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ blue_cell.py
+|  |  |  |  |  |_ brief.py
+|  |  |  |  |  |_ conops.py
+|  |  |  |  |  |_ edr.py
+|  |  |  |  |  |_ elastic.py
+|  |  |  |  |  |_ sentinel.py
+|  |  |  |  |  |_ splunk.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ evidence/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ asciicast.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ interaction/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ ask_user.py
+|  |  |  |  |  |_ complete_planning.py
+|  |  |  |  |_ mcp/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ client.py
+|  |  |  |  |_ network/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ protocols.py
+|  |  |  |  |  |_ scanners.py
+|  |  |  |  |  |_ vulnerability.py
+|  |  |  |  |_ ops/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ client.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ proxy/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ references/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ catalog.py
+|  |  |  |  |  |_ cve_poc_index.py
+|  |  |  |  |  |_ fetch.py
+|  |  |  |  |  |_ h1_corpus.py
+|  |  |  |  |  |_ hydrate.py
+|  |  |  |  |  |_ killchain.py
+|  |  |  |  |  |_ killchain.yaml
+|  |  |  |  |  |_ methodology.py
+|  |  |  |  |  |_ oneliners.py
+|  |  |  |  |  |_ payloads.py
+|  |  |  |  |  |_ payloads_ingest.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ reporting/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ bugcrowd.py
+|  |  |  |  |  |_ cvss.py
+|  |  |  |  |  |_ executive.py
+|  |  |  |  |  |_ hackerone.py
+|  |  |  |  |  |_ kg_adapter.py
+|  |  |  |  |  |_ sarif.py
+|  |  |  |  |  |_ timeline.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ research/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ _apoc_safety.py
+|  |  |  |  |  |_ _engagement_scope.py
+|  |  |  |  |  |_ _state.py
+|  |  |  |  |  |_ bounty.py
+|  |  |  |  |  |_ chain.py
+|  |  |  |  |  |_ cve.py
+|  |  |  |  |  |_ dedupe.py
+|  |  |  |  |  |_ fuzz.py
+|  |  |  |  |  |_ graph.py
+|  |  |  |  |  |_ health.py
+|  |  |  |  |  |_ osint.py
+|  |  |  |  |  |_ patch.py
+|  |  |  |  |  |_ poc.py
+|  |  |  |  |  |_ sarif.py
+|  |  |  |  |  |_ sarif_export.py
+|  |  |  |  |  |_ scanner_tools.py
+|  |  |  |  |  |_ secret_scanner.py
+|  |  |  |  |  |_ tech_detection.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ reversing/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ binary.py
+|  |  |  |  |  |_ ghidra.py
+|  |  |  |  |  |_ packer.py
+|  |  |  |  |  |_ rop.py
+|  |  |  |  |  |_ scripts.py
+|  |  |  |  |  |_ strings.py
+|  |  |  |  |  |_ symbols.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ web/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ graphql.py
+|  |  |  |  |  |_ http.py
+|  |  |  |  |  |_ jwt.py
+|  |  |  |  |  |_ oauth.py
+|  |  |  |  |  |_ search.py
+|  |  |  |  |  |_ session.py
+|  |  |  |  |  |_ tools.py
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ filesystem.py
+|  |  |  |  |_ opplan.py
+|  |  |  |  |_ README.md
+|  |  |  |  |_ skills.py
+|  |  |  |  |_ skills_registry.py
+|  |  |  |  |_ verification.py
+|  |  |  |_ __init__.py
+|  |  |  |_ _boot.py
+|  |  |  |_ graph_registry.py
+|  |  |  |_ plugin_loader.py
+|  |  |  |_ py.typed
+|  |  |_ tests/
+|  |  |  |_ fixtures/
+|  |  |  |  |_ capabilities/
+|  |  |  |  |  |_ held-out.jsonl
+|  |  |  |_ integration/
+|  |  |  |  |_ kg/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ conftest.py
+|  |  |  |  |  |_ test_kg_ingest_live.py
+|  |  |  |  |  |_ test_kg_live.py
+|  |  |  |  |  |_ test_kg_middleware_live.py
+|  |  |  |  |  |_ test_kg_summary_live.py
+|  |  |  |  |  |_ test_kg_tools_live.py
+|  |  |  |  |_ __init__.py
+|  |  |  |_ unit/
+|  |  |  |  |_ ad/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_ad.py
+|  |  |  |  |  |_ test_ad_tools.py
+|  |  |  |  |  |_ test_adcs_post.py
+|  |  |  |  |  |_ test_bh_tools.py
+|  |  |  |  |  |_ test_bhce_client.py
+|  |  |  |  |  |_ test_bloodhound_kgstore.py
+|  |  |  |  |_ agents/
+|  |  |  |  |  |_ standard/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |  |_ test_specialist_skill_sources.py
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_blue_cell_agent.py
+|  |  |  |  |  |_ test_build.py
+|  |  |  |  |  |_ test_if_skill_contract.py
+|  |  |  |  |  |_ test_registry_parity.py
+|  |  |  |  |  |_ test_reporting_tools_wired.py
+|  |  |  |  |  |_ test_reverser_workload_fallback.py
+|  |  |  |  |  |_ test_surface_dispatch.py
+|  |  |  |  |  |_ test_surface_reexpand.py
+|  |  |  |  |  |_ test_surface_registry.py
+|  |  |  |  |  |_ test_task_spec.py
+|  |  |  |  |_ backends/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ conftest.py
+|  |  |  |  |  |_ test_background_jobs.py
+|  |  |  |  |  |_ test_docker_sandbox_helpers.py
+|  |  |  |  |  |_ test_factory.py
+|  |  |  |  |  |_ test_http_sandbox.py
+|  |  |  |  |  |_ test_http_sandbox_job_key.py
+|  |  |  |  |  |_ test_session_log.py
+|  |  |  |  |  |_ test_skills_path.py
+|  |  |  |  |_ benchmark/
+|  |  |  |     (benchmark - khong liet ke chi tiet)
+|  |  |  |  |_ blue_cell/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_brief.py
+|  |  |  |  |  |_ test_rule_match.py
+|  |  |  |  |  |_ test_rule_match_internals.py
+|  |  |  |  |  |_ test_rule_match_uppercase_selection.py
+|  |  |  |  |  |_ test_scan.py
+|  |  |  |  |  |_ test_tap.py
+|  |  |  |  |_ capabilities/
+|  |  |  |  |  |_ test_contracts.py
+|  |  |  |  |  |_ test_evidence.py
+|  |  |  |  |  |_ test_scorecards.py
+|  |  |  |  |_ cli/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_audit.py
+|  |  |  |  |  |_ test_auth.py
+|  |  |  |  |  |_ test_auth_branches.py
+|  |  |  |  |  |_ test_export_transcript.py
+|  |  |  |  |  |_ test_scan.py
+|  |  |  |  |  |_ test_scan_extra.py
+|  |  |  |  |  |_ test_zip.py
+|  |  |  |  |_ cloud/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_cloud.py
+|  |  |  |  |  |_ test_cloud_tools.py
+|  |  |  |  |  |_ test_k8s_branches.py
+|  |  |  |  |_ contracts/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_contract_tools.py
+|  |  |  |  |  |_ test_patterns_slither.py
+|  |  |  |  |  |_ test_slither_kgstore.py
+|  |  |  |  |_ core/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_config.py
+|  |  |  |  |  |_ test_dispatch_boundary.py
+|  |  |  |  |  |_ test_logging.py
+|  |  |  |  |  |_ test_schemas.py
+|  |  |  |  |  |_ test_subagent_streaming.py
+|  |  |  |  |  |_ test_subagent_streaming_guard.py
+|  |  |  |  |  |_ test_subagent_transcript_state.py
+|  |  |  |  |  |_ test_workspace_scaffold.py
+|  |  |  |  |_ installer/
+|  |  |  |  |  |_ test_install_sh.py
+|  |  |  |  |_ llm/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_claude_code_handler_cache_dedup.py
+|  |  |  |  |  |_ test_claude_code_handler_streaming.py
+|  |  |  |  |  |_ test_codex_chatgpt_handler_streaming.py
+|  |  |  |  |  |_ test_factory.py
+|  |  |  |  |  |_ test_factory_attribution.py
+|  |  |  |  |  |_ test_factory_classify_errors.py
+|  |  |  |  |  |_ test_factory_fallback_execution.py
+|  |  |  |  |  |_ test_factory_url_redaction.py
+|  |  |  |  |  |_ test_gemini_handler_session_cookies.py
+|  |  |  |  |  |_ test_http_client.py
+|  |  |  |  |  |_ test_litellm_dynamic_config.py
+|  |  |  |  |  |_ test_models.py
+|  |  |  |  |  |_ test_oauth_handlers.py
+|  |  |  |  |  |_ test_oauth_token_store.py
+|  |  |  |  |  |_ test_ollama_probe.py
+|  |  |  |  |  |_ test_provider_controls.py
+|  |  |  |  |  |_ test_role_model_override.py
+|  |  |  |  |  |_ test_router.py
+|  |  |  |  |_ mcp_server/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_auth.py
+|  |  |  |  |  |_ test_config.py
+|  |  |  |  |  |_ test_conversation.py
+|  |  |  |  |  |_ test_engagements.py
+|  |  |  |  |  |_ test_findings.py
+|  |  |  |  |_ middleware/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_ai_surface.py
+|  |  |  |  |  |_ test_api_spec_ingest.py
+|  |  |  |  |  |_ test_audit_sink.py
+|  |  |  |  |  |_ test_budget.py
+|  |  |  |  |  |_ test_budget_internals.py
+|  |  |  |  |  |_ test_command_targets.py
+|  |  |  |  |  |_ test_command_targets_scope_bypass.py
+|  |  |  |  |  |_ test_egress.py
+|  |  |  |  |  |_ test_engagement.py
+|  |  |  |  |  |_ test_event_logging.py
+|  |  |  |  |  |_ test_filesystem.py
+|  |  |  |  |  |_ test_hitl.py
+|  |  |  |  |  |_ test_injection_detector.py
+|  |  |  |  |  |_ test_kg_autoingest.py
+|  |  |  |  |  |_ test_kg_control_freshness.py
+|  |  |  |  |  |_ test_kg_engagement_scope.py
+|  |  |  |  |  |_ test_kg_ingest_unit.py
+|  |  |  |  |  |_ test_kg_middleware_unit.py
+|  |  |  |  |  |_ test_kg_migration_runner.py
+|  |  |  |  |  |_ test_kg_operational_shadow.py
+|  |  |  |  |  |_ test_kg_summary_unit.py
+|  |  |  |  |  |_ test_kg_tools_unit.py
+|  |  |  |  |  |_ test_kgstore_unit.py
+|  |  |  |  |  |_ test_model_override.py
+|  |  |  |  |  |_ test_notifications.py
+|  |  |  |  |  |_ test_opplan_hierarchy.py
+|  |  |  |  |  |_ test_opplan_inject_format.py
+|  |  |  |  |  |_ test_opplan_persistence.py
+|  |  |  |  |  |_ test_prompt_injection_shield.py
+|  |  |  |  |  |_ test_proxy_key_override.py
+|  |  |  |  |  |_ test_roe.py
+|  |  |  |  |  |_ test_skillogy.py
+|  |  |  |  |  |_ test_skills.py
+|  |  |  |  |  |_ test_summarization_fallback.py
+|  |  |  |  |  |_ test_surface_inventory_ingest.py
+|  |  |  |  |  |_ test_tried_edges.py
+|  |  |  |  |  |_ test_untrusted_output.py
+|  |  |  |  |  |_ test_untrusted_output_envelope.py
+|  |  |  |  |_ ops/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_client.py
+|  |  |  |  |  |_ test_tools.py
+|  |  |  |  |_ prompts/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_claude4_compat.py
+|  |  |  |  |_ references/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_cve_poc_index.py
+|  |  |  |  |  |_ test_fetch_comprehensive.py
+|  |  |  |  |  |_ test_h1_corpus.py
+|  |  |  |  |  |_ test_hydrate.py
+|  |  |  |  |  |_ test_killchain.py
+|  |  |  |  |  |_ test_methodology.py
+|  |  |  |  |  |_ test_oneliners.py
+|  |  |  |  |  |_ test_payloads_ingest.py
+|  |  |  |  |  |_ test_references.py
+|  |  |  |  |  |_ test_tools_new.py
+|  |  |  |  |  |_ test_tools_wrappers.py
+|  |  |  |  |_ reporting/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_cvss.py
+|  |  |  |  |  |_ test_hackerone.py
+|  |  |  |  |  |_ test_reporting.py
+|  |  |  |  |  |_ test_reporting_tools_and_executive.py
+|  |  |  |  |  |_ test_sarif.py
+|  |  |  |  |_ research/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_apoc_safety.py
+|  |  |  |  |  |_ test_bounty.py
+|  |  |  |  |  |_ test_bounty_extended.py
+|  |  |  |  |  |_ test_chain.py
+|  |  |  |  |  |_ test_cve.py
+|  |  |  |  |  |_ test_cve_extended.py
+|  |  |  |  |  |_ test_dedupe.py
+|  |  |  |  |  |_ test_dependency_enrichment_evidence.py
+|  |  |  |  |  |_ test_dependency_evidence.py
+|  |  |  |  |  |_ test_engagement_scope.py
+|  |  |  |  |  |_ test_fuzz.py
+|  |  |  |  |  |_ test_graph.py
+|  |  |  |  |  |_ test_kg_ingest_kali.py
+|  |  |  |  |  |_ test_no_neo4j_at_import.py
+|  |  |  |  |  |_ test_osint.py
+|  |  |  |  |  |_ test_patch.py
+|  |  |  |  |  |_ test_poc.py
+|  |  |  |  |  |_ test_poc_runner_timeout.py
+|  |  |  |  |  |_ test_sarif.py
+|  |  |  |  |  |_ test_sarif_export.py
+|  |  |  |  |  |_ test_sarif_export_props_attr.py
+|  |  |  |  |  |_ test_scanner_tools.py
+|  |  |  |  |  |_ test_secret_scanner.py
+|  |  |  |  |  |_ test_state_backend.py
+|  |  |  |  |  |_ test_tech_detection.py
+|  |  |  |  |  |_ test_tools.py
+|  |  |  |  |  |_ test_tools_extended.py
+|  |  |  |  |_ reversing/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_binary_strings_packer.py
+|  |  |  |  |  |_ test_reversing_internals.py
+|  |  |  |  |  |_ test_reversing_robustness.py
+|  |  |  |  |_ runtime/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_attack_graph_protocol.py
+|  |  |  |  |  |_ test_cart.py
+|  |  |  |  |  |_ test_event_log.py
+|  |  |  |  |  |_ test_event_log_retry_lock.py
+|  |  |  |  |  |_ test_event_log_winlock.py
+|  |  |  |  |  |_ test_recording.py
+|  |  |  |  |  |_ test_recording_internals.py
+|  |  |  |  |  |_ test_shutdown.py
+|  |  |  |  |  |_ test_task_spec.py
+|  |  |  |  |_ sandbox_kernel/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_daemon_fileio.py
+|  |  |  |  |  |_ test_egress_applier.py
+|  |  |  |  |  |_ test_interactive_prompt_detection.py
+|  |  |  |  |  |_ test_log_sanitize.py
+|  |  |  |  |  |_ test_orphan_reap.py
+|  |  |  |  |  |_ test_poll_backoff.py
+|  |  |  |  |  |_ test_poll_capture_failures.py
+|  |  |  |  |  |_ test_ps1_marker_collision.py
+|  |  |  |  |  |_ test_tmux_lifecycle.py
+|  |  |  |  |  |_ test_workspace_path.py
+|  |  |  |  |_ sandbox_server/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_app.py
+|  |  |  |  |  |_ test_app_consttime_auth.py
+|  |  |  |  |_ sandbox_web/
+|  |  |  |  |  |_ test_bias_check.py
+|  |  |  |  |  |_ test_executor.py
+|  |  |  |  |  |_ test_fetch_chain.py
+|  |  |  |  |  |_ test_main.py
+|  |  |  |  |  |_ test_providers.py
+|  |  |  |  |  |_ test_safety.py
+|  |  |  |  |  |_ test_url_transforms.py
+|  |  |  |  |  |_ test_validators.py
+|  |  |  |  |  |_ test_waf_detector.py
+|  |  |  |  |_ schemas/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |_ server/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_checkpoint_persistence.py
+|  |  |  |  |  |_ test_plugins_api.py
+|  |  |  |  |_ skill_audit/
+|  |  |  |  |  |_ fixtures/
+|  |  |  |  |  |  |_ bad_mitre.md
+|  |  |  |  |  |  |_ clean.md
+|  |  |  |  |  |  |_ missing_subdomain.md
+|  |  |  |  |  |  |_ no_attribution.md
+|  |  |  |  |  |  |_ reporting_skill.md
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_aliases.py
+|  |  |  |  |  |_ test_canonical.py
+|  |  |  |  |  |_ test_cli.py
+|  |  |  |  |  |_ test_frontmatter.py
+|  |  |  |  |  |_ test_mitre.py
+|  |  |  |  |  |_ test_path_kind.py
+|  |  |  |  |  |_ test_rules.py
+|  |  |  |  |_ skillogy/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_acl.py
+|  |  |  |  |  |_ test_app.py
+|  |  |  |  |  |_ test_asset_types.py
+|  |  |  |  |  |_ test_embed_ingest.py
+|  |  |  |  |  |_ test_embeddings.py
+|  |  |  |  |  |_ test_find_skill_fusion.py
+|  |  |  |  |  |_ test_middleware.py
+|  |  |  |  |  |_ test_seed.py
+|  |  |  |  |  |_ test_stix_bootstrap.py
+|  |  |  |  |_ telemetry/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_otel.py
+|  |  |  |  |  |_ test_telemetry_behavioral.py
+|  |  |  |  |  |_ test_telemetry_config.py
+|  |  |  |  |  |_ test_telemetry_exporter.py
+|  |  |  |  |  |_ test_telemetry_redact.py
+|  |  |  |  |  |_ test_telemetry_sanitizer.py
+|  |  |  |  |  |_ test_telemetry_sink.py
+|  |  |  |  |_ tools/
+|  |  |  |  |  |_ bash/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |  |_ test_bash_output.py
+|  |  |  |  |  |  |_ test_offload_bracket_prefix.py
+|  |  |  |  |  |  |_ test_passive_read_bounds.py
+|  |  |  |  |  |  |_ test_passive_read_stale_guard.py
+|  |  |  |  |  |  |_ test_proxy_env.py
+|  |  |  |  |  |  |_ test_sandbox_routing.py
+|  |  |  |  |  |_ web/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |  |_ test_http_request.py
+|  |  |  |  |  |  |_ test_search.py
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_ask_user_question.py
+|  |  |  |  |  |_ test_browser.py
+|  |  |  |  |  |_ test_browser_cleanup.py
+|  |  |  |  |  |_ test_complete_planning.py
+|  |  |  |  |  |_ test_defense.py
+|  |  |  |  |  |_ test_defense_edr.py
+|  |  |  |  |  |_ test_defense_push.py
+|  |  |  |  |  |_ test_evidence.py
+|  |  |  |  |  |_ test_evidence_tools.py
+|  |  |  |  |  |_ test_foothold_shadow.py
+|  |  |  |  |  |_ test_mcp_client.py
+|  |  |  |  |  |_ test_misc_tool_wrappers.py
+|  |  |  |  |  |_ test_opplan_tool.py
+|  |  |  |  |  |_ test_proxy.py
+|  |  |  |  |  |_ test_skills.py
+|  |  |  |  |  |_ test_skills_loader.py
+|  |  |  |  |  |_ test_skills_registry.py
+|  |  |  |  |  |_ test_verification.py
+|  |  |  |  |_ web/
+|  |  |  |  |  |_ __init__.py
+|  |  |  |  |  |_ test_graphql.py
+|  |  |  |  |  |_ test_graphql_introspection.py
+|  |  |  |  |  |_ test_http.py
+|  |  |  |  |  |_ test_http_branches.py
+|  |  |  |  |  |_ test_http_timeout.py
+|  |  |  |  |  |_ test_jwt.py
+|  |  |  |  |  |_ test_jwt_jku_x5u_flagging.py
+|  |  |  |  |  |_ test_jwt_nonstring_headers.py
+|  |  |  |  |  |_ test_oauth_detections.py
+|  |  |  |  |  |_ test_oauth_session.py
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ test_next_version.py
+|  |  |  |  |_ test_plugin_loader.py
+|  |  |  |  |_ test_wheel_contents.py
+|  |  |  |_ __init__.py
+|  |  |_ pyproject.toml
+|  |  |_ README.md
+|  |_ raptix-core/
+|  |  |_ raptix_core/
+|  |  |  |_ contracts/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ contributions.py
+|  |  |  |  |_ slots.py
+|  |  |  |_ protocols/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ agent.py
+|  |  |  |  |_ backend.py
+|  |  |  |  |_ callback.py
+|  |  |  |  |_ llm.py
+|  |  |  |  |_ middleware.py
+|  |  |  |  |_ sandbox.py
+|  |  |  |  |_ tool.py
+|  |  |  |_ registry/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ conflict.py
+|  |  |  |  |_ plugins.py
+|  |  |  |  |_ resolution.py
+|  |  |  |  |_ roles.py
+|  |  |  |  |_ safety.py
+|  |  |  |  |_ skills.py
+|  |  |  |_ types/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ dispatch_outcome.py
+|  |  |  |  |_ engagement.py
+|  |  |  |  |_ foothold.py
+|  |  |  |  |_ kg.py
+|  |  |  |  |_ llm.py
+|  |  |  |  |_ roe.py
+|  |  |  |_ utils/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ config.py
+|  |  |  |  |_ engagement_scope.py
+|  |  |  |  |_ logging.py
+|  |  |  |_ __init__.py
+|  |  |  |_ plugin_loader.py
+|  |  |  |_ py.typed
+|  |  |_ tests/
+|  |  |  |_ test_kg_detection_types.py
+|  |  |  |_ test_kg_technology_types.py
+|  |  |  |_ test_no_runtime_deps.py
+|  |  |  |_ test_plugin_registry.py
+|  |  |  |_ test_public_api_stability.py
+|  |  |  |_ test_roe_wildcards.py
+|  |  |  |_ test_safety_registry.py
+|  |  |_ pyproject.toml
+|  |  |_ README.md
+|  |_ raptix-sdk/
+|  |  |_ examples/
+|  |  |  |_ agent/
+|  |  |  |  |_ src/
+|  |  |  |  |  |_ raptix_example_agent/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |_ pyproject.toml
+|  |  |  |  |_ README.md
+|  |  |  |_ callback/
+|  |  |  |  |_ src/
+|  |  |  |  |  |_ raptix_example_callback/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |_ pyproject.toml
+|  |  |  |  |_ README.md
+|  |  |  |_ middleware/
+|  |  |  |  |_ src/
+|  |  |  |  |  |_ raptix_example_middleware/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |_ pyproject.toml
+|  |  |  |  |_ README.md
+|  |  |  |_ prompt/
+|  |  |  |  |_ src/
+|  |  |  |  |  |_ raptix_example_prompt/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |_ pyproject.toml
+|  |  |  |  |_ README.md
+|  |  |  |_ skill/
+|  |  |  |  |_ src/
+|  |  |  |  |  |_ raptix_example_skill/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |_ pyproject.toml
+|  |  |  |  |_ README.md
+|  |  |  |_ tool/
+|  |  |  |  |_ src/
+|  |  |  |  |  |_ raptix_example_tool/
+|  |  |  |  |  |  |_ __init__.py
+|  |  |  |  |_ pyproject.toml
+|  |  |  |  |_ README.md
+|  |  |  |_ README.md
+|  |  |_ raptix_sdk/
+|  |  |  |_ scaffold/
+|  |  |  |  |_ __init__.py
+|  |  |  |  |_ cli.py
+|  |  |  |  |_ templates.py
+|  |  |  |_ testing/
+|  |  |  |  |_ __init__.py
+|  |  |  |_ __init__.py
+|  |  |  |_ py.typed
+|  |  |_ tests/
+|  |  |  |_ test_compat_shim_identity.py
+|  |  |  |_ test_examples.py
+|  |  |  |_ test_extra_routes.py
+|  |  |  |_ test_framework_import_smoke.py
+|  |  |  |_ test_sdk_api_stability.py
+|  |  |  |_ test_sdk_surface.py
+|  |  |_ pyproject.toml
+|  |  |_ README.md
+|_ run/
+   (runtime output - trong)
+|_ scripts/
+|  |_ bootstrap_skillogy_stix.py
+|  |_ check_basedpyright_errors.py
+|  |_ init_neo4j.cypher
+|  |_ init-web-db.sql
+|  |_ install.ps1
+|  |_ install.sh
+|  |_ next_version.py
+|  |_ render_benchmark_charts.py
+|  |_ web-hotswap.sh
+|_ telemetry/
+   (runtime output - trong)
+|_ telemetry-gateway/
+|  |_ src/
+|  |  |_ index.ts
+|  |  |_ posthog.ts
+|  |  |_ schema.ts
+|  |  |_ tierc.ts
+|  |_ test/
+|  |  |_ schema.test.ts
+|  |  |_ tierc.test.ts
+|  |  |_ worker.test.ts
+|  |_ build_dashboard.py
+|  |_ DEPLOY.md
+|  |_ export_corpus.py
+|  |_ package.json
+|  |_ package-lock.json
+|  |_ README.md
+|  |_ redact_corpus.py
+|  |_ schema.json
+|  |_ tsconfig.json
+|  |_ vitest.config.ts
+|  |_ wrangler.toml
+|_ tests/
+|  |_ local/
+|  |  |_ artifacts/
+|  |  |  |_ workspaces/
+|  |  |  |  |_ workspace-w14live-202610021549/
+|  |  |  |  |_ workspace-w14live-202610021550/
+|  |  |  |  |_ workspace-w15core-202610021601/
+|  |  |  |  |_ workspace-w15core-202610021602/
+|  |  |  |  |_ workspace-w15core-202610021603/
+|  |  |  |  |_ workspace-w15core-202610021605/
+|  |  |  |  |_ workspace-w15core-202610021606/
+|  |  |  |  |_ workspace-w15core-202610021608/
+|  |  |  |  |_ workspace-w15core-202610021609/
+|  |  |_ harnesses/
+|  |  |  |_ juice_shop_t2.py
+|  |  |  |_ lab_collect.py
+|  |  |  |_ lab_run.py
+|  |  |  |_ t2_probe.py
+|  |  |_ manual/
+|  |  |  |_ test_b0_session_isolation_live.py
+|  |  |_ README.md
+|  |_ test_compose_langgraph_command.py
+|  |_ test_compose_network_isolation.py
+|  |_ test_cve_bench_loader.py
+|  |_ test_cve_bench_scorer.py
+|  |_ test_web_raptix_ci.py
+|  |_ test_web_raptix_release.py
+|_ workspace/
+   (runtime scratch dirs cua cac lan chay: t2-*, iw-*, w*-*, khong git-track)
+|_ AGENTS.md
+|_ ARCHITECTURE_AUDIT.md
+|_ ARCHITECTURE_AUDIT_FIX.md
+|_ bp.json
+|_ CHANGELOG.md
+|_ CLAUDE.md
+|_ CODE_OF_CONDUCT.md
+|_ CONTRIBUTING.md
+|_ CONTRIBUTING_AGENT.md
+|_ docker-compose.dev.yml
+|_ docker-compose.opscontrol.yml
+|_ docker-compose.watch.yml
+|_ docker-compose.web-raptix.yml
+|_ docker-compose.yml
+|_ langgraph.json
+|_ LICENSE
+|_ Makefile
+|_ package.json
+|_ package-lock.json
+|_ prompt.txt
+|_ pyproject.toml
+|_ README.md
+|_ README_KO.md
+|_ RELEASE.md
+|_ SECURITY.md
+|_ SPEC.md
+|_ TELEMETRY.md
+|_ THIRD_PARTY_LICENSES.md
+|_ uv.lock

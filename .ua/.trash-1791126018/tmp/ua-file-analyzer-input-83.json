@@ -1,0 +1,17 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix",
+  "batchFiles": [
+    { "path": "clients/web/AGENTS.md", "language": "markdown", "sizeLines": 5, "fileCategory": "docs" },
+    { "path": "clients/web/README.md", "language": "markdown", "sizeLines": 36, "fileCategory": "docs" },
+    { "path": "clients/web/components.json", "language": "json", "sizeLines": 25, "fileCategory": "config" },
+    { "path": "clients/web/package.json", "language": "json", "sizeLines": 92, "fileCategory": "config" },
+    { "path": "clients/web/tsconfig.json", "language": "json", "sizeLines": 35, "fileCategory": "config" }
+  ],
+  "batchImportData": {
+    "clients/web/AGENTS.md": [],
+    "clients/web/README.md": [],
+    "clients/web/components.json": [],
+    "clients/web/package.json": [],
+    "clients/web/tsconfig.json": []
+  }
+}

@@ -1,0 +1,213 @@
+{
+  "batchIndex": 55,
+  "batchFiles": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "language": "yaml",
+      "sizeLines": 765,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/pin-digests.yml",
+      "language": "yaml",
+      "sizeLines": 49,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/promote-stable.yml",
+      "language": "yaml",
+      "sizeLines": 126,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/release-recover.yml",
+      "language": "yaml",
+      "sizeLines": 100,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "language": "yaml",
+      "sizeLines": 566,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/scorecard.yml",
+      "language": "yaml",
+      "sizeLines": 39,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/security-scan-example.yml",
+      "language": "yaml",
+      "sizeLines": 41,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/security.yml",
+      "language": "yaml",
+      "sizeLines": 194,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/todo-to-issue.yml",
+      "language": "yaml",
+      "sizeLines": 78,
+      "fileCategory": "infra"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:.github/workflows/ci.yml",
+      "type": "file",
+      "name": "ci.yml",
+      "filePath": ".github/workflows/ci.yml",
+      "summary": "CI tổng hợp của repo: job \"changes\" dùng dorny/paths-filter tính 6 scope (python/cli/web-raptix/desktop/launcher/compose) cùng danh sách Docker image; các lane đắt được gate theo scope — python chạy make ci-lint/ci-test (+ coverage trên main, audit-skills-strict, check-skill-graph với MITRE STIX), CLI/desktop/launcher chạy matrix đa OS (launcher: go vet + go test trên 3 OS), web-raptix chạy prisma/typecheck/lint/build/test + Docker real-mode smoke, docker-build kèm Trivy SARIF, docker-build-arm64 smoke QEMU cho cli/langgraph, security chạy pip-audit blocking, cộng actionlint cho mọi workflow — khép lại bằng job ci-ok duy nhất làm required check (skipped=PASS, failure/cancelled=FAIL).",
+      "tags": [
+        "ci",
+        "github-actions",
+        "path-filter",
+        "matrix",
+        "required-check"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Không dùng paths-ignore ở trigger (issue #561: check bị skip trên pull_request kẹt Pending) — mọi job luôn chạy và tự emit noop success khi scope không đổi; coverage-report chạy song song non-blocking, cố tình không nằm trong required-status set."
+    },
+    {
+      "id": "file:.github/workflows/pin-digests.yml",
+      "type": "file",
+      "name": "pin-digests.yml",
+      "filePath": ".github/workflows/pin-digests.yml",
+      "summary": "Sau khi release published: resolve manifest-list digest cho 8 image ghcr.io/akapi895/raptix-* ở đúng version bằng docker buildx imagetools inspect rồi upload image-digests.txt làm release asset, để operator pin compose theo sha256 thay vì tag trôi :latest/:stable.",
+      "tags": [
+        "release",
+        "supply-chain",
+        "digest-pinning"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.github/workflows/promote-stable.yml",
+      "type": "file",
+      "name": "promote-stable.yml",
+      "filePath": ".github/workflows/promote-stable.yml",
+      "summary": "Channel :stable theo mô hình soak kiểu Claude-Code: chạy daily + workflow_dispatch, chọn release FINAL mới nhất đã baked ≥ 7 ngày (input soak_days buộc chỉ-cho-phép-digit chống injection qua arithmetic, floor 7 ngày), preflight toàn bộ 8 image (kèm check OCI label version với web-raptix) rồi retag :stable bằng buildx imagetools; idempotent khi re-point cùng version.",
+      "tags": [
+        "release",
+        "update-channel",
+        "soak",
+        "ghcr"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:.github/workflows/release-recover.yml",
+      "type": "file",
+      "name": "release-recover.yml",
+      "filePath": ".github/workflows/release-recover.yml",
+      "summary": "Công cụ khôi phục release chạy tay (workflow_dispatch): verify đủ 8 image raptix-*:<version> trên GHCR (check label version với web image), tùy chọn promote :latest theo input promote_latest, rồi gh release edit --draft=false (--prerelease tự suy từ suffix version) — dùng khi job publish-release của release.yml gãy giữa chừng.",
+      "tags": [
+        "release",
+        "recovery",
+        "ops"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.github/workflows/release.yml",
+      "type": "file",
+      "name": "release.yml",
+      "filePath": ".github/workflows/release.yml",
+      "summary": "Pipeline release khi push tag v*: publish 3 wheel workspace (raptix-core/raptix/raptix-sdk) lên PyPI bằng Trusted Publishing OIDC sau khi stamp version từ tag vào 4 pyproject; GoReleaser build launcher Go kèm upload config-checksums.txt (sha256 manifest chống CDN tampering cho compose/litellm.yaml/.env.example); build 8 Docker image đa arch với cosign sign keyless, SBOM CycloneDX và cosign attest (sandbox bỏ Rekor do cap ~5MiB, mọi attestation retry 5 lần backoff rồi warning); sandbox/c2-sliver build tách runner native amd64/arm64 rồi merge manifest ở docker-heavy-merge; job publish-release verify đủ image trên GHCR rồi promote :latest (final-only) và undraft GitHub release.",
+      "tags": [
+        "release",
+        "pypi",
+        "cosign",
+        "sbom",
+        "multi-arch"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Version source-tree giữ sentinel 0.0.0 — stamp vào image qua --build-arg VERSION lúc build; :stable do promote-stable.yml riêng quản, workflow này chỉ move :latest cho release final."
+    },
+    {
+      "id": "file:.github/workflows/scorecard.yml",
+      "type": "file",
+      "name": "scorecard.yml",
+      "filePath": ".github/workflows/scorecard.yml",
+      "summary": "OpenSSF Scorecard: chạy theo lịch weekly + push main + branch_protection_rule + dispatch, publish kết quả lên OSSF dashboard và upload scorecard.sarif vào Code Scanning qua codeql-action; permissions read-all ở top-level, job analysis xin đúng security-events/id-token cần thiết.",
+      "tags": [
+        "supply-chain",
+        "scorecard",
+        "sarif",
+        "security"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.github/workflows/security-scan-example.yml",
+      "type": "file",
+      "name": "security-scan-example.yml",
+      "filePath": ".github/workflows/security-scan-example.yml",
+      "summary": "Ví dụ dogfooding chạy Raptix quét chính repo: workflow_dispatch, gate kép bằng repo variable ENABLE_RAPTIX_SCAN và secret ANTHROPIC_API_KEY (thiếu key thì skip êm), gọi composite action ./.github/actions/raptix-scan ở chế độ quick/diff, fail-on high, upload SARIF.",
+      "tags": [
+        "security",
+        "dogfood",
+        "example",
+        "workflow-dispatch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.github/workflows/security.yml",
+      "type": "file",
+      "name": "security.yml",
+      "filePath": ".github/workflows/security.yml",
+      "summary": "Workflow security hợp nhất (thay CodeQL standalone + bộ 18 tool): CodeQL security-and-quality cho python + javascript-typescript theo matrix, Semgrep chạy rule riêng .semgrep/raptix-rules.yml (hard gate --error trên ERROR), Trivy quét fs (CVE dependencies) + config (Dockerfile/compose) xuất SARIF, TruffleHog --only-verified trên diff PR, dependency-review chặn dep có CVE high+ hoặc license bị cấm (probe dependency graph trước khi enforce); style/lint để dành cho pre-commit, không duplicate.",
+      "tags": [
+        "security",
+        "codeql",
+        "semgrep",
+        "trivy",
+        "trufflehog"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Re-scan weekly (cron 27 4 * * 1) để CVE mới lộ diện vẫn soi được cây không đổi; paths-ignore docs/license/assets ở cả push lẫn pull_request."
+    },
+    {
+      "id": "file:.github/workflows/todo-to-issue.yml",
+      "type": "file",
+      "name": "todo-to-issue.yml",
+      "filePath": ".github/workflows/todo-to-issue.yml",
+      "summary": "Push lên main quét marker TODO/FIXME/HACK bằng alstr/todo-to-issue-action pin commit SHA và tự mở/đóng issue kèm label (todo/bug/tech-debt); INSERT_ISSUE_URLS=false để action không push annotation ngược main (giữ contents: read); paths-ignore docs/license/assets vì workflow chạy trên push nên check skip không kẹt merge.",
+      "tags": [
+        "automation",
+        "issues",
+        "tech-debt"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:.github/workflows/pin-digests.yml",
+      "target": "file:.github/workflows/release.yml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:.github/workflows/promote-stable.yml",
+      "target": "file:.github/workflows/release.yml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:.github/workflows/release-recover.yml",
+      "target": "file:.github/workflows/release.yml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

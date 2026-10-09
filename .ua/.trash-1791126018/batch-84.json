@@ -1,0 +1,145 @@
+{
+  "batchIndex": 84,
+  "batchFiles": [
+    {
+      "path": "containers/c2-sliver-entrypoint.sh",
+      "language": "shell",
+      "sizeLines": 49,
+      "fileCategory": "script"
+    },
+    {
+      "path": "containers/sandbox-entrypoint.sh",
+      "language": "shell",
+      "sizeLines": 20,
+      "fileCategory": "script"
+    },
+    {
+      "path": "containers/web-entrypoint.sh",
+      "language": "shell",
+      "sizeLines": 80,
+      "fileCategory": "script"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:containers/c2-sliver-entrypoint.sh",
+      "type": "file",
+      "name": "c2-sliver-entrypoint.sh",
+      "filePath": "containers/c2-sliver-entrypoint.sh",
+      "summary": "Entrypoint container Sliver C2: chạy root để chown lại volume mounted (/home/sliver/.sliver và /workspace/.sliver-configs), rồi drop xuống user sliver qua runuser; khởi động sliver-server daemon nền, poll tới 2 phút chờ daemon sẵn sàng (probe lệnh operator), tự sinh operator config decepticon.cfg lên volume chia sẻ nếu chưa có và cuối cùng wait trên PID daemon.",
+      "tags": [
+        "containerization",
+        "entrypoint",
+        "c2",
+        "sliver",
+        "privilege-drop"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Mẫu chuẩn container: sửa quyền volume ở giai đoạn root rồi hạ quyền sớm; dùng runuser -u thay vì su để tránh xử lý environment thừa."
+    },
+    {
+      "id": "file:containers/sandbox-entrypoint.sh",
+      "type": "file",
+      "name": "sandbox-entrypoint.sh",
+      "filePath": "containers/sandbox-entrypoint.sh",
+      "summary": "Entrypoint container sandbox đỏ: chmod 777 /workspace với umask 0000 để host đọc được findings/report (ranh giới bảo mật là bản thân container, không phải file permission); mặc định (SANDBOX_DAEMON=1) exec FastAPI sandbox server python3 -m raptix.sandbox_server trên localhost:9999 cho mọi deployment target, đặt 0 để fallback exec CMD cho workflow docker exec cũ.",
+      "tags": [
+        "containerization",
+        "entrypoint",
+        "sandbox",
+        "security",
+        "fastapi"
+      ],
+      "complexity": "simple",
+      "languageNotes": "exec thay thế shell bằng tiến trình đích để nhận đúng signal (PID 1) — daemon FastAPI là transport mà HTTPSandbox phía LangGraph gọi qua HTTP."
+    },
+    {
+      "id": "file:containers/web-entrypoint.sh",
+      "type": "file",
+      "name": "web-entrypoint.sh",
+      "filePath": "containers/web-entrypoint.sh",
+      "summary": "Entrypoint container raptix-web đóng vai PID 1 giám sát 2 tiến trình con: terminal server ws://0.0.0.0:3003 (tsx server/terminal-server.ts, dài hạn) và Next.js standalone :3000 (node server.js, có thể restart); chạy prisma migrate deploy lúc khởi động, trap SIGUSR1 để hot-restart riêng Next.js mà không ngắt WebSocket operator, trap SIGTERM/INT cho shutdown sạch, và vòng poll 2s tự restart Next.js nếu crash hoặc thoát container nếu terminal server chết.",
+      "tags": [
+        "containerization",
+        "entrypoint",
+        "process-supervision",
+        "nextjs",
+        "websocket"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Không dùng wait -n vì dash/busybox sh không hỗ trợ — thay bằng vòng poll kill -0; SIGUSR1 là tín hiệu hotswap mà scripts/web-hotswap.sh gửi sau khi tiêm .next/ mới."
+    },
+    {
+      "id": "function:containers/web-entrypoint.sh:restart_next",
+      "type": "function",
+      "name": "restart_next",
+      "filePath": "containers/web-entrypoint.sh",
+      "lineRange": [24, 34],
+      "summary": "Handler SIGUSR1: kill và wait tiến trình Next.js hiện tại rồi khởi động lại node server.js ở nền, cập nhật NEXT_PID — cho phép hot-restart Next.js mà terminal server và các PTY session vẫn sống (zero WebSocket disconnection).",
+      "tags": [
+        "signal-handler",
+        "restart",
+        "hot-reload"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:containers/web-entrypoint.sh",
+      "target": "function:containers/web-entrypoint.sh:restart_next",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:containers/web-entrypoint.sh",
+      "target": "file:clients/web/server/terminal-server.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:containers/web-entrypoint.sh",
+      "target": "config:clients/web/package.json",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:containers/web-entrypoint.sh",
+      "target": "file:scripts/web-hotswap.sh",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:containers/sandbox-entrypoint.sh",
+      "target": "file:packages/raptix/raptix/sandbox_server/__main__.py",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:containers/sandbox-entrypoint.sh",
+      "target": "file:packages/raptix/raptix/backends/http_sandbox.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:containers/sandbox-entrypoint.sh",
+      "target": "service:docker-compose.yml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:containers/c2-sliver-entrypoint.sh",
+      "target": "service:docker-compose.yml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

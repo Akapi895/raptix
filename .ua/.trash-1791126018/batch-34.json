@@ -1,0 +1,3611 @@
+{
+  "batchIndex": 34,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/tools/reporting/__init__.py",
+      "language": "python",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "language": "python",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "language": "python",
+      "sizeLines": 267,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reporting/executive.py",
+      "language": "python",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reporting/hackerone.py",
+      "language": "python",
+      "sizeLines": 133,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "language": "python",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "language": "python",
+      "sizeLines": 254,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reporting/timeline.py",
+      "language": "python",
+      "sizeLines": 74,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reporting/tools.py",
+      "language": "python",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "language": "python",
+      "sizeLines": 104,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "language": "python",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reporting/test_reporting.py",
+      "language": "python",
+      "sizeLines": 106,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "language": "python",
+      "sizeLines": 534,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reporting/test_sarif.py",
+      "language": "python",
+      "sizeLines": 225,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/__init__.py",
+      "summary": "Barrel của gói reporting: re-export các renderer HackerOne/Bugcrowd/executive/timeline/SARIF và bộ CVSS tools để cùng một KnowledgeGraph nuôi mọi định dạng báo cáo.",
+      "tags": [
+        "barrel",
+        "reporting",
+        "entry-point",
+        "exports"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "type": "file",
+      "name": "bugcrowd.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "summary": "Renderer CSV nộp hàng loạt lên Bugcrowd: cột title/severity/cwe/url/description/recommendation/poc từ danh sách node vulnerability của graph.",
+      "tags": [
+        "reporting",
+        "csv",
+        "bugcrowd",
+        "exporter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "type": "file",
+      "name": "cvss.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "summary": "Chấm điểm CVSS 3.1 deterministic theo công thức FIRST.org: base + environmental (CR/IR/AR, modified metrics), severity band, chuẩn hóa vector và @tool cvss_score cho validator/drafter — thay cho việc đoán severity bằng LLM.",
+      "tags": [
+        "cvss",
+        "scoring",
+        "severity",
+        "reporting",
+        "deterministic"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "type": "file",
+      "name": "executive.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/executive.py",
+      "summary": "Soạn executive summary markdown đọc trong 90 giây: đếm findings theo severity, top-N critical chains với impact, top CVE theo composite score và coverage gaps.",
+      "tags": [
+        "reporting",
+        "executive-summary",
+        "markdown",
+        "aggregation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "type": "file",
+      "name": "hackerone.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/hackerone.py",
+      "summary": "Renderer markdown chuẩn HackerOne: HackerOneReport in-memory (title, severity, CVSS, steps, impact, PoC, remediation, references) và render thành báo cáo một file có placeholder cho phần thiếu.",
+      "tags": [
+        "reporting",
+        "hackerone",
+        "markdown",
+        "exporter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "type": "file",
+      "name": "kg_adapter.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "summary": "Adapter đọc dữ liệu KG theo engagement từ KGStore mới và dựng KnowledgeGraph in-memory cho các renderer, giữ deterministic Node/Edge ID — seam để reporting bỏ shim legacy mà không đụng renderer.",
+      "tags": [
+        "adapter",
+        "knowledge-graph",
+        "reporting",
+        "persistence"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "type": "file",
+      "name": "sarif.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "summary": "Renderer SARIF v2.1.0 cho GitHub code scanning/DefectDojo: rules từ finding duy nhất, mapping severity, location URI, result tags, partial fingerprints ổn định qua hash.",
+      "tags": [
+        "reporting",
+        "sarif",
+        "exporter",
+        "ci"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "type": "file",
+      "name": "timeline.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/timeline.py",
+      "summary": "Trích timeline thời gian từ created_at/updated_at của KnowledgeGraph thành danh sách TimelineEvent xếp thời gian cho báo cáo/dashboard.",
+      "tags": [
+        "reporting",
+        "timeline",
+        "extraction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "type": "file",
+      "name": "tools.py",
+      "filePath": "packages/raptix/raptix/tools/reporting/tools.py",
+      "summary": "Bộ @tool LangChain cho reporting: report_hackerone/bugcrowd_csv/executive/timeline/sarif đọc KG theo engagement từ contextvar; thiếu engagement context trả cấu trúc graph rỗng để agent tự phục hồi.",
+      "tags": [
+        "langchain-tools",
+        "reporting",
+        "agent",
+        "facade"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "type": "file",
+      "name": "test_cvss.py",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "summary": "Test CVSS: đối chiếu base score với reference, chấp nhận prefix 3.0/3.1, environmental hạ điểm theo security requirements, biên severity band, chuẩn hóa vector và hành vi @tool trả dict lỗi thay vì raise.",
+      "tags": [
+        "test",
+        "cvss",
+        "scoring",
+        "unit-test"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "type": "file",
+      "name": "test_hackerone.py",
+      "filePath": "packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "summary": "Test HackerOneReport.to_markdown và render_hackerone_markdown: placeholder cho summary/impact/PoC rỗng, references, chain id footer, CVSS số hợp lệ, fallback title/severity từ props và edge dangling không crash.",
+      "tags": [
+        "test",
+        "hackerone",
+        "reporting",
+        "unit-test"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "type": "file",
+      "name": "test_reporting.py",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting.py",
+      "summary": "Test tổng hợp các renderer trên graph seed chung: cấu trúc full report, in-memory markdown, CSV header + filter severity, executive có counts và timeline non-empty.",
+      "tags": [
+        "test",
+        "reporting",
+        "unit-test"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "type": "file",
+      "name": "test_reporting_tools_and_executive.py",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "summary": "Test lớn nhất của reporting: _count_by_severity/_top_chains/_top_cves chi tiết, render_executive_summary đủ section, và 5 report tools qua asyncio chạy đúng JSON payload, filter severity, timeline count.",
+      "tags": [
+        "test",
+        "executive",
+        "langchain-tools",
+        "unit-test"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "type": "file",
+      "name": "test_sarif.py",
+      "filePath": "packages/raptix/tests/unit/reporting/test_sarif.py",
+      "summary": "Test SARIF: cấu trúc 2.1.0, chỉ phát node vulnerability/finding, rules dedupe, mapping severity→level, result fields, stable rule id, URI fallback và tool report_sarif ghi đĩa kèm metadata.",
+      "tags": [
+        "test",
+        "sarif",
+        "reporting",
+        "unit-test"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/bugcrowd.py:render_bugcrowd_csv",
+      "type": "function",
+      "name": "render_bugcrowd_csv",
+      "filePath": "packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "lineRange": [
+        32,
+        72
+      ],
+      "summary": "Render danh sách node vulnerability thành CSV đúng schema Bugcrowd (header cố định, escaping qua csv module, min_severity filter).",
+      "tags": [
+        "reporting",
+        "csv",
+        "bugcrowd"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/cvss.py:severity_band",
+      "type": "function",
+      "name": "severity_band",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        89,
+        94
+      ],
+      "summary": "Map điểm số sang band theo bảng CVSS chính thức (None/Low/Medium/High/Critical).",
+      "tags": [
+        "cvss",
+        "severity",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/cvss.py:_roundup",
+      "type": "function",
+      "name": "_roundup",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        97,
+        102
+      ],
+      "summary": "Làm tròn lên 1 chữ số thập phân đúng spec CVSS (tránh lỗi float binary).",
+      "tags": [
+        "cvss",
+        "math",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/cvss.py:parse_vector",
+      "type": "function",
+      "name": "parse_vector",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        105,
+        131
+      ],
+      "summary": "Parse vector string thành dict metric, chuẩn hóa thứ tự, chấp nhận prefix CVSS:3.0/3.1; metric sai/trùng raise CVSSError.",
+      "tags": [
+        "cvss",
+        "parser",
+        "validation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/cvss.py:_impact_subscore",
+      "type": "function",
+      "name": "_impact_subscore",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        134,
+        135
+      ],
+      "summary": "Tính impact subscore theo công thức CVSS 3.1 (scope changed/unchanged).",
+      "tags": [
+        "cvss",
+        "math",
+        "scoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/cvss.py:base_score",
+      "type": "function",
+      "name": "base_score",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        138,
+        159
+      ],
+      "summary": "Tính base score từ 8 metric cơ bản theo công thức chính thức, trả score + breakdown từng metric.",
+      "tags": [
+        "cvss",
+        "math",
+        "scoring"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/cvss.py:environmental_score",
+      "type": "function",
+      "name": "environmental_score",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        162,
+        199
+      ],
+      "summary": "Tính environmental score đầy đủ với security requirements CR/IR/AR và modified metrics theo §8.2 FIRST.",
+      "tags": [
+        "cvss",
+        "math",
+        "scoring"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "function",
+      "name": "score_vector",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        202,
+        222
+      ],
+      "summary": "Điểm vào tổng hợp: parse vector, tính base + environmental, trả normalized vector, hai score, severity band và breakdown; vector rỗng chỉ có base metrics vẫn tính được.",
+      "tags": [
+        "cvss",
+        "scoring",
+        "facade"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/cvss.py:cvss_score_tool",
+      "type": "function",
+      "name": "cvss_score_tool",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        226,
+        253
+      ],
+      "summary": "@tool cvss_score cho agent: nhận vector string, trả dict {vector, base_score, environmental_score, severity bands, breakdown} hoặc dict lỗi — không bao giờ raise qua ranh giới tool.",
+      "tags": [
+        "langchain-tool",
+        "cvss",
+        "agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reporting/cvss.py:CVSSError",
+      "type": "class",
+      "name": "CVSSError",
+      "filePath": "packages/raptix/raptix/tools/reporting/cvss.py",
+      "lineRange": [
+        85,
+        86
+      ],
+      "summary": "Ngoại lệ cho vector CVSS không hợp lệ, thừa kế ValueError.",
+      "tags": [
+        "exception",
+        "cvss",
+        "scoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/executive.py:_count_by_severity",
+      "type": "function",
+      "name": "_count_by_severity",
+      "filePath": "packages/raptix/raptix/tools/reporting/executive.py",
+      "lineRange": [
+        19,
+        23
+      ],
+      "summary": "Đếm node vulnerability theo severity (mặc định 'info' khi thiếu).",
+      "tags": [
+        "aggregation",
+        "severity",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_chains",
+      "type": "function",
+      "name": "_top_chains",
+      "filePath": "packages/raptix/raptix/tools/reporting/executive.py",
+      "lineRange": [
+        26,
+        36
+      ],
+      "summary": "Rút top-N attack path từ graph, sắp theo tổng cost tăng dần, trả (label, cost, length) với default an toàn khi thiếu field.",
+      "tags": [
+        "aggregation",
+        "attack-path",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_cves",
+      "type": "function",
+      "name": "_top_cves",
+      "filePath": "packages/raptix/raptix/tools/reporting/executive.py",
+      "lineRange": [
+        39,
+        45
+      ],
+      "summary": "Rút top-N CVE theo composite score giảm dần từ node có cve id.",
+      "tags": [
+        "aggregation",
+        "cve",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "type": "function",
+      "name": "render_executive_summary",
+      "filePath": "packages/raptix/raptix/tools/reporting/executive.py",
+      "lineRange": [
+        48,
+        97
+      ],
+      "summary": "Soạn markdown executive: tiêu đề engagement, bảng đếm severity, section chains (cost + hops), top CVE, validated findings (cap 15) và graph stats — luôn là markdown hợp lệ kể cả graph rỗng.",
+      "tags": [
+        "reporting",
+        "executive-summary",
+        "markdown"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/hackerone.py:render_hackerone_markdown",
+      "type": "function",
+      "name": "render_hackerone_markdown",
+      "filePath": "packages/raptix/raptix/tools/reporting/hackerone.py",
+      "lineRange": [
+        79,
+        133
+      ],
+      "summary": "Từ vulnerability node của KnowledgeGraph: fallback title/severity, từ chối CVSS không số, thu references, chain id qua edge chain, rồi render HackerOneReport thành markdown.",
+      "tags": [
+        "hackerone",
+        "reporting",
+        "knowledge-graph"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reporting/hackerone.py:HackerOneReport",
+      "type": "class",
+      "name": "HackerOneReport",
+      "filePath": "packages/raptix/raptix/tools/reporting/hackerone.py",
+      "lineRange": [
+        17,
+        76
+      ],
+      "summary": "Dataclass in-memory của báo cáo H1 với to_markdown(): dựng steps từ stdout excerpt, derived impact theo severity, placeholder 'Pending' cho phần trống và footer chain id.",
+      "tags": [
+        "data-model",
+        "hackerone",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:_coerce_props",
+      "type": "function",
+      "name": "_coerce_props",
+      "filePath": "packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "lineRange": [
+        70,
+        73
+      ],
+      "summary": "Ép kiểu props từ KGStore (JSON/Neo4j) về dạng an toàn cho model Pydantic KnowledgeGraph.",
+      "tags": [
+        "adapter",
+        "utility",
+        "normalization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:load_engagement_graph",
+      "type": "function",
+      "name": "load_engagement_graph",
+      "filePath": "packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "lineRange": [
+        76,
+        173
+      ],
+      "summary": "Đọc toàn bộ node/edge theo engagement từ KGStore và dựng KnowledgeGraph với ID deterministic — nguồn dữ liệu chung cho mọi renderer.",
+      "tags": [
+        "adapter",
+        "knowledge-graph",
+        "reporting",
+        "persistence"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:render_sarif",
+      "type": "function",
+      "name": "render_sarif",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        33,
+        69
+      ],
+      "summary": "Dựng SARIF log 2.1.0 từ KnowledgeGraph: driver/rules từ finding duy nhất, results mapping, artifact URI — string JSON hoàn chỉnh cho aggregator.",
+      "tags": [
+        "sarif",
+        "reporting",
+        "exporter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_build_rules",
+      "type": "function",
+      "name": "_build_rules",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        72,
+        95
+      ],
+      "summary": "Dựng danh sách rules dedupe (mỗi rule id một entry) từ tập finding.",
+      "tags": [
+        "sarif",
+        "rules",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "type": "function",
+      "name": "_result_for",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        98,
+        115
+      ],
+      "summary": "Map một finding node thành SARIF result: ruleId, level, message, location và partial fingerprints.",
+      "tags": [
+        "sarif",
+        "mapping",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_sarif_level",
+      "type": "function",
+      "name": "_sarif_level",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        118,
+        142
+      ],
+      "summary": "Chọn level SARIF (error/warning/note): severity explicit thắng CVSS score, fallback note cho giá trị lạ/không số.",
+      "tags": [
+        "sarif",
+        "severity",
+        "mapping"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_title",
+      "type": "function",
+      "name": "_node_title",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        145,
+        146
+      ],
+      "summary": "Lấy tiêu đề hiển thị của node (prop title hoặc label).",
+      "tags": [
+        "utility",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_description",
+      "type": "function",
+      "name": "_node_description",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        149,
+        150
+      ],
+      "summary": "Lấy mô tả node cho message của result.",
+      "tags": [
+        "utility",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_stable_rule_id",
+      "type": "function",
+      "name": "_stable_rule_id",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        153,
+        170
+      ],
+      "summary": "Sinh rule id ổn định: Ưu tiên CWE đầu tiên, fallback title normalized, cuối cùng node id — giúp GitHub gộp alert đúng qua các run.",
+      "tags": [
+        "sarif",
+        "deterministic",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_normalize_rule_id",
+      "type": "function",
+      "name": "_normalize_rule_id",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        173,
+        175
+      ],
+      "summary": "Chuẩn hóa rule id về ký tự hợp lệ SARIF (alphanumeric/dash/underscore).",
+      "tags": [
+        "utility",
+        "sarif",
+        "normalization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_for",
+      "type": "function",
+      "name": "_location_for",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        178,
+        191
+      ],
+      "summary": "Dựng physicalLocation từ file/line của finding, fallback URL khi không có file.",
+      "tags": [
+        "sarif",
+        "location",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_uri",
+      "type": "function",
+      "name": "_location_uri",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        194,
+        201
+      ],
+      "summary": "Chuẩn hóa URI artifact (file path tương đối, URI giữ nguyên) cho location.",
+      "tags": [
+        "utility",
+        "sarif",
+        "uri"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_tags",
+      "type": "function",
+      "name": "_result_tags",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        204,
+        228
+      ],
+      "summary": "Gom tags của result: severity, CWE, nguồn/phát hiện từ props — giúp filter bên aggregator.",
+      "tags": [
+        "sarif",
+        "metadata",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/sarif.py:_partial_fingerprints",
+      "type": "function",
+      "name": "_partial_fingerprints",
+      "filePath": "packages/raptix/raptix/tools/reporting/sarif.py",
+      "lineRange": [
+        231,
+        254
+      ],
+      "summary": "Sinh partialFingerprint ổn định từ hash (engagement/node/rule) để GitHub match finding giữa các lần upload.",
+      "tags": [
+        "sarif",
+        "deterministic",
+        "hash"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/timeline.py:extract_timeline",
+      "type": "function",
+      "name": "extract_timeline",
+      "filePath": "packages/raptix/raptix/tools/reporting/timeline.py",
+      "lineRange": [
+        36,
+        74
+      ],
+      "summary": "Duyệt node/edge của KnowledgeGraph theo created_at/updated_at, dựng TimelineEvent rồi sort theo thời gian tăng dần.",
+      "tags": [
+        "timeline",
+        "extraction",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reporting/timeline.py:TimelineEvent",
+      "type": "class",
+      "name": "TimelineEvent",
+      "filePath": "packages/raptix/raptix/tools/reporting/timeline.py",
+      "lineRange": [
+        17,
+        33
+      ],
+      "summary": "Dataclass một event timeline: ts, kind node/edge, type_name, label, severity và to_dict() cho serializer.",
+      "tags": [
+        "data-model",
+        "timeline",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "type": "function",
+      "name": "_load",
+      "filePath": "packages/raptix/raptix/tools/reporting/tools.py",
+      "lineRange": [
+        30,
+        45
+      ],
+      "summary": "Resolve engagement từ contextvar (fallback default) rồi load_engagement_graph; trả KnowledgeGraph in-memory cho tool.",
+      "tags": [
+        "utility",
+        "knowledge-graph",
+        "langchain-tools"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/tools.py:_json",
+      "type": "function",
+      "name": "_json",
+      "filePath": "packages/raptix/raptix/tools/reporting/tools.py",
+      "lineRange": [
+        48,
+        49
+      ],
+      "summary": "Serialize kết quả tool thành chuỗi JSON (hợp đồng trả về của @tool).",
+      "tags": [
+        "utility",
+        "serialization",
+        "langchain-tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/tools.py:report_hackerone",
+      "type": "function",
+      "name": "report_hackerone",
+      "filePath": "packages/raptix/raptix/tools/reporting/tools.py",
+      "lineRange": [
+        53,
+        60
+      ],
+      "summary": "@tool báo cáo HackerOne: load graph theo node_id, render markdown, trả JSON {markdown} hoặc {error}.",
+      "tags": [
+        "langchain-tool",
+        "hackerone",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/tools.py:report_bugcrowd_csv",
+      "type": "function",
+      "name": "report_bugcrowd_csv",
+      "filePath": "packages/raptix/raptix/tools/reporting/tools.py",
+      "lineRange": [
+        64,
+        68
+      ],
+      "summary": "@tool xuất CSV Bugcrowd với min_severity filter, trả JSON {csv}.",
+      "tags": [
+        "langchain-tool",
+        "bugcrowd",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/tools.py:report_executive",
+      "type": "function",
+      "name": "report_executive",
+      "filePath": "packages/raptix/raptix/tools/reporting/tools.py",
+      "lineRange": [
+        72,
+        76
+      ],
+      "summary": "@tool executive summary: render markdown tóm tắt engagement, trả JSON {markdown}.",
+      "tags": [
+        "langchain-tool",
+        "executive-summary",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/tools.py:report_timeline",
+      "type": "function",
+      "name": "report_timeline",
+      "filePath": "packages/raptix/raptix/tools/reporting/tools.py",
+      "lineRange": [
+        80,
+        84
+      ],
+      "summary": "@tool timeline: extract_timeline và trả JSON {count, events}.",
+      "tags": [
+        "langchain-tool",
+        "timeline",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reporting/tools.py:report_sarif",
+      "type": "function",
+      "name": "report_sarif",
+      "filePath": "packages/raptix/raptix/tools/reporting/tools.py",
+      "lineRange": [
+        88,
+        109
+      ],
+      "summary": "@tool xuất SARIF: render, tùy chọn ghi file ra disk (mkdir cha) và trả metadata + SARIF string.",
+      "tags": [
+        "langchain-tool",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_base_score_matches_reference",
+      "type": "function",
+      "name": "test_base_score_matches_reference",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        36,
+        37
+      ],
+      "summary": "Base score khớp giá trị tham chiếu official cho vector mẫu.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_30_prefix_is_accepted",
+      "type": "function",
+      "name": "test_30_prefix_is_accepted",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        40,
+        45
+      ],
+      "summary": "Vector prefix CVSS:3.0/3.1 được parse chấp nhận.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_environmental_security_requirements_lower_score",
+      "type": "function",
+      "name": "test_environmental_security_requirements_lower_score",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        48,
+        52
+      ],
+      "summary": "CR/IR/AR cao làm environmental score khác base theo đúng công thức.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_environmental_neutral_when_requirements_medium_and_low_impact",
+      "type": "function",
+      "name": "test_environmental_neutral_when_requirements_medium_and_low_impact",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        55,
+        59
+      ],
+      "summary": "Requirements trung tính không đổi score so với base.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_severity_band_boundaries",
+      "type": "function",
+      "name": "test_severity_band_boundaries",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        62,
+        69
+      ],
+      "summary": "Biên band 0.1/3.9/4.0/6.9/7.0/8.9/9.0… map đúng severity.",
+      "tags": [
+        "test",
+        "cvss",
+        "severity"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_normalized_vector_orders_metrics",
+      "type": "function",
+      "name": "test_normalized_vector_orders_metrics",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        72,
+        74
+      ],
+      "summary": "Vector trả về có thứ tự metric chuẩn của spec.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_parse_rejects_malformed",
+      "type": "function",
+      "name": "test_parse_rejects_malformed",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        87,
+        90
+      ],
+      "summary": "Parse từ chối vector malformed hoặc metric bị khai trùng bằng CVSSError.",
+      "tags": [
+        "test",
+        "cvss",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_tool_returns_error_dict_not_raise",
+      "type": "function",
+      "name": "test_tool_returns_error_dict_not_raise",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        93,
+        97
+      ],
+      "summary": "@tool cvss_score với vector xấu trả dict lỗi thay vì raise qua ranh giới tool.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "cvss"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_tool_happy_path",
+      "type": "function",
+      "name": "test_tool_happy_path",
+      "filePath": "packages/raptix/tests/unit/reporting/test_cvss.py",
+      "lineRange": [
+        100,
+        104
+      ],
+      "summary": "@tool cvss_score happy path trả đủ score/band/breakdown.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "cvss"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_hackerone.py:TestHackerOneReportToMarkdown",
+      "type": "class",
+      "name": "TestHackerOneReportToMarkdown",
+      "filePath": "packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "lineRange": [
+        9,
+        52
+      ],
+      "summary": "Suite test HackerOneReport.to_markdown: CVSS thiếu/empty steps/PoC/summary, references và chain id footer.",
+      "tags": [
+        "test",
+        "hackerone",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_hackerone.py:TestRenderHackeroneMarkdown",
+      "type": "class",
+      "name": "TestRenderHackeroneMarkdown",
+      "filePath": "packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "lineRange": [
+        55,
+        168
+      ],
+      "summary": "Suite test render_hackerone_markdown trên graph seed: fallback title/severity, CVSS hợp lệ/không hợp lệ, references coercion, steps explicit thắng auto-build, edge dangling an toàn.",
+      "tags": [
+        "test",
+        "hackerone",
+        "knowledge-graph"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_reporting.py:_seeded_graph",
+      "type": "function",
+      "name": "_seeded_graph",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting.py",
+      "lineRange": [
+        12,
+        38
+      ],
+      "summary": "Fixture dựng KnowledgeGraph seed (host + vulnerability + chain) dùng chung cho các test renderer.",
+      "tags": [
+        "test",
+        "fixture",
+        "knowledge-graph"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestHackerOne",
+      "type": "class",
+      "name": "TestHackerOne",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting.py",
+      "lineRange": [
+        41,
+        65
+      ],
+      "summary": "Test HackerOne trên graph seed: cấu trúc report đầy đủ và render in-memory.",
+      "tags": [
+        "test",
+        "hackerone",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestBugcrowd",
+      "type": "class",
+      "name": "TestBugcrowd",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting.py",
+      "lineRange": [
+        68,
+        82
+      ],
+      "summary": "Test CSV Bugcrowd: header + rows đúng và min_severity filter hoạt động.",
+      "tags": [
+        "test",
+        "bugcrowd",
+        "csv"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestExecutive",
+      "type": "class",
+      "name": "TestExecutive",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting.py",
+      "lineRange": [
+        85,
+        98
+      ],
+      "summary": "Test executive summary: có counts trên graph seed và markdown sạch trên graph rỗng.",
+      "tags": [
+        "test",
+        "executive",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestTimeline",
+      "type": "class",
+      "name": "TestTimeline",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting.py",
+      "lineRange": [
+        101,
+        106
+      ],
+      "summary": "Test extract_timeline trả event non-empty cho graph seed.",
+      "tags": [
+        "test",
+        "timeline",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "function",
+      "name": "_empty_graph",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        35,
+        36
+      ],
+      "summary": "Fixture KnowledgeGraph rỗng cho test edge-case.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_all_severities",
+      "type": "function",
+      "name": "_graph_all_severities",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        39,
+        43
+      ],
+      "summary": "Fixture graph chứa finding cho đủ mọi mức severity.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_chains",
+      "type": "function",
+      "name": "_graph_with_chains",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        46,
+        51
+      ],
+      "summary": "Fixture graph có attack path với cost/length đa dạng.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_cves",
+      "type": "function",
+      "name": "_graph_with_cves",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        54,
+        59
+      ],
+      "summary": "Fixture graph chứa node CVE với score khác nhau.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_validated",
+      "type": "function",
+      "name": "_graph_with_validated",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        62,
+        74
+      ],
+      "summary": "Fixture graph có findings validated/unvalidated cho section validated.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_rich_graph",
+      "type": "function",
+      "name": "_rich_graph",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        77,
+        96
+      ],
+      "summary": "Fixture graph giàu dữ liệu (host + vulnerability) cho test tools end-to-end.",
+      "tags": [
+        "test",
+        "fixture",
+        "knowledge-graph"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestCountBySeverity",
+      "type": "class",
+      "name": "TestCountBySeverity",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        102,
+        139
+      ],
+      "summary": "Suite _count_by_severity: graph rỗng, đơn/multi severity, node non-vuln không đếm, default 'info'.",
+      "tags": [
+        "test",
+        "aggregation",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopChains",
+      "type": "class",
+      "name": "TestTopChains",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        145,
+        196
+      ],
+      "summary": "Suite _top_chains: sắp theo cost, limit, tuple (label, cost, length), default cost/length an toàn.",
+      "tags": [
+        "test",
+        "attack-path",
+        "reporting"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopCves",
+      "type": "class",
+      "name": "TestTopCves",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        202,
+        234
+      ],
+      "summary": "Suite _top_cves: sắp score giảm dần, limit, node non-CVE loại bỏ, default score 0.",
+      "tags": [
+        "test",
+        "cve",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "type": "class",
+      "name": "TestRenderExecutiveSummary",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        240,
+        356
+      ],
+      "summary": "Suite render_executive_summary: header tên engagement, thứ tự severity, section chains/CVE/validated, graph stats và markdown hợp lệ.",
+      "tags": [
+        "test",
+        "executive-summary",
+        "reporting"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportHackerOneTool",
+      "type": "class",
+      "name": "TestReportHackerOneTool",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        362,
+        388
+      ],
+      "summary": "Suite @tool report_hackerone: markdown cho node hợp lệ, error cho node thiếu và giá trị JSON string.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "hackerone"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportBugcrowdCsvTool",
+      "type": "class",
+      "name": "TestReportBugcrowdCsvTool",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        391,
+        438
+      ],
+      "summary": "Suite @tool report_bugcrowd_csv: default severity medium, filter low/critical, header CSV và graph rỗng.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "bugcrowd"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportExecutiveTool",
+      "type": "class",
+      "name": "TestReportExecutiveTool",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        441,
+        475
+      ],
+      "summary": "Suite @tool report_executive: key markdown, tên engagement xuất hiện, graph rỗng và default engagement name.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "executive"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportTimelineTool",
+      "type": "class",
+      "name": "TestReportTimelineTool",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        478,
+        513
+      ],
+      "summary": "Suite @tool report_timeline: key count/events, count khớp, event là list, graph rỗng → 0 events.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "timeline"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportingToolsList",
+      "type": "class",
+      "name": "TestReportingToolsList",
+      "filePath": "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "lineRange": [
+        519,
+        534
+      ],
+      "summary": "Suite kiểm chứng danh sách reporting tools export là list non-empty.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reporting/test_sarif.py:_seeded_graph",
+      "type": "function",
+      "name": "_seeded_graph",
+      "filePath": "packages/raptix/tests/unit/reporting/test_sarif.py",
+      "lineRange": [
+        24,
+        54
+      ],
+      "summary": "Fixture graph seed SARIF với host + vulnerability có file/line/CWE/score đa dạng.",
+      "tags": [
+        "test",
+        "fixture",
+        "sarif"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestRenderSarifShape",
+      "type": "class",
+      "name": "TestRenderSarifShape",
+      "filePath": "packages/raptix/tests/unit/reporting/test_sarif.py",
+      "lineRange": [
+        57,
+        86
+      ],
+      "summary": "Suite cấu trúc SARIF: version 2.1.0, chỉ node vulnerability/finding, rules dedupe theo rule id.",
+      "tags": [
+        "test",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestSarifLevelMapping",
+      "type": "class",
+      "name": "TestSarifLevelMapping",
+      "filePath": "packages/raptix/tests/unit/reporting/test_sarif.py",
+      "lineRange": [
+        89,
+        126
+      ],
+      "summary": "Suite _sarif_level: severity map đúng, CVSS fallback, severity ưu tiên hơn CVSS, unknown → note.",
+      "tags": [
+        "test",
+        "sarif",
+        "severity"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestResultMapping",
+      "type": "class",
+      "name": "TestResultMapping",
+      "filePath": "packages/raptix/tests/unit/reporting/test_sarif.py",
+      "lineRange": [
+        129,
+        177
+      ],
+      "summary": "Suite result: fields populate từ props, URI fallback khi thiếu file, fingerprints deterministic.",
+      "tags": [
+        "test",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestStableRuleId",
+      "type": "class",
+      "name": "TestStableRuleId",
+      "filePath": "packages/raptix/tests/unit/reporting/test_sarif.py",
+      "lineRange": [
+        180,
+        199
+      ],
+      "summary": "Suite _stable_rule_id: CWE đầu tiên thắng, fallback title, fallback node id khi title rỗng.",
+      "tags": [
+        "test",
+        "sarif",
+        "deterministic"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestReportSarifTool",
+      "type": "class",
+      "name": "TestReportSarifTool",
+      "filePath": "packages/raptix/tests/unit/reporting/test_sarif.py",
+      "lineRange": [
+        202,
+        225
+      ],
+      "summary": "Suite @tool report_sarif: ghi file ra disk + metadata, tự tạo thư mục cha.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "sarif"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/bugcrowd.py:render_bugcrowd_csv",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/bugcrowd.py:render_bugcrowd_csv",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:severity_band",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:severity_band",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:_roundup",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:_roundup",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:parse_vector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:parse_vector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:_impact_subscore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:_impact_subscore",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:base_score",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:base_score",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:environmental_score",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:environmental_score",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:cvss_score_tool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:cvss_score_tool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "class:packages/raptix/raptix/tools/reporting/cvss.py:CVSSError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "class:packages/raptix/raptix/tools/reporting/cvss.py:CVSSError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_count_by_severity",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_count_by_severity",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_chains",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_chains",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_cves",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_cves",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/hackerone.py:render_hackerone_markdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/hackerone.py:render_hackerone_markdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "target": "class:packages/raptix/raptix/tools/reporting/hackerone.py:HackerOneReport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "target": "class:packages/raptix/raptix/tools/reporting/hackerone.py:HackerOneReport",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:_coerce_props",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:_coerce_props",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:load_engagement_graph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:load_engagement_graph",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:render_sarif",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:render_sarif",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_build_rules",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_build_rules",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_sarif_level",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_sarif_level",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_title",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_title",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_description",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_description",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_stable_rule_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_stable_rule_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_normalize_rule_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_normalize_rule_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_for",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_for",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_uri",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_uri",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_tags",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_tags",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_partial_fingerprints",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_partial_fingerprints",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/timeline.py:extract_timeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/timeline.py:extract_timeline",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "target": "class:packages/raptix/raptix/tools/reporting/timeline.py:TimelineEvent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "target": "class:packages/raptix/raptix/tools/reporting/timeline.py:TimelineEvent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_hackerone",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_hackerone",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_bugcrowd_csv",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_bugcrowd_csv",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_executive",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_executive",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_timeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_timeline",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_sarif",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_sarif",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_base_score_matches_reference",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_base_score_matches_reference",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_30_prefix_is_accepted",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_30_prefix_is_accepted",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_environmental_security_requirements_lower_score",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_environmental_security_requirements_lower_score",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_environmental_neutral_when_requirements_medium_and_low_impact",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_environmental_neutral_when_requirements_medium_and_low_impact",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_severity_band_boundaries",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_severity_band_boundaries",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_normalized_vector_orders_metrics",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_normalized_vector_orders_metrics",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_parse_rejects_malformed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_parse_rejects_malformed",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_tool_returns_error_dict_not_raise",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_tool_returns_error_dict_not_raise",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_tool_happy_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_tool_happy_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_hackerone.py:TestHackerOneReportToMarkdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_hackerone.py:TestHackerOneReportToMarkdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_hackerone.py:TestRenderHackeroneMarkdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_hackerone.py:TestRenderHackeroneMarkdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting.py:_seeded_graph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting.py:_seeded_graph",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestHackerOne",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestHackerOne",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestBugcrowd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestBugcrowd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestExecutive",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestExecutive",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestTimeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestTimeline",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_all_severities",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_all_severities",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_chains",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_chains",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_cves",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_cves",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_validated",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_validated",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_rich_graph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_rich_graph",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestCountBySeverity",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestCountBySeverity",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopChains",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopChains",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopCves",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopCves",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportHackerOneTool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportHackerOneTool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportBugcrowdCsvTool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportBugcrowdCsvTool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportExecutiveTool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportExecutiveTool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportTimelineTool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportTimelineTool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportingToolsList",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportingToolsList",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_sarif.py:_seeded_graph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "function:packages/raptix/tests/unit/reporting/test_sarif.py:_seeded_graph",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestRenderSarifShape",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestRenderSarifShape",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestSarifLevelMapping",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestSarifLevelMapping",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestResultMapping",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestResultMapping",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestStableRuleId",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestStableRuleId",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestReportSarifTool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestReportSarifTool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "target": "file:packages/raptix/raptix/middleware/kg_internal/store.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/kg_adapter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "target": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/cvss.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_cvss.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_hackerone.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/bugcrowd.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/hackerone.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/timeline.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_reporting.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/executive.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/sarif.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reporting/tools.py",
+      "target": "file:packages/raptix/tests/unit/reporting/test_sarif.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:parse_vector",
+      "target": "class:packages/raptix/raptix/tools/reporting/cvss.py:CVSSError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:base_score",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:_impact_subscore",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:base_score",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:_roundup",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:environmental_score",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:_roundup",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:parse_vector",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:base_score",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:environmental_score",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:severity_band",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/cvss.py:cvss_score_tool",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_count_by_severity",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_chains",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_cves",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/hackerone.py:render_hackerone_markdown",
+      "target": "class:packages/raptix/raptix/tools/reporting/hackerone.py:HackerOneReport",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:load_engagement_graph",
+      "target": "class:packages/raptix/raptix/middleware/kg_internal/store.py:KGStore",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:load_engagement_graph",
+      "target": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:_coerce_props",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:render_sarif",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_build_rules",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:render_sarif",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_build_rules",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_stable_rule_id",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_build_rules",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_title",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_build_rules",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_description",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_build_rules",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_sarif_level",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_stable_rule_id",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_sarif_level",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_description",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_title",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_for",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_partial_fingerprints",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_for",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_result_tags",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_stable_rule_id",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_normalize_rule_id",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_stable_rule_id",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_title",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_for",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_location_uri",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/sarif.py:_partial_fingerprints",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_node_title",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/timeline.py:extract_timeline",
+      "target": "class:packages/raptix/raptix/tools/reporting/timeline.py:TimelineEvent",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "target": "function:packages/raptix/raptix/tools/reporting/kg_adapter.py:load_engagement_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_hackerone",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_hackerone",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_hackerone",
+      "target": "function:packages/raptix/raptix/tools/reporting/hackerone.py:render_hackerone_markdown",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_bugcrowd_csv",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_bugcrowd_csv",
+      "target": "function:packages/raptix/raptix/tools/reporting/bugcrowd.py:render_bugcrowd_csv",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_bugcrowd_csv",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_executive",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_executive",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_executive",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_timeline",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_timeline",
+      "target": "function:packages/raptix/raptix/tools/reporting/timeline.py:extract_timeline",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_timeline",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_sarif",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_load",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_sarif",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:render_sarif",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reporting/tools.py:report_sarif",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_base_score_matches_reference",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_30_prefix_is_accepted",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_environmental_security_requirements_lower_score",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_environmental_neutral_when_requirements_medium_and_low_impact",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_severity_band_boundaries",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:severity_band",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_normalized_vector_orders_metrics",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:score_vector",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_parse_rejects_malformed",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:parse_vector",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_tool_returns_error_dict_not_raise",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:cvss_score_tool",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/reporting/test_cvss.py:test_tool_happy_path",
+      "target": "function:packages/raptix/raptix/tools/reporting/cvss.py:cvss_score_tool",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_hackerone.py:TestHackerOneReportToMarkdown",
+      "target": "class:packages/raptix/raptix/tools/reporting/hackerone.py:HackerOneReport",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_hackerone.py:TestRenderHackeroneMarkdown",
+      "target": "function:packages/raptix/raptix/tools/reporting/hackerone.py:render_hackerone_markdown",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestHackerOne",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting.py:_seeded_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestHackerOne",
+      "target": "function:packages/raptix/raptix/tools/reporting/hackerone.py:render_hackerone_markdown",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestHackerOne",
+      "target": "class:packages/raptix/raptix/tools/reporting/hackerone.py:HackerOneReport",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestBugcrowd",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting.py:_seeded_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestBugcrowd",
+      "target": "function:packages/raptix/raptix/tools/reporting/bugcrowd.py:render_bugcrowd_csv",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestExecutive",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting.py:_seeded_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestExecutive",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestTimeline",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting.py:_seeded_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting.py:TestTimeline",
+      "target": "function:packages/raptix/raptix/tools/reporting/timeline.py:extract_timeline",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestCountBySeverity",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_count_by_severity",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestCountBySeverity",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestCountBySeverity",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_all_severities",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopChains",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_chains",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopChains",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_chains",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopCves",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_cves",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestTopCves",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:_top_cves",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "target": "function:packages/raptix/raptix/tools/reporting/executive.py:render_executive_summary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_all_severities",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_chains",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_cves",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_with_validated",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestRenderExecutiveSummary",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_rich_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportHackerOneTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_rich_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportHackerOneTool",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_hackerone",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportHackerOneTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportBugcrowdCsvTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_graph_all_severities",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportBugcrowdCsvTool",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_bugcrowd_csv",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportBugcrowdCsvTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_rich_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportBugcrowdCsvTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportExecutiveTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_rich_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportExecutiveTool",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_executive",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportExecutiveTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportTimelineTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_rich_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportTimelineTool",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_timeline",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:TestReportTimelineTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py:_empty_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestRenderSarifShape",
+      "target": "function:packages/raptix/tests/unit/reporting/test_sarif.py:_seeded_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestRenderSarifShape",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:render_sarif",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestSarifLevelMapping",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_sarif_level",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestResultMapping",
+      "target": "function:packages/raptix/tests/unit/reporting/test_sarif.py:_seeded_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestResultMapping",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:render_sarif",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestResultMapping",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_partial_fingerprints",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestStableRuleId",
+      "target": "function:packages/raptix/raptix/tools/reporting/sarif.py:_stable_rule_id",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestReportSarifTool",
+      "target": "function:packages/raptix/tests/unit/reporting/test_sarif.py:_seeded_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:packages/raptix/tests/unit/reporting/test_sarif.py:TestReportSarifTool",
+      "target": "function:packages/raptix/raptix/tools/reporting/tools.py:report_sarif",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

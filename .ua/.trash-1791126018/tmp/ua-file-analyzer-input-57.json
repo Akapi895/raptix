@@ -1,0 +1,98 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "SECURITY.md",
+      "language": "markdown",
+      "sizeLines": 45,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "SPEC.md",
+      "language": "markdown",
+      "sizeLines": 56,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "TELEMETRY.md",
+      "language": "markdown",
+      "sizeLines": 186,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "THIRD_PARTY_LICENSES.md",
+      "language": "markdown",
+      "sizeLines": 57,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docker-compose.dev.yml",
+      "language": "yaml",
+      "sizeLines": 31,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "docker-compose.opscontrol.yml",
+      "language": "yaml",
+      "sizeLines": 15,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "docker-compose.watch.yml",
+      "language": "yaml",
+      "sizeLines": 56,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "docker-compose.web-raptix.yml",
+      "language": "yaml",
+      "sizeLines": 70,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "docker-compose.yml",
+      "language": "yaml",
+      "sizeLines": 754,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "langgraph.json",
+      "language": "json",
+      "sizeLines": 36,
+      "fileCategory": "config"
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "sizeLines": 39,
+      "fileCategory": "config"
+    },
+    {
+      "path": "prompt.txt",
+      "language": "txt",
+      "sizeLines": 392,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "pyproject.toml",
+      "language": "toml",
+      "sizeLines": 366,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "SECURITY.md": [],
+    "SPEC.md": [],
+    "TELEMETRY.md": [],
+    "THIRD_PARTY_LICENSES.md": [],
+    "docker-compose.dev.yml": [],
+    "docker-compose.opscontrol.yml": [],
+    "docker-compose.watch.yml": [],
+    "docker-compose.web-raptix.yml": [],
+    "docker-compose.yml": [],
+    "langgraph.json": [],
+    "package.json": [],
+    "prompt.txt": [],
+    "pyproject.toml": []
+  }
+}

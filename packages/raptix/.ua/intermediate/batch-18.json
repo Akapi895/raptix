@@ -1,0 +1,2641 @@
+{
+  "batchIndex": 18,
+  "batchFiles": [
+    {
+      "path": "raptix/cli/telemetry.py",
+      "language": "python",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/__init__.py",
+      "language": "python",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/config.py",
+      "language": "python",
+      "sizeLines": 220,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/exporter.py",
+      "language": "python",
+      "sizeLines": 122,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/otel.py",
+      "language": "python",
+      "sizeLines": 262,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/redact.py",
+      "language": "python",
+      "sizeLines": 288,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/sanitizer.py",
+      "language": "python",
+      "sizeLines": 221,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/sink.py",
+      "language": "python",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_otel.py",
+      "language": "python",
+      "sizeLines": 231,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "language": "python",
+      "sizeLines": 234,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_config.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_exporter.py",
+      "language": "python",
+      "sizeLines": 102,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_redact.py",
+      "language": "python",
+      "sizeLines": 183,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "language": "python",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_sink.py",
+      "language": "python",
+      "sizeLines": 233,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:raptix/cli/telemetry.py",
+      "type": "file",
+      "name": "telemetry.py",
+      "filePath": "raptix/cli/telemetry.py",
+      "summary": "CLI con `telemetry` của Raptix: xem trạng thái, preview payload mẫu, bật chế độ basic/research và tắt telemetry.",
+      "tags": [
+        "cli",
+        "telemetry",
+        "entry-point"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/cli/telemetry.py:_status",
+      "type": "function",
+      "name": "_status",
+      "filePath": "raptix/cli/telemetry.py",
+      "lineRange": [
+        96,
+        105
+      ],
+      "summary": "In trạng thái telemetry hiện tại (mode, endpoint, install id) ra stdout.",
+      "tags": [
+        "cli",
+        "status",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/cli/telemetry.py:_preview",
+      "type": "function",
+      "name": "_preview",
+      "filePath": "raptix/cli/telemetry.py",
+      "lineRange": [
+        108,
+        122
+      ],
+      "summary": "Sinh và hiển thị payload telemetry mẫu (đã sanitize) để người dùng xem trước khi bật.",
+      "tags": [
+        "cli",
+        "preview",
+        "privacy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/cli/telemetry.py:_enable",
+      "type": "function",
+      "name": "_enable",
+      "filePath": "raptix/cli/telemetry.py",
+      "lineRange": [
+        125,
+        140
+      ],
+      "summary": "Bật telemetry với mode được chọn và persist vào cấu hình cục bộ.",
+      "tags": [
+        "cli",
+        "configuration",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/cli/telemetry.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "raptix/cli/telemetry.py",
+      "lineRange": [
+        149,
+        169
+      ],
+      "summary": "Điều hướng subcommand telemetry: status/preview/enable/off.",
+      "tags": [
+        "cli",
+        "entry-point",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/telemetry/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "raptix/telemetry/__init__.py",
+      "summary": "Façade công khai của package telemetry: re-export TelemetrySink, get_sink, config và otel helpers cho phần còn lại của hệ thống.",
+      "tags": [
+        "barrel",
+        "entry-point",
+        "telemetry",
+        "facade"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/telemetry/config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "raptix/telemetry/config.py",
+      "summary": "Cấu hình telemetry: enum TelemetryMode (off/basic/research), ưu tiên env > persisted > default, opt-out marker, DNT và install id bền vững.",
+      "tags": [
+        "configuration",
+        "telemetry",
+        "privacy"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:resolve_mode",
+      "type": "function",
+      "name": "resolve_mode",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        48,
+        57
+      ],
+      "summary": "Chọn TelemetryMode theo thứ tự ưu tiên: env override > persisted > mặc định off (opt-in).",
+      "tags": [
+        "configuration",
+        "telemetry",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:is_opted_out",
+      "type": "function",
+      "name": "is_opted_out",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        69,
+        75
+      ],
+      "summary": "Kiểm tra marker opt-out (DO_NOT_TRACK hoặc file marker) trên máy.",
+      "tags": [
+        "privacy",
+        "configuration",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:set_opted_out",
+      "type": "function",
+      "name": "set_opted_out",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        78,
+        86
+      ],
+      "summary": "Ghi/xóa marker opt-out telemetry theo lựa chọn người dùng.",
+      "tags": [
+        "privacy",
+        "configuration",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:persisted_mode",
+      "type": "function",
+      "name": "persisted_mode",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        93,
+        103
+      ],
+      "summary": "Đọc mode telemetry đã persist trên đĩa; trả None khi chưa có.",
+      "tags": [
+        "configuration",
+        "persistence",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:set_persisted_mode",
+      "type": "function",
+      "name": "set_persisted_mode",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        106,
+        121
+      ],
+      "summary": "Ghi mode telemetry vào file cấu hình cục bộ một cách atomic.",
+      "tags": [
+        "configuration",
+        "persistence",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:install_id",
+      "type": "function",
+      "name": "install_id",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        124,
+        143
+      ],
+      "summary": "Đọc/tạo install id ngẫu nhiên bền vững, chỉ mint khi telemetry được bật.",
+      "tags": [
+        "identity",
+        "privacy",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:resolve_config",
+      "type": "function",
+      "name": "resolve_config",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        166,
+        198
+      ],
+      "summary": "Tổng hợp TelemetryConfig hoàn chỉnh: mode, endpoint, install id, arch và phiên bản Python.",
+      "tags": [
+        "configuration",
+        "telemetry",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:_arch",
+      "type": "function",
+      "name": "_arch",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        201,
+        211
+      ],
+      "summary": "Xác định kiến trúc máy (machine) để đưa vào envelope.",
+      "tags": [
+        "utility",
+        "envelope",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/config.py:_detect_version",
+      "type": "function",
+      "name": "_detect_version",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        214,
+        220
+      ],
+      "summary": "Lấy phiên bản Python đang chạy cho envelope telemetry.",
+      "tags": [
+        "utility",
+        "envelope",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/telemetry/config.py:TelemetryMode",
+      "type": "class",
+      "name": "TelemetryMode",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        32,
+        41
+      ],
+      "summary": "Enum mức telemetry: off, basic và research.",
+      "tags": [
+        "enum",
+        "telemetry",
+        "configuration"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/telemetry/config.py:TelemetryConfig",
+      "type": "class",
+      "name": "TelemetryConfig",
+      "filePath": "raptix/telemetry/config.py",
+      "lineRange": [
+        147,
+        163
+      ],
+      "summary": "Dataclass cấu hình telemetry đã resolve: mode, endpoint, install id và cờ debug.",
+      "tags": [
+        "data-model",
+        "configuration",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/telemetry/exporter.py",
+      "type": "file",
+      "name": "exporter.py",
+      "filePath": "raptix/telemetry/exporter.py",
+      "summary": "BatchExporter: hàng đợi giới hạn (drop cũ nhất khi đầy), gom event theo batch size và flush qua HTTP POST với fail-open.",
+      "tags": [
+        "telemetry",
+        "exporter",
+        "batching",
+        "http"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/telemetry/exporter.py:_http_post",
+      "type": "function",
+      "name": "_http_post",
+      "filePath": "raptix/telemetry/exporter.py",
+      "lineRange": [
+        38,
+        47
+      ],
+      "summary": "Gửi POST HTTP tới endpoint telemetry với timeout ngắn; không raise khi lỗi mạng.",
+      "tags": [
+        "http",
+        "exporter",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/telemetry/exporter.py:BatchExporter",
+      "type": "class",
+      "name": "BatchExporter",
+      "filePath": "raptix/telemetry/exporter.py",
+      "lineRange": [
+        50,
+        122
+      ],
+      "summary": "Exporter gom sự kiện vào hàng đợi bounded, flush theo batch size qua HTTP POST; lỗi mạng được nuốt để không ảnh hưởng runtime.",
+      "tags": [
+        "exporter",
+        "batching",
+        "telemetry"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:raptix/telemetry/otel.py",
+      "type": "file",
+      "name": "otel.py",
+      "filePath": "raptix/telemetry/otel.py",
+      "summary": "Tích hợp OpenTelemetry: khởi tạo tracer provider, span hierarchy engagement→agent→tool→llm và helpers ghi chi phí/token; no-op an toàn khi thiếu package.",
+      "tags": [
+        "telemetry",
+        "opentelemetry",
+        "tracing",
+        "observability"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:init_otel",
+      "type": "function",
+      "name": "init_otel",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        52,
+        86
+      ],
+      "summary": "Khởi tạo TracerProvider OTLP nếu telemetry bật; idempotent và trả False khi tắt/thiếu package.",
+      "tags": [
+        "opentelemetry",
+        "initialization",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:start_engagement_span",
+      "type": "function",
+      "name": "start_engagement_span",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        109,
+        127
+      ],
+      "summary": "Mở span gốc cho engagement với thuộc tính mục tiêu và workspace.",
+      "tags": [
+        "opentelemetry",
+        "span",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:start_agent_span",
+      "type": "function",
+      "name": "start_agent_span",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        131,
+        150
+      ],
+      "summary": "Mở span con cho agent với vai trò và model; parent là span engagement hiện hành.",
+      "tags": [
+        "opentelemetry",
+        "span",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:start_tool_span",
+      "type": "function",
+      "name": "start_tool_span",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        154,
+        172
+      ],
+      "summary": "Mở span cho lần gọi tool với tên tool và trạng thái thực thi.",
+      "tags": [
+        "opentelemetry",
+        "span",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:start_llm_span",
+      "type": "function",
+      "name": "start_llm_span",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        176,
+        198
+      ],
+      "summary": "Mở span cho lời gọi LLM với model và loại prompt.",
+      "tags": [
+        "opentelemetry",
+        "span",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:_set_span_attribute",
+      "type": "function",
+      "name": "_set_span_attribute",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        201,
+        213
+      ],
+      "summary": "Ghi attribute an toàn vào span hiện hành, bỏ qua khi disabled.",
+      "tags": [
+        "opentelemetry",
+        "utility",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:record_llm_cost",
+      "type": "function",
+      "name": "record_llm_cost",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        216,
+        227
+      ],
+      "summary": "Ghi chi phí LLM lên span llm hiện hành, fallback về span engagement; bỏ qua None.",
+      "tags": [
+        "opentelemetry",
+        "cost",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:record_llm_token_usage",
+      "type": "function",
+      "name": "record_llm_token_usage",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        230,
+        240
+      ],
+      "summary": "Ghi số token prompt/completion lên span llm hiện hành.",
+      "tags": [
+        "opentelemetry",
+        "token-usage",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:set_current_objective_id",
+      "type": "function",
+      "name": "set_current_objective_id",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        243,
+        252
+      ],
+      "summary": "Gắn objective id vào context OTel để các span con kế thừa.",
+      "tags": [
+        "opentelemetry",
+        "context",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/otel.py:reset_current_objective_id",
+      "type": "function",
+      "name": "reset_current_objective_id",
+      "filePath": "raptix/telemetry/otel.py",
+      "lineRange": [
+        255,
+        262
+      ],
+      "summary": "Xóa objective id khỏi context OTel khi kết thúc mục tiêu.",
+      "tags": [
+        "opentelemetry",
+        "context",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/telemetry/redact.py",
+      "type": "file",
+      "name": "redact.py",
+      "filePath": "raptix/telemetry/redact.py",
+      "summary": "Redactor che giấu dữ liệu nhạy cảm trong payload telemetry: IP/CIDR, hostname đã biết, credential dạng cặp key=value và cờ command line.",
+      "tags": [
+        "telemetry",
+        "redaction",
+        "security",
+        "privacy"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/telemetry/redact.py:_group_detector",
+      "type": "function",
+      "name": "_group_detector",
+      "filePath": "raptix/telemetry/redact.py",
+      "lineRange": [
+        111,
+        125
+      ],
+      "summary": "Dựng detector theo nhóm: compile pattern và thay bằng placeholder có nhãn.",
+      "tags": [
+        "redaction",
+        "regex",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/redact.py:_builtin_detectors",
+      "type": "function",
+      "name": "_builtin_detectors",
+      "filePath": "raptix/telemetry/redact.py",
+      "lineRange": [
+        142,
+        179
+      ],
+      "summary": "Danh sách detector sẵn có: IPv4/IPv6/CIDR, hostname, các cặp credential phổ biến và flag mật khẩu.",
+      "tags": [
+        "redaction",
+        "detection",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:raptix/telemetry/redact.py:Redactor",
+      "type": "class",
+      "name": "Redactor",
+      "filePath": "raptix/telemetry/redact.py",
+      "lineRange": [
+        182,
+        288
+      ],
+      "summary": "Redactor chính: redact chuỗi/đối tượng đệ quy, hỗ trợ known-target tùy chọn và giữ placeholder ổn định giữa các lần chạy.",
+      "tags": [
+        "redaction",
+        "security",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:raptix/telemetry/sanitizer.py",
+      "type": "file",
+      "name": "sanitizer.py",
+      "filePath": "raptix/telemetry/sanitizer.py",
+      "summary": "Chuyển sự kiện nội bộ thành sự kiện Tier A đã chuẩn hóa: whitelist trường theo event type, bucket hóa output/tin nhắn và quét Tier C phát hiện rò rỉ.",
+      "tags": [
+        "telemetry",
+        "sanitization",
+        "privacy",
+        "schema"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/telemetry/sanitizer.py:slug",
+      "type": "function",
+      "name": "slug",
+      "filePath": "raptix/telemetry/sanitizer.py",
+      "lineRange": [
+        70,
+        80
+      ],
+      "summary": "Chuẩn hóa chuỗi thành slug an toàn dùng làm định danh trong schema telemetry.",
+      "tags": [
+        "utility",
+        "normalization",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/sanitizer.py:event_to_tier_a",
+      "type": "function",
+      "name": "event_to_tier_a",
+      "filePath": "raptix/telemetry/sanitizer.py",
+      "lineRange": [
+        90,
+        167
+      ],
+      "summary": "Chuyển sự kiện nội bộ thành sự kiện Tier A: whitelist trường theo event type, bucket hóa output/messages, bỏ trường lạ.",
+      "tags": [
+        "sanitization",
+        "schema",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/telemetry/sanitizer.py:scan_tier_c",
+      "type": "function",
+      "name": "scan_tier_c",
+      "filePath": "raptix/telemetry/sanitizer.py",
+      "lineRange": [
+        198,
+        221
+      ],
+      "summary": "Quét payload tìm dữ liệu nhạy cảm (Tier C); trả marker phát hiện mà không trả lại giá trị gốc.",
+      "tags": [
+        "sanitization",
+        "privacy",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/telemetry/sink.py",
+      "type": "file",
+      "name": "sink.py",
+      "filePath": "raptix/telemetry/sink.py",
+      "summary": "TelemetrySink trung tâm: map event miền sang schema telemetry, gắn session id băm muối, redact theo tier và ship qua BatchExporter; get_sink singleton.",
+      "tags": [
+        "telemetry",
+        "sink",
+        "session",
+        "singleton"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/telemetry/sink.py:set_current_session",
+      "type": "function",
+      "name": "set_current_session",
+      "filePath": "raptix/telemetry/sink.py",
+      "lineRange": [
+        289,
+        291
+      ],
+      "summary": "Đặt contextvar session id hiện hành để mọi sự kiện sau được gắn nhãn.",
+      "tags": [
+        "session",
+        "context",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/sink.py:reset_current_session",
+      "type": "function",
+      "name": "reset_current_session",
+      "filePath": "raptix/telemetry/sink.py",
+      "lineRange": [
+        294,
+        295
+      ],
+      "summary": "Xóa session id hiện hành khi engagement kết thúc.",
+      "tags": [
+        "session",
+        "context",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/sink.py:current_session",
+      "type": "function",
+      "name": "current_session",
+      "filePath": "raptix/telemetry/sink.py",
+      "lineRange": [
+        298,
+        300
+      ],
+      "summary": "Đọc session id hiện hành từ contextvar.",
+      "tags": [
+        "session",
+        "context",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/sink.py:session_id_for",
+      "type": "function",
+      "name": "session_id_for",
+      "filePath": "raptix/telemetry/sink.py",
+      "lineRange": [
+        313,
+        330
+      ],
+      "summary": "Băm HMAC install-salt + engagement thành session id ổn định và không đảo ngược.",
+      "tags": [
+        "session",
+        "hash",
+        "privacy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/telemetry/sink.py:get_sink",
+      "type": "function",
+      "name": "get_sink",
+      "filePath": "raptix/telemetry/sink.py",
+      "lineRange": [
+        343,
+        356
+      ],
+      "summary": "Singleton truy cập TelemetrySink theo cấu hình hiện tại; trả sink no-op khi tắt.",
+      "tags": [
+        "singleton",
+        "sink",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/telemetry/sink.py:TelemetrySink",
+      "type": "class",
+      "name": "TelemetrySink",
+      "filePath": "raptix/telemetry/sink.py",
+      "lineRange": [
+        26,
+        272
+      ],
+      "summary": "Sink trung tâm gom sự kiện từ middleware/tools: map sang schema, redact theo tier, gắn session id và đẩy vào BatchExporter.",
+      "tags": [
+        "telemetry",
+        "sink",
+        "session"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/unit/telemetry/test_otel.py",
+      "type": "file",
+      "name": "test_otel.py",
+      "filePath": "tests/unit/telemetry/test_otel.py",
+      "summary": "Kiểm thử otel: tắt mặc định, hierarchy span engagement/agent/tool/llm, thuộc tính, fallback ghi cost và an toàn khi thiếu package.",
+      "tags": [
+        "test",
+        "opentelemetry",
+        "telemetry"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_otel.py:test_disabled_by_default_emits_no_spans",
+      "type": "function",
+      "name": "test_disabled_by_default_emits_no_spans",
+      "filePath": "tests/unit/telemetry/test_otel.py",
+      "lineRange": [
+        78,
+        90
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra disabled by default emits no spans.",
+      "tags": [
+        "test",
+        "unit",
+        "test_otel"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_otel.py:test_engagement_agent_tool_llm_hierarchy",
+      "type": "function",
+      "name": "test_engagement_agent_tool_llm_hierarchy",
+      "filePath": "tests/unit/telemetry/test_otel.py",
+      "lineRange": [
+        93,
+        112
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra engagement agent tool llm hierarchy.",
+      "tags": [
+        "test",
+        "unit",
+        "test_otel"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_otel.py:test_attributes_are_set",
+      "type": "function",
+      "name": "test_attributes_are_set",
+      "filePath": "tests/unit/telemetry/test_otel.py",
+      "lineRange": [
+        115,
+        143
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra attributes are set.",
+      "tags": [
+        "test",
+        "unit",
+        "test_otel"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_otel.py:test_record_llm_cost_falls_back_when_llm_span_write_raises",
+      "type": "function",
+      "name": "test_record_llm_cost_falls_back_when_llm_span_write_raises",
+      "filePath": "tests/unit/telemetry/test_otel.py",
+      "lineRange": [
+        155,
+        172
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra record llm cost falls back when llm span write raises.",
+      "tags": [
+        "test",
+        "unit",
+        "test_otel"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_otel.py:test_helpers_are_safe_when_otel_packages_missing",
+      "type": "function",
+      "name": "test_helpers_are_safe_when_otel_packages_missing",
+      "filePath": "tests/unit/telemetry/test_otel.py",
+      "lineRange": [
+        202,
+        231
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra helpers are safe when otel packages missing.",
+      "tags": [
+        "test",
+        "unit",
+        "test_otel"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "type": "file",
+      "name": "test_telemetry_behavioral.py",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "summary": "Kiểm thử hành vi telemetry end-to-end: ghi finding/phase, ưu tiên mode, envelope arch/py và đếm drop Tier C.",
+      "tags": [
+        "test",
+        "telemetry",
+        "behavioral"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_record_finding_forwards_structured_classification",
+      "type": "function",
+      "name": "test_record_finding_forwards_structured_classification",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "lineRange": [
+        35,
+        58
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra record finding forwards structured classification.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_behavioral"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_record_finding_available_at_basic_tier",
+      "type": "function",
+      "name": "test_record_finding_available_at_basic_tier",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "lineRange": [
+        61,
+        70
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra record finding available at basic tier.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_behavioral"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_record_phase_maps_to_opplan_update",
+      "type": "function",
+      "name": "test_record_phase_maps_to_opplan_update",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "lineRange": [
+        76,
+        88
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra record phase maps to opplan update.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_behavioral"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_envelope_includes_arch_and_py_when_set",
+      "type": "function",
+      "name": "test_envelope_includes_arch_and_py_when_set",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "lineRange": [
+        124,
+        140
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra envelope includes arch and py when set.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_behavioral"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_envelope_omits_arch_and_py_when_unset",
+      "type": "function",
+      "name": "test_envelope_omits_arch_and_py_when_unset",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "lineRange": [
+        143,
+        154
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra envelope omits arch and py when unset.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_behavioral"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_resolve_config_populates_arch_and_py",
+      "type": "function",
+      "name": "test_resolve_config_populates_arch_and_py",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "lineRange": [
+        157,
+        170
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra resolve config populates arch and py.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_behavioral"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_trajectory_step_carries_the_model_that_produced_it",
+      "type": "function",
+      "name": "test_trajectory_step_carries_the_model_that_produced_it",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "lineRange": [
+        190,
+        204
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra trajectory step carries the model that produced it.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_behavioral"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_tier_c_drops_are_counted_and_reported",
+      "type": "function",
+      "name": "test_tier_c_drops_are_counted_and_reported",
+      "filePath": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "lineRange": [
+        215,
+        234
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra tier c drops are counted and reported.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_behavioral"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/telemetry/test_telemetry_config.py",
+      "type": "file",
+      "name": "test_telemetry_config.py",
+      "filePath": "tests/unit/telemetry/test_telemetry_config.py",
+      "summary": "Kiểm thử resolve_mode: opt-in mặc định, DNT ép off, giá trị lạ fail-closed và install id chỉ mint khi bật.",
+      "tags": [
+        "test",
+        "configuration",
+        "telemetry"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_config.py:test_enabled_requires_mode_and_endpoint",
+      "type": "function",
+      "name": "test_enabled_requires_mode_and_endpoint",
+      "filePath": "tests/unit/telemetry/test_telemetry_config.py",
+      "lineRange": [
+        32,
+        43
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra enabled requires mode and endpoint.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "type": "file",
+      "name": "test_telemetry_exporter.py",
+      "filePath": "tests/unit/telemetry/test_telemetry_exporter.py",
+      "summary": "Kiểm thử BatchExporter: user-agent, flush khi đầy batch, close flush phần dư, swallow lỗi offline và queue bounded drop-oldest.",
+      "tags": [
+        "test",
+        "exporter",
+        "telemetry"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_default_transport_sets_user_agent",
+      "type": "function",
+      "name": "test_default_transport_sets_user_agent",
+      "filePath": "tests/unit/telemetry/test_telemetry_exporter.py",
+      "lineRange": [
+        16,
+        36
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra default transport sets user agent.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_exporter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_flushes_when_batch_full",
+      "type": "function",
+      "name": "test_flushes_when_batch_full",
+      "filePath": "tests/unit/telemetry/test_telemetry_exporter.py",
+      "lineRange": [
+        39,
+        54
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra flushes when batch full.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_exporter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_close_flushes_remainder",
+      "type": "function",
+      "name": "test_close_flushes_remainder",
+      "filePath": "tests/unit/telemetry/test_telemetry_exporter.py",
+      "lineRange": [
+        57,
+        68
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra close flushes remainder.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_exporter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_offline_failure_is_swallowed",
+      "type": "function",
+      "name": "test_offline_failure_is_swallowed",
+      "filePath": "tests/unit/telemetry/test_telemetry_exporter.py",
+      "lineRange": [
+        71,
+        84
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra offline failure is swallowed.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_exporter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_bounded_queue_drops_oldest",
+      "type": "function",
+      "name": "test_bounded_queue_drops_oldest",
+      "filePath": "tests/unit/telemetry/test_telemetry_exporter.py",
+      "lineRange": [
+        87,
+        102
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra bounded queue drops oldest.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_exporter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "type": "file",
+      "name": "test_telemetry_redact.py",
+      "filePath": "tests/unit/telemetry/test_telemetry_redact.py",
+      "summary": "Kiểm thử Redactor: placeholder ổn định, mask target/credential, không mask nhầm prose, mã nguồn chấm và địa chỉ IPv6/giờ hệ thống.",
+      "tags": [
+        "test",
+        "redaction",
+        "security"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_redact.py:test_no_leak_on_realistic_blob",
+      "type": "function",
+      "name": "test_no_leak_on_realistic_blob",
+      "filePath": "tests/unit/telemetry/test_telemetry_redact.py",
+      "lineRange": [
+        24,
+        41
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra no leak on realistic blob.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_redact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_redact.py:test_add_known_closes_the_detector_gap",
+      "type": "function",
+      "name": "test_add_known_closes_the_detector_gap",
+      "filePath": "tests/unit/telemetry/test_telemetry_redact.py",
+      "lineRange": [
+        51,
+        60
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra add known closes the detector gap.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_redact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_redact.py:test_plain_credential_pairs_are_masked_value_only",
+      "type": "function",
+      "name": "test_plain_credential_pairs_are_masked_value_only",
+      "filePath": "tests/unit/telemetry/test_telemetry_redact.py",
+      "lineRange": [
+        78,
+        94
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra plain credential pairs are masked value only.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_redact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_redact.py:test_dotted_code_is_neither_masked_nor_dropped",
+      "type": "function",
+      "name": "test_dotted_code_is_neither_masked_nor_dropped",
+      "filePath": "tests/unit/telemetry/test_telemetry_redact.py",
+      "lineRange": [
+        104,
+        123
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra dotted code is neither masked nor dropped.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_redact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_redact.py:test_credentials_passed_as_command_line_flags_are_masked",
+      "type": "function",
+      "name": "test_credentials_passed_as_command_line_flags_are_masked",
+      "filePath": "tests/unit/telemetry/test_telemetry_redact.py",
+      "lineRange": [
+        126,
+        138
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra credentials passed as command line flags are masked.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_redact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_redact.py:test_ip_glued_to_a_label_is_masked",
+      "type": "function",
+      "name": "test_ip_glued_to_a_label_is_masked",
+      "filePath": "tests/unit/telemetry/test_telemetry_redact.py",
+      "lineRange": [
+        152,
+        165
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra ip glued to a label is masked.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_redact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_redact.py:test_wall_clock_time_is_not_an_ipv6_address",
+      "type": "function",
+      "name": "test_wall_clock_time_is_not_an_ipv6_address",
+      "filePath": "tests/unit/telemetry/test_telemetry_redact.py",
+      "lineRange": [
+        168,
+        183
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra wall clock time is not an ipv6 address.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_redact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "type": "file",
+      "name": "test_telemetry_sanitizer.py",
+      "filePath": "tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "summary": "Kiểm thử sanitizer: whitelist trường theo event type, bucket hóa output, passthrough MITRE/CVE và bắt rò rỉ Tier C.",
+      "tags": [
+        "test",
+        "sanitization",
+        "telemetry"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sanitizer.py:test_tool_call_keeps_only_tool",
+      "type": "function",
+      "name": "test_tool_call_keeps_only_tool",
+      "filePath": "tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "lineRange": [
+        10,
+        19
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra tool call keeps only tool.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sanitizer"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sanitizer.py:test_tool_result_normalizes_status_and_buckets_output",
+      "type": "function",
+      "name": "test_tool_result_normalizes_status_and_buckets_output",
+      "filePath": "tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "lineRange": [
+        22,
+        32
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra tool result normalizes status and buckets output.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sanitizer"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sanitizer.py:test_mitre_cwe_cve_passthrough_when_present",
+      "type": "function",
+      "name": "test_mitre_cwe_cve_passthrough_when_present",
+      "filePath": "tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "lineRange": [
+        52,
+        68
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra mitre cwe cve passthrough when present.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sanitizer"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sanitizer.py:test_clean_tier_a_passes",
+      "type": "function",
+      "name": "test_clean_tier_a_passes",
+      "filePath": "tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "lineRange": [
+        109,
+        118
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra clean tier a passes.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sanitizer"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "type": "file",
+      "name": "test_telemetry_sink.py",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "summary": "Kiểm thử TelemetrySink: no-op khi tắt, map và ship event, session id ổn định, fail-closed với Tier C và chế độ research-only.",
+      "tags": [
+        "test",
+        "sink",
+        "telemetry"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_enabled_sink_maps_and_ships",
+      "type": "function",
+      "name": "test_enabled_sink_maps_and_ships",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        29,
+        48
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra enabled sink maps and ships.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_research_sink_tags_tier_r",
+      "type": "function",
+      "name": "test_research_sink_tags_tier_r",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        51,
+        61
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra research sink tags tier r.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_session_id_stamped_on_every_event_type",
+      "type": "function",
+      "name": "test_session_id_stamped_on_every_event_type",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        64,
+        80
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra session id stamped on every event type.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_fail_closed_drops_tier_c_leak",
+      "type": "function",
+      "name": "test_fail_closed_drops_tier_c_leak",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        103,
+        112
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra fail closed drops tier c leak.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_record_step_masks_identifiers_and_forwards",
+      "type": "function",
+      "name": "test_record_step_masks_identifiers_and_forwards",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        125,
+        150
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra record step masks identifiers and forwards.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_record_step_stable_across_steps",
+      "type": "function",
+      "name": "test_record_step_stable_across_steps",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        153,
+        169
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra record step stable across steps.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_add_known_targets_masks_bare_host_in_step",
+      "type": "function",
+      "name": "test_add_known_targets_masks_bare_host_in_step",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        172,
+        187
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra add known targets masks bare host in step.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_preview_returns_exact_payload",
+      "type": "function",
+      "name": "test_preview_returns_exact_payload",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        197,
+        212
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra preview returns exact payload.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/telemetry/test_telemetry_sink.py:test_session_id_is_scoped_to_the_install",
+      "type": "function",
+      "name": "test_session_id_is_scoped_to_the_install",
+      "filePath": "tests/unit/telemetry/test_telemetry_sink.py",
+      "lineRange": [
+        215,
+        233
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra session id is scoped to the install.",
+      "tags": [
+        "test",
+        "unit",
+        "test_telemetry_sink"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:raptix/cli/telemetry.py",
+      "target": "function:raptix/cli/telemetry.py:_status",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/cli/telemetry.py",
+      "target": "function:raptix/cli/telemetry.py:_preview",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/cli/telemetry.py",
+      "target": "function:raptix/cli/telemetry.py:_enable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/cli/telemetry.py",
+      "target": "function:raptix/cli/telemetry.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/cli/telemetry.py",
+      "target": "function:raptix/cli/telemetry.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:resolve_mode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:resolve_mode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:is_opted_out",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:is_opted_out",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:set_opted_out",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:set_opted_out",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:persisted_mode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:persisted_mode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:set_persisted_mode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:set_persisted_mode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:install_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:install_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:resolve_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:resolve_config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:_arch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "function:raptix/telemetry/config.py:_detect_version",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "class:raptix/telemetry/config.py:TelemetryMode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "class:raptix/telemetry/config.py:TelemetryMode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "class:raptix/telemetry/config.py:TelemetryConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "class:raptix/telemetry/config.py:TelemetryConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/exporter.py",
+      "target": "function:raptix/telemetry/exporter.py:_http_post",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/exporter.py",
+      "target": "class:raptix/telemetry/exporter.py:BatchExporter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/exporter.py",
+      "target": "class:raptix/telemetry/exporter.py:BatchExporter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:init_otel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:init_otel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:start_engagement_span",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:start_engagement_span",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:start_agent_span",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:start_agent_span",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:start_tool_span",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:start_tool_span",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:start_llm_span",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:start_llm_span",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:_set_span_attribute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:record_llm_cost",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:record_llm_cost",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:record_llm_token_usage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:record_llm_token_usage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:set_current_objective_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:set_current_objective_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:reset_current_objective_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "function:raptix/telemetry/otel.py:reset_current_objective_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/redact.py",
+      "target": "function:raptix/telemetry/redact.py:_group_detector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/redact.py",
+      "target": "function:raptix/telemetry/redact.py:_builtin_detectors",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/redact.py",
+      "target": "class:raptix/telemetry/redact.py:Redactor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/redact.py",
+      "target": "class:raptix/telemetry/redact.py:Redactor",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sanitizer.py",
+      "target": "function:raptix/telemetry/sanitizer.py:slug",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sanitizer.py",
+      "target": "function:raptix/telemetry/sanitizer.py:slug",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sanitizer.py",
+      "target": "function:raptix/telemetry/sanitizer.py:event_to_tier_a",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sanitizer.py",
+      "target": "function:raptix/telemetry/sanitizer.py:event_to_tier_a",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sanitizer.py",
+      "target": "function:raptix/telemetry/sanitizer.py:scan_tier_c",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sanitizer.py",
+      "target": "function:raptix/telemetry/sanitizer.py:scan_tier_c",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:set_current_session",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:set_current_session",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:reset_current_session",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:reset_current_session",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:current_session",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:current_session",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:session_id_for",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:session_id_for",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:get_sink",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "function:raptix/telemetry/sink.py:get_sink",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "class:raptix/telemetry/sink.py:TelemetrySink",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "class:raptix/telemetry/sink.py:TelemetrySink",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_otel.py",
+      "target": "function:tests/unit/telemetry/test_otel.py:test_disabled_by_default_emits_no_spans",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_otel.py",
+      "target": "function:tests/unit/telemetry/test_otel.py:test_engagement_agent_tool_llm_hierarchy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_otel.py",
+      "target": "function:tests/unit/telemetry/test_otel.py:test_attributes_are_set",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_otel.py",
+      "target": "function:tests/unit/telemetry/test_otel.py:test_record_llm_cost_falls_back_when_llm_span_write_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_otel.py",
+      "target": "function:tests/unit/telemetry/test_otel.py:test_helpers_are_safe_when_otel_packages_missing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_record_finding_forwards_structured_classification",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_record_finding_available_at_basic_tier",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_record_phase_maps_to_opplan_update",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_envelope_includes_arch_and_py_when_set",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_envelope_omits_arch_and_py_when_unset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_resolve_config_populates_arch_and_py",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_trajectory_step_carries_the_model_that_produced_it",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_behavioral.py:test_tier_c_drops_are_counted_and_reported",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_config.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_config.py:test_enabled_requires_mode_and_endpoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_default_transport_sets_user_agent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_flushes_when_batch_full",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_close_flushes_remainder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_offline_failure_is_swallowed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_exporter.py:test_bounded_queue_drops_oldest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_redact.py:test_no_leak_on_realistic_blob",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_redact.py:test_add_known_closes_the_detector_gap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_redact.py:test_plain_credential_pairs_are_masked_value_only",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_redact.py:test_dotted_code_is_neither_masked_nor_dropped",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_redact.py:test_credentials_passed_as_command_line_flags_are_masked",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_redact.py:test_ip_glued_to_a_label_is_masked",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_redact.py:test_wall_clock_time_is_not_an_ipv6_address",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sanitizer.py:test_tool_call_keeps_only_tool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sanitizer.py:test_tool_result_normalizes_status_and_buckets_output",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sanitizer.py:test_mitre_cwe_cve_passthrough_when_present",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sanitizer.py:test_clean_tier_a_passes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_enabled_sink_maps_and_ships",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_research_sink_tags_tier_r",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_session_id_stamped_on_every_event_type",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_fail_closed_drops_tier_c_leak",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_record_step_masks_identifiers_and_forwards",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_record_step_stable_across_steps",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_add_known_targets_masks_bare_host_in_step",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_preview_returns_exact_payload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "function:tests/unit/telemetry/test_telemetry_sink.py:test_session_id_is_scoped_to_the_install",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/cli/telemetry.py",
+      "target": "file:raptix/telemetry/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/cli/telemetry.py",
+      "target": "file:raptix/telemetry/sink.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/telemetry/__init__.py",
+      "target": "file:raptix/telemetry/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/telemetry/__init__.py",
+      "target": "file:raptix/telemetry/otel.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/telemetry/__init__.py",
+      "target": "file:raptix/telemetry/sink.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "file:raptix/telemetry/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "file:raptix/telemetry/exporter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "file:raptix/telemetry/redact.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "file:raptix/telemetry/sanitizer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_otel.py",
+      "target": "file:raptix/telemetry/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_otel.py",
+      "target": "file:raptix/telemetry/otel.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "file:raptix/telemetry/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "target": "file:raptix/telemetry/sink.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_config.py",
+      "target": "file:raptix/telemetry/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "target": "file:raptix/telemetry/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "target": "file:raptix/telemetry/exporter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "target": "file:raptix/telemetry/redact.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "target": "file:raptix/telemetry/sanitizer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "file:raptix/telemetry/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "target": "file:raptix/telemetry/sink.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/telemetry/__init__.py",
+      "target": "file:tests/unit/telemetry/test_otel.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/otel.py",
+      "target": "file:tests/unit/telemetry/test_otel.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_behavioral.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_config.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/__init__.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/exporter.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_exporter.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/redact.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_redact.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/sanitizer.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/config.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/telemetry/sink.py",
+      "target": "file:tests/unit/telemetry/test_telemetry_sink.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "function:raptix/cli/telemetry.py:main",
+      "target": "function:raptix/telemetry/sink.py:get_sink",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:raptix/telemetry/sink.py:TelemetrySink",
+      "target": "class:raptix/telemetry/exporter.py:BatchExporter",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:raptix/telemetry/sink.py:TelemetrySink",
+      "target": "class:raptix/telemetry/redact.py:Redactor",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:raptix/telemetry/sink.py:TelemetrySink",
+      "target": "function:raptix/telemetry/config.py:resolve_config",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:raptix/telemetry/sink.py:TelemetrySink",
+      "target": "function:raptix/telemetry/sanitizer.py:scan_tier_c",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/telemetry/sink.py:get_sink",
+      "target": "function:raptix/telemetry/config.py:resolve_config",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

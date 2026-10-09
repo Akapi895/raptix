@@ -1,0 +1,2108 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 19,
+  "filesSkipped": [
+    ".dockerignore"
+  ],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 19,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 19
+    }
+  },
+  "results": [
+    {
+      "path": ".env.example",
+      "language": "config",
+      "fileCategory": "config",
+      "totalLines": 406,
+      "nonEmptyLines": 368,
+      "definitions": [
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 11,
+          "endLine": 11
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 12,
+          "endLine": 12
+        },
+        {
+          "name": "GEMINI_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 13,
+          "endLine": 13
+        },
+        {
+          "name": "MINIMAX_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 14,
+          "endLine": 14
+        },
+        {
+          "name": "OPENROUTER_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 15,
+          "endLine": 15
+        },
+        {
+          "name": "NVIDIA_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 16,
+          "endLine": 16
+        },
+        {
+          "name": "DEEPSEEK_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 17,
+          "endLine": 17
+        },
+        {
+          "name": "XAI_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 18,
+          "endLine": 18
+        },
+        {
+          "name": "MISTRAL_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 19,
+          "endLine": 19
+        },
+        {
+          "name": "VOYAGE_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 23,
+          "endLine": 23
+        },
+        {
+          "name": "GROQ_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 29,
+          "endLine": 29
+        },
+        {
+          "name": "TOGETHER_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 30,
+          "endLine": 30
+        },
+        {
+          "name": "FIREWORKS_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 31,
+          "endLine": 31
+        },
+        {
+          "name": "COHERE_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 32,
+          "endLine": 32
+        },
+        {
+          "name": "MOONSHOT_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 33,
+          "endLine": 33
+        },
+        {
+          "name": "KIMI_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 36,
+          "endLine": 36
+        },
+        {
+          "name": "ZAI_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 37,
+          "endLine": 37
+        },
+        {
+          "name": "DASHSCOPE_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 38,
+          "endLine": 38
+        },
+        {
+          "name": "GITHUB_TOKEN",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 42,
+          "endLine": 42
+        },
+        {
+          "name": "OPENCODE_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 49,
+          "endLine": 49
+        },
+        {
+          "name": "VERCEL_AI_GATEWAY_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 52,
+          "endLine": 52
+        },
+        {
+          "name": "HF_TOKEN",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 53,
+          "endLine": 53
+        },
+        {
+          "name": "VENICE_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 54,
+          "endLine": 54
+        },
+        {
+          "name": "NANOGPT_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 55,
+          "endLine": 55
+        },
+        {
+          "name": "SYNTHETIC_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 56,
+          "endLine": 56
+        },
+        {
+          "name": "ZENMUX_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 57,
+          "endLine": 57
+        },
+        {
+          "name": "QIANFAN_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 58,
+          "endLine": 58
+        },
+        {
+          "name": "CLOUDFLARE_AI_GATEWAY_API_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 62,
+          "endLine": 62
+        },
+        {
+          "name": "LITELLM_MASTER_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 175,
+          "endLine": 175
+        },
+        {
+          "name": "LITELLM_SALT_KEY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 176,
+          "endLine": 176
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 179,
+          "endLine": 179
+        },
+        {
+          "name": "NEO4J_PASSWORD",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 189,
+          "endLine": 189
+        },
+        {
+          "name": "RAPTIX_MODEL_PROFILE",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 202,
+          "endLine": 202
+        },
+        {
+          "name": "RAPTIX_AUTH_PRIORITY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 219,
+          "endLine": 219
+        },
+        {
+          "name": "RAPTIX_AUTH_CLAUDE_CODE",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 225,
+          "endLine": 225
+        },
+        {
+          "name": "RAPTIX_AUTH_CHATGPT",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 233,
+          "endLine": 233
+        },
+        {
+          "name": "CHATGPT_SESSION_TOKEN",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 240,
+          "endLine": 240
+        },
+        {
+          "name": "BENCHMARK_MODE",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 273,
+          "endLine": 273
+        },
+        {
+          "name": "LANGSMITH_TRACING",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 283,
+          "endLine": 283
+        },
+        {
+          "name": "LANGSMITH_PROJECT",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 285,
+          "endLine": 285
+        },
+        {
+          "name": "RAPTIX_STACK_NAME",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 349,
+          "endLine": 349
+        },
+        {
+          "name": "RAPTIX_LANGUAGE",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 384,
+          "endLine": 384
+        },
+        {
+          "name": "RAPTIX_LLM__TIMEOUT",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 400,
+          "endLine": 400
+        },
+        {
+          "name": "RAPTIX_TELEMETRY",
+          "kind": "variable",
+          "fields": [],
+          "startLine": 406,
+          "endLine": 406
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 44
+      }
+    },
+    {
+      "path": ".golangci.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 103,
+      "nonEmptyLines": 97,
+      "sections": [
+        {
+          "heading": "version",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "run",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "linters",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "issues",
+          "level": 1,
+          "line": 95
+        },
+        {
+          "heading": "formatters",
+          "level": 1,
+          "line": 99
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": ".hadolint.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 36,
+      "nonEmptyLines": 36,
+      "sections": [
+        {
+          "heading": "failure-threshold",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "override",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "ignored",
+          "level": 1,
+          "line": 33
+        },
+        {
+          "heading": "trustedRegistries",
+          "level": 1,
+          "line": 34
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".markdownlint.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 38,
+      "nonEmptyLines": 38,
+      "sections": [
+        {
+          "heading": "default",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "MD013",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "MD024",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "MD033",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "MD041",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "MD046",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "MD036",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "MD034",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "MD040",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "MD031",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "MD032",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "MD060",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "MD007",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "MD026",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "MD028",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "MD029",
+          "level": 1,
+          "line": 17
+        },
+        {
+          "heading": "MD038",
+          "level": 1,
+          "line": 18
+        },
+        {
+          "heading": "MD049",
+          "level": 1,
+          "line": 19
+        },
+        {
+          "heading": "MD050",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "MD055",
+          "level": 1,
+          "line": 21
+        },
+        {
+          "heading": "MD056",
+          "level": 1,
+          "line": 22
+        },
+        {
+          "heading": "MD058",
+          "level": 1,
+          "line": 23
+        },
+        {
+          "heading": "MD022",
+          "level": 1,
+          "line": 24
+        },
+        {
+          "heading": "MD004",
+          "level": 1,
+          "line": 25
+        },
+        {
+          "heading": "MD009",
+          "level": 1,
+          "line": 26
+        },
+        {
+          "heading": "MD010",
+          "level": 1,
+          "line": 27
+        },
+        {
+          "heading": "MD012",
+          "level": 1,
+          "line": 28
+        },
+        {
+          "heading": "MD014",
+          "level": 1,
+          "line": 29
+        },
+        {
+          "heading": "MD019",
+          "level": 1,
+          "line": 30
+        },
+        {
+          "heading": "MD020",
+          "level": 1,
+          "line": 31
+        },
+        {
+          "heading": "MD021",
+          "level": 1,
+          "line": 32
+        },
+        {
+          "heading": "MD023",
+          "level": 1,
+          "line": 33
+        },
+        {
+          "heading": "MD018",
+          "level": 1,
+          "line": 34
+        },
+        {
+          "heading": "MD047",
+          "level": 1,
+          "line": 35
+        },
+        {
+          "heading": "MD059",
+          "level": 1,
+          "line": 36
+        },
+        {
+          "heading": "MD025",
+          "level": 1,
+          "line": 37
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 36
+      }
+    },
+    {
+      "path": ".migrations.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "sections": [
+        {
+          "heading": "telemetry-policy-2026-06",
+          "level": 1,
+          "line": 2
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": ".pre-commit-config.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 157,
+      "nonEmptyLines": 148,
+      "sections": [
+        {
+          "heading": "minimum_pre_commit_version",
+          "level": 1,
+          "line": 17
+        },
+        {
+          "heading": "default_stages",
+          "level": 1,
+          "line": 18
+        },
+        {
+          "heading": "repos",
+          "level": 1,
+          "line": 34
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": ".typos.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 176,
+      "nonEmptyLines": 172,
+      "sections": [
+        {
+          "heading": "default",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "default.extend-words",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "default.extend-identifiers",
+          "level": 2,
+          "line": 126
+        },
+        {
+          "heading": "files",
+          "level": 1,
+          "line": 142
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".yamllint.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 22,
+      "nonEmptyLines": 22,
+      "sections": [
+        {
+          "heading": "extends",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "rules",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "ignore",
+          "level": 1,
+          "line": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "AGENTS.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 53,
+      "nonEmptyLines": 45,
+      "sections": [
+        {
+          "heading": "Raptix agent notes",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Where changes belong",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Run from repo root",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Active initiative: Incalmo-lessons (safe subset)",
+          "level": 2,
+          "line": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "ARCHITECTURE_AUDIT.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 1061,
+      "nonEmptyLines": 743,
+      "sections": [
+        {
+          "heading": "Mục lục",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "1. Phạm vi và mức độ bằng chứng",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Runtime evidence đáng chú ý",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "2. Phase routing và phase boundary — A, C, D",
+          "level": 2,
+          "line": 77
+        },
+        {
+          "heading": "2.1 Ai thực sự điều khiển phase?",
+          "level": 3,
+          "line": 79
+        },
+        {
+          "heading": "2.2 Mapping sang ba vùng của audit",
+          "level": 3,
+          "line": 103
+        },
+        {
+          "heading": "2.3 Foothold artifact hiện có đến đâu?",
+          "level": 3,
+          "line": 117
+        },
+        {
+          "heading": "2.4 C2/session boundary",
+          "level": 3,
+          "line": 177
+        },
+        {
+          "heading": "3. Initial Foothold architecture — B, R",
+          "level": 2,
+          "line": 215
+        },
+        {
+          "heading": "3.1 Objective contract và autonomy",
+          "level": 3,
+          "line": 217
+        },
+        {
+          "heading": "3.2 Contract inconsistency có evidence mạnh hơn \"bash quá rộng\"",
+          "level": 3,
+          "line": 259
+        },
+        {
+          "heading": "3.3 Tool surface của exploitation agents",
+          "level": 3,
+          "line": 281
+        },
+        {
+          "heading": "4. Propagation loop, planner input và graph load-bearing — E, F, G, H, I, J, S",
+          "level": 2,
+          "line": 307
+        },
+        {
+          "heading": "4.1 Loop thực tế",
+          "level": 3,
+          "line": 309
+        },
+        {
+          "heading": "4.2 Context thực tế theo phase",
+          "level": 3,
+          "line": 338
+        },
+        {
+          "heading": "4.3 Lỗi freshness được xác nhận",
+          "level": 3,
+          "line": 378
+        },
+        {
+          "heading": "4.4 Capability representation: có vocabulary, chưa thành planning contract",
+          "level": 3,
+          "line": 402
+        },
+        {
+          "heading": "4.5 Attack graph có load-bearing không?",
+          "level": 3,
+          "line": 425
+        },
+        {
+          "heading": "4.6 Planner → worker và worker → planner contracts",
+          "level": 3,
+          "line": 486
+        },
+        {
+          "heading": "5. StateDelta, fact/hypothesis và event history — K, L, M",
+          "level": 2,
+          "line": 531
+        },
+        {
+          "heading": "5.1 Các persistence paths chính",
+          "level": 3,
+          "line": 533
+        },
+        {
+          "heading": "5.2 Fact vs hypothesis",
+          "level": 3,
+          "line": 576
+        },
+        {
+          "heading": "5.3 Current state và history chưa nối đủ",
+          "level": 3,
+          "line": 615
+        },
+        {
+          "heading": "6. Verification, failure taxonomy và retry — N, O, P",
+          "level": 2,
+          "line": 629
+        },
+        {
+          "heading": "6.1 Ai xác nhận các critical transitions?",
+          "level": 3,
+          "line": 631
+        },
+        {
+          "heading": "6.2 Failure taxonomy hiện có",
+          "level": 3,
+          "line": 650
+        },
+        {
+          "heading": "6.3 Retry responsibility",
+          "level": 3,
+          "line": 674
+        },
+        {
+          "heading": "7. Multi-agent boundaries — Q",
+          "level": 2,
+          "line": 690
+        },
+        {
+          "heading": "8. Observability — T",
+          "level": 2,
+          "line": 741
+        },
+        {
+          "heading": "9. Bảng bottleneck ưu tiên",
+          "level": 2,
+          "line": 782
+        },
+        {
+          "heading": "10. TOP 5 và experiment nhỏ nhất",
+          "level": 2,
+          "line": 800
+        },
+        {
+          "heading": "1. Failure/termination không trở thành control signal",
+          "level": 3,
+          "line": 802
+        },
+        {
+          "heading": "2. KG freshness sai trong propagation loop",
+          "level": 3,
+          "line": 824
+        },
+        {
+          "heading": "3. Foothold boundary dựa completion thay verified usable access",
+          "level": 3,
+          "line": 852
+        },
+        {
+          "heading": "4. Planner reason trên narrative thay operational state",
+          "level": 3,
+          "line": 880
+        },
+        {
+          "heading": "5. Initial Foothold contract không nhất quán",
+          "level": 3,
+          "line": 903
+        },
+        {
+          "heading": "11. Trả lời năm câu cuối",
+          "level": 2,
+          "line": 928
+        },
+        {
+          "heading": "Phụ lục — nội dung kèm theo trong file gốc",
+          "level": 2,
+          "line": 987
+        },
+        {
+          "heading": "Objective",
+          "level": 3,
+          "line": 997
+        },
+        {
+          "heading": "Important Details",
+          "level": 3,
+          "line": 1001
+        },
+        {
+          "heading": "Work State",
+          "level": 3,
+          "line": 1017
+        },
+        {
+          "heading": "Completed",
+          "level": 4,
+          "line": 1019
+        },
+        {
+          "heading": "Active",
+          "level": 4,
+          "line": 1026
+        },
+        {
+          "heading": "Blocked",
+          "level": 4,
+          "line": 1030
+        },
+        {
+          "heading": "Next Move",
+          "level": 3,
+          "line": 1034
+        },
+        {
+          "heading": "Relevant Files",
+          "level": 3,
+          "line": 1039
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 46
+      }
+    },
+    {
+      "path": "ARCHITECTURE_AUDIT_FIX.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 557,
+      "nonEmptyLines": 358,
+      "sections": [
+        {
+          "heading": "Đánh giá hướng cải tiến cho repo raptix",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prompt:",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Response:",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "1. Vấn đề lớn nhất: Raptix đang dùng LLM như cả planner lẫn control-plane interpreter",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "2. 204 lần `ls` không phải lỗi “model ngu”; nó là symptom cực giá trị",
+          "level": 2,
+          "line": 79
+        },
+        {
+          "heading": "3. Foothold boundary có lẽ là architectural gap quan trọng nhất cho full-flow",
+          "level": 2,
+          "line": 93
+        },
+        {
+          "heading": "4. KG có hai lỗi khác nhau, và tuyệt đối không nên gộp chúng",
+          "level": 2,
+          "line": 113
+        },
+        {
+          "heading": "5. “Có attack graph” không đồng nghĩa “planner đang plan bằng attack graph”",
+          "level": 2,
+          "line": 127
+        },
+        {
+          "heading": "6. Planner → worker contract hiện quá yếu so với mức độ autonomy của worker",
+          "level": 2,
+          "line": 141
+        },
+        {
+          "heading": "7. Contract inconsistency là bug thật, không phải vấn đề prompt “chưa đẹp”",
+          "level": 2,
+          "line": 151
+        },
+        {
+          "heading": "8. Fact/hypothesis contamination là correctness problem tiềm ẩn, dù runtime impact chưa đo",
+          "level": 2,
+          "line": 161
+        },
+        {
+          "heading": "9. Audit đúng khi KHÔNG flag parent-history injection",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "10. Observability không chỉ thiếu tiện ích; nó đang giới hạn khả năng biết mình đã sửa đúng thứ gì",
+          "level": 2,
+          "line": 187
+        },
+        {
+          "heading": "11. Đánh giá lại toàn bộ 11 bottleneck",
+          "level": 2,
+          "line": 199
+        },
+        {
+          "heading": "12. Mình sẽ diễn đạt TOP 5 theo cách hơi khác: chúng là năm điểm đứt của một pipeline duy nhất",
+          "level": 2,
+          "line": 219
+        },
+        {
+          "heading": "13. Thứ tự experiment trong báo cáo là hợp lý, và mình chưa thấy lý do để nhảy thẳng tới redesign",
+          "level": 2,
+          "line": 244
+        },
+        {
+          "heading": "Kết luận sau lần đọc đầy đủ",
+          "level": 2,
+          "line": 258
+        },
+        {
+          "heading": "Prompt:",
+          "level": 2,
+          "line": 283
+        },
+        {
+          "heading": "Response:",
+          "level": 2,
+          "line": 288
+        },
+        {
+          "heading": "0. Trước tiên: đóng băng một baseline rất nhỏ",
+          "level": 3,
+          "line": 316
+        },
+        {
+          "heading": "1. Sửa failure/terminal trước",
+          "level": 2,
+          "line": 330
+        },
+        {
+          "heading": "2. Sửa KG freshness độc lập",
+          "level": 2,
+          "line": 367
+        },
+        {
+          "heading": "3. Sau đó sửa contract inconsistency ở Initial Foothold",
+          "level": 2,
+          "line": 395
+        },
+        {
+          "heading": "4. Sau đó mới thêm verified foothold boundary",
+          "level": 2,
+          "line": 432
+        },
+        {
+          "heading": "5. Structured operational state làm cuối cùng, ban đầu ở shadow mode",
+          "level": 2,
+          "line": 476
+        },
+        {
+          "heading": "Còn “exploit theo chiều ngang” ở Initial Foothold thì sao?",
+          "level": 1,
+          "line": 515
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 26
+      }
+    },
+    {
+      "path": "CHANGELOG.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 894,
+      "nonEmptyLines": 795,
+      "sections": [
+        {
+          "heading": "Changelog",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "[1.1.47] — 2026-09-26",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 11
+        },
+        {
+          "heading": "[1.1.45] — 2026-09-24",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Added",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "[1.1.44] — 2026-09-19",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Added",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Security and operational changes",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "[1.1.40] — 2026-07-27",
+          "level": 2,
+          "line": 90
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 92
+        },
+        {
+          "heading": "[1.1.39] — 2026-07-27",
+          "level": 2,
+          "line": 116
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "Documentation",
+          "level": 3,
+          "line": 157
+        },
+        {
+          "heading": "[1.1.8] — Unreleased",
+          "level": 2,
+          "line": 166
+        },
+        {
+          "heading": "Added",
+          "level": 3,
+          "line": 174
+        },
+        {
+          "heading": "Changed",
+          "level": 3,
+          "line": 259
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 272
+        },
+        {
+          "heading": "[1.1.6] — 2026-06-01",
+          "level": 2,
+          "line": 331
+        },
+        {
+          "heading": "[1.1.5] — 2026-06-01",
+          "level": 2,
+          "line": 342
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 347
+        },
+        {
+          "heading": "Changed",
+          "level": 3,
+          "line": 360
+        },
+        {
+          "heading": "[1.1.4] — 2026-05-30",
+          "level": 2,
+          "line": 368
+        },
+        {
+          "heading": "Added",
+          "level": 3,
+          "line": 379
+        },
+        {
+          "heading": "Changed",
+          "level": 3,
+          "line": 440
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 457
+        },
+        {
+          "heading": "Security",
+          "level": 3,
+          "line": 495
+        },
+        {
+          "heading": "Notes",
+          "level": 3,
+          "line": 512
+        },
+        {
+          "heading": "[1.1.3] — 2026-05-27",
+          "level": 2,
+          "line": 523
+        },
+        {
+          "heading": "Added",
+          "level": 3,
+          "line": 533
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 569
+        },
+        {
+          "heading": "Changed",
+          "level": 3,
+          "line": 624
+        },
+        {
+          "heading": "Dev infrastructure",
+          "level": 3,
+          "line": 639
+        },
+        {
+          "heading": "[1.1.2-localfixes.1] — 2026-05-25 (fork — mohamedq9900/Decepticon)",
+          "level": 2,
+          "line": 654
+        },
+        {
+          "heading": "Fixed",
+          "level": 3,
+          "line": 661
+        },
+        {
+          "heading": "Changed",
+          "level": 3,
+          "line": 712
+        },
+        {
+          "heading": "Compatibility",
+          "level": 3,
+          "line": 734
+        },
+        {
+          "heading": "Tested against",
+          "level": 3,
+          "line": 741
+        },
+        {
+          "heading": "[1.1.2] — 2026-05-23",
+          "level": 2,
+          "line": 748
+        },
+        {
+          "heading": "Added — three-package split (core / framework / sdk)",
+          "level": 3,
+          "line": 757
+        },
+        {
+          "heading": "Added — plugin extension primitives (closes 9 of 12 spec §8 gaps)",
+          "level": 3,
+          "line": 790
+        },
+        {
+          "heading": "Added — author tooling + docs",
+          "level": 3,
+          "line": 819
+        },
+        {
+          "heading": "Changed",
+          "level": 3,
+          "line": 834
+        },
+        {
+          "heading": "Deprecated",
+          "level": 3,
+          "line": 852
+        },
+        {
+          "heading": "Notes",
+          "level": 3,
+          "line": 869
+        },
+        {
+          "heading": "Deferred to subsequent releases",
+          "level": 3,
+          "line": 881
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 46
+      }
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 111,
+      "nonEmptyLines": 79,
+      "sections": [
+        {
+          "heading": "Contributor Covenant Code of Conduct",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Our Pledge",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Our Standards",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "Enforcement Responsibilities",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Scope",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "Enforcement",
+          "level": 2,
+          "line": 53
+        },
+        {
+          "heading": "Enforcement Guidelines",
+          "level": 2,
+          "line": 59
+        },
+        {
+          "heading": "1. Correction",
+          "level": 3,
+          "line": 64
+        },
+        {
+          "heading": "2. Warning",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "3. Temporary Ban",
+          "level": 3,
+          "line": 85
+        },
+        {
+          "heading": "4. Permanent Ban",
+          "level": 3,
+          "line": 96
+        },
+        {
+          "heading": "Attribution",
+          "level": 2,
+          "line": 105
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 127,
+      "nonEmptyLines": 93,
+      "sections": [
+        {
+          "heading": "Contributing to Raptix",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Getting Started",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 3,
+          "line": 7
+        },
+        {
+          "heading": "Development Setup",
+          "level": 3,
+          "line": 14
+        },
+        {
+          "heading": "Running Tests & Linting",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "How to Contribute",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Reporting Bugs",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "Suggesting Features",
+          "level": 3,
+          "line": 48
+        },
+        {
+          "heading": "Submitting Pull Requests",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "Code Conventions",
+          "level": 2,
+          "line": 65
+        },
+        {
+          "heading": "Project Structure",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "Authoring Skills",
+          "level": 2,
+          "line": 86
+        },
+        {
+          "heading": "Working with AI assistants",
+          "level": 2,
+          "line": 98
+        },
+        {
+          "heading": "Architecture decisions",
+          "level": 2,
+          "line": 108
+        },
+        {
+          "heading": "Releases",
+          "level": 2,
+          "line": 117
+        },
+        {
+          "heading": "Security",
+          "level": 2,
+          "line": 121
+        },
+        {
+          "heading": "License",
+          "level": 2,
+          "line": 125
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 17
+      }
+    },
+    {
+      "path": "CONTRIBUTING_AGENT.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 261,
+      "nonEmptyLines": 225,
+      "sections": [
+        {
+          "heading": "Charter for AI-Assisted Contributions",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. The hard rules",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "2. The self-review checklist",
+          "level": 2,
+          "line": 122
+        },
+        {
+          "heading": "2.1 Intent",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "2.2 Scope and shape",
+          "level": 3,
+          "line": 142
+        },
+        {
+          "heading": "2.3 Blast-radius classification",
+          "level": 3,
+          "line": 155
+        },
+        {
+          "heading": "2.4 Verification",
+          "level": 3,
+          "line": 188
+        },
+        {
+          "heading": "2.5 Honesty",
+          "level": 3,
+          "line": 207
+        },
+        {
+          "heading": "3. Patterns AI assistants get wrong here",
+          "level": 2,
+          "line": 219
+        },
+        {
+          "heading": "4. When in doubt",
+          "level": 2,
+          "line": 236
+        },
+        {
+          "heading": "5. Why this exists",
+          "level": 2,
+          "line": 250
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "Makefile",
+      "language": "makefile",
+      "fileCategory": "infra",
+      "totalLines": 429,
+      "nonEmptyLines": 375,
+      "steps": [
+        {
+          "name": "help",
+          "startLine": 74,
+          "endLine": 115
+        },
+        {
+          "name": "dogfood",
+          "startLine": 123,
+          "endLine": 139
+        },
+        {
+          "name": "launcher",
+          "startLine": 141,
+          "endLine": 145
+        },
+        {
+          "name": "smoke",
+          "startLine": 154,
+          "endLine": 176
+        },
+        {
+          "name": "dev",
+          "startLine": 180,
+          "endLine": 182
+        },
+        {
+          "name": "cli-dev",
+          "startLine": 191,
+          "endLine": 198
+        },
+        {
+          "name": "webraptix-dev",
+          "startLine": 201,
+          "endLine": 206
+        },
+        {
+          "name": "infra",
+          "startLine": 211,
+          "endLine": 214
+        },
+        {
+          "name": "test",
+          "startLine": 217,
+          "endLine": 219
+        },
+        {
+          "name": "test-local",
+          "startLine": 220,
+          "endLine": 222
+        },
+        {
+          "name": "lint",
+          "startLine": 223,
+          "endLine": 227
+        },
+        {
+          "name": "lint-fix",
+          "startLine": 228,
+          "endLine": 231
+        },
+        {
+          "name": "ci-lint",
+          "startLine": 238,
+          "endLine": 246
+        },
+        {
+          "name": "ci-test",
+          "startLine": 248,
+          "endLine": 250
+        },
+        {
+          "name": "audit-skills",
+          "startLine": 253,
+          "endLine": 255
+        },
+        {
+          "name": "audit-skills-strict",
+          "startLine": 258,
+          "endLine": 260
+        },
+        {
+          "name": "bootstrap-skill-graph",
+          "startLine": 264,
+          "endLine": 266
+        },
+        {
+          "name": "build-skill-graph",
+          "startLine": 270,
+          "endLine": 272
+        },
+        {
+          "name": "check-skill-graph",
+          "startLine": 276,
+          "endLine": 278
+        },
+        {
+          "name": "ci-test-coverage",
+          "startLine": 280,
+          "endLine": 282
+        },
+        {
+          "name": "ci-test-coverage-report",
+          "startLine": 290,
+          "endLine": 292
+        },
+        {
+          "name": "quality-cli",
+          "startLine": 293,
+          "endLine": 300
+        },
+        {
+          "name": "quality",
+          "startLine": 303,
+          "endLine": 306
+        },
+        {
+          "name": "quality-strict",
+          "startLine": 309,
+          "endLine": 315
+        },
+        {
+          "name": "webraptix-quality",
+          "startLine": 325,
+          "endLine": 334
+        },
+        {
+          "name": "webraptix-build",
+          "startLine": 335,
+          "endLine": 337
+        },
+        {
+          "name": "webraptix-db-ensure",
+          "startLine": 338,
+          "endLine": 348
+        },
+        {
+          "name": "webraptix-up",
+          "startLine": 349,
+          "endLine": 351
+        },
+        {
+          "name": "webraptix-down",
+          "startLine": 352,
+          "endLine": 354
+        },
+        {
+          "name": "webraptix-health",
+          "startLine": 357,
+          "endLine": 369
+        },
+        {
+          "name": "status",
+          "startLine": 372,
+          "endLine": 374
+        },
+        {
+          "name": "logs",
+          "startLine": 376,
+          "endLine": 378
+        },
+        {
+          "name": "health",
+          "startLine": 380,
+          "endLine": 390
+        },
+        {
+          "name": "clean",
+          "startLine": 394,
+          "endLine": 399
+        },
+        {
+          "name": "node-install",
+          "startLine": 402,
+          "endLine": 404
+        },
+        {
+          "name": "recreate-litellm",
+          "startLine": 415,
+          "endLine": 420
+        },
+        {
+          "name": "benchmark",
+          "startLine": 422,
+          "endLine": 424
+        },
+        {
+          "name": "cve-bench-dry",
+          "startLine": 427,
+          "endLine": 430
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "stepCount": 38
+      }
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 244,
+      "nonEmptyLines": 161,
+      "sections": [
+        {
+          "heading": "☁️ Don't want to self-host? **Raptix is live in the cloud.**",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "Install",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "Use as a library (pip)",
+          "level": 3,
+          "line": 89
+        },
+        {
+          "heading": "💖 Support Raptix",
+          "level": 2,
+          "line": 102
+        },
+        {
+          "heading": "Benchmark",
+          "level": 2,
+          "line": 110
+        },
+        {
+          "heading": "What is Raptix?",
+          "level": 2,
+          "line": 128
+        },
+        {
+          "heading": "Why Raptix?",
+          "level": 2,
+          "line": 140
+        },
+        {
+          "heading": "Architecture",
+          "level": 2,
+          "line": 152
+        },
+        {
+          "heading": "Agents",
+          "level": 2,
+          "line": 164
+        },
+        {
+          "heading": "Models & Providers",
+          "level": 2,
+          "line": 174
+        },
+        {
+          "heading": "Documentation",
+          "level": 2,
+          "line": 191
+        },
+        {
+          "heading": "Contributing",
+          "level": 2,
+          "line": 211
+        },
+        {
+          "heading": "Community",
+          "level": 2,
+          "line": 224
+        },
+        {
+          "heading": "Disclaimer",
+          "level": 2,
+          "line": 230
+        },
+        {
+          "heading": "License",
+          "level": 2,
+          "line": 236
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "README_KO.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 228,
+      "nonEmptyLines": 149,
+      "sections": [
+        {
+          "heading": "☁️ 직접 설치하기 번거롭다면? **Raptix이 클라우드에서 라이브로 돌아갑니다.**",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "설치",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "라이브러리로 사용 (pip)",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "💖 Raptix 후원",
+          "level": 2,
+          "line": 86
+        },
+        {
+          "heading": "벤치마크",
+          "level": 2,
+          "line": 94
+        },
+        {
+          "heading": "Raptix이란?",
+          "level": 2,
+          "line": 112
+        },
+        {
+          "heading": "왜 Raptix인가?",
+          "level": 2,
+          "line": 124
+        },
+        {
+          "heading": "아키텍처",
+          "level": 2,
+          "line": 136
+        },
+        {
+          "heading": "에이전트",
+          "level": 2,
+          "line": 148
+        },
+        {
+          "heading": "모델 & 프로바이더",
+          "level": 2,
+          "line": 158
+        },
+        {
+          "heading": "문서",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "기여하기",
+          "level": 2,
+          "line": 195
+        },
+        {
+          "heading": "커뮤니티",
+          "level": 2,
+          "line": 208
+        },
+        {
+          "heading": "면책조항",
+          "level": 2,
+          "line": 214
+        },
+        {
+          "heading": "라이선스",
+          "level": 2,
+          "line": 220
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "RELEASE.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 124,
+      "nonEmptyLines": 95,
+      "sections": [
+        {
+          "heading": "Release Process",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Versioning",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Cutting a release",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "Automated releases (auto-tag on merge)",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "What the release workflow does",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Digest pinning",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "Pre-releases",
+          "level": 2,
+          "line": 102
+        },
+        {
+          "heading": "Recovering a failed release",
+          "level": 2,
+          "line": 108
+        },
+        {
+          "heading": "Submodules",
+          "level": 2,
+          "line": 115
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    }
+  ]
+}

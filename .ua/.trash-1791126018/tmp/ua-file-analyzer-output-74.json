@@ -1,0 +1,127 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 3
+    }
+  },
+  "results": [
+    {
+      "path": "clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 28,
+      "nonEmptyLines": 21,
+      "sections": [
+        {
+          "heading": "Decision 0001 — Single-user scope và canonical screens",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Bối cảnh",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Quyết định",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "Hệ quả",
+          "level": 2,
+          "line": 24
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/decisions/0002-brand-token.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 20,
+      "nonEmptyLines": 13,
+      "sections": [
+        {
+          "heading": "Decision 0002 — Brand token",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Bối cảnh",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Quyết định",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "Hệ quả",
+          "level": 2,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/decisions/0004-fresh-thread-context-bootstrap.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 45,
+      "nonEmptyLines": 36,
+      "sections": [
+        {
+          "heading": "Fresh owned thread context bootstrap",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Observed failure",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Threat model / guard preservation",
+          "level": 2,
+          "line": 30
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,2809 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 9,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 9,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/tools/cloud/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 44,
+      "nonEmptyLines": 38,
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/cloud/aws.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 269,
+      "nonEmptyLines": 241,
+      "functions": [
+        {
+          "name": "_as_list",
+          "startLine": 111,
+          "endLine": 116,
+          "params": [
+            "val"
+          ]
+        },
+        {
+          "name": "analyze_iam_policy",
+          "startLine": 119,
+          "endLine": 211,
+          "params": [
+            "policy"
+          ]
+        },
+        {
+          "name": "scan_bucket_names",
+          "startLine": 234,
+          "endLine": 242,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "scan_user_data",
+          "startLine": 258,
+          "endLine": 269,
+          "params": [
+            "text"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "IAMFinding",
+          "startLine": 27,
+          "endLine": 43,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "id",
+            "severity",
+            "title",
+            "detail",
+            "action",
+            "resource"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "IAMFinding",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "_as_list",
+          "line": 111,
+          "isDefault": false
+        },
+        {
+          "name": "analyze_iam_policy",
+          "line": 119,
+          "isDefault": false
+        },
+        {
+          "name": "scan_bucket_names",
+          "line": 234,
+          "isDefault": false
+        },
+        {
+          "name": "scan_user_data",
+          "line": 258,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_as_list",
+          "callee": "isinstance",
+          "lineNumber": 114
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "isinstance",
+          "lineNumber": 121
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "json.loads",
+          "lineNumber": 123
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "IAMFinding",
+          "lineNumber": 126
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "_as_list",
+          "lineNumber": 133
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "data.get",
+          "lineNumber": 133
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "(stmt.get(\"Effect\") or \"Allow\").lower",
+          "lineNumber": 134
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "stmt.get",
+          "lineNumber": 134
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "_as_list",
+          "lineNumber": 137
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "stmt.get",
+          "lineNumber": 137
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "any",
+          "lineNumber": 138
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "str",
+          "lineNumber": 138
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "_as_list",
+          "lineNumber": 144
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "\", \".join",
+          "lineNumber": 148
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "str",
+          "lineNumber": 148
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "_as_list",
+          "lineNumber": 148
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "findings.append",
+          "lineNumber": 149
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "IAMFinding",
+          "lineNumber": 150
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "str(action).lower",
+          "lineNumber": 167
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "str",
+          "lineNumber": 167
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "_as_list",
+          "lineNumber": 168
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "stmt.get",
+          "lineNumber": 168
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "str",
+          "lineNumber": 169
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "findings.append",
+          "lineNumber": 172
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "IAMFinding",
+          "lineNumber": 173
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "act.endswith",
+          "lineNumber": 184
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "findings.append",
+          "lineNumber": 186
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "IAMFinding",
+          "lineNumber": 187
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "act.split",
+          "lineNumber": 191
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "_PRIVESC_PRIMITIVES.get",
+          "lineNumber": 197
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "act.strip",
+          "lineNumber": 197
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "findings.append",
+          "lineNumber": 201
+        },
+        {
+          "caller": "analyze_iam_policy",
+          "callee": "IAMFinding",
+          "lineNumber": 202
+        },
+        {
+          "caller": "scan_bucket_names",
+          "callee": "pat.finditer",
+          "lineNumber": 238
+        },
+        {
+          "caller": "scan_bucket_names",
+          "callee": "m.group(1).lower().rstrip",
+          "lineNumber": 239
+        },
+        {
+          "caller": "scan_bucket_names",
+          "callee": "m.group(1).lower",
+          "lineNumber": 239
+        },
+        {
+          "caller": "scan_bucket_names",
+          "callee": "m.group",
+          "lineNumber": 239
+        },
+        {
+          "caller": "scan_bucket_names",
+          "callee": "names.append",
+          "lineNumber": 241
+        },
+        {
+          "caller": "scan_user_data",
+          "callee": "pat.finditer",
+          "lineNumber": 265
+        },
+        {
+          "caller": "scan_user_data",
+          "callee": "m.group",
+          "lineNumber": 267
+        },
+        {
+          "caller": "scan_user_data",
+          "callee": "results.append",
+          "lineNumber": 268
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/cloud/k8s.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 300,
+      "nonEmptyLines": 275,
+      "functions": [
+        {
+          "name": "_iter_documents",
+          "startLine": 67,
+          "endLine": 74,
+          "params": [
+            "manifest"
+          ]
+        },
+        {
+          "name": "_pod_spec",
+          "startLine": 77,
+          "endLine": 90,
+          "params": [
+            "doc"
+          ]
+        },
+        {
+          "name": "_containers",
+          "startLine": 93,
+          "endLine": 101,
+          "params": [
+            "pod_spec"
+          ]
+        },
+        {
+          "name": "analyze_k8s_manifest",
+          "startLine": 104,
+          "endLine": 300,
+          "params": [
+            "manifest"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "K8sFinding",
+          "startLine": 46,
+          "endLine": 64,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "id",
+            "severity",
+            "kind",
+            "name",
+            "title",
+            "detail",
+            "namespace"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "K8sFinding",
+          "line": 45,
+          "isDefault": false
+        },
+        {
+          "name": "_iter_documents",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "_pod_spec",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "_containers",
+          "line": 93,
+          "isDefault": false
+        },
+        {
+          "name": "analyze_k8s_manifest",
+          "line": 104,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_iter_documents",
+          "callee": "isinstance",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_iter_documents",
+          "callee": "isinstance",
+          "lineNumber": 69
+        },
+        {
+          "caller": "_iter_documents",
+          "callee": "isinstance",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_iter_documents",
+          "callee": "manifest.get",
+          "lineNumber": 71
+        },
+        {
+          "caller": "_iter_documents",
+          "callee": "manifest.get",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_iter_documents",
+          "callee": "isinstance",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "doc.get",
+          "lineNumber": 78
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "doc.get",
+          "lineNumber": 79
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "(spec.get(\"template\") or {}).get",
+          "lineNumber": 83
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "spec.get",
+          "lineNumber": 83
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "isinstance",
+          "lineNumber": 84
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "(spec.get(\"jobTemplate\") or {}).get",
+          "lineNumber": 86
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "spec.get",
+          "lineNumber": 86
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "(job_template.get(\"template\") or {}).get",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "job_template.get",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_pod_spec",
+          "callee": "isinstance",
+          "lineNumber": 88
+        },
+        {
+          "caller": "_containers",
+          "callee": "pod_spec.get",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_containers",
+          "callee": "isinstance",
+          "lineNumber": 96
+        },
+        {
+          "caller": "_containers",
+          "callee": "out.append",
+          "lineNumber": 97
+        },
+        {
+          "caller": "_containers",
+          "callee": "pod_spec.get",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_containers",
+          "callee": "isinstance",
+          "lineNumber": 99
+        },
+        {
+          "caller": "_containers",
+          "callee": "out.append",
+          "lineNumber": 100
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "isinstance",
+          "lineNumber": 106
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "json.loads",
+          "lineNumber": 108
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 111
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "_iter_documents",
+          "lineNumber": 125
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "doc.get",
+          "lineNumber": 126
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "doc.get",
+          "lineNumber": 127
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "meta.get",
+          "lineNumber": 128
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "meta.get",
+          "lineNumber": 129
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "doc.get",
+          "lineNumber": 133
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "v.lower",
+          "lineNumber": 134
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "rule.get",
+          "lineNumber": 134
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "rule.get",
+          "lineNumber": 135
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "rule.get",
+          "lineNumber": 136
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 139
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 140
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 152
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 153
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 165
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 166
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "_pod_spec",
+          "lineNumber": 177
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "pod_spec.get",
+          "lineNumber": 187
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 189
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 190
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "flag[4:].lower",
+          "lineNumber": 197
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "pod_spec.get",
+          "lineNumber": 202
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "(vol or {}).get",
+          "lineNumber": 203
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "isinstance",
+          "lineNumber": 203
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "isinstance",
+          "lineNumber": 204
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "hp.get",
+          "lineNumber": 205
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "path.startswith",
+          "lineNumber": 206
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 208
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 209
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "_containers",
+          "lineNumber": 221
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "c.get",
+          "lineNumber": 222
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "sc.get",
+          "lineNumber": 223
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 225
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 226
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "c.get",
+          "lineNumber": 232
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "sc.get",
+          "lineNumber": 236
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 238
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 239
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "c.get",
+          "lineNumber": 245
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "sc.get",
+          "lineNumber": 249
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "sc.get",
+          "lineNumber": 250
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 253
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 254
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "c.get",
+          "lineNumber": 260
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "(sc.get(\"capabilities\") or {}).get",
+          "lineNumber": 264
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "sc.get",
+          "lineNumber": 264
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "str(cap).upper",
+          "lineNumber": 265
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "str",
+          "lineNumber": 265
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 268
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 269
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "', '.join",
+          "lineNumber": 275
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "c.get",
+          "lineNumber": 281
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "env.get",
+          "lineNumber": 282
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "isinstance",
+          "lineNumber": 282
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "(env or {}).get",
+          "lineNumber": 283
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "isinstance",
+          "lineNumber": 283
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "any",
+          "lineNumber": 284
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "name_env.lower",
+          "lineNumber": 285
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "findings.append",
+          "lineNumber": 288
+        },
+        {
+          "caller": "analyze_k8s_manifest",
+          "callee": "K8sFinding",
+          "lineNumber": 289
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/cloud/metadata.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 97,
+      "nonEmptyLines": 89,
+      "classes": [
+        {
+          "name": "MetadataEndpoint",
+          "startLine": 14,
+          "endLine": 30,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "provider",
+            "url",
+            "method",
+            "headers",
+            "yields",
+            "notes"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "MetadataEndpoint",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/cloud/terraform.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 151,
+      "nonEmptyLines": 131,
+      "functions": [
+        {
+          "name": "_walk_secrets",
+          "startLine": 85,
+          "endLine": 103,
+          "params": [
+            "obj",
+            "resource",
+            "report",
+            "path"
+          ]
+        },
+        {
+          "name": "analyze_tfstate",
+          "startLine": 106,
+          "endLine": 151,
+          "params": [
+            "data"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "TFStateFinding",
+          "startLine": 42,
+          "endLine": 54,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "kind",
+            "resource",
+            "detail",
+            "severity"
+          ]
+        },
+        {
+          "name": "TFStateReport",
+          "startLine": 58,
+          "endLine": 82,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "version",
+            "terraform_version",
+            "backend",
+            "outputs",
+            "sensitive_outputs",
+            "secrets",
+            "resources",
+            "providers",
+            "findings"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "TFStateFinding",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "TFStateReport",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "_walk_secrets",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "analyze_tfstate",
+          "line": 106,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "to_dict",
+          "callee": "sorted",
+          "lineNumber": 77
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 78
+        },
+        {
+          "caller": "to_dict",
+          "callee": "self.outputs.keys",
+          "lineNumber": 78
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 79
+        },
+        {
+          "caller": "to_dict",
+          "callee": "len",
+          "lineNumber": 80
+        },
+        {
+          "caller": "to_dict",
+          "callee": "f.to_dict",
+          "lineNumber": 81
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "isinstance",
+          "lineNumber": 86
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "obj.items",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "k.lower",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "isinstance",
+          "lineNumber": 90
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "report.secrets.append",
+          "lineNumber": 91
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "report.findings.append",
+          "lineNumber": 92
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "TFStateFinding",
+          "lineNumber": 93
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "_walk_secrets",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "isinstance",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "enumerate",
+          "lineNumber": 102
+        },
+        {
+          "caller": "_walk_secrets",
+          "callee": "_walk_secrets",
+          "lineNumber": 103
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "isinstance",
+          "lineNumber": 108
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "json.loads",
+          "lineNumber": 110
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "TFStateReport",
+          "lineNumber": 112
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "r.findings.append",
+          "lineNumber": 113
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "TFStateFinding",
+          "lineNumber": 114
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "TFStateReport",
+          "lineNumber": 120
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "payload.get",
+          "lineNumber": 121
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "payload.get",
+          "lineNumber": 122
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "(payload.get(\"backend\") or {}).get",
+          "lineNumber": 123
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "payload.get",
+          "lineNumber": 123
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "payload.get",
+          "lineNumber": 126
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "outputs.items",
+          "lineNumber": 127
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "meta.get",
+          "lineNumber": 128
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "meta.get",
+          "lineNumber": 129
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "report.sensitive_outputs.append",
+          "lineNumber": 130
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "report.findings.append",
+          "lineNumber": 131
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "TFStateFinding",
+          "lineNumber": 132
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "payload.get",
+          "lineNumber": 140
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "r.get",
+          "lineNumber": 142
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "report.providers.add",
+          "lineNumber": 144
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "r.get",
+          "lineNumber": 145
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "r.get",
+          "lineNumber": 145
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "r.get",
+          "lineNumber": 145
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "r.get",
+          "lineNumber": 147
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "inst.get",
+          "lineNumber": 148
+        },
+        {
+          "caller": "analyze_tfstate",
+          "callee": "_walk_secrets",
+          "lineNumber": 149
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 2,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/cloud/tools.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 91,
+      "nonEmptyLines": 67,
+      "functions": [
+        {
+          "name": "_json",
+          "startLine": 20,
+          "endLine": 21,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "iam_policy_audit",
+          "startLine": 25,
+          "endLine": 32,
+          "params": [
+            "policy_json"
+          ]
+        },
+        {
+          "name": "s3_buckets_from_text",
+          "startLine": 36,
+          "endLine": 44,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "user_data_secrets",
+          "startLine": 48,
+          "endLine": 51,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "k8s_audit",
+          "startLine": 55,
+          "endLine": 63,
+          "params": [
+            "manifest_json"
+          ]
+        },
+        {
+          "name": "tfstate_audit",
+          "startLine": 67,
+          "endLine": 70,
+          "params": [
+            "tfstate_json"
+          ]
+        },
+        {
+          "name": "metadata_endpoints",
+          "startLine": 74,
+          "endLine": 81,
+          "params": [
+            "provider"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_json",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "iam_policy_audit",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "s3_buckets_from_text",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "user_data_secrets",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "k8s_audit",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "tfstate_audit",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "metadata_endpoints",
+          "line": 73,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_json",
+          "callee": "json.dumps",
+          "lineNumber": 21
+        },
+        {
+          "caller": "iam_policy_audit",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 31
+        },
+        {
+          "caller": "iam_policy_audit",
+          "callee": "_json",
+          "lineNumber": 32
+        },
+        {
+          "caller": "iam_policy_audit",
+          "callee": "f.to_dict",
+          "lineNumber": 32
+        },
+        {
+          "caller": "s3_buckets_from_text",
+          "callee": "scan_bucket_names",
+          "lineNumber": 43
+        },
+        {
+          "caller": "s3_buckets_from_text",
+          "callee": "_json",
+          "lineNumber": 44
+        },
+        {
+          "caller": "s3_buckets_from_text",
+          "callee": "len",
+          "lineNumber": 44
+        },
+        {
+          "caller": "user_data_secrets",
+          "callee": "scan_user_data",
+          "lineNumber": 50
+        },
+        {
+          "caller": "user_data_secrets",
+          "callee": "_json",
+          "lineNumber": 51
+        },
+        {
+          "caller": "user_data_secrets",
+          "callee": "len",
+          "lineNumber": 51
+        },
+        {
+          "caller": "k8s_audit",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 62
+        },
+        {
+          "caller": "k8s_audit",
+          "callee": "_json",
+          "lineNumber": 63
+        },
+        {
+          "caller": "k8s_audit",
+          "callee": "f.to_dict",
+          "lineNumber": 63
+        },
+        {
+          "caller": "tfstate_audit",
+          "callee": "analyze_tfstate",
+          "lineNumber": 69
+        },
+        {
+          "caller": "tfstate_audit",
+          "callee": "_json",
+          "lineNumber": 70
+        },
+        {
+          "caller": "tfstate_audit",
+          "callee": "report.to_dict",
+          "lineNumber": 70
+        },
+        {
+          "caller": "metadata_endpoints",
+          "callee": "e.to_dict",
+          "lineNumber": 80
+        },
+        {
+          "caller": "metadata_endpoints",
+          "callee": "_json",
+          "lineNumber": 81
+        },
+        {
+          "caller": "metadata_endpoints",
+          "callee": "len",
+          "lineNumber": 81
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 7,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/cloud/test_cloud.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 215,
+      "nonEmptyLines": 180,
+      "classes": [
+        {
+          "name": "TestIAMPolicy",
+          "startLine": 15,
+          "endLine": 69,
+          "methods": [
+            "test_wildcard_action_resource",
+            "test_privesc_create_access_key",
+            "test_deny_statements_ignored",
+            "test_parse_error_returns_finding",
+            "test_s3_wildcard_flagged",
+            "test_notaction_allow_flagged_as_near_wildcard",
+            "test_notaction_does_not_match_privesc_primitive",
+            "test_empty_action_produces_no_phantom_wildcard",
+            "test_privesc_passrole_still_flagged"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestBucketScan",
+          "startLine": 72,
+          "endLine": 85,
+          "methods": [
+            "test_s3_scheme",
+            "test_virtual_hosted",
+            "test_path_style",
+            "test_does_not_match_generic_paths"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestUserDataScan",
+          "startLine": 88,
+          "endLine": 99,
+          "methods": [
+            "test_aws_key",
+            "test_private_key",
+            "test_password_literal"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestKubernetes",
+          "startLine": 102,
+          "endLine": 168,
+          "methods": [
+            "test_privileged_container",
+            "test_host_path_docker_sock",
+            "test_wildcard_rbac",
+            "test_dangerous_capability",
+            "test_plain_env_secret"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestTerraform",
+          "startLine": 171,
+          "endLine": 202,
+          "methods": [
+            "test_sensitive_output",
+            "test_plaintext_secret_in_resource",
+            "test_bad_json"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestMetadataCatalogue",
+          "startLine": 205,
+          "endLine": 215,
+          "methods": [
+            "test_catalog_nonempty",
+            "test_aws_imds_present",
+            "test_gcp_header_present"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TestIAMPolicy",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "TestBucketScan",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "TestUserDataScan",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "TestKubernetes",
+          "line": 102,
+          "isDefault": false
+        },
+        {
+          "name": "TestTerraform",
+          "line": 171,
+          "isDefault": false
+        },
+        {
+          "name": "TestMetadataCatalogue",
+          "line": 205,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_wildcard_action_resource",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 18
+        },
+        {
+          "caller": "test_wildcard_action_resource",
+          "callee": "any",
+          "lineNumber": 19
+        },
+        {
+          "caller": "test_wildcard_action_resource",
+          "callee": "any",
+          "lineNumber": 20
+        },
+        {
+          "caller": "test_privesc_create_access_key",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 26
+        },
+        {
+          "caller": "test_privesc_create_access_key",
+          "callee": "any",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_deny_statements_ignored",
+          "callee": "len",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_deny_statements_ignored",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_parse_error_returns_finding",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 36
+        },
+        {
+          "caller": "test_parse_error_returns_finding",
+          "callee": "len",
+          "lineNumber": 37
+        },
+        {
+          "caller": "test_s3_wildcard_flagged",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_s3_wildcard_flagged",
+          "callee": "any",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_notaction_allow_flagged_as_near_wildcard",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_notaction_allow_flagged_as_near_wildcard",
+          "callee": "any",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_notaction_allow_flagged_as_near_wildcard",
+          "callee": "any",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_notaction_does_not_match_privesc_primitive",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_notaction_does_not_match_privesc_primitive",
+          "callee": "any",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_empty_action_produces_no_phantom_wildcard",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_privesc_passrole_still_flagged",
+          "callee": "analyze_iam_policy",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_privesc_passrole_still_flagged",
+          "callee": "any",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_s3_scheme",
+          "callee": "scan_bucket_names",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_virtual_hosted",
+          "callee": "scan_bucket_names",
+          "lineNumber": 77
+        },
+        {
+          "caller": "test_path_style",
+          "callee": "scan_bucket_names",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_does_not_match_generic_paths",
+          "callee": "scan_bucket_names",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_aws_key",
+          "callee": "scan_user_data",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_aws_key",
+          "callee": "any",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_private_key",
+          "callee": "scan_user_data",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_private_key",
+          "callee": "any",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_password_literal",
+          "callee": "scan_user_data",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_password_literal",
+          "callee": "any",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_privileged_container",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_privileged_container",
+          "callee": "any",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_privileged_container",
+          "callee": "any",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_host_path_docker_sock",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_host_path_docker_sock",
+          "callee": "any",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_wildcard_rbac",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 131
+        },
+        {
+          "caller": "test_wildcard_rbac",
+          "callee": "any",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_dangerous_capability",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 151
+        },
+        {
+          "caller": "test_dangerous_capability",
+          "callee": "any",
+          "lineNumber": 152
+        },
+        {
+          "caller": "test_plain_env_secret",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 167
+        },
+        {
+          "caller": "test_plain_env_secret",
+          "callee": "any",
+          "lineNumber": 168
+        },
+        {
+          "caller": "test_sensitive_output",
+          "callee": "analyze_tfstate",
+          "lineNumber": 179
+        },
+        {
+          "caller": "test_sensitive_output",
+          "callee": "any",
+          "lineNumber": 181
+        },
+        {
+          "caller": "test_plaintext_secret_in_resource",
+          "callee": "analyze_tfstate",
+          "lineNumber": 196
+        },
+        {
+          "caller": "test_plaintext_secret_in_resource",
+          "callee": "any",
+          "lineNumber": 197
+        },
+        {
+          "caller": "test_bad_json",
+          "callee": "analyze_tfstate",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_bad_json",
+          "callee": "any",
+          "lineNumber": 202
+        },
+        {
+          "caller": "test_catalog_nonempty",
+          "callee": "len",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_aws_imds_present",
+          "callee": "any",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_gcp_header_present",
+          "callee": "any",
+          "lineNumber": 215
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 6,
+        "functionCount": 0,
+        "classCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/cloud/test_cloud_tools.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 139,
+      "nonEmptyLines": 119,
+      "classes": [
+        {
+          "name": "TestIamPolicyAuditWrapper",
+          "startLine": 9,
+          "endLine": 26,
+          "methods": [
+            "test_wildcard_action_resource_returns_critical_finding_with_expected_title",
+            "test_parse_error_json_returns_info_finding_with_parse_error_id"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestS3BucketsFromTextWrapper",
+          "startLine": 29,
+          "endLine": 45,
+          "methods": [
+            "test_multiple_bucket_styles_returns_correct_count_and_bucket_names",
+            "test_empty_text_returns_zero_count_and_empty_buckets_list"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestUserDataSecretsWrapper",
+          "startLine": 48,
+          "endLine": 65,
+          "methods": [
+            "test_aws_key_and_password_in_text_returns_hits_with_kind_and_snippet_keys",
+            "test_no_secrets_in_text_returns_zero_count_and_empty_hits"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestK8sAuditWrapper",
+          "startLine": 68,
+          "endLine": 79,
+          "methods": [
+            "test_privileged_pod_manifest_returns_critical_privileged_finding"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestTfstateAuditWrapper",
+          "startLine": 82,
+          "endLine": 105,
+          "methods": [
+            "test_sensitive_output_and_plaintext_secret_resource_returns_expected_report_shape"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestMetadataEndpointsWrapper",
+          "startLine": 108,
+          "endLine": 139,
+          "methods": [
+            "test_no_provider_filter_returns_all_metadata_endpoints",
+            "test_empty_string_provider_returns_all_endpoints_same_as_no_filter",
+            "test_aws_provider_filter_returns_only_aws_endpoints",
+            "test_unknown_provider_returns_zero_count_and_empty_endpoints"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TestIamPolicyAuditWrapper",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "TestS3BucketsFromTextWrapper",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "TestUserDataSecretsWrapper",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "TestK8sAuditWrapper",
+          "line": 68,
+          "isDefault": false
+        },
+        {
+          "name": "TestTfstateAuditWrapper",
+          "line": 82,
+          "isDefault": false
+        },
+        {
+          "name": "TestMetadataEndpointsWrapper",
+          "line": 108,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_wildcard_action_resource_returns_critical_finding_with_expected_title",
+          "callee": "T.iam_policy_audit.invoke",
+          "lineNumber": 11
+        },
+        {
+          "caller": "test_wildcard_action_resource_returns_critical_finding_with_expected_title",
+          "callee": "json.loads",
+          "lineNumber": 14
+        },
+        {
+          "caller": "test_wildcard_action_resource_returns_critical_finding_with_expected_title",
+          "callee": "isinstance",
+          "lineNumber": 15
+        },
+        {
+          "caller": "test_wildcard_action_resource_returns_critical_finding_with_expected_title",
+          "callee": "len",
+          "lineNumber": 16
+        },
+        {
+          "caller": "test_wildcard_action_resource_returns_critical_finding_with_expected_title",
+          "callee": "any",
+          "lineNumber": 17
+        },
+        {
+          "caller": "test_wildcard_action_resource_returns_critical_finding_with_expected_title",
+          "callee": "any",
+          "lineNumber": 18
+        },
+        {
+          "caller": "test_parse_error_json_returns_info_finding_with_parse_error_id",
+          "callee": "T.iam_policy_audit.invoke",
+          "lineNumber": 21
+        },
+        {
+          "caller": "test_parse_error_json_returns_info_finding_with_parse_error_id",
+          "callee": "json.loads",
+          "lineNumber": 22
+        },
+        {
+          "caller": "test_parse_error_json_returns_info_finding_with_parse_error_id",
+          "callee": "isinstance",
+          "lineNumber": 23
+        },
+        {
+          "caller": "test_parse_error_json_returns_info_finding_with_parse_error_id",
+          "callee": "len",
+          "lineNumber": 24
+        },
+        {
+          "caller": "test_multiple_bucket_styles_returns_correct_count_and_bucket_names",
+          "callee": "T.s3_buckets_from_text.invoke",
+          "lineNumber": 31
+        },
+        {
+          "caller": "test_multiple_bucket_styles_returns_correct_count_and_bucket_names",
+          "callee": "json.loads",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_multiple_bucket_styles_returns_correct_count_and_bucket_names",
+          "callee": "len",
+          "lineNumber": 37
+        },
+        {
+          "caller": "test_empty_text_returns_zero_count_and_empty_buckets_list",
+          "callee": "T.s3_buckets_from_text.invoke",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_empty_text_returns_zero_count_and_empty_buckets_list",
+          "callee": "json.loads",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_aws_key_and_password_in_text_returns_hits_with_kind_and_snippet_keys",
+          "callee": "T.user_data_secrets.invoke",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_aws_key_and_password_in_text_returns_hits_with_kind_and_snippet_keys",
+          "callee": "json.loads",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_aws_key_and_password_in_text_returns_hits_with_kind_and_snippet_keys",
+          "callee": "len",
+          "lineNumber": 56
+        },
+        {
+          "caller": "test_aws_key_and_password_in_text_returns_hits_with_kind_and_snippet_keys",
+          "callee": "set",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_aws_key_and_password_in_text_returns_hits_with_kind_and_snippet_keys",
+          "callee": "hit.keys",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_aws_key_and_password_in_text_returns_hits_with_kind_and_snippet_keys",
+          "callee": "any",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_no_secrets_in_text_returns_zero_count_and_empty_hits",
+          "callee": "T.user_data_secrets.invoke",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_no_secrets_in_text_returns_zero_count_and_empty_hits",
+          "callee": "json.loads",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_privileged_pod_manifest_returns_critical_privileged_finding",
+          "callee": "T.k8s_audit.invoke",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_privileged_pod_manifest_returns_critical_privileged_finding",
+          "callee": "json.dumps",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_privileged_pod_manifest_returns_critical_privileged_finding",
+          "callee": "json.loads",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_privileged_pod_manifest_returns_critical_privileged_finding",
+          "callee": "isinstance",
+          "lineNumber": 77
+        },
+        {
+          "caller": "test_privileged_pod_manifest_returns_critical_privileged_finding",
+          "callee": "any",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_privileged_pod_manifest_returns_critical_privileged_finding",
+          "callee": "any",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_sensitive_output_and_plaintext_secret_resource_returns_expected_report_shape",
+          "callee": "T.tfstate_audit.invoke",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_sensitive_output_and_plaintext_secret_resource_returns_expected_report_shape",
+          "callee": "json.dumps",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_sensitive_output_and_plaintext_secret_resource_returns_expected_report_shape",
+          "callee": "json.loads",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_sensitive_output_and_plaintext_secret_resource_returns_expected_report_shape",
+          "callee": "any",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_no_provider_filter_returns_all_metadata_endpoints",
+          "callee": "T.metadata_endpoints.invoke",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_no_provider_filter_returns_all_metadata_endpoints",
+          "callee": "json.loads",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_no_provider_filter_returns_all_metadata_endpoints",
+          "callee": "len",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_no_provider_filter_returns_all_metadata_endpoints",
+          "callee": "len",
+          "lineNumber": 113
+        },
+        {
+          "caller": "test_empty_string_provider_returns_all_endpoints_same_as_no_filter",
+          "callee": "T.metadata_endpoints.invoke",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_empty_string_provider_returns_all_endpoints_same_as_no_filter",
+          "callee": "json.loads",
+          "lineNumber": 124
+        },
+        {
+          "caller": "test_empty_string_provider_returns_all_endpoints_same_as_no_filter",
+          "callee": "len",
+          "lineNumber": 125
+        },
+        {
+          "caller": "test_aws_provider_filter_returns_only_aws_endpoints",
+          "callee": "T.metadata_endpoints.invoke",
+          "lineNumber": 128
+        },
+        {
+          "caller": "test_aws_provider_filter_returns_only_aws_endpoints",
+          "callee": "json.loads",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_aws_provider_filter_returns_only_aws_endpoints",
+          "callee": "all",
+          "lineNumber": 131
+        },
+        {
+          "caller": "test_aws_provider_filter_returns_only_aws_endpoints",
+          "callee": "sum",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_unknown_provider_returns_zero_count_and_empty_endpoints",
+          "callee": "T.metadata_endpoints.invoke",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_unknown_provider_returns_zero_count_and_empty_endpoints",
+          "callee": "json.loads",
+          "lineNumber": 137
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 6,
+        "functionCount": 0,
+        "classCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/cloud/test_k8s_branches.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 500,
+      "nonEmptyLines": 442,
+      "classes": [
+        {
+          "name": "TestK8sFindingToDict",
+          "startLine": 10,
+          "endLine": 42,
+          "methods": [
+            "test_to_dict_returns_all_seven_keys_with_correct_values",
+            "test_to_dict_namespace_none_when_not_set"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestAnalyzeK8sManifestStrInput",
+          "startLine": 45,
+          "endLine": 64,
+          "methods": [
+            "test_valid_json_string_input_finds_privileged",
+            "test_malformed_json_string_returns_parse_error_finding"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestIterDocumentsListInput",
+          "startLine": 67,
+          "endLine": 95,
+          "methods": [
+            "test_list_input_filters_non_dict_entries",
+            "test_list_input_multiple_dicts_all_analyzed"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestIterDocumentsKindList",
+          "startLine": 98,
+          "endLine": 117,
+          "methods": [
+            "test_kind_list_wrapper_items_analyzed",
+            "test_kind_list_items_none_returns_empty",
+            "test_kind_list_items_empty_returns_empty"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestIterDocumentsFallthrough",
+          "startLine": 120,
+          "endLine": 127,
+          "methods": [
+            "test_non_str_non_dict_non_list_returns_empty",
+            "test_none_input_returns_empty"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPodSpecWorkloadKinds",
+          "startLine": 130,
+          "endLine": 170,
+          "methods": [
+            "test_workload_kind_template_spec_finds_privileged",
+            "test_cronjob_job_template_path_finds_privileged",
+            "test_unknown_kind_returns_no_findings"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestContainersInitContainers",
+          "startLine": 173,
+          "endLine": 185,
+          "methods": [
+            "test_init_container_privileged_is_detected"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestRBACWildcardVerbs",
+          "startLine": 188,
+          "endLine": 230,
+          "methods": [
+            "test_wildcard_verbs_on_secrets_returns_high_severity",
+            "test_wildcard_verbs_on_secrets_kind_role_preserved",
+            "test_impersonate_verb_returns_high_severity",
+            "test_impersonate_verb_kind_clusterrole_preserved"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestHostNamespaceFlags",
+          "startLine": 233,
+          "endLine": 263,
+          "methods": [
+            "test_host_namespace_flag_true_returns_high_finding",
+            "test_host_namespace_flag_truthy_non_true_does_not_trigger",
+            "test_host_namespace_flag_integer_one_does_not_trigger"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestHostPathVolumes",
+          "startLine": 266,
+          "endLine": 317,
+          "methods": [
+            "test_hostpath_root_slash_returns_high_not_critical",
+            "test_hostpath_dangerous_prefix_returns_high_severity",
+            "test_hostpath_safe_path_no_finding",
+            "test_hostpath_malformed_volume_entries_no_crash"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestAllowPrivilegeEscalation",
+          "startLine": 320,
+          "endLine": 344,
+          "methods": [
+            "test_allow_privilege_escalation_true_returns_medium",
+            "test_allow_privilege_escalation_false_no_finding"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestRunAsRootChecks",
+          "startLine": 347,
+          "endLine": 388,
+          "methods": [
+            "test_run_as_user_zero_returns_medium_root_finding",
+            "test_run_as_non_root_false_without_run_as_user_returns_medium",
+            "test_run_as_non_root_false_with_nonzero_run_as_user_no_root_finding",
+            "test_run_as_user_nonzero_no_root_finding"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestDangerousCapsCaseNormalization",
+          "startLine": 391,
+          "endLine": 422,
+          "methods": [
+            "test_lowercase_sys_ptrace_is_detected",
+            "test_non_dangerous_cap_net_bind_service_no_finding"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPlainEnvSecretNegatives",
+          "startLine": 425,
+          "endLine": 472,
+          "methods": [
+            "test_non_secret_env_name_no_finding",
+            "test_secret_name_without_value_no_finding",
+            "test_malformed_env_entries_no_crash",
+            "test_env_value_from_secret_key_ref_no_literal_value_no_finding"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestIdxSequencingAndIdFormat",
+          "startLine": 475,
+          "endLine": 500,
+          "methods": [
+            "test_multiple_findings_have_sequential_zero_padded_ids",
+            "test_id_format_uses_four_digit_padding"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TestK8sFindingToDict",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "TestAnalyzeK8sManifestStrInput",
+          "line": 45,
+          "isDefault": false
+        },
+        {
+          "name": "TestIterDocumentsListInput",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "TestIterDocumentsKindList",
+          "line": 98,
+          "isDefault": false
+        },
+        {
+          "name": "TestIterDocumentsFallthrough",
+          "line": 120,
+          "isDefault": false
+        },
+        {
+          "name": "TestPodSpecWorkloadKinds",
+          "line": 130,
+          "isDefault": false
+        },
+        {
+          "name": "TestContainersInitContainers",
+          "line": 173,
+          "isDefault": false
+        },
+        {
+          "name": "TestRBACWildcardVerbs",
+          "line": 188,
+          "isDefault": false
+        },
+        {
+          "name": "TestHostNamespaceFlags",
+          "line": 233,
+          "isDefault": false
+        },
+        {
+          "name": "TestHostPathVolumes",
+          "line": 266,
+          "isDefault": false
+        },
+        {
+          "name": "TestAllowPrivilegeEscalation",
+          "line": 320,
+          "isDefault": false
+        },
+        {
+          "name": "TestRunAsRootChecks",
+          "line": 347,
+          "isDefault": false
+        },
+        {
+          "name": "TestDangerousCapsCaseNormalization",
+          "line": 391,
+          "isDefault": false
+        },
+        {
+          "name": "TestPlainEnvSecretNegatives",
+          "line": 425,
+          "isDefault": false
+        },
+        {
+          "name": "TestIdxSequencingAndIdFormat",
+          "line": 475,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_to_dict_returns_all_seven_keys_with_correct_values",
+          "callee": "K8sFinding",
+          "lineNumber": 12
+        },
+        {
+          "caller": "test_to_dict_returns_all_seven_keys_with_correct_values",
+          "callee": "f.to_dict",
+          "lineNumber": 21
+        },
+        {
+          "caller": "test_to_dict_namespace_none_when_not_set",
+          "callee": "K8sFinding",
+          "lineNumber": 31
+        },
+        {
+          "caller": "test_to_dict_namespace_none_when_not_set",
+          "callee": "f.to_dict",
+          "lineNumber": 32
+        },
+        {
+          "caller": "test_to_dict_namespace_none_when_not_set",
+          "callee": "set",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_to_dict_namespace_none_when_not_set",
+          "callee": "result.keys",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_valid_json_string_input_finds_privileged",
+          "callee": "json.dumps",
+          "lineNumber": 47
+        },
+        {
+          "caller": "test_valid_json_string_input_finds_privileged",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_valid_json_string_input_finds_privileged",
+          "callee": "any",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_valid_json_string_input_finds_privileged",
+          "callee": "any",
+          "lineNumber": 56
+        },
+        {
+          "caller": "test_malformed_json_string_returns_parse_error_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_malformed_json_string_returns_parse_error_finding",
+          "callee": "len",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_list_input_filters_non_dict_entries",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_list_input_filters_non_dict_entries",
+          "callee": "any",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_list_input_multiple_dicts_all_analyzed",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_list_input_multiple_dicts_all_analyzed",
+          "callee": "any",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_list_input_multiple_dicts_all_analyzed",
+          "callee": "any",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_kind_list_wrapper_items_analyzed",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_kind_list_wrapper_items_analyzed",
+          "callee": "any",
+          "lineNumber": 107
+        },
+        {
+          "caller": "test_kind_list_items_none_returns_empty",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_kind_list_items_empty_returns_empty",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 116
+        },
+        {
+          "caller": "test_non_str_non_dict_non_list_returns_empty",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_none_input_returns_empty",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 126
+        },
+        {
+          "caller": "test_workload_kind_template_spec_finds_privileged",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 142
+        },
+        {
+          "caller": "test_workload_kind_template_spec_finds_privileged",
+          "callee": "any",
+          "lineNumber": 143
+        },
+        {
+          "caller": "test_workload_kind_template_spec_finds_privileged",
+          "callee": "any",
+          "lineNumber": 144
+        },
+        {
+          "caller": "test_cronjob_job_template_path_finds_privileged",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_cronjob_job_template_path_finds_privileged",
+          "callee": "any",
+          "lineNumber": 165
+        },
+        {
+          "caller": "test_unknown_kind_returns_no_findings",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_init_container_privileged_is_detected",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_init_container_privileged_is_detected",
+          "callee": "any",
+          "lineNumber": 184
+        },
+        {
+          "caller": "test_init_container_privileged_is_detected",
+          "callee": "any",
+          "lineNumber": 185
+        },
+        {
+          "caller": "test_wildcard_verbs_on_secrets_returns_high_severity",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 195
+        },
+        {
+          "caller": "test_wildcard_verbs_on_secrets_returns_high_severity",
+          "callee": "any",
+          "lineNumber": 196
+        },
+        {
+          "caller": "test_wildcard_verbs_on_secrets_returns_high_severity",
+          "callee": "any",
+          "lineNumber": 197
+        },
+        {
+          "caller": "test_wildcard_verbs_on_secrets_returns_high_severity",
+          "callee": "any",
+          "lineNumber": 198
+        },
+        {
+          "caller": "test_wildcard_verbs_on_secrets_kind_role_preserved",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 206
+        },
+        {
+          "caller": "test_wildcard_verbs_on_secrets_kind_role_preserved",
+          "callee": "len",
+          "lineNumber": 208
+        },
+        {
+          "caller": "test_impersonate_verb_returns_high_severity",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 217
+        },
+        {
+          "caller": "test_impersonate_verb_returns_high_severity",
+          "callee": "any",
+          "lineNumber": 218
+        },
+        {
+          "caller": "test_impersonate_verb_returns_high_severity",
+          "callee": "any",
+          "lineNumber": 219
+        },
+        {
+          "caller": "test_impersonate_verb_kind_clusterrole_preserved",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 227
+        },
+        {
+          "caller": "test_impersonate_verb_kind_clusterrole_preserved",
+          "callee": "len",
+          "lineNumber": 229
+        },
+        {
+          "caller": "test_host_namespace_flag_true_returns_high_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 241
+        },
+        {
+          "caller": "test_host_namespace_flag_true_returns_high_finding",
+          "callee": "any",
+          "lineNumber": 242
+        },
+        {
+          "caller": "test_host_namespace_flag_true_returns_high_finding",
+          "callee": "any",
+          "lineNumber": 243
+        },
+        {
+          "caller": "test_host_namespace_flag_truthy_non_true_does_not_trigger",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 252
+        },
+        {
+          "caller": "test_host_namespace_flag_truthy_non_true_does_not_trigger",
+          "callee": "any",
+          "lineNumber": 253
+        },
+        {
+          "caller": "test_host_namespace_flag_integer_one_does_not_trigger",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 262
+        },
+        {
+          "caller": "test_host_namespace_flag_integer_one_does_not_trigger",
+          "callee": "any",
+          "lineNumber": 263
+        },
+        {
+          "caller": "test_hostpath_root_slash_returns_high_not_critical",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 276
+        },
+        {
+          "caller": "test_hostpath_root_slash_returns_high_not_critical",
+          "callee": "len",
+          "lineNumber": 278
+        },
+        {
+          "caller": "test_hostpath_dangerous_prefix_returns_high_severity",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 291
+        },
+        {
+          "caller": "test_hostpath_dangerous_prefix_returns_high_severity",
+          "callee": "any",
+          "lineNumber": 292
+        },
+        {
+          "caller": "test_hostpath_dangerous_prefix_returns_high_severity",
+          "callee": "any",
+          "lineNumber": 293
+        },
+        {
+          "caller": "test_hostpath_safe_path_no_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 304
+        },
+        {
+          "caller": "test_hostpath_safe_path_no_finding",
+          "callee": "any",
+          "lineNumber": 305
+        },
+        {
+          "caller": "test_hostpath_malformed_volume_entries_no_crash",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 316
+        },
+        {
+          "caller": "test_hostpath_malformed_volume_entries_no_crash",
+          "callee": "any",
+          "lineNumber": 317
+        },
+        {
+          "caller": "test_allow_privilege_escalation_true_returns_medium",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 329
+        },
+        {
+          "caller": "test_allow_privilege_escalation_true_returns_medium",
+          "callee": "any",
+          "lineNumber": 330
+        },
+        {
+          "caller": "test_allow_privilege_escalation_true_returns_medium",
+          "callee": "any",
+          "lineNumber": 331
+        },
+        {
+          "caller": "test_allow_privilege_escalation_false_no_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 343
+        },
+        {
+          "caller": "test_allow_privilege_escalation_false_no_finding",
+          "callee": "any",
+          "lineNumber": 344
+        },
+        {
+          "caller": "test_run_as_user_zero_returns_medium_root_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 354
+        },
+        {
+          "caller": "test_run_as_user_zero_returns_medium_root_finding",
+          "callee": "any",
+          "lineNumber": 355
+        },
+        {
+          "caller": "test_run_as_user_zero_returns_medium_root_finding",
+          "callee": "any",
+          "lineNumber": 356
+        },
+        {
+          "caller": "test_run_as_non_root_false_without_run_as_user_returns_medium",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 364
+        },
+        {
+          "caller": "test_run_as_non_root_false_without_run_as_user_returns_medium",
+          "callee": "any",
+          "lineNumber": 365
+        },
+        {
+          "caller": "test_run_as_non_root_false_without_run_as_user_returns_medium",
+          "callee": "any",
+          "lineNumber": 366
+        },
+        {
+          "caller": "test_run_as_non_root_false_with_nonzero_run_as_user_no_root_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 378
+        },
+        {
+          "caller": "test_run_as_non_root_false_with_nonzero_run_as_user_no_root_finding",
+          "callee": "any",
+          "lineNumber": 379
+        },
+        {
+          "caller": "test_run_as_user_nonzero_no_root_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 387
+        },
+        {
+          "caller": "test_run_as_user_nonzero_no_root_finding",
+          "callee": "any",
+          "lineNumber": 388
+        },
+        {
+          "caller": "test_lowercase_sys_ptrace_is_detected",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 405
+        },
+        {
+          "caller": "test_lowercase_sys_ptrace_is_detected",
+          "callee": "any",
+          "lineNumber": 406
+        },
+        {
+          "caller": "test_non_dangerous_cap_net_bind_service_no_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 421
+        },
+        {
+          "caller": "test_non_dangerous_cap_net_bind_service_no_finding",
+          "callee": "any",
+          "lineNumber": 422
+        },
+        {
+          "caller": "test_non_secret_env_name_no_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 432
+        },
+        {
+          "caller": "test_non_secret_env_name_no_finding",
+          "callee": "any",
+          "lineNumber": 433
+        },
+        {
+          "caller": "test_secret_name_without_value_no_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 441
+        },
+        {
+          "caller": "test_secret_name_without_value_no_finding",
+          "callee": "any",
+          "lineNumber": 442
+        },
+        {
+          "caller": "test_malformed_env_entries_no_crash",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 450
+        },
+        {
+          "caller": "test_malformed_env_entries_no_crash",
+          "callee": "isinstance",
+          "lineNumber": 451
+        },
+        {
+          "caller": "test_env_value_from_secret_key_ref_no_literal_value_no_finding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 471
+        },
+        {
+          "caller": "test_env_value_from_secret_key_ref_no_literal_value_no_finding",
+          "callee": "any",
+          "lineNumber": 472
+        },
+        {
+          "caller": "test_multiple_findings_have_sequential_zero_padded_ids",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 486
+        },
+        {
+          "caller": "test_id_format_uses_four_digit_padding",
+          "callee": "analyze_k8s_manifest",
+          "lineNumber": 498
+        },
+        {
+          "caller": "test_id_format_uses_four_digit_padding",
+          "callee": "len",
+          "lineNumber": 499
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 15,
+        "functionCount": 0,
+        "classCount": 15
+      }
+    }
+  ]
+}

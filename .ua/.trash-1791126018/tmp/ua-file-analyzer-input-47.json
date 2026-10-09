@@ -1,0 +1,41 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/tools/browser/__init__.py",
+      "language": "python",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/browser/tools.py",
+      "language": "python",
+      "sizeLines": 384,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_browser.py",
+      "language": "python",
+      "sizeLines": 281,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "packages/raptix/raptix/tools/browser/__init__.py": [
+      "packages/raptix/raptix/tools/browser/tools.py"
+    ],
+    "packages/raptix/raptix/tools/browser/tools.py": [],
+    "packages/raptix/tests/unit/tools/test_browser.py": [
+      "packages/raptix/raptix/tools/browser/tools.py"
+    ],
+    "packages/raptix/tests/unit/tools/test_browser_cleanup.py": [
+      "packages/raptix/raptix/tools/browser/tools.py"
+    ]
+  }
+}

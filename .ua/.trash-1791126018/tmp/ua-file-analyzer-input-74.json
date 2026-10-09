@@ -1,0 +1,28 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md",
+   "language": "markdown",
+   "sizeLines": 28,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/docs/decisions/0002-brand-token.md",
+   "language": "markdown",
+   "sizeLines": 20,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/docs/decisions/0004-fresh-thread-context-bootstrap.md",
+   "language": "markdown",
+   "sizeLines": 45,
+   "fileCategory": "docs"
+  }
+ ],
+ "batchImportData": {
+  "clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md": [],
+  "clients/web-raptix/docs/decisions/0002-brand-token.md": [],
+  "clients/web-raptix/docs/decisions/0004-fresh-thread-context-bootstrap.md": []
+ }
+}

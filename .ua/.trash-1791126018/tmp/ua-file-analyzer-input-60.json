@@ -1,0 +1,28 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "benchmark/cve_bench/fixtures/CVE-2023-37999.yml",
+      "language": "yaml",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/cve_bench/fixtures/CVE-2024-22120.yml",
+      "language": "yaml",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/cve_bench/fixtures/CVE-2024-2624.yml",
+      "language": "yaml",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "benchmark/cve_bench/fixtures/CVE-2023-37999.yml": [],
+    "benchmark/cve_bench/fixtures/CVE-2024-22120.yml": [],
+    "benchmark/cve_bench/fixtures/CVE-2024-2624.yml": []
+  }
+}

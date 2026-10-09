@@ -1,0 +1,147 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/001-health.json",
+      "language": "json",
+      "sizeLines": 34,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/002-catalog.json",
+      "language": "json",
+      "sizeLines": 146,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/003-create-invalid-400.json",
+      "language": "json",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/004-create-201.json",
+      "language": "json",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/005-create-duplicate-409.json",
+      "language": "json",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/006-list.json",
+      "language": "json",
+      "sizeLines": 22,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/007-detail.json",
+      "language": "json",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/008-patch-status.json",
+      "language": "json",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/009-plan-docs.json",
+      "language": "json",
+      "sizeLines": 75,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/010-opplan.json",
+      "language": "json",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/011-findings.json",
+      "language": "json",
+      "sizeLines": 36,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/012-timeline.json",
+      "language": "json",
+      "sizeLines": 58,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/013-files.json",
+      "language": "json",
+      "sizeLines": 39,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/014-file-content.json",
+      "language": "json",
+      "sizeLines": 8,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/015-approvals-pending.json",
+      "language": "json",
+      "sizeLines": 31,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/016-approval-allow.json",
+      "language": "json",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/017-approval-duplicate-409.json",
+      "language": "json",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/018-export-json.json",
+      "language": "json",
+      "sizeLines": 97,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/019-export-markdown.json",
+      "language": "json",
+      "sizeLines": 9,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/020-export-invalid-format.json",
+      "language": "json",
+      "sizeLines": 9,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "clients/web-raptix/tests/fixtures/w00/http/001-health.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/002-catalog.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/003-create-invalid-400.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/004-create-201.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/005-create-duplicate-409.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/006-list.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/007-detail.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/008-patch-status.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/009-plan-docs.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/010-opplan.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/011-findings.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/012-timeline.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/013-files.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/014-file-content.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/015-approvals-pending.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/016-approval-allow.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/017-approval-duplicate-409.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/018-export-json.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/019-export-markdown.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/020-export-invalid-format.json": []
+  }
+}

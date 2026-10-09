@@ -1,0 +1,32 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "clients/shared/streaming/src/normalize.ts",
+      "language": "typescript",
+      "sizeLines": 212,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/streaming/src/sessions.ts",
+      "language": "typescript",
+      "sizeLines": 98,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/streaming/src/types.ts",
+      "language": "typescript",
+      "sizeLines": 91,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "clients/shared/streaming/src/normalize.ts": [
+      "clients/shared/streaming/src/types.ts"
+    ],
+    "clients/shared/streaming/src/sessions.ts": [
+      "clients/shared/streaming/src/types.ts"
+    ],
+    "clients/shared/streaming/src/types.ts": []
+  }
+}

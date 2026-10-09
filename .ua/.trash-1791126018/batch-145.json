@@ -1,0 +1,2016 @@
+{
+  "batchIndex": 145,
+  "batchFiles": [
+    {
+      "path": "scripts/check_basedpyright_errors.py",
+      "language": "python",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/init_neo4j.cypher",
+      "language": "cypher",
+      "sizeLines": 74,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/next_version.py",
+      "language": "python",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/render_benchmark_charts.py",
+      "language": "python",
+      "sizeLines": 292,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/build_dashboard.py",
+      "language": "python",
+      "sizeLines": 308,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/export_corpus.py",
+      "language": "python",
+      "sizeLines": 237,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/redact_corpus.py",
+      "language": "python",
+      "sizeLines": 452,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/vitest.config.ts",
+      "language": "typescript",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/local/README.md",
+      "language": "markdown",
+      "sizeLines": 40,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/local/harnesses/juice_shop_t2.py",
+      "language": "python",
+      "sizeLines": 1439,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/local/harnesses/lab_collect.py",
+      "language": "python",
+      "sizeLines": 394,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/local/harnesses/lab_run.py",
+      "language": "python",
+      "sizeLines": 564,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/local/harnesses/t2_probe.py",
+      "language": "python",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/local/manual/test_b0_session_isolation_live.py",
+      "language": "python",
+      "sizeLines": 191,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_compose_langgraph_command.py",
+      "language": "python",
+      "sizeLines": 92,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_compose_network_isolation.py",
+      "language": "python",
+      "sizeLines": 331,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_web_raptix_ci.py",
+      "language": "python",
+      "sizeLines": 85,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/test_web_raptix_release.py",
+      "language": "python",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:scripts/check_basedpyright_errors.py",
+      "type": "file",
+      "name": "check_basedpyright_errors.py",
+      "filePath": "scripts/check_basedpyright_errors.py",
+      "summary": "Cổng kiểm tra type: parse báo cáo JSON của basedpyright và fail chỉ khi có diagnostic mức error; warning/info chỉ đếm vì codebase còn warning được theo dõi trên các interface động của langchain.",
+      "tags": [
+        "ci-cd",
+        "typecheck",
+        "basedpyright",
+        "quality-gate",
+        "script"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/check_basedpyright_errors.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/check_basedpyright_errors.py",
+      "lineRange": [
+        21,
+        55
+      ],
+      "summary": "Đọc báo cáo JSON, tách diagnostic theo mức severity, in tổng số warning/error và thoát 1 nếu có error-level diagnostics.",
+      "tags": [
+        "parsing",
+        "quality-gate",
+        "exit-code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/init_neo4j.cypher",
+      "type": "file",
+      "name": "init_neo4j.cypher",
+      "filePath": "scripts/init_neo4j.cypher",
+      "summary": "Khởi tạo schema Neo4j cho Attack Graph: ràng buộc duy nhất cho các label Host/Network/Credential/Vulnerability/Technique…, index hiệu năng theo trạng thái khám phá/severity và hai index full-text tìm kiếm.",
+      "tags": [
+        "database",
+        "neo4j",
+        "schema-definition",
+        "attack-graph",
+        "script"
+      ],
+      "complexity": "simple",
+      "languageNotes": "File Cypher không có parser cấu trúc — được phân tích thủ công; chạy một lần sau khi Neo4j bật bằng cypher-shell."
+    },
+    {
+      "id": "file:scripts/next_version.py",
+      "type": "file",
+      "name": "next_version.py",
+      "filePath": "scripts/next_version.py",
+      "summary": "Tính phiên bản semver tiếp theo từ conventional commits cho workflow auto-tag: BREAKING CHANGE → major, feat → minor, fix/perf/revert → patch, còn lại không release; exit code là tín hiệu workflow phân nhánh.",
+      "tags": [
+        "versioning",
+        "conventional-commits",
+        "ci-cd",
+        "script"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/next_version.py:classify",
+      "type": "function",
+      "name": "classify",
+      "filePath": "scripts/next_version.py",
+      "lineRange": [
+        39,
+        52
+      ],
+      "summary": "Phân loại một gói dòng commit thành cấp bump (none/patch/minor/major) bằng regex breaking/feat/fix.",
+      "tags": [
+        "classification",
+        "conventional-commits"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/next_version.py:bump",
+      "type": "function",
+      "name": "bump",
+      "filePath": "scripts/next_version.py",
+      "lineRange": [
+        55,
+        67
+      ],
+      "summary": "Cộng phiên bản hiện tại theo cấp bump đã chọn, từ chối version đầu vào không hợp lệ.",
+      "tags": [
+        "versioning",
+        "semver"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/render_benchmark_charts.py",
+      "type": "file",
+      "name": "render_benchmark_charts.py",
+      "filePath": "scripts/render_benchmark_charts.py",
+      "summary": "Vẽ các biểu đồ PNG cho bài viết benchmark XBOW (leaderboard, độ khó, donut Raptix, coverage) bằng matplotlib/numpy, dữ liệu giữ tập trung trong script như nguồn sự thật duy nhất.",
+      "tags": [
+        "visualization",
+        "benchmark",
+        "matplotlib",
+        "script"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/render_benchmark_charts.py:chart_leaderboard",
+      "type": "function",
+      "name": "chart_leaderboard",
+      "filePath": "scripts/render_benchmark_charts.py",
+      "lineRange": [
+        109,
+        145
+      ],
+      "summary": "Vẽ biểu đồ leaderboard các publisher XBOW kèm tô màu theo nhóm và ghi điểm phần trăm.",
+      "tags": [
+        "visualization",
+        "leaderboard"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/render_benchmark_charts.py:chart_difficulty",
+      "type": "function",
+      "name": "chart_difficulty",
+      "filePath": "scripts/render_benchmark_charts.py",
+      "lineRange": [
+        153,
+        177
+      ],
+      "summary": "Vẽ biểu đồ độ khó benchmark theo nhóm category cho phần write-up.",
+      "tags": [
+        "visualization",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/render_benchmark_charts.py:chart_raptix_donut",
+      "type": "function",
+      "name": "chart_raptix_donut",
+      "filePath": "scripts/render_benchmark_charts.py",
+      "lineRange": [
+        185,
+        253
+      ],
+      "summary": "Vẽ donut chart thể hiện tỷ lệ nhiệm vụ Raptix giải được theo lớp độ khó với chú thích chi tiết.",
+      "tags": [
+        "visualization",
+        "donut-chart"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/render_benchmark_charts.py:chart_coverage",
+      "type": "function",
+      "name": "chart_coverage",
+      "filePath": "scripts/render_benchmark_charts.py",
+      "lineRange": [
+        261,
+        282
+      ],
+      "summary": "Vẽ biểu đồ độ phủ kỹ năng/kịch bản benchmark cho mục coverage của write-up.",
+      "tags": [
+        "visualization",
+        "coverage"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:telemetry-gateway/build_dashboard.py",
+      "type": "file",
+      "name": "build_dashboard.py",
+      "filePath": "telemetry-gateway/build_dashboard.py",
+      "summary": "Dựng lại dashboard PostHog thành ba mục định hướng (Usage, Tactics, Corpus) qua REST API: bao nhiêu OSS user dùng harness, tactic/MITRE nào chạy nhiều và trạng thái corpus huấn luyện đã mask.",
+      "tags": [
+        "telemetry",
+        "posthog",
+        "dashboard",
+        "analytics",
+        "script"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:telemetry-gateway/build_dashboard.py:api",
+      "type": "function",
+      "name": "api",
+      "filePath": "telemetry-gateway/build_dashboard.py",
+      "lineRange": [
+        30,
+        40
+      ],
+      "summary": "Gửi request authenticated tới PostHog API (GET/POST) và parse JSON trả về.",
+      "tags": [
+        "http-client",
+        "posthog",
+        "api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:telemetry-gateway/build_dashboard.py:exclude_test_data",
+      "type": "function",
+      "name": "exclude_test_data",
+      "filePath": "telemetry-gateway/build_dashboard.py",
+      "lineRange": [
+        65,
+        79
+      ],
+      "summary": "Thêm mệnh đề HogQL loại bỏ event throwaway deploy-verify/live-verify khỏi mọi truy vấn dashboard.",
+      "tags": [
+        "hogql",
+        "data-quality",
+        "filtering"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:telemetry-gateway/build_dashboard.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "telemetry-gateway/build_dashboard.py",
+      "lineRange": [
+        254,
+        304
+      ],
+      "summary": "Xóa dashboard cũ (tùy chọn), tạo dashboard mới cùng các insight HogQL theo ba mục và ghim layout.",
+      "tags": [
+        "posthog",
+        "dashboard",
+        "orchestration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:telemetry-gateway/export_corpus.py",
+      "type": "file",
+      "name": "export_corpus.py",
+      "filePath": "telemetry-gateway/export_corpus.py",
+      "summary": "Export corpus suy luận red-team đã mask từ PostHog về JSONL huấn luyện: ghép các event trajectory.step thành chuỗi turn có nhãn vai trò theo từng engagement, phân trang qua HogQL vì giới hạn kích thước query.",
+      "tags": [
+        "telemetry",
+        "posthog",
+        "training-corpus",
+        "export",
+        "script"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Nội dung đã được client masker che định danh trước khi tới PostHog nên bản export an toàn để chia sẻ."
+    },
+    {
+      "id": "function:telemetry-gateway/export_corpus.py:group_trajectories",
+      "type": "function",
+      "name": "group_trajectories",
+      "filePath": "telemetry-gateway/export_corpus.py",
+      "lineRange": [
+        56,
+        88
+      ],
+      "summary": "Gom các dòng event theo session_id, sắp xếp theo step và dựng một object trajectory với mảng steps có nhãn vai trò.",
+      "tags": [
+        "grouping",
+        "trajectory",
+        "transformation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:telemetry-gateway/export_corpus.py:_query",
+      "type": "function",
+      "name": "_query",
+      "filePath": "telemetry-gateway/export_corpus.py",
+      "lineRange": [
+        98,
+        154
+      ],
+      "summary": "Chạy truy vấn HogQL phân trang lên events của PostHog, parse từng trang 10k dòng và nối kết quả có bảo toàn thứ tự.",
+      "tags": [
+        "hogql",
+        "pagination",
+        "posthog"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:telemetry-gateway/export_corpus.py:_bump_ms",
+      "type": "function",
+      "name": "_bump_ms",
+      "filePath": "telemetry-gateway/export_corpus.py",
+      "lineRange": [
+        157,
+        168
+      ],
+      "summary": "Đẩy mốc thời gian truy vấn theo từng trang để phân trang không trùng/khểnh event ở biên.",
+      "tags": [
+        "pagination",
+        "time-window"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:telemetry-gateway/export_corpus.py:_self_test",
+      "type": "function",
+      "name": "_self_test",
+      "filePath": "telemetry-gateway/export_corpus.py",
+      "lineRange": [
+        179,
+        188
+      ],
+      "summary": "Self-test offline kiểm tra logic group/parse mà không cần gọi mạng.",
+      "tags": [
+        "self-test",
+        "offline"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:telemetry-gateway/export_corpus.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "telemetry-gateway/export_corpus.py",
+      "lineRange": [
+        191,
+        233
+      ],
+      "summary": "Điều phối CLI: phân tích đối số, chạy export (tùy --since-hours/--self-test) và ghi JSONL corpus ra file đầu ra.",
+      "tags": [
+        "cli",
+        "export",
+        "orchestration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:telemetry-gateway/redact_corpus.py",
+      "type": "file",
+      "name": "redact_corpus.py",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "summary": "Cổng redaction ngữ nghĩa lớp 2 trước khi corpus vào training: hai lượt LLM (redact định danh còn sót rồi verify độc lập) trên từng trajectory, fail-closed — trajectory còn lộ định danh bị chuyển vào quarantine thay vì được xuất bản.",
+      "tags": [
+        "telemetry",
+        "redaction",
+        "privacy",
+        "llm",
+        "security"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Đặt sau thu thập và trước training theo khuyến nghị OpenTelemetry/ISO 27559; placeholder tái dùng đúng shape <TYPE_n> của client masker để trajectory nhất quán."
+    },
+    {
+      "id": "function:telemetry-gateway/redact_corpus.py:_chat",
+      "type": "function",
+      "name": "_chat",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "lineRange": [
+        138,
+        150
+      ],
+      "summary": "Gửi prompt tới LLM proxy kèm retry wrapper cho các lỗi tạm thời.",
+      "tags": [
+        "llm-client",
+        "retry"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:telemetry-gateway/redact_corpus.py:_chat_once",
+      "type": "function",
+      "name": "_chat_once",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "lineRange": [
+        153,
+        167
+      ],
+      "summary": "Một lượt gọi LLM thuần: dựng request POST tới proxy, trả về nội dung text của assistant.",
+      "tags": [
+        "llm-client",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:telemetry-gateway/redact_corpus.py:_parse_json",
+      "type": "function",
+      "name": "_parse_json",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "lineRange": [
+        170,
+        187
+      ],
+      "summary": "Parse phản hồi LLM thành JSON an toàn: tách fence code, bắt lỗi giải mã và trả None thay vì raise.",
+      "tags": [
+        "parsing",
+        "json",
+        "robustness"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:telemetry-gateway/redact_corpus.py:text_windows",
+      "type": "function",
+      "name": "text_windows",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "lineRange": [
+        190,
+        215
+      ],
+      "summary": "Chia text dài thành các cửa sổ có chồng lấn để redact theo phần mà không vượt giới hạn context của model.",
+      "tags": [
+        "chunking",
+        "windowing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:telemetry-gateway/redact_corpus.py:apply_identifiers",
+      "type": "function",
+      "name": "apply_identifiers",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "lineRange": [
+        218,
+        261
+      ],
+      "summary": "Áp dụng map định danh → placeholder <TYPE_n> lên các trường text, tái dùng số placeholder cũ để trajectory giữ tính nhất quán giữa các cửa sổ.",
+      "tags": [
+        "redaction",
+        "placeholder",
+        "mapping"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:telemetry-gateway/redact_corpus.py:redact_trajectory",
+      "type": "function",
+      "name": "redact_trajectory",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "lineRange": [
+        273,
+        305
+      ],
+      "summary": "Điều phối hai lượt redact + verify cho một trajectory: trả bản đã làm sạch hoặc đánh dấu quarantine khi lượt verify phát hiện còn định danh.",
+      "tags": [
+        "redaction",
+        "verify",
+        "fail-closed"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:telemetry-gateway/redact_corpus.py:_self_test",
+      "type": "function",
+      "name": "_self_test",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "lineRange": [
+        323,
+        361
+      ],
+      "summary": "Self-test offline với trajectory mẫu kiểm tra windowing, parse JSON và luồng quarantine không cần LLM thật.",
+      "tags": [
+        "self-test",
+        "offline"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:telemetry-gateway/redact_corpus.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "telemetry-gateway/redact_corpus.py",
+      "lineRange": [
+        364,
+        448
+      ],
+      "summary": "Điều phối CLI: đọc corpus JSONL vào, chạy song song qua ThreadPoolExecutor, ghi corpus sạch và quarantine, in thống kê tóm tắt.",
+      "tags": [
+        "cli",
+        "concurrency",
+        "orchestration"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:telemetry-gateway/vitest.config.ts",
+      "type": "file",
+      "name": "vitest.config.ts",
+      "filePath": "telemetry-gateway/vitest.config.ts",
+      "summary": "Cấu hình Vitest cho các test gateway telemetry của dự án (defineConfig tối giản).",
+      "tags": [
+        "configuration",
+        "vitest",
+        "test-runner",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:tests/local/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "tests/local/README.md",
+      "summary": "Tài liệu thư mục tests/local: quy định harness cục bộ (T2 probe, Juice Shop A/B runner, B0 live gate) là opt-in, cách chạy từ gốc repo và nguyên tắc lưu artifact ngoài git.",
+      "tags": [
+        "documentation",
+        "local-testing",
+        "harnesses",
+        "conventions"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/local/harnesses/juice_shop_t2.py",
+      "type": "file",
+      "name": "juice_shop_t2.py",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "summary": "Runner benchmark T2 A/B cho Juice Shop chạy trên WSL host: đổi ảnh LangGraph theo arm, tái tạo Juice Shop từ digest pin, dispatch orchestrator qua LangGraph API với ngân sách cố định, chấm bằng verifier solved-transition đóng băng và lưu bằng chứng mỗi run.",
+      "tags": [
+        "benchmark",
+        "harness",
+        "a-b-test",
+        "juice-shop",
+        "orchestration"
+      ],
+      "complexity": "complex",
+      "languageNotes": "File orchestration 1.4k dòng; mọi thao tác với target chỉ đọc và agent tự chạy dưới RoE enforcement."
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:preflight",
+      "type": "function",
+      "name": "preflight",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        185,
+        209
+      ],
+      "summary": "Kiểm tra điều kiện tiền lệ trước khi chạy: docker khả dụng, ảnh/commit arm tồn tại, ground truth đã nạp.",
+      "tags": [
+        "preflight",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:inventory",
+      "type": "function",
+      "name": "inventory",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        222,
+        239
+      ],
+      "summary": "Đọc inventory challenge Juice Shop từ ground-truth table để làm mốc đối chiếu kết quả.",
+      "tags": [
+        "inventory",
+        "ground-truth"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:validate_ground_truth",
+      "type": "function",
+      "name": "validate_ground_truth",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        242,
+        258
+      ],
+      "summary": "Kiểm tra bảng ground truth hợp lệ (đủ cột, tham chiếu challenge tồn tại) trước khi cho phép dispatch run.",
+      "tags": [
+        "validation",
+        "ground-truth"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_recreate_juice_shop",
+      "type": "function",
+      "name": "_recreate_juice_shop",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        320,
+        341
+      ],
+      "summary": "Tái tạo container Juice Shop từ digest pin trên port cục bộ, đảm bảo target mới tinh cho từng run.",
+      "tags": [
+        "docker",
+        "target-setup"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_read_sandbox_opplan",
+      "type": "function",
+      "name": "_read_sandbox_opplan",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        360,
+        380
+      ],
+      "summary": "Đọc opplan từ workspace sandbox container để phục vụ lưu bằng chứng và scoring.",
+      "tags": [
+        "sandbox",
+        "evidence"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_archive_sandbox_workspace",
+      "type": "function",
+      "name": "_archive_sandbox_workspace",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        383,
+        409
+      ],
+      "summary": "Sao chép workspace engagement từ container sandbox về thư mục bằng chứng của run kèm hash.",
+      "tags": [
+        "archive",
+        "evidence",
+        "docker"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_pg",
+      "type": "function",
+      "name": "_pg",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        466,
+        493
+      ],
+      "summary": "Kết nối trực tiếp Postgres container (checkpoint DB) cho các thao tác dọn/checkpoint phục vụ social hóa state giữa các run.",
+      "tags": [
+        "postgres",
+        "checkpoint",
+        "database"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_await_run_terminal",
+      "type": "function",
+      "name": "_await_run_terminal",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        646,
+        700
+      ],
+      "summary": "Poll thread state LangGraph đến khi run kết thúc terminal hoặc hết ngân sách thời gian, xử lý retry lỗi tạm thời.",
+      "tags": [
+        "polling",
+        "langgraph",
+        "async"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_snapshotter",
+      "type": "function",
+      "name": "_snapshotter",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        722,
+        757
+      ],
+      "summary": "Chụp snapshot objective/state định kỳ trong lúc run để có timeline phục vụ phân tích sau.",
+      "tags": [
+        "snapshot",
+        "evidence"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_ensure_resumable_thread",
+      "type": "function",
+      "name": "_ensure_resumable_thread",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        760,
+        795
+      ],
+      "summary": "Đảm bảo thread LangGraph có thể resume: kiểm tra trạng thái thread và checkpoint trước khi dispatch tiếp.",
+      "tags": [
+        "langgraph",
+        "checkpoint"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_dispatch",
+      "type": "function",
+      "name": "_dispatch",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        798,
+        938
+      ],
+      "summary": "Gửi nhiệm vụ tới orchestrator decepticon qua LangGraph API theo mô hình turn-by-turn với proceed message standing-approval, xử lý interrupt và thu transcript.",
+      "tags": [
+        "dispatch",
+        "langgraph",
+        "orchestration"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_coverage_recall",
+      "type": "function",
+      "name": "_coverage_recall",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        941,
+        970
+      ],
+      "summary": "Đối chiếu challenge đã giải với ground truth để tính coverage và liệt kê mục còn thiếu cho báo cáo run.",
+      "tags": [
+        "scoring",
+        "coverage"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_score",
+      "type": "function",
+      "name": "_score",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        973,
+        1000
+      ],
+      "summary": "Chấm kết quả run bằng verifier solved-transition đóng băng và tổng hợp điểm vào summary.",
+      "tags": [
+        "scoring",
+        "verifier"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:_execute_run",
+      "type": "function",
+      "name": "_execute_run",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        1003,
+        1244
+      ],
+      "summary": "Thực thi trọn vẹn một run A/B: chuyển arm, tái tạo target, dựng workspace, dispatch agent, snapshot, chấm và lưu bằng chứng — hàm trung tâm của runner.",
+      "tags": [
+        "orchestration",
+        "benchmark",
+        "evidence"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:run",
+      "type": "function",
+      "name": "run",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        1247,
+        1342
+      ],
+      "summary": "Vòng lặp lịch A/B đóng băng (A1,B1,A2,B2,A3,B3): gọi _execute_run cho từng lượt và tổng hợp kết quả loạt.",
+      "tags": [
+        "orchestration",
+        "a-b-test"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/local/harnesses/juice_shop_t2.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "tests/local/harnesses/juice_shop_t2.py",
+      "lineRange": [
+        1345,
+        1431
+      ],
+      "summary": "CLI chính: phân tích subcommand (setup/run/probe…), kiểm tra authorization operator và điều phối luồng tương ứng.",
+      "tags": [
+        "cli",
+        "entry-point",
+        "orchestration"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/local/harnesses/lab_run.py",
+      "type": "file",
+      "name": "lab_run.py",
+      "filePath": "tests/local/harnesses/lab_run.py",
+      "summary": "Runner tự động một lab duy nhất với thu thập trace đầy đủ: lưu input/trace/workspace/logs/manifest, suy diễn model/tool-call từ message diff của thread LangGraph mà không cần chỉnh mã hệ thống đang test; exit code 0/2/1 phân biệt hoàn thành, terminal khác và lỗi setup.",
+      "tags": [
+        "harness",
+        "lab-runner",
+        "trace-capture",
+        "langgraph"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Một engagement = một engagement_name + workspace container + thread mới; không tái sử dụng thread giữa các lab."
+    },
+    {
+      "id": "function:tests/local/harnesses/lab_run.py:_await_run_terminal",
+      "type": "function",
+      "name": "_await_run_terminal",
+      "filePath": "tests/local/harnesses/lab_run.py",
+      "lineRange": [
+        105,
+        147
+      ],
+      "summary": "Poll trạng thái thread tới khi run terminal, phân biệt giữa các trạng thái actionable và xử lý lỗi tạm thời.",
+      "tags": [
+        "polling",
+        "langgraph"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/local/harnesses/lab_run.py:_derive_calls",
+      "type": "function",
+      "name": "_derive_calls",
+      "filePath": "tests/local/harnesses/lab_run.py",
+      "lineRange": [
+        172,
+        209
+      ],
+      "summary": "Suy diễn model_calls.jsonl/tool_calls.jsonl từ chuỗi message (AIMessage → model call, ToolMessage → tool call) và ghi ra file trace.",
+      "tags": [
+        "trace",
+        "derivation",
+        "evidence"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/local/harnesses/lab_run.py:_parse_args",
+      "type": "function",
+      "name": "_parse_args",
+      "filePath": "tests/local/harnesses/lab_run.py",
+      "lineRange": [
+        216,
+        235
+      ],
+      "summary": "Phân tích CLI của runner: target, assistant, ngân sách, thư mục bằng chứng và các cờ snapshot.",
+      "tags": [
+        "cli",
+        "argument-parsing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/lab_run.py:_snapshotter",
+      "type": "function",
+      "name": "_snapshotter",
+      "filePath": "tests/local/harnesses/lab_run.py",
+      "lineRange": [
+        238,
+        263
+      ],
+      "summary": "Trả về coroutine snapshotter chụp objective/state định kỳ trong suốt run.",
+      "tags": [
+        "snapshot",
+        "evidence"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/lab_run.py:_amain",
+      "type": "function",
+      "name": "_amain",
+      "filePath": "tests/local/harnesses/lab_run.py",
+      "lineRange": [
+        266,
+        473
+      ],
+      "summary": "Luồng chính async: dựng thread, gửi kickoff, dẫn dắt turn-by-turn với proceed message, snapshot định kỳ và lưu toàn bộ bằng chứng.",
+      "tags": [
+        "async",
+        "orchestration",
+        "langgraph"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/local/harnesses/lab_run.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "tests/local/harnesses/lab_run.py",
+      "lineRange": [
+        476,
+        560
+      ],
+      "summary": "Entry-point đồng bộ: chạy _amain, ánh xạ terminal state sang exit code và in tóm tắt outcome.",
+      "tags": [
+        "entry-point",
+        "cli"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/local/harnesses/lab_collect.py",
+      "type": "file",
+      "name": "lab_collect.py",
+      "filePath": "tests/local/harnesses/lab_collect.py",
+      "summary": "Collector bóng (shadow collector): gắn vào thread LangGraph đang chạy do CLI điều khiển, poll đến khi run terminal và message ngừng tăng, rồi ghi cùng layout bằng chứng như lab_run.py với cùng quy tắc suy diễn model/tool-call.",
+      "tags": [
+        "harness",
+        "collector",
+        "trace-capture",
+        "langgraph"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/local/harnesses/lab_collect.py:_amain",
+      "type": "function",
+      "name": "_amain",
+      "filePath": "tests/local/harnesses/lab_collect.py",
+      "lineRange": [
+        119,
+        341
+      ],
+      "summary": "Luồng async chính: chọn thread theo id hoặc mới nhất, poll state, ghi transcript/trace/workspace/logs và manifest khi run đi đến terminal hoặc timeout.",
+      "tags": [
+        "async",
+        "polling",
+        "evidence"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/local/harnesses/lab_collect.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "tests/local/harnesses/lab_collect.py",
+      "lineRange": [
+        344,
+        390
+      ],
+      "summary": "Entry-point đồng bộ: chạy _amain, xử lý Ctrl-C để finalise những gì đã chụp và ánh xạ exit code.",
+      "tags": [
+        "entry-point",
+        "cli"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/local/harnesses/t2_probe.py",
+      "type": "file",
+      "name": "t2_probe.py",
+      "filePath": "tests/local/harnesses/t2_probe.py",
+      "summary": "Probe cục bộ in tóm tắt trạng thái thread T2 đang sống (số message, token, objectives) ngoài suite chính, dùng langgraph_sdk.",
+      "tags": [
+        "harness",
+        "probe",
+        "diagnostics",
+        "langgraph"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/harnesses/t2_probe.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "tests/local/harnesses/t2_probe.py",
+      "lineRange": [
+        13,
+        34
+      ],
+      "summary": "Đọc provenance.json của run, lấy state thread qua langgraph_sdk và in dòng tóm tắt message/token/objectives.",
+      "tags": [
+        "probe",
+        "diagnostics"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "type": "file",
+      "name": "test_b0_session_isolation_live.py",
+      "filePath": "tests/local/manual/test_b0_session_isolation_live.py",
+      "summary": "Gate B0 thủ công (slow/manual, cần RAPTIX_B0_LIVE=1): chứng minh hai session tmux sandbox thật không tráo state chéo, chạy qua đúng đường bash tool production thay vì gọi transport trực tiếp.",
+      "tags": [
+        "test",
+        "sandbox",
+        "session-isolation",
+        "manual-gate"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/local/manual/test_b0_session_isolation_live.py:_marker_command",
+      "type": "function",
+      "name": "_marker_command",
+      "filePath": "tests/local/manual/test_b0_session_isolation_live.py",
+      "lineRange": [
+        46,
+        56
+      ],
+      "summary": "Dựng lệnh shell ghi marker độc nhất vào artifact trong session chỉ định để kiểm tra cô lập.",
+      "tags": [
+        "test-helper",
+        "isolation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/local/manual/test_b0_session_isolation_live.py:_run_cell",
+      "type": "function",
+      "name": "_run_cell",
+      "filePath": "tests/local/manual/test_b0_session_isolation_live.py",
+      "lineRange": [
+        70,
+        97
+      ],
+      "summary": "Chạy một cell qua bash tool trong session riêng, thu artifact marker làm bằng chứng cho test isolation.",
+      "tags": [
+        "test-helper",
+        "sandbox"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/local/manual/test_b0_session_isolation_live.py:test_b0_real_sessions_overlap_without_cross_session_state",
+      "type": "function",
+      "name": "test_b0_real_sessions_overlap_without_cross_session_state",
+      "filePath": "tests/local/manual/test_b0_session_isolation_live.py",
+      "lineRange": [
+        101,
+        191
+      ],
+      "summary": "Chạy hai session chồng thời gian, assert marker của session này không lộ trong session kia qua artifact và workspace — bằng chứng B0 isolation trên stack thật.",
+      "tags": [
+        "test",
+        "session-isolation",
+        "evidence"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_compose_langgraph_command.py",
+      "type": "file",
+      "name": "test_compose_langgraph_command.py",
+      "filePath": "tests/test_compose_langgraph_command.py",
+      "summary": "Kiểm tra hợp đồng compose: lệnh langgraph trong docker-compose.yml phải tôn trọng LANGGRAPH_STRICT_ASYNC — bật biến thì bỏ --allow-blocking, mặc định thì giữ, xác minh trên file compose đã render.",
+      "tags": [
+        "test",
+        "docker-compose",
+        "configuration",
+        "contract-test"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_compose_network_isolation.py",
+      "type": "file",
+      "name": "test_compose_network_isolation.py",
+      "filePath": "tests/test_compose_network_isolation.py",
+      "summary": "Bất biến cô lập mạng cho docker-compose.yml đã render: dịch vụ operational không vào management network, cấm host networking, cấm mount docker.sock, mọi port publish gắn 127.0.0.1 và dịch vụ dual-homed phải nằm allowlist.",
+      "tags": [
+        "test",
+        "network-isolation",
+        "security",
+        "docker-compose",
+        "contract-test"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_web_raptix_ci.py",
+      "type": "file",
+      "name": "test_web_raptix_ci.py",
+      "filePath": "tests/test_web_raptix_ci.py",
+      "summary": "Kiểm tra workflow CI thực sự điều hướng thay đổi web tới các bước quality chạy được: web filter output được export và tiêu thụ, status check phụ thuộc hợp lệ, change detection không cần write permission và Prisma client tạo trước typecheck.",
+      "tags": [
+        "test",
+        "ci-cd",
+        "web",
+        "contract-test"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_web_raptix_release.py",
+      "type": "file",
+      "name": "test_web_raptix_release.py",
+      "filePath": "tests/test_web_raptix_release.py",
+      "summary": "Kiểm tra asset release khớp web stack mới: release.yml build đủ hai ảnh web với version stamping, các workflow lifecycle dùng catalog ảnh mới, installer/updater/checksum manifest gồm docker-compose.web-raptix.yml.",
+      "tags": [
+        "test",
+        "release",
+        "ci-cd",
+        "contract-test"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:scripts/check_basedpyright_errors.py",
+      "target": "function:scripts/check_basedpyright_errors.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/check_basedpyright_errors.py",
+      "target": "function:scripts/check_basedpyright_errors.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/init_neo4j.cypher",
+      "target": "document:docs/design/attack-graph-schema.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:scripts/next_version.py",
+      "target": "function:scripts/next_version.py:classify",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/next_version.py",
+      "target": "function:scripts/next_version.py:classify",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/next_version.py",
+      "target": "function:scripts/next_version.py:bump",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/next_version.py",
+      "target": "function:scripts/next_version.py:bump",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/render_benchmark_charts.py",
+      "target": "function:scripts/render_benchmark_charts.py:chart_leaderboard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/render_benchmark_charts.py",
+      "target": "function:scripts/render_benchmark_charts.py:chart_leaderboard",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/render_benchmark_charts.py",
+      "target": "function:scripts/render_benchmark_charts.py:chart_difficulty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/render_benchmark_charts.py",
+      "target": "function:scripts/render_benchmark_charts.py:chart_difficulty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/render_benchmark_charts.py",
+      "target": "function:scripts/render_benchmark_charts.py:chart_raptix_donut",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/render_benchmark_charts.py",
+      "target": "function:scripts/render_benchmark_charts.py:chart_raptix_donut",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/render_benchmark_charts.py",
+      "target": "function:scripts/render_benchmark_charts.py:chart_coverage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/render_benchmark_charts.py",
+      "target": "function:scripts/render_benchmark_charts.py:chart_coverage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/build_dashboard.py",
+      "target": "function:telemetry-gateway/build_dashboard.py:api",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/build_dashboard.py",
+      "target": "function:telemetry-gateway/build_dashboard.py:api",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/build_dashboard.py",
+      "target": "function:telemetry-gateway/build_dashboard.py:exclude_test_data",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/build_dashboard.py",
+      "target": "function:telemetry-gateway/build_dashboard.py:exclude_test_data",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/build_dashboard.py",
+      "target": "function:telemetry-gateway/build_dashboard.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/build_dashboard.py",
+      "target": "function:telemetry-gateway/build_dashboard.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:group_trajectories",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:group_trajectories",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:_query",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:_query",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:_bump_ms",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:_bump_ms",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:_self_test",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:_self_test",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/export_corpus.py",
+      "target": "function:telemetry-gateway/export_corpus.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:_chat",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:_chat",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:_chat_once",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:_chat_once",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:_parse_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:_parse_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:text_windows",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:text_windows",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:apply_identifiers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:apply_identifiers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:redact_trajectory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:redact_trajectory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:_self_test",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:_self_test",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/redact_corpus.py",
+      "target": "function:telemetry-gateway/redact_corpus.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:preflight",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:preflight",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:inventory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:inventory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:validate_ground_truth",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:validate_ground_truth",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_recreate_juice_shop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_recreate_juice_shop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_read_sandbox_opplan",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_read_sandbox_opplan",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_archive_sandbox_workspace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_archive_sandbox_workspace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_pg",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_pg",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_await_run_terminal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_await_run_terminal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_snapshotter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_snapshotter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_ensure_resumable_thread",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_ensure_resumable_thread",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_dispatch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_dispatch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_coverage_recall",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_coverage_recall",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_score",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_score",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_execute_run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:_execute_run",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:run",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/juice_shop_t2.py",
+      "target": "function:tests/local/harnesses/juice_shop_t2.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_await_run_terminal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_await_run_terminal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_derive_calls",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_derive_calls",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_parse_args",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_parse_args",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_snapshotter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_snapshotter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_amain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:_amain",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_run.py",
+      "target": "function:tests/local/harnesses/lab_run.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_collect.py",
+      "target": "function:tests/local/harnesses/lab_collect.py:_amain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_collect.py",
+      "target": "function:tests/local/harnesses/lab_collect.py:_amain",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_collect.py",
+      "target": "function:tests/local/harnesses/lab_collect.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/lab_collect.py",
+      "target": "function:tests/local/harnesses/lab_collect.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/harnesses/t2_probe.py",
+      "target": "function:tests/local/harnesses/t2_probe.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/harnesses/t2_probe.py",
+      "target": "function:tests/local/harnesses/t2_probe.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "target": "function:tests/local/manual/test_b0_session_isolation_live.py:_marker_command",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "target": "function:tests/local/manual/test_b0_session_isolation_live.py:_marker_command",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "target": "function:tests/local/manual/test_b0_session_isolation_live.py:_run_cell",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "target": "function:tests/local/manual/test_b0_session_isolation_live.py:_run_cell",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "target": "function:tests/local/manual/test_b0_session_isolation_live.py:test_b0_real_sessions_overlap_without_cross_session_state",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "target": "function:tests/local/manual/test_b0_session_isolation_live.py:test_b0_real_sessions_overlap_without_cross_session_state",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "service:docker-compose.yml",
+      "target": "file:tests/test_compose_langgraph_command.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "service:docker-compose.yml",
+      "target": "file:tests/test_compose_network_isolation.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:.github/workflows/ci.yml",
+      "target": "file:tests/test_web_raptix_ci.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:.github/workflows/release.yml",
+      "target": "file:tests/test_web_raptix_release.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/bash/bash.py",
+      "target": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/backends/factory.py",
+      "target": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/local/README.md",
+      "target": "file:tests/local/harnesses/juice_shop_t2.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/local/README.md",
+      "target": "file:tests/local/harnesses/lab_run.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/local/README.md",
+      "target": "file:tests/local/harnesses/lab_collect.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/local/README.md",
+      "target": "file:tests/local/harnesses/t2_probe.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:tests/local/README.md",
+      "target": "file:tests/local/manual/test_b0_session_isolation_live.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

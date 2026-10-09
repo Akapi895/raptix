@@ -1,0 +1,472 @@
+{
+  "batchIndex": 56,
+  "batchFiles": [
+    {
+      "path": ".dockerignore",
+      "language": "unknown",
+      "sizeLines": 54,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".env.example",
+      "language": "config",
+      "sizeLines": 406,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".golangci.yml",
+      "language": "yaml",
+      "sizeLines": 103,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".hadolint.yaml",
+      "language": "yaml",
+      "sizeLines": 36,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".markdownlint.yaml",
+      "language": "yaml",
+      "sizeLines": 38,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".migrations.json",
+      "language": "json",
+      "sizeLines": 2,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".pre-commit-config.yaml",
+      "language": "yaml",
+      "sizeLines": 157,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".typos.toml",
+      "language": "toml",
+      "sizeLines": 176,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".yamllint.yaml",
+      "language": "yaml",
+      "sizeLines": 22,
+      "fileCategory": "config"
+    },
+    {
+      "path": "AGENTS.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "ARCHITECTURE_AUDIT.md",
+      "language": "markdown",
+      "sizeLines": 1061,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "ARCHITECTURE_AUDIT_FIX.md",
+      "language": "markdown",
+      "sizeLines": 556,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "language": "markdown",
+      "sizeLines": 894,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "language": "markdown",
+      "sizeLines": 110,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "language": "markdown",
+      "sizeLines": 127,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CONTRIBUTING_AGENT.md",
+      "language": "markdown",
+      "sizeLines": 261,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Makefile",
+      "language": "makefile",
+      "sizeLines": 429,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 244,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "README_KO.md",
+      "language": "markdown",
+      "sizeLines": 228,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "RELEASE.md",
+      "language": "markdown",
+      "sizeLines": 124,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:.dockerignore",
+      "type": "file",
+      "name": ".dockerignore",
+      "filePath": ".dockerignore",
+      "summary": "Danh sách loại trừ context build Docker: loại node_modules, .git, benchmark results, workspace người dùng... để image build nhỏ và tránh lộ dữ liệu cục bộ vào layer build.",
+      "tags": ["docker", "build-system", "infrastructure", "exclude-list"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.env.example",
+      "type": "config",
+      "name": ".env.example",
+      "filePath": ".env.example",
+      "summary": "Template biến môi trường trung tâm của stack: API key cho các LLM provider (Anthropic, OpenAI, Gemini, DeepSeek, Ollama...), LiteLLM master/salt key, mật khẩu Postgres/Neo4j, cấu hình RAPTIX (model profile, auth priority, telemetry, stack name) và benchmark mode.",
+      "tags": ["configuration", "environment", "secrets", "llm-providers"],
+      "complexity": "complex",
+      "languageNotes": "Người dùng copy thành .env; compose và langgraph.json đều ăn env_file này nên là điểm single-source cho credential và tuning runtime."
+    },
+    {
+      "id": "config:.golangci.yml",
+      "type": "config",
+      "name": ".golangci.yml",
+      "filePath": ".golangci.yml",
+      "summary": "Cấu hình golangci-lint cho module Go của clients/launcher: chọn linter (errcheck, govet, staticcheck, revive...), ngưỡng issues và formatter gofmt/goimports.",
+      "tags": ["linter", "golang", "code-quality", "ci"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.hadolint.yaml",
+      "type": "config",
+      "name": ".hadolint.yaml",
+      "filePath": ".hadolint.yaml",
+      "summary": "Cấu hình hadolint cho việc lint Dockerfile: failure-threshold, override severity theo rule, danh sách rule bị ignore và trusted registries.",
+      "tags": ["linter", "dockerfile", "docker", "code-quality"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.markdownlint.yaml",
+      "type": "config",
+      "name": ".markdownlint.yaml",
+      "filePath": ".markdownlint.yaml",
+      "summary": "Cấu hình markdownlint: bật/tắt từng rule MD0xx (độ dài dòng, heading lặp, inline HTML, list style...) để chuẩn hóa toàn bộ tài liệu Markdown trong repo.",
+      "tags": ["linter", "markdown", "documentation", "code-quality"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.migrations.json",
+      "type": "config",
+      "name": ".migrations.json",
+      "filePath": ".migrations.json",
+      "summary": "Sổ theo dõi migration policy của telemetry: ghi nhận telemetry-policy-2026-06 đã được ack, để runtime biết không phải hỏi lại người dùng về chính sách telemetry.",
+      "tags": ["configuration", "telemetry", "migration", "state"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.pre-commit-config.yaml",
+      "type": "config",
+      "name": ".pre-commit-config.yaml",
+      "filePath": ".pre-commit-config.yaml",
+      "summary": "Cấu hình pre-commit hooks chạy cục bộ trước mỗi commit: ruff, ruff-format, basedpyright, yamllint, markdownlint, typos và các hook hệ thống khác với default_stages chung.",
+      "tags": ["pre-commit", "linting", "code-quality", "developer-experience"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.typos.toml",
+      "type": "config",
+      "name": ".typos.toml",
+      "filePath": ".typos.toml",
+      "summary": "Cấu hình typos (spell checker): từ điển extend-words/extend-identifiers chấp nhận các thuật ngữ offensive-security (payload, exploit, enum...) và mẫu files loại trừ để tránh false positive.",
+      "tags": ["spell-check", "linting", "configuration", "developer-experience"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.yamllint.yaml",
+      "type": "config",
+      "name": ".yamllint.yaml",
+      "filePath": ".yamllint.yaml",
+      "summary": "Cấu hình yamllint extending default style: nới lỏng một số rule (line length, indentation) và ignore các file YAML sinh tự động trước khi lint compose/workflow.",
+      "tags": ["linter", "yaml", "code-quality", "ci"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:AGENTS.md",
+      "type": "document",
+      "name": "AGENTS.md",
+      "filePath": "AGENTS.md",
+      "summary": "Ghi chú hiển thị trực tiếp cho AI coding agent: ranh giới package (raptix-core/raptix/raptix-sdk), lane CI (make ci-lint/ci-test), và initiative Incalmo-lessons với các cấm động vào exploit-execution path và guardrail (SafeCommand, RoE, HITL).",
+      "tags": ["ai-agents", "contributor-guide", "guardrails", "documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:ARCHITECTURE_AUDIT.md",
+      "type": "document",
+      "name": "ARCHITECTURE_AUDIT.md",
+      "filePath": "ARCHITECTURE_AUDIT.md",
+      "summary": "Báo cáo audit kiến trúc tiếng Việt dài 1000+ dòng: phân tích bằng chứng runtime về phase routing, foothold boundary, propagation loop, KG freshness, StateDelta/fact-hypothesis, failure taxonomy, multi-agent boundary, observability và bảng 11 bottleneck ưu tiên.",
+      "tags": ["architecture-audit", "analysis", "vi-doc", "planning"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:ARCHITECTURE_AUDIT_FIX.md",
+      "type": "document",
+      "name": "ARCHITECTURE_AUDIT_FIX.md",
+      "filePath": "ARCHITECTURE_AUDIT_FIX.md",
+      "summary": "Hội thoại đánh giá thứ tự sửa lỗi sau audit kiến trúc: chốt 5 điểm nghẽn như một pipeline duy nhất (failure/terminal signal trước, KG freshness, contract inconsistency ở Initial Foothold, verified foothold boundary, structured operational state shadow mode cuối cùng).",
+      "tags": ["architecture-audit", "remediation-plan", "vi-doc", "prioritization"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:CHANGELOG.md",
+      "type": "document",
+      "name": "CHANGELOG.md",
+      "filePath": "CHANGELOG.md",
+      "summary": "Lịch sử phiên bản theo Keep a Changelog từ fork 1.1.2 đến 1.1.47: ghi nhận 3-package split (core/framework/sdk), plugin extension primitives, thay đổi security/operational và các fix lớn từng release.",
+      "tags": ["changelog", "release-notes", "versioning", "documentation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:CODE_OF_CONDUCT.md",
+      "type": "document",
+      "name": "CODE_OF_CONDUCT.md",
+      "filePath": "CODE_OF_CONDUCT.md",
+      "summary": "Contributor Covenant 2.x: cam kết cộng đồng, chuẩn xử sự, trách nhiệm enforcement, phạm vi áp dụng và thang xử lý 4 mức (Correction, Warning, Temporary Ban, Permanent Ban).",
+      "tags": ["code-of-conduct", "community", "governance", "documentation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:CONTRIBUTING.md",
+      "type": "document",
+      "name": "CONTRIBUTING.md",
+      "filePath": "CONTRIBUTING.md",
+      "summary": "Hướng dẫn đóng góp: setup môi trường (uv, Docker, make dev), chạy test/lint, quy trình PR, code conventions, cấu trúc project, cách viết skills, làm việc với AI assistants, ADR và quy trình release.",
+      "tags": ["contributing", "developer-guide", "workflow", "documentation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:CONTRIBUTING_AGENT.md",
+      "type": "document",
+      "name": "CONTRIBUTING_AGENT.md",
+      "filePath": "CONTRIBUTING_AGENT.md",
+      "summary": "Charter cho đóng góp do AI hỗ trợ: hard rules (không phá guardrail, không self-approve), checklist self-review 5 mục (intent, scope, blast-radius, verification, honesty) và các pattern AI hay làm sai trong repo này.",
+      "tags": ["ai-agents", "contributor-guide", "code-review", "safety"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Makefile",
+      "type": "file",
+      "name": "Makefile",
+      "filePath": "Makefile",
+      "summary": "Entry point vận hành repo với 38 target: make dev/dogfood/smoke (compose lifecycle), test/test-local, ci-lint/ci-test (lane PR Python), audit-skills + check-skill-graph, quality-cli/quality/quality-strict, webraptix-* (build/db/up/health), benchmark và cve-bench-dry.",
+      "tags": ["build-system", "ci-cd", "makefile", "developer-experience"],
+      "complexity": "complex",
+      "languageNotes": "Target phức tạp như webraptix-health dogfood cả vòng đời compose up --wait rồi probe HTTP; ci-lint/ci-test là lane chuẩn cho PR Python (ruff + basedpyright + pytest -n auto)."
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Trang chủ dự án: giới thiệu Raptix là autonomous red team agent, hướng dẫn cài đặt (install script, pip SDK), kết quả benchmark XBOW 102/104, kiến trúc hai mạng (raptix-net/sandbox-net), roster 16 agents, model profile eco/max/test và bản đồ tài liệu.",
+      "tags": ["documentation", "entry-point", "overview", "readme"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:README_KO.md",
+      "type": "document",
+      "name": "README_KO.md",
+      "filePath": "README_KO.md",
+      "summary": "Bản dịch tiếng Hàn của README.md: giữ nguyên cấu trúc (cài đặt, benchmark, kiến trúc, agents, models/providers, tài liệu, cộng đồng, disclaimer) cho người đọc Hàn Quốc.",
+      "tags": ["documentation", "i18n", "korean", "readme"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:RELEASE.md",
+      "type": "document",
+      "name": "RELEASE.md",
+      "filePath": "RELEASE.md",
+      "summary": "Quy trình release: đánh version, cut release thủ công, auto-tag trên merge, các bước release workflow tự động (build image, stamp version, publish), digest pinning, pre-release, phục hồi release lỗi và xử lý submodules.",
+      "tags": ["release-process", "versioning", "ci-cd", "documentation"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:.env.example",
+      "target": "service:docker-compose.yml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.env.example",
+      "target": "config:langgraph.json",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.golangci.yml",
+      "target": "file:clients/launcher/cmd/opscontrol/opscontrol.go",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.hadolint.yaml",
+      "target": "service:containers/langgraph.Dockerfile",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.markdownlint.yaml",
+      "target": "document:README.md",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.pre-commit-config.yaml",
+      "target": "config:pyproject.toml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.yamllint.yaml",
+      "target": "service:docker-compose.yml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:AGENTS.md",
+      "target": "config:pyproject.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:AGENTS.md",
+      "target": "config:langgraph.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:ARCHITECTURE_AUDIT.md",
+      "target": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:ARCHITECTURE_AUDIT_FIX.md",
+      "target": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:CHANGELOG.md",
+      "target": "config:pyproject.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:CODE_OF_CONDUCT.md",
+      "target": "document:CONTRIBUTING.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:CONTRIBUTING.md",
+      "target": "config:pyproject.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "service:docker-compose.yml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README_KO.md",
+      "target": "document:README.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:RELEASE.md",
+      "target": "file:Makefile",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:ARCHITECTURE_AUDIT_FIX.md",
+      "target": "document:ARCHITECTURE_AUDIT.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:CONTRIBUTING_AGENT.md",
+      "target": "document:CONTRIBUTING.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:.dockerignore",
+      "target": "service:containers/langgraph.Dockerfile",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:.typos.toml",
+      "target": "config:.pre-commit-config.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:Makefile",
+      "target": "service:docker-compose.yml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:Makefile",
+      "target": "config:pyproject.toml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

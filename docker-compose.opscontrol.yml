@@ -1,0 +1,15 @@
+# docker-compose.opscontrol.yml — LAUNCHER-MANAGED runtime overlay (ADR-0006).
+# Do NOT hand-edit. The launcher rewrites this file on every `raptix start`
+# (cmd/opscontrol/supervisor.go:writeComposeOverlay) so any manual edits are
+# erased on the next boot.
+#
+# RAPTIX_OPSCONTROL_SOCK_HOST is REQUIRED at compose interpolation
+# time. There is no '/dev/null' fallback: a missing socket path means
+# the daemon wiring is broken, and we'd rather fail at boot than mount
+# a character device into the container and surface ECONNREFUSED
+# mid-engagement.
+
+services:
+  langgraph:
+    volumes:
+      - "${RAPTIX_OPSCONTROL_SOCK_HOST}:/var/run/raptix-ops.sock:rw"

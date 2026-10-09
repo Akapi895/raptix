@@ -1,0 +1,2302 @@
+{
+  "batchIndex": 126,
+  "batchFiles": [
+    {
+      "path": "packages/raptix-sdk/examples/middleware/README.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/middleware/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/prompt/README.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/prompt/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/skill/README.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/skill/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py",
+      "language": "python",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/tool/README.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/tool/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix-sdk/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 61,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix-sdk/raptix_sdk/py.typed",
+      "language": "typed",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "language": "python",
+      "sizeLines": 114,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "language": "python",
+      "sizeLines": 98,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_examples.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "language": "python",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "language": "python",
+      "sizeLines": 163,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "language": "python",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "language": "python",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/README.md",
+      "language": "markdown",
+      "sizeLines": 19,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 204,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix/raptix/_boot.py",
+      "language": "python",
+      "sizeLines": 161,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/agents/plugins/__init__.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "language": "python",
+      "sizeLines": 209,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/language.md",
+      "language": "markdown",
+      "sizeLines": 13,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/standard/wireless_operator.md",
+      "language": "markdown",
+      "sizeLines": 74,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:packages/raptix-sdk/examples/middleware/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "packages/raptix-sdk/examples/middleware/README.md",
+      "summary": "README cho example plugin middleware (raptix-example-middleware) do raptix-sdk plugin new scaffold: build bằng uv build + pip install dist/*.whl, framework khám phá contribution qua entry-point group raptix.middleware; phần Test chỉ cách dùng FakeBackend/FakeLLM/FakeSandbox từ raptix_sdk.testing để viết test hermetic không cần framework thật.",
+      "tags": [
+        "plugin",
+        "middleware",
+        "example",
+        "scaffold"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        23
+      ]
+    },
+    {
+      "id": "config:packages/raptix-sdk/examples/middleware/pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "packages/raptix-sdk/examples/middleware/pyproject.toml",
+      "summary": "pyproject của plugin middleware ví dụ raptix-example-middleware (Apache-2.0, Python >=3.13, phụ thuộc raptix-sdk): khai báo entry-point group raptix.middleware để plugin loader tự khám phá, build hatchling với package src/raptix_example_middleware.",
+      "tags": [
+        "pyproject",
+        "plugin",
+        "middleware",
+        "entry-point"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        21
+      ]
+    },
+    {
+      "id": "document:packages/raptix-sdk/examples/prompt/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "packages/raptix-sdk/examples/prompt/README.md",
+      "summary": "README cho example plugin prompt (raptix-example-prompt) do raptix-sdk plugin new scaffold: build bằng uv build + pip install dist/*.whl, framework khám phá contribution qua entry-point group raptix.prompts; phần Test chỉ cách dùng FakeBackend/FakeLLM/FakeSandbox từ raptix_sdk.testing để viết test hermetic không cần framework thật.",
+      "tags": [
+        "plugin",
+        "prompt",
+        "example",
+        "scaffold"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        23
+      ]
+    },
+    {
+      "id": "config:packages/raptix-sdk/examples/prompt/pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "packages/raptix-sdk/examples/prompt/pyproject.toml",
+      "summary": "pyproject của plugin prompt ví dụ raptix-example-prompt (Apache-2.0, Python >=3.13, phụ thuộc raptix-sdk): khai báo entry-point group raptix.prompts để plugin loader tự khám phá, build hatchling với package src/raptix_example_prompt.",
+      "tags": [
+        "pyproject",
+        "plugin",
+        "prompt",
+        "entry-point"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        21
+      ]
+    },
+    {
+      "id": "document:packages/raptix-sdk/examples/skill/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "packages/raptix-sdk/examples/skill/README.md",
+      "summary": "README cho example plugin skill (raptix-example-skill) do raptix-sdk plugin new scaffold: build bằng uv build + pip install dist/*.whl, framework khám phá contribution qua entry-point group raptix.skills; phần Test chỉ cách dùng FakeBackend/FakeLLM/FakeSandbox từ raptix_sdk.testing để viết test hermetic không cần framework thật.",
+      "tags": [
+        "plugin",
+        "skill",
+        "example",
+        "scaffold"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        23
+      ]
+    },
+    {
+      "id": "config:packages/raptix-sdk/examples/skill/pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "packages/raptix-sdk/examples/skill/pyproject.toml",
+      "summary": "pyproject của plugin skill ví dụ raptix-example-skill (Apache-2.0, Python >=3.13, phụ thuộc raptix-sdk): khai báo entry-point group raptix.skills để plugin loader tự khám phá, build hatchling với package src/raptix_example_skill.",
+      "tags": [
+        "pyproject",
+        "plugin",
+        "skill",
+        "entry-point"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        21
+      ]
+    },
+    {
+      "id": "file:packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py",
+      "summary": "Module skill-source plugin ví dụ: plugin đóng gói file skill markdown làm package data và đăng ký prefix đường dẫn qua factory get_skill_sources mà framework skill loader gọi lúc build agent.",
+      "tags": [
+        "plugin",
+        "skill",
+        "example"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        14
+      ]
+    },
+    {
+      "id": "document:packages/raptix-sdk/examples/tool/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "packages/raptix-sdk/examples/tool/README.md",
+      "summary": "README cho example plugin tool (raptix-example-tool) do raptix-sdk plugin new scaffold: build bằng uv build + pip install dist/*.whl, framework khám phá contribution qua entry-point group raptix.tools; phần Test chỉ cách dùng FakeBackend/FakeLLM/FakeSandbox từ raptix_sdk.testing để viết test hermetic không cần framework thật.",
+      "tags": [
+        "plugin",
+        "tool",
+        "example",
+        "scaffold"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        23
+      ]
+    },
+    {
+      "id": "config:packages/raptix-sdk/examples/tool/pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "packages/raptix-sdk/examples/tool/pyproject.toml",
+      "summary": "pyproject của plugin tool ví dụ raptix-example-tool (Apache-2.0, Python >=3.13, phụ thuộc raptix-sdk): khai báo entry-point group raptix.tools để plugin loader tự khám phá, build hatchling với package src/raptix_example_tool.",
+      "tags": [
+        "pyproject",
+        "plugin",
+        "tool",
+        "entry-point"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        21
+      ]
+    },
+    {
+      "id": "config:packages/raptix-sdk/pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "packages/raptix-sdk/pyproject.toml",
+      "summary": "Pyproject của raptix-sdk — SDK cho tác giả plugin (protocols, fixtures, scaffolding): metadata Apache-2.0/Python 3.13, phụ thuộc raptix-core + typer; extras testing (pytest/pytest-asyncio cho fakes) và fixtures (kéo raptix); script CLI raptix-sdk trỏ tới raptix_sdk.scaffold.cli:app scaffold 6 loại plugin (tool/middleware/agent/callback/skill/prompt); build hatchling.",
+      "tags": [
+        "sdk",
+        "pyproject",
+        "packaging",
+        "cli"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        61
+      ]
+    },
+    {
+      "id": "file:packages/raptix-sdk/raptix_sdk/py.typed",
+      "type": "file",
+      "name": "py.typed",
+      "filePath": "packages/raptix-sdk/raptix_sdk/py.typed",
+      "summary": "Marker PEP 561 rỗng khai báo raptix-sdk có type hints, cho phép type checker bên ngoài dùng typing của SDK.",
+      "tags": [
+        "pep561",
+        "typing",
+        "marker"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "summary": "Fakes kiểm thử hermetic cho plugin: FakeBackend (filesystem in-memory hỗ trợ kwargs offset/limit để compose với CompositeBackend), FakeLLM (trả responses theo thứ tự, IndexError khi cạn để over-invoke không im lặng), FakeSandbox (ghi nhận commands, trả stdout từ queue) — mỗi fake satisfies runtime-checkable Protocol tương ứng của raptix_core, giúp test plugin không cần framework thật.",
+      "tags": [
+        "testing",
+        "fakes",
+        "sdk",
+        "protocol"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        114
+      ]
+    },
+    {
+      "id": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "type": "file",
+      "name": "test_compat_shim_identity.py",
+      "filePath": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "summary": "Kiểm tra bảo toàn identity của compat shim PEP 562: class import từ đường legacy (raptix.core.schemas, raptix.llm.models, raptix.plugin_loader, raptix.tools.research.graph) và canonical (raptix_core.*) phải là CÙNG object; chứng minh __getattr__ không cảnh báo với lookup dunder/private nhưng phát DeprecationWarning một lần cho attribute legacy.",
+      "tags": [
+        "test",
+        "compat",
+        "pep562",
+        "deprecation"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        98
+      ]
+    },
+    {
+      "id": "file:packages/raptix-sdk/tests/test_examples.py",
+      "type": "file",
+      "name": "test_examples.py",
+      "filePath": "packages/raptix-sdk/tests/test_examples.py",
+      "summary": "Smoke test cấu trúc cho 6 example plugins dưới examples/: mỗi example có pyproject + README + cây src/, khai báo đúng entry-point group theo kind (tool/middleware/agent/callback/skill/prompt) và module chính parse được bằng ast — không cần framework thật (spec §14 acceptance #8).",
+      "tags": [
+        "test",
+        "examples",
+        "packaging",
+        "smoke"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        71
+      ]
+    },
+    {
+      "id": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "type": "file",
+      "name": "test_extra_routes.py",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "summary": "Acceptance spec §14 cho make_agent_backend(extra_routes=): prefix do caller cung cấp mount trên OSS default, longest-prefix-wins (tenant route đè /skills/), từ chối prefix reserved (/skills/, /) và path traversal, yêu cầu dạng /x/ hợp lệ; test end-to-end đọc /foo/x.txt qua backend composite trả đúng nội dung overlay.",
+      "tags": [
+        "test",
+        "backend",
+        "routing",
+        "security"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        137
+      ]
+    },
+    {
+      "id": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "type": "file",
+      "name": "test_framework_import_smoke.py",
+      "filePath": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "summary": "Import smoke cho Phase 2.x.3 (chạy trong raptix-sdk/tests nhờ extras fixtures): 16 agent factory đều importable + callable, backend/middleware/llm public API importable, register_legacy_imports idempotent, RoleRegistry seeded đủ 16 OSS role, PluginRegistry tìm thấy OSS subagents — không cần sandbox container hay LiteLLM proxy.",
+      "tags": [
+        "test",
+        "smoke",
+        "import",
+        "framework"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        163
+      ]
+    },
+    {
+      "id": "file:packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "type": "file",
+      "name": "test_sdk_api_stability.py",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "summary": "Snapshot ổn định API SDK: khoá 23 symbol public raptix-sdk (7 protocols, slot enum/constants, 5 contribution, 3 plugin loader, 8 registry) + fakes testing — symbol nào bị xoá/re-export mất sẽ fail CI (spec §6.3).",
+      "tags": [
+        "test",
+        "api-stability",
+        "sdk",
+        "snapshot"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        76
+      ]
+    },
+    {
+      "id": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "type": "file",
+      "name": "test_sdk_surface.py",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "summary": "Kiểm tra surface single-import của raptix-sdk (spec §6.3): 7 Protocol + 5 contribution dataclass import được qua raptix_sdk; FakeBackend/FakeLLM/FakeSandbox passes isinstance với runtime-checkable Protocol tương ứng; RoleRegistry idempotent và SkillSourceRegistry validate path skill.",
+      "tags": [
+        "test",
+        "sdk",
+        "protocol",
+        "surface"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        125
+      ]
+    },
+    {
+      "id": "document:packages/raptix/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "packages/raptix/README.md",
+      "summary": "README của package raptix — agent framework opinionated xây trên raptix-core: 16 agent factory, 11 middleware, tools, LLM router, sandbox HTTP client và skill catalogs; plugin author nên phụ thuộc raptix-sdk thay vì raptix.",
+      "tags": [
+        "readme",
+        "framework",
+        "packaging"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        19
+      ]
+    },
+    {
+      "id": "config:packages/raptix/pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "packages/raptix/pyproject.toml",
+      "summary": "Pyproject của framework runtime raptix (version sentinel 0.0.0 thay bằng git tag lúc build Docker): phụ thuộc raptix-core, stack LangChain/LangGraph, beautifulsoup4 cho sandbox_web, FastAPI/uvicorn cho sandbox daemon, typer CLI và security floors (click/cryptography/starlette/langchain) cho gate pip-audit; extras neo4j/runtime-persistence/telemetry/mcp; scripts raptix-cli, raptix-kg-health, raptix-mcp và các entry-point group plugin raptix.* cho plugin loader.",
+      "tags": [
+        "pyproject",
+        "packaging",
+        "dependencies",
+        "entry-point"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        204
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/_boot.py",
+      "type": "file",
+      "name": "_boot.py",
+      "filePath": "packages/raptix/raptix/_boot.py",
+      "summary": "Framework boot chạy một lần lúc import raptix: đăng ký 16 OSS role vào RoleRegistry (idempotent, kèm baseline skill_sources), walk entry-point raptix.roles để nạp RoleSpec của plugin, PluginRegistry.load() và push RoleResolution snapshot per-role (middleware stack, skill sources) phục vụ introspect_role() audit-grade (spec §8 gaps #2/#5/#7).",
+      "tags": [
+        "boot",
+        "registry",
+        "plugin",
+        "role"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        161
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/agents/plugins/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/agents/plugins/__init__.py",
+      "summary": "Docstring khai báo bundle plugin-shape OSS: agent vulnresearch + 5 subagent (scanner, detector, verifier, patcher, exploiter) wired như plugin ngoài qua entry-point raptix.subagents với bundle=\"plugins\" — là canonical reference cho community-plugin contract.",
+      "tags": [
+        "plugin",
+        "subagent",
+        "bundle",
+        "vulnresearch"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        12
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "type": "file",
+      "name": "claude4_compat.py",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "summary": "Lớp tương thích Claude 4.x cho system prompt: phát hiện model family Claude 4+ bằng regex (bất kể provider prefix), thay từ vựng red-team bằng ngôn ngữ trung tính (longest-match-first, word-boundary) và prepend persona AUTHORIZATION CONTEXT; term map nạp từ config/claude4_compat.yaml với fallback builtin, tắt qua env RAPTIX_CLAUDE4_COMPAT; apply_compat_for_role resolve model theo role qua LLM router và fail-soft trả prompt gốc.",
+      "tags": [
+        "compat",
+        "claude",
+        "prompt",
+        "refusal"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        1,
+        209
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/agents/prompts/language.md",
+      "type": "document",
+      "name": "language.md",
+      "filePath": "packages/raptix/raptix/agents/prompts/language.md",
+      "summary": "Chính sách ngôn ngữ LANGUAGE_POLICY chèn vào prompt: mọi prose cho operator (câu hỏi interview, menu, explanation, error) phải tiếng Anh; tool call/args/payload JSON/field schema giữ nguyên dạng kỹ thuật; bị override runtime bởi biến môi trường RAPTIX_LANGUAGE (ISO 639-1).",
+      "tags": [
+        "prompt",
+        "policy",
+        "language",
+        "i18n"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        13
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/agents/prompts/standard/wireless_operator.md",
+      "type": "document",
+      "name": "wireless_operator.md",
+      "filePath": "packages/raptix/raptix/agents/prompts/standard/wireless_operator.md",
+      "summary": "System prompt WirelessOperator — chuyên gia tấn công không dây (Wi-Fi, BLE, Zigbee, sub-GHz) do orchestrator dispatch: xác nhận hardware mode từ plan/roe.json (in_sandbox/dropbox/none), recon airspace bằng airodump-ng/kismet vào recon/airspace.md, chọn kỹ thuật theo acceptance criterion của OPPLAN, load skill từ skills/standard/wireless/, deauth bounded bởi RoE (stealth → PMKID), lưu evidence handshake/PSK vào evidence/wireless/ và Credential node wpa_psk.",
+      "tags": [
+        "prompt",
+        "wireless",
+        "agent",
+        "opsec"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        74
+      ]
+    },
+    {
+      "id": "function:packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py:get_skill_sources",
+      "type": "function",
+      "name": "get_skill_sources",
+      "filePath": "packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py",
+      "lineRange": [
+        11,
+        14
+      ],
+      "summary": "Factory plugin được framework skill loader gọi: bỏ qua tham số role và trả về danh sách skill source /skills/decepticon_example_skill/ đóng gói bởi plugin.",
+      "tags": [
+        "plugin",
+        "skill",
+        "factory"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeBackend",
+      "type": "class",
+      "name": "FakeBackend",
+      "filePath": "packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "lineRange": [
+        26,
+        61
+      ],
+      "summary": "Fake BackendProtocol in-memory: mọi read/write/list/exists backing bằng dict, hỗ trợ kwargs offset/limit theo hợp đồng canonical backend; passes isinstance(fake, BackendProtocol) runtime.",
+      "tags": [
+        "fake",
+        "testing",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeLLM",
+      "type": "class",
+      "name": "FakeLLM",
+      "filePath": "packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "lineRange": [
+        64,
+        87
+      ],
+      "summary": "Fake LLMProtocol scripted: invoke() trả từng response theo thứ tự, ghi nhận calls; IndexError khi cạn responses để over-invocation không thành công im lặng.",
+      "tags": [
+        "fake",
+        "testing",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeSandbox",
+      "type": "class",
+      "name": "FakeSandbox",
+      "filePath": "packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "lineRange": [
+        90,
+        111
+      ],
+      "summary": "Fake SandboxProtocol no-op: execute_command ghi command vào self.commands và trả stdout từ response queue (rỗng khi cạn), cho phép assert logic dựng command không cần sandbox container.",
+      "tags": [
+        "fake",
+        "testing",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_schemas_identity_preservation",
+      "type": "function",
+      "name": "test_schemas_identity_preservation",
+      "filePath": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "lineRange": [
+        16,
+        25
+      ],
+      "summary": "Assert RoE từ raptix.core.schemas (legacy) và raptix_core.types.engagement (canonical) là cùng một class object — shim phải trả class gốc chứ không bọc wrapper.",
+      "tags": [
+        "test",
+        "compat",
+        "identity"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_llm_models_identity_preservation",
+      "type": "function",
+      "name": "test_llm_models_identity_preservation",
+      "filePath": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "lineRange": [
+        28,
+        34
+      ],
+      "summary": "Tương tự cho raptix.llm.models vs raptix_core.types.llm: identity class được bảo toàn qua shim.",
+      "tags": [
+        "test",
+        "compat",
+        "identity"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_plugin_loader_identity_preservation",
+      "type": "function",
+      "name": "test_plugin_loader_identity_preservation",
+      "filePath": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "lineRange": [
+        37,
+        43
+      ],
+      "summary": "Tương tự cho raptix.plugin_loader vs raptix_core.plugin_loader.",
+      "tags": [
+        "test",
+        "compat",
+        "identity"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_research_graph_identity_preservation",
+      "type": "function",
+      "name": "test_research_graph_identity_preservation",
+      "filePath": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "lineRange": [
+        46,
+        52
+      ],
+      "summary": "Tương tự cho raptix.tools.research.graph vs raptix_core.types.kg.",
+      "tags": [
+        "test",
+        "compat",
+        "identity"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_dunder_lookup_does_not_warn",
+      "type": "function",
+      "name": "test_dunder_lookup_does_not_warn",
+      "filePath": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "lineRange": [
+        55,
+        78
+      ],
+      "summary": "Lookup dunder/private (như __path__ probe của Python khi from X import Y) qua shim không phát DeprecationWarning — tránh nhiễu warning trong cơ chế import.",
+      "tags": [
+        "test",
+        "compat",
+        "identity"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_explicit_warning_on_legacy_attribute",
+      "type": "function",
+      "name": "test_explicit_warning_on_legacy_attribute",
+      "filePath": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "lineRange": [
+        81,
+        98
+      ],
+      "summary": "Truy cập attribute legacy phát đúng một DeprecationWarning trỏ tới path canonical; lần gọi sau không lặp warning.",
+      "tags": [
+        "test",
+        "compat",
+        "identity"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_examples.py:test_example_layout",
+      "type": "function",
+      "name": "test_example_layout",
+      "filePath": "packages/raptix-sdk/tests/test_examples.py",
+      "lineRange": [
+        31,
+        39
+      ],
+      "summary": "Parametrize 6 kind: mỗi example plugin có pyproject.toml, README.md và cây src/ đúng layout.",
+      "tags": [
+        "test",
+        "examples",
+        "packaging"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_examples.py:test_example_declares_correct_entry_point_group",
+      "type": "function",
+      "name": "test_example_declares_correct_entry_point_group",
+      "filePath": "packages/raptix-sdk/tests/test_examples.py",
+      "lineRange": [
+        43,
+        58
+      ],
+      "summary": "Đọc pyproject từng example và assert entry-point group đúng mapping kind→group (raptix.tools/middleware/agents/callbacks/skills/prompts).",
+      "tags": [
+        "test",
+        "examples",
+        "packaging"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_examples.py:test_example_module_is_importable_syntactically",
+      "type": "function",
+      "name": "test_example_module_is_importable_syntactically",
+      "filePath": "packages/raptix-sdk/tests/test_examples.py",
+      "lineRange": [
+        62,
+        71
+      ],
+      "summary": "Module __init__ của example parse được bằng ast (importable syntactically) mà không cần cài framework.",
+      "tags": [
+        "test",
+        "examples",
+        "packaging"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_extra_routes_adds_caller_supplied_prefix",
+      "type": "function",
+      "name": "test_extra_routes_adds_caller_supplied_prefix",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        21,
+        29
+      ],
+      "summary": "make_agent_backend(sandbox, extra_routes={\"/foo/\": overlay}) mount route caller-supplied trên OSS default — backend.routes chứa cả /skills/ và /foo/.",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_longest_prefix_wins",
+      "type": "function",
+      "name": "test_longest_prefix_wins",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        32,
+        48
+      ],
+      "summary": "Spec §16.4 #5: prefix dài hơn (/skills/tenant/abc/) phải đứng trước /skills/ trong thứ tự duyệt routes để tenant route không rơi vào backend generic.",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_baseline_without_extra_routes",
+      "type": "function",
+      "name": "test_baseline_without_extra_routes",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        51,
+        55
+      ],
+      "summary": "Gọi make_agent_backend không có extra_routes giữ nguyên surface mặc định: duy nhất route /skills/.",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_reserved_prefix_skills_root_rejected",
+      "type": "function",
+      "name": "test_reserved_prefix_skills_root_rejected",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        58,
+        70
+      ],
+      "summary": "Caller không được shadow nguyên gốc route OSS /skills/ — mount đè bị từ chối.",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_reserved_prefix_root_rejected",
+      "type": "function",
+      "name": "test_reserved_prefix_root_rejected",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        73,
+        82
+      ],
+      "summary": "Prefix / (root) là reserved và bị từ chối khi mount.",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_path_traversal_rejected",
+      "type": "function",
+      "name": "test_path_traversal_rejected",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        85,
+        92
+      ],
+      "summary": "Route chứa path traversal (../) bị từ chối ngay khi đăng ký.",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_missing_slash_rejected",
+      "type": "function",
+      "name": "test_missing_slash_rejected",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        95,
+        103
+      ],
+      "summary": "Prefix thiếu slash cuối (không đúng dạng /x/) bị từ chối.",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_valid_subprefix_passes",
+      "type": "function",
+      "name": "test_valid_subprefix_passes",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        106,
+        111
+      ],
+      "summary": "Sub-prefix hợp lệ (ví dụ /a/b/) được chấp nhận và xuất hiện trong routes.",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_extra_routes_actually_serves_content",
+      "type": "function",
+      "name": "test_extra_routes_actually_serves_content",
+      "filePath": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "lineRange": [
+        114,
+        137
+      ],
+      "summary": "End-to-end: đọc /foo/x.txt qua backend composite trả đúng nội dung overlay — vendor overlay pattern là một-lời-gọi (acceptance #11).",
+      "tags": [
+        "test",
+        "backend",
+        "routing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_all_16_agent_factories_importable",
+      "type": "function",
+      "name": "test_all_16_agent_factories_importable",
+      "filePath": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "lineRange": [
+        18,
+        61
+      ],
+      "summary": "16 agent factory (create_ad_operator_agent … create_vulnresearch_agent) đều import được và callable cùng build_middleware/build_tools — chứng minh rewrite import Phase 2.x.3 sạch.",
+      "tags": [
+        "test",
+        "smoke",
+        "import"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_backends_importable",
+      "type": "function",
+      "name": "test_framework_backends_importable",
+      "filePath": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "lineRange": [
+        64,
+        76
+      ],
+      "summary": "Public API backend (HTTPSandbox, build_sandbox_backend, make_agent_backend, SKILLS_LOCAL_PATH…) import được từ raptix.backends.",
+      "tags": [
+        "test",
+        "smoke",
+        "import"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_middleware_importable",
+      "type": "function",
+      "name": "test_framework_middleware_importable",
+      "filePath": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "lineRange": [
+        79,
+        94
+      ],
+      "summary": "Các middleware implementation import được từ raptix.agents.middleware (EngagementContext, KG, middleware slots).",
+      "tags": [
+        "test",
+        "smoke",
+        "import"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_llm_importable",
+      "type": "function",
+      "name": "test_framework_llm_importable",
+      "filePath": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "lineRange": [
+        97,
+        102
+      ],
+      "summary": "LLM surface (router/factory) import được mà không cần credential.",
+      "tags": [
+        "test",
+        "smoke",
+        "import"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_compat_register_legacy_imports_idempotent",
+      "type": "function",
+      "name": "test_compat_register_legacy_imports_idempotent",
+      "filePath": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "lineRange": [
+        105,
+        123
+      ],
+      "summary": "register_legacy_imports() gọi nhiều lần idempotent — chỉ một DeprecationWarning; RAPTIX_NO_COMPAT=1 tắt shim.",
+      "tags": [
+        "test",
+        "smoke",
+        "import"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_role_registry_seeded_with_16_oss_roles",
+      "type": "function",
+      "name": "test_role_registry_seeded_with_16_oss_roles",
+      "filePath": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "lineRange": [
+        126,
+        137
+      ],
+      "summary": "Sau boot, RoleRegistry chứa đủ 16 OSS role kèm slots + skill_sources baseline.",
+      "tags": [
+        "test",
+        "smoke",
+        "import"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_plugin_registry_finds_oss_subagents",
+      "type": "function",
+      "name": "test_plugin_registry_finds_oss_subagents",
+      "filePath": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "lineRange": [
+        140,
+        163
+      ],
+      "summary": "PluginRegistry.load() phát hiện subagent OSS (scanner/detector/verifier/patcher/exploiter) đăng ký qua entry-point raptix.subagents.",
+      "tags": [
+        "test",
+        "smoke",
+        "import"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_api_stability.py:test_sdk_public_name_importable",
+      "type": "function",
+      "name": "test_sdk_public_name_importable",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "lineRange": [
+        60,
+        66
+      ],
+      "summary": "Mỗi tuple (module, name) trong SDK_PUBLIC_API import được qua importlib — không symbol public nào bị mất.",
+      "tags": [
+        "test",
+        "api-stability",
+        "sdk"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_api_stability.py:test_sdk_manifest_count_unchanged",
+      "type": "function",
+      "name": "test_sdk_manifest_count_unchanged",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "lineRange": [
+        69,
+        76
+      ],
+      "summary": "Số lượng symbol trong manifest không đổi so với snapshot (23 stable + fakes) — chặn xoá/đổi tên ngoài ý muốn.",
+      "tags": [
+        "test",
+        "api-stability",
+        "sdk"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_protocols_importable",
+      "type": "function",
+      "name": "test_protocols_importable",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "lineRange": [
+        12,
+        36
+      ],
+      "summary": "7 Protocol (Backend/Middleware/Tool/Callback/LLM/Sandbox/Agent) import được qua raptix_sdk và tên kết thúc \"Protocol\".",
+      "tags": [
+        "test",
+        "sdk",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_contributions_importable",
+      "type": "function",
+      "name": "test_contributions_importable",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "lineRange": [
+        39,
+        71
+      ],
+      "summary": "5 contribution dataclass (Tool/Middleware/Prompt/SubAgentContribution, SafetyDeclaration) import được qua single SDK import.",
+      "tags": [
+        "test",
+        "sdk",
+        "protocol"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_backend_satisfies_protocol",
+      "type": "function",
+      "name": "test_fake_backend_satisfies_protocol",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "lineRange": [
+        74,
+        82
+      ],
+      "summary": "isinstance(FakeBackend(), BackendProtocol) pass — fake khớp duck-type contract runtime.",
+      "tags": [
+        "test",
+        "sdk",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_llm_satisfies_protocol",
+      "type": "function",
+      "name": "test_fake_llm_satisfies_protocol",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "lineRange": [
+        85,
+        92
+      ],
+      "summary": "isinstance(FakeLLM(), LLMProtocol) pass.",
+      "tags": [
+        "test",
+        "sdk",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_sandbox_satisfies_protocol",
+      "type": "function",
+      "name": "test_fake_sandbox_satisfies_protocol",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "lineRange": [
+        95,
+        103
+      ],
+      "summary": "isinstance(FakeSandbox(), SandboxProtocol) pass.",
+      "tags": [
+        "test",
+        "sdk",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_role_registry_idempotent",
+      "type": "function",
+      "name": "test_role_registry_idempotent",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "lineRange": [
+        106,
+        114
+      ],
+      "summary": "Đăng ký role lặp lại với tham số giống nhau không raise — RoleRegistry idempotent theo spec §16.4 #3.",
+      "tags": [
+        "test",
+        "sdk",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_skill_source_registry_validates",
+      "type": "function",
+      "name": "test_skill_source_registry_validates",
+      "filePath": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "lineRange": [
+        117,
+        125
+      ],
+      "summary": "SkillSourceRegistry từ chối skill source không hợp lệ và chấp nhận path /skills/… đúng chuẩn.",
+      "tags": [
+        "test",
+        "sdk",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/_boot.py:_oss_skill_sources_for",
+      "type": "function",
+      "name": "_oss_skill_sources_for",
+      "filePath": "packages/raptix/raptix/_boot.py",
+      "lineRange": [
+        36,
+        46
+      ],
+      "summary": "Trả baseline /skills/standard/<role>/ + /skills/shared/ — nhân bản skills_sources_for của framework để RoleRegistry mang audit-time view khớp runtime (spec §8 gap #2).",
+      "tags": [
+        "boot",
+        "registry",
+        "roles"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/_boot.py:_register_oss_roles",
+      "type": "function",
+      "name": "_register_oss_roles",
+      "filePath": "packages/raptix/raptix/_boot.py",
+      "lineRange": [
+        49,
+        63
+      ],
+      "summary": "Duyệt SLOTS_PER_ROLE và RoleRegistry.register 16 OSS role kèm slots + skill_sources; idempotent cho re-import multi-process (spec §16.4 #3).",
+      "tags": [
+        "boot",
+        "registry",
+        "roles"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/_boot.py:_register_plugin_roles",
+      "type": "function",
+      "name": "_register_plugin_roles",
+      "filePath": "packages/raptix/raptix/_boot.py",
+      "lineRange": [
+        66,
+        89
+      ],
+      "summary": "Walk entry-point raptix.roles qua load_plugin_role_specs và đăng ký từng RoleSpec (slots, skill_sources, llm_role_fallback); ValueError do tham số xung đột được log và bỏ qua — plugin cần replace phải unregister trước.",
+      "tags": [
+        "boot",
+        "registry",
+        "roles"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/_boot.py:_push_role_resolutions",
+      "type": "function",
+      "name": "_push_role_resolutions",
+      "filePath": "packages/raptix/raptix/_boot.py",
+      "lineRange": [
+        92,
+        145
+      ],
+      "summary": "Với mỗi OSS role, compose RoleResolution (middleware_stack từ SLOTS_PER_ROLE thuộc owner raptix, skill_sources từ skills_sources_for authoritative, tool_list/llm_model rỗng có chủ đích vì tính per-invocation) và PluginRegistry.set_role_res…",
+      "tags": [
+        "boot",
+        "registry",
+        "roles"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/_boot.py:run",
+      "type": "function",
+      "name": "run",
+      "filePath": "packages/raptix/raptix/_boot.py",
+      "lineRange": [
+        148,
+        158
+      ],
+      "summary": "Entry boot idempotent: _register_oss_roles → _register_plugin_roles → PluginRegistry.load() → _push_role_resolutions, log debug tổng kết.",
+      "tags": [
+        "boot",
+        "registry",
+        "roles"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_load_term_map",
+      "type": "function",
+      "name": "_load_term_map",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "lineRange": [
+        108,
+        121
+      ],
+      "summary": "Nạp trigger-term map từ config/claude4_compat.yaml (merge lên fallback builtin) với lru_cache; mọi lỗi IO/YAML quay về fallback an toàn.",
+      "tags": [
+        "compat",
+        "prompt",
+        "claude"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:is_claude4_family",
+      "type": "function",
+      "name": "is_claude4_family",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "lineRange": [
+        124,
+        128
+      ],
+      "summary": "Kiểm tra model id thuộc family Claude 4.x+ qua regex _CLAUDE4_MODEL_RE, bất kể provider prefix (anthropic/, openrouter/, bedrock/, vertex_ai/).",
+      "tags": [
+        "compat",
+        "prompt",
+        "claude"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:substitute_trigger_terms",
+      "type": "function",
+      "name": "substitute_trigger_terms",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "lineRange": [
+        131,
+        147
+      ],
+      "summary": "Thay từ vựng red-team bằng thuật ngữ trung tính: sort longest-match-first, anchor word-boundary để \"Recon\" khớp \"Recon.\" nhưng không khớp \"Reconcile\".",
+      "tags": [
+        "compat",
+        "prompt",
+        "claude"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:prepend_neutral_persona",
+      "type": "function",
+      "name": "prepend_neutral_persona",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "lineRange": [
+        150,
+        156
+      ],
+      "summary": "Prepend khung AUTHORIZATION CONTEXT vào đầu prompt; idempotent bằng marker check trong đoạn đầu nên không lặp.",
+      "tags": [
+        "compat",
+        "prompt",
+        "claude"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_compat_disabled",
+      "type": "function",
+      "name": "_compat_disabled",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "lineRange": [
+        159,
+        163
+      ],
+      "summary": "Đọc env RAPTIX_CLAUDE4_COMPAT: trả true khi giá trị là 0/false/off/no — công tắc tắt compat shim toàn cục.",
+      "tags": [
+        "compat",
+        "prompt",
+        "claude"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_claude4_compat",
+      "type": "function",
+      "name": "apply_claude4_compat",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "lineRange": [
+        166,
+        174
+      ],
+      "summary": "Điểm vào transform: no-op nếu _compat_disabled() (env RAPTIX_CLAUDE4_COMPAT=0/false/off) hoặc model không thuộc Claude 4; ngược lại prepend persona + substitute terms. An toàn gọi vô điều kiện.",
+      "tags": [
+        "compat",
+        "prompt",
+        "claude"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_resolve_model_for_role",
+      "type": "function",
+      "name": "_resolve_model_for_role",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "lineRange": [
+        177,
+        189
+      ],
+      "summary": "Import lười ModelRouter và lấy primary model của role; trả None khi LLM stack chưa cấu hình (unit tests, docs build) — module vẫn importable.",
+      "tags": [
+        "compat",
+        "prompt",
+        "claude"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_compat_for_role",
+      "type": "function",
+      "name": "apply_compat_for_role",
+      "filePath": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "lineRange": [
+        192,
+        200
+      ],
+      "summary": "Wrapper tiện cho load_prompt: resolve model theo role rồi apply shim; fail-soft trả prompt gốc khi resolve lỗi nên có thể gọi vô điều kiện mỗi lần load prompt.",
+      "tags": [
+        "compat",
+        "prompt",
+        "claude"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py",
+      "target": "function:packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py:get_skill_sources",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py",
+      "target": "function:packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py:get_skill_sources",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "target": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeBackend",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "target": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeBackend",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "target": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeLLM",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "target": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeLLM",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "target": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeSandbox",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "target": "class:packages/raptix-sdk/raptix_sdk/testing/__init__.py:FakeSandbox",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_schemas_identity_preservation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_schemas_identity_preservation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_llm_models_identity_preservation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_llm_models_identity_preservation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_plugin_loader_identity_preservation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_plugin_loader_identity_preservation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_research_graph_identity_preservation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_research_graph_identity_preservation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_dunder_lookup_does_not_warn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_dunder_lookup_does_not_warn",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_explicit_warning_on_legacy_attribute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "target": "function:packages/raptix-sdk/tests/test_compat_shim_identity.py:test_explicit_warning_on_legacy_attribute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_examples.py",
+      "target": "function:packages/raptix-sdk/tests/test_examples.py:test_example_layout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_examples.py",
+      "target": "function:packages/raptix-sdk/tests/test_examples.py:test_example_layout",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_examples.py",
+      "target": "function:packages/raptix-sdk/tests/test_examples.py:test_example_declares_correct_entry_point_group",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_examples.py",
+      "target": "function:packages/raptix-sdk/tests/test_examples.py:test_example_declares_correct_entry_point_group",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_examples.py",
+      "target": "function:packages/raptix-sdk/tests/test_examples.py:test_example_module_is_importable_syntactically",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_examples.py",
+      "target": "function:packages/raptix-sdk/tests/test_examples.py:test_example_module_is_importable_syntactically",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_extra_routes_adds_caller_supplied_prefix",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_extra_routes_adds_caller_supplied_prefix",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_longest_prefix_wins",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_longest_prefix_wins",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_baseline_without_extra_routes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_baseline_without_extra_routes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_reserved_prefix_skills_root_rejected",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_reserved_prefix_skills_root_rejected",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_reserved_prefix_root_rejected",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_reserved_prefix_root_rejected",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_path_traversal_rejected",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_path_traversal_rejected",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_missing_slash_rejected",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_missing_slash_rejected",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_valid_subprefix_passes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_valid_subprefix_passes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_extra_routes_actually_serves_content",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "function:packages/raptix-sdk/tests/test_extra_routes.py:test_extra_routes_actually_serves_content",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_all_16_agent_factories_importable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_all_16_agent_factories_importable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_backends_importable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_backends_importable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_middleware_importable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_middleware_importable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_llm_importable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_framework_llm_importable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_compat_register_legacy_imports_idempotent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_compat_register_legacy_imports_idempotent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_role_registry_seeded_with_16_oss_roles",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_role_registry_seeded_with_16_oss_roles",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_plugin_registry_finds_oss_subagents",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "target": "function:packages/raptix-sdk/tests/test_framework_import_smoke.py:test_plugin_registry_finds_oss_subagents",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_api_stability.py:test_sdk_public_name_importable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_api_stability.py:test_sdk_public_name_importable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_api_stability.py:test_sdk_manifest_count_unchanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_api_stability.py:test_sdk_manifest_count_unchanged",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_protocols_importable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_protocols_importable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_contributions_importable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_contributions_importable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_backend_satisfies_protocol",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_backend_satisfies_protocol",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_llm_satisfies_protocol",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_llm_satisfies_protocol",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_sandbox_satisfies_protocol",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_fake_sandbox_satisfies_protocol",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_role_registry_idempotent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_role_registry_idempotent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_skill_source_registry_validates",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "target": "function:packages/raptix-sdk/tests/test_sdk_surface.py:test_skill_source_registry_validates",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:_oss_skill_sources_for",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:_oss_skill_sources_for",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:_register_oss_roles",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:_register_oss_roles",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:_register_plugin_roles",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:_register_plugin_roles",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:_push_role_resolutions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:_push_role_resolutions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/_boot.py",
+      "target": "function:packages/raptix/raptix/_boot.py:run",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_load_term_map",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_load_term_map",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:is_claude4_family",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:is_claude4_family",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:substitute_trigger_terms",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:substitute_trigger_terms",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:prepend_neutral_persona",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:prepend_neutral_persona",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_compat_disabled",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_compat_disabled",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_claude4_compat",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_claude4_compat",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_resolve_model_for_role",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_resolve_model_for_role",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_compat_for_role",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_compat_for_role",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/tests/test_extra_routes.py",
+      "target": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:packages/raptix/raptix/_boot.py:run",
+      "target": "function:packages/raptix/raptix/_boot.py:_register_oss_roles",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/_boot.py:run",
+      "target": "function:packages/raptix/raptix/_boot.py:_register_plugin_roles",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/_boot.py:run",
+      "target": "function:packages/raptix/raptix/_boot.py:_push_role_resolutions",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_claude4_compat",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:substitute_trigger_terms",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_claude4_compat",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:prepend_neutral_persona",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:substitute_trigger_terms",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:_load_term_map",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_compat_for_role",
+      "target": "function:packages/raptix/raptix/agents/prompts/claude4_compat.py:apply_claude4_compat",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "target": "file:packages/raptix-sdk/tests/test_sdk_surface.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix-sdk/examples/middleware/README.md",
+      "target": "config:packages/raptix-sdk/examples/middleware/pyproject.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix-sdk/examples/prompt/README.md",
+      "target": "config:packages/raptix-sdk/examples/prompt/pyproject.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix-sdk/examples/skill/README.md",
+      "target": "config:packages/raptix-sdk/examples/skill/pyproject.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix-sdk/examples/tool/README.md",
+      "target": "config:packages/raptix-sdk/examples/tool/pyproject.toml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:packages/raptix-sdk/examples/middleware/pyproject.toml",
+      "target": "config:packages/raptix-sdk/pyproject.toml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:packages/raptix-sdk/examples/prompt/pyproject.toml",
+      "target": "config:packages/raptix-sdk/pyproject.toml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:packages/raptix-sdk/examples/skill/pyproject.toml",
+      "target": "config:packages/raptix-sdk/pyproject.toml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:packages/raptix-sdk/examples/tool/pyproject.toml",
+      "target": "config:packages/raptix-sdk/pyproject.toml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

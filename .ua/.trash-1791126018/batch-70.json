@@ -1,0 +1,89 @@
+{
+  "batchIndex": 70,
+  "batchFiles": [
+    {
+      "path": "clients/shared/streaming/package.json",
+      "language": "json",
+      "sizeLines": 28,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/shared/streaming/tsconfig.build.json",
+      "language": "json",
+      "sizeLines": 11,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/shared/streaming/tsconfig.json",
+      "language": "json",
+      "sizeLines": 16,
+      "fileCategory": "config"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "config:clients/shared/streaming/package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "clients/shared/streaming/package.json",
+      "summary": "Manifest workspace package \"@raptix/streaming\" 0.1.0: types/constants/utilities streaming LangGraph dùng chung cho web-raptix và CLI; ESM-only (type: module), entry dist/index.js + dist/index.d.ts qua exports map, scripts build (tsc -p tsconfig.build.json), typecheck (tsc --noEmit), test (vitest run); devDeps typescript ^5.7.0 và vitest ^3.2.7.",
+      "tags": [
+        "npm",
+        "workspace",
+        "streaming",
+        "typescript"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Package này phải build trước khi typecheck/build CLI hoặc build web-raptix vì cả hai tiêu thụ dist/."
+    },
+    {
+      "id": "config:clients/shared/streaming/tsconfig.build.json",
+      "type": "config",
+      "name": "tsconfig.build.json",
+      "filePath": "clients/shared/streaming/tsconfig.build.json",
+      "summary": "Tsconfig build của @raptix/streaming: extends tsconfig.json, tắt noEmit để emit ra dist/ với declaration=true, rootDir=src, loại trừ node_modules, dist và các file test (*.test.ts) khỏi sản phẩm build.",
+      "tags": [
+        "typescript",
+        "build-config",
+        "emit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:clients/shared/streaming/tsconfig.json",
+      "type": "config",
+      "name": "tsconfig.json",
+      "filePath": "clients/shared/streaming/tsconfig.json",
+      "summary": "Tsconfig gốc của @raptix/streaming: target ES2022, module ESNext với moduleResolution Bundler, strict + isolatedModules + skipLibCheck, noEmit=true (chỉ dùng cho typecheck), include src/** và exclude node_modules.",
+      "tags": [
+        "typescript",
+        "strict",
+        "typecheck"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:clients/shared/streaming/package.json",
+      "target": "config:clients/shared/streaming/tsconfig.build.json",
+      "type": "triggers",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:clients/shared/streaming/package.json",
+      "target": "config:clients/shared/streaming/tsconfig.json",
+      "type": "triggers",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:clients/shared/streaming/tsconfig.build.json",
+      "target": "config:clients/shared/streaming/tsconfig.json",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ]
+}

@@ -1,0 +1,4000 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 35,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 35,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 35,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/agents/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 62,
+      "nonEmptyLines": 61,
+      "metrics": {
+        "importCount": 27,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/_benchmark_mode.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 8,
+      "nonEmptyLines": 6,
+      "functions": [
+        {
+          "name": "benchmark_skill_sources",
+          "startLine": 4,
+          "endLine": 8,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "benchmark_skill_sources",
+          "line": 4,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "benchmark_skill_sources",
+          "callee": "os.environ.get(\"BENCHMARK_MODE\", \"\").strip().lower",
+          "lineNumber": 6
+        },
+        {
+          "caller": "benchmark_skill_sources",
+          "callee": "os.environ.get(\"BENCHMARK_MODE\", \"\").strip",
+          "lineNumber": 6
+        },
+        {
+          "caller": "benchmark_skill_sources",
+          "callee": "os.environ.get",
+          "lineNumber": 6
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/build.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 567,
+      "nonEmptyLines": 495,
+      "functions": [
+        {
+          "name": "_iter_override_bundles",
+          "startLine": 96,
+          "endLine": 137,
+          "params": [
+            "role"
+          ]
+        },
+        {
+          "name": "resolve_role_model",
+          "startLine": 140,
+          "endLine": 172,
+          "params": [
+            "role"
+          ]
+        },
+        {
+          "name": "_resolve_overrides",
+          "startLine": 191,
+          "endLine": 284,
+          "params": [
+            "role",
+            "explicit_middleware_replace",
+            "explicit_middleware_disable",
+            "explicit_tool_replace",
+            "explicit_tool_disable",
+            "explicit_prompt"
+          ]
+        },
+        {
+          "name": "_check_safety_gate",
+          "startLine": 287,
+          "endLine": 333,
+          "params": [
+            "role",
+            "mw_replace",
+            "mw_disable",
+            "tool_replace",
+            "tool_disable"
+          ]
+        },
+        {
+          "name": "build_middleware",
+          "startLine": 341,
+          "endLine": 457,
+          "params": [
+            "role",
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "subagents",
+            "skill_sources",
+            "overrides",
+            "disabled_slots",
+            "slots"
+          ]
+        },
+        {
+          "name": "build_tools",
+          "startLine": 460,
+          "endLine": 511,
+          "params": [
+            "role",
+            "standard_tools",
+            "overrides",
+            "disabled_tools"
+          ]
+        },
+        {
+          "name": "_tool_name",
+          "startLine": 514,
+          "endLine": 524,
+          "params": [
+            "tool"
+          ]
+        },
+        {
+          "name": "resolve_prompt_overrides",
+          "startLine": 527,
+          "endLine": 567,
+          "params": [
+            "role",
+            "override"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "SafetyOverrideViolation",
+          "startLine": 85,
+          "endLine": 88,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "_ResolvedOverrides",
+          "startLine": 181,
+          "endLine": 188,
+          "methods": [],
+          "properties": [
+            "middleware_replace",
+            "middleware_disable",
+            "tool_replace",
+            "tool_disable",
+            "prompt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "SafetyOverrideViolation",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "_iter_override_bundles",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "resolve_role_model",
+          "line": 140,
+          "isDefault": false
+        },
+        {
+          "name": "_ResolvedOverrides",
+          "line": 180,
+          "isDefault": false
+        },
+        {
+          "name": "_resolve_overrides",
+          "line": 191,
+          "isDefault": false
+        },
+        {
+          "name": "_check_safety_gate",
+          "line": 287,
+          "isDefault": false
+        },
+        {
+          "name": "build_middleware",
+          "line": 341,
+          "isDefault": false
+        },
+        {
+          "name": "build_tools",
+          "line": 460,
+          "isDefault": false
+        },
+        {
+          "name": "_tool_name",
+          "line": 514,
+          "isDefault": false
+        },
+        {
+          "name": "resolve_prompt_overrides",
+          "line": 527,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "list",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "entry_points",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "logger.exception",
+          "lineNumber": 102
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "ep.load",
+          "lineNumber": 107
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "logger.exception",
+          "lineNumber": 109
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "callable",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "isinstance",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "loaded",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "logger.exception",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "isinstance",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "logger.warning",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "type",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "is_bundle_enabled",
+          "lineNumber": 133
+        },
+        {
+          "caller": "_iter_override_bundles",
+          "callee": "bundle.matches_role",
+          "lineNumber": 135
+        },
+        {
+          "caller": "resolve_role_model",
+          "callee": "os.environ.get(f\"RAPTIX_MODEL_{role.upper()}\", \"\").strip",
+          "lineNumber": 151
+        },
+        {
+          "caller": "resolve_role_model",
+          "callee": "os.environ.get",
+          "lineNumber": 151
+        },
+        {
+          "caller": "resolve_role_model",
+          "callee": "role.upper",
+          "lineNumber": 151
+        },
+        {
+          "caller": "resolve_role_model",
+          "callee": "_iter_override_bundles",
+          "lineNumber": 156
+        },
+        {
+          "caller": "resolve_role_model",
+          "callee": "bundle.models.get",
+          "lineNumber": 157
+        },
+        {
+          "caller": "resolve_role_model",
+          "callee": "logger.warning",
+          "lineNumber": 162
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "set",
+          "lineNumber": 212
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "set",
+          "lineNumber": 214
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "_iter_override_bundles",
+          "lineNumber": 220
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "bundle.replaced_middleware.items",
+          "lineNumber": 226
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "mw_owner.get",
+          "lineNumber": 227
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "_warnings.warn",
+          "lineNumber": 229
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "PluginConflictWarning",
+          "lineNumber": 230
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "mw_disable.update",
+          "lineNumber": 242
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "bundle.replaced_tools.items",
+          "lineNumber": 243
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "tool_owner.get",
+          "lineNumber": 244
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "_warnings.warn",
+          "lineNumber": 246
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "PluginConflictWarning",
+          "lineNumber": 247
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "tool_disable.update",
+          "lineNumber": 259
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "bundle.prompts.get",
+          "lineNumber": 260
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "explicit_middleware_replace.items",
+          "lineNumber": 267
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "mw_disable.update",
+          "lineNumber": 270
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "tool_replace.update",
+          "lineNumber": 272
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "tool_disable.update",
+          "lineNumber": 274
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "prompt.update",
+          "lineNumber": 276
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "_ResolvedOverrides",
+          "lineNumber": 278
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "frozenset",
+          "lineNumber": 280
+        },
+        {
+          "caller": "_resolve_overrides",
+          "callee": "frozenset",
+          "lineNumber": 282
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "os.environ.get(SAFETY_OVERRIDE_ENV, \"\").strip().lower",
+          "lineNumber": 309
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "os.environ.get(SAFETY_OVERRIDE_ENV, \"\").strip",
+          "lineNumber": 309
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "os.environ.get",
+          "lineNumber": 309
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "frozenset",
+          "lineNumber": 312
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "SafetyRegistry.merged_critical_slots",
+          "lineNumber": 313
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "SafetyRegistry.merged_critical_tools",
+          "lineNumber": 314
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "set",
+          "lineNumber": 315
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "mw_replace.keys",
+          "lineNumber": 315
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "set",
+          "lineNumber": 316
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "tool_replace.keys",
+          "lineNumber": 316
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "bits.append",
+          "lineNumber": 323
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "sorted",
+          "lineNumber": 323
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "bits.append",
+          "lineNumber": 325
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "sorted",
+          "lineNumber": 325
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "SafetyOverrideViolation",
+          "lineNumber": 326
+        },
+        {
+          "caller": "_check_safety_gate",
+          "callee": "' and '.join",
+          "lineNumber": 328
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "SLOTS_PER_ROLE.get",
+          "lineNumber": 390
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "KeyError",
+          "lineNumber": 392
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "_resolve_overrides",
+          "lineNumber": 400
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "_check_safety_gate",
+          "lineNumber": 408
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "frozenset",
+          "lineNumber": 413
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "DEFAULT_SLOT_FACTORIES.items",
+          "lineNumber": 417
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "factories.update",
+          "lineNumber": 419
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "result.append",
+          "lineNumber": 440
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "result.extend",
+          "lineNumber": 445
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "load_plugin_middleware",
+          "lineNumber": 445
+        },
+        {
+          "caller": "build_middleware",
+          "callee": "maybe_install_skillogy",
+          "lineNumber": 455
+        },
+        {
+          "caller": "build_tools",
+          "callee": "isinstance",
+          "lineNumber": 484
+        },
+        {
+          "caller": "build_tools",
+          "callee": "dict",
+          "lineNumber": 485
+        },
+        {
+          "caller": "build_tools",
+          "callee": "_tool_name",
+          "lineNumber": 487
+        },
+        {
+          "caller": "build_tools",
+          "callee": "_resolve_overrides",
+          "lineNumber": 489
+        },
+        {
+          "caller": "build_tools",
+          "callee": "_check_safety_gate",
+          "lineNumber": 497
+        },
+        {
+          "caller": "build_tools",
+          "callee": "frozenset",
+          "lineNumber": 500
+        },
+        {
+          "caller": "build_tools",
+          "callee": "base.pop",
+          "lineNumber": 506
+        },
+        {
+          "caller": "build_tools",
+          "callee": "base.update",
+          "lineNumber": 507
+        },
+        {
+          "caller": "build_tools",
+          "callee": "list",
+          "lineNumber": 509
+        },
+        {
+          "caller": "build_tools",
+          "callee": "base.values",
+          "lineNumber": 509
+        },
+        {
+          "caller": "build_tools",
+          "callee": "result.extend",
+          "lineNumber": 510
+        },
+        {
+          "caller": "build_tools",
+          "callee": "load_plugin_tools",
+          "lineNumber": 510
+        },
+        {
+          "caller": "_tool_name",
+          "callee": "hasattr",
+          "lineNumber": 522
+        },
+        {
+          "caller": "_tool_name",
+          "callee": "isinstance",
+          "lineNumber": 522
+        },
+        {
+          "caller": "_tool_name",
+          "callee": "getattr",
+          "lineNumber": 524
+        },
+        {
+          "caller": "_tool_name",
+          "callee": "repr",
+          "lineNumber": 524
+        },
+        {
+          "caller": "resolve_prompt_overrides",
+          "callee": "isinstance",
+          "lineNumber": 552
+        },
+        {
+          "caller": "resolve_prompt_overrides",
+          "callee": "isinstance",
+          "lineNumber": 554
+        },
+        {
+          "caller": "resolve_prompt_overrides",
+          "callee": "_resolve_overrides",
+          "lineNumber": 559
+        },
+        {
+          "caller": "resolve_prompt_overrides",
+          "callee": "dict",
+          "lineNumber": 567
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 10,
+        "functionCount": 8,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/plugins/detector.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 193,
+      "nonEmptyLines": 161,
+      "functions": [
+        {
+          "name": "create_detector_agent",
+          "startLine": 88,
+          "endLine": 173,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_detector_agent",
+          "line": 88,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_detector_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 136
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 138
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 140
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 146
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "build_tools",
+          "lineNumber": 149
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "build_middleware",
+          "lineNumber": 151
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "load_prompt",
+          "lineNumber": 160
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 162
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "create_agent",
+          "lineNumber": 162
+        },
+        {
+          "caller": "create_detector_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 171
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/plugins/exploiter.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 197,
+      "nonEmptyLines": 165,
+      "functions": [
+        {
+          "name": "create_exploiter_agent",
+          "startLine": 96,
+          "endLine": 177,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_exploiter_agent",
+          "line": 96,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 139
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 141
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 146
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 150
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "build_tools",
+          "lineNumber": 153
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "build_middleware",
+          "lineNumber": 155
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "load_prompt",
+          "lineNumber": 164
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 166
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "create_agent",
+          "lineNumber": 166
+        },
+        {
+          "caller": "create_exploiter_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 175
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/plugins/patcher.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 185,
+      "nonEmptyLines": 155,
+      "functions": [
+        {
+          "name": "create_patcher_agent",
+          "startLine": 84,
+          "endLine": 165,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_patcher_agent",
+          "line": 84,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_patcher_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 127
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 131
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 134
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 135
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 138
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "build_tools",
+          "lineNumber": 141
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "build_middleware",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "load_prompt",
+          "lineNumber": 152
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 154
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "create_agent",
+          "lineNumber": 154
+        },
+        {
+          "caller": "create_patcher_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 163
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/plugins/scanner.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 198,
+      "nonEmptyLines": 166,
+      "functions": [
+        {
+          "name": "create_scanner_agent",
+          "startLine": 87,
+          "endLine": 178,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_scanner_agent",
+          "line": 87,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_scanner_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 140
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 142
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 144
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 148
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 151
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "build_tools",
+          "lineNumber": 154
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "build_middleware",
+          "lineNumber": 156
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "load_prompt",
+          "lineNumber": 165
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 167
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "create_agent",
+          "lineNumber": 167
+        },
+        {
+          "caller": "create_scanner_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 176
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/plugins/verifier.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 191,
+      "nonEmptyLines": 160,
+      "functions": [
+        {
+          "name": "create_verifier_agent",
+          "startLine": 90,
+          "endLine": 171,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_verifier_agent",
+          "line": 90,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_verifier_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 133
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 135
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 137
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 140
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 141
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 144
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "build_tools",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "build_middleware",
+          "lineNumber": 149
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "load_prompt",
+          "lineNumber": 158
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 160
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "create_agent",
+          "lineNumber": 160
+        },
+        {
+          "caller": "create_verifier_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 169
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/plugins/vulnresearch.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 201,
+      "nonEmptyLines": 176,
+      "functions": [
+        {
+          "name": "create_vulnresearch_agent",
+          "startLine": 81,
+          "endLine": 188,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "subagents",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_vulnresearch_agent",
+          "line": 81,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 131
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 133
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 135
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 138
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "CompiledSubAgent",
+          "lineNumber": 149
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "StreamingRunnable",
+          "lineNumber": 152
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "spec.factory",
+          "lineNumber": 152
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "load_subagents_for_parent",
+          "lineNumber": 154
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "build_tools",
+          "lineNumber": 158
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 163
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "build_middleware",
+          "lineNumber": 165
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "load_prompt",
+          "lineNumber": 175
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 177
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "create_agent",
+          "lineNumber": 177
+        },
+        {
+          "caller": "create_vulnresearch_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 186
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 77,
+      "nonEmptyLines": 71,
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/builder.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 409,
+      "nonEmptyLines": 332,
+      "functions": [
+        {
+          "name": "_read_fragment",
+          "startLine": 122,
+          "endLine": 130,
+          "params": [
+            "name"
+          ]
+        },
+        {
+          "name": "_read_workflow_for_role",
+          "startLine": 153,
+          "endLine": 166,
+          "params": [
+            "role"
+          ]
+        },
+        {
+          "name": "_format_workflow_block",
+          "startLine": 169,
+          "endLine": 179,
+          "params": [
+            "role",
+            "body"
+          ]
+        },
+        {
+          "name": "_get_tool_prompt",
+          "startLine": 182,
+          "endLine": 195,
+          "params": [
+            "tool_name",
+            "role"
+          ]
+        },
+        {
+          "name": "load_prompt",
+          "startLine": 319,
+          "endLine": 409,
+          "params": [
+            "name",
+            "shared",
+            "override"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "PromptBuilder",
+          "startLine": 213,
+          "endLine": 316,
+          "methods": [
+            "__init__",
+            "with_tool_prompts",
+            "with_shared",
+            "with_dynamic",
+            "build"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_read_fragment",
+          "line": 121,
+          "isDefault": false
+        },
+        {
+          "name": "_read_workflow_for_role",
+          "line": 152,
+          "isDefault": false
+        },
+        {
+          "name": "_format_workflow_block",
+          "line": 169,
+          "isDefault": false
+        },
+        {
+          "name": "_get_tool_prompt",
+          "line": 182,
+          "isDefault": false
+        },
+        {
+          "name": "PromptBuilder",
+          "line": 213,
+          "isDefault": false
+        },
+        {
+          "name": "load_prompt",
+          "line": 319,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_read_fragment",
+          "callee": "path.exists",
+          "lineNumber": 126
+        },
+        {
+          "caller": "_read_fragment",
+          "callee": "path.read_text",
+          "lineNumber": 127
+        },
+        {
+          "caller": "_read_fragment",
+          "callee": "\", \".join",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_read_fragment",
+          "callee": "str",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_read_fragment",
+          "callee": "FileNotFoundError",
+          "lineNumber": 130
+        },
+        {
+          "caller": "_read_workflow_for_role",
+          "callee": "path.exists",
+          "lineNumber": 163
+        },
+        {
+          "caller": "_read_workflow_for_role",
+          "callee": "path.read_text(encoding=\"utf-8\").strip",
+          "lineNumber": 165
+        },
+        {
+          "caller": "_read_workflow_for_role",
+          "callee": "path.read_text",
+          "lineNumber": 165
+        },
+        {
+          "caller": "_get_tool_prompt",
+          "callee": "_read_fragment",
+          "lineNumber": 195
+        },
+        {
+          "caller": "with_dynamic",
+          "callee": "self._dynamic_sections.append",
+          "lineNumber": 250
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 267
+        },
+        {
+          "caller": "build",
+          "callee": "_read_fragment",
+          "lineNumber": 267
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 271
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 272
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 273
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 274
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 275
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 278
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 279
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 280
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 281
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 285
+        },
+        {
+          "caller": "build",
+          "callee": "_get_tool_prompt",
+          "lineNumber": 285
+        },
+        {
+          "caller": "build",
+          "callee": "_read_workflow_for_role",
+          "lineNumber": 291
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 293
+        },
+        {
+          "caller": "build",
+          "callee": "_format_workflow_block",
+          "lineNumber": 293
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 298
+        },
+        {
+          "caller": "build",
+          "callee": "datetime.now",
+          "lineNumber": 301
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 302
+        },
+        {
+          "caller": "build",
+          "callee": "now.strftime",
+          "lineNumber": 303
+        },
+        {
+          "caller": "build",
+          "callee": "now.strftime",
+          "lineNumber": 304
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 310
+        },
+        {
+          "caller": "build",
+          "callee": "_read_fragment",
+          "lineNumber": 310
+        },
+        {
+          "caller": "build",
+          "callee": "parts.append",
+          "lineNumber": 314
+        },
+        {
+          "caller": "build",
+          "callee": "\"\\n\\n\".join",
+          "lineNumber": 316
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "PromptBuilder(name).with_tool_prompts(tool_prompts).with_shared(fragments).build",
+          "lineNumber": 366
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "PromptBuilder(name).with_tool_prompts(tool_prompts).with_shared",
+          "lineNumber": 366
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "PromptBuilder(name).with_tool_prompts",
+          "lineNumber": 366
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "PromptBuilder",
+          "lineNumber": 366
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "os.environ.get(\"RAPTIX_LANGUAGE\", \"\").strip",
+          "lineNumber": 374
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "os.environ.get",
+          "lineNumber": 374
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "build_language_policy",
+          "lineNumber": 375
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "re.sub",
+          "lineNumber": 379
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "apply_compat_for_role",
+          "lineNumber": 391
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "log.debug",
+          "lineNumber": 394
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "resolve_prompt_overrides",
+          "lineNumber": 401
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "merged.get",
+          "lineNumber": 404
+        },
+        {
+          "caller": "load_prompt",
+          "callee": "merged.get",
+          "lineNumber": 406
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 5,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/registry.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 138,
+      "nonEmptyLines": 128,
+      "functions": [
+        {
+          "name": "build_language_policy",
+          "startLine": 86,
+          "endLine": 138,
+          "params": [
+            "language"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "build_language_policy",
+          "line": 86,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "build_language_policy",
+          "callee": "(language or \"\").strip",
+          "lineNumber": 94
+        },
+        {
+          "caller": "build_language_policy",
+          "callee": "lang.lower",
+          "lineNumber": 95
+        },
+        {
+          "caller": "build_language_policy",
+          "callee": "_COUNTRY_TO_LANG.get",
+          "lineNumber": 98
+        },
+        {
+          "caller": "build_language_policy",
+          "callee": "lang.lower",
+          "lineNumber": 98
+        },
+        {
+          "caller": "build_language_policy",
+          "callee": "lang.lower",
+          "lineNumber": 98
+        },
+        {
+          "caller": "build_language_policy",
+          "callee": "_LANG_NAMES.get",
+          "lineNumber": 126
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 8,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/ad_operator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 188,
+      "nonEmptyLines": 162,
+      "functions": [
+        {
+          "name": "create_ad_operator_agent",
+          "startLine": 86,
+          "endLine": 167,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_ad_operator_agent",
+          "line": 86,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 131
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 133
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 136
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 137
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 140
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "build_tools",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "build_middleware",
+          "lineNumber": 145
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "load_prompt",
+          "lineNumber": 154
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 156
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "create_agent",
+          "lineNumber": 156
+        },
+        {
+          "caller": "create_ad_operator_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 165
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/analyst.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 200,
+      "nonEmptyLines": 170,
+      "functions": [
+        {
+          "name": "create_analyst_agent",
+          "startLine": 96,
+          "endLine": 176,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_analyst_agent",
+          "line": 96,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_analyst_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 139
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 141
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 146
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 150
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "build_tools",
+          "lineNumber": 153
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "build_middleware",
+          "lineNumber": 155
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "load_prompt",
+          "lineNumber": 163
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 165
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "create_agent",
+          "lineNumber": 165
+        },
+        {
+          "caller": "create_analyst_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 174
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/autohunt.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 76,
+      "nonEmptyLines": 64,
+      "functions": [
+        {
+          "name": "create_autohunt_agent",
+          "startLine": 25,
+          "endLine": 72,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_autohunt_agent",
+          "line": 25,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 42
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 46
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 48
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 48
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "build_tools",
+          "lineNumber": 50
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "build_middleware",
+          "lineNumber": 52
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "load_prompt",
+          "lineNumber": 59
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_GRAPH_NAME,\n    ).with_config",
+          "lineNumber": 61
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "create_agent",
+          "lineNumber": 61
+        },
+        {
+          "caller": "create_autohunt_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 70
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/blue_cell.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 172,
+      "nonEmptyLines": 145,
+      "functions": [
+        {
+          "name": "create_blue_cell_agent",
+          "startLine": 70,
+          "endLine": 150,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_blue_cell_agent",
+          "line": 70,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 114
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 116
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 118
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 121
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 124
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "build_tools",
+          "lineNumber": 127
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "build_middleware",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "load_prompt",
+          "lineNumber": 137
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 139
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "create_agent",
+          "lineNumber": 139
+        },
+        {
+          "caller": "create_blue_cell_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 148
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/cloud_hunter.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 174,
+      "nonEmptyLines": 147,
+      "functions": [
+        {
+          "name": "create_cloud_hunter_agent",
+          "startLine": 74,
+          "endLine": 154,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_cloud_hunter_agent",
+          "line": 74,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 117
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 119
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 121
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 124
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 125
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 128
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "build_tools",
+          "lineNumber": 131
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "build_middleware",
+          "lineNumber": 133
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "load_prompt",
+          "lineNumber": 141
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "create_agent",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_cloud_hunter_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 152
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/contract_auditor.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 188,
+      "nonEmptyLines": 161,
+      "functions": [
+        {
+          "name": "create_contract_auditor_agent",
+          "startLine": 86,
+          "endLine": 167,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_contract_auditor_agent",
+          "line": 86,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 131
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 133
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 136
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 137
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 140
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "build_tools",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "build_middleware",
+          "lineNumber": 145
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "load_prompt",
+          "lineNumber": 154
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 156
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "create_agent",
+          "lineNumber": 156
+        },
+        {
+          "caller": "create_contract_auditor_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 165
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/decepticon.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 209,
+      "nonEmptyLines": 184,
+      "functions": [
+        {
+          "name": "create_decepticon_agent",
+          "startLine": 77,
+          "endLine": 198,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "subagents",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_decepticon_agent",
+          "line": 77,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 120
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 122
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 124
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 128
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 131
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "CompiledSubAgent",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "StreamingRunnable",
+          "lineNumber": 150
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "spec.factory",
+          "lineNumber": 150
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "load_subagents_for_parent",
+          "lineNumber": 152
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "ops_available",
+          "lineNumber": 173
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "build_tools",
+          "lineNumber": 174
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "build_middleware",
+          "lineNumber": 176
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "load_prompt",
+          "lineNumber": 185
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 187
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "create_agent",
+          "lineNumber": 187
+        },
+        {
+          "caller": "create_decepticon_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 196
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/exploit.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 195,
+      "nonEmptyLines": 165,
+      "functions": [
+        {
+          "name": "create_exploit_agent",
+          "startLine": 95,
+          "endLine": 175,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_exploit_agent",
+          "line": 95,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_exploit_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 138
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 140
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 142
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 145
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 146
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 149
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "build_tools",
+          "lineNumber": 152
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "build_middleware",
+          "lineNumber": 154
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "load_prompt",
+          "lineNumber": 162
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 164
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "create_agent",
+          "lineNumber": 164
+        },
+        {
+          "caller": "create_exploit_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 173
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/forensicator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 140,
+      "nonEmptyLines": 119,
+      "functions": [
+        {
+          "name": "create_forensicator_agent",
+          "startLine": 67,
+          "endLine": 118,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_forensicator_agent",
+          "line": 67,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 80
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 82
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 84
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 87
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 88
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 91
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "build_tools",
+          "lineNumber": 94
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "build_middleware",
+          "lineNumber": 96
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 98
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "load_prompt",
+          "lineNumber": 105
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 107
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "create_agent",
+          "lineNumber": 107
+        },
+        {
+          "caller": "create_forensicator_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 116
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/ics_operator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 141,
+      "nonEmptyLines": 120,
+      "functions": [
+        {
+          "name": "create_ics_operator_agent",
+          "startLine": 68,
+          "endLine": 119,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_ics_operator_agent",
+          "line": 68,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 81
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 83
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 85
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 88
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 89
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 92
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "build_tools",
+          "lineNumber": 95
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "build_middleware",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 99
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "load_prompt",
+          "lineNumber": 106
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 108
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "create_agent",
+          "lineNumber": 108
+        },
+        {
+          "caller": "create_ics_operator_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 117
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/iot_operator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 140,
+      "nonEmptyLines": 119,
+      "functions": [
+        {
+          "name": "create_iot_operator_agent",
+          "startLine": 67,
+          "endLine": 118,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_iot_operator_agent",
+          "line": 67,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 80
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 82
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 84
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 87
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 88
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 91
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "build_tools",
+          "lineNumber": 94
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "build_middleware",
+          "lineNumber": 96
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 98
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "load_prompt",
+          "lineNumber": 105
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 107
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "create_agent",
+          "lineNumber": 107
+        },
+        {
+          "caller": "create_iot_operator_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 116
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/mobile_operator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 138,
+      "nonEmptyLines": 116,
+      "functions": [
+        {
+          "name": "create_mobile_operator_agent",
+          "startLine": 62,
+          "endLine": 113,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_mobile_operator_agent",
+          "line": 62,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 75
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 77
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 79
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 82
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 83
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 86
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "build_tools",
+          "lineNumber": 89
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "build_middleware",
+          "lineNumber": 91
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 93
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "load_prompt",
+          "lineNumber": 100
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 102
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "create_agent",
+          "lineNumber": 102
+        },
+        {
+          "caller": "create_mobile_operator_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 111
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/osint_operator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 147,
+      "nonEmptyLines": 126,
+      "functions": [
+        {
+          "name": "create_osint_operator_agent",
+          "startLine": 73,
+          "endLine": 124,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_osint_operator_agent",
+          "line": 73,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 86
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 88
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 90
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 93
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 94
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "build_tools",
+          "lineNumber": 100
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "build_middleware",
+          "lineNumber": 102
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 104
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "load_prompt",
+          "lineNumber": 111
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 113
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "create_agent",
+          "lineNumber": 113
+        },
+        {
+          "caller": "create_osint_operator_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 122
+        }
+      ],
+      "metrics": {
+        "importCount": 10,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/phisher.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 155,
+      "nonEmptyLines": 132,
+      "functions": [
+        {
+          "name": "create_phisher_agent",
+          "startLine": 74,
+          "endLine": 131,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_phisher_agent",
+          "line": 74,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_phisher_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 93
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 95
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 100
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 101
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 104
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "build_tools",
+          "lineNumber": 107
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "build_middleware",
+          "lineNumber": 109
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 111
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "load_prompt",
+          "lineNumber": 118
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 120
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "create_agent",
+          "lineNumber": 120
+        },
+        {
+          "caller": "create_phisher_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 129
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/postexploit.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 184,
+      "nonEmptyLines": 155,
+      "functions": [
+        {
+          "name": "create_postexploit_agent",
+          "startLine": 84,
+          "endLine": 164,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_postexploit_agent",
+          "line": 84,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 127
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 131
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 134
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 135
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 138
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "build_tools",
+          "lineNumber": 141
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "build_middleware",
+          "lineNumber": 143
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "load_prompt",
+          "lineNumber": 151
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 153
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "create_agent",
+          "lineNumber": 153
+        },
+        {
+          "caller": "create_postexploit_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 162
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/recon.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 183,
+      "nonEmptyLines": 156,
+      "functions": [
+        {
+          "name": "create_recon_agent",
+          "startLine": 83,
+          "endLine": 163,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_recon_agent",
+          "line": 83,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_recon_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 126
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 128
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 130
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 133
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 134
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 137
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "build_tools",
+          "lineNumber": 140
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "build_middleware",
+          "lineNumber": 142
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "load_prompt",
+          "lineNumber": 150
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 152
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "create_agent",
+          "lineNumber": 152
+        },
+        {
+          "caller": "create_recon_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 161
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/reverser.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 181,
+      "nonEmptyLines": 153,
+      "functions": [
+        {
+          "name": "create_reverser_agent",
+          "startLine": 78,
+          "endLine": 158,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_reverser_agent",
+          "line": 78,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_reverser_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 121
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 123
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 125
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 128
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 132
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "build_tools",
+          "lineNumber": 135
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "build_middleware",
+          "lineNumber": 137
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "load_prompt",
+          "lineNumber": 145
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "create_agent",
+          "lineNumber": 147
+        },
+        {
+          "caller": "create_reverser_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 156
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/soundwave.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 145,
+      "nonEmptyLines": 121,
+      "functions": [
+        {
+          "name": "create_soundwave_agent",
+          "startLine": 69,
+          "endLine": 140,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_soundwave_agent",
+          "line": 69,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 108
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 110
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 112
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 115
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 115
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "build_tools",
+          "lineNumber": 118
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "build_middleware",
+          "lineNumber": 120
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "load_prompt",
+          "lineNumber": 127
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "create_agent",
+          "lineNumber": 129
+        },
+        {
+          "caller": "create_soundwave_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 138
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 141,
+      "nonEmptyLines": 120,
+      "functions": [
+        {
+          "name": "create_supply_chain_operator_agent",
+          "startLine": 67,
+          "endLine": 118,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_supply_chain_operator_agent",
+          "line": 67,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 80
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 82
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 84
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 87
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 88
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 91
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "build_tools",
+          "lineNumber": 94
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "build_middleware",
+          "lineNumber": 96
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 98
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "load_prompt",
+          "lineNumber": 105
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 107
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "create_agent",
+          "lineNumber": 107
+        },
+        {
+          "caller": "create_supply_chain_operator_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 116
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/surface_exploit.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 103,
+      "nonEmptyLines": 91,
+      "functions": [
+        {
+          "name": "create_surface_exploit_agent",
+          "startLine": 38,
+          "endLine": 84,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_surface_exploit_agent",
+          "line": 38,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 51
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 53
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 55
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 57
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 58
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 60
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "build_tools",
+          "lineNumber": 62
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "build_middleware",
+          "lineNumber": 64
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "load_prompt",
+          "lineNumber": 72
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 73
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "create_agent",
+          "lineNumber": 73
+        },
+        {
+          "caller": "create_surface_exploit_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 82
+        }
+      ],
+      "metrics": {
+        "importCount": 10,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/standard/wireless_operator.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 149,
+      "nonEmptyLines": 126,
+      "functions": [
+        {
+          "name": "create_wireless_operator_agent",
+          "startLine": 73,
+          "endLine": 124,
+          "params": [
+            "backend",
+            "llm",
+            "fallback_models",
+            "sandbox",
+            "tools",
+            "middleware",
+            "system_prompt",
+            "recursion_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "create_wireless_operator_agent",
+          "line": 73,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "LLMFactory",
+          "lineNumber": 86
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "factory.get_model",
+          "lineNumber": 88
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "factory.get_fallback_models",
+          "lineNumber": 90
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "build_sandbox_backend",
+          "lineNumber": 93
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "set_sandbox",
+          "lineNumber": 94
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "make_agent_backend",
+          "lineNumber": 97
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "build_tools",
+          "lineNumber": 100
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "build_middleware",
+          "lineNumber": 102
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "benchmark_skill_sources",
+          "lineNumber": 104
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "load_prompt",
+          "lineNumber": 111
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "create_agent(\n        llm,\n        system_prompt=system_prompt,\n        tools=tools,\n        middleware=middleware,\n        name=_ROLE,\n    ).with_config",
+          "lineNumber": 113
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "create_agent",
+          "lineNumber": 113
+        },
+        {
+          "caller": "create_wireless_operator_agent",
+          "callee": "load_plugin_callbacks",
+          "lineNumber": 122
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/backends/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 122,
+      "nonEmptyLines": 104,
+      "functions": [
+        {
+          "name": "_validate_extra_route_key",
+          "startLine": 28,
+          "endLine": 56,
+          "params": [
+            "prefix"
+          ]
+        },
+        {
+          "name": "make_agent_backend",
+          "startLine": 59,
+          "endLine": 114,
+          "params": [
+            "sandbox",
+            "extra_routes"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_validate_extra_route_key",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "make_agent_backend",
+          "line": 59,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_validate_extra_route_key",
+          "callee": "isinstance",
+          "lineNumber": 40
+        },
+        {
+          "caller": "_validate_extra_route_key",
+          "callee": "ValueError",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_validate_extra_route_key",
+          "callee": "type",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_validate_extra_route_key",
+          "callee": "ValueError",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_validate_extra_route_key",
+          "callee": "prefix.startswith",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_validate_extra_route_key",
+          "callee": "prefix.endswith",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_validate_extra_route_key",
+          "callee": "ValueError",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_validate_extra_route_key",
+          "callee": "ValueError",
+          "lineNumber": 54
+        },
+        {
+          "caller": "make_agent_backend",
+          "callee": "dict",
+          "lineNumber": 99
+        },
+        {
+          "caller": "make_agent_backend",
+          "callee": "_validate_extra_route_key",
+          "lineNumber": 101
+        },
+        {
+          "caller": "make_agent_backend",
+          "callee": "FilesystemBackend",
+          "lineNumber": 104
+        },
+        {
+          "caller": "make_agent_backend",
+          "callee": "dict",
+          "lineNumber": 113
+        },
+        {
+          "caller": "make_agent_backend",
+          "callee": "sorted",
+          "lineNumber": 113
+        },
+        {
+          "caller": "make_agent_backend",
+          "callee": "merged.items",
+          "lineNumber": 113
+        },
+        {
+          "caller": "make_agent_backend",
+          "callee": "len",
+          "lineNumber": 113
+        },
+        {
+          "caller": "make_agent_backend",
+          "callee": "CompositeBackend",
+          "lineNumber": 114
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    }
+  ]
+}

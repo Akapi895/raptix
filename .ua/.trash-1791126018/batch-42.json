@@ -1,0 +1,320 @@
+{
+  "batchIndex": 42,
+  "batchFiles": [
+    {
+      "path": "telemetry-gateway/src/index.ts",
+      "language": "typescript",
+      "sizeLines": 123,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/src/posthog.ts",
+      "language": "typescript",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/src/schema.ts",
+      "language": "typescript",
+      "sizeLines": 147,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/src/tierc.ts",
+      "language": "typescript",
+      "sizeLines": 95,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/test/schema.test.ts",
+      "language": "typescript",
+      "sizeLines": 114,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/test/tierc.test.ts",
+      "language": "typescript",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "telemetry-gateway/test/worker.test.ts",
+      "language": "typescript",
+      "sizeLines": 139,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:telemetry-gateway/src/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "telemetry-gateway/src/index.ts",
+      "summary": "Cloudflare Worker làm ingest endpoint công khai duy nhất cho telemetry OSS: giới hạn body 256 KiB, validate schema Tier-A, quét nội dung Tier-C fail-closed, rate-limit theo install_id rồi forward sang PostHog; giữ secret PostHog phía server.",
+      "tags": [
+        "cloudflare-worker",
+        "telemetry",
+        "ingest",
+        "privacy"
+      ],
+      "complexity": "complex",
+      "languageNotes": "TypeScript: default export fetch handler; lỗi trả 400/413/422/429/502 chuẩn, không bao gi� echo giá trị nhạy cảm."
+    },
+    {
+      "id": "file:telemetry-gateway/src/posthog.ts",
+      "type": "file",
+      "name": "posthog.ts",
+      "filePath": "telemetry-gateway/src/posthog.ts",
+      "summary": "Forwarder PostHog: fan-out mỗi telemetry event thành một event PostHog qua /batch/, distinct_id là install_id ẩn danh, flatten envelope context và tắt geo enrichment.",
+      "tags": [
+        "posthog",
+        "forwarding",
+        "privacy"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "TypeScript: fetchImpl inject được để test; cắt trailing slash không dùng regex tránh ReDoS."
+    },
+    {
+      "id": "file:telemetry-gateway/src/schema.ts",
+      "type": "file",
+      "name": "schema.ts",
+      "filePath": "telemetry-gateway/src/schema.ts",
+      "summary": "Hợp đồng telemetry Tier-A bằng Zod: EVENT_TYPES, TelemetryEvent strict allow-list chỉ chứa scalar/enum, ClientInfo và TelemetryBatch (tối đa 500 event); mirror JSON Schema cho client Python phải đồng bộ.",
+      "tags": [
+        "zod",
+        "schema",
+        "contract",
+        "telemetry"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Zod .strict() chặn key lạ; slug và MITRE/CWE/CVE bị khóa regex; bucket hóa size/msgs/prompt thay vì giá trị thô."
+    },
+    {
+      "id": "file:telemetry-gateway/src/tierc.ts",
+      "type": "file",
+      "name": "tierc.ts",
+      "filePath": "telemetry-gateway/src/tierc.ts",
+      "summary": "Máy quét nội dung Tier-C fail-closed phía server: regex chặn private key, JWT, AWS key, email, URL, IPv4/IPv6, MAC, user:pass, opaque blob và domain; chỉ trả class + JSON path, không bao gi� echo giá trị khớp.",
+      "tags": [
+        "tier-c",
+        "content-scanner",
+        "privacy",
+        "fail-closed"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Pattern IPv4 dùng lookbehind (?<![\\d.]) vì ESXI10.10.0.95 từng l�t; ipv6 cần ≥3 nhóm để tránh khớp timestamp."
+    },
+    {
+      "id": "file:telemetry-gateway/test/schema.test.ts",
+      "type": "file",
+      "name": "schema.test.ts",
+      "filePath": "telemetry-gateway/test/schema.test.ts",
+      "summary": "Test vitest cho schema Tier-A: batch hợp lệ được nhận; chặn key lạ ở envelope/event, sai enum, sai định dạng MITRE/CVE và install_id.",
+      "tags": [
+        "vitest",
+        "schema",
+        "unit-test"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:telemetry-gateway/test/tierc.test.ts",
+      "type": "file",
+      "name": "tierc.test.ts",
+      "filePath": "telemetry-gateway/test/tierc.test.ts",
+      "summary": "Test corpus Tier-C (gate §A.1): m�i mẫu IP/credential/host bị cấm phải bị bắt ngay cả khi lồng sâu trong field của event.",
+      "tags": [
+        "vitest",
+        "tier-c",
+        "unit-test"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:telemetry-gateway/test/worker.test.ts",
+      "type": "file",
+      "name": "worker.test.ts",
+      "filePath": "telemetry-gateway/test/worker.test.ts",
+      "summary": "Test tích hợp worker: health check, 404/405/415, body quá lớn, JSON lỗi, schema fail, Tier-C reject, rate limit và mapping lỗi upstream sang 502.",
+      "tags": [
+        "vitest",
+        "cloudflare-worker",
+        "integration-test"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "schema:telemetry-gateway/src/schema.ts:tier-a-telemetry-contract",
+      "type": "schema",
+      "name": "tier-a-telemetry-contract",
+      "filePath": "telemetry-gateway/src/schema.ts",
+      "lineRange": [
+        1,
+        147
+      ],
+      "summary": "Hợp đồng wire-format Tier-A: envelope schema_version 1.0 + tier A/R + install_id UUID + client descriptor, kèm danh sách event type đóng (engagement.*, tool.*, llm.*, finding.created, trajectory.step, telemetry.drop) — m�i nội dung tự do bị strip trước khi forward.",
+      "tags": [
+        "schema",
+        "contract",
+        "telemetry",
+        "privacy"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:telemetry-gateway/src/posthog.ts:forwardToPostHog",
+      "type": "function",
+      "name": "forwardToPostHog",
+      "filePath": "telemetry-gateway/src/posthog.ts",
+      "lineRange": [
+        25,
+        61
+      ],
+      "summary": "Gửi batch đã validate tới PostHog /batch/: map mỗi event, gắn decepticon_version/os/arch/py/tier vào properties, set $geoip_disable và $process_person_profile=false.",
+      "tags": [
+        "posthog",
+        "http-client",
+        "privacy"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:telemetry-gateway/src/tierc.ts:scanTierC",
+      "type": "function",
+      "name": "scanTierC",
+      "filePath": "telemetry-gateway/src/tierc.ts",
+      "lineRange": [
+        72,
+        95
+      ],
+      "summary": "�ệ quy quét m�i giá trị chuỗi trong payload và trả TierCHit đầu tiên (class + JSON path); b� qua key enum khóa schema như \"type\".",
+      "tags": [
+        "tier-c",
+        "scanner",
+        "recursion"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:telemetry-gateway/src/posthog.ts",
+      "target": "function:telemetry-gateway/src/posthog.ts:forwardToPostHog",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/src/tierc.ts",
+      "target": "function:telemetry-gateway/src/tierc.ts:scanTierC",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/src/schema.ts",
+      "target": "schema:telemetry-gateway/src/schema.ts:tier-a-telemetry-contract",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:telemetry-gateway/src/schema.ts",
+      "target": "schema:telemetry-gateway/src/schema.ts:tier-a-telemetry-contract",
+      "type": "defines_schema",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:telemetry-gateway/src/posthog.ts",
+      "target": "function:telemetry-gateway/src/posthog.ts:forwardToPostHog",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/src/tierc.ts",
+      "target": "function:telemetry-gateway/src/tierc.ts:scanTierC",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:telemetry-gateway/src/index.ts",
+      "target": "file:telemetry-gateway/src/posthog.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:telemetry-gateway/src/index.ts",
+      "target": "file:telemetry-gateway/src/schema.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:telemetry-gateway/src/index.ts",
+      "target": "file:telemetry-gateway/src/tierc.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:telemetry-gateway/src/posthog.ts",
+      "target": "file:telemetry-gateway/src/schema.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:telemetry-gateway/test/schema.test.ts",
+      "target": "file:telemetry-gateway/src/schema.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:telemetry-gateway/test/tierc.test.ts",
+      "target": "file:telemetry-gateway/src/tierc.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:telemetry-gateway/test/worker.test.ts",
+      "target": "file:telemetry-gateway/src/index.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:telemetry-gateway/src/index.ts",
+      "target": "file:telemetry-gateway/test/worker.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:telemetry-gateway/src/posthog.ts",
+      "target": "file:telemetry-gateway/test/worker.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:telemetry-gateway/src/schema.ts",
+      "target": "file:telemetry-gateway/test/schema.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:telemetry-gateway/src/tierc.ts",
+      "target": "file:telemetry-gateway/test/tierc.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "batchIndex": 93,
+  "batchFiles": [
+    {
+      "path": "docs/red-team/ai-red-teaming.md",
+      "language": "markdown",
+      "sizeLines": 229,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/red-team/operations.md",
+      "language": "markdown",
+      "sizeLines": 280,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/red-team/opplan-domain-knowledge.md",
+      "language": "markdown",
+      "sizeLines": 180,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/red-team/recon-methodology.md",
+      "language": "markdown",
+      "sizeLines": 428,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/red-team/tools-techniques.md",
+      "language": "markdown",
+      "sizeLines": 355,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:docs/red-team/ai-red-teaming.md",
+      "type": "document",
+      "name": "ai-red-teaming.md",
+      "filePath": "docs/red-team/ai-red-teaming.md",
+      "lineRange": [1, 229],
+      "summary": "Research state-of-the-art 2024-2026 về autonomous red-team agent dùng AI để tấn công hạ tầng thật (không phải AI safety red teaming): DARPA AIxCC (DEF CON 33 — 86% synthetic vuln tìm thấy, 68% patch, 18 zero-day thật; ATLANTIS của Team Atlanta và Buttercup của Trail of Bits OSS); so sánh PentestGPT/AutoPentester/PentAGI/HackSynth/Reaper; pattern Planner-Executor-Perceptor với ReAct/Tree-of-Thought; structured attack tree tăng subtask completion từ 35.2% lên 74.4%; LLM exploit development (ChatAFL, PwnGPT); CART và purple team feedback loop; guardrail an toàn (RoE bất biến, kill switch, HITL, audit trail, deconfliction); mục 8 đối chiếu độ tương hợp với kiến trúc Raptix (multi-agent role, Ralph loop, RoE, sandbox) và bảng bổ xuất ưu tiên: graph memory Neo4j, structured attack tree, kill switch — HIGH; semantic search pgvector, domain specialist, CART — MEDIUM/LONG-TERM.",
+      "tags": ["research", "ai-agents", "kill-chain", "benchmark", "raptix-alignment"],
+      "complexity": "complex",
+      "languageNotes": "Toàn bộ nội dung tiếng Hàn; trích dẫn arXiv/GitHub của các hệ AIxCC và agent pentest tự động."
+    },
+    {
+      "id": "document:docs/red-team/operations.md",
+      "type": "document",
+      "name": "operations.md",
+      "filePath": "docs/red-team/operations.md",
+      "lineRange": [1, 280],
+      "summary": "Khung vận hành red team toàn diện cho Raptix agent: bảng so sánh pentest vs red team (mục tiêu, phạm vi, thời gian, stealth, deliverable); lifecycle 15 phase theo MITRE ATT&CK từ Planning đến Impact, map sang Raptix — Soundwave viết 8 tài liệu planning (RoE, Threat Profile, CONOPS, Deconfliction, Contact, Data Handling, Abort, Cleanup) rồi orchestrator lập OPPLAN; thống kê MITRE ATT&CK 2025 (14 tactics, 216 techniques, 475 sub-techniques); adversary emulation vs simulation; khung quy định TIBER-EU/CBEST/CORIE/AASE/iCAST/FEER với bảng so sánh; NIST SP 800-53 CA-8(2), PCI DSS 4.0 Req 11.4, DORA (TLPT, purple teaming bắt buộc), CISA advisories; purple team TAR cycle và RTCMM maturity 5 level; phân tích capability gap của Raptix — Planning/Recon/OPSEC đã đạt, Initial Access trở đi chưa có, 67 skill tham chiếu từ red-run (Web 33, AD 16, Privesc 11), roadmap mở rộng 4 giai đoạn.",
+      "tags": ["red-team", "mitre-attack", "compliance", "purple-team", "capability-gap"],
+      "complexity": "complex",
+      "languageNotes": "Tiếng Hàn; các bảng lifecycle/framework là tài liệu tham chiếu nền cho OPPLAN và skill planning."
+    },
+    {
+      "id": "document:docs/red-team/opplan-domain-knowledge.md",
+      "type": "document",
+      "name": "opplan-domain-knowledge.md",
+      "filePath": "docs/red-team/opplan-domain-knowledge.md",
+      "lineRange": [1, 180],
+      "summary": "Domain knowledge cho OPPLAN (compiled 2026-04-02): phân cấp 6 tầng tài liệu planning kế thừa doctrine quân sự — RoE (ràng buộc pháp lý) → Engagement Plan → CONOPS → Resource Plan → OPPLAN (chi tiết chiến thuật, TTP, stopping conditions) → Mission Plan; 3 kill chain model — Lockheed Martin 7 giai đoạn, MITRE ATT&CK 14 tactics, Unified Kill Chain 18 phase chia 3 chu kỳ IN/THROUGH/OUT; mô hình 5-phase thực dụng của Raptix map sang sub-agent (recon → initial-access → post-exploit, c2/exfiltration cutting-across); OPSEC 5 bước và 5 mức theo Red Team Maturity Model kèm C2 tier 3 tầng (Interactive/Short Haul/Long Haul); cấu trúc objective với metadata bắt buộc (OPSEC Level, Detection Risk, C2 Tier, Concessions pre-authorized theo TIBER-EU/CORIE — critical cho autonomous agent kẹt ở kill chain gate); khác biệt lập kế hoạch pentest vs red team.",
+      "tags": ["opplan", "opsec", "kill-chain", "planning", "concessions"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/red-team/recon-methodology.md",
+      "type": "document",
+      "name": "recon-methodology.md",
+      "filePath": "docs/red-team/recon-methodology.md",
+      "lineRange": [1, 428],
+      "summary": "Methodology recon làm domain knowledge cho Raptix Recon agent: map MITRE ATT&CK TA0043 (T1595-T1598) + OWASP WSTG INFO-01→10 + PTES/NIST SP 800-115 sang tool cụ thể; passive recon chi tiết — theHarvester/Amass/Subfinder/puredns workflow, DNS intelligence (MX/TXT/CNAME/SOA/NS, passive DNS DB), Certificate Transparency qua crt.sh, Shodan/Censys/ZoomEye, web archive (waybackurls/gau/waymore), secret scanning (TruffleHog/Gitleaks), cloud fingerprinting (CloudEnum/S3Scanner/CloudFox), ASN/BGP, OSINT nhân viên (CrossLinked/Sherlock); active recon — chiến lược nmap 5 phase tăng dần (SYN targeted → top 1000 → NSE → UDP → full), NSE categories, httpx/nuclei/WhatWeb fingerprinting, API discovery (KiteRunner/ffuf/Arjun), dir bruteforce (feroxybuster), JS analysis (LinkFinder/SecretFinder), wafw00f, vhost enum; OPSEC scan evasion (timing -T0/T1, fragmentation, decoy, source port); 2 pipeline tự động (reconFTW, TBHM bug bounty); xu hướng 2025-2026 (AI recon, cloud-native, supply chain, API-first); bảng phân loại tool passive/active cho agent.",
+      "tags": ["recon", "osint", "nmap", "opsec", "tooling"],
+      "complexity": "complex",
+      "languageNotes": "Tiếng Hàn; nhiều bash snippet mẫu; section 7 là phân loại tool dùng trực tiếp cho recon agent."
+    },
+    {
+      "id": "document:docs/red-team/tools-techniques.md",
+      "type": "document",
+      "name": "tools-techniques.md",
+      "filePath": "docs/red-team/tools-techniques.md",
+      "lineRange": [1, 355],
+      "summary": "Tham chiếu tool/kỹ thuật theo toàn bộ kill chain (bổ trợ cho recon-methodology.md): Initial Access — Evilginx2/GoPhish/Modlishka phishing infra, supply chain +1300% từ 2020, T1078 (74% breach liên quan credential); Execution — so sánh 6 C2 framework 2025 (Sliver/Havoc/Mythic/Cobalt Strike/Brute Ratel/Empire), BOF in-memory ~3KB, PowerShell 71% LOTL; Persistence top-10 (Run Keys, Scheduled Tasks, WMI Event Subscription, COM Hijacking) + SharPersist; PrivEsc — Potato family (PrintSpoofer/GodPotato/SigmaPotato), Kerberoasting/AS-REP với Rubeus/Impacket; Defense Evasion — AMSI bypass (memory patch, hardware breakpoint), ETW patching, ScareCrow, loader Nim/Rust/Go, direct/indirect syscalls, LOLBAS; Credential Access — LSASS dump (nanodump/HandleKatz), Golden/Silver/Diamond ticket, NTLM relay (Responder/ntlmrelayx/PetitPotam), password spray; Lateral Movement — protocol matrix (PsExec/WMI/WinRM/SMB/RDP/DCOM), PtH, Ligolo-ng/Chisel tunneling; Collection & Exfil channels + DLP bypass; C2 infra — malleable profile, RedWarden, domain fronting suy thoái sau khi Edgio retire; Cloud red team Azure/AWS (ROADtools, Pacu, CVE-2025-55241 CVSS 10.0); AD attack chain 10 bước từ foothold tới forest compromise (Potato → LSASS → PtH → BloodHound → ADCS ESC1-8 → DCSync → Golden Ticket → trust attack).",
+      "tags": ["kill-chain", "c2", "active-directory", "cloud", "defense-evasion"],
+      "complexity": "complex",
+      "languageNotes": "Tiếng Hàn; sơ đồ AD attack chain dạng text; tham chiếu Bishop Fox 2025 và Picus Red Report."
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:docs/red-team/recon-methodology.md",
+      "target": "file:packages/raptix/raptix/agents/standard/recon.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/tools-techniques.md",
+      "target": "file:packages/raptix/raptix/agents/standard/exploit.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/tools-techniques.md",
+      "target": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/tools-techniques.md",
+      "target": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/tools-techniques.md",
+      "target": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/tools-techniques.md",
+      "target": "file:packages/raptix/raptix/agents/standard/phisher.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/operations.md",
+      "target": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/opplan-domain-knowledge.md",
+      "target": "file:packages/raptix/raptix/middleware/opplan.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/opplan-domain-knowledge.md",
+      "target": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/tools-techniques.md",
+      "target": "document:docs/red-team/recon-methodology.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/ai-red-teaming.md",
+      "target": "document:docs/red-team/operations.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/red-team/opplan-domain-knowledge.md",
+      "target": "document:docs/red-team/operations.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

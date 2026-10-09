@@ -1,0 +1,97 @@
+\documentclass[a4paper]{article}
+
+% --- CẤU HÌNH CƠ BẢN ---
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{mathptmx}
+\usepackage[fontsize=12pt]{scrextend}
+\usepackage{setspace}
+\setstretch{1.2}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning,arrows.meta}
+\usepackage{eso-pic}
+\usepackage{lmodern}
+
+% --- CĂN LỀ (Trái 2.5cm, Phải 2cm) ---
+\usepackage[
+    left=2.5cm,
+    right=2cm,
+    top=2cm,
+    bottom=2cm,
+    headsep=30pt
+]{geometry}
+
+% --- CÁC GÓI HỖ TRỢ KHÁC ---
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{array}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+
+\renewcommand{\sectionmark}[1]{\markboth{\MakeUppercase{#1}}{}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\fancyhead[L]{\includegraphics[height=1.0cm]{images/uet_logo.png}}
+\fancyhead[R]{\footnotesize\leftmark}
+\fancyfoot[L]{INT3011E - Báo cáo thực tập}
+\fancyfoot[R]{\thepage}
+
+\fancypagestyle{plain}{
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyhead[L]{\includegraphics[height=1.0cm]{images/uet_logo.png}}
+\fancyhead[R]{\footnotesize\leftmark}
+\fancyfoot[L]{\textbf{INT3011E - Báo cáo thực tập} \quad | \quad \textbf{Final Project Report}}
+\fancyfoot[R]{\thepage}
+}
+
+% --- BIBLIOGRAPHY TIGHT SPACING ---
+\makeatletter
+\renewcommand{\@openbib@code}{%
+  \footnotesize\setstretch{1.0}%
+  \setlength{\itemsep}{2pt}%
+  \setlength{\parsep}{0pt}%
+  \setlength{\topsep}{4pt}%
+  \setlength{\parskip}{0pt}%
+}
+\makeatother
+
+% --- THÔNG TIN DỰ ÁN ---
+\title{Báo cáo thực tập -- Nghiên cứu và ứng dụng AI Agent trong tự động hóa quy trình Red Teaming}
+\date{\today}
+
+\begin{document}
+
+% --- TRANG BÌA
+\input{cover.tex}
+\thispagestyle{empty}
+
+\thispagestyle{empty}
+% --- MỤC LỤC ---
+\newpage
+\tableofcontents
+\thispagestyle{empty}
+\newpage
+
+% --- NỘI DUNG CHÍNH ---
+\include{sections/0_loi_cam_on}
+\include{sections/1_gioi_thieu}
+\include{sections/2_yeu_cau_bai_toan}
+\include{sections/3_kien_truc_mo_hinh}
+\include{sections/4_trien_khai_thuc_nghiem}
+\include{sections/5_danh_gia_ket_qua}
+
+% --- TÀI LIỆU THAM KHẢO ---
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

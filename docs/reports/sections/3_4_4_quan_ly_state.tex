@@ -1,0 +1,45 @@
+% =====================================================================
+%  File: sections/3_4_4_quan_ly_state.tex
+%  Mục đích: Phần 3.4.4 - Quản lý knowledge, state, event trên AKG
+% =====================================================================
+
+\subsubsection{Quản lý knowledge, state và event trên AKG}
+\label{sec:quan-ly-state}
+
+Một thay đổi quan trọng trong Raptix so với cách dùng chatbot thuần túy là \emph{không} lưu mọi thứ vào một memory chung. Thay vào đó, AKG phân loại dữ liệu thành bốn nhóm logic với quy tắc sử dụng khác nhau, giúp giảm nhiễu, giảm token và tăng tính nhất quán của state.
+
+\paragraph{Bốn nhóm dữ liệu}
+
+\begin{table}[H]
+\centering
+\caption{Phân loại dữ liệu trong AKG}
+\label{tab:phan-loai-du-lieu}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{2.6cm}|p{5.5cm}|p{7.5cm}|}
+\hline
+\textbf{Loại dữ liệu} & \textbf{Ví dụ} & \textbf{Quy tắc sử dụng} \\
+\hline
+Project fact & 10.0.0.5 mở 22/tcp; user A đăng nhập được & Có nguồn/evidence; được đưa vào context khi liên quan. \\
+\hline
+Event & Tool X bắt đầu/kết thúc; agent Y tạo task & Append-only; phục vụ audit, replay và debug. \\
+\hline
+Evidence & HTTP response, command output, flag, screenshot & Bất biến hoặc versioned; gắn trực tiếp với finding. \\
+\hline
+Knowledge & Playbook SSRF, tool usage, remediation pattern & Tái sử dụng giữa các mission; không chứa fact tạm thời của target. \\
+\hline
+\end{tabular}
+\end{table}
+
+Việc phân tách này giảm nguy cơ knowledge base bị ``nhiễm'' bởi các suy đoán trong một engagement cụ thể, đồng thời giảm token vì agent không cần đọc lại toàn bộ transcript khi lập kế hoạch.
+
+\paragraph{Truy vấn context theo nhu cầu}
+
+Khi lập kế hoạch, orchestrator chỉ truy vấn AKG để lấy fact và evidence liên quan đến task hiện tại: planner xác định loại task, truy vấn các node/cạnh tương ứng (ví dụ: Identity và Credential kết nối tới target host khi leo thang đặc quyền), lọc chỉ lấy fact đã verified, rồi tổng hợp thành prompt có cấu trúc thay vì nhồi toàn bộ transcript.
+
+\paragraph{Audit, replay và finding lifecycle}
+
+Event stream cho phép audit và replay toàn bộ chuỗi quyết định: từ một finding, truy vết ngược qua \texttt{EVIDENCES} và \texttt{LEADS\_TO} đến action và evidence gốc; từ event stream, dựng lại trạng thái AKG tại bất kỳ thời điểm nào mà không cần chạy lại.
+
+Finding không được sinh ra trực tiếp bởi LLM mà đi qua lifecycle: \textbf{Candidate} (hypothesis) → \textbf{Validated} (có evidence sơ bộ) → \textbf{Verified} (xác minh độc lập bởi verifier) → \textbf{Reported} (vào báo cáo cuối). Chỉ \texttt{Verified}/\texttt{Reported} được tính vào metric. AKG hỗ trợ node-level versioning và graph-level snapshot để recovery sau agent crash hoặc tool timeout.
+

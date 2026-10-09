@@ -1,0 +1,405 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+ "batchFiles": [
+  {
+   "path": "raptix/agents/__init__.py",
+   "language": "python",
+   "sizeLines": 62,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/_benchmark_mode.py",
+   "language": "python",
+   "sizeLines": 8,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/build.py",
+   "language": "python",
+   "sizeLines": 567,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/plugins/detector.py",
+   "language": "python",
+   "sizeLines": 193,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/plugins/exploiter.py",
+   "language": "python",
+   "sizeLines": 197,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/plugins/patcher.py",
+   "language": "python",
+   "sizeLines": 185,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/plugins/scanner.py",
+   "language": "python",
+   "sizeLines": 198,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/plugins/verifier.py",
+   "language": "python",
+   "sizeLines": 191,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/plugins/vulnresearch.py",
+   "language": "python",
+   "sizeLines": 201,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/prompts/__init__.py",
+   "language": "python",
+   "sizeLines": 77,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/prompts/builder.py",
+   "language": "python",
+   "sizeLines": 409,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/prompts/registry.py",
+   "language": "python",
+   "sizeLines": 138,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/__init__.py",
+   "language": "python",
+   "sizeLines": 9,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/ad_operator.py",
+   "language": "python",
+   "sizeLines": 188,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/analyst.py",
+   "language": "python",
+   "sizeLines": 200,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/autohunt.py",
+   "language": "python",
+   "sizeLines": 76,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/blue_cell.py",
+   "language": "python",
+   "sizeLines": 172,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/cloud_hunter.py",
+   "language": "python",
+   "sizeLines": 174,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/contract_auditor.py",
+   "language": "python",
+   "sizeLines": 188,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/decepticon.py",
+   "language": "python",
+   "sizeLines": 209,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/exploit.py",
+   "language": "python",
+   "sizeLines": 195,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/forensicator.py",
+   "language": "python",
+   "sizeLines": 140,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/ics_operator.py",
+   "language": "python",
+   "sizeLines": 141,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/iot_operator.py",
+   "language": "python",
+   "sizeLines": 140,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/mobile_operator.py",
+   "language": "python",
+   "sizeLines": 138,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/osint_operator.py",
+   "language": "python",
+   "sizeLines": 147,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/phisher.py",
+   "language": "python",
+   "sizeLines": 155,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "raptix/agents/__init__.py": [
+   "raptix/agents/plugins/detector.py",
+   "raptix/agents/plugins/exploiter.py",
+   "raptix/agents/plugins/patcher.py",
+   "raptix/agents/plugins/scanner.py",
+   "raptix/agents/plugins/verifier.py",
+   "raptix/agents/plugins/vulnresearch.py",
+   "raptix/agents/standard/ad_operator.py",
+   "raptix/agents/standard/analyst.py",
+   "raptix/agents/standard/autohunt.py",
+   "raptix/agents/standard/blue_cell.py",
+   "raptix/agents/standard/cloud_hunter.py",
+   "raptix/agents/standard/contract_auditor.py",
+   "raptix/agents/standard/decepticon.py",
+   "raptix/agents/standard/exploit.py",
+   "raptix/agents/standard/forensicator.py",
+   "raptix/agents/standard/ics_operator.py",
+   "raptix/agents/standard/iot_operator.py",
+   "raptix/agents/standard/mobile_operator.py",
+   "raptix/agents/standard/osint_operator.py",
+   "raptix/agents/standard/phisher.py",
+   "raptix/agents/standard/postexploit.py",
+   "raptix/agents/standard/recon.py",
+   "raptix/agents/standard/reverser.py",
+   "raptix/agents/standard/soundwave.py",
+   "raptix/agents/standard/supply_chain_operator.py",
+   "raptix/agents/standard/surface_exploit.py",
+   "raptix/agents/standard/wireless_operator.py"
+  ],
+  "raptix/agents/_benchmark_mode.py": [],
+  "raptix/agents/build.py": [
+   "raptix/agents/middleware_slots.py",
+   "raptix/middleware/skillogy.py"
+  ],
+  "raptix/agents/plugins/detector.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/plugins/exploiter.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/plugins/patcher.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py"
+  ],
+  "raptix/agents/plugins/scanner.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/research/scanner_tools.py"
+  ],
+  "raptix/agents/plugins/verifier.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/verification.py"
+  ],
+  "raptix/agents/plugins/vulnresearch.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/core/subagent_streaming.py",
+   "raptix/llm/__init__.py"
+  ],
+  "raptix/agents/prompts/__init__.py": [
+   "raptix/agents/prompts/builder.py",
+   "raptix/agents/prompts/registry.py"
+  ],
+  "raptix/agents/prompts/builder.py": [
+   "raptix/agents/prompts/registry.py"
+  ],
+  "raptix/agents/prompts/registry.py": [],
+  "raptix/agents/standard/__init__.py": [],
+  "raptix/agents/standard/ad_operator.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/ad/tools.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py"
+  ],
+  "raptix/agents/standard/analyst.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/reporting/tools.py",
+   "raptix/tools/web/search.py"
+  ],
+  "raptix/agents/standard/autohunt.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/agents/standard/soundwave.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py"
+  ],
+  "raptix/agents/standard/blue_cell.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/defense/blue_cell.py",
+   "raptix/tools/defense/brief.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/standard/cloud_hunter.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/cloud/tools.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/standard/contract_auditor.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/contracts/tools.py"
+  ],
+  "raptix/agents/standard/decepticon.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/core/subagent_streaming.py",
+   "raptix/llm/__init__.py"
+  ],
+  "raptix/agents/standard/exploit.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/standard/forensicator.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/standard/ics_operator.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/standard/iot_operator.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/standard/mobile_operator.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/standard/osint_operator.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py",
+   "raptix/tools/web/search.py"
+  ],
+  "raptix/agents/standard/phisher.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/web/search.py"
+  ]
+ }
+}

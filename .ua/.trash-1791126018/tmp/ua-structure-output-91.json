@@ -1,0 +1,187 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 3
+    }
+  },
+  "results": [
+    {
+      "path": "docs/integrations/ci-cd.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 144,
+      "nonEmptyLines": 119,
+      "sections": [
+        {
+          "heading": "CI/CD Integration",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Quick start — GitHub Actions",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "Scan modes",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Severity gating",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "Other CI systems",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "Engagement context in CI",
+          "level": 2,
+          "line": 138
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/integrations/external-agents.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 176,
+      "nonEmptyLines": 139,
+      "sections": [
+        {
+          "heading": "External agents — OpenClaw & Hermes",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Tools",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "1. Install + run",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "2. OpenClaw",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "3. Hermes",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "The bundled skill",
+          "level": 3,
+          "line": 107
+        },
+        {
+          "heading": "4. CLI-like workflow (what the agent does)",
+          "level": 2,
+          "line": 123
+        },
+        {
+          "heading": "5. Remote / networked use (optional)",
+          "level": 2,
+          "line": 136
+        },
+        {
+          "heading": "Authorization",
+          "level": 2,
+          "line": 171
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "docs/integrations/github-actions.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 97,
+      "nonEmptyLines": 77,
+      "sections": [
+        {
+          "heading": "GitHub Actions Integration",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "The composite action",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "Minimal workflow",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Inputs",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Outputs",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "Secrets required",
+          "level": 2,
+          "line": 59
+        },
+        {
+          "heading": "PR comment integration",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Diff-scoped scans",
+          "level": 2,
+          "line": 83
+        },
+        {
+          "heading": "Example workflows",
+          "level": 2,
+          "line": 91
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    }
+  ]
+}

@@ -1,0 +1,295 @@
+﻿[
+    {
+        "batchIndex":  61,
+        "files":  [
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt-grid-15runs.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  32,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt-grid-full.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  23,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt-shared-lab-grid.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  45,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt10.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt28.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  23,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt29.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  25,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt36.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt41.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/apt44.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  26,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/kimsuky.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/lazarus.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/muddywater.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/mustang-panda.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/salt-typhoon.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/dreadgoad/configs/turla.yaml",
+                          "language":  "yaml",
+                          "sizeLines":  21,
+                          "fileCategory":  "config"
+                      }
+                  ],
+        "batchImportData":  {
+                                "benchmark/dreadgoad/configs/apt-grid-15runs.yaml":  [
+
+                                                                                     ],
+                                "benchmark/dreadgoad/configs/apt-grid-full.yaml":  [
+
+                                                                                   ],
+                                "benchmark/dreadgoad/configs/apt-shared-lab-grid.yaml":  [
+
+                                                                                         ],
+                                "benchmark/dreadgoad/configs/apt10.yaml":  [
+
+                                                                           ],
+                                "benchmark/dreadgoad/configs/apt28.yaml":  [
+
+                                                                           ],
+                                "benchmark/dreadgoad/configs/apt29.yaml":  [
+
+                                                                           ],
+                                "benchmark/dreadgoad/configs/apt36.yaml":  [
+
+                                                                           ],
+                                "benchmark/dreadgoad/configs/apt41.yaml":  [
+
+                                                                           ],
+                                "benchmark/dreadgoad/configs/apt44.yaml":  [
+
+                                                                           ],
+                                "benchmark/dreadgoad/configs/kimsuky.yaml":  [
+
+                                                                             ],
+                                "benchmark/dreadgoad/configs/lazarus.yaml":  [
+
+                                                                             ],
+                                "benchmark/dreadgoad/configs/muddywater.yaml":  [
+
+                                                                                ],
+                                "benchmark/dreadgoad/configs/mustang-panda.yaml":  [
+
+                                                                                   ],
+                                "benchmark/dreadgoad/configs/salt-typhoon.yaml":  [
+
+                                                                                  ],
+                                "benchmark/dreadgoad/configs/turla.yaml":  [
+
+                                                                           ]
+                            },
+        "neighborMap":  {
+
+                        }
+    },
+    {
+        "batchIndex":  62,
+        "files":  [
+                      {
+                          "path":  "benchmark/results/XBEN-010-24/README.md",
+                          "language":  "markdown",
+                          "sizeLines":  26,
+                          "fileCategory":  "docs"
+                      },
+                      {
+                          "path":  "benchmark/results/XBEN-010-24/report.json",
+                          "language":  "json",
+                          "sizeLines":  40,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/results/XBEN-010-24/report.md",
+                          "language":  "markdown",
+                          "sizeLines":  32,
+                          "fileCategory":  "docs"
+                      }
+                  ],
+        "batchImportData":  {
+                                "benchmark/results/XBEN-010-24/README.md":  [
+
+                                                                            ],
+                                "benchmark/results/XBEN-010-24/report.json":  [
+
+                                                                              ],
+                                "benchmark/results/XBEN-010-24/report.md":  [
+
+                                                                            ]
+                            },
+        "neighborMap":  {
+
+                        }
+    },
+    {
+        "batchIndex":  63,
+        "files":  [
+                      {
+                          "path":  "benchmark/results/XBEN-018-24/README.md",
+                          "language":  "markdown",
+                          "sizeLines":  27,
+                          "fileCategory":  "docs"
+                      },
+                      {
+                          "path":  "benchmark/results/XBEN-018-24/report.json",
+                          "language":  "json",
+                          "sizeLines":  24,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/results/XBEN-018-24/report.md",
+                          "language":  "markdown",
+                          "sizeLines":  29,
+                          "fileCategory":  "docs"
+                      }
+                  ],
+        "batchImportData":  {
+                                "benchmark/results/XBEN-018-24/README.md":  [
+
+                                                                            ],
+                                "benchmark/results/XBEN-018-24/report.json":  [
+
+                                                                              ],
+                                "benchmark/results/XBEN-018-24/report.md":  [
+
+                                                                            ]
+                            },
+        "neighborMap":  {
+
+                        }
+    },
+    {
+        "batchIndex":  64,
+        "files":  [
+                      {
+                          "path":  "benchmark/results/XBEN-057-24/README.md",
+                          "language":  "markdown",
+                          "sizeLines":  27,
+                          "fileCategory":  "docs"
+                      },
+                      {
+                          "path":  "benchmark/results/XBEN-057-24/report.json",
+                          "language":  "json",
+                          "sizeLines":  40,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/results/XBEN-057-24/report.md",
+                          "language":  "markdown",
+                          "sizeLines":  29,
+                          "fileCategory":  "docs"
+                      }
+                  ],
+        "batchImportData":  {
+                                "benchmark/results/XBEN-057-24/README.md":  [
+
+                                                                            ],
+                                "benchmark/results/XBEN-057-24/report.json":  [
+
+                                                                              ],
+                                "benchmark/results/XBEN-057-24/report.md":  [
+
+                                                                            ]
+                            },
+        "neighborMap":  {
+
+                        }
+    },
+    {
+        "batchIndex":  65,
+        "files":  [
+                      {
+                          "path":  "benchmark/results/XBEN-087-24/README.md",
+                          "language":  "markdown",
+                          "sizeLines":  27,
+                          "fileCategory":  "docs"
+                      },
+                      {
+                          "path":  "benchmark/results/XBEN-087-24/report.json",
+                          "language":  "json",
+                          "sizeLines":  40,
+                          "fileCategory":  "config"
+                      },
+                      {
+                          "path":  "benchmark/results/XBEN-087-24/report.md",
+                          "language":  "markdown",
+                          "sizeLines":  29,
+                          "fileCategory":  "docs"
+                      }
+                  ],
+        "batchImportData":  {
+                                "benchmark/results/XBEN-087-24/README.md":  [
+
+                                                                            ],
+                                "benchmark/results/XBEN-087-24/report.json":  [
+
+                                                                              ],
+                                "benchmark/results/XBEN-087-24/report.md":  [
+
+                                                                            ]
+                            },
+        "neighborMap":  {
+
+                        }
+    }
+]

@@ -1,0 +1,35 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "scripts/init-web-db.sql",
+   "language": "sql",
+   "sizeLines": 4,
+   "fileCategory": "data"
+  },
+  {
+   "path": "scripts/install.ps1",
+   "language": "powershell",
+   "sizeLines": 224,
+   "fileCategory": "script"
+  },
+  {
+   "path": "scripts/install.sh",
+   "language": "shell",
+   "sizeLines": 584,
+   "fileCategory": "script"
+  },
+  {
+   "path": "scripts/web-hotswap.sh",
+   "language": "shell",
+   "sizeLines": 139,
+   "fileCategory": "script"
+  }
+ ],
+ "batchImportData": {
+  "scripts/init-web-db.sql": [],
+  "scripts/install.ps1": [],
+  "scripts/install.sh": [],
+  "scripts/web-hotswap.sh": []
+ }
+}

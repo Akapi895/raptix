@@ -1,0 +1,22 @@
+% =====================================================================
+%  File: sections/3_4_kien_truc_de_xuat.tex
+%  Mục đích: Phần 3.4 - Kiến trúc và cách giải quyết đề xuất (file cha)
+% =====================================================================
+
+\subsection{Kiến trúc và cách giải quyết đề xuất}
+\label{sec:kien-truc-de-xuat}
+
+Sau khi phân tích các hệ thống liên quan ở phần~\ref{sec:khao-sat-he-thong}, em chọn hướng tiếp cận \textbf{evolutionary redesign} cho prototype Raptix: kế thừa Decepticon làm nền tảng vì kiến trúc multi-agent theo kill chain và sandbox biệt lập của Decepticon đã được kiểm chứng~\cite{decepticon}, đồng thời tiếp thu các bài học quan trọng từ Incalmo~\cite{incalmo} về tách planning/execution và quản lý state ngoài context. Cách tiếp cận này có rủi ro thấp hơn so với việc viết lại từ đầu, và cho phép sử dụng benchmark làm hàng rào non-regression trong suốt quá trình phát triển.
+
+Đóng góp thiết kế của Raptix tập trung vào hai điểm khác biệt cốt lõi so với Decepticon gốc:
+
+\begin{itemize}
+    \item \textbf{Attack Knowledge Graph (AKG):} thay thế cách tổ chức knowledge graph hiện tại của Decepticon bằng một đồ thị \emph{hợp nhất} chứa tất cả các thực thể (asset, identity, credential, vulnerability, finding, action, evidence) và quan hệ giữa chúng, đóng vai trò nguồn sự thật duy nhất cho mọi tác tử.
+    \item \textbf{Mô hình khai thác hai pha:} phân tách quy trình khai thác thành pha Initial Foothold (khai thác theo chiều ngang, breadth-first) và pha Network Propagation (khai thác theo chiều sâu, depth-first), với cơ chế chuyển pha tường minh dựa trên trạng thái của AKG.
+\end{itemize}
+
+Ba phần con của mục này lần lượt trình bày: kiến trúc tổng thể Raptix (\ref{sec:kien-truc-tong-the}), thiết kế chi tiết AKG (\ref{sec:attack-knowledge-graph}) và mô hình khai thác hai pha (\ref{sec:mo-hinh-hai-pha}).
+
+\input{sections/3_4_1_kien_truc_tong_the}
+\input{sections/3_4_2_attack_knowledge_graph}
+\input{sections/3_4_3_mo_hinh_hai_pha}

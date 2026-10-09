@@ -1,0 +1,295 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 6,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 6,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 6
+    }
+  },
+  "results": [
+    {
+      "path": "telemetry-gateway/DEPLOY.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 77,
+      "nonEmptyLines": 56,
+      "sections": [
+        {
+          "heading": "Deploying the Telemetry Gateway (maintainer runbook)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. PostHog project (the dashboard where you read the data)",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "2. Deploy the Worker (Cloudflare)",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "3. Verify the live gateway",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "4. Ship it in the OSS release",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Rotating / disabling",
+          "level": 2,
+          "line": 73
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "telemetry-gateway/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 94,
+      "nonEmptyLines": 74,
+      "sections": [
+        {
+          "heading": "Raptix Telemetry Gateway (PoC)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Why a gateway (and not client → a third-party analytics backend directly)",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "Data flow",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Layout",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "Develop & test",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "Deploy (maintainer-side)",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "Schema ↔ contract sync",
+          "level": 2,
+          "line": 82
+        },
+        {
+          "heading": "Next steps (not in this PoC)",
+          "level": 2,
+          "line": 89
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "telemetry-gateway/package.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 23,
+      "nonEmptyLines": 23,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "version",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "private",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "description",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "type",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "main",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "scripts",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "dependencies",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "devDependencies",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "telemetry-gateway/schema.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 78,
+      "nonEmptyLines": 78,
+      "sections": [
+        {
+          "heading": "$schema",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "$id",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "title",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "description",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "type",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "additionalProperties",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "required",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "properties",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "$defs",
+          "level": 1,
+          "line": 31
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "telemetry-gateway/tsconfig.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "compilerOptions",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "include",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "telemetry-gateway/wrangler.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 28,
+      "nonEmptyLines": 25,
+      "sections": [
+        {
+          "heading": "vars",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "[[unsafe.bindings]]",
+          "level": 2,
+          "line": 22
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    }
+  ]
+}

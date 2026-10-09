@@ -1,0 +1,79 @@
+\begin{thebibliography}{10}
+
+\bibitem{vtnet}
+{Viettel Telecom}.
+\newblock {Báo cáo chất lượng dịch vụ viễn thông}.
+\newblock Báo cáo công bố định kỳ, Tập đoàn Công nghiệp --
+  Viễn thông Quân đội Viettel, 2026.
+\newblock Ghi nhận Tổng Công ty Mạng lưới Viettel là đơn vị
+  đầu mối về quản lý chất lượng dịch vụ viễn thông. Truy
+  cập: tháng 10/2026.
+
+\bibitem{cyberstrike}
+{CyberStrikeAI Contributors}.
+\newblock {CyberStrikeAI: AI-powered Penetration Testing with MCP Tool
+  Registry}.
+\newblock GitHub repository, \url{https://github.com/r-s0n/cyberstrike-ai},
+  2024.
+\newblock Truy cập: tháng 10/2026.
+
+\bibitem{strix}
+{Strix Contributors}.
+\newblock {Strix: Autonomous Pentesting Agent with Sandbox and Graph of
+  Agents}.
+\newblock GitHub repository, \url{https://github.com/strix-security/strix},
+  2024.
+\newblock Truy cập: tháng 10/2026.
+
+\bibitem{pentestai}
+{Pentest-AI Contributors}.
+\newblock {Pentest-AI: Verification-centric Automated Pentesting with Oracle
+  and Scope Guard}.
+\newblock GitHub repository, \url{https://github.com/pentestai/pentestai},
+  2024.
+\newblock Truy cập: tháng 10/2026.
+
+\bibitem{decepticon}
+{BitterSecurity}.
+\newblock {Decepticon: Professional AI Red Team Agent with Multi-agent Kill
+  Chain and Neo4j Knowledge Graph}.
+\newblock GitHub repository,
+  \url{https://github.com/BitterSecurity/decepticon}, 2025.
+\newblock Tự báo cáo 102/104 (98.08\%) trên XBOW Validation Benchmark theo
+  cấu hình dự án. Truy cập: tháng 10/2026.
+
+\bibitem{incalmo}
+Brian Singer, Keane Lucas, Lakshmi Adiga, Meghna Jain, Lujo Bauer, and Vyas
+  Sekar.
+\newblock {Incalmo: An Autonomous LLM-Assisted System for Red Teaming
+  Multi-Host Networks}.
+\newblock In {\em 2026 IEEE Symposium on Security and Privacy (S\&P)}, pages
+  4282--4300, 2026.
+
+\bibitem{agentcyberrange}
+Frank Liu et~al.
+\newblock {AgentCyberRange: Benchmarking Frontier AI Systems in Realistic Cyber
+  Ranges}.
+\newblock arXiv preprint arXiv:2606.14295, 2026.
+
+\bibitem{goad}
+Cyril~({@m4yfly}) Servi{\`e}res.
+\newblock {GOAD -- Game of Active Directory: A Pentest Active Directory Lab}.
+\newblock GitHub repository (Orange-Cyberdefense/GOAD),
+  \url{https://github.com/Orange-Cyberdefense/GOAD}, 2022.
+\newblock Môi trường lab AD để luyện kỹ thuật tấn công; không
+  phải benchmark tự chấm điểm. Truy cập: tháng 10/2026.
+
+\bibitem{nilgiri}
+{SPARC Research Group}.
+\newblock {Nilgiri: Long-Horizon Cyber Range for Autonomous Security Agents}.
+\newblock GitHub repository, 2026.
+\newblock Truy cập: tháng 10/2026.
+
+\bibitem{infragauntlet}
+{InfraGauntlet Contributors}.
+\newblock {InfraGauntlet: Linux/Network Benchmark for AI Red Team Agents}.
+\newblock GitHub repository, 2025.
+\newblock Truy cập: tháng 10/2026.
+
+\end{thebibliography}

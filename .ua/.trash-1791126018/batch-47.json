@@ -1,0 +1,1531 @@
+{
+  "batchIndex": 47,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/tools/browser/__init__.py",
+      "language": "python",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/browser/tools.py",
+      "language": "python",
+      "sizeLines": 384,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_browser.py",
+      "language": "python",
+      "sizeLines": 281,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:packages/raptix/raptix/tools/browser/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/tools/browser/__init__.py",
+      "summary": "Package browser session Playwright bền vững cho agent Raptix: expose browser_action — một LangChain tool multiplex cho SPA auth flow, OAuth callback, DOM-XSS verification; Playwright import lazily nên agent vẫn boot khi thiếu dependency.",
+      "tags": [
+        "browser",
+        "playwright",
+        "tools"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Cài Playwright + Chromium trong sandbox image và wiring docker-compose thuộc PR sau, cố ý ngoài phạm vi thư viện này."
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "type": "file",
+      "name": "tools.py",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "summary": "Triển khai browser_action: BrowserSessionManager singleton giữ state Playwright (browser/context/tabs/console buffer) serialize qua asyncio.Lock; 13 sub-action trả JSON, lỗi chuyển thành {\"error\": …} thay vì raise để agent loop tiếp tục; cleanup đóng có timeout và log đầy đủ.",
+      "tags": [
+        "browser",
+        "playwright",
+        "session-manager",
+        "langchain-tool"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "type": "file",
+      "name": "test_browser.py",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "summary": "Unit test BrowserSessionManager + dispatcher browser_action với Playwright mock: singleton, validate action/params, thiếu Playwright trả install hint, từng action (goto/click/type/screenshot/eval_js/console/page_source/tabs/close) và 'No active tab'.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright",
+        "mocking"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "type": "file",
+      "name": "test_browser_cleanup.py",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "summary": "Test cleanup bounded có log trong raptix.tools.browser.tools: _safe_close timeout 5s + log exception, close vẫn tiếp tục khi một page.close() raise và hoàn tất khi browser.close() treo.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "cleanup",
+        "timeout"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserActionError",
+      "type": "class",
+      "name": "BrowserActionError",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        68,
+        74
+      ],
+      "summary": "Lỗi nội bộ của manager, bắt ở biên tool và đổi thành JSON {\"error\": …} để LLM xử lý in-band (thiếu Playwright, trang đóng, timeout điều hướng, selector sai) mà không kết thúc run.",
+      "tags": [
+        "error-handling",
+        "exception",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/browser/tools.py:_Tab",
+      "type": "class",
+      "name": "_Tab",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        97,
+        106
+      ],
+      "summary": "Dataclass một tab Playwright do manager theo dõi: page + console deque bounded 500 dòng để trang nói nhiều không làm phình memory.",
+      "tags": [
+        "dataclass",
+        "console",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserSessionManager",
+      "type": "class",
+      "name": "BrowserSessionManager",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        109,
+        261
+      ],
+      "summary": "Singleton per-process giữ state browser sống: launch Chromium headless, quản lý tabs dict + tab active, mọi method async serialize qua asyncio.Lock để các tool turn không interleaved navigation; close tuần tự page→context→browser→playwright qua _safe_close.",
+      "tags": [
+        "session-manager",
+        "playwright",
+        "singleton",
+        "asyncio"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/browser/tools.py:_safe_close",
+      "type": "function",
+      "name": "_safe_close",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        39,
+        65
+      ],
+      "summary": "Await obj.<method>() với timeout bounded (5s), log mọi timeout/exception — thay cho except-pass âm thầm để operator chẩn đoán được leak handle Playwright.",
+      "tags": [
+        "cleanup",
+        "asyncio",
+        "logging"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/browser/tools.py:get_session_manager",
+      "type": "function",
+      "name": "get_session_manager",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        268,
+        274
+      ],
+      "summary": "Trả singleton BrowserSessionManager toàn process (threading.Lock bảo trợ lazy init).",
+      "tags": [
+        "singleton",
+        "factory",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/browser/tools.py:_reset_session_manager_for_tests",
+      "type": "function",
+      "name": "_reset_session_manager_for_tests",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        277,
+        281
+      ],
+      "summary": "Test-only: drop singleton để mỗi test nhận manager mới.",
+      "tags": [
+        "test-helper",
+        "browser",
+        "singleton"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/browser/tools.py:_json",
+      "type": "function",
+      "name": "_json",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        284,
+        285
+      ],
+      "summary": "Serialize dict thành chuỗi JSON indent=2, default=str, ensure_ascii=False.",
+      "tags": [
+        "json",
+        "browser",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/browser/tools.py:_dispatch",
+      "type": "function",
+      "name": "_dispatch",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        288,
+        331
+      ],
+      "summary": "Route action → method của manager: validate action thuộc _SUPPORTED_ACTIONS, ép kiểu tham số từ kwargs JSON, thiếu action lạ raise BrowserActionError.",
+      "tags": [
+        "dispatcher",
+        "validation",
+        "browser"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/browser/tools.py:browser_action",
+      "type": "function",
+      "name": "browser_action",
+      "filePath": "packages/raptix/raptix/tools/browser/tools.py",
+      "lineRange": [
+        335,
+        372
+      ],
+      "summary": "LangChain @tool multiplex duy nhất điều khiển browser bền vững: parse params_json (JSON lỗi/không phải object trả error), dispatch tới manager và bọc mọi exception thành {\"error\": …} để agent loop tiếp tục.",
+      "tags": [
+        "langchain-tool",
+        "multiplexer",
+        "error-handling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:_reset_singleton",
+      "type": "function",
+      "name": "_reset_singleton",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        24,
+        27
+      ],
+      "summary": "Fixture autouse reset singleton manager trước/sau mỗi test.",
+      "tags": [
+        "test-helper",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:_async_mock",
+      "type": "function",
+      "name": "_async_mock",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        30,
+        33
+      ],
+      "summary": "Helper tạo AsyncMock với giá trị trả về cho thuộc tính awaitable.",
+      "tags": [
+        "test-helper",
+        "mocking",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "function",
+      "name": "_fake_page",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        36,
+        55
+      ],
+      "summary": "Dựng MagicMock page Playwright giả: url, title, goto, click, fill, screenshot, evaluate, content, pdf, console event.",
+      "tags": [
+        "test-helper",
+        "mocking",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "function",
+      "name": "_fake_browser_chain",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        58,
+        75
+      ],
+      "summary": "Dựng chuỗi playwright→browser→context giả cho launch/close.",
+      "tags": [
+        "test-helper",
+        "mocking",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_get_session_manager_is_singleton",
+      "type": "function",
+      "name": "test_get_session_manager_is_singleton",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        78,
+        81
+      ],
+      "summary": "get_session_manager trả cùng instance gọi nhiều lần.",
+      "tags": [
+        "unit-test",
+        "singleton",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_unknown_action",
+      "type": "function",
+      "name": "test_dispatcher_rejects_unknown_action",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        84,
+        87
+      ],
+      "summary": "Action lạ → error JSON liệt kê các action hỗ trợ.",
+      "tags": [
+        "unit-test",
+        "dispatcher",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_bad_params_json",
+      "type": "function",
+      "name": "test_dispatcher_rejects_bad_params_json",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        90,
+        93
+      ],
+      "summary": "params_json sai JSON → error kèm thông tin decode.",
+      "tags": [
+        "unit-test",
+        "dispatcher",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_non_object_params",
+      "type": "function",
+      "name": "test_dispatcher_rejects_non_object_params",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        96,
+        99
+      ],
+      "summary": "params_json decode thành mảng/scalar → error 'must decode to a JSON object'.",
+      "tags": [
+        "unit-test",
+        "dispatcher",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_missing_required_parameter_surfaces_as_error_json",
+      "type": "function",
+      "name": "test_missing_required_parameter_surfaces_as_error_json",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        102,
+        108
+      ],
+      "summary": "Thiếu tham số bắt buộc (url/selector/expression) → error 'missing required parameter', không crash.",
+      "tags": [
+        "unit-test",
+        "dispatcher",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_missing_playwright_surfaces_install_hint",
+      "type": "function",
+      "name": "test_missing_playwright_surfaces_install_hint",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        111,
+        120
+      ],
+      "summary": "Thiếu Playwright → error chỉ dẫn cài extra browser/playwright + chromium.",
+      "tags": [
+        "unit-test",
+        "playwright",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_launch_starts_browser_and_creates_main_tab",
+      "type": "function",
+      "name": "test_launch_starts_browser_and_creates_main_tab",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        123,
+        129
+      ],
+      "summary": "launch khởi động browser và tạo tab 'main' làm tab active.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_goto_returns_url_status_title",
+      "type": "function",
+      "name": "test_goto_returns_url_status_title",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        132,
+        148
+      ],
+      "summary": "goto điều hướng và trả url/status/title từ response Playwright.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_click_invokes_page_click",
+      "type": "function",
+      "name": "test_click_invokes_page_click",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        151,
+        166
+      ],
+      "summary": "click gọi page.click với selector + timeout_ms.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_type_invokes_page_fill",
+      "type": "function",
+      "name": "test_type_invokes_page_fill",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        169,
+        185
+      ],
+      "summary": "type gọi page.fill với selector/text, delay_ms sleep tương ứng.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_screenshot_returns_base64_png",
+      "type": "function",
+      "name": "test_screenshot_returns_base64_png",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        188,
+        197
+      ],
+      "summary": "screenshot trả base64 PNG kèm số bytes; full_page chuyển tiếp.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_eval_js_returns_result",
+      "type": "function",
+      "name": "test_eval_js_returns_result",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        200,
+        212
+      ],
+      "summary": "eval_js trả kết quả page.evaluate bọc trong JSON.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_console_logs_returns_captured_messages",
+      "type": "function",
+      "name": "test_console_logs_returns_captured_messages",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        215,
+        229
+      ],
+      "summary": "console_logs trả buffer console đã capture kèm count; clear=True xoá buffer.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "console"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_page_source_returns_html_and_url",
+      "type": "function",
+      "name": "test_page_source_returns_html_and_url",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        232,
+        240
+      ],
+      "summary": "page_source trả HTML + url + số bytes.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_list_tabs_and_switch_tab",
+      "type": "function",
+      "name": "test_list_tabs_and_switch_tab",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        243,
+        258
+      ],
+      "summary": "list_tabs liệt kê tab; switch_tab chuyển hoặc tạo tab mới khi id chưa tồn tại.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_close_resets_session_state",
+      "type": "function",
+      "name": "test_close_resets_session_state",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        261,
+        268
+      ],
+      "summary": "close reset tabs/active và đóng browser qua manager.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "cleanup"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_browser_tools_export",
+      "type": "function",
+      "name": "test_browser_tools_export",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        271,
+        273
+      ],
+      "summary": "BROWSER_TOOLS chứa đúng browser_action.",
+      "tags": [
+        "unit-test",
+        "exports",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser.py:test_active_tab_required_for_navigation",
+      "type": "function",
+      "name": "test_active_tab_required_for_navigation",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser.py",
+      "lineRange": [
+        276,
+        281
+      ],
+      "summary": "Điều hướng khi chưa launch → error 'No active tab'.",
+      "tags": [
+        "unit-test",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:_reset_singleton",
+      "type": "function",
+      "name": "_reset_singleton",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "lineRange": [
+        22,
+        25
+      ],
+      "summary": "Fixture autouse reset singleton manager trước/sau mỗi test.",
+      "tags": [
+        "test-helper",
+        "browser",
+        "playwright"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:_propagate_decepticon_logger",
+      "type": "function",
+      "name": "_propagate_decepticon_logger",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "lineRange": [
+        29,
+        38
+      ],
+      "summary": "Patch logger 'raptix.tools.browser.tools' để assert các warning cleanup.",
+      "tags": [
+        "test-helper",
+        "logging",
+        "browser"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_safe_close_logs_raised_exception",
+      "type": "function",
+      "name": "test_safe_close_logs_raised_exception",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "lineRange": [
+        42,
+        54
+      ],
+      "summary": "close() raise → _safe_close log warning kèm tên handle, không re-raise.",
+      "tags": [
+        "unit-test",
+        "cleanup",
+        "logging"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_safe_close_bounded_by_timeout",
+      "type": "function",
+      "name": "test_safe_close_bounded_by_timeout",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "lineRange": [
+        58,
+        74
+      ],
+      "summary": "Handle treo → asyncio.wait_for hủy sau timeout, log 'timed out', bỏ handle thay vì wedge cleanup.",
+      "tags": [
+        "unit-test",
+        "cleanup",
+        "timeout"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_continues_when_page_close_raises",
+      "type": "function",
+      "name": "test_close_continues_when_page_close_raises",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "lineRange": [
+        78,
+        131
+      ],
+      "summary": "Một page.close() raise: các page còn lại + context/browser/playwright vẫn đóng theo thứ tự, state manager reset sạch.",
+      "tags": [
+        "unit-test",
+        "cleanup",
+        "resilience"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_bounded_when_browser_close_hangs",
+      "type": "function",
+      "name": "test_close_bounded_when_browser_close_hangs",
+      "filePath": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "lineRange": [
+        135,
+        159
+      ],
+      "summary": "browser.close() treo → bị hủy sau 5s, close vẫn hoàn tất và manager reset sạch.",
+      "tags": [
+        "unit-test",
+        "cleanup",
+        "timeout"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserActionError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserActionError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:_Tab",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:_Tab",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserSessionManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserSessionManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_safe_close",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_safe_close",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:get_session_manager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:get_session_manager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_reset_session_manager_for_tests",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_reset_session_manager_for_tests",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_dispatch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_dispatch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:browser_action",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:browser_action",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_reset_singleton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_reset_singleton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_async_mock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_async_mock",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_get_session_manager_is_singleton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_get_session_manager_is_singleton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_unknown_action",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_unknown_action",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_bad_params_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_bad_params_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_non_object_params",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_dispatcher_rejects_non_object_params",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_missing_required_parameter_surfaces_as_error_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_missing_required_parameter_surfaces_as_error_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_missing_playwright_surfaces_install_hint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_missing_playwright_surfaces_install_hint",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_launch_starts_browser_and_creates_main_tab",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_launch_starts_browser_and_creates_main_tab",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_goto_returns_url_status_title",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_goto_returns_url_status_title",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_click_invokes_page_click",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_click_invokes_page_click",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_type_invokes_page_fill",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_type_invokes_page_fill",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_screenshot_returns_base64_png",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_screenshot_returns_base64_png",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_eval_js_returns_result",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_eval_js_returns_result",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_console_logs_returns_captured_messages",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_console_logs_returns_captured_messages",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_page_source_returns_html_and_url",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_page_source_returns_html_and_url",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_list_tabs_and_switch_tab",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_list_tabs_and_switch_tab",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_close_resets_session_state",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_close_resets_session_state",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_browser_tools_export",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_browser_tools_export",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_active_tab_required_for_navigation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:test_active_tab_required_for_navigation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:_reset_singleton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:_reset_singleton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:_propagate_decepticon_logger",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:_propagate_decepticon_logger",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_safe_close_logs_raised_exception",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_safe_close_logs_raised_exception",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_safe_close_bounded_by_timeout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_safe_close_bounded_by_timeout",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_continues_when_page_close_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_continues_when_page_close_raises",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_bounded_when_browser_close_hangs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_bounded_when_browser_close_hangs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "target": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_browser.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "target": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/browser/tools.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/browser/tools.py:get_session_manager",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserSessionManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/browser/tools.py:_dispatch",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserActionError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/browser/tools.py:_dispatch",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:get_session_manager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/browser/tools.py:browser_action",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/browser/tools.py:browser_action",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_dispatch",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:_reset_singleton",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_reset_session_manager_for_tests",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_async_mock",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_async_mock",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_get_session_manager_is_singleton",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:get_session_manager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_missing_required_parameter_surfaces_as_error_json",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_launch_starts_browser_and_creates_main_tab",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_goto_returns_url_status_title",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_goto_returns_url_status_title",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_click_invokes_page_click",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_click_invokes_page_click",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_type_invokes_page_fill",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_type_invokes_page_fill",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_screenshot_returns_base64_png",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_screenshot_returns_base64_png",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_eval_js_returns_result",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_eval_js_returns_result",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_async_mock",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_eval_js_returns_result",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_console_logs_returns_captured_messages",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_console_logs_returns_captured_messages",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_page_source_returns_html_and_url",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_page_source_returns_html_and_url",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_list_tabs_and_switch_tab",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_list_tabs_and_switch_tab",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_close_resets_session_state",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_page",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser.py:test_close_resets_session_state",
+      "target": "function:packages/raptix/tests/unit/tools/test_browser.py:_fake_browser_chain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:_reset_singleton",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_reset_session_manager_for_tests",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_safe_close_logs_raised_exception",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_safe_close",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_safe_close_bounded_by_timeout",
+      "target": "function:packages/raptix/raptix/tools/browser/tools.py:_safe_close",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_continues_when_page_close_raises",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserSessionManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_continues_when_page_close_raises",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:_Tab",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_browser_cleanup.py:test_close_bounded_when_browser_close_hangs",
+      "target": "class:packages/raptix/raptix/tools/browser/tools.py:BrowserSessionManager",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

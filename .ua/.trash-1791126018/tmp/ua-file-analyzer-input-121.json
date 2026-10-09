@@ -1,0 +1,184 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261003010000_campaign_delivery_outcomes/migration.sql",
+      "language": "sql",
+      "sizeLines": 6,
+      "fileCategory": "data"
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261004000000_c2_commands/migration.sql",
+      "language": "sql",
+      "sizeLines": 12,
+      "fileCategory": "data"
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/migration_lock.toml",
+      "language": "toml",
+      "sizeLines": 3,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/schema.prisma",
+      "language": "prisma",
+      "sizeLines": 217,
+      "fileCategory": "data"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/planning-schemas.json",
+      "language": "json",
+      "sizeLines": 1205,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/server/vitest.config.ts",
+      "language": "typescript",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/MessageContent.tsx",
+      "language": "typescript",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/operator-console/mocks/fixtures/console.ts",
+      "language": "typescript",
+      "sizeLines": 91,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/useMediaQuery.ts",
+      "language": "typescript",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/index.css",
+      "language": "css",
+      "sizeLines": 207,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/evidence.ts",
+      "language": "typescript",
+      "sizeLines": 300,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/findings.ts",
+      "language": "typescript",
+      "sizeLines": 240,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/graphs.ts",
+      "language": "typescript",
+      "sizeLines": 770,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/C2Sessions.tsx",
+      "language": "typescript",
+      "sizeLines": 1643,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/OperatorConsole.tsx",
+      "language": "typescript",
+      "sizeLines": 1151,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/ScopeBoundaries.tsx",
+      "language": "typescript",
+      "sizeLines": 420,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/shared/ui/CapabilityButton.tsx",
+      "language": "typescript",
+      "sizeLines": 5,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/vite-env.d.ts",
+      "language": "typescript",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/run-store.test.ts",
+      "language": "typescript",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/visual-projects.test.ts",
+      "language": "typescript",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/w00-captures.test.ts",
+      "language": "typescript",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/e2e/deployed-smoke.spec.ts",
+      "language": "typescript",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/e2e/real-campaigns.spec.ts",
+      "language": "typescript",
+      "sizeLines": 164,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/e2e/real-console-live.spec.ts",
+      "language": "typescript",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/e2e/real-console.spec.ts",
+      "language": "typescript",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "clients/web-raptix/server/prisma/migrations/20261003010000_campaign_delivery_outcomes/migration.sql": [],
+    "clients/web-raptix/server/prisma/migrations/20261004000000_c2_commands/migration.sql": [],
+    "clients/web-raptix/server/prisma/migrations/migration_lock.toml": [],
+    "clients/web-raptix/server/prisma/schema.prisma": [],
+    "clients/web-raptix/server/src/services/planning-schemas.json": [],
+    "clients/web-raptix/server/vitest.config.ts": [],
+    "clients/web-raptix/src/features/agent-runs/MessageContent.tsx": [],
+    "clients/web-raptix/src/features/operator-console/mocks/fixtures/console.ts": [],
+    "clients/web-raptix/src/features/reports/useMediaQuery.ts": [],
+    "clients/web-raptix/src/index.css": [],
+    "clients/web-raptix/src/mocks/fixtures/evidence.ts": [
+      "clients/web-raptix/src/mocks/fixtures/findings.ts"
+    ],
+    "clients/web-raptix/src/mocks/fixtures/findings.ts": [],
+    "clients/web-raptix/src/mocks/fixtures/graphs.ts": [],
+    "clients/web-raptix/src/screens/C2Sessions.tsx": [],
+    "clients/web-raptix/src/screens/OperatorConsole.tsx": [],
+    "clients/web-raptix/src/screens/ScopeBoundaries.tsx": [],
+    "clients/web-raptix/src/shared/ui/CapabilityButton.tsx": [],
+    "clients/web-raptix/src/vite-env.d.ts": [],
+    "clients/web-raptix/tests/contracts/run-store.test.ts": [],
+    "clients/web-raptix/tests/contracts/visual-projects.test.ts": [],
+    "clients/web-raptix/tests/contracts/w00-captures.test.ts": [],
+    "clients/web-raptix/tests/e2e/deployed-smoke.spec.ts": [],
+    "clients/web-raptix/tests/e2e/real-campaigns.spec.ts": [],
+    "clients/web-raptix/tests/e2e/real-console-live.spec.ts": [],
+    "clients/web-raptix/tests/e2e/real-console.spec.ts": []
+  }
+}

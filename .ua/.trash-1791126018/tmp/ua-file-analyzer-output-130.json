@@ -1,0 +1,2279 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 25,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 25
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/references/cve-apt-mapping.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 203,
+      "nonEmptyLines": 165,
+      "sections": [
+        {
+          "heading": "CVE-to-APT Mapping Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Master Mapping Table",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "Detail Cards",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "CVE-2023-23397 — Outlook NTLM Credential Relay",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "CVE-2023-20198 / CVE-2023-20273 — Cisco IOS XE Web UI Chain",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "CVE-2023-38831 — WinRAR Filename Spoofing",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "CVE-2020-1472 — ZeroLogon",
+          "level": 3,
+          "line": 67
+        },
+        {
+          "heading": "CVE-2022-38028 — Print Spooler GooseEgg",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "CVE-2022-3236 — Sophos Firewall Code Injection",
+          "level": 3,
+          "line": 89
+        },
+        {
+          "heading": "CVE-2023-46805 / CVE-2024-21887 — Ivanti Connect Secure Chain",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "CVE-2023-48788 — Fortinet FortiClient EMS SQL Injection",
+          "level": 3,
+          "line": 109
+        },
+        {
+          "heading": "CVE-2024-3400 — PAN-OS GlobalProtect RCE",
+          "level": 3,
+          "line": 119
+        },
+        {
+          "heading": "CVE-2024-47575 — FortiManager FortiJump",
+          "level": 3,
+          "line": 130
+        },
+        {
+          "heading": "CVE-2017-11882 — Office Equation Editor",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "CVE-2017-0199 — Office HTA Handler",
+          "level": 3,
+          "line": 152
+        },
+        {
+          "heading": "Raptix Skill Coverage Summary",
+          "level": 2,
+          "line": 165
+        },
+        {
+          "heading": "Recommended New Skill Priorities (by CVSS and active exploitation)",
+          "level": 3,
+          "line": 172
+        },
+        {
+          "heading": "Appendix: Cross-Reference by Threat Actor",
+          "level": 2,
+          "line": 188
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 18
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/salt-typhoon/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 195,
+      "nonEmptyLines": 162,
+      "sections": [
+        {
+          "heading": "Salt Typhoon (Earth Estries, GhostEmperor, FamousSparrow) — Adversary Emulation Profile",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Attribution & motivation",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Targeting",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Notable campaigns",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "TTPs by ATT&CK tactic",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Reconnaissance",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "Resource Development",
+          "level": 3,
+          "line": 45
+        },
+        {
+          "heading": "Initial Access",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "Execution",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Persistence",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "Privilege Escalation",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "Defense Evasion",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "Credential Access",
+          "level": 3,
+          "line": 91
+        },
+        {
+          "heading": "Discovery",
+          "level": 3,
+          "line": 98
+        },
+        {
+          "heading": "Lateral Movement",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "Collection",
+          "level": 3,
+          "line": 110
+        },
+        {
+          "heading": "Command & Control",
+          "level": 3,
+          "line": 117
+        },
+        {
+          "heading": "Exfiltration",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "Signature tooling & malware",
+          "level": 2,
+          "line": 132
+        },
+        {
+          "heading": "Emulation guidance (Raptix)",
+          "level": 2,
+          "line": 157
+        },
+        {
+          "heading": "Detection & defense",
+          "level": 2,
+          "line": 172
+        },
+        {
+          "heading": "Sources",
+          "level": 2,
+          "line": 184
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 22
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/sandworm-team/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 142,
+      "nonEmptyLines": 113,
+      "sections": [
+        {
+          "heading": "Sandworm Team (Voodoo Bear, Seashell Blizzard, ELECTRUM) — Adversary Emulation Profile",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Attribution & motivation",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Targeting",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Notable campaigns",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "TTPs by ATT&CK tactic",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "Reconnaissance & Resource Development",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "Initial Access",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "Execution",
+          "level": 3,
+          "line": 58
+        },
+        {
+          "heading": "Persistence",
+          "level": 3,
+          "line": 63
+        },
+        {
+          "heading": "Privilege Escalation / Defense Evasion",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "Credential Access",
+          "level": 3,
+          "line": 72
+        },
+        {
+          "heading": "Discovery",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "Lateral Movement",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "Command & Control",
+          "level": 3,
+          "line": 81
+        },
+        {
+          "heading": "Collection & Exfiltration",
+          "level": 3,
+          "line": 84
+        },
+        {
+          "heading": "Impact (signature)",
+          "level": 3,
+          "line": 87
+        },
+        {
+          "heading": "Signature tooling & malware",
+          "level": 2,
+          "line": 94
+        },
+        {
+          "heading": "Emulation guidance (Raptix)",
+          "level": 2,
+          "line": 113
+        },
+        {
+          "heading": "Detection & defense",
+          "level": 2,
+          "line": 127
+        },
+        {
+          "heading": "Sources",
+          "level": 2,
+          "line": 136
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 20
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/scattered-spider/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 170,
+      "nonEmptyLines": 139,
+      "sections": [
+        {
+          "heading": "Scattered Spider (UNC3944, Octo Tempest, Muddled Libra, Star Fraud) — Adversary Emulation Profile",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Attribution & motivation",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Targeting",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Notable campaigns",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "TTPs by ATT&CK tactic",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Resource Development",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "Initial Access",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "Execution",
+          "level": 3,
+          "line": 58
+        },
+        {
+          "heading": "Persistence",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "Privilege Escalation",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Defense Evasion",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "Credential Access",
+          "level": 3,
+          "line": 84
+        },
+        {
+          "heading": "Discovery",
+          "level": 3,
+          "line": 92
+        },
+        {
+          "heading": "Lateral Movement",
+          "level": 3,
+          "line": 101
+        },
+        {
+          "heading": "Collection",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "Command & Control",
+          "level": 3,
+          "line": 111
+        },
+        {
+          "heading": "Exfiltration",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "Impact",
+          "level": 3,
+          "line": 119
+        },
+        {
+          "heading": "Signature tooling & malware",
+          "level": 2,
+          "line": 125
+        },
+        {
+          "heading": "Emulation guidance (Raptix)",
+          "level": 2,
+          "line": 136
+        },
+        {
+          "heading": "Detection & defense",
+          "level": 2,
+          "line": 148
+        },
+        {
+          "heading": "Sources",
+          "level": 2,
+          "line": 160
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 22
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/sidewinder/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 157,
+      "nonEmptyLines": 127,
+      "sections": [
+        {
+          "heading": "SideWinder (Rattlesnake, T-APT-04, Razor Tiger) — Adversary Emulation Profile",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Attribution & motivation",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Targeting",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Notable campaigns",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "TTPs by ATT&CK tactic",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Initial Access",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "Execution",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "Persistence",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Privilege Escalation",
+          "level": 3,
+          "line": 60
+        },
+        {
+          "heading": "Defense Evasion",
+          "level": 3,
+          "line": 63
+        },
+        {
+          "heading": "Credential Access",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "Discovery",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Lateral Movement",
+          "level": 3,
+          "line": 83
+        },
+        {
+          "heading": "Collection",
+          "level": 3,
+          "line": 86
+        },
+        {
+          "heading": "Command & Control",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Exfiltration",
+          "level": 3,
+          "line": 98
+        },
+        {
+          "heading": "Signature tooling & malware",
+          "level": 2,
+          "line": 102
+        },
+        {
+          "heading": "Emulation guidance (Raptix)",
+          "level": 2,
+          "line": 115
+        },
+        {
+          "heading": "Detection & defense",
+          "level": 2,
+          "line": 130
+        },
+        {
+          "heading": "Sources",
+          "level": 2,
+          "line": 142
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 20
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/turla/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 274,
+      "nonEmptyLines": 242,
+      "sections": [
+        {
+          "heading": "Turla (Venomous Bear, Secret Blizzard, Waterbug, KRYPTON, Snake) — Adversary Emulation Profile",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Attribution & motivation",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Targeting",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Notable campaigns",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "TTPs by ATT&CK tactic",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "Resource Development",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "Initial Access",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Execution",
+          "level": 3,
+          "line": 58
+        },
+        {
+          "heading": "Persistence",
+          "level": 3,
+          "line": 69
+        },
+        {
+          "heading": "Privilege Escalation",
+          "level": 3,
+          "line": 82
+        },
+        {
+          "heading": "Defense Evasion",
+          "level": 3,
+          "line": 88
+        },
+        {
+          "heading": "Credential Access",
+          "level": 3,
+          "line": 108
+        },
+        {
+          "heading": "Discovery",
+          "level": 3,
+          "line": 116
+        },
+        {
+          "heading": "Lateral Movement",
+          "level": 3,
+          "line": 138
+        },
+        {
+          "heading": "Collection",
+          "level": 3,
+          "line": 143
+        },
+        {
+          "heading": "Command & Control",
+          "level": 3,
+          "line": 155
+        },
+        {
+          "heading": "Exfiltration",
+          "level": 3,
+          "line": 173
+        },
+        {
+          "heading": "Impact",
+          "level": 3,
+          "line": 179
+        },
+        {
+          "heading": "Signature tooling & malware",
+          "level": 2,
+          "line": 182
+        },
+        {
+          "heading": "Emulation guidance (Raptix)",
+          "level": 2,
+          "line": 214
+        },
+        {
+          "heading": "Detection & defense",
+          "level": 2,
+          "line": 233
+        },
+        {
+          "heading": "Sources",
+          "level": 2,
+          "line": 247
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 22
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/volt-typhoon/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 161,
+      "nonEmptyLines": 127,
+      "sections": [
+        {
+          "heading": "Volt Typhoon (BRONZE SILHOUETTE, Vanguard Panda, Insidious Taurus) — Adversary Emulation Profile",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Attribution & motivation",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Targeting",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Notable campaigns",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "TTPs by ATT&CK tactic",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "Reconnaissance",
+          "level": 3,
+          "line": 39
+        },
+        {
+          "heading": "Resource Development",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "Initial Access",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "Execution",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Persistence",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "Privilege Escalation",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "Defense Evasion",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "Credential Access",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "Discovery",
+          "level": 3,
+          "line": 85
+        },
+        {
+          "heading": "Lateral Movement",
+          "level": 3,
+          "line": 95
+        },
+        {
+          "heading": "Collection",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "Command and Control",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "Exfiltration",
+          "level": 3,
+          "line": 112
+        },
+        {
+          "heading": "Impact",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "Signature tooling & malware",
+          "level": 2,
+          "line": 118
+        },
+        {
+          "heading": "Emulation guidance (Raptix)",
+          "level": 2,
+          "line": 126
+        },
+        {
+          "heading": "Detection & defense",
+          "level": 2,
+          "line": 144
+        },
+        {
+          "heading": "Sources",
+          "level": 2,
+          "line": 155
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 23
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/defense-evasion/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 19,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "Defense Evasion References",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/defense-evasion/references/amsi-bypass-techniques.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 103,
+      "nonEmptyLines": 82,
+      "sections": [
+        {
+          "heading": "AMSI Bypass Techniques — Deep Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "AMSI Architecture",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Bypass Method 1: Memory Patching (amsi.dll)",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "Classic AmsiScanBuffer Patch",
+          "level": 3,
+          "line": 19
+        },
+        {
+          "heading": "PowerShell One-Liner (Obfuscated)",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "Bypass Method 2: Hardware Breakpoints",
+          "level": 2,
+          "line": 43
+        },
+        {
+          "heading": "Bypass Method 3: Reflection (Type Confusion)",
+          "level": 2,
+          "line": 59
+        },
+        {
+          "heading": "ETW Patching",
+          "level": 2,
+          "line": 69
+        },
+        {
+          "heading": "Detection & OPSEC",
+          "level": 2,
+          "line": 83
+        },
+        {
+          "heading": "Recommended Approach (Layered)",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Key Considerations",
+          "level": 3,
+          "line": 99
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/defense-evasion/references/modern-evasion-techniques.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 696,
+      "nonEmptyLines": 535,
+      "sections": [
+        {
+          "heading": "Modern Evasion Techniques — 2024-2026 Threat Intelligence Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "MITRE ATT&CK Coverage",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "1. ETW (Event Tracing for Windows) Bypass Techniques",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "1.1 NtTraceEvent Patching",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "1.2 ETW Provider Disabling",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "1.3 Kernel-Level ETW Considerations",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "1.4 Detection & OPSEC Notes",
+          "level": 3,
+          "line": 102
+        },
+        {
+          "heading": "2. Smart Contract-Based C2 Evasion",
+          "level": 2,
+          "line": 121
+        },
+        {
+          "heading": "2.1 EtherHiding — Blockchain-Hosted Payloads",
+          "level": 3,
+          "line": 127
+        },
+        {
+          "heading": "2.2 Advantages for Adversary Infrastructure",
+          "level": 3,
+          "line": 183
+        },
+        {
+          "heading": "2.3 Detection & OPSEC Notes",
+          "level": 3,
+          "line": 196
+        },
+        {
+          "heading": "3. Geofencing-Based Evasion",
+          "level": 2,
+          "line": 215
+        },
+        {
+          "heading": "3.1 IP-Based Geofencing",
+          "level": 3,
+          "line": 221
+        },
+        {
+          "heading": "3.2 Language and Locale Checks",
+          "level": 3,
+          "line": 267
+        },
+        {
+          "heading": "3.3 Timezone Verification",
+          "level": 3,
+          "line": 301
+        },
+        {
+          "heading": "3.4 Compound Geofencing (Layered Checks)",
+          "level": 3,
+          "line": 328
+        },
+        {
+          "heading": "3.5 Detection & OPSEC Notes",
+          "level": 3,
+          "line": 341
+        },
+        {
+          "heading": "4. Node.js/Electron-Based Malware Evasion",
+          "level": 2,
+          "line": 359
+        },
+        {
+          "heading": "4.1 Node.js Runtime Abuse",
+          "level": 3,
+          "line": 365
+        },
+        {
+          "heading": "4.2 Electron App Sideloading",
+          "level": 3,
+          "line": 420
+        },
+        {
+          "heading": "4.3 Detection & OPSEC Notes",
+          "level": 3,
+          "line": 467
+        },
+        {
+          "heading": "5. RMM Tool Abuse for Evasion",
+          "level": 2,
+          "line": 488
+        },
+        {
+          "heading": "5.1 Commonly Abused RMM Tools",
+          "level": 3,
+          "line": 494
+        },
+        {
+          "heading": "5.2 Attack Pattern — ScreenConnect Abuse",
+          "level": 3,
+          "line": 506
+        },
+        {
+          "heading": "5.3 Silent AnyDesk Deployment",
+          "level": 3,
+          "line": 538
+        },
+        {
+          "heading": "5.4 Detection & OPSEC Notes",
+          "level": 3,
+          "line": 556
+        },
+        {
+          "heading": "6. AI/LLM-Assisted Evasion",
+          "level": 2,
+          "line": 582
+        },
+        {
+          "heading": "6.1 LLM-Generated Polymorphic Payloads",
+          "level": 3,
+          "line": 588
+        },
+        {
+          "heading": "6.2 AI-Generated Phishing Content",
+          "level": 3,
+          "line": 620
+        },
+        {
+          "heading": "6.3 Automated OPSEC Review via AI",
+          "level": 3,
+          "line": 642
+        },
+        {
+          "heading": "6.4 Detection & OPSEC Notes",
+          "level": 3,
+          "line": 668
+        },
+        {
+          "heading": "Cross-Reference Matrix",
+          "level": 2,
+          "line": 687
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 32
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/finding-protocol/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 160,
+      "nonEmptyLines": 127,
+      "sections": [
+        {
+          "heading": "Finding Protocol — Operational Tier",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "File Naming Convention",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Operational Template",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Severity Guide (operational, principle-only)",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Classification fields (CWE + VRT)",
+          "level": 2,
+          "line": 89
+        },
+        {
+          "heading": "Location",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "After Creating a Finding",
+          "level": 2,
+          "line": 124
+        },
+        {
+          "heading": "Rules",
+          "level": 2,
+          "line": 131
+        },
+        {
+          "heading": "Promotion to Deliverable Tier",
+          "level": 2,
+          "line": 137
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/opsec/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 239,
+      "nonEmptyLines": 193,
+      "sections": [
+        {
+          "heading": "Operational Security (OPSEC) Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Core OPSEC Principles",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "The OPSEC Mindset",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "Engagement Scope Awareness",
+          "level": 3,
+          "line": 25
+        },
+        {
+          "heading": "2. Network OPSEC",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Scan Rate Limiting",
+          "level": 3,
+          "line": 36
+        },
+        {
+          "heading": "Traffic Shaping",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "Timing Considerations",
+          "level": 3,
+          "line": 64
+        },
+        {
+          "heading": "3. HTTP OPSEC",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "User-Agent Management",
+          "level": 3,
+          "line": 72
+        },
+        {
+          "heading": "Header Hygiene",
+          "level": 3,
+          "line": 97
+        },
+        {
+          "heading": "4. Tool Signature Awareness",
+          "level": 2,
+          "line": 114
+        },
+        {
+          "heading": "Common IDS/WAF Signatures",
+          "level": 3,
+          "line": 116
+        },
+        {
+          "heading": "Reducing Scanner Fingerprint",
+          "level": 3,
+          "line": 127
+        },
+        {
+          "heading": "5. Source Management",
+          "level": 2,
+          "line": 140
+        },
+        {
+          "heading": "IP Awareness",
+          "level": 3,
+          "line": 142
+        },
+        {
+          "heading": "DNS OPSEC",
+          "level": 3,
+          "line": 148
+        },
+        {
+          "heading": "6. Evidence & Data Handling",
+          "level": 2,
+          "line": 158
+        },
+        {
+          "heading": "Engagement Documentation",
+          "level": 3,
+          "line": 160
+        },
+        {
+          "heading": "Data Classification",
+          "level": 3,
+          "line": 169
+        },
+        {
+          "heading": "Clean-Up Protocol",
+          "level": 3,
+          "line": 175
+        },
+        {
+          "heading": "7. Scope Enforcement",
+          "level": 2,
+          "line": 183
+        },
+        {
+          "heading": "Automated Scope Checking",
+          "level": 3,
+          "line": 185
+        },
+        {
+          "heading": "Scope Boundaries",
+          "level": 3,
+          "line": 199
+        },
+        {
+          "heading": "Accidental Out-of-Scope",
+          "level": 3,
+          "line": 206
+        },
+        {
+          "heading": "8. Detection Indicators to Monitor",
+          "level": 2,
+          "line": 213
+        },
+        {
+          "heading": "Signs You've Been Detected",
+          "level": 3,
+          "line": 215
+        },
+        {
+          "heading": "Response to Detection",
+          "level": 3,
+          "line": 222
+        },
+        {
+          "heading": "9. OPSEC Checklist (Pre-Engagement)",
+          "level": 2,
+          "line": 229
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 29
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/references/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 86,
+      "nonEmptyLines": 70,
+      "sections": [
+        {
+          "heading": "External References Skill",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "Catalogue (13 entries)",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "When to use each",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "First engagement iteration",
+          "level": 3,
+          "line": 36
+        },
+        {
+          "heading": "When you need a payload RIGHT NOW",
+          "level": 3,
+          "line": 40
+        },
+        {
+          "heading": "When you need the FULL library",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "Report calibration",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "CVE → PoC",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Tool discovery",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "Shannon, Strix, HexStrike, Pentagi, PentestGPT, NeuroSploit",
+          "level": 2,
+          "line": 76
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/stealth-infra/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 334,
+      "nonEmptyLines": 271,
+      "sections": [
+        {
+          "heading": "Stealth Infrastructure — Anti-Bot Evasion & Covert Operations",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Available Libraries (Pre-Installed)",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "1. Scrapling — Primary Anti-Bot Bypass",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "With proxy rotation:",
+          "level": 3,
+          "line": 54
+        },
+        {
+          "heading": "Session persistence (cookies survive across requests):",
+          "level": 3,
+          "line": 69
+        },
+        {
+          "heading": "2. curl_cffi — TLS Fingerprint Impersonation",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "With proxy:",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "Available impersonation profiles:",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "3. Proxy Infrastructure",
+          "level": 2,
+          "line": 121
+        },
+        {
+          "heading": "Proxychains (route any CLI tool through proxy)",
+          "level": 3,
+          "line": 123
+        },
+        {
+          "heading": "Free proxy rotation (Proxifly)",
+          "level": 3,
+          "line": 138
+        },
+        {
+          "heading": "Custom proxy chain (edit /etc/proxychains4.conf)",
+          "level": 3,
+          "line": 167
+        },
+        {
+          "heading": "4. Credential Retrieval from Password Managers",
+          "level": 2,
+          "line": 181
+        },
+        {
+          "heading": "Python keyring (generic — works with GNOME Keyring, macOS Keychain, KWallet)",
+          "level": 3,
+          "line": 183
+        },
+        {
+          "heading": "Store credentials for the engagement:",
+          "level": 3,
+          "line": 198
+        },
+        {
+          "heading": "1Password CLI (if configured):",
+          "level": 3,
+          "line": 208
+        },
+        {
+          "heading": "Cookie injection from file:",
+          "level": 3,
+          "line": 218
+        },
+        {
+          "heading": "5. CAPTCHA Handling",
+          "level": 2,
+          "line": 246
+        },
+        {
+          "heading": "Cloudflare Turnstile — Scrapling handles this automatically:",
+          "level": 3,
+          "line": 248
+        },
+        {
+          "heading": "For other CAPTCHAs (reCAPTCHA, hCaptcha):",
+          "level": 3,
+          "line": 255
+        },
+        {
+          "heading": "6. Rate Limiting & Traffic Shaping",
+          "level": 2,
+          "line": 280
+        },
+        {
+          "heading": "Anti-Patterns (Do NOT)",
+          "level": 2,
+          "line": 307
+        },
+        {
+          "heading": "Decision Tree",
+          "level": 2,
+          "line": 316
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 23
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 53,
+      "nonEmptyLines": 49,
+      "sections": [
+        {
+          "heading": "AD Operator Skill Catalog",
+          "level": 1,
+          "line": 26
+        },
+        {
+          "heading": "Playbooks",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Crown jewels to add",
+          "level": 2,
+          "line": 48
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/adcs-esc1/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 131,
+      "nonEmptyLines": 110,
+      "sections": [
+        {
+          "heading": "ADCS ESC1 Exploitation",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Enumerate templates",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "2. Identify ESC1 candidates",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "3. Request the cert as Domain Admin",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "4. Authenticate as Domain Admin",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "5. Operate as Domain Admin",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "6. Promote",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "ESC variants quick-ref",
+          "level": 2,
+          "line": 96
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 113
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 118
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 123
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/asrep-roasting/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 102,
+      "nonEmptyLines": 85,
+      "sections": [
+        {
+          "heading": "AS-REP Roasting Playbook",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "Prerequisite",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "1. Identify vulnerable users",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "2. Request AS-REP",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "3. Crack offline (hashcat mode 18200)",
+          "level": 2,
+          "line": 53
+        },
+        {
+          "heading": "4. Userlist sources when zero-auth",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "5. Promote",
+          "level": 2,
+          "line": 79
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 92
+        },
+        {
+          "heading": "Defender fix",
+          "level": 2,
+          "line": 97
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/bloodhound-bhce/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 143,
+      "nonEmptyLines": 122,
+      "sections": [
+        {
+          "heading": "BloodHound CE via Raptix's `bhce_*` Tools",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "Why we use BHCE rather than our own ingest",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "End-to-end loop the agent should follow",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "Common failure modes",
+          "level": 2,
+          "line": 110
+        },
+        {
+          "heading": "Where authoritative information lives",
+          "level": 2,
+          "line": 126
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/bloodhound-query/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 86,
+      "nonEmptyLines": 75,
+      "sections": [
+        {
+          "heading": "BloodHound Query Playbook",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "1. Collect",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "2. Ingest into Raptix KG",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "3. Canonical Cypher queries",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "4. Auto-prioritize attack paths",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "5. Promote findings",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "6. Common collector failures",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "CVSS / impact",
+          "level": 2,
+          "line": 78
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/certipy-esc-chain/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 130,
+      "nonEmptyLines": 100,
+      "sections": [
+        {
+          "heading": "ADCS Abuse via Certipy",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Find vulnerable templates",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "2. The ESC catalog — quick reference",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "3. Exploit ESC1 (the most common)",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "4. Authenticate with the cert",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "5. DCSync krbtgt (final step)",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "ESC8 chain (no vulnerable template, but ADCS Web Enrollment is enabled)",
+          "level": 2,
+          "line": 81
+        },
+        {
+          "heading": "ESC9/10 chain (UPN mapping abuse)",
+          "level": 2,
+          "line": 98
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 118
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 125
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/coercer/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 106,
+      "nonEmptyLines": 82,
+      "sections": [
+        {
+          "heading": "Authentication Coercion (PetitPotam family)",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "The family of coercion vulnerabilities",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "1. Set up the listener (attacker)",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "2. Coerce auth from a target machine",
+          "level": 3,
+          "line": 45
+        },
+        {
+          "heading": "3. Catch the auth → escalate",
+          "level": 3,
+          "line": 60
+        },
+        {
+          "heading": "Why coerce DC$? — The privilege escalation chain",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Targets that work",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 94
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 100
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/dcsync/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 133,
+      "nonEmptyLines": 112,
+      "sections": [
+        {
+          "heading": "DCSync Playbook",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "1. Identify DCSync candidates",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "2. Execute DCSync",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "3. Output files",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "4. Highest-value secrets to grab",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "5. Golden Ticket (post-DCSync)",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "6. Promote",
+          "level": 2,
+          "line": 93
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "Detection signature (so you know what blue sees)",
+          "level": 2,
+          "line": 110
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 118
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 122
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/kerberoasting/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 97,
+      "nonEmptyLines": 82,
+      "sections": [
+        {
+          "heading": "Kerberoasting Playbook",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "Prerequisite",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "1. Identify roastable accounts",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "2. Request TGS tickets",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "3. Crack offline",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "4. Promote cracked credential",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "5. Post-crack actions",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "OPSEC notes",
+          "level": 2,
+          "line": 77
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Common services found",
+          "level": 2,
+          "line": 90
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/laps/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 135,
+      "nonEmptyLines": 112,
+      "sections": [
+        {
+          "heading": "LAPS Password Extraction",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "1. Detect LAPS deployment",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "2. Find delegated readers (your target ACL)",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "3. Read passwords (assuming you can)",
+          "level": 2,
+          "line": 43
+        },
+        {
+          "heading": "4. Bulk-process result",
+          "level": 2,
+          "line": 67
+        },
+        {
+          "heading": "5. Cracking encrypted LAPS (Windows LAPS only)",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "6. Authentication with LAPS pw",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 101
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 108
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 112
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 132
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/netexec/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 177,
+      "nonEmptyLines": 150,
+      "sections": [
+        {
+          "heading": "NetExec (`nxc`) Playbook",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "1. Install",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "2. Protocol auth sweep",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "3. Critical modules",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "3.1 BloodHound auto-collect (built-in)",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "3.2 ADCS ESC1-15 scan",
+          "level": 3,
+          "line": 53
+        },
+        {
+          "heading": "3.3 Kerberoasting",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "3.4 AS-REP roasting",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "3.5 Spider SMB shares",
+          "level": 3,
+          "line": 71
+        },
+        {
+          "heading": "3.6 DC sync (when authorized as DA)",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "3.7 Password spray (with lockout protection)",
+          "level": 3,
+          "line": 84
+        },
+        {
+          "heading": "3.8 Module catalog",
+          "level": 3,
+          "line": 90
+        },
+        {
+          "heading": "4. Output formats",
+          "level": 2,
+          "line": 101
+        },
+        {
+          "heading": "5. Raptix integration",
+          "level": 2,
+          "line": 118
+        },
+        {
+          "heading": "6. PoC framing",
+          "level": 2,
+          "line": 149
+        },
+        {
+          "heading": "7. Severity",
+          "level": 2,
+          "line": 156
+        },
+        {
+          "heading": "8. Defender",
+          "level": 2,
+          "line": 161
+        },
+        {
+          "heading": "Cross-references",
+          "level": 2,
+          "line": 167
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 174
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 19
+      }
+    }
+  ]
+}

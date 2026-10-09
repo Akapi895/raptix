@@ -1,0 +1,472 @@
+﻿##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/oauth/SKILL.md (167L)
+FM: name: oauth
+FM: description: OAuth 2.0 / OIDC attacks — redirect_uri bypass, state CSRF, code leak via Referer, response_type confusion, PKCE downgrade, scope creep, ATO chains.
+H2: 1. Map the flow | 2. Attack surface
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/open-redirect/SKILL.md (115L)
+FM: name: open-redirect
+FM: description: Open redirect + tabnabbing — URL filter bypass, OAuth chain extension, phishing infrastructure-free, SSRF chain.
+H2: 1. Common parameters | 2. Bypass table | 3. Chain patterns | 4. Tools | 5. PoC
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/php-type-juggling/SKILL.md (199L)
+FM: name: php-type-juggling
+FM: description: "PHP type juggling and magic hash attacks — exploit loose comparison (==) with 0e-prefixed hash collisions and NULL returns to bypass authentication."
+H2: ATT&CK Mapping | 1. Loose Comparison Cheat Sheet | 2. Magic Hashes — 0e Collisions
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/proxy-misconfig/SKILL.md (160L)
+FM: name: proxy-misconfig
+FM: description: Reverse proxy misconfigurations — nginx alias traversal, Apache mod_rewrite SSRF, Spring Boot Actuator exposure, Tomcat manager, IIS short-name disclosure.
+H2: 1. Nginx alias traversal | 2. Apache mod_rewrite SSRF | 3. Spring Boot Actuator exposure | 4. Tomcat Manager | 5. IIS short-name disclosure (8.3 names) | 6. Nginx merge_slashes off + URL encoded
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/race-condition/SKILL.md (139L)
+FM: name: race-condition
+FM: description: "Race condition / TOCTOU exploitation — concurrent and parallel-request attacks against web applications that check then act, write session state before validating it, or perform slow operations that widen the race window. Covers single-endpoint races (double-spend, coupon abuse, balance overflow) and multi-endpoint state-leak races where a session write on one endpoint leaks privilege into another endpoint mid-request."
+H2: Recognition Signals | Single-Endpoint Race — Double Submit | Multi-Endpoint State-Leak Race
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/saml/SKILL.md (145L)
+FM: name: saml
+FM: description: SAML 2.0 attacks — XSW (XML Signature Wrapping) variants 1-8, comment injection, signature stripping, assertion forgery, IdP metadata abuse.
+H2: 1. Capture the flow | 2. XML Signature Wrapping (XSW) attacks | 3. Comment injection | 4. Signature stripping | 5. Self-signed assertion (when allowed by misconfig) | 6. Bypass via `SAMLResponse` to `SAMLRequest` confusion
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/smuggling/SKILL.md (656L)
+FM: name: smuggling
+FM: description: "HTTP Request Smuggling (HRS) — front-end / back-end parser disagreement attacks that desync the proxy stack. Covers CL.TE, TE.CL, TE.TE, CL.0, HTTP/2 downgrade (h2.cl, h2.te), pipelining, and connection-state pinning. Includes a confirm-desync gate, header obfuscation catalog, and minimal raw-socket Python harnesses (no smuggler.py available in sandbox)."
+H2: When This Skill Is Primary | Recognition Signals | Confirm-Desync Gate
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/sqli/SKILL.md (263L)
+FM: name: sqli
+FM: description: "SQL Injection — automated and manual exploitation of unsanitized SQL queries. Covers Union-based, Error-based, Blind (Boolean/Time-based), and Stacked queries. Includes sqlmap automation with WAF bypass tamper scripts."
+H2: Detection | sqlmap — Automated Exploitation | Blind SQLi Fast-Path (MANDATORY when tag is `blind_sqli`) | Manual-vs-Tool Decision Rule (MANDATORY)
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/ssrf/SKILL.md (157L)
+FM: name: exploit-ssrf
+FM: description: "Server-Side Request Forgery (SSRF) — exploiting server-side URL fetching to access internal services, cloud metadata (AWS/GCP/Azure), internal APIs, and port scanning. Covers IP bypass techniques, DNS rebinding, Gopher protocol smuggling, and redirect-based bypass."
+H2: Detection | Cloud Metadata Exploitation | Internal Service Scanning | Bypass Techniques | Gopher Protocol
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/ssti/SKILL.md (316L)
+FM: name: exploit-ssti
+FM: description: "Server-Side Template Injection (SSTI) — RCE through template engines. Covers Jinja2 (Python/Flask), Twig (PHP/Symfony), Freemarker (Java), ERB (Ruby), Razor (.NET). Includes engine fingerprinting, MRO chain construction, and filter bypass."
+H2: Default Credentials Fast-Path (when `default_credentials` is a co-tag) | Detection — Universal Probes | Jinja2 (Python — Flask/Django) | Django (engine.from_string)
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/verb-tampering/SKILL.md (184L)
+FM: name: verb-tampering
+FM: description: "HTTP verb/method tampering — auth bypass via HEAD/OPTIONS/arbitrary methods, X-HTTP-Method-Override, TRACE/PUT/DELETE exposure, framework routing flaws."
+H2: 1. Why it works | 2. Detection — does the endpoint answer non-standard verbs? | 3. Method-override headers | 4. Bypass patterns
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/waf-bypass/SKILL.md (239L)
+FM: name: waf-bypass
+FM: description: "WAF evasion — payload obfuscation, HTTP-level evasion, origin-IP discovery, rate/anomaly evasion, per-WAF notes (Cloudflare/Akamai/AWS WAF/ModSecurity)."
+H2: 1. Recon first — fingerprint the WAF | 2. Payload obfuscation | 3. HTTP-level evasion
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/web-cache-poisoning/SKILL.md (111L)
+FM: name: web-cache-poisoning
+FM: description: Unkeyed-input cache poisoning — X-Forwarded-Host/Scheme/Port, X-Original-URL, fat-GET, parameter cloaking, oversized-header DoS, and chains to stored-XSS / open redirect via shared caches.
+H2: 1. Detection — find unkeyed inputs | 2. Misconfig / technique matrix | 3. Exploit PoC
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/xpath-xslt/SKILL.md (92L)
+FM: name: xpath-xslt
+FM: description: XPath + XSLT injection — query manipulation in XML data stores, server-side XSLT RCE via document() / EXSLT extensions.
+H2: XPath Injection | XSLT Injection | Detection | PoC | Severity
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/xs-leaks/SKILL.md (118L)
+FM: name: xs-leaks
+FM: description: XS-Leaks — cross-site information leaks via timing, frame counting, navigation, error oracles. Side-channel attacks against same-origin authenticated state.
+H2: 1. Categories | 2. xsleaks.dev — canonical reference | 3. Detection
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/xss/SKILL.md (301L)
+FM: name: xss
+FM: description: "Cross-Site Scripting (XSS) — reflected, stored, DOM-based XSS exploitation. Covers filter bypass, CSP evasion, bot-triggered cookie exfiltration, admin page scraping, and headless browser flag extraction. Use for any challenge involving client-side JavaScript injection, Cross payloads, cookie theft, or browser-based exploitation."
+H2: Win Condition — Identify FIRST | Detection | Stored XSS with Bot Exfiltration (CTF Pattern)
+##### FILE: packages/raptix/raptix/skills/defs/standard/exploit/web/xxe/SKILL.md (144L)
+FM: name: exploit-xxe
+FM: description: "XML External Entity (XXE) injection — local file reading via XML parsers, SOAP/WSDL API exploitation, blind out-of-band exfiltration, SVG/DOCX/XLSX upload XXE. Use for any challenge involving XML processing, SOAP endpoints, WSDL services, or XML-based file upload parsing."
+H2: Detection | Basic XXE — File Read | XXE via SOAP
+##### FILE: packages/raptix/raptix/skills/defs/standard/ics/SKILL.md (88L)
+FM: name: ics-overview
+FM: description: >
+H2: Hard rules | Playbooks | Workflow | Detection gap
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/SKILL.md (65L)
+FM: name: iot-overview
+FM: description: >
+H2: Playbooks | Workflow | Hardware bench tools (sandbox tools) | Safety
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/binwalk-extract/SKILL.md (251L)
+FM: name: binwalk-extract
+FM: description: Firmware image extraction with binwalk and firmware-mod-kit — recursive archive carving, squashfs/jffs2/ubifs mounting, entropy analysis to detect packed/encrypted regions, and nested container handling. Entry point for all static filesystem analysis after a raw binary image is acquired.
+H2: Prerequisites | Step 1 — Identify + Entropy Survey | Step 2 — Recursive Extraction
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/ble-gatt/SKILL.md (225L)
+FM: name: ble-gatt
+FM: description: GATT service/characteristic enumeration on BLE peripherals, unauthenticated read/write exploitation, pairing downgrade to Just Works, and over-the-air sniffing with Sniffle or Ubertooth. Covers firmware update channels, hidden debug services, and missing auth on sensitive characteristics.
+H2: Prerequisites | Phase 1: Passive Discovery | Phase 2: Full GATT Enumeration (unauthenticated)
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/bootloader-uboot/SKILL.md (342L)
+FM: name: bootloader-uboot
+FM: description: U-Boot bootloader attack playbook — console interrupt to break the autoboot countdown, environment variable inspection and manipulation, bootargs override to spawn init=/bin/sh, secure-boot bypass techniques, and fault-injection basics (voltage and clock glitching). Covers MIPS, ARM, and AArch64 targets.
+H2: Prerequisites | Phase 1 — Console Interrupt | Phase 2 — Environment Inspection
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/dev-mem/SKILL.md (319L)
+FM: name: dev-mem
+FM: description: Runtime memory access and manipulation on embedded Linux via /dev/mem, /dev/kmem, and MTD devices. Covers physical memory reads/writes, kernel symbol resolution via /proc/kallsyms, live firmware patching with mtd_debug and flashcp, and bypassing memory-access restrictions (CONFIG_STRICT_DEVMEM, kernel.perf_event_paranoid).
+H2: Prerequisites | Phase 1 — Physical Memory Read via /dev/mem
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/firmware-acquisition/SKILL.md (273L)
+FM: name: firmware-acquisition
+FM: description: Systematic firmware extraction from IoT and embedded targets — vendor portals, OTA interception, SPI flash dumping with flashrom/CH341A, eMMC chip-off, and UART/JTAG console dumps. Covers the full acquisition chain from zero hardware access to a raw binary ready for static analysis.
+H2: Prerequisites | Tier 0 — Vendor Portal / OTA Proxy (no hardware needed) | Tier 1 — UART Console Dump
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/hardcoded-creds/SKILL.md (257L)
+FM: name: hardcoded-creds
+FM: description: Systematic hunt for hardcoded credentials, API keys, certificates, and default passwords in extracted IoT firmware. Covers /etc/shadow and passwd parsing, busybox httpd configs, telnet/dropbear stanzas, MQTT/cloud API key extraction, and cross-referencing against known default-credential databases.
+H2: Prerequisites | Phase 1 — Account Databases | Phase 2 — SSH / Dropbear Keys
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/lorawan-otaa/SKILL.md (256L)
+FM: name: lorawan-otaa
+FM: description: LoRaWAN OTAA join-procedure analysis (DevEUI/AppEUI/AppKey extraction), frame-counter replay on ABP devices, downlink injection via rogue gateway, bit-flipping on unprotected FRMPayload, and network enumeration with ChirpStack and the LoRaWAN Auditing Framework.
+H2: Prerequisites | LoRaWAN Frequency Reference | Phase 1: Passive Air Capture | Phase 2: OTAA Join Analysis
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/ros2-dds-attack/SKILL.md (196L)
+FM: name: ros2-dds-attack
+FM: description: "ROS2/DDS network attack: unauthenticated topic enumeration, message injection, and telemetry interception against robotic platforms and autonomous systems."
+H2: Background | Phase 1 — Discovery
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/sub-ghz/SKILL.md (288L)
+FM: name: sub-ghz
+FM: description: Sub-GHz RF capture and replay for 433/868/915 MHz ISM-band targets (garage doors, car keys, alarm sensors, weather stations). Covers fixed-code replay with HackRF/Flipper Zero/RTL-SDR, rolling-code analysis with rfcat, signal visualization with inspectrum and Universal Radio Hacker, and encoding/modulation identification.
+H2: Prerequisites | Frequency and Modulation Quick Reference | Phase 1: Passive Capture and Signal Identification
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/z-wave/SKILL.md (211L)
+FM: name: z-wave
+FM: description: Z-Wave S0 network-key derivation flaw exploitation, S2 ECDH/DSK analysis, replay attacks against unauthenticated Z-Wave nodes, traffic capture with RTL-SDR, and active fuzzing/replay with EZ-Wave and Z-Force. Covers 868.42 MHz (EU) and 908.42 MHz (US) bands.
+H2: Prerequisites | Z-Wave Frequency Reference | Phase 1: Passive Capture with RTL-SDR + gr-zwave | Phase 2: S0 Key Extraction During Inclusion
+##### FILE: packages/raptix/raptix/skills/defs/standard/iot/zigbee-touchlink/SKILL.md (219L)
+FM: name: zigbee-touchlink
+FM: description: Touchlink commissioning abuse on Zigbee Light Link (ZLL) devices using the well-known ZLL transport key, ZCL command injection (toggle/move/step), network key extraction, and factory reset via touchlink. Toolchain covers KillerBee, zbstumbler, zbreplay, and Sonoff Zigbee 3.0 Dongle E running Wireshark live capture.
+H2: Prerequisites | Phase 1: Passive Channel Scan (zbstumbler) | Phase 2: Decode the ZLL Well-Known Transport Key
+##### FILE: packages/raptix/raptix/skills/defs/standard/mobile/SKILL.md (87L)
+FM: name: mobile-overview
+FM: description: >
+H2: Playbooks — Android | Playbooks — iOS | Cross-platform | Workflow | Tools sandbox
+##### FILE: packages/raptix/raptix/skills/defs/standard/mobile/android/SKILL.md (224L)
+FM: name: mobile-android
+FM: description: Android APK pentest workflow — apktool/jadx static, Frida dynamic instrumentation, SSL pinning bypass, root detection bypass, intent fuzzing, keystore extraction.
+H2: 1. Static — decompile + inspect | 2. Dynamic — Frida + Objection
+##### FILE: packages/raptix/raptix/skills/defs/standard/mobile/android/il2cpp/SKILL.md (305L)
+FM: name: il2cpp
+FM: description: Unity IL2CPP game reversing — Il2CppDumper metadata recovery, global-metadata.dat decryption, IDA/Ghidra symbol restore via generated scripts, Frida method hooking, IAP/license bypass, and zygisk-il2cpp-dumper for obfuscated metadata.
+H2: Prerequisites | Step 1: Identify Unity IL2CPP App | Step 2: Recover Symbols with Il2CppDumper
+##### FILE: packages/raptix/raptix/skills/defs/standard/mobile/flutter/SKILL.md (267L)
+FM: name: flutter
+FM: description: Flutter app reversing and SSL pinning bypass — reFlutter Dart-AOT patching, BoringSSL bypass, libapp.so static analysis in Ghidra/radare2, Dart snapshot dump, and iOS Flutter.framework notes.
+H2: Prerequisites | Step 1: Identify a Flutter App | Step 2: reFlutter Workflow — Patch BoringSSL Pinning
+##### FILE: packages/raptix/raptix/skills/defs/standard/mobile/ios/dynamic/SKILL.md (308L)
+FM: name: dynamic
+FM: description: iOS dynamic instrumentation on jailbroken device — Frida/Objection setup, SSL Kill Switch pinning bypass, jailbreak-detection bypass, keychain dump, biometric/LAContext bypass, and ObjC runtime method hooking.
+H2: Prerequisites | Path A: SSL Pinning Bypass
+##### FILE: packages/raptix/raptix/skills/defs/standard/osint/SKILL.md (85L)
+FM: name: osint-overview
+FM: description: >
+H2: Playbooks | Workflow | Network policy | Why split from Recon
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/SKILL.md (73L)
+FM: name: phishing-overview
+FM: description: >
+H2: Playbooks | Infrastructure pattern | Deconfliction (mandatory) | Failsafe
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/evilginx2-proxy/SKILL.md (83L)
+FM: name: evilginx2-proxy
+FM: description: >
+H2: Prerequisites | Deploy | Authoring a phishlet (when none ships for the target) | Capture + replay | Evidence | OPSEC
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/gophish-campaign/SKILL.md (80L)
+FM: name: gophish-campaign
+FM: description: >
+H2: Prerequisites | Flow (REST API) | Evidence | OPSEC / failsafe
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/html-smuggling-lure/SKILL.md (310L)
+FM: name: html-smuggling-lure
+FM: description: "HTML smuggling payloads for initial access — embed base64-encoded binaries inside an HTML attachment that reconstructs and auto-downloads the file client-side via JavaScript Blob, bypassing email gateway and proxy file-type inspection."
+H2: Prerequisites | Quick Reference | MITRE ATT&CK Mapping | 1. Basic HTML Smuggling Template
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/lookalike-domain/SKILL.md (87L)
+FM: name: lookalike-domain
+FM: description: >
+H2: Choose the name | DNS | TLS | Verify before sending | Evidence
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/lure-deconfliction/SKILL.md (137L)
+FM: name: lure-deconfliction
+FM: description: Mandatory out-of-band handshake with the blue-team contact BEFORE any phishing campaign sends. Skipping this is a critical RoE violation - the engagement has no legal coverage for unannounced phishing of real employees.
+H2: Why this is mandatory | Inputs you need | Handshake payload | Send it via the configured channel
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/mfa-fatigue-social/SKILL.md (326L)
+FM: name: mfa-fatigue-social
+FM: description: "MFA fatigue (push-bombing) combined with help-desk impersonation — overwhelm the target with repeated MFA push notifications and then social-engineer them into approving via a vishing call posing as IT support."
+H2: Prerequisites | Quick Reference | MITRE ATT&CK Mapping | 1. MFA Push-Bombing Automation
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/o365-credential-harvest/SKILL.md (78L)
+FM: name: o365-credential-harvest
+FM: description: >
+H2: Device-code flow | Token replay (TokenTactics pattern) | Validate | Evidence | RoE / OPSEC
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/pdf-credential-harvest/SKILL.md (267L)
+FM: name: pdf-credential-harvest
+FM: description: "Weaponized PDF attachments that redirect victims to fake authentication portals (SharePoint, M365, Google Workspace) — no exploit, no macro, just a convincing document with embedded links to a credential-capture page."
+H2: Prerequisites | Quick Reference | MITRE ATT&CK Mapping | 1. SharePoint-Themed PDF
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/pretext-engineering/SKILL.md (69L)
+FM: name: pretext-engineering
+FM: description: >
+H2: Inputs | Build the pretext | Target shortlist | Forbidden lure patterns | Output
+##### FILE: packages/raptix/raptix/skills/defs/standard/phisher/quishing/SKILL.md (260L)
+FM: name: quishing
+FM: description: "QR-code phishing (Quishing) — generate QR lures embedding credential-harvest URLs, embed in PDF or email bodies, bypass email gateway URL scanners that cannot parse QR image payloads."
+H2: Prerequisites | Quick Reference | MITRE ATT&CK Mapping | 1. QR Code Generation
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/c2-alternative-channels/SKILL.md (488L)
+FM: name: c2-alternative-channels
+FM: description: "Non-traditional C2 channels — Discord/Telegram bots, DNS-over-HTTPS, blockchain-based C2, email-based C2, and cloud function dead drops for covert command and control."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. Discord Webhook C2
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/c2-cobalt-strike/SKILL.md (429L)
+FM: name: c2-cobalt-strike
+FM: description: "Cobalt Strike operations — Beacon deployment, Malleable C2 profile creation, listener setup, OPSEC-safe beacon configuration, process injection, and Arsenal kit usage."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. Teamserver Setup | 2. Listener Configuration
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/c2-domain-fronting/SKILL.md (488L)
+FM: name: c2-domain-fronting
+FM: description: "Domain fronting and CDN abuse for C2 concealment — CloudFront, Azure CDN, Fastly setup, TLS SNI vs Host header technique, CDN-based redirectors, and integration with Cobalt Strike and Sliver."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. The Domain Fronting Technique | 2. CloudFront Domain Fronting
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/SKILL.md (410L)
+FM: name: c2-sliver
+FM: description: "Sliver C2 framework operations — server connection, listener setup, implant generation, BOF/Armory extensions, post-implant operations, HTTP C2 profiles."
+H2: Raptix Setup | 1. Listener Configuration
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/references/sliver-quickstart.md (148L)
+H2: Architecture (Raptix) | Server Setup | Listener Configuration | Implant Generation
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/c2/SKILL.md (216L)
+FM: name: c2
+FM: description: "Framework-agnostic C2 orchestration — listener types, implant modes, redirector architecture, malleable profiles, jitter strategy, OPSEC guidance."
+H2: Raptix C2 Architecture | MITRE ATT&CK Mapping | 1. C2 Channel Types | 2. Implant Modes
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/c2/havoc/SKILL.md (156L)
+FM: name: c2-havoc
+FM: description: "Havoc C2 framework (C5pider/Havoc) — modern Sliver/CS alternative, Demon agent with indirect syscalls, sleep obfuscation (Ekko/Zilean/FOLIAGE), Donut PIC loader integration, profile-driven HTTP comms, MaterialUI web client. Best when you need modern OPSEC without Cobalt Strike cost."
+H2: Setup | Architecture | Configure a profile | Build a Demon
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/c2/mythic/SKILL.md (144L)
+FM: name: c2-mythic
+FM: description: "Mythic C2 framework operations — multi-agent (Apfell, Apollo, Athena, Poseidon, Medusa), web UI on 7443, RabbitMQ + PostgreSQL backend, JSON-RPC tasking model, building an agent via mythic-cli, profile design (HTTP/SMB/named pipe/peer-to-peer), opsec defaults. Comparison to Sliver: more pluggable, less polished UI."
+H2: Setup (one-time, on the operator server) | Agent matrix | Profile matrix | Build a payload (Apollo + http profile)
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/SKILL.md (377L)
+FM: name: credential-access
+FM: description: "Credential extraction and capture — LSASS dumping, SAM/SECURITY hive extraction, DPAPI decryption, NTLM relay, Responder poisoning, password spraying, hash cracking."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. LSASS Memory Dumping
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/references/lsass-techniques.md (126L)
+H2: Method Comparison | Techniques by Stealth Level | SAM/SECURITY Hive Extraction
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/lateral-movement/SKILL.md (460L)
+FM: name: lateral-movement
+FM: description: "Network lateral movement — Pass-the-Hash, Pass-the-Ticket, WMI/WinRM/PsExec/RDP execution, SMB operations, network tunneling with Ligolo-ng and Chisel."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. Pass-the-Hash (PtH)
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/linux-privesc-enum/SKILL.md (410L)
+FM: name: linux-privesc-enum
+FM: description: "Systematic Linux privilege-escalation enumeration methodology — ordered phases covering sudo, SUID/SGID, capabilities, cron, writable paths, NFS, kernel CVEs, and GTFOBins lookup, grounded in LLM-assisted autonomous privesc research (hackingBuddyGPT/ipa-lab)."
+H2: Phase 0 — Situational Awareness (always first) | Phase 1 — Sudo (highest yield, lowest noise)
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/macos/SKILL.md (85L)
+FM: name: macos-post-exploitation
+FM: description: "macOS endpoint post-exploitation — launchd persistence, TCC bypass, Keychain credential access, dylib hijacking, Gatekeeper/quarantine evasion, and discovery on Apple hosts."
+H2: Discovery (T1087.001 / T1518 / T1647) | Privilege escalation | Persistence | Defense evasion | Credential access (T1555.001) | Collection, C2 & exfil | Detection & defense (blue-cell notes)
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/network-replay/SKILL.md (264L)
+FM: name: network-replay
+FM: description: "PCAP-based network replay attacks: capture auth sequences, session tokens, and protocol frames, then replay or inject to achieve unauthorized access or session hijack."
+H2: Overview | Tool inventory | Phase 1 — Traffic Capture | Phase 2 — Extract Replayable Material
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/privilege-escalation/SKILL.md (499L)
+FM: name: privilege-escalation
+FM: description: "Host privilege escalation — Windows token impersonation, UAC bypass, service abuse, DLL hijacking, Linux SUID/sudo/kernel exploits, automated enumeration."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. Windows Token Impersonation — Potato Family
+##### FILE: packages/raptix/raptix/skills/defs/standard/post-exploit/reporting/SKILL.md (549L)
+FM: name: post-exploit-reporting
+FM: description: "Post-exploitation finding documentation — credential access, privilege escalation, lateral movement reports, detection gap analysis, attack path documentation, CVSS v4.0 scoring."
+H2: 1. Phase-Specific Finding Templates | Description | Steps to Reproduce | Credentials Obtained | Impact | Evidence
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/active-recon/SKILL.md (399L)
+FM: name: active-recon
+FM: description: "Active target probing — port scanning, service detection, vulnerability scanning, banner grabbing, web directory fuzzing, SSL/TLS analysis."
+H2: Quick Reference — Common Scan Patterns | 1. OPSEC Principles for Active Scanning | 2. Port Scanning with Nmap
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/SKILL.md (264L)
+FM: name: cloud-recon
+FM: description: "Cloud infrastructure enumeration — AWS S3 buckets, Azure blob storage, GCP buckets, cloud metadata endpoints, IAM misconfigurations, CDN origin detection."
+H2: 1. Cloud Provider Detection | 2. AWS Enumeration
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-ip-ranges.md (111L)
+H2: Live IP Range Endpoints | Quick IP Check Script | CNAME → Provider Mapping
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-naming-patterns.md (136L)
+H2: S3 / GCS / Azure Blob Bucket Names
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/iot-security/SKILL.md (363L)
+FM: name: iot-security
+FM: description: "IoT device security reconnaissance — firmware extraction, embedded analysis, protocol identification, default credential checking, vulnerability scanning, device fingerprinting."
+H2: 1. Device Discovery and Identification | 2. Firmware Extraction
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/mobile-security/SKILL.md (233L)
+FM: name: mobile-security
+FM: description: "Mobile application security reconnaissance — APK/IPA analysis, permission enumeration, certificate validation, hardcoded secret detection, insecure storage identification, network security analysis."
+H2: 1. APK Analysis | 2. iOS IPA Analysis | 3. Certificate and Signature Validation
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/open-web/SKILL.md (102L)
+FM: name: open-web
+FM: description: "Resilient public-page reading and OSINT keyword search — web_search (allowlisted-provider OSINT) and web_fetch (curl_cffi TLS-impersonation grid + headless-browser fallback that gets past WAF/403/anti-bot). Use when a fetch is blocked, a page is JS-rendered, or you need open-web OSINT about a target/org."
+H2: How web_fetch escalates (you do NOT drive this — the engine does) | R2 — HTTP 200 is NOT success | R6 — a give-up is NOT exhaustion (the discipline that matters) | RoE & OSINT boundary
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/osint/SKILL.md (235L)
+FM: name: osint
+FM: description: "Open-source intelligence gathering — email harvesting, social media profiling, breach data checking, employee enumeration, GitHub secret scanning, organizational mapping."
+H2: 1. Email Harvesting | 2. Employee & Organization Enumeration | 3. GitHub & Code Repository OSINT
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/passive-recon/SKILL.md (311L)
+FM: name: passive-recon
+FM: description: "Passive intelligence gathering without touching the target — DNS, WHOIS, subdomain enumeration, Certificate Transparency, technology fingerprinting, ASN mapping."
+H2: Quick Reference — Copy-Paste Commands | 1. WHOIS Intelligence | 2. DNS Reconnaissance
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/passive-recon/references/dns-techniques.md (99L)
+H2: DNS Record Types for Recon | Subdomain Enumeration Tool Comparison | Subfinder Configuration | Certificate Transparency Deep Dive | Passive DNS Databases | ASN/BGP Intelligence
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/reporting/SKILL.md (495L)
+FM: name: recon-reporting
+FM: description: "Recon output formatting — report structure, CVSS v4.0 scoring (primary), MITRE ATT&CK mapping, finding prioritization, Markdown output, detection gap tracking, handoff checklists."
+H2: 1. Report Structure | 2. Finding Document Template | Description | Steps to Reproduce | Impact | Evidence
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md (69L)
+FM: name: web-recon
+FM: description: "Web application enumeration hub — directory/file fuzzing, vhost discovery, API enumeration, CMS scanning, WAF detection, auth surface mapping, cookie audit."
+H2: Tag-Driven Fast Paths | HTTP Request Deduplication Pattern | Output files
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/web-recon/api-enumeration/SKILL.md (67L)
+FM: name: web-api-enumeration
+FM: description: "REST API discovery, GraphQL detection, parameter fuzzing."
+H2: 1. API Endpoint Enumeration | 2. Parameter Discovery
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/web-recon/auth-mapping/SKILL.md (40L)
+FM: name: web-auth-mapping
+FM: description: "Authentication surface — login endpoints, JWT/OAuth/SAML/SSO/API-key mechanism identification."
+H2: 1. Login Endpoint Discovery | 2. Auth Mechanism Identification | 3. Output for Handoff
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/web-recon/cms-scanning/SKILL.md (39L)
+FM: name: web-cms-scanning
+FM: description: "CMS-specific scans — WordPress (wpscan), Joomla, Drupal version detection."
+H2: WordPress | Joomla | Drupal
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/web-recon/cookie-audit/SKILL.md (45L)
+FM: name: web-cookie-audit
+FM: description: "Cookie-conditional sink discovery — bisect required cookies per sink, session-write timeline for race-condition challenges."
+H2: Procedure
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/web-recon/discovery/SKILL.md (116L)
+FM: name: web-discovery
+FM: description: "Web app discovery — directory/file fuzzing, vhost discovery, JavaScript endpoint extraction."
+H2: 1. Directory & File Discovery | 2. Virtual Host (vHost) Discovery | 3. Nginx/Apache Alias Off-By-One Probe
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/web-recon/subdomain-takeover/SKILL.md (175L)
+FM: name: web-subdomain-takeover
+FM: description: "Subdomain takeover via dangling DNS/CNAME — GitHub Pages, Heroku, Azure, Fastly, Shopify, Netlify, Surge, Tumblr, Beanstalk, Zendesk, etc."
+H2: 1. Asset surface — enumerate every subdomain | 2. CNAME → provider fingerprints | 3. Detection — body fingerprint
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/web-recon/waf-detection/SKILL.md (39L)
+FM: name: web-waf-detection
+FM: description: "Web Application Firewall fingerprinting — Cloudflare, AWS WAF, Akamai, Imperva, etc."
+H2: Tooling | Known WAF Indicators | Multi-Proxy / Smuggling Signal
+##### FILE: packages/raptix/raptix/skills/defs/standard/recon/wireless-security/SKILL.md (380L)
+FM: name: wireless-security
+FM: description: "Wireless network security reconnaissance — WiFi analysis, Bluetooth assessment, RFID/NFC evaluation, signal capture, protocol analysis, encryption testing, rogue device detection."
+H2: 1. WiFi Network Reconnaissance | 2. WiFi Encryption Analysis
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md (45L)
+FM: name: reverser-overview
+FM: description: Root pointer for the binary reversing lane. Covers triage, Radare2 fallback, string extraction, packer unpacking, virtualized protectors, symbol risk, ROP, Ghidra deep analysis, and firmware extraction.
+H2: Playbooks | Workflow
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/android-malware/SKILL.md (333L)
+FM: name: reverser-android-malware
+FM: description: "Android APK malware analysis — manifest permission review, smali disassembly, Java decompilation with jadx, dynamic instrumentation with Frida, network traffic interception, native library analysis, and automated scanning with MobSF."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. Static Analysis — APK Structure
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/anti-debug-bypass/SKILL.md (198L)
+FM: name: anti-debug-bypass
+FM: description: Detect and neutralize anti-debug / anti-VM checks — IsDebuggerPresent, ptrace, NtGlobalFlag, timing, hardware-breakpoint detection.
+H2: 1. Enumerate anti-debug techniques in the binary | 2. Common checks + bypasses
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/ctf-triage/SKILL.md (350L)
+FM: name: ctf-triage
+FM: description: "CTF challenge triage and solve methodology — category detection, tool selection, and multi-step solve chains across pwn/rev/crypto/forensics/web/misc."
+H2: Phase 0 — Initial Triage (always first) | Phase 1a — Pwn (Binary Exploitation)
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/deep-analysis/SKILL.md (235L)
+FM: name: deep-analysis
+FM: description: "Depth-first RE investigation loop for a single binary or function cluster: decompile→rename→retype→comment→re-read, with context-rot guards and on-task checks. Use when triage has already identified the interesting area and the goal is full understanding: what does function X do, identify cryptographic primitives, locate C2 protocol, recover data structures. Triggers on: 'deep analysis', 'understand function', 'recover struct', 'crypto identification', 'C2 protocol', 'reverse this binary fully', 'what does this function do'."
+H2: Core Principle: Narrow → Deep | 1. Entry Point | 2. Decompile→Rename→Retype→Comment Loop
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/dotnet-malware/SKILL.md (304L)
+FM: name: reverser-dotnet-malware
+FM: description: ".NET malware analysis — dnSpy/ILSpy decompilation, de-obfuscation (ConfuserEx, .NET Reactor, Babel, Crypto Obfuscator), behavioral analysis of managed assemblies, PowerShell cradle extraction, and config decryption for common .NET RAT families."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. Identify .NET Assembly | 2. Detect Obfuscator
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/fileless-malware/SKILL.md (319L)
+FM: name: reverser-fileless-malware
+FM: description: "In-memory and fileless malware detection — AMSI bypass analysis, reflective DLL injection, CLR-hosted payloads, process hollowing, PowerShell cradle chains, WMI/COM persistence, and registry-resident payloads. Covers detection, memory forensics, and payload extraction."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. Detect In-Memory Artifacts
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/firmware/SKILL.md (67L)
+FM: name: reverser-firmware
+FM: description: Router / IoT firmware extraction pipeline — unpack nested filesystems, locate web server, identify backdoor credentials.
+H2: 1. Extract | 2. Map the root | 3. Web server binary | 4. Hardcoded credentials | 5. Authentication bypass audit | 6. Cross-reference CVEs | 7. Record
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/fuzzing/SKILL.md (272L)
+FM: name: fuzzing
+FM: description: "Coverage-guided fuzzing methodology for compiled binaries and libraries: target scoping, fuzzer selection (AFL++/libFuzzer/Honggfuzz), harness skeleton, ASan+UBSan flags, corpus curation, crash triage and minimization (afl-tmin/minimize_corpus), exploitability rubric. Outputs corpora and crashes to /workspace/. Triggers on: 'fuzz', 'fuzzing', 'AFL', 'libFuzzer', 'harness', 'crash triage', 'coverage-guided', 'afl-tmin', 'sanitizer', 'corpus'."
+H2: 1. Target Scoping | 2. Fuzzer Selection | 3. Instrumented Build (source-available) | 4. Harness Skeleton
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/game-security/SKILL.md (52L)
+FM: name: game-security-research
+FM: description: "Authorized game-client, protocol, replay, and anti-tamper security research for local, self-hosted, or intentionally vulnerable training targets."
+H2: Scope | Research workflow | Promotion rule
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/ghidra/SKILL.md (69L)
+FM: name: reverser-ghidra
+FM: description: Deep binary analysis via Ghidra — headless analyzeHeadless or live MCP bridge with 245 tools. Decompilation, xrefs, function listing, batch operations, P-code emulation, convention enforcement.
+H2: Prerequisites | 1. Full Analysis | 2. Decompile a Function | 3. Cross-References (MCP) | 4. Fallback: Script Generation | MCP Bridge — Full 245-Tool Coverage | Workflow
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/ios-static/SKILL.md (162L)
+FM: name: reverser-ios-static
+FM: description: "iOS IPA static analysis — class-dump-z / class-dump-ng, Hopper / IDA / Ghidra for Mach-O ARM64, Objective-C runtime introspection, Swift demangling, App Transport Security check, plist analysis, embedded provisioning profile parse. For dynamic Frida/Objection see mobile/SKILL.md."
+H2: Acquire the IPA | Unpack the IPA | Quick triage | Class-dump (Objective-C metadata)
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/malware-triage/SKILL.md (142L)
+FM: name: reverser-malware-triage
+FM: description: "Fast malware triage workflow — static (PE/Mach-O/ELF format, strings, imports, signatures, entropy/packed indicators), dynamic (sandbox with INetSim, Wireshark, Process Monitor, Procmon, time-shift), unpack (Scylla/PE-sieve), then full RE with Ghidra/IDA. Designed for ≤15 min initial verdict."
+H2: Phase 1: Static (5 min) | Phase 2: Dynamic (5 min — in an isolated VM)
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/packer-unpacking/SKILL.md (177L)
+FM: name: packer-unpacking
+FM: description: Identify and unpack common binary packers — UPX, ASPack, Themida, VMProtect, MPRESS, PECompact, Enigma.
+H2: 1. Detect packing | 2. Common packer signatures | 3. Automated unpacking
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/ransomware-analysis/SKILL.md (343L)
+FM: name: reverser-ransomware-analysis
+FM: description: "Ransomware family identification and analysis — encryption scheme identification, key recovery techniques, ransom note parsing, shadow copy/recovery inhibition analysis, decryptor availability check, and IOC extraction for common ransomware families."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. Family Identification
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/rootkit-analysis/SKILL.md (428L)
+FM: name: reverser-rootkit-analysis
+FM: description: "Rootkit detection and analysis — UEFI rootkits, kernel-level rootkits, bootkits, DKOM techniques, SSDT/IDT/IRP hooking, hypervisor rootkits, and firmware implant detection using GMER, Volatility, chipsec, and UEFITool."
+H2: Quick Reference | MITRE ATT&CK Mapping | 1. User-Mode Rootkit Detection
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/rop-chain/SKILL.md (213L)
+FM: name: rop-chain
+FM: description: ROP/JOP gadget hunting and exploit-chain construction — for NX/DEP bypass on x86/x64/ARM binaries.
+H2: 1. Inventory mitigations | 2. Gadget discovery | 3. Common chain patterns
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/triage/SKILL.md (51L)
+FM: name: reverser-triage
+FM: description: Fast-path binary triage — identify format/arch/mitigations, grab high-signal strings and imports in under a minute.
+H2: 1. Identify | 2. Mitigation check | 3. String harvest (categorized) | 4. Imports risk | 5. Version → CVE | 6. Handoff
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/virtualized-protectors/SKILL.md (50L)
+FM: name: reverser-virtualized-protectors
+FM: description: VMProtect, VMP2, Themida, and CodeVirtualizer reversing workflow using Radare2/Ghidra facts and Back Engineering Labs research guidance.
+H2: Source Guidance | Loop | Report Shape
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/windows-internals/SKILL.md (55L)
+FM: name: windows-driver-assessment
+FM: description: "Defensive Windows internals and driver exposure assessment for owner-authorized systems and disposable research VMs."
+H2: Scope | Evidence-first workflow | Promotion rule
+##### FILE: packages/raptix/raptix/skills/defs/standard/reverser/yara-hunting/SKILL.md (170L)
+FM: name: reverser-yara-hunting
+FM: description: "YARA rule authoring + hunting — `condition:` syntax, hex patterns with wildcards, `for`/`any of them`, PE module, ELF module, hash module, math module. Build per-family signatures, hunt at scale via VT/MalwareBazaar/Hybrid Analysis. Avoid common pitfalls (collisions, slow rules, regex traps)."
+H2: Anatomy of a good rule | The condition tools you need | High-leverage patterns
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/abort-template/SKILL.md (74L)
+FM: name: abort-template
+FM: description: "Abort / crisis plan generator — halt triggers, response actions, AI-aware safety gates (hallucination threshold, destructive-action gate, output validation)."
+H2: When to Use | Workflow | Validation Checklist | Anti-patterns | Output
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/cleanup-template/SKILL.md (72L)
+FM: name: cleanup-template
+FM: description: "Cleanup & restoration plan generator — artifact inventory, persistence removal commands, pre-engagement baseline, post-engagement verification."
+H2: When to Use | Workflow | Validation Checklist | Anti-patterns | Output
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/conops-template/SKILL.md (76L)
+FM: name: conops-template
+FM: description: "Concept of Operations document creation — executive summary, threat actor profiling, attack narrative, kill chain design, communication plan, deconfliction."
+H2: When to Use | Prerequisites | Workflow | Generation Rules
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/conops-template/references/kill-chain-templates.md (66L)
+H2: Kill Chain Phases (5-Phase Model) | Engagement Type → Phase Selection | MITRE ATT&CK Tactic Mapping | Phase → Sub-Agent Routing | Phase → OPSEC Level Guidance
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/contact-template/SKILL.md (82L)
+FM: name: contact-template
+FM: description: "Contact / communications plan generator — primary operator, escalation chain, abort signal recipient, external SOC endpoint, blackout windows."
+H2: When to Use | Workflow | Validation Checklist | Anti-patterns | Output
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/data-handling-template/SKILL.md (72L)
+FM: name: data-handling-template
+FM: description: "Data handling plan generator — evidence retention, encryption, chain-of-custody, compliance frameworks (GDPR / HIPAA / PCI-DSS / SOC2)."
+H2: When to Use | Workflow | Validation Checklist | Anti-patterns | Output
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/SKILL.md (83L)
+FM: name: opplan-converter
+FM: description: "Convert engagement documents into machine-readable OPPLAN for the ralph loop — objective decomposition, acceptance criteria, MITRE mapping, priority ordering."
+H2: When to Use | Prerequisites | Workflow
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-rules.md (107L)
+H2: Rule 1: One Objective = One Context Window | Rule 2: Kill Chain Phase Ordering | Rule 3: Mandatory Acceptance Criteria | Rule 4: Verifiable Criteria Only | Rule 5: MITRE ATT&CK Mapping | Rule 6: OPSEC Level Assignment
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-templates.md (240L)
+H2: Passive Recon Objectives (priority 1-5)
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/references/schema-quick-reference.md (146L)
+H2: RoE (Rules of Engagement) | CONOPS (Concept of Operations) | DeconflictionPlan
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/SKILL.md (60L)
+FM: name: roe-template
+FM: description: "Rules of Engagement document creation — scope definition, prohibited/permitted actions, testing windows, escalation contacts, incident procedures."
+H2: When to Use | Workflow | Generation Rules | Output
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/references/validation-checklist.md (32L)
+H2: Required Fields | Scope | Boundaries | Escalation | Final
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/structured-questions/SKILL.md (113L)
+FM: name: structured-questions
+FM: description: "How to use ask_user_question — the single operator-input channel for every interview question, including free-form fields via allow_other=true."
+H2: When to call `ask_user_question` | Habits (the typed tool signature already encodes the schema) | Examples
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/SKILL.md (99L)
+FM: name: threat-profile
+FM: description: "Threat actor profiling for adversary emulation — APT group research, sophistication tiers, MITRE ATT&CK mapping, initial access vectors, custom archetypes."
+H2: When to Use | Workflow
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/SKILL.md (78L)
+FM: name: emulation-overview
+FM: description: "Adversary-emulation playbook catalog — per-actor kill chains that turn an APT/eCrime threat profile into Raptix CONOPS phases + OPPLAN objectives. Routing skill: pick the actor, seed plan/threat-profile.json, then map each kill-chain phase to the operational skill the executing agent runs. Triggers on: 'emulate', 'adversary emulation', 'APT playbook', 'threat actor playbook', 'emulation plan', 'attack flow'."
+H2: Playbooks | How to use a playbook (Soundwave Phase 2) | Playbook anatomy (every leaf has these) | Discipline
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/apt29/SKILL.md (120L)
+FM: name: apt29
+FM: description: "APT29 (Cozy Bear / Midnight Blizzard, SVR) adversary-emulation playbook — malware-light cloud-identity espionage: no-MFA password spray, OAuth consent/token abuse, Golden SAML, mailbox collection over residential proxies. Use when emulating APT29 against an M365/Entra/AWS-identity estate. Triggers on: 'emulate APT29', 'Cozy Bear', 'Midnight Blizzard', 'NOBELIUM', 'OAuth abuse', 'cloud identity espionage', 'Golden SAML'."
+H2: When to emulate APT29 | ThreatProfile seed (`plan/threat-profile.json`) | Kill-chain emulation | CONOPS kill_chain (copy into `conops.json`)
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/fin7/SKILL.md (99L)
+FM: name: fin7
+FM: description: "FIN7 (Carbon Spider / Sangria Tempest) adversary-emulation playbook — revenue-targeted spearphishing with phone follow-up, EDR-evasion tradecraft, AD compromise, and big-game-hunting ransomware. Use when emulating a high-end financially-motivated crew that graduated from POS theft to ransomware. Triggers on: 'emulate FIN7', 'Carbanak', 'Carbon Spider', 'Sangria Tempest', 'big game hunting', 'EDR evasion', 'AvNeutralizer'."
+H2: When to emulate FIN7 | ThreatProfile seed (`plan/threat-profile.json`) | Kill-chain emulation | CONOPS kill_chain (copy into `conops.json`) | OPSEC & signature fidelity | RoE / safety gates
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/lazarus/SKILL.md (104L)
+FM: name: lazarus
+FM: description: "Lazarus Group (Hidden Cobra, DPRK RGB) adversary-emulation playbook — financially-motivated crypto/DeFi theft and supply-chain intrusion: fake-job social engineering, trojanized apps, wallet/key theft, and on-chain DeFi/bridge exploitation (testnet/fork only). Use when emulating DPRK financial actors against a crypto/exchange/DeFi target. Triggers on: 'emulate Lazarus', 'Hidden Cobra', 'DPRK crypto', 'AppleJeus', '3CX supply chain', 'DeFi bridge attack', 'crypto theft'."
+H2: When to emulate Lazarus | ThreatProfile seed (`plan/threat-profile.json`) | Kill-chain emulation | CONOPS kill_chain (copy into `conops.json`) | OPSEC & signature fidelity | RoE / safety gates
+##### FILE: packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/lockbit/SKILL.md (101L)
+FM: name: lockbit
+FM: description: "LockBit / generic RaaS-affiliate adversary-emulation playbook — broker/edge/RDP initial access, beacon, AD compromise to Domain Admin, defense evasion (Defender-disable via GPO, shadow-copy deletion), bulk exfil, then canary double-extortion encryption (Windows + ESXi). Reusable template for any ransomware affiliate (ALPHV, Akira, Black Basta). Triggers on: 'emulate LockBit', 'ransomware affiliate', 'RaaS', 'double extortion', 'StealBit', 'domain-wide ransomware', 'ESXi locker'."
+H2: When to emulate a RaaS affiliate | ThreatProfile seed (`plan/threat-profile.json`) | Kill-chain emulation | CONOPS kill_chain (copy into `conops.json`) | OPSEC & signature fidelity | RoE / safety gates

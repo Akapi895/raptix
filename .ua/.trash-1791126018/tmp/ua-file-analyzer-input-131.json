@@ -1,0 +1,182 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/ad/ntlm-relay/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 121,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 56,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/adversarial-ml-evasion/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 260,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/auth-bypass/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 26,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/bounty-hunting/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 134,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/chains/cred-reuse/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 19,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/chains/idor-to-priv-esc/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 18,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/chains/ssrf-to-rce/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 21,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/chains/xss-to-takeover/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 19,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/command-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 103,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/data-and-model-poisoning/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 141,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/deserialization/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 149,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/excessive-agency/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 144,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/idor/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 137,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/improper-output-handling/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 155,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/misinformation/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 151,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/ml-model-extraction/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 288,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/patch-diff/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 55,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/path-traversal/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 26,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/pattern-exhaustion/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 111,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/prompt-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 141,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/prototype-pollution/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 107,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/redos/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 228,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/sensitive-information-disclosure/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 136,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/sql-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 118,
+   "fileCategory": "docs"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/raptix/skills/defs/standard/ad/ntlm-relay/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/adversarial-ml-evasion/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/auth-bypass/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/bounty-hunting/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/chains/cred-reuse/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/chains/idor-to-priv-esc/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/chains/ssrf-to-rce/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/chains/xss-to-takeover/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/command-injection/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/data-and-model-poisoning/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/deserialization/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/excessive-agency/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/idor/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/improper-output-handling/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/misinformation/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/ml-model-extraction/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/patch-diff/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/path-traversal/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/pattern-exhaustion/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/prompt-injection/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/prototype-pollution/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/redos/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/sensitive-information-disclosure/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/analyst/sql-injection/SKILL.md": []
+ }
+}

@@ -1,0 +1,3757 @@
+{
+  "batchIndex": 16,
+  "batchFiles": [
+    {
+      "path": "raptix/tools/ad/__init__.py",
+      "language": "python",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/adcs.py",
+      "language": "python",
+      "sizeLines": 304,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/adcs_post.py",
+      "language": "python",
+      "sizeLines": 646,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/bh_tools.py",
+      "language": "python",
+      "sizeLines": 242,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/bhce_client.py",
+      "language": "python",
+      "sizeLines": 349,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/bloodhound.py",
+      "language": "python",
+      "sizeLines": 1229,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/dcsync.py",
+      "language": "python",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/delegation.py",
+      "language": "python",
+      "sizeLines": 132,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/gpo.py",
+      "language": "python",
+      "sizeLines": 119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/kerberos.py",
+      "language": "python",
+      "sizeLines": 142,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/shadow_creds.py",
+      "language": "python",
+      "sizeLines": 88,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/ad/tools.py",
+      "language": "python",
+      "sizeLines": 248,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/tools/research/graph.py",
+      "language": "python",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/ad/test_ad.py",
+      "language": "python",
+      "sizeLines": 92,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/ad/test_ad_tools.py",
+      "language": "python",
+      "sizeLines": 638,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/ad/test_adcs_post.py",
+      "language": "python",
+      "sizeLines": 691,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/ad/test_bh_tools.py",
+      "language": "python",
+      "sizeLines": 205,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/ad/test_bhce_client.py",
+      "language": "python",
+      "sizeLines": 150,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "language": "python",
+      "sizeLines": 1098,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:raptix/tools/ad/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "raptix/tools/ad/__init__.py",
+      "summary": "Barrel package cho bộ công cụ Active Directory: re-export các API audit ADCS, BloodHound, dcsync, delegation, GPO, Kerberos và shadow credentials.",
+      "tags": [
+        "barrel",
+        "entry-point",
+        "active-directory",
+        "tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/tools/ad/adcs.py",
+      "type": "file",
+      "name": "adcs.py",
+      "filePath": "raptix/tools/ad/adcs.py",
+      "summary": "Phân tích template và CA của ADCS từ dữ liệu BloodHound để phát hiện các đường leo thang đặc quyền ESC1–ESC13.",
+      "tags": [
+        "active-directory",
+        "adcs",
+        "privilege-escalation",
+        "analysis"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/tools/ad/adcs.py:_template_analysis",
+      "type": "function",
+      "name": "_template_analysis",
+      "filePath": "raptix/tools/ad/adcs.py",
+      "lineRange": [
+        73,
+        190
+      ],
+      "summary": "Đánh giá từng certificate template: enrollable rights, ESC1–ESC4, yêu cầu phê duyệt quản trị và flag enrollment agent.",
+      "tags": [
+        "adcs",
+        "privilege-escalation",
+        "analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/adcs.py:_ca_analysis",
+      "type": "function",
+      "name": "_ca_analysis",
+      "filePath": "raptix/tools/ad/adcs.py",
+      "lineRange": [
+        193,
+        283
+      ],
+      "summary": "Đánh giá cấu hình CA: CASecurity, quyền rủi ro và các điều kiện ESC6–ESC13 trên cấp CA.",
+      "tags": [
+        "adcs",
+        "ca",
+        "analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/adcs.py:analyze_adcs_templates",
+      "type": "function",
+      "name": "analyze_adcs_templates",
+      "filePath": "raptix/tools/ad/adcs.py",
+      "lineRange": [
+        286,
+        304
+      ],
+      "summary": "Entry point phân tích dữ liệu ADCS: gom findings từ template và CA, trả danh sách ADCSFinding.",
+      "tags": [
+        "adcs",
+        "entry-point",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/tools/ad/adcs.py:ADCSFinding",
+      "type": "class",
+      "name": "ADCSFinding",
+      "filePath": "raptix/tools/ad/adcs.py",
+      "lineRange": [
+        41,
+        53
+      ],
+      "summary": "Dataclass kết quả phát hiện ADCS, hỗ trợ to_dict để serialize vào báo cáo.",
+      "tags": [
+        "data-model",
+        "adcs",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/tools/ad/adcs_post.py",
+      "type": "file",
+      "name": "adcs_post.py",
+      "filePath": "raptix/tools/ad/adcs_post.py",
+      "summary": "Hậu kiểm các phát hiện ADCS bằng truy vấn Cypher trên KG store (golden cert, ESC1/3/4/6, ESC13, ESC9, dcsync) và tổng hợp thành thống kê PostProcessStats.",
+      "tags": [
+        "adcs",
+        "knowledge-graph",
+        "cypher",
+        "post-processing"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/tools/ad/adcs_post.py:synthesise_adcs_post",
+      "type": "function",
+      "name": "synthesise_adcs_post",
+      "filePath": "raptix/tools/ad/adcs_post.py",
+      "lineRange": [
+        454,
+        646
+      ],
+      "summary": "Chạy bộ truy vấn Cypher trên KGStore (golden cert, các kịch bản ESC, dcsync) và tổng hợp thành PostProcessStats.",
+      "tags": [
+        "cypher",
+        "knowledge-graph",
+        "adcs"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:raptix/tools/ad/adcs_post.py:PostProcessStats",
+      "type": "class",
+      "name": "PostProcessStats",
+      "filePath": "raptix/tools/ad/adcs_post.py",
+      "lineRange": [
+        40,
+        57
+      ],
+      "summary": "Dataclass thống kê kết quả hậu kiểm ADCS theo từng loại truy vấn Cypher.",
+      "tags": [
+        "data-model",
+        "statistics",
+        "adcs"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/tools/ad/bh_tools.py",
+      "type": "file",
+      "name": "bh_tools.py",
+      "filePath": "raptix/tools/ad/bh_tools.py",
+      "summary": "Ba tool LangChain thao tác BloodHound CE qua REST: kiểm tra trạng thái, chạy truy vấn Cypher và ingest file ZIP.",
+      "tags": [
+        "bloodhound",
+        "tools",
+        "rest-client"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bh_tools.py:_config_error",
+      "type": "function",
+      "name": "_config_error",
+      "filePath": "raptix/tools/ad/bh_tools.py",
+      "lineRange": [
+        49,
+        60
+      ],
+      "summary": "Sinh thông báo lỗi cấu hình BHCE (thiếu env URL/token) kèm hướng dẫn khắc phục.",
+      "tags": [
+        "error-handling",
+        "configuration",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bh_tools.py:bhce_status",
+      "type": "function",
+      "name": "bhce_status",
+      "filePath": "raptix/tools/ad/bh_tools.py",
+      "lineRange": [
+        67,
+        94
+      ],
+      "summary": "Kiểm tra trạng thái BloodHound CE: version, health và user đang xác thực.",
+      "tags": [
+        "bloodhound",
+        "status",
+        "diagnostics"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bh_tools.py:bhce_cypher",
+      "type": "function",
+      "name": "bhce_cypher",
+      "filePath": "raptix/tools/ad/bh_tools.py",
+      "lineRange": [
+        101,
+        129
+      ],
+      "summary": "Chạy truy vấn Cypher read-only trên BloodHound CE và trả kết quả JSON.",
+      "tags": [
+        "bloodhound",
+        "cypher",
+        "query"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bh_tools.py:bhce_ingest_zip",
+      "type": "function",
+      "name": "bhce_ingest_zip",
+      "filePath": "raptix/tools/ad/bh_tools.py",
+      "lineRange": [
+        140,
+        215
+      ],
+      "summary": "Ingest file ZIP BloodHound CE theo trình tự start/poll/status, chờ đến trạng thái terminal.",
+      "tags": [
+        "bloodhound",
+        "ingest",
+        "zip"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:raptix/tools/ad/bhce_client.py",
+      "type": "file",
+      "name": "bhce_client.py",
+      "filePath": "raptix/tools/ad/bhce_client.py",
+      "summary": "REST client xác thực HMAC-SHA256 cho BloodHound CE, ký request theo spec tham chiếu Go và quản lý token xác thực.",
+      "tags": [
+        "rest-client",
+        "hmac",
+        "bloodhound",
+        "authentication"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/tools/ad/bhce_client.py:_rfc3339_now",
+      "type": "function",
+      "name": "_rfc3339_now",
+      "filePath": "raptix/tools/ad/bhce_client.py",
+      "lineRange": [
+        72,
+        82
+      ],
+      "summary": "Sinh timestamp RFC3339 cắt về đầu giờ, dùng làm mốc tính chữ ký HMAC.",
+      "tags": [
+        "time",
+        "hmac",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bhce_client.py:sign_request",
+      "type": "function",
+      "name": "sign_request",
+      "filePath": "raptix/tools/ad/bhce_client.py",
+      "lineRange": [
+        85,
+        131
+      ],
+      "summary": "Ký request HTTP bằng HMAC-SHA256 theo spec BloodHound CE: method, path, query, body và timestamp khóa giờ.",
+      "tags": [
+        "hmac",
+        "security",
+        "signature"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:raptix/tools/ad/bhce_client.py:BHCEHTTPError",
+      "type": "class",
+      "name": "BHCEHTTPError",
+      "filePath": "raptix/tools/ad/bhce_client.py",
+      "lineRange": [
+        138,
+        149
+      ],
+      "summary": "Exception HTTP kèm status code và body trả về từ BloodHound CE.",
+      "tags": [
+        "error-handling",
+        "http",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/tools/ad/bhce_client.py:BHCEClient",
+      "type": "class",
+      "name": "BHCEClient",
+      "filePath": "raptix/tools/ad/bhce_client.py",
+      "lineRange": [
+        152,
+        349
+      ],
+      "summary": "Client BloodHound CE đầy đủ: from_env, tự ký mọi request, gọi endpoint cypher/file-ingest/status và xử lý token.",
+      "tags": [
+        "rest-client",
+        "bloodhound",
+        "api-client"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:raptix/tools/ad/bloodhound.py",
+      "type": "file",
+      "name": "bloodhound.py",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "summary": "Ingest dump BloodHound JSON/ZIP vào KG store: ánh xạ node/edge (ACE, membership, session, trust, GPO, local group, ADCS...) với provenance đầy đủ.",
+      "tags": [
+        "bloodhound",
+        "ingest",
+        "knowledge-graph",
+        "active-directory"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_node_kind_for_bh",
+      "type": "function",
+      "name": "_node_kind_for_bh",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        159,
+        188
+      ],
+      "summary": "Ánh xạ loại đối tượng BloodHound sang node label của KG (user, group, computer, domain, CA...).",
+      "tags": [
+        "mapping",
+        "normalization",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_trust_edge_kind",
+      "type": "function",
+      "name": "_trust_edge_kind",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        203,
+        225
+      ],
+      "summary": "Tách trust BloodHound thành các edge KG riêng theo hướng và thuộc tính (trusting/trusted, SID filtering).",
+      "tags": [
+        "trust",
+        "mapping",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ensure_placeholder",
+      "type": "function",
+      "name": "_ensure_placeholder",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        307,
+        321
+      ],
+      "summary": "Đảm bảo node placeholder tồn tại trong KG trước khi tạo edge tham chiếu tới nó.",
+      "tags": [
+        "knowledge-graph",
+        "utility",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_object",
+      "type": "function",
+      "name": "_ingest_object",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        327,
+        378
+      ],
+      "summary": "Upsert một đối tượng BloodHound thành node KG với props đã chuẩn hóa.",
+      "tags": [
+        "ingest",
+        "knowledge-graph",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_aces",
+      "type": "function",
+      "name": "_ingest_aces",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        381,
+        413
+      ],
+      "summary": "Chuyển ACE thành các edge quyền (GenericAll, Owns, WriteDacl...) giữa principal và target.",
+      "tags": [
+        "acl",
+        "privilege-escalation",
+        "ingest"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_memberships",
+      "type": "function",
+      "name": "_ingest_memberships",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        416,
+        449
+      ],
+      "summary": "Tạo edge MemberOf từ dữ liệu nhóm/membership của BloodHound.",
+      "tags": [
+        "membership",
+        "ingest",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_delegation_edges",
+      "type": "function",
+      "name": "_ingest_delegation_edges",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        452,
+        479
+      ],
+      "summary": "Ghi các quan hệ delegation Kerberos (RBCD, constrained) thành edge KG.",
+      "tags": [
+        "kerberos",
+        "delegation",
+        "ingest"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_sessions",
+      "type": "function",
+      "name": "_ingest_sessions",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        482,
+        515
+      ],
+      "summary": "Ingest session đăng nhập; tùy cờ cấu hình có thể đảo chiều edge HasSession.",
+      "tags": [
+        "sessions",
+        "ingest",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_contained_by",
+      "type": "function",
+      "name": "_ingest_contained_by",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        518,
+        536
+      ],
+      "summary": "Ingest quan hệ container, hỗ trợ đảo chiều edge contained-by.",
+      "tags": [
+        "container",
+        "ingest",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_child_objects",
+      "type": "function",
+      "name": "_ingest_child_objects",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        539,
+        560
+      ],
+      "summary": "Ingest quan hệ child object thành edge KG tương ứng.",
+      "tags": [
+        "ingest",
+        "mapping",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_gp_links",
+      "type": "function",
+      "name": "_ingest_gp_links",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        563,
+        584
+      ],
+      "summary": "Ingest gpLink giữa OU/domain và GPO thành edge áp dụng chính sách.",
+      "tags": [
+        "gpo",
+        "ingest",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_spn_targets",
+      "type": "function",
+      "name": "_ingest_spn_targets",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        587,
+        616
+      ],
+      "summary": "Tạo edge SPN target cho tài khoản có SPN (tiềm năng Kerberoast).",
+      "tags": [
+        "kerberos",
+        "spn",
+        "ingest"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_dump_smsa_password",
+      "type": "function",
+      "name": "_ingest_dump_smsa_password",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        619,
+        645
+      ],
+      "summary": "Ingest các edge rò rỉ mật khẩu SMSA từ dump BloodHound.",
+      "tags": [
+        "credential",
+        "ingest",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_root_ca_for",
+      "type": "function",
+      "name": "_ingest_root_ca_for",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        648,
+        670
+      ],
+      "summary": "Ingest quan hệ RootCA giữa enterprise CA và domain.",
+      "tags": [
+        "adcs",
+        "ingest",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_has_sid_history",
+      "type": "function",
+      "name": "_ingest_has_sid_history",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        673,
+        700
+      ],
+      "summary": "Ingest edge SID history phục vụ phát hiện leo thang qua SID history.",
+      "tags": [
+        "sid-history",
+        "ingest",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_rid_from_local_group_id",
+      "type": "function",
+      "name": "_rid_from_local_group_id",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        711,
+        723
+      ],
+      "summary": "Trích RID từ định danh local group của BloodHound.",
+      "tags": [
+        "utility",
+        "parsing",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_local_groups",
+      "type": "function",
+      "name": "_ingest_local_groups",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        726,
+        806
+      ],
+      "summary": "Ingest local group, member và ACL với xử lý RID ẩn danh và external member.",
+      "tags": [
+        "local-group",
+        "ingest",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_gpo_changes",
+      "type": "function",
+      "name": "_ingest_gpo_changes",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        834,
+        866
+      ],
+      "summary": "Ingest thay đổi GPO thành node/edge phản vọng lịch sử chỉnh sửa chính sách.",
+      "tags": [
+        "gpo",
+        "ingest",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_user_rights",
+      "type": "function",
+      "name": "_ingest_user_rights",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        889,
+        930
+      ],
+      "summary": "Ingest user rights assignment (Logon privileged, Remote access...) thành edge KG.",
+      "tags": [
+        "user-rights",
+        "ingest",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_enterprise_ca_edges",
+      "type": "function",
+      "name": "_ingest_enterprise_ca_edges",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        933,
+        966
+      ],
+      "summary": "Ingest các edge liên quan enterprise CA trong đồ thị ADCS.",
+      "tags": [
+        "adcs",
+        "ingest",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_issuance_policy_link",
+      "type": "function",
+      "name": "_ingest_issuance_policy_link",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        969,
+        987
+      ],
+      "summary": "Ingest liên kết issuance policy của certificate template.",
+      "tags": [
+        "adcs",
+        "ingest",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_ingest_trusts",
+      "type": "function",
+      "name": "_ingest_trusts",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        990,
+        1018
+      ],
+      "summary": "Ingest domain trust với phân tách hướng và thuộc tính trust.",
+      "tags": [
+        "trust",
+        "ingest",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_merge_one_payload",
+      "type": "function",
+      "name": "_merge_one_payload",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        1024,
+        1079
+      ],
+      "summary": "Merge một data blob BloodHound vào trạng thái ingest theo data type.",
+      "tags": [
+        "merge",
+        "ingest",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_merge_payload",
+      "type": "function",
+      "name": "_merge_payload",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        1082,
+        1097
+      ],
+      "summary": "Merge toàn bộ payload BloodHound (nhiều data blob) vào trạng thái ingest.",
+      "tags": [
+        "merge",
+        "ingest",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:merge_bloodhound_json",
+      "type": "function",
+      "name": "merge_bloodhound_json",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        1106,
+        1133
+      ],
+      "summary": "Entry point merge payload BloodHound JSON vào KG store và trả ImportStats.",
+      "tags": [
+        "entry-point",
+        "ingest",
+        "knowledge-graph"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:ingest_bloodhound_zip",
+      "type": "function",
+      "name": "ingest_bloodhound_zip",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        1136,
+        1204
+      ],
+      "summary": "Entry point ingest file ZIP BloodHound: giải nén, merge từng JSON bên trong và flush lên KG.",
+      "tags": [
+        "entry-point",
+        "ingest",
+        "zip"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/tools/ad/bloodhound.py:_flush",
+      "type": "function",
+      "name": "_flush",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        1207,
+        1229
+      ],
+      "summary": "Đẩy buffer node/edge tích lũy lên KGStore theo lô và ghi provenance.",
+      "tags": [
+        "flush",
+        "knowledge-graph",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/tools/ad/bloodhound.py:ImportStats",
+      "type": "class",
+      "name": "ImportStats",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        61,
+        80
+      ],
+      "summary": "Dataclass thống kê kết quả ingest BloodHound: số node, edge và cảnh báo.",
+      "tags": [
+        "data-model",
+        "statistics",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/tools/ad/bloodhound.py:_IngestState",
+      "type": "class",
+      "name": "_IngestState",
+      "filePath": "raptix/tools/ad/bloodhound.py",
+      "lineRange": [
+        232,
+        298
+      ],
+      "summary": "Trạng thái buffer của phiên ingest: node/edge chờ ghi, cờ cấu hình và placeholder đã tạo.",
+      "tags": [
+        "ingest",
+        "state",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:raptix/tools/ad/dcsync.py",
+      "type": "file",
+      "name": "dcsync.py",
+      "filePath": "raptix/tools/ad/dcsync.py",
+      "summary": "Xác định ứng viên dcsync từ KG: các principal có quyền replication (GetChanges/GetChangesAll) lên domain controller.",
+      "tags": [
+        "active-directory",
+        "dcsync",
+        "knowledge-graph"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/dcsync.py:dcsync_candidates",
+      "type": "function",
+      "name": "dcsync_candidates",
+      "filePath": "raptix/tools/ad/dcsync.py",
+      "lineRange": [
+        15,
+        54
+      ],
+      "summary": "Truy vấn KG để liệt kê principal có quyền Replication (GetChanges/GetChangesAll) trên domain — ứng viên dcsync.",
+      "tags": [
+        "dcsync",
+        "knowledge-graph",
+        "query"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:raptix/tools/ad/delegation.py",
+      "type": "file",
+      "name": "delegation.py",
+      "filePath": "raptix/tools/ad/delegation.py",
+      "summary": "Phân tích các dạng Kerberos delegation (RBCD, constrained...) từ dữ liệu BloodHound và sinh DelegationFinding.",
+      "tags": [
+        "active-directory",
+        "kerberos",
+        "delegation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/delegation.py:analyze_delegation",
+      "type": "function",
+      "name": "analyze_delegation",
+      "filePath": "raptix/tools/ad/delegation.py",
+      "lineRange": [
+        53,
+        132
+      ],
+      "summary": "Phân tích các quan hệ delegation từ KG và sinh DelegationFinding kèm mức độ rủi ro.",
+      "tags": [
+        "delegation",
+        "analysis",
+        "kerberos"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:raptix/tools/ad/delegation.py:DelegationFinding",
+      "type": "class",
+      "name": "DelegationFinding",
+      "filePath": "raptix/tools/ad/delegation.py",
+      "lineRange": [
+        19,
+        33
+      ],
+      "summary": "Dataclass kết quả phát hiện delegation, hỗ trợ to_dict cho báo cáo.",
+      "tags": [
+        "data-model",
+        "delegation",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/tools/ad/gpo.py",
+      "type": "file",
+      "name": "gpo.py",
+      "filePath": "raptix/tools/ad/gpo.py",
+      "summary": "Phát hiện lạm dụng GPO từ dữ liệu BloodHound: OU nhạy cảm, GPO áp dụng lên đối tượng quan trọng và thành viên nhóm có quyền.",
+      "tags": [
+        "active-directory",
+        "gpo",
+        "privilege-escalation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/gpo.py:analyze_gpo_abuse",
+      "type": "function",
+      "name": "analyze_gpo_abuse",
+      "filePath": "raptix/tools/ad/gpo.py",
+      "lineRange": [
+        46,
+        119
+      ],
+      "summary": "Truy vấn KG tìm GPO áp dụng lên OU nhạy cảm và thành viên có quyền sửa GPO, sinh GPOFinding.",
+      "tags": [
+        "gpo",
+        "analysis",
+        "privilege-escalation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:raptix/tools/ad/gpo.py:GPOFinding",
+      "type": "class",
+      "name": "GPOFinding",
+      "filePath": "raptix/tools/ad/gpo.py",
+      "lineRange": [
+        18,
+        32
+      ],
+      "summary": "Dataclass kết quả phát hiện lạm dụng GPO, hỗ trợ to_dict cho báo cáo.",
+      "tags": [
+        "data-model",
+        "gpo",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/tools/ad/kerberos.py",
+      "type": "file",
+      "name": "kerberos.py",
+      "filePath": "raptix/tools/ad/kerberos.py",
+      "summary": "Tiện ích Kerberos: parse ticket và phân loại hash hashcat (AS-REP, TGS-REP, Kerberoast) phục vụ cracking.",
+      "tags": [
+        "kerberos",
+        "hashcat",
+        "parsing",
+        "active-directory"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/kerberos.py:classify_hashcat_hash",
+      "type": "function",
+      "name": "classify_hashcat_hash",
+      "filePath": "raptix/tools/ad/kerberos.py",
+      "lineRange": [
+        57,
+        105
+      ],
+      "summary": "Phân loại chuỗi hash Kerberos sang mode hashcat tương ứng (AS-REP roast, Kerberoast, LM...).",
+      "tags": [
+        "hashcat",
+        "classification",
+        "kerberos"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/kerberos.py:parse_ticket",
+      "type": "function",
+      "name": "parse_ticket",
+      "filePath": "raptix/tools/ad/kerberos.py",
+      "lineRange": [
+        111,
+        142
+      ],
+      "summary": "Parse chuỗi ticket/hash Kerberos thành KerberosTicket kèm phân loại hashcat.",
+      "tags": [
+        "kerberos",
+        "parsing",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:raptix/tools/ad/kerberos.py:KerberosTicket",
+      "type": "class",
+      "name": "KerberosTicket",
+      "filePath": "raptix/tools/ad/kerberos.py",
+      "lineRange": [
+        21,
+        38
+      ],
+      "summary": "Dataclass biểu diễn ticket Kerberos đã parse (user, service, thời gian, loại hash).",
+      "tags": [
+        "data-model",
+        "kerberos",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/tools/ad/shadow_creds.py",
+      "type": "file",
+      "name": "shadow_creds.py",
+      "filePath": "raptix/tools/ad/shadow_creds.py",
+      "summary": "Phát hiện shadow credentials: các principal có quyền Key Credential Link lên đối tượng khác, kỹ thuật leo thang qua certificate.",
+      "tags": [
+        "active-directory",
+        "shadow-credentials",
+        "privilege-escalation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/shadow_creds.py:analyze_shadow_credentials",
+      "type": "function",
+      "name": "analyze_shadow_credentials",
+      "filePath": "raptix/tools/ad/shadow_creds.py",
+      "lineRange": [
+        35,
+        88
+      ],
+      "summary": "Truy vấn KG tìm quan hệ Key Credential Link bất thường và sinh ShadowCredsFinding.",
+      "tags": [
+        "shadow-credentials",
+        "analysis",
+        "privilege-escalation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:raptix/tools/ad/shadow_creds.py:ShadowCredsFinding",
+      "type": "class",
+      "name": "ShadowCredsFinding",
+      "filePath": "raptix/tools/ad/shadow_creds.py",
+      "lineRange": [
+        20,
+        32
+      ],
+      "summary": "Dataclass kết quả phát hiện shadow credentials, hỗ trợ to_dict cho báo cáo.",
+      "tags": [
+        "data-model",
+        "shadow-credentials",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/tools/ad/tools.py",
+      "type": "file",
+      "name": "tools.py",
+      "filePath": "raptix/tools/ad/tools.py",
+      "summary": "Registry các tool LangChain cho domain Active Directory: bọc từng engine phân tích (ADCS, BloodHound, dcsync, GPO...) thành tool JSON-schema cho agent.",
+      "tags": [
+        "tools",
+        "active-directory",
+        "langchain",
+        "entry-point"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:_warn_deprecated",
+      "type": "function",
+      "name": "_warn_deprecated",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        50,
+        55
+      ],
+      "summary": "In cảnh báo deprecation cho các tool AD cũ.",
+      "tags": [
+        "deprecation",
+        "utility",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:_resolve_engagement",
+      "type": "function",
+      "name": "_resolve_engagement",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        62,
+        71
+      ],
+      "summary": "Xác định engagement/workspace hiện tại từ context cho các tool AD.",
+      "tags": [
+        "utility",
+        "engagement",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:bh_ingest_zip",
+      "type": "function",
+      "name": "bh_ingest_zip",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        75,
+        89
+      ],
+      "summary": "Tool bọc ingest_bloodhound_zip: đọc ZIP BloodHound từ sandbox và ingest vào KG.",
+      "tags": [
+        "tool",
+        "bloodhound",
+        "ingest"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:bh_ingest_json",
+      "type": "function",
+      "name": "bh_ingest_json",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        93,
+        112
+      ],
+      "summary": "Tool bọc merge_bloodhound_json: ingest payload BloodHound JSON trực tiếp.",
+      "tags": [
+        "tool",
+        "bloodhound",
+        "json"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:dcsync_check",
+      "type": "function",
+      "name": "dcsync_check",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        116,
+        136
+      ],
+      "summary": "Tool liệt kê ứng viên dcsync từ KG và trả kết quả JSON cho agent.",
+      "tags": [
+        "tool",
+        "dcsync",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:kerberos_classify",
+      "type": "function",
+      "name": "kerberos_classify",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        140,
+        152
+      ],
+      "summary": "Tool phân loại hash Kerberos sang mode hashcat.",
+      "tags": [
+        "tool",
+        "kerberos",
+        "hashcat"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:adcs_audit",
+      "type": "function",
+      "name": "adcs_audit",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        156,
+        170
+      ],
+      "summary": "Tool chạy phân tích ADCS và trả danh sách findings ESC.",
+      "tags": [
+        "tool",
+        "adcs",
+        "audit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:delegation_audit",
+      "type": "function",
+      "name": "delegation_audit",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        174,
+        185
+      ],
+      "summary": "Tool chạy phân tích delegation Kerberos trên KG.",
+      "tags": [
+        "tool",
+        "delegation",
+        "audit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:gpo_audit",
+      "type": "function",
+      "name": "gpo_audit",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        189,
+        199
+      ],
+      "summary": "Tool chạy phân tích lạm dụng GPO trên KG.",
+      "tags": [
+        "tool",
+        "gpo",
+        "audit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:shadow_creds_audit",
+      "type": "function",
+      "name": "shadow_creds_audit",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        203,
+        213
+      ],
+      "summary": "Tool chạy phân tích shadow credentials trên KG.",
+      "tags": [
+        "tool",
+        "shadow-credentials",
+        "audit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/ad/tools.py:adcs_post_process",
+      "type": "function",
+      "name": "adcs_post_process",
+      "filePath": "raptix/tools/ad/tools.py",
+      "lineRange": [
+        217,
+        229
+      ],
+      "summary": "Tool chạy hậu kiểm ADCS (synthesise_adcs_post) và trả thống kê.",
+      "tags": [
+        "tool",
+        "adcs",
+        "post-processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/tools/research/graph.py",
+      "type": "file",
+      "name": "graph.py",
+      "filePath": "raptix/tools/research/graph.py",
+      "summary": "Shim tương thích: chuyển hướng import raptix.tools.research.graph sang KG store mới trong tools.research._state, kèm cảnh báo deprecation.",
+      "tags": [
+        "compatibility",
+        "shim",
+        "knowledge-graph"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/tools/research/graph.py:__getattr__",
+      "type": "function",
+      "name": "__getattr__",
+      "filePath": "raptix/tools/research/graph.py",
+      "lineRange": [
+        19,
+        32
+      ],
+      "summary": "Chuyển hướng thuộc tính truy cập sang module tools.research._state, kèm cảnh báo deprecation.",
+      "tags": [
+        "compatibility",
+        "shim",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/ad/test_ad.py",
+      "type": "file",
+      "name": "test_ad.py",
+      "filePath": "tests/unit/ad/test_ad.py",
+      "summary": "Kiểm thử đơn vị cho phân tích Kerberos ticket (hashcat) và template ADCS trên dữ liệu mẫu.",
+      "tags": [
+        "test",
+        "kerberos",
+        "adcs"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad.py:TestKerberos",
+      "type": "class",
+      "name": "TestKerberos",
+      "filePath": "tests/unit/ad/test_ad.py",
+      "lineRange": [
+        18,
+        39
+      ],
+      "summary": "Bộ kiểm thử parse ticket và phân loại hash Kerberos.",
+      "tags": [
+        "test",
+        "kerberos",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad.py:TestADCS",
+      "type": "class",
+      "name": "TestADCS",
+      "filePath": "tests/unit/ad/test_ad.py",
+      "lineRange": [
+        42,
+        92
+      ],
+      "summary": "Bộ kiểm thử phân tích template ADCS với dữ liệu mẫu.",
+      "tags": [
+        "test",
+        "adcs",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/ad/test_ad_tools.py",
+      "type": "file",
+      "name": "test_ad_tools.py",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "summary": "Kiểm thử cho gpo.py, delegation.py và shadow_creds.py trên graph BloodHound giả lập dựng từ helper node/edge.",
+      "tags": [
+        "test",
+        "gpo",
+        "delegation",
+        "shadow-credentials"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestIsSensitiveOu",
+      "type": "class",
+      "name": "TestIsSensitiveOu",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        73,
+        88
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho IsSensitiveOu.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestGPOFindingToDict",
+      "type": "class",
+      "name": "TestGPOFindingToDict",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        96,
+        111
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho GPOFindingToDict.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestAnalyzeGpoAbuse",
+      "type": "class",
+      "name": "TestAnalyzeGpoAbuse",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        119,
+        262
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AnalyzeGpoAbuse.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestIsDc",
+      "type": "class",
+      "name": "TestIsDc",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        270,
+        285
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho IsDc.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestSpnTargetsDc",
+      "type": "class",
+      "name": "TestSpnTargetsDc",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        288,
+        314
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho SpnTargetsDc.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestDelegationFindingToDict",
+      "type": "class",
+      "name": "TestDelegationFindingToDict",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        322,
+        336
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho DelegationFindingToDict.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestAnalyzeDelegation",
+      "type": "class",
+      "name": "TestAnalyzeDelegation",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        344,
+        491
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AnalyzeDelegation.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestShadowCredsToDict",
+      "type": "class",
+      "name": "TestShadowCredsToDict",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        499,
+        511
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho ShadowCredsToDict.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_ad_tools.py:TestAnalyzeShadowCredentials",
+      "type": "class",
+      "name": "TestAnalyzeShadowCredentials",
+      "filePath": "tests/unit/ad/test_ad_tools.py",
+      "lineRange": [
+        519,
+        638
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AnalyzeShadowCredentials.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_ad_tools"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/ad/test_adcs_post.py",
+      "type": "file",
+      "name": "test_adcs_post.py",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "summary": "Kiểm thử các truy vấn hậu kiểm ADCS (ESC1–ESC13, golden cert, dcsync) trên KGStore giả với fixture Cypher chuẩn.",
+      "tags": [
+        "test",
+        "adcs",
+        "cypher"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:_FakeKGStore",
+      "type": "class",
+      "name": "_FakeKGStore",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        20,
+        87
+      ],
+      "summary": "KGStore giả ghi nhận truy vấn Cypher và trả kết quả fixture cho test hậu kiểm ADCS.",
+      "tags": [
+        "test-double",
+        "fixture",
+        "knowledge-graph"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestPublicSignatures",
+      "type": "class",
+      "name": "TestPublicSignatures",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        93,
+        155
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho PublicSignatures.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestDcsyncQuery",
+      "type": "class",
+      "name": "TestDcsyncQuery",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        161,
+        199
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho DcsyncQuery.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestGoldenCertQuery",
+      "type": "class",
+      "name": "TestGoldenCertQuery",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        205,
+        246
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho GoldenCertQuery.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc1Query",
+      "type": "class",
+      "name": "TestAdcsEsc1Query",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        252,
+        314
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AdcsEsc1Query.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc3Query",
+      "type": "class",
+      "name": "TestAdcsEsc3Query",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        320,
+        387
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AdcsEsc3Query.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc4Query",
+      "type": "class",
+      "name": "TestAdcsEsc4Query",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        393,
+        439
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AdcsEsc4Query.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc6Queries",
+      "type": "class",
+      "name": "TestAdcsEsc6Queries",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        445,
+        497
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AdcsEsc6Queries.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestTrustedForNTAuthQuery",
+      "type": "class",
+      "name": "TestTrustedForNTAuthQuery",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        503,
+        554
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho TrustedForNTAuthQuery.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc13Query",
+      "type": "class",
+      "name": "TestAdcsEsc13Query",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        560,
+        610
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AdcsEsc13Query.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc9Queries",
+      "type": "class",
+      "name": "TestAdcsEsc9Queries",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        616,
+        667
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AdcsEsc9Queries.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_adcs_post.py:TestDefaultStorePath",
+      "type": "class",
+      "name": "TestDefaultStorePath",
+      "filePath": "tests/unit/ad/test_adcs_post.py",
+      "lineRange": [
+        673,
+        691
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho DefaultStorePath.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_adcs_post"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/ad/test_bh_tools.py",
+      "type": "file",
+      "name": "test_bh_tools.py",
+      "filePath": "tests/unit/ad/test_bh_tools.py",
+      "summary": "Kiểm thử ba tool BloodHound CE với transport HTTP giả: status, cypher passthrough và luồng ingest ZIP 3 bước.",
+      "tags": [
+        "test",
+        "bloodhound",
+        "tools"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bh_tools.py:_install_transport",
+      "type": "function",
+      "name": "_install_transport",
+      "filePath": "tests/unit/ad/test_bh_tools.py",
+      "lineRange": [
+        35,
+        46
+      ],
+      "summary": "Hàm _install_transport của test_bh_tools.py.",
+      "tags": [
+        "test",
+        "bloodhound",
+        "bh-tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bh_tools.py:test_bhce_status_returns_version_and_self",
+      "type": "function",
+      "name": "test_bhce_status_returns_version_and_self",
+      "filePath": "tests/unit/ad/test_bh_tools.py",
+      "lineRange": [
+        56,
+        69
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra bhce status returns version and self.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bh_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bh_tools.py:test_bhce_cypher_passthrough",
+      "type": "function",
+      "name": "test_bhce_cypher_passthrough",
+      "filePath": "tests/unit/ad/test_bh_tools.py",
+      "lineRange": [
+        82,
+        97
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra bhce cypher passthrough.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bh_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bh_tools.py:test_bhce_cypher_propagates_bhce_error",
+      "type": "function",
+      "name": "test_bhce_cypher_propagates_bhce_error",
+      "filePath": "tests/unit/ad/test_bh_tools.py",
+      "lineRange": [
+        106,
+        118
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra bhce cypher propagates bhce error.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bh_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bh_tools.py:test_bhce_ingest_zip_runs_three_step_and_polls_until_terminal",
+      "type": "function",
+      "name": "test_bhce_ingest_zip_runs_three_step_and_polls_until_terminal",
+      "filePath": "tests/unit/ad/test_bh_tools.py",
+      "lineRange": [
+        131,
+        168
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra bhce ingest zip runs three step and polls until terminal.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bh_tools"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bh_tools.py:test_bhce_ingest_zip_propagates_start_error",
+      "type": "function",
+      "name": "test_bhce_ingest_zip_propagates_start_error",
+      "filePath": "tests/unit/ad/test_bh_tools.py",
+      "lineRange": [
+        177,
+        190
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra bhce ingest zip propagates start error.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bh_tools"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/ad/test_bhce_client.py",
+      "type": "file",
+      "name": "test_bhce_client.py",
+      "filePath": "tests/unit/ad/test_bhce_client.py",
+      "summary": "Kiểm thử chữ ký HMAC của BHCEClient đối chiếu vector tham chiếu Go: canonical request, query string và giờ khóa theo giờ.",
+      "tags": [
+        "test",
+        "hmac",
+        "signature"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bhce_client.py:test_sign_empty_get_self_matches_go_reference",
+      "type": "function",
+      "name": "test_sign_empty_get_self_matches_go_reference",
+      "filePath": "tests/unit/ad/test_bhce_client.py",
+      "lineRange": [
+        23,
+        34
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra sign empty get self matches go reference.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bhce_client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bhce_client.py:test_sign_post_cypher_with_offset_tz_matches_go_reference",
+      "type": "function",
+      "name": "test_sign_post_cypher_with_offset_tz_matches_go_reference",
+      "filePath": "tests/unit/ad/test_bhce_client.py",
+      "lineRange": [
+        37,
+        47
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra sign post cypher with offset tz matches go reference.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bhce_client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bhce_client.py:test_sign_post_empty_body_negative_offset_matches_go_reference",
+      "type": "function",
+      "name": "test_sign_post_empty_body_negative_offset_matches_go_reference",
+      "filePath": "tests/unit/ad/test_bhce_client.py",
+      "lineRange": [
+        50,
+        59
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra sign post empty body negative offset matches go reference.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bhce_client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bhce_client.py:test_sign_includes_query_string_in_signature",
+      "type": "function",
+      "name": "test_sign_includes_query_string_in_signature",
+      "filePath": "tests/unit/ad/test_bhce_client.py",
+      "lineRange": [
+        65,
+        86
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra sign includes query string in signature.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bhce_client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/ad/test_bhce_client.py:test_signed_call_without_token_raises",
+      "type": "function",
+      "name": "test_signed_call_without_token_raises",
+      "filePath": "tests/unit/ad/test_bhce_client.py",
+      "lineRange": [
+        138,
+        150
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra signed call without token raises.",
+      "tags": [
+        "test",
+        "unit",
+        "test_bhce_client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "type": "file",
+      "name": "test_bloodhound_kgstore.py",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "summary": "Kiểm thử toàn diện việc ingest BloodHound vào KGStore: ACE, session, trust 4 chiều, local group, GPO, user rights, SPN, RootCA, SID history.",
+      "tags": [
+        "test",
+        "bloodhound",
+        "knowledge-graph"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:_FakeKGStore",
+      "type": "class",
+      "name": "_FakeKGStore",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        30,
+        87
+      ],
+      "summary": "KGStore giả thu thập node/edge được ingest để assert ánh xạ BloodHound.",
+      "tags": [
+        "test-double",
+        "fixture",
+        "knowledge-graph"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestPublicSignatures",
+      "type": "class",
+      "name": "TestPublicSignatures",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        93,
+        132
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho PublicSignatures.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestPrimaryGroupSidSynthesis",
+      "type": "class",
+      "name": "TestPrimaryGroupSidSynthesis",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        138,
+        164
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho PrimaryGroupSidSynthesis.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestSessionsDirection",
+      "type": "class",
+      "name": "TestSessionsDirection",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        170,
+        221
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho SessionsDirection.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestContainedByFlip",
+      "type": "class",
+      "name": "TestContainedByFlip",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        227,
+        245
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho ContainedByFlip.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestTrust4WaySplit",
+      "type": "class",
+      "name": "TestTrust4WaySplit",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        251,
+        287
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho Trust4WaySplit.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestMetaMethodsProvenance",
+      "type": "class",
+      "name": "TestMetaMethodsProvenance",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        293,
+        336
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho MetaMethodsProvenance.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestAceEdgeMapping",
+      "type": "class",
+      "name": "TestAceEdgeMapping",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        342,
+        411
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AceEdgeMapping.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestZipIngest",
+      "type": "class",
+      "name": "TestZipIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        417,
+        484
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho ZipIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestAdcsIngest",
+      "type": "class",
+      "name": "TestAdcsIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        490,
+        655
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho AdcsIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestLocalGroupsIngest",
+      "type": "class",
+      "name": "TestLocalGroupsIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        661,
+        819
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho LocalGroupsIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestGpoChangesIngest",
+      "type": "class",
+      "name": "TestGpoChangesIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        825,
+        878
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho GpoChangesIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestUserRightsIngest",
+      "type": "class",
+      "name": "TestUserRightsIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        881,
+        945
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho UserRightsIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestSpnTargetsIngest",
+      "type": "class",
+      "name": "TestSpnTargetsIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        951,
+        979
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho SpnTargetsIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestRootCaForIngest",
+      "type": "class",
+      "name": "TestRootCaForIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        982,
+        1032
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho RootCaForIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestHasSidHistoryIngest",
+      "type": "class",
+      "name": "TestHasSidHistoryIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        1035,
+        1072
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho HasSidHistoryIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestDumpSmsaPasswordIngest",
+      "type": "class",
+      "name": "TestDumpSmsaPasswordIngest",
+      "filePath": "tests/unit/ad/test_bloodhound_kgstore.py",
+      "lineRange": [
+        1075,
+        1098
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho DumpSmsaPasswordIngest.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_bloodhound_kgstore"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:raptix/tools/ad/adcs.py",
+      "target": "function:raptix/tools/ad/adcs.py:_template_analysis",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs.py",
+      "target": "function:raptix/tools/ad/adcs.py:_ca_analysis",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs.py",
+      "target": "function:raptix/tools/ad/adcs.py:analyze_adcs_templates",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs.py",
+      "target": "function:raptix/tools/ad/adcs.py:analyze_adcs_templates",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs.py",
+      "target": "class:raptix/tools/ad/adcs.py:ADCSFinding",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs.py",
+      "target": "class:raptix/tools/ad/adcs.py:ADCSFinding",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs_post.py",
+      "target": "function:raptix/tools/ad/adcs_post.py:synthesise_adcs_post",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs_post.py",
+      "target": "function:raptix/tools/ad/adcs_post.py:synthesise_adcs_post",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs_post.py",
+      "target": "class:raptix/tools/ad/adcs_post.py:PostProcessStats",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs_post.py",
+      "target": "class:raptix/tools/ad/adcs_post.py:PostProcessStats",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "function:raptix/tools/ad/bh_tools.py:_config_error",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "function:raptix/tools/ad/bh_tools.py:bhce_status",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "function:raptix/tools/ad/bh_tools.py:bhce_status",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "function:raptix/tools/ad/bh_tools.py:bhce_cypher",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "function:raptix/tools/ad/bh_tools.py:bhce_cypher",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "function:raptix/tools/ad/bh_tools.py:bhce_ingest_zip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "function:raptix/tools/ad/bh_tools.py:bhce_ingest_zip",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bhce_client.py",
+      "target": "function:raptix/tools/ad/bhce_client.py:_rfc3339_now",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bhce_client.py",
+      "target": "function:raptix/tools/ad/bhce_client.py:sign_request",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bhce_client.py",
+      "target": "function:raptix/tools/ad/bhce_client.py:sign_request",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bhce_client.py",
+      "target": "class:raptix/tools/ad/bhce_client.py:BHCEHTTPError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bhce_client.py",
+      "target": "class:raptix/tools/ad/bhce_client.py:BHCEHTTPError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bhce_client.py",
+      "target": "class:raptix/tools/ad/bhce_client.py:BHCEClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bhce_client.py",
+      "target": "class:raptix/tools/ad/bhce_client.py:BHCEClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_node_kind_for_bh",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_trust_edge_kind",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ensure_placeholder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_object",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_aces",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_memberships",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_delegation_edges",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_sessions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_contained_by",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_child_objects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_gp_links",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_spn_targets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_dump_smsa_password",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_root_ca_for",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_has_sid_history",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_rid_from_local_group_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_local_groups",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_gpo_changes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_user_rights",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_enterprise_ca_edges",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_issuance_policy_link",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_ingest_trusts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_merge_one_payload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_merge_payload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:merge_bloodhound_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:merge_bloodhound_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:ingest_bloodhound_zip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:ingest_bloodhound_zip",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "function:raptix/tools/ad/bloodhound.py:_flush",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "class:raptix/tools/ad/bloodhound.py:ImportStats",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "class:raptix/tools/ad/bloodhound.py:ImportStats",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "class:raptix/tools/ad/bloodhound.py:_IngestState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/dcsync.py",
+      "target": "function:raptix/tools/ad/dcsync.py:dcsync_candidates",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/dcsync.py",
+      "target": "function:raptix/tools/ad/dcsync.py:dcsync_candidates",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/delegation.py",
+      "target": "function:raptix/tools/ad/delegation.py:analyze_delegation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/delegation.py",
+      "target": "function:raptix/tools/ad/delegation.py:analyze_delegation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/delegation.py",
+      "target": "class:raptix/tools/ad/delegation.py:DelegationFinding",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/delegation.py",
+      "target": "class:raptix/tools/ad/delegation.py:DelegationFinding",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/gpo.py",
+      "target": "function:raptix/tools/ad/gpo.py:analyze_gpo_abuse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/gpo.py",
+      "target": "function:raptix/tools/ad/gpo.py:analyze_gpo_abuse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/gpo.py",
+      "target": "class:raptix/tools/ad/gpo.py:GPOFinding",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/gpo.py",
+      "target": "class:raptix/tools/ad/gpo.py:GPOFinding",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/kerberos.py",
+      "target": "function:raptix/tools/ad/kerberos.py:classify_hashcat_hash",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/kerberos.py",
+      "target": "function:raptix/tools/ad/kerberos.py:classify_hashcat_hash",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/kerberos.py",
+      "target": "function:raptix/tools/ad/kerberos.py:parse_ticket",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/kerberos.py",
+      "target": "function:raptix/tools/ad/kerberos.py:parse_ticket",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/kerberos.py",
+      "target": "class:raptix/tools/ad/kerberos.py:KerberosTicket",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/kerberos.py",
+      "target": "class:raptix/tools/ad/kerberos.py:KerberosTicket",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/shadow_creds.py",
+      "target": "function:raptix/tools/ad/shadow_creds.py:analyze_shadow_credentials",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/shadow_creds.py",
+      "target": "function:raptix/tools/ad/shadow_creds.py:analyze_shadow_credentials",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/shadow_creds.py",
+      "target": "class:raptix/tools/ad/shadow_creds.py:ShadowCredsFinding",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/shadow_creds.py",
+      "target": "class:raptix/tools/ad/shadow_creds.py:ShadowCredsFinding",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:_warn_deprecated",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:_resolve_engagement",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:bh_ingest_zip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:bh_ingest_zip",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:bh_ingest_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:bh_ingest_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:dcsync_check",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:dcsync_check",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:kerberos_classify",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:kerberos_classify",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:adcs_audit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:adcs_audit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:delegation_audit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:delegation_audit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:gpo_audit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:gpo_audit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:shadow_creds_audit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:shadow_creds_audit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:adcs_post_process",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "function:raptix/tools/ad/tools.py:adcs_post_process",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/tools/research/graph.py",
+      "target": "function:raptix/tools/research/graph.py:__getattr__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad.py",
+      "target": "class:tests/unit/ad/test_ad.py:TestKerberos",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad.py",
+      "target": "class:tests/unit/ad/test_ad.py:TestADCS",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestIsSensitiveOu",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestGPOFindingToDict",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestAnalyzeGpoAbuse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestIsDc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestSpnTargetsDc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestDelegationFindingToDict",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestAnalyzeDelegation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestShadowCredsToDict",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "class:tests/unit/ad/test_ad_tools.py:TestAnalyzeShadowCredentials",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:_FakeKGStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestPublicSignatures",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestDcsyncQuery",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestGoldenCertQuery",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc1Query",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc3Query",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc4Query",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc6Queries",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestTrustedForNTAuthQuery",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc13Query",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestAdcsEsc9Queries",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "class:tests/unit/ad/test_adcs_post.py:TestDefaultStorePath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bh_tools.py",
+      "target": "function:tests/unit/ad/test_bh_tools.py:_install_transport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bh_tools.py",
+      "target": "function:tests/unit/ad/test_bh_tools.py:test_bhce_status_returns_version_and_self",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bh_tools.py",
+      "target": "function:tests/unit/ad/test_bh_tools.py:test_bhce_cypher_passthrough",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bh_tools.py",
+      "target": "function:tests/unit/ad/test_bh_tools.py:test_bhce_cypher_propagates_bhce_error",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bh_tools.py",
+      "target": "function:tests/unit/ad/test_bh_tools.py:test_bhce_ingest_zip_runs_three_step_and_polls_until_terminal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bh_tools.py",
+      "target": "function:tests/unit/ad/test_bh_tools.py:test_bhce_ingest_zip_propagates_start_error",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bhce_client.py",
+      "target": "function:tests/unit/ad/test_bhce_client.py:test_sign_empty_get_self_matches_go_reference",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bhce_client.py",
+      "target": "function:tests/unit/ad/test_bhce_client.py:test_sign_post_cypher_with_offset_tz_matches_go_reference",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bhce_client.py",
+      "target": "function:tests/unit/ad/test_bhce_client.py:test_sign_post_empty_body_negative_offset_matches_go_reference",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bhce_client.py",
+      "target": "function:tests/unit/ad/test_bhce_client.py:test_sign_includes_query_string_in_signature",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bhce_client.py",
+      "target": "function:tests/unit/ad/test_bhce_client.py:test_signed_call_without_token_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:_FakeKGStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestPublicSignatures",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestPrimaryGroupSidSynthesis",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestSessionsDirection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestContainedByFlip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestTrust4WaySplit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestMetaMethodsProvenance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestAceEdgeMapping",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestZipIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestAdcsIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestLocalGroupsIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestGpoChangesIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestUserRightsIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestSpnTargetsIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestRootCaForIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestHasSidHistoryIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "class:tests/unit/ad/test_bloodhound_kgstore.py:TestDumpSmsaPasswordIngest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/tools/ad/__init__.py",
+      "target": "file:raptix/tools/ad/adcs.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/__init__.py",
+      "target": "file:raptix/tools/ad/bloodhound.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/__init__.py",
+      "target": "file:raptix/tools/ad/dcsync.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/__init__.py",
+      "target": "file:raptix/tools/ad/delegation.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/__init__.py",
+      "target": "file:raptix/tools/ad/gpo.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/__init__.py",
+      "target": "file:raptix/tools/ad/kerberos.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/__init__.py",
+      "target": "file:raptix/tools/ad/shadow_creds.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs_post.py",
+      "target": "file:raptix/middleware/kg_internal/store.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "file:raptix/tools/ad/bhce_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "file:raptix/middleware/kg_internal/store.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/delegation.py",
+      "target": "file:raptix/tools/research/graph.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/gpo.py",
+      "target": "file:raptix/tools/research/graph.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/shadow_creds.py",
+      "target": "file:raptix/tools/research/graph.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/adcs.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/adcs_post.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/bh_tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/bloodhound.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/dcsync.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/delegation.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/gpo.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/kerberos.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/ad/shadow_creds.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/research/_engagement_scope.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/tools.py",
+      "target": "file:raptix/tools/research/_state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad.py",
+      "target": "file:raptix/tools/ad/adcs.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad.py",
+      "target": "file:raptix/tools/ad/kerberos.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "file:raptix/tools/ad/delegation.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "file:raptix/tools/ad/gpo.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_ad_tools.py",
+      "target": "file:raptix/tools/ad/shadow_creds.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_adcs_post.py",
+      "target": "file:raptix/tools/ad/adcs_post.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_bh_tools.py",
+      "target": "file:raptix/tools/ad/bh_tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_bhce_client.py",
+      "target": "file:raptix/tools/ad/bhce_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "target": "file:raptix/tools/ad/bloodhound.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs.py",
+      "target": "file:tests/unit/ad/test_ad.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/tools/ad/kerberos.py",
+      "target": "file:tests/unit/ad/test_ad.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/tools/ad/delegation.py",
+      "target": "file:tests/unit/ad/test_ad_tools.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/tools/ad/gpo.py",
+      "target": "file:tests/unit/ad/test_ad_tools.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/tools/ad/shadow_creds.py",
+      "target": "file:tests/unit/ad/test_ad_tools.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/tools/ad/adcs_post.py",
+      "target": "file:tests/unit/ad/test_adcs_post.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/tools/ad/bh_tools.py",
+      "target": "file:tests/unit/ad/test_bh_tools.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/tools/ad/bhce_client.py",
+      "target": "file:tests/unit/ad/test_bhce_client.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/tools/ad/bloodhound.py",
+      "target": "file:tests/unit/ad/test_bloodhound_kgstore.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "function:raptix/tools/ad/tools.py:adcs_audit",
+      "target": "function:raptix/tools/ad/adcs.py:analyze_adcs_templates",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/tools.py:bh_ingest_zip",
+      "target": "function:raptix/tools/ad/bloodhound.py:ingest_bloodhound_zip",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/tools.py:dcsync_check",
+      "target": "function:raptix/tools/ad/dcsync.py:dcsync_candidates",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/tools.py:kerberos_classify",
+      "target": "function:raptix/tools/ad/kerberos.py:classify_hashcat_hash",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/tools.py:delegation_audit",
+      "target": "function:raptix/tools/ad/delegation.py:analyze_delegation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/tools.py:gpo_audit",
+      "target": "function:raptix/tools/ad/gpo.py:analyze_gpo_abuse",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/tools.py:shadow_creds_audit",
+      "target": "function:raptix/tools/ad/shadow_creds.py:analyze_shadow_credentials",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/tools.py:adcs_post_process",
+      "target": "function:raptix/tools/ad/adcs_post.py:synthesise_adcs_post",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/bh_tools.py:bhce_ingest_zip",
+      "target": "class:raptix/tools/ad/bhce_client.py:BHCEClient",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/bh_tools.py:bhce_status",
+      "target": "class:raptix/tools/ad/bhce_client.py:BHCEClient",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/tools/ad/adcs_post.py:synthesise_adcs_post",
+      "target": "class:raptix/middleware/kg_internal/store.py:KGStore",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+\babel@toc {vietnamese}{}\relax 
+\contentsline {section}{Lời cảm ơn}{2}{section*.2}%
+\contentsline {section}{\numberline {1}Giới thiệu chung}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Giới thiệu đơn vị thực tập}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Giới thiệu công việc}{3}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Giới thiệu bài toán}{4}{subsection.1.3}%
+\contentsline {section}{\numberline {2}Yêu cầu bài toán}{6}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Phạm vi và đối tượng}{6}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Yêu cầu chức năng và phi chức năng}{6}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Phạm vi công việc cá nhân}{7}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Tiêu chí đánh giá}{8}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Tóm tắt lý thuyết, giải pháp và cách giải quyết}{9}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Khảo sát các hệ thống liên quan}{9}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Decepticon -- Red team agent đa tác tử}{9}{subsubsection.3.1.1}%
+\contentsline {paragraph}{Kiến trúc đa tác tử theo pha kill chain}{9}{section*.5}%
+\contentsline {paragraph}{Knowledge graph và attack chain planning}{10}{section*.6}%
+\contentsline {paragraph}{Sandbox và hạn chế}{10}{section*.7}%
+\contentsline {subsubsection}{\numberline {3.1.2}Incalmo -- Red team đa host với LLM hỗ trợ}{11}{subsubsection.3.1.2}%
+\contentsline {paragraph}{Tách biệt planning và execution}{11}{section*.8}%
+\contentsline {paragraph}{Auxiliary services, kết quả và hạn chế}{11}{section*.9}%
+\contentsline {subsubsection}{\numberline {3.1.3}Tham chiếu từ các hệ thống pentest}{12}{subsubsection.3.1.3}%
+\contentsline {subsection}{\numberline {3.2}Kiến trúc và cách giải quyết đề xuất}{12}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Kiến trúc tổng thể Raptix}{12}{subsubsection.3.2.1}%
+\contentsline {paragraph}{Năm lớp chức năng}{12}{section*.10}%
+\contentsline {paragraph}{Sơ đồ luồng xử lý}{13}{figure.caption.12}%
+\contentsline {paragraph}{Nguyên tắc thiết kế}{13}{section*.13}%
+\contentsline {subsubsection}{\numberline {3.2.2}Attack Knowledge Graph (AKG)}{14}{subsubsection.3.2.2}%
+\contentsline {paragraph}{Các loại node trong AKG}{14}{section*.14}%
+\contentsline {paragraph}{Các loại cạnh trong AKG}{15}{section*.16}%
+\contentsline {paragraph}{Ví dụ một đoạn AKG}{15}{figure.caption.19}%
+\contentsline {paragraph}{Cơ chế cập nhật và tính nhất quán}{15}{section*.20}%
+\contentsline {paragraph}{Ba invariant của AKG}{15}{section*.21}%
+\contentsline {paragraph}{Lựa chọn backend}{16}{section*.22}%
+\contentsline {subsubsection}{\numberline {3.2.3}Mô hình khai thác hai pha}{16}{subsubsection.3.2.3}%
+\contentsline {paragraph}{Pha 1 - Initial Foothold}{16}{section*.23}%
+\contentsline {paragraph}{Pha 2 - Network Propagation}{16}{section*.24}%
+\contentsline {paragraph}{Cơ chế chuyển pha}{16}{section*.25}%
+\contentsline {paragraph}{Tận dụng AKG cho attack vector reasoning}{17}{section*.26}%
+\contentsline {paragraph}{So sánh hai pha}{17}{table.caption.29}%
+\contentsline {subsection}{\numberline {3.3}Thiết kế benchmark}{18}{subsection.3.3}%
+\contentsline {paragraph}{Động cơ thiết kế}{18}{section*.30}%
+\contentsline {subsection}{\numberline {3.4}Liên hệ và so sánh với các cách đã có}{20}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Mô tả phần mềm cài đặt}{21}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Môi trường phát triển và tổ chức mã nguồn}{21}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Các artifact phục vụ phát triển}{22}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Quy trình thử nghiệm thiết kế cho Raptix}{22}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Kết quả đạt được và hướng phát triển}{23}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Kết quả và kỹ năng thu được}{23}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Hạn chế và hướng phát triển}{24}{subsection.5.2}%
+\contentsline {section}{References}{25}{section*.47}%

@@ -1,0 +1,14 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "containers/sliver-bridge/Dockerfile",
+      "language": "dockerfile",
+      "sizeLines": 27,
+      "fileCategory": "infra"
+    }
+  ],
+  "batchImportData": {
+    "containers/sliver-bridge/Dockerfile": []
+  }
+}

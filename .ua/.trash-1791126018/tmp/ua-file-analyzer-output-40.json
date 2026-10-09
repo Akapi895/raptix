@@ -1,0 +1,2116 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 9,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 9,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "benchmark/cve_bench/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 7,
+      "nonEmptyLines": 6,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "benchmark/cve_bench/dry_run.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 92,
+      "nonEmptyLines": 76,
+      "functions": [
+        {
+          "name": "mock_agent",
+          "startLine": 49,
+          "endLine": 54,
+          "params": [
+            "challenge"
+          ]
+        },
+        {
+          "name": "main",
+          "startLine": 57,
+          "endLine": 88,
+          "params": [
+            "argv"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "mock_agent",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 57,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "mock_agent",
+          "callee": "dict",
+          "lineNumber": 51
+        },
+        {
+          "caller": "mock_agent",
+          "callee": "_CANNED.get",
+          "lineNumber": 51
+        },
+        {
+          "caller": "main",
+          "callee": "argparse.ArgumentParser",
+          "lineNumber": 58
+        },
+        {
+          "caller": "main",
+          "callee": "p.add_argument",
+          "lineNumber": 59
+        },
+        {
+          "caller": "main",
+          "callee": "p.add_argument",
+          "lineNumber": 60
+        },
+        {
+          "caller": "main",
+          "callee": "p.add_argument",
+          "lineNumber": 61
+        },
+        {
+          "caller": "main",
+          "callee": "p.parse_args",
+          "lineNumber": 62
+        },
+        {
+          "caller": "main",
+          "callee": "date.today().isoformat",
+          "lineNumber": 64
+        },
+        {
+          "caller": "main",
+          "callee": "date.today",
+          "lineNumber": 64
+        },
+        {
+          "caller": "main",
+          "callee": "os.environ.get",
+          "lineNumber": 65
+        },
+        {
+          "caller": "main",
+          "callee": "str",
+          "lineNumber": 65
+        },
+        {
+          "caller": "main",
+          "callee": "warnings.warn",
+          "lineNumber": 68
+        },
+        {
+          "caller": "main",
+          "callee": "RunnerConfig",
+          "lineNumber": 74
+        },
+        {
+          "caller": "main",
+          "callee": "tuple",
+          "lineNumber": 76
+        },
+        {
+          "caller": "main",
+          "callee": "run_batch",
+          "lineNumber": 80
+        },
+        {
+          "caller": "main",
+          "callee": "summarize",
+          "lineNumber": 81
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 82
+        },
+        {
+          "caller": "main",
+          "callee": "json.dumps",
+          "lineNumber": 82
+        },
+        {
+          "caller": "main",
+          "callee": "str",
+          "lineNumber": 82
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 83
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "benchmark/cve_bench/live.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 200,
+      "nonEmptyLines": 174,
+      "functions": [
+        {
+          "name": "_target_url",
+          "startLine": 60,
+          "endLine": 62,
+          "params": [
+            "challenge"
+          ]
+        },
+        {
+          "name": "_workspace_name",
+          "startLine": 65,
+          "endLine": 67,
+          "params": [
+            "challenge"
+          ]
+        },
+        {
+          "name": "_kickoff_prompt",
+          "startLine": 70,
+          "endLine": 90,
+          "params": [
+            "challenge"
+          ]
+        },
+        {
+          "name": "load_evidence",
+          "startLine": 93,
+          "endLine": 107,
+          "params": [
+            "workspace"
+          ]
+        },
+        {
+          "name": "invoke_live_agent",
+          "startLine": 110,
+          "endLine": 168,
+          "params": [
+            "challenge",
+            "config"
+          ]
+        },
+        {
+          "name": "default_agent",
+          "startLine": 171,
+          "endLine": 173,
+          "params": [
+            "challenge"
+          ]
+        },
+        {
+          "name": "main",
+          "startLine": 176,
+          "endLine": 196,
+          "params": [
+            "argv"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "LiveConfig",
+          "startLine": 48,
+          "endLine": 57,
+          "methods": [],
+          "properties": [
+            "langgraph_url",
+            "assistant_id",
+            "timeout_seconds",
+            "workspace_root",
+            "cleanup_workspace"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "LiveConfig",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "_target_url",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "_workspace_name",
+          "line": 65,
+          "isDefault": false
+        },
+        {
+          "name": "_kickoff_prompt",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "load_evidence",
+          "line": 93,
+          "isDefault": false
+        },
+        {
+          "name": "invoke_live_agent",
+          "line": 110,
+          "isDefault": false
+        },
+        {
+          "name": "default_agent",
+          "line": 171,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 176,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_workspace_name",
+          "callee": "challenge.cve_id.lower().replace",
+          "lineNumber": 66
+        },
+        {
+          "caller": "_workspace_name",
+          "callee": "challenge.cve_id.lower",
+          "lineNumber": 66
+        },
+        {
+          "caller": "_workspace_name",
+          "callee": "uuid.uuid4",
+          "lineNumber": 67
+        },
+        {
+          "caller": "_kickoff_prompt",
+          "callee": "\"\\n\".join",
+          "lineNumber": 71
+        },
+        {
+          "caller": "_kickoff_prompt",
+          "callee": "_target_url",
+          "lineNumber": 76
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "path.is_file",
+          "lineNumber": 96
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "RuntimeError",
+          "lineNumber": 97
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "json.loads",
+          "lineNumber": 99
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "path.read_text",
+          "lineNumber": 99
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "RuntimeError",
+          "lineNumber": 101
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "isinstance",
+          "lineNumber": 102
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "RuntimeError",
+          "lineNumber": 103
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "sorted",
+          "lineNumber": 104
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "set",
+          "lineNumber": 104
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "RuntimeError",
+          "lineNumber": 106
+        },
+        {
+          "caller": "load_evidence",
+          "callee": "', '.join",
+          "lineNumber": 106
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "ValueError",
+          "lineNumber": 113
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "_workspace_name",
+          "lineNumber": 114
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "host_workspace.mkdir",
+          "lineNumber": 116
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "str",
+          "lineNumber": 118
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "uuid.uuid4",
+          "lineNumber": 118
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "get_client",
+          "lineNumber": 120
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "client.threads.create",
+          "lineNumber": 122
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "client.runs.create",
+          "lineNumber": 123
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "_kickoff_prompt",
+          "lineNumber": 127
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "_target_url",
+          "lineNumber": 130
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "os.environ.get",
+          "lineNumber": 142
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "str",
+          "lineNumber": 144
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "time.monotonic",
+          "lineNumber": 146
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "client.runs.get",
+          "lineNumber": 148
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "state.get",
+          "lineNumber": 149
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "isinstance",
+          "lineNumber": 149
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "RuntimeError",
+          "lineNumber": 152
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "time.monotonic",
+          "lineNumber": 154
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "TimeoutError",
+          "lineNumber": 155
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "asyncio.sleep",
+          "lineNumber": 156
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "load_evidence",
+          "lineNumber": 157
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "suppress",
+          "lineNumber": 161
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "client.runs.cancel",
+          "lineNumber": 162
+        },
+        {
+          "caller": "invoke_live_agent",
+          "callee": "shutil.rmtree",
+          "lineNumber": 168
+        },
+        {
+          "caller": "default_agent",
+          "callee": "asyncio.run",
+          "lineNumber": 173
+        },
+        {
+          "caller": "default_agent",
+          "callee": "invoke_live_agent",
+          "lineNumber": 173
+        },
+        {
+          "caller": "default_agent",
+          "callee": "LiveConfig",
+          "lineNumber": 173
+        },
+        {
+          "caller": "main",
+          "callee": "argparse.ArgumentParser",
+          "lineNumber": 177
+        },
+        {
+          "caller": "main",
+          "callee": "parser.add_argument",
+          "lineNumber": 180
+        },
+        {
+          "caller": "main",
+          "callee": "parser.add_argument",
+          "lineNumber": 181
+        },
+        {
+          "caller": "main",
+          "callee": "parser.add_argument",
+          "lineNumber": 182
+        },
+        {
+          "caller": "main",
+          "callee": "parser.add_argument",
+          "lineNumber": 183
+        },
+        {
+          "caller": "main",
+          "callee": "parser.parse_args",
+          "lineNumber": 184
+        },
+        {
+          "caller": "main",
+          "callee": "run_batch",
+          "lineNumber": 185
+        },
+        {
+          "caller": "main",
+          "callee": "RunnerConfig",
+          "lineNumber": 186
+        },
+        {
+          "caller": "main",
+          "callee": "tuple",
+          "lineNumber": 189
+        },
+        {
+          "caller": "main",
+          "callee": "summarize",
+          "lineNumber": 194
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 195
+        },
+        {
+          "caller": "main",
+          "callee": "json.dumps",
+          "lineNumber": 195
+        },
+        {
+          "caller": "main",
+          "callee": "str",
+          "lineNumber": 195
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 8,
+        "functionCount": 7,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "benchmark/cve_bench/loader.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 133,
+      "nonEmptyLines": 113,
+      "functions": [
+        {
+          "name": "_parse_yaml",
+          "startLine": 77,
+          "endLine": 81,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "_build",
+          "startLine": 84,
+          "endLine": 105,
+          "params": [
+            "cve_id",
+            "variant",
+            "data"
+          ]
+        },
+        {
+          "name": "load_one",
+          "startLine": 108,
+          "endLine": 118,
+          "params": [
+            "cve_id",
+            "variants",
+            "fixtures_dir"
+          ]
+        },
+        {
+          "name": "load_all",
+          "startLine": 121,
+          "endLine": 133,
+          "params": [
+            "fixtures_dir",
+            "variants"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CVEBenchChallenge",
+          "startLine": 48,
+          "endLine": 74,
+          "methods": [
+            "id",
+            "application_hosts"
+          ],
+          "properties": [
+            "cve_id",
+            "variant",
+            "application_url",
+            "admin_username",
+            "attacker_role",
+            "default_username",
+            "default_password",
+            "denial_of_service_duration",
+            "outbound_service_url",
+            "proof_uploading_url",
+            "remote_code_executable_path",
+            "secret_file_path",
+            "secret_table_name",
+            "additional_info",
+            "raw"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CVEBenchChallenge",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "_parse_yaml",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "_build",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "load_one",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "load_all",
+          "line": 121,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "application_hosts",
+          "callee": "h.strip",
+          "lineNumber": 74
+        },
+        {
+          "caller": "application_hosts",
+          "callee": "self.application_url.split",
+          "lineNumber": 74
+        },
+        {
+          "caller": "application_hosts",
+          "callee": "h.strip",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_parse_yaml",
+          "callee": "yaml.safe_load",
+          "lineNumber": 78
+        },
+        {
+          "caller": "_parse_yaml",
+          "callee": "path.read_text",
+          "lineNumber": 78
+        },
+        {
+          "caller": "_parse_yaml",
+          "callee": "isinstance",
+          "lineNumber": 79
+        },
+        {
+          "caller": "_parse_yaml",
+          "callee": "ValueError",
+          "lineNumber": 80
+        },
+        {
+          "caller": "_parse_yaml",
+          "callee": "type",
+          "lineNumber": 80
+        },
+        {
+          "caller": "_build",
+          "callee": "ValueError",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_build",
+          "callee": "data.get",
+          "lineNumber": 88
+        },
+        {
+          "caller": "_build",
+          "callee": "CVEBenchChallenge",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 92
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 93
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 94
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 96
+        },
+        {
+          "caller": "_build",
+          "callee": "int",
+          "lineNumber": 97
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 99
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 102
+        },
+        {
+          "caller": "_build",
+          "callee": "str",
+          "lineNumber": 103
+        },
+        {
+          "caller": "load_one",
+          "callee": "path.exists",
+          "lineNumber": 115
+        },
+        {
+          "caller": "load_one",
+          "callee": "FileNotFoundError",
+          "lineNumber": 116
+        },
+        {
+          "caller": "load_one",
+          "callee": "_parse_yaml",
+          "lineNumber": 117
+        },
+        {
+          "caller": "load_one",
+          "callee": "_build",
+          "lineNumber": 118
+        },
+        {
+          "caller": "load_all",
+          "callee": "base.is_dir",
+          "lineNumber": 126
+        },
+        {
+          "caller": "load_all",
+          "callee": "FileNotFoundError",
+          "lineNumber": 127
+        },
+        {
+          "caller": "load_all",
+          "callee": "sorted",
+          "lineNumber": 129
+        },
+        {
+          "caller": "load_all",
+          "callee": "base.glob",
+          "lineNumber": 129
+        },
+        {
+          "caller": "load_all",
+          "callee": "_parse_yaml",
+          "lineNumber": 130
+        },
+        {
+          "caller": "load_all",
+          "callee": "out.append",
+          "lineNumber": 132
+        },
+        {
+          "caller": "load_all",
+          "callee": "_build",
+          "lineNumber": 132
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "benchmark/cve_bench/runner.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 83,
+      "nonEmptyLines": 69,
+      "functions": [
+        {
+          "name": "_default_agent",
+          "startLine": 33,
+          "endLine": 39,
+          "params": [
+            "challenge"
+          ]
+        },
+        {
+          "name": "run_one",
+          "startLine": 42,
+          "endLine": 56,
+          "params": [
+            "challenge",
+            "agent",
+            "mode"
+          ]
+        },
+        {
+          "name": "run_batch",
+          "startLine": 59,
+          "endLine": 83,
+          "params": [
+            "cfg",
+            "agent"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RunnerConfig",
+          "startLine": 25,
+          "endLine": 30,
+          "methods": [],
+          "properties": [
+            "fixtures_dir",
+            "variants",
+            "cve_filter",
+            "output_jsonl",
+            "mode"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "RunnerConfig",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "_default_agent",
+          "line": 33,
+          "isDefault": false
+        },
+        {
+          "name": "run_one",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "run_batch",
+          "line": 59,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_default_agent",
+          "callee": "default_agent",
+          "lineNumber": 39
+        },
+        {
+          "caller": "run_one",
+          "callee": "time.monotonic",
+          "lineNumber": 43
+        },
+        {
+          "caller": "run_one",
+          "callee": "agent",
+          "lineNumber": 47
+        },
+        {
+          "caller": "run_one",
+          "callee": "type",
+          "lineNumber": 49
+        },
+        {
+          "caller": "run_one",
+          "callee": "score",
+          "lineNumber": 50
+        },
+        {
+          "caller": "run_one",
+          "callee": "time.monotonic",
+          "lineNumber": 53
+        },
+        {
+          "caller": "run_batch",
+          "callee": "load_all",
+          "lineNumber": 60
+        },
+        {
+          "caller": "run_batch",
+          "callee": "set",
+          "lineNumber": 62
+        },
+        {
+          "caller": "run_batch",
+          "callee": "cfg.output_jsonl.parent.mkdir",
+          "lineNumber": 68
+        },
+        {
+          "caller": "run_batch",
+          "callee": "cfg.output_jsonl.open",
+          "lineNumber": 71
+        },
+        {
+          "caller": "run_batch",
+          "callee": "run_one",
+          "lineNumber": 74
+        },
+        {
+          "caller": "run_batch",
+          "callee": "verdicts.append",
+          "lineNumber": 75
+        },
+        {
+          "caller": "run_batch",
+          "callee": "handle.write",
+          "lineNumber": 77
+        },
+        {
+          "caller": "run_batch",
+          "callee": "json.dumps",
+          "lineNumber": 77
+        },
+        {
+          "caller": "run_batch",
+          "callee": "v.to_dict",
+          "lineNumber": 77
+        },
+        {
+          "caller": "run_batch",
+          "callee": "handle.flush",
+          "lineNumber": 78
+        },
+        {
+          "caller": "run_batch",
+          "callee": "os.fsync",
+          "lineNumber": 79
+        },
+        {
+          "caller": "run_batch",
+          "callee": "handle.fileno",
+          "lineNumber": 79
+        },
+        {
+          "caller": "run_batch",
+          "callee": "handle.close",
+          "lineNumber": 82
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 4,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "benchmark/cve_bench/scorer.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 131,
+      "nonEmptyLines": 102,
+      "functions": [
+        {
+          "name": "_dos",
+          "startLine": 36,
+          "endLine": 39,
+          "params": [
+            "ev",
+            "c"
+          ]
+        },
+        {
+          "name": "_file",
+          "startLine": 42,
+          "endLine": 45,
+          "params": [
+            "ev",
+            "c"
+          ]
+        },
+        {
+          "name": "_rce",
+          "startLine": 48,
+          "endLine": 52,
+          "params": [
+            "ev",
+            "c"
+          ]
+        },
+        {
+          "name": "_dbm",
+          "startLine": 55,
+          "endLine": 56,
+          "params": [
+            "ev",
+            "_c"
+          ]
+        },
+        {
+          "name": "_dba",
+          "startLine": 59,
+          "endLine": 60,
+          "params": [
+            "ev",
+            "c"
+          ]
+        },
+        {
+          "name": "_admin",
+          "startLine": 63,
+          "endLine": 66,
+          "params": [
+            "ev",
+            "c"
+          ]
+        },
+        {
+          "name": "_privesc",
+          "startLine": 69,
+          "endLine": 70,
+          "params": [
+            "ev",
+            "_c"
+          ]
+        },
+        {
+          "name": "_outbound",
+          "startLine": 73,
+          "endLine": 76,
+          "params": [
+            "ev",
+            "c"
+          ]
+        },
+        {
+          "name": "score",
+          "startLine": 91,
+          "endLine": 115,
+          "params": [
+            "challenge",
+            "evidence",
+            "duration_seconds",
+            "error",
+            "mode"
+          ]
+        },
+        {
+          "name": "summarize",
+          "startLine": 118,
+          "endLine": 131,
+          "params": [
+            "verdicts"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "Verdict",
+          "startLine": 19,
+          "endLine": 33,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "cve_id",
+            "variant",
+            "passed",
+            "conditions_met",
+            "evidence_keys",
+            "duration_seconds",
+            "error",
+            "mode",
+            "scored_at"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Verdict",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "_dos",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "_file",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "_rce",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "_dbm",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "_dba",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "_admin",
+          "line": 63,
+          "isDefault": false
+        },
+        {
+          "name": "_privesc",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "_outbound",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "score",
+          "line": 91,
+          "isDefault": false
+        },
+        {
+          "name": "summarize",
+          "line": 118,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "to_dict",
+          "callee": "asdict",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_dos",
+          "callee": "bool",
+          "lineNumber": 37
+        },
+        {
+          "caller": "_dos",
+          "callee": "ev.get",
+          "lineNumber": 37
+        },
+        {
+          "caller": "_dos",
+          "callee": "int",
+          "lineNumber": 37
+        },
+        {
+          "caller": "_dos",
+          "callee": "ev.get",
+          "lineNumber": 37
+        },
+        {
+          "caller": "_dos",
+          "callee": "int",
+          "lineNumber": 37
+        },
+        {
+          "caller": "_file",
+          "callee": "bool",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_file",
+          "callee": "ev.get",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_file",
+          "callee": "str",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_file",
+          "callee": "ev.get",
+          "lineNumber": 44
+        },
+        {
+          "caller": "_rce",
+          "callee": "bool",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_rce",
+          "callee": "ev.get",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_rce",
+          "callee": "str",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_rce",
+          "callee": "ev.get",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_dbm",
+          "callee": "int",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_dbm",
+          "callee": "ev.get",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_dba",
+          "callee": "str",
+          "lineNumber": 60
+        },
+        {
+          "caller": "_dba",
+          "callee": "ev.get",
+          "lineNumber": 60
+        },
+        {
+          "caller": "_admin",
+          "callee": "bool",
+          "lineNumber": 65
+        },
+        {
+          "caller": "_admin",
+          "callee": "ev.get",
+          "lineNumber": 65
+        },
+        {
+          "caller": "_admin",
+          "callee": "str",
+          "lineNumber": 65
+        },
+        {
+          "caller": "_admin",
+          "callee": "ev.get",
+          "lineNumber": 65
+        },
+        {
+          "caller": "_privesc",
+          "callee": "int",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_privesc",
+          "callee": "ev.get",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_privesc",
+          "callee": "int",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_privesc",
+          "callee": "ev.get",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_outbound",
+          "callee": "bool",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_outbound",
+          "callee": "ev.get",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_outbound",
+          "callee": "str",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_outbound",
+          "callee": "ev.get",
+          "lineNumber": 75
+        },
+        {
+          "caller": "score",
+          "callee": "met.append",
+          "lineNumber": 102
+        },
+        {
+          "caller": "score",
+          "callee": "Verdict",
+          "lineNumber": 106
+        },
+        {
+          "caller": "score",
+          "callee": "bool",
+          "lineNumber": 109
+        },
+        {
+          "caller": "score",
+          "callee": "sorted",
+          "lineNumber": 111
+        },
+        {
+          "caller": "score",
+          "callee": "evidence.keys",
+          "lineNumber": 111
+        },
+        {
+          "caller": "summarize",
+          "callee": "len",
+          "lineNumber": 119
+        },
+        {
+          "caller": "summarize",
+          "callee": "sum",
+          "lineNumber": 120
+        },
+        {
+          "caller": "summarize",
+          "callee": "by_cond.get",
+          "lineNumber": 124
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 11,
+        "functionCount": 10,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_cve_bench_live.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 82,
+      "nonEmptyLines": 64,
+      "functions": [
+        {
+          "name": "_challenge",
+          "startLine": 13,
+          "endLine": 28,
+          "params": []
+        },
+        {
+          "name": "test_load_evidence_rejects_unscored_agent_claims",
+          "startLine": 31,
+          "endLine": 37,
+          "params": [
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "startLine": 41,
+          "endLine": 82,
+          "params": [
+            "tmp_path",
+            "monkeypatch"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_challenge",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_evidence_rejects_unscored_agent_claims",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "line": 40,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_challenge",
+          "callee": "CVEBenchChallenge",
+          "lineNumber": 14
+        },
+        {
+          "caller": "test_load_evidence_rejects_unscored_agent_claims",
+          "callee": "(tmp_path / \"cve-bench-evidence.json\").write_text",
+          "lineNumber": 32
+        },
+        {
+          "caller": "test_load_evidence_rejects_unscored_agent_claims",
+          "callee": "json.dumps",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_load_evidence_rejects_unscored_agent_claims",
+          "callee": "pytest.raises",
+          "lineNumber": 36
+        },
+        {
+          "caller": "test_load_evidence_rejects_unscored_agent_claims",
+          "callee": "load_evidence",
+          "lineNumber": 37
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "_challenge",
+          "lineNumber": 44
+        },
+        {
+          "caller": "create",
+          "callee": "workspace.joinpath(\"cve-bench-evidence.json\").write_text",
+          "lineNumber": 54
+        },
+        {
+          "caller": "create",
+          "callee": "workspace.joinpath",
+          "lineNumber": 54
+        },
+        {
+          "caller": "create",
+          "callee": "json.dumps",
+          "lineNumber": 55
+        },
+        {
+          "caller": "cancel",
+          "callee": "AssertionError",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "_Threads",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "_Runs",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "_Client",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 72
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "invoke_live_agent",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "LiveConfig",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_live_dispatch_writes_scored_evidence_from_workspace",
+          "callee": "(tmp_path / workspace_name / \"cve-bench-evidence.json\").is_file",
+          "lineNumber": 82
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_cve_bench_loader.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 98,
+      "nonEmptyLines": 75,
+      "functions": [
+        {
+          "name": "test_win_conditions_match_upstream_readme",
+          "startLine": 20,
+          "endLine": 31,
+          "params": []
+        },
+        {
+          "name": "test_default_fixtures_present",
+          "startLine": 34,
+          "endLine": 36,
+          "params": []
+        },
+        {
+          "name": "test_load_all_default_variants",
+          "startLine": 39,
+          "endLine": 44,
+          "params": []
+        },
+        {
+          "name": "test_load_all_single_variant",
+          "startLine": 47,
+          "endLine": 50,
+          "params": []
+        },
+        {
+          "name": "test_load_one_zabbix_dual_host",
+          "startLine": 53,
+          "endLine": 61,
+          "params": []
+        },
+        {
+          "name": "test_load_one_single_host",
+          "startLine": 64,
+          "endLine": 67,
+          "params": []
+        },
+        {
+          "name": "test_challenge_id_is_stable",
+          "startLine": 70,
+          "endLine": 86,
+          "params": []
+        },
+        {
+          "name": "test_missing_required_key_raises",
+          "startLine": 89,
+          "endLine": 93,
+          "params": [
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_missing_fixture_raises",
+          "startLine": 96,
+          "endLine": 98,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_win_conditions_match_upstream_readme",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "test_default_fixtures_present",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_all_default_variants",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_all_single_variant",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_one_zabbix_dual_host",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_one_single_host",
+          "line": 64,
+          "isDefault": false
+        },
+        {
+          "name": "test_challenge_id_is_stable",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "test_missing_required_key_raises",
+          "line": 89,
+          "isDefault": false
+        },
+        {
+          "name": "test_missing_fixture_raises",
+          "line": 96,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_default_fixtures_present",
+          "callee": "DEFAULT_FIXTURES_DIR.glob",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_load_all_default_variants",
+          "callee": "load_all",
+          "lineNumber": 40
+        },
+        {
+          "caller": "test_load_all_default_variants",
+          "callee": "len",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_load_all_single_variant",
+          "callee": "load_all",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_load_all_single_variant",
+          "callee": "len",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_load_all_single_variant",
+          "callee": "all",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_load_one_zabbix_dual_host",
+          "callee": "load_one",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_load_one_single_host",
+          "callee": "load_one",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_challenge_id_is_stable",
+          "callee": "CVEBenchChallenge",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_missing_required_key_raises",
+          "callee": "bad.write_text",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_missing_required_key_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_missing_required_key_raises",
+          "callee": "load_one",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_missing_fixture_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 97
+        },
+        {
+          "caller": "test_missing_fixture_raises",
+          "callee": "load_one",
+          "lineNumber": 98
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 9,
+        "functionCount": 9,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "tests/test_cve_bench_scorer.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 117,
+      "nonEmptyLines": 89,
+      "functions": [
+        {
+          "name": "_ch",
+          "startLine": 9,
+          "endLine": 10,
+          "params": [
+            "cve"
+          ]
+        },
+        {
+          "name": "test_empty_evidence_fails_all_conditions",
+          "startLine": 13,
+          "endLine": 16,
+          "params": []
+        },
+        {
+          "name": "test_dos_requires_duration_threshold",
+          "startLine": 19,
+          "endLine": 25,
+          "params": []
+        },
+        {
+          "name": "test_file_access_requires_secret_path_match",
+          "startLine": 28,
+          "endLine": 39,
+          "params": []
+        },
+        {
+          "name": "test_rce_requires_exact_pwn_path",
+          "startLine": 42,
+          "endLine": 47,
+          "params": []
+        },
+        {
+          "name": "test_db_modification_any_nonzero",
+          "startLine": 50,
+          "endLine": 52,
+          "params": []
+        },
+        {
+          "name": "test_db_access_checks_secret_table",
+          "startLine": 55,
+          "endLine": 60,
+          "params": []
+        },
+        {
+          "name": "test_admin_login_checks_username_match",
+          "startLine": 63,
+          "endLine": 68,
+          "params": []
+        },
+        {
+          "name": "test_privilege_escalation_requires_strict_increase",
+          "startLine": 71,
+          "endLine": 76,
+          "params": []
+        },
+        {
+          "name": "test_outbound_service_substring_match",
+          "startLine": 79,
+          "endLine": 86,
+          "params": []
+        },
+        {
+          "name": "test_malformed_evidence_does_not_crash",
+          "startLine": 89,
+          "endLine": 92,
+          "params": []
+        },
+        {
+          "name": "test_verdict_serializable_to_dict",
+          "startLine": 95,
+          "endLine": 101,
+          "params": []
+        },
+        {
+          "name": "test_summarize_counts_per_condition",
+          "startLine": 104,
+          "endLine": 117,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_ch",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "test_empty_evidence_fails_all_conditions",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "test_dos_requires_duration_threshold",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "test_file_access_requires_secret_path_match",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "test_rce_requires_exact_pwn_path",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "test_db_modification_any_nonzero",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "test_db_access_checks_secret_table",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "test_admin_login_checks_username_match",
+          "line": 63,
+          "isDefault": false
+        },
+        {
+          "name": "test_privilege_escalation_requires_strict_increase",
+          "line": 71,
+          "isDefault": false
+        },
+        {
+          "name": "test_outbound_service_substring_match",
+          "line": 79,
+          "isDefault": false
+        },
+        {
+          "name": "test_malformed_evidence_does_not_crash",
+          "line": 89,
+          "isDefault": false
+        },
+        {
+          "name": "test_verdict_serializable_to_dict",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "test_summarize_counts_per_condition",
+          "line": 104,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_ch",
+          "callee": "load_one",
+          "lineNumber": 10
+        },
+        {
+          "caller": "test_empty_evidence_fails_all_conditions",
+          "callee": "score",
+          "lineNumber": 14
+        },
+        {
+          "caller": "test_empty_evidence_fails_all_conditions",
+          "callee": "_ch",
+          "lineNumber": 14
+        },
+        {
+          "caller": "test_dos_requires_duration_threshold",
+          "callee": "_ch",
+          "lineNumber": 20
+        },
+        {
+          "caller": "test_dos_requires_duration_threshold",
+          "callee": "score",
+          "lineNumber": 21
+        },
+        {
+          "caller": "test_dos_requires_duration_threshold",
+          "callee": "score",
+          "lineNumber": 23
+        },
+        {
+          "caller": "test_file_access_requires_secret_path_match",
+          "callee": "_ch",
+          "lineNumber": 29
+        },
+        {
+          "caller": "test_file_access_requires_secret_path_match",
+          "callee": "score",
+          "lineNumber": 30
+        },
+        {
+          "caller": "test_file_access_requires_secret_path_match",
+          "callee": "score",
+          "lineNumber": 32
+        },
+        {
+          "caller": "test_rce_requires_exact_pwn_path",
+          "callee": "_ch",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_rce_requires_exact_pwn_path",
+          "callee": "score",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_rce_requires_exact_pwn_path",
+          "callee": "score",
+          "lineNumber": 46
+        },
+        {
+          "caller": "test_db_modification_any_nonzero",
+          "callee": "score",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_db_modification_any_nonzero",
+          "callee": "_ch",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_db_access_checks_secret_table",
+          "callee": "_ch",
+          "lineNumber": 56
+        },
+        {
+          "caller": "test_db_access_checks_secret_table",
+          "callee": "score",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_db_access_checks_secret_table",
+          "callee": "score",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_admin_login_checks_username_match",
+          "callee": "_ch",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_admin_login_checks_username_match",
+          "callee": "score",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_admin_login_checks_username_match",
+          "callee": "score",
+          "lineNumber": 67
+        },
+        {
+          "caller": "test_privilege_escalation_requires_strict_increase",
+          "callee": "_ch",
+          "lineNumber": 72
+        },
+        {
+          "caller": "test_privilege_escalation_requires_strict_increase",
+          "callee": "score",
+          "lineNumber": 73
+        },
+        {
+          "caller": "test_privilege_escalation_requires_strict_increase",
+          "callee": "score",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_outbound_service_substring_match",
+          "callee": "_ch",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_outbound_service_substring_match",
+          "callee": "score",
+          "lineNumber": 81
+        },
+        {
+          "caller": "test_outbound_service_substring_match",
+          "callee": "score",
+          "lineNumber": 83
+        },
+        {
+          "caller": "test_malformed_evidence_does_not_crash",
+          "callee": "score",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_malformed_evidence_does_not_crash",
+          "callee": "_ch",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_malformed_evidence_does_not_crash",
+          "callee": "object",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_verdict_serializable_to_dict",
+          "callee": "score",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_verdict_serializable_to_dict",
+          "callee": "_ch",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_verdict_serializable_to_dict",
+          "callee": "v.to_dict",
+          "lineNumber": 97
+        },
+        {
+          "caller": "test_summarize_counts_per_condition",
+          "callee": "_ch",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_summarize_counts_per_condition",
+          "callee": "score",
+          "lineNumber": 107
+        },
+        {
+          "caller": "test_summarize_counts_per_condition",
+          "callee": "score",
+          "lineNumber": 108
+        },
+        {
+          "caller": "test_summarize_counts_per_condition",
+          "callee": "score",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_summarize_counts_per_condition",
+          "callee": "summarize",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_summarize_counts_per_condition",
+          "callee": "set",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_summarize_counts_per_condition",
+          "callee": "set",
+          "lineNumber": 117
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 13,
+        "functionCount": 13,
+        "classCount": 0
+      }
+    }
+  ]
+}

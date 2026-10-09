@@ -1,0 +1,1144 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 3,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/tools/mcp/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 21,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/mcp/client.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 269,
+      "nonEmptyLines": 226,
+      "functions": [
+        {
+          "name": "_default_transport",
+          "startLine": 106,
+          "endLine": 115,
+          "params": [
+            "entry"
+          ]
+        },
+        {
+          "name": "_parse_one",
+          "startLine": 118,
+          "endLine": 156,
+          "params": [
+            "name",
+            "entry"
+          ]
+        },
+        {
+          "name": "parse_mcp_servers_env",
+          "startLine": 159,
+          "endLine": 191,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "_read_env_servers",
+          "startLine": 194,
+          "endLine": 195,
+          "params": []
+        },
+        {
+          "name": "mcp_servers_configured",
+          "startLine": 198,
+          "endLine": 200,
+          "params": []
+        },
+        {
+          "name": "load_mcp_tools",
+          "startLine": 203,
+          "endLine": 269,
+          "params": [
+            "config"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "MCPServerConfig",
+          "startLine": 65,
+          "endLine": 103,
+          "methods": [
+            "to_client_kwargs"
+          ],
+          "properties": [
+            "name",
+            "transport",
+            "url",
+            "command",
+            "args",
+            "headers"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "MCPServerConfig",
+          "line": 64,
+          "isDefault": false
+        },
+        {
+          "name": "_default_transport",
+          "line": 106,
+          "isDefault": false
+        },
+        {
+          "name": "_parse_one",
+          "line": 118,
+          "isDefault": false
+        },
+        {
+          "name": "parse_mcp_servers_env",
+          "line": 159,
+          "isDefault": false
+        },
+        {
+          "name": "_read_env_servers",
+          "line": 194,
+          "isDefault": false
+        },
+        {
+          "name": "mcp_servers_configured",
+          "line": 198,
+          "isDefault": false
+        },
+        {
+          "name": "load_mcp_tools",
+          "line": 203,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "to_client_kwargs",
+          "callee": "list",
+          "lineNumber": 97
+        },
+        {
+          "caller": "to_client_kwargs",
+          "callee": "dict",
+          "lineNumber": 102
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "isinstance",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "log.warning",
+          "lineNumber": 121
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "type",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "entry.get",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "_default_transport",
+          "lineNumber": 128
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "log.warning",
+          "lineNumber": 130
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "sorted",
+          "lineNumber": 134
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "entry.get",
+          "lineNumber": 139
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "isinstance",
+          "lineNumber": 140
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "log.warning",
+          "lineNumber": 141
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "entry.get",
+          "lineNumber": 144
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "isinstance",
+          "lineNumber": 145
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "log.warning",
+          "lineNumber": 146
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "MCPServerConfig",
+          "lineNumber": 149
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "entry.get",
+          "lineNumber": 152
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "entry.get",
+          "lineNumber": 153
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "tuple",
+          "lineNumber": 154
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "str",
+          "lineNumber": 154
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "str",
+          "lineNumber": 155
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "str",
+          "lineNumber": 155
+        },
+        {
+          "caller": "_parse_one",
+          "callee": "headers_raw.items",
+          "lineNumber": 155
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "raw.strip",
+          "lineNumber": 166
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "json.loads",
+          "lineNumber": 169
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "log.warning",
+          "lineNumber": 171
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "isinstance",
+          "lineNumber": 178
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "log.warning",
+          "lineNumber": 179
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "type",
+          "lineNumber": 182
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "loaded.items",
+          "lineNumber": 187
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "_parse_one",
+          "lineNumber": 188
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "str",
+          "lineNumber": 188
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "parsed.append",
+          "lineNumber": 190
+        },
+        {
+          "caller": "parse_mcp_servers_env",
+          "callee": "tuple",
+          "lineNumber": 191
+        },
+        {
+          "caller": "_read_env_servers",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 195
+        },
+        {
+          "caller": "_read_env_servers",
+          "callee": "os.environ.get",
+          "lineNumber": 195
+        },
+        {
+          "caller": "mcp_servers_configured",
+          "callee": "bool",
+          "lineNumber": 200
+        },
+        {
+          "caller": "mcp_servers_configured",
+          "callee": "_read_env_servers",
+          "lineNumber": 200
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "_read_env_servers",
+          "lineNumber": 216
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "log.warning",
+          "lineNumber": 223
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "srv.to_client_kwargs",
+          "lineNumber": 237
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "range",
+          "lineNumber": 240
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "MultiServerMCPClient",
+          "lineNumber": 242
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "client.get_tools",
+          "lineNumber": 243
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "log.info",
+          "lineNumber": 249
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "type",
+          "lineNumber": 254
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "_sleep",
+          "lineNumber": 258
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "log.warning",
+          "lineNumber": 260
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "type",
+          "lineNumber": 263
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "log.info",
+          "lineNumber": 267
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "len",
+          "lineNumber": 267
+        },
+        {
+          "caller": "load_mcp_tools",
+          "callee": "collected.extend",
+          "lineNumber": 268
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 338,
+      "nonEmptyLines": 264,
+      "functions": [
+        {
+          "name": "_propagate_mcp_logger",
+          "startLine": 28,
+          "endLine": 40,
+          "params": []
+        },
+        {
+          "name": "test_parse_empty_returns_empty_tuple",
+          "startLine": 46,
+          "endLine": 49,
+          "params": []
+        },
+        {
+          "name": "test_parse_two_servers_roundtrip",
+          "startLine": 52,
+          "endLine": 66,
+          "params": []
+        },
+        {
+          "name": "test_parse_default_transport_http_when_url_only",
+          "startLine": 69,
+          "endLine": 72,
+          "params": []
+        },
+        {
+          "name": "test_parse_default_transport_stdio_when_command_present",
+          "startLine": 75,
+          "endLine": 78,
+          "params": []
+        },
+        {
+          "name": "test_parse_malformed_json_returns_empty_and_warns",
+          "startLine": 81,
+          "endLine": 85,
+          "params": [
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_parse_non_object_top_level_returns_empty",
+          "startLine": 88,
+          "endLine": 92,
+          "params": [
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_parse_unknown_transport_is_skipped",
+          "startLine": 95,
+          "endLine": 106,
+          "params": [
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_parse_bad_entry_shape_is_skipped",
+          "startLine": 109,
+          "endLine": 114,
+          "params": [
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_to_client_kwargs_http_includes_url_and_headers",
+          "startLine": 117,
+          "endLine": 129,
+          "params": []
+        },
+        {
+          "name": "test_to_client_kwargs_stdio_includes_command_args",
+          "startLine": 132,
+          "endLine": 141,
+          "params": []
+        },
+        {
+          "name": "test_mcp_servers_configured_false_when_unset",
+          "startLine": 147,
+          "endLine": 149,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_mcp_servers_configured_true_when_set",
+          "startLine": 152,
+          "endLine": 157,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_mcp_tools_no_servers_returns_empty",
+          "startLine": 163,
+          "endLine": 165,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_mcp_tools_malformed_env_returns_empty",
+          "startLine": 168,
+          "endLine": 174,
+          "params": [
+            "monkeypatch",
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_load_mcp_tools_missing_package_is_graceful",
+          "startLine": 177,
+          "endLine": 189,
+          "params": [
+            "monkeypatch",
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "startLine": 192,
+          "endLine": 229,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_mcp_tools_retries_transient_failures",
+          "startLine": 232,
+          "endLine": 271,
+          "params": [
+            "monkeypatch",
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "startLine": 274,
+          "endLine": 307,
+          "params": [
+            "monkeypatch",
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "startLine": 310,
+          "endLine": 338,
+          "params": [
+            "monkeypatch",
+            "caplog"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_propagate_mcp_logger",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "test_parse_empty_returns_empty_tuple",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "test_parse_two_servers_roundtrip",
+          "line": 52,
+          "isDefault": false
+        },
+        {
+          "name": "test_parse_default_transport_http_when_url_only",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "test_parse_default_transport_stdio_when_command_present",
+          "line": 75,
+          "isDefault": false
+        },
+        {
+          "name": "test_parse_malformed_json_returns_empty_and_warns",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "test_parse_non_object_top_level_returns_empty",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "test_parse_unknown_transport_is_skipped",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "test_parse_bad_entry_shape_is_skipped",
+          "line": 109,
+          "isDefault": false
+        },
+        {
+          "name": "test_to_client_kwargs_http_includes_url_and_headers",
+          "line": 117,
+          "isDefault": false
+        },
+        {
+          "name": "test_to_client_kwargs_stdio_includes_command_args",
+          "line": 132,
+          "isDefault": false
+        },
+        {
+          "name": "test_mcp_servers_configured_false_when_unset",
+          "line": 147,
+          "isDefault": false
+        },
+        {
+          "name": "test_mcp_servers_configured_true_when_set",
+          "line": 152,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_mcp_tools_no_servers_returns_empty",
+          "line": 163,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_mcp_tools_malformed_env_returns_empty",
+          "line": 168,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_mcp_tools_missing_package_is_graceful",
+          "line": 177,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "line": 192,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_mcp_tools_retries_transient_failures",
+          "line": 232,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "line": 274,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "line": 310,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_propagate_mcp_logger",
+          "callee": "logging.getLogger",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_parse_empty_returns_empty_tuple",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 47
+        },
+        {
+          "caller": "test_parse_empty_returns_empty_tuple",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_parse_empty_returns_empty_tuple",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_parse_two_servers_roundtrip",
+          "callee": "json.dumps",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_parse_two_servers_roundtrip",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_parse_two_servers_roundtrip",
+          "callee": "len",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_parse_default_transport_http_when_url_only",
+          "callee": "json.dumps",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_parse_default_transport_http_when_url_only",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_parse_default_transport_stdio_when_command_present",
+          "callee": "json.dumps",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_parse_default_transport_stdio_when_command_present",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 77
+        },
+        {
+          "caller": "test_parse_malformed_json_returns_empty_and_warns",
+          "callee": "caplog.at_level",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_parse_malformed_json_returns_empty_and_warns",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 83
+        },
+        {
+          "caller": "test_parse_malformed_json_returns_empty_and_warns",
+          "callee": "any",
+          "lineNumber": 85
+        },
+        {
+          "caller": "test_parse_non_object_top_level_returns_empty",
+          "callee": "caplog.at_level",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_parse_non_object_top_level_returns_empty",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_parse_non_object_top_level_returns_empty",
+          "callee": "json.dumps",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_parse_non_object_top_level_returns_empty",
+          "callee": "any",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_parse_unknown_transport_is_skipped",
+          "callee": "json.dumps",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_parse_unknown_transport_is_skipped",
+          "callee": "caplog.at_level",
+          "lineNumber": 102
+        },
+        {
+          "caller": "test_parse_unknown_transport_is_skipped",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 103
+        },
+        {
+          "caller": "test_parse_unknown_transport_is_skipped",
+          "callee": "any",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_parse_bad_entry_shape_is_skipped",
+          "callee": "json.dumps",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_parse_bad_entry_shape_is_skipped",
+          "callee": "caplog.at_level",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_parse_bad_entry_shape_is_skipped",
+          "callee": "parse_mcp_servers_env",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_parse_bad_entry_shape_is_skipped",
+          "callee": "any",
+          "lineNumber": 114
+        },
+        {
+          "caller": "test_to_client_kwargs_http_includes_url_and_headers",
+          "callee": "MCPServerConfig",
+          "lineNumber": 118
+        },
+        {
+          "caller": "test_to_client_kwargs_http_includes_url_and_headers",
+          "callee": "cfg.to_client_kwargs",
+          "lineNumber": 124
+        },
+        {
+          "caller": "test_to_client_kwargs_stdio_includes_command_args",
+          "callee": "MCPServerConfig",
+          "lineNumber": 133
+        },
+        {
+          "caller": "test_to_client_kwargs_stdio_includes_command_args",
+          "callee": "cfg.to_client_kwargs",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_mcp_servers_configured_false_when_unset",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_mcp_servers_configured_false_when_unset",
+          "callee": "mcp_servers_configured",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_mcp_servers_configured_true_when_set",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 153
+        },
+        {
+          "caller": "test_mcp_servers_configured_true_when_set",
+          "callee": "json.dumps",
+          "lineNumber": 155
+        },
+        {
+          "caller": "test_mcp_servers_configured_true_when_set",
+          "callee": "mcp_servers_configured",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_load_mcp_tools_no_servers_returns_empty",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_load_mcp_tools_no_servers_returns_empty",
+          "callee": "load_mcp_tools",
+          "lineNumber": 165
+        },
+        {
+          "caller": "test_load_mcp_tools_malformed_env_returns_empty",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 171
+        },
+        {
+          "caller": "test_load_mcp_tools_malformed_env_returns_empty",
+          "callee": "caplog.at_level",
+          "lineNumber": 172
+        },
+        {
+          "caller": "test_load_mcp_tools_malformed_env_returns_empty",
+          "callee": "load_mcp_tools",
+          "lineNumber": 173
+        },
+        {
+          "caller": "test_load_mcp_tools_missing_package_is_graceful",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_load_mcp_tools_missing_package_is_graceful",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 184
+        },
+        {
+          "caller": "test_load_mcp_tools_missing_package_is_graceful",
+          "callee": "MCPServerConfig",
+          "lineNumber": 185
+        },
+        {
+          "caller": "test_load_mcp_tools_missing_package_is_graceful",
+          "callee": "caplog.at_level",
+          "lineNumber": 186
+        },
+        {
+          "caller": "test_load_mcp_tools_missing_package_is_graceful",
+          "callee": "load_mcp_tools",
+          "lineNumber": 187
+        },
+        {
+          "caller": "test_load_mcp_tools_missing_package_is_graceful",
+          "callee": "any",
+          "lineNumber": 189
+        },
+        {
+          "caller": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "callee": "object",
+          "lineNumber": 196
+        },
+        {
+          "caller": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "callee": "object",
+          "lineNumber": 196
+        },
+        {
+          "caller": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "callee": "types.ModuleType",
+          "lineNumber": 206
+        },
+        {
+          "caller": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "callee": "types.ModuleType",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 210
+        },
+        {
+          "caller": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "callee": "MCPServerConfig",
+          "lineNumber": 214
+        },
+        {
+          "caller": "test_load_mcp_tools_uses_mock_client_when_package_present",
+          "callee": "load_mcp_tools",
+          "lineNumber": 221
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "object",
+          "lineNumber": 238
+        },
+        {
+          "caller": "get_tools",
+          "callee": "attempts.append",
+          "lineNumber": 246
+        },
+        {
+          "caller": "get_tools",
+          "callee": "len",
+          "lineNumber": 247
+        },
+        {
+          "caller": "get_tools",
+          "callee": "ConnectionError",
+          "lineNumber": 248
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "types.ModuleType",
+          "lineNumber": 251
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "types.ModuleType",
+          "lineNumber": 252
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 255
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 256
+        },
+        {
+          "caller": "_no_sleep",
+          "callee": "sleeps.append",
+          "lineNumber": 261
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 263
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "MCPServerConfig",
+          "lineNumber": 265
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "caplog.at_level",
+          "lineNumber": 266
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "load_mcp_tools",
+          "lineNumber": 267
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "len",
+          "lineNumber": 269
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "len",
+          "lineNumber": 270
+        },
+        {
+          "caller": "test_load_mcp_tools_retries_transient_failures",
+          "callee": "all",
+          "lineNumber": 271
+        },
+        {
+          "caller": "get_tools",
+          "callee": "attempts.append",
+          "lineNumber": 287
+        },
+        {
+          "caller": "get_tools",
+          "callee": "ConnectionError",
+          "lineNumber": 288
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "types.ModuleType",
+          "lineNumber": 290
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "types.ModuleType",
+          "lineNumber": 291
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 294
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 295
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 300
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "MCPServerConfig",
+          "lineNumber": 302
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "caplog.at_level",
+          "lineNumber": 303
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "load_mcp_tools",
+          "lineNumber": 304
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "len",
+          "lineNumber": 306
+        },
+        {
+          "caller": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+          "callee": "any",
+          "lineNumber": 307
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "object",
+          "lineNumber": 313
+        },
+        {
+          "caller": "get_tools",
+          "callee": "ConnectionError",
+          "lineNumber": 321
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "types.ModuleType",
+          "lineNumber": 324
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "types.ModuleType",
+          "lineNumber": 325
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 328
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 329
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "MCPServerConfig",
+          "lineNumber": 332
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "MCPServerConfig",
+          "lineNumber": 333
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "caplog.at_level",
+          "lineNumber": 335
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "load_mcp_tools",
+          "lineNumber": 336
+        },
+        {
+          "caller": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+          "callee": "any",
+          "lineNumber": 338
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 20,
+        "functionCount": 20,
+        "classCount": 0
+      }
+    }
+  ]
+}

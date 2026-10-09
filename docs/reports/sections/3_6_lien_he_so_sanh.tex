@@ -1,0 +1,23 @@
+% =====================================================================
+%  File: sections/3_6_lien_he_so_sanh.tex
+%  Mục đích: Phần 3.6 - Liên hệ và so sánh với các cách đã có
+% =====================================================================
+
+\subsection{Liên hệ và so sánh với các cách đã có}
+\label{sec:lien-he-so-sanh}
+
+Sau khi trình bày kiến trúc và cách giải quyết đề xuất, phần này đặt Raptix trong tương quan với các hệ thống đã khảo sát ở phần~\ref{sec:khao-sat-he-thong}, đồng thời so sánh với hai cách tiếp cận phổ biến khác trong lĩnh vực tự động hóa an toàn thông tin: prompt-only LLM và scanner truyền thống. Mục tiêu của phần này không phải là khẳng định Raptix vượt trội hơn tất cả, mà là làm rõ \emph{đóng góp cụ thể} của thiết kế đề xuất so với từng nhóm giải pháp đã có.
+
+\subsubsection*{Kế thừa và điều chỉnh từ các hệ thống tham chiếu}
+
+Raptix kế thừa kiến trúc multi-agent theo kill chain và sandbox biệt lập của \textbf{Decepticon}~\cite{decepticon} (bổ sung AKG hợp nhất và cơ chế chuyển pha tường minh), tiếp thu nguyên tắc tách planning/execution và auxiliary services của \textbf{Incalmo}~\cite{incalmo} (mở rộng thành hai pha và bổ sung verifier độc lập), và học hỏi pattern verification-centric từ \textbf{Pentest-AI}~\cite{pentestai} (mở rộng sang nhiều loại target, tích hợp vào finding lifecycle). CyberStrikeAI~\cite{cyberstrike} và Strix~\cite{strix} cung cấp pattern về MCP/tool registry và skill-as-document.
+
+\subsubsection*{So sánh với prompt-only LLM}
+
+Cách tiếp cận prompt-only (cấp quyền shell cho LLM rồi để tự quyết định) triển khai nhanh nhưng có ba hạn chế căn bản: (i) thiếu state persistence — sau nhiều bước, thông tin cũ bị ``trôi dạt'', agent lặp lại hành động hoặc giả định sai; (ii) không phân biệt fact với hypothesis — không có verifier độc lập; (iii) không tái lập được — cùng prompt cho kết quả rất khác nhau giữa các run. Raptix giải quyết ba điểm này bằng AKG (nguồn sự thật duy nhất), finding lifecycle với verifier, và quy trình benchmark có pin baseline.
+
+\subsubsection*{Đóng góp chính của hướng thiết kế}
+
+Ba đóng góp chính của Raptix: (i) \textbf{AKG hợp nhất} — thay vì tách findings khỏi workspace (Decepticon~\cite{decepticon}) hoặc tách environment state khỏi attack graph (Incalmo~\cite{incalmo}), AKG Raptix hợp nhất tất cả thực thể vào một đồ thị duy nhất; (ii) \textbf{mô hình hai pha với chuyển pha tường minh} — kết hợp phân chia sub-agent theo pha của Decepticon~\cite{decepticon} với declarative task của Incalmo~\cite{incalmo}, bổ sung cơ chế chuyển pha dựa trên state AKG; (iii) \textbf{verification tích hợp vào finding lifecycle} — mở rộng verifier/oracle của Pentest-AI~\cite{pentestai} từ web sang nhiều loại target, tích hợp trực tiếp vào AKG (candidate $\rightarrow$ validated $\rightarrow$ verified $\rightarrow$ reported).
+
+

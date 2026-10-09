@@ -1,0 +1,310 @@
+[
+ {
+  "id": "file:packages/raptix/raptix/agents/build.py",
+  "type": "file",
+  "name": "build.py",
+  "filePath": "packages/raptix/raptix/agents/build.py",
+  "summary": "Trái tim của quá trình dựng agent: hợp nhất middleware và công cụ theo từng vai trò, áp dụng ghi đè từ PluginBundle và chặn thay đổi nguy hiểm qua cổng an toàn. Cung cấp build_middleware, build_tools cùng các hàm phân giải prompt và model.",
+  "tags": [
+   "factory",
+   "middleware",
+   "plugin",
+   "an-toàn",
+   "cổng-bảo-vệ",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+  "type": "file",
+  "name": "decepticon.py",
+  "filePath": "packages/raptix/raptix/agents/standard/decepticon.py",
+  "summary": "Agent điều phối red-team tự động: dựng OPPLAN từ tài liệu RoE và CONOPS có sẵn rồi thực thi kill chain bằng cách ủy thác cho các sub-agent chuyên biệt.",
+  "tags": [
+   "điều-phối",
+   "tác-nhân-ai",
+   "red-team",
+   "opplan"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/agents/standard/recon.py",
+  "type": "file",
+  "name": "recon.py",
+  "filePath": "packages/raptix/raptix/agents/standard/recon.py",
+  "summary": "Agent trinh sát tự động: thu thập tình báo, tra cứu killchain và oneliner, tìm kiếm web mở có kiểm soát RoE rồi ghi finding ra file để middleware KG ingest sau.",
+  "tags": [
+   "tác-nhân-ai",
+   "trinh-sát",
+   "thu-thập",
+   "tình-báo"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/tools/__init__.py",
+  "type": "file",
+  "name": "__init__.py",
+  "filePath": "packages/raptix/raptix/tools/__init__.py",
+  "summary": "Barrel tổng hợp toàn bộ công cụ của agent: gom BASH, research, contracts, web, cloud, AD, evidence và reporting thành một registry duy nhất.",
+  "tags": [
+   "barrel",
+   "tool-registry",
+   "entry-point",
+   "agent-tools"
+  ]
+ },
+ {
+  "id": "file:clients/launcher/main.go",
+  "type": "file",
+  "name": "main.go",
+  "filePath": "clients/launcher/main.go",
+  "summary": "Điểm vào của launcher, ủy quyền toàn bộ xử lý cho lệnh gốc của CLI.",
+  "tags": [
+   "entry-point",
+   "launcher",
+   "cli"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/cli/__init__.py",
+  "type": "file",
+  "name": "__init__.py",
+  "filePath": "packages/raptix/raptix/cli/__init__.py",
+  "summary": "Barrel CLI headless của Raptix (python -m raptix.cli): re-export scan_main cho môi trường CI không cần binary Go.",
+  "tags": [
+   "barrel",
+   "cli",
+   "entry-point",
+   "headless",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/llm/factory.py",
+  "type": "file",
+  "name": "factory.py",
+  "filePath": "packages/raptix/raptix/llm/factory.py",
+  "summary": "Factory LLM qua LiteLLM proxy: ánh xạ role sang model, quản lý credentials đa phương thức (API key, OAuth, local), fallback, kiểm tra sức khỏe và che giấu secret.",
+  "tags": [
+   "llm-factory",
+   "litellm-proxy",
+   "model-routing",
+   "credentials",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:clients/web-raptix/src/main.tsx",
+  "type": "file",
+  "name": "main.tsx",
+  "filePath": "clients/web-raptix/src/main.tsx",
+  "summary": "Diem vao trinh duyet: mount App vao #root kem index.css, cau noi giua index.html va cay React.",
+  "tags": [
+   "entry-point",
+   "khoi-dong",
+   "react",
+   "vite"
+  ]
+ },
+ {
+  "id": "file:packages/raptix-core/raptix_core/__init__.py",
+  "type": "file",
+  "name": "__init__.py",
+  "filePath": "packages/raptix-core/raptix_core/__init__.py",
+  "summary": "Barrel lop hop dong raptix-core: tai xuat contracts/plugin_loader/protocols/registry/types/utils va anh xa bien moi truong legacy, cam import langchain/langgraph/http/fastapi.",
+  "tags": [
+   "barrel",
+   "hop-dong",
+   "entry-point",
+   "plugin"
+  ]
+ },
+ {
+  "id": "file:clients/cli/src/index.tsx",
+  "type": "file",
+  "name": "index.tsx",
+  "filePath": "clients/cli/src/index.tsx",
+  "summary": "Điểm vào CLI: render App Ink với patchConsole, hỗ trợ cờ --resume và RAPTIX_INITIAL_MESSAGE.",
+  "tags": [
+   "entry-point",
+   "cli",
+   "ink"
+  ]
+ },
+ {
+  "id": "file:benchmark/harness.py",
+  "type": "file",
+  "name": "harness.py",
+  "filePath": "benchmark/harness.py",
+  "summary": "Harness chạy challenge: gọi docker, dựng kickoff prompt, cộng token usage, truy vấn cost và provision workspace.",
+  "tags": [
+   "harness",
+   "benchmark",
+   "thực-thi",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/runtime/recording.py",
+  "type": "file",
+  "name": "recording.py",
+  "filePath": "packages/raptix/raptix/runtime/recording.py",
+  "summary": "Lớp ghi/phát lại xác định cho re-execution: chuẩn hóa request, băm transcript, RecordingMiddleware và ReplayMiddleware tái hiện run.",
+  "tags": [
+   "recording",
+   "replay",
+   "runtime",
+   "deterministic",
+   "middleware",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix-sdk/raptix_sdk/__init__.py",
+  "type": "file",
+  "name": "__init__.py",
+  "filePath": "packages/raptix-sdk/raptix_sdk/__init__.py",
+  "summary": "Entrypoint tác giả plugin của raptix-sdk: re-export toàn bộ API public raptix-core (protocols, contributions, slots, plugin loader, registries) qua một import duy nhất, không cần đụng internals có ti�n tố gạch dưới.",
+  "tags": [
+   "sdk",
+   "public-api",
+   "re-export"
+  ]
+ },
+ {
+  "id": "document:README.md",
+  "type": "document",
+  "name": "README.md",
+  "filePath": "README.md",
+  "summary": "Trang chủ dự án: giới thiệu Raptix là autonomous red team agent, hướng dẫn cài đặt (install script, pip SDK), kết quả benchmark XBOW 102/104, kiến trúc hai mạng (raptix-net/sandbox-net), roster 16 agents, model profile eco/max/test và bản đồ tài liệu.",
+  "tags": [
+   "documentation",
+   "entry-point",
+   "overview",
+   "readme"
+  ]
+ },
+ {
+  "id": "service:docker-compose.yml",
+  "type": "service",
+  "name": "docker-compose.yml",
+  "filePath": "docker-compose.yml",
+  "summary": "Compose chính của stack: 12 service trên hai mạng raptix-net (management) và sandbox-net (operational) — litellm gateway, postgres, neo4j KG (dual-homed, APOC allowlist), sandbox Kali harden (cap_drop ALL, no-new-privileges), langgraph platform, cli, skillogy skill-retrieval, c2-sliver và bộ BHCE (BloodHound CE) profile-based; kèm x-logging rotation và healthcheck chi tiết.",
+  "tags": [
+   "docker-compose",
+   "orchestration",
+   "infrastructure",
+   "security"
+  ]
+ },
+ {
+  "id": "document:docs/getting-started.md",
+  "type": "document",
+  "name": "getting-started.md",
+  "filePath": "docs/getting-started.md",
+  "summary": "Khởi động nhanh Raptix: prerequisites (Docker, key LLM), cài đặt, cấu hình qua wizard, launch stack, chạy engagement đầu tiên, dừng services và kiểm tra trạng thái service, cùng gợi ý bước tiếp theo.",
+  "tags": [
+   "getting-started",
+   "install",
+   "quickstart"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/skills/__init__.py",
+  "type": "file",
+  "name": "__init__.py",
+  "filePath": "packages/raptix/raptix/skills/__init__.py",
+  "summary": "Package raptix.skills: subpackage defs (skill definition data: standard/shared/plugins/benchmark), engine (skill-graph service: builder + server + client + proto, cũ là raptix.skillogy) và audit (skill definition auditing); dump Cypher sinh ra tại skills/.graph/skills.cypher.",
+  "tags": [
+   "skills",
+   "package",
+   "docstring"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/middleware/kg.py",
+  "type": "file",
+  "name": "kg.py",
+  "filePath": "packages/raptix/raptix/middleware/kg.py",
+  "summary": "Middleware đồ thị tấn công trên Neo4j cho agent: hydrate engagement, gắn công cụ kg_record/kg_ingest và chèn tóm tắt đồ thị vào system prompt.",
+  "tags": [
+   "kg",
+   "middleware",
+   "neo4j",
+   "attack-graph",
+   "prompt-injection",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/middleware/kg_internal/store.py",
+  "type": "file",
+  "name": "store.py",
+  "filePath": "packages/raptix/raptix/middleware/kg_internal/store.py",
+  "summary": "Bao bọc Neo4j theo phạm vi engagement cho KG: ghi/đọc theo phiên, gắn provenance tự động và ép nhãn quan hệ an toàn.",
+  "tags": [
+   "kg",
+   "neo4j",
+   "store",
+   "provenance",
+   "engagement-scope",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/cli/__main__.py",
+  "type": "file",
+  "name": "__main__.py",
+  "filePath": "packages/raptix/raptix/cli/__main__.py",
+  "summary": "Bộ điều phối CLI headless: định tuyến 6 subcommand scan/auth/audit/zip/export-transcript/telemetry về hàm main tương ứng.",
+  "tags": [
+   "cli",
+   "dispatcher",
+   "subcommands",
+   "entry-point",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/middleware/roe.py",
+  "type": "file",
+  "name": "roe.py",
+  "filePath": "packages/raptix/raptix/middleware/roe.py",
+  "summary": "Cổng RoE cố vấn phân tích lệnh: đánh giá mọi bash/tool theo machine_enforcement của roe.json với PASS/WARN/REFUSE, ghi ledger audit.",
+  "tags": [
+   "roe",
+   "guardrail",
+   "policy-enforcement",
+   "audit",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/middleware/hitl.py",
+  "type": "file",
+  "name": "hitl.py",
+  "filePath": "packages/raptix/raptix/middleware/hitl.py",
+  "summary": "Middleware phê duyệt con người (HITL) cho tool high-impact: khớp policy theo ATT&CK/tool-name, phát ApprovalRequest qua transport và áp allow/deny/redirect.",
+  "tags": [
+   "hitl",
+   "approval",
+   "high-impact",
+   "safety-gate",
+   "tested"
+  ]
+ },
+ {
+  "id": "file:packages/raptix/raptix/middleware/dispatch.py",
+  "type": "file",
+  "name": "dispatch.py",
+  "filePath": "packages/raptix/raptix/middleware/dispatch.py",
+  "summary": "Middleware điều phối task bền vững: giữ ledger dispatch theo biên tác vụ, không triệt tiêu retry toàn role, bọc tool task/atask.",
+  "tags": [
+   "dispatch",
+   "subagent",
+   "task-ledger",
+   "reliability",
+   "tested"
+  ]
+ }
+]

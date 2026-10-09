@@ -1,0 +1,49 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "clients/web-raptix/docs/design-reference/imports/d3-visualization.md",
+   "language": "markdown",
+   "sizeLines": 62,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/docs/design-reference/imports/design-md.md",
+   "language": "markdown",
+   "sizeLines": 108,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/docs/design-reference/imports/product-design-and-ux.md",
+   "language": "markdown",
+   "sizeLines": 67,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/docs/design-reference/imports/ui-animation.md",
+   "language": "markdown",
+   "sizeLines": 236,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/docs/design-reference/imports/web-accessibility.md",
+   "language": "markdown",
+   "sizeLines": 62,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/docs/design-reference/imports/webapp-ui-skill.md",
+   "language": "markdown",
+   "sizeLines": 61,
+   "fileCategory": "docs"
+  }
+ ],
+ "batchImportData": {
+  "clients/web-raptix/docs/design-reference/imports/d3-visualization.md": [],
+  "clients/web-raptix/docs/design-reference/imports/design-md.md": [],
+  "clients/web-raptix/docs/design-reference/imports/product-design-and-ux.md": [],
+  "clients/web-raptix/docs/design-reference/imports/ui-animation.md": [],
+  "clients/web-raptix/docs/design-reference/imports/web-accessibility.md": [],
+  "clients/web-raptix/docs/design-reference/imports/webapp-ui-skill.md": []
+ }
+}

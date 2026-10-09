@@ -1,0 +1,357 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/src/App.tsx",
+      "language": "typescript",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/app/RealApp.tsx",
+      "language": "typescript",
+      "sizeLines": 473,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/app/config.ts",
+      "language": "typescript",
+      "sizeLines": 2,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/app/navigation.ts",
+      "language": "typescript",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/app/providers.tsx",
+      "language": "typescript",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/app/real-capabilities.ts",
+      "language": "typescript",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/app/router.ts",
+      "language": "typescript",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/components/Header.tsx",
+      "language": "typescript",
+      "sizeLines": 152,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/components/HitlModal.tsx",
+      "language": "typescript",
+      "sizeLines": 223,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/components/Icons.tsx",
+      "language": "typescript",
+      "sizeLines": 154,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/components/NewChatModal.tsx",
+      "language": "typescript",
+      "sizeLines": 223,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/components/NewProjectModal.tsx",
+      "language": "typescript",
+      "sizeLines": 193,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/components/Sidebar.tsx",
+      "language": "typescript",
+      "sizeLines": 272,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/AgentDetailPanel.tsx",
+      "language": "typescript",
+      "sizeLines": 243,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/RealConsole.tsx",
+      "language": "typescript",
+      "sizeLines": 395,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/console-view.ts",
+      "language": "typescript",
+      "sizeLines": 127,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/history-merge.ts",
+      "language": "typescript",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/model.ts",
+      "language": "typescript",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/observe-stream.ts",
+      "language": "typescript",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/store.ts",
+      "language": "typescript",
+      "sizeLines": 457,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/stream-reducer.ts",
+      "language": "typescript",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/agent-runs/use-console-session.ts",
+      "language": "typescript",
+      "sizeLines": 363,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/c2/RealC2.tsx",
+      "language": "typescript",
+      "sizeLines": 101,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/campaigns/RealCampaigns.tsx",
+      "language": "typescript",
+      "sizeLines": 223,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/campaigns/real-campaigns-api.ts",
+      "language": "typescript",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/findings-evidence/RealFindings.tsx",
+      "language": "typescript",
+      "sizeLines": 223,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/findings-evidence/findings-view.ts",
+      "language": "typescript",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/findings-evidence/real-findings-api.ts",
+      "language": "typescript",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/findings-evidence/use-real-findings.ts",
+      "language": "typescript",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/infrastructure/RealAssets.tsx",
+      "language": "typescript",
+      "sizeLines": 139,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/infrastructure/RealInfrastructure.tsx",
+      "language": "typescript",
+      "sizeLines": 126,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/infrastructure/graph-view.ts",
+      "language": "typescript",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/infrastructure/real-graph-api.ts",
+      "language": "typescript",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "clients/web-raptix/src/App.tsx": [
+      "clients/web-raptix/src/app/config.ts",
+      "clients/web-raptix/src/app/router.ts",
+      "clients/web-raptix/src/components/Header.tsx",
+      "clients/web-raptix/src/components/HitlModal.tsx",
+      "clients/web-raptix/src/components/NewChatModal.tsx",
+      "clients/web-raptix/src/components/NewProjectModal.tsx",
+      "clients/web-raptix/src/components/Sidebar.tsx",
+      "clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "clients/web-raptix/src/screens/Home.tsx",
+      "clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "clients/web-raptix/src/types.ts"
+    ],
+    "clients/web-raptix/src/app/RealApp.tsx": [
+      "clients/web-raptix/src/app/navigation.ts",
+      "clients/web-raptix/src/app/providers.tsx",
+      "clients/web-raptix/src/app/real-capabilities.ts",
+      "clients/web-raptix/src/app/router.ts",
+      "clients/web-raptix/src/components/Icons.tsx",
+      "clients/web-raptix/src/features/agent-runs/RealConsole.tsx",
+      "clients/web-raptix/src/features/c2/RealC2.tsx",
+      "clients/web-raptix/src/features/campaigns/RealCampaigns.tsx",
+      "clients/web-raptix/src/features/findings-evidence/RealFindings.tsx",
+      "clients/web-raptix/src/features/infrastructure/RealAssets.tsx",
+      "clients/web-raptix/src/features/infrastructure/RealInfrastructure.tsx",
+      "clients/web-raptix/src/features/members/RealMembers.tsx",
+      "clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "clients/web-raptix/src/features/reports/RealReports.tsx",
+      "clients/web-raptix/src/features/settings/RealSettings.tsx",
+      "clients/web-raptix/src/features/vault/RealVault.tsx",
+      "clients/web-raptix/src/shared/api/errors.ts",
+      "clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "clients/web-raptix/src/types.ts"
+    ],
+    "clients/web-raptix/src/app/config.ts": [],
+    "clients/web-raptix/src/app/navigation.ts": [
+      "clients/web-raptix/src/types.ts"
+    ],
+    "clients/web-raptix/src/app/providers.tsx": [
+      "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts"
+    ],
+    "clients/web-raptix/src/app/real-capabilities.ts": [
+      "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "clients/web-raptix/src/shared/api/errors.ts",
+      "clients/web-raptix/src/types.ts"
+    ],
+    "clients/web-raptix/src/app/router.ts": [
+      "clients/web-raptix/src/app/navigation.ts",
+      "clients/web-raptix/src/types.ts"
+    ],
+    "clients/web-raptix/src/components/Header.tsx": [
+      "clients/web-raptix/src/app/navigation.ts",
+      "clients/web-raptix/src/types.ts"
+    ],
+    "clients/web-raptix/src/components/HitlModal.tsx": [
+      "clients/web-raptix/src/components/Icons.tsx",
+      "clients/web-raptix/src/shared/ui/Dialog.tsx"
+    ],
+    "clients/web-raptix/src/components/Icons.tsx": [],
+    "clients/web-raptix/src/components/NewChatModal.tsx": [
+      "clients/web-raptix/src/components/Icons.tsx",
+      "clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "clients/web-raptix/src/types.ts"
+    ],
+    "clients/web-raptix/src/components/NewProjectModal.tsx": [
+      "clients/web-raptix/src/components/Icons.tsx",
+      "clients/web-raptix/src/shared/ui/Dialog.tsx"
+    ],
+    "clients/web-raptix/src/components/Sidebar.tsx": [
+      "clients/web-raptix/src/app/navigation.ts",
+      "clients/web-raptix/src/types.ts"
+    ],
+    "clients/web-raptix/src/features/agent-runs/AgentDetailPanel.tsx": [
+      "clients/web-raptix/src/components/Icons.tsx",
+      "clients/web-raptix/src/features/agent-runs/model.ts"
+    ],
+    "clients/web-raptix/src/features/agent-runs/RealConsole.tsx": [
+      "clients/web-raptix/src/features/agent-runs/console-view.ts",
+      "clients/web-raptix/src/features/agent-runs/use-console-session.ts"
+    ],
+    "clients/web-raptix/src/features/agent-runs/console-view.ts": [
+      "clients/web-raptix/src/features/agent-runs/stream-reducer.ts"
+    ],
+    "clients/web-raptix/src/features/agent-runs/history-merge.ts": [
+      "clients/web-raptix/src/features/agent-runs/stream-reducer.ts"
+    ],
+    "clients/web-raptix/src/features/agent-runs/model.ts": [],
+    "clients/web-raptix/src/features/agent-runs/observe-stream.ts": [
+      "clients/web-raptix/src/app/config.ts",
+      "clients/web-raptix/src/shared/api/errors.ts",
+      "clients/web-raptix/src/shared/api/http.ts"
+    ],
+    "clients/web-raptix/src/features/agent-runs/store.ts": [
+      "clients/web-raptix/src/features/agent-runs/model.ts",
+      "clients/web-raptix/src/mocks/fixtures/agent-runs.ts"
+    ],
+    "clients/web-raptix/src/features/agent-runs/stream-reducer.ts": [],
+    "clients/web-raptix/src/features/agent-runs/use-console-session.ts": [
+      "clients/web-raptix/src/app/config.ts",
+      "clients/web-raptix/src/features/agent-runs/console-view.ts",
+      "clients/web-raptix/src/features/agent-runs/history-merge.ts",
+      "clients/web-raptix/src/features/agent-runs/observe-stream.ts",
+      "clients/web-raptix/src/features/agent-runs/stream-reducer.ts",
+      "clients/web-raptix/src/shared/api/errors.ts",
+      "clients/web-raptix/src/shared/api/http.ts"
+    ],
+    "clients/web-raptix/src/features/c2/RealC2.tsx": [
+      "clients/web-raptix/src/app/config.ts",
+      "clients/web-raptix/src/shared/api/errors.ts",
+      "clients/web-raptix/src/shared/api/http.ts"
+    ],
+    "clients/web-raptix/src/features/campaigns/RealCampaigns.tsx": [
+      "clients/web-raptix/src/features/campaigns/real-campaigns-api.ts",
+      "clients/web-raptix/src/shared/api/errors.ts"
+    ],
+    "clients/web-raptix/src/features/campaigns/real-campaigns-api.ts": [
+      "clients/web-raptix/src/app/config.ts",
+      "clients/web-raptix/src/shared/api/errors.ts",
+      "clients/web-raptix/src/shared/api/http.ts"
+    ],
+    "clients/web-raptix/src/features/findings-evidence/RealFindings.tsx": [
+      "clients/web-raptix/src/features/findings-evidence/findings-view.ts",
+      "clients/web-raptix/src/features/findings-evidence/use-real-findings.ts"
+    ],
+    "clients/web-raptix/src/features/findings-evidence/findings-view.ts": [],
+    "clients/web-raptix/src/features/findings-evidence/real-findings-api.ts": [
+      "clients/web-raptix/src/app/config.ts",
+      "clients/web-raptix/src/shared/api/errors.ts",
+      "clients/web-raptix/src/shared/api/http.ts"
+    ],
+    "clients/web-raptix/src/features/findings-evidence/use-real-findings.ts": [
+      "clients/web-raptix/src/features/findings-evidence/real-findings-api.ts"
+    ],
+    "clients/web-raptix/src/features/infrastructure/RealAssets.tsx": [
+      "clients/web-raptix/src/features/infrastructure/graph-view.ts",
+      "clients/web-raptix/src/features/infrastructure/use-real-graph.ts"
+    ],
+    "clients/web-raptix/src/features/infrastructure/RealInfrastructure.tsx": [
+      "clients/web-raptix/src/features/infrastructure/graph-view.ts",
+      "clients/web-raptix/src/features/infrastructure/use-real-graph.ts"
+    ],
+    "clients/web-raptix/src/features/infrastructure/graph-view.ts": [],
+    "clients/web-raptix/src/features/infrastructure/real-graph-api.ts": [
+      "clients/web-raptix/src/app/config.ts",
+      "clients/web-raptix/src/shared/api/errors.ts",
+      "clients/web-raptix/src/shared/api/http.ts"
+    ]
+  }
+}

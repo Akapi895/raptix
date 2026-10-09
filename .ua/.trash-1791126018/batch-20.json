@@ -1,0 +1,3098 @@
+{
+  "batchIndex": 20,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "language": "typescript",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/security/run-policy.ts",
+      "language": "typescript",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/security/workspace-policy.ts",
+      "language": "typescript",
+      "sizeLines": 79,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/approvals-service.ts",
+      "language": "typescript",
+      "sizeLines": 147,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/artifacts-service.ts",
+      "language": "typescript",
+      "sizeLines": 91,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/c2-service.ts",
+      "language": "typescript",
+      "sizeLines": 105,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "language": "typescript",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "language": "typescript",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/campaign-service.ts",
+      "language": "typescript",
+      "sizeLines": 279,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "language": "typescript",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/export-service.ts",
+      "language": "typescript",
+      "sizeLines": 119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/findings-service.ts",
+      "language": "typescript",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/graph-service.ts",
+      "language": "typescript",
+      "sizeLines": 198,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/members-service.ts",
+      "language": "typescript",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/planning-service.ts",
+      "language": "typescript",
+      "sizeLines": 101,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/projects-service.ts",
+      "language": "typescript",
+      "sizeLines": 276,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "language": "typescript",
+      "sizeLines": 240,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "language": "typescript",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "language": "typescript",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "language": "typescript",
+      "sizeLines": 217,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "language": "typescript",
+      "sizeLines": 70,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "language": "typescript",
+      "sizeLines": 102,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "language": "typescript",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/settings-service.ts",
+      "language": "typescript",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/timeline-service.ts",
+      "language": "typescript",
+      "sizeLines": 121,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/services/vault-service.ts",
+      "language": "typescript",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/tests/approvals-service.test.ts",
+      "language": "typescript",
+      "sizeLines": 132,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/tests/bootstrap.test.ts",
+      "language": "typescript",
+      "sizeLines": 461,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "type": "file",
+      "name": "request-fingerprint.ts",
+      "filePath": "clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "summary": "Fingerprint request: chuẩn hóa JSON (sắp xếp key, chặn lồng sâu, giới hạn 64KiB) rồi hash sha256.",
+      "tags": [
+        "bảo-mật",
+        "fingerprint",
+        "hash"
+      ],
+      "complexity": "simple",
+      "languageNotes": "TypeScript: canonical JSON sắp xếp key để fingerprint ổn định."
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/request-fingerprint.ts:canonical",
+      "type": "function",
+      "name": "canonical",
+      "filePath": "clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "lineRange": [
+        4,
+        13
+      ],
+      "summary": "Hàm canonical (10 dòng) trong request-fingerprint.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "security"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/request-fingerprint.ts:requestFingerprint",
+      "type": "function",
+      "name": "requestFingerprint",
+      "filePath": "clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "lineRange": [
+        15,
+        19
+      ],
+      "summary": "Băm sha256 payload sau chuẩn hóa JSON canonical.",
+      "tags": [
+        "fingerprint",
+        "hash",
+        "bảo-mật"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "type": "file",
+      "name": "run-policy.ts",
+      "filePath": "clients/web-raptix/server/src/security/run-policy.ts",
+      "summary": "Parse yêu cầu runtime theo phạm vi: thread/run/page/resume/approval với requestId và giới hạn chặt.",
+      "tags": [
+        "chính-sách",
+        "kiểm-chứng",
+        "runtime"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/run-policy.ts:parseThreadCreate",
+      "type": "function",
+      "name": "parseThreadCreate",
+      "filePath": "clients/web-raptix/server/src/security/run-policy.ts",
+      "lineRange": [
+        11,
+        15
+      ],
+      "summary": "Parse tạo thread: requestId và selection context.",
+      "tags": [
+        "parse",
+        "thread",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/run-policy.ts:parseRunCreate",
+      "type": "function",
+      "name": "parseRunCreate",
+      "filePath": "clients/web-raptix/server/src/security/run-policy.ts",
+      "lineRange": [
+        16,
+        20
+      ],
+      "summary": "Parse tạo run: requestId và message giới hạn 16k.",
+      "tags": [
+        "parse",
+        "run",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/run-policy.ts:parseRunPage",
+      "type": "function",
+      "name": "parseRunPage",
+      "filePath": "clients/web-raptix/server/src/security/run-policy.ts",
+      "lineRange": [
+        21,
+        32
+      ],
+      "summary": "Parse phân trang run: offset/limit.",
+      "tags": [
+        "parse",
+        "phân-trang",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/run-policy.ts:parseResumeCreate",
+      "type": "function",
+      "name": "parseResumeCreate",
+      "filePath": "clients/web-raptix/server/src/security/run-policy.ts",
+      "lineRange": [
+        34,
+        44
+      ],
+      "summary": "Parse resume run từ interrupt.",
+      "tags": [
+        "parse",
+        "resume",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/run-policy.ts:parseApprovalDecision",
+      "type": "function",
+      "name": "parseApprovalDecision",
+      "filePath": "clients/web-raptix/server/src/security/run-policy.ts",
+      "lineRange": [
+        46,
+        54
+      ],
+      "summary": "Parse quyết định approval HITL.",
+      "tags": [
+        "parse",
+        "phê-duyệt",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "type": "file",
+      "name": "workspace-policy.ts",
+      "filePath": "clients/web-raptix/server/src/security/workspace-policy.ts",
+      "summary": "Giải quyết thư mục workspace engagement: kiểm tra slug, chặn escape root và tạo plan dir.",
+      "tags": [
+        "workspace",
+        "bảo-mật",
+        "đường-dẫn"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "TypeScript: realpath và assertInsideRoot chống path traversal."
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/workspace-policy.ts:resolveEngagementWorkspaceDir",
+      "type": "function",
+      "name": "resolveEngagementWorkspaceDir",
+      "filePath": "clients/web-raptix/server/src/security/workspace-policy.ts",
+      "lineRange": [
+        33,
+        56
+      ],
+      "summary": "Giải quyết và kiểm tra thư mục workspace của engagement.",
+      "tags": [
+        "workspace",
+        "đường-dẫn",
+        "bảo-mật"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/workspace-policy.ts:prepareEngagementPlanDir",
+      "type": "function",
+      "name": "prepareEngagementPlanDir",
+      "filePath": "clients/web-raptix/server/src/security/workspace-policy.ts",
+      "lineRange": [
+        70,
+        79
+      ],
+      "summary": "Tạo thư mục plan trong workspace engagement.",
+      "tags": [
+        "workspace",
+        "plan",
+        "khởi-tạo"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "type": "file",
+      "name": "approvals-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/approvals-service.ts",
+      "summary": "Phê duyệt HITL dựa file: đọc approval_request JSONL, append decision có mutex, re-check trong lock.",
+      "tags": [
+        "hitl",
+        "phê-duyệt",
+        "service"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "TypeScript: quyết định concurrent được serialize bằng mutex tiến trình."
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/approvals-service.ts:toRecord",
+      "type": "function",
+      "name": "toRecord",
+      "filePath": "clients/web-raptix/server/src/services/approvals-service.ts",
+      "lineRange": [
+        40,
+        74
+      ],
+      "summary": "Hàm toRecord (35 dòng) trong approvals-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/approvals-service.ts:ApprovalsService",
+      "type": "class",
+      "name": "ApprovalsService",
+      "filePath": "clients/web-raptix/server/src/services/approvals-service.ts",
+      "lineRange": [
+        76,
+        147
+      ],
+      "summary": "Service phê duyệt HITL dựa file với mutex tiến trình.",
+      "tags": [
+        "hitl",
+        "phê-duyệt",
+        "service"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "type": "file",
+      "name": "artifacts-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/artifacts-service.ts",
+      "summary": "Trình duyệt artifact theo engagement: liệt kê allowlist không đệ quy, đọc text/JSON có cap, chặn symlink.",
+      "tags": [
+        "artifact",
+        "service",
+        "bảo-mật"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/artifacts-service.ts:ArtifactsService",
+      "type": "class",
+      "name": "ArtifactsService",
+      "filePath": "clients/web-raptix/server/src/services/artifacts-service.ts",
+      "lineRange": [
+        22,
+        91
+      ],
+      "summary": "Service liệt kê và đọc artifact scoped theo engagement.",
+      "tags": [
+        "artifact",
+        "service",
+        "bảo-mật"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "type": "file",
+      "name": "c2-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/c2-service.ts",
+      "summary": "Service C2: ủy quyền engagement, liệt kê sessions/listeners/profiles Sliver và audit lệnh bền.",
+      "tags": [
+        "c2",
+        "sliver",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/c2-service.ts:ProviderUnavailableError",
+      "type": "class",
+      "name": "ProviderUnavailableError",
+      "filePath": "clients/web-raptix/server/src/services/c2-service.ts",
+      "lineRange": [
+        7,
+        9
+      ],
+      "summary": "Lỗi provider C2 chưa cấu hình (503).",
+      "tags": [
+        "lỗi",
+        "c2",
+        "provider"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/c2-service.ts:C2Service",
+      "type": "class",
+      "name": "C2Service",
+      "filePath": "clients/web-raptix/server/src/services/c2-service.ts",
+      "lineRange": [
+        11,
+        89
+      ],
+      "summary": "Service C2 engagement-owned qua Sliver.",
+      "tags": [
+        "c2",
+        "sliver",
+        "service"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "type": "file",
+      "name": "campaign-deployment-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "summary": "Triển khai campaign GoPhish: reserve ledger, khóa version, deploy lab không gửi lại mail.",
+      "tags": [
+        "campaign",
+        "triển-khai",
+        "gophish"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/campaign-deployment-service.ts:CampaignDeploymentService",
+      "type": "class",
+      "name": "CampaignDeploymentService",
+      "filePath": "clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "lineRange": [
+        7,
+        69
+      ],
+      "summary": "Triển khai campaign GoPhish idempotent.",
+      "tags": [
+        "campaign",
+        "triển-khai",
+        "service"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "type": "file",
+      "name": "campaign-job-ledger.ts",
+      "filePath": "clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "summary": "Sổ ledger job campaign: parse request và reserve idempotent theo requestId.",
+      "tags": [
+        "campaign",
+        "ledger",
+        "idempotent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/campaign-job-ledger.ts:parseCampaignJobRequest",
+      "type": "function",
+      "name": "parseCampaignJobRequest",
+      "filePath": "clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "lineRange": [
+        8,
+        19
+      ],
+      "summary": "Parse request job campaign: requestId và version.",
+      "tags": [
+        "parse",
+        "campaign",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/campaign-job-ledger.ts:CampaignJobLedger",
+      "type": "class",
+      "name": "CampaignJobLedger",
+      "filePath": "clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "lineRange": [
+        21,
+        49
+      ],
+      "summary": "Sổ reserve job campaign theo requestId.",
+      "tags": [
+        "campaign",
+        "ledger",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "type": "file",
+      "name": "campaign-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/campaign-service.ts",
+      "summary": "Service campaign: bản nháp scoped, chuẩn bị tài sản GoPhish và điều phối evilginx.",
+      "tags": [
+        "campaign",
+        "service",
+        "phishing"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/campaign-service.ts:parseDraftInput",
+      "type": "function",
+      "name": "parseDraftInput",
+      "filePath": "clients/web-raptix/server/src/services/campaign-service.ts",
+      "lineRange": [
+        209,
+        232
+      ],
+      "summary": "Hàm parseDraftInput (24 dòng) trong campaign-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/campaign-service.ts:toCampaignView",
+      "type": "function",
+      "name": "toCampaignView",
+      "filePath": "clients/web-raptix/server/src/services/campaign-service.ts",
+      "lineRange": [
+        243,
+        256
+      ],
+      "summary": "Ánh xạ campaign sang view public.",
+      "tags": [
+        "ánh-xạ",
+        "campaign",
+        "view"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/campaign-service.ts:toJobView",
+      "type": "function",
+      "name": "toJobView",
+      "filePath": "clients/web-raptix/server/src/services/campaign-service.ts",
+      "lineRange": [
+        258,
+        275
+      ],
+      "summary": "Hàm toJobView (18 dòng) trong campaign-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/campaign-service.ts:CampaignValidationError",
+      "type": "class",
+      "name": "CampaignValidationError",
+      "filePath": "clients/web-raptix/server/src/services/campaign-service.ts",
+      "lineRange": [
+        22,
+        26
+      ],
+      "summary": "Lỗi kiểm tra campaign (400).",
+      "tags": [
+        "lỗi",
+        "campaign",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/campaign-service.ts:CampaignService",
+      "type": "class",
+      "name": "CampaignService",
+      "filePath": "clients/web-raptix/server/src/services/campaign-service.ts",
+      "lineRange": [
+        61,
+        207
+      ],
+      "summary": "Service campaign scoped: draft, prepare, deploy.",
+      "tags": [
+        "campaign",
+        "service",
+        "phishing"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "type": "file",
+      "name": "evilginx-campaign-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "summary": "Chạy và đối soát campaign evilginx2 lab: reserve ledger, persist manifest.",
+      "tags": [
+        "campaign",
+        "evilginx",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/evilginx-campaign-service.ts:EvilginxCampaignService",
+      "type": "class",
+      "name": "EvilginxCampaignService",
+      "filePath": "clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "lineRange": [
+        7,
+        62
+      ],
+      "summary": "Service chạy campaign evilginx2 lab.",
+      "tags": [
+        "campaign",
+        "evilginx",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "type": "file",
+      "name": "export-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/export-service.ts",
+      "summary": "Export engagement JSON/Markdown: DTO thật, tài liệu plan và FIND-*.md thô, validate format strict.",
+      "tags": [
+        "export",
+        "báo-cáo",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/export-service.ts:isExportFormat",
+      "type": "function",
+      "name": "isExportFormat",
+      "filePath": "clients/web-raptix/server/src/services/export-service.ts",
+      "lineRange": [
+        19,
+        21
+      ],
+      "summary": "Kiểm tra định dạng export hợp lệ.",
+      "tags": [
+        "kiểm-tra",
+        "export",
+        "định-dạng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/export-service.ts:buildMarkdown",
+      "type": "function",
+      "name": "buildMarkdown",
+      "filePath": "clients/web-raptix/server/src/services/export-service.ts",
+      "lineRange": [
+        95,
+        119
+      ],
+      "summary": "Hàm buildMarkdown (25 dòng) trong export-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/export-service.ts:ExportService",
+      "type": "class",
+      "name": "ExportService",
+      "filePath": "clients/web-raptix/server/src/services/export-service.ts",
+      "lineRange": [
+        40,
+        93
+      ],
+      "summary": "Service export JSON/Markdown engagement.",
+      "tags": [
+        "export",
+        "service",
+        "báo-cáo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "type": "file",
+      "name": "findings-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/findings-service.ts",
+      "summary": "Chiếu findings: parse FIND-*.md trong workspace, gắn cờ chất lượng parser, mặc định bị gắn cờ.",
+      "tags": [
+        "findings",
+        "service",
+        "chiếu"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/findings-service.ts:parseFindingMarkdown",
+      "type": "function",
+      "name": "parseFindingMarkdown",
+      "filePath": "clients/web-raptix/server/src/services/findings-service.ts",
+      "lineRange": [
+        56,
+        125
+      ],
+      "summary": "Parse FIND-*.md thành view kèm cờ chất lượng.",
+      "tags": [
+        "parse",
+        "findings",
+        "markdown"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/findings-service.ts:FindingsService",
+      "type": "class",
+      "name": "FindingsService",
+      "filePath": "clients/web-raptix/server/src/services/findings-service.ts",
+      "lineRange": [
+        24,
+        54
+      ],
+      "summary": "Service chiếu findings từ workspace.",
+      "tags": [
+        "findings",
+        "service",
+        "chiếu"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "type": "file",
+      "name": "graph-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/graph-service.ts",
+      "summary": "Service đồ thị tấn công qua HTTP Neo4j: whitelist thuộc tính public, che credential, chặn payload.",
+      "tags": [
+        "đồ-thị",
+        "neo4j",
+        "che-dấu"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "TypeScript: redaction credential diễn ra trước khi trả response."
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/graph-service.ts:runScopedQuery",
+      "type": "function",
+      "name": "runScopedQuery",
+      "filePath": "clients/web-raptix/server/src/services/graph-service.ts",
+      "lineRange": [
+        69,
+        99
+      ],
+      "summary": "Hàm runScopedQuery (31 dòng) trong graph-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/graph-service.ts:toAssetSummaries",
+      "type": "function",
+      "name": "toAssetSummaries",
+      "filePath": "clients/web-raptix/server/src/services/graph-service.ts",
+      "lineRange": [
+        114,
+        155
+      ],
+      "summary": "Tóm tắt tài sản từ node đồ thị đã redaction.",
+      "tags": [
+        "tóm-tắt",
+        "tài-sản",
+        "đồ-thị"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/graph-service.ts:GraphUnavailableError",
+      "type": "class",
+      "name": "GraphUnavailableError",
+      "filePath": "clients/web-raptix/server/src/services/graph-service.ts",
+      "lineRange": [
+        20,
+        20
+      ],
+      "summary": "Lỗi graph không khả dụng.",
+      "tags": [
+        "lỗi",
+        "đồ-thị",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/graph-service.ts:GraphService",
+      "type": "class",
+      "name": "GraphService",
+      "filePath": "clients/web-raptix/server/src/services/graph-service.ts",
+      "lineRange": [
+        157,
+        198
+      ],
+      "summary": "Service đồ thị tấn công scoped qua Neo4j HTTP.",
+      "tags": [
+        "đồ-thị",
+        "neo4j",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "type": "file",
+      "name": "members-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/members-service.ts",
+      "summary": "Service thành viên đơn người dùng trung thực: liệt kê operator local, invite/xóa trả 503 kèm lý do.",
+      "tags": [
+        "thành-viên",
+        "service",
+        "single-user"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/members-service.ts:MembersUnsupportedError",
+      "type": "class",
+      "name": "MembersUnsupportedError",
+      "filePath": "clients/web-raptix/server/src/services/members-service.ts",
+      "lineRange": [
+        17,
+        21
+      ],
+      "summary": "Lỗi tính năng members chưa hỗ trợ (503).",
+      "tags": [
+        "lỗi",
+        "thành-viên",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/members-service.ts:MembersService",
+      "type": "class",
+      "name": "MembersService",
+      "filePath": "clients/web-raptix/server/src/services/members-service.ts",
+      "lineRange": [
+        23,
+        48
+      ],
+      "summary": "Service members single-user trung thực.",
+      "tags": [
+        "thành-viên",
+        "service",
+        "single-user"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/planning-service.ts",
+      "type": "file",
+      "name": "planning-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/planning-service.ts",
+      "summary": "Đọc tài liệu planning: validate Ajv theo schema sinh từ Pydantic, chỉ chiếu field public.",
+      "tags": [
+        "planning",
+        "tài-liệu",
+        "kiểm-chứng"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/planning-service.ts:readDocument",
+      "type": "function",
+      "name": "readDocument",
+      "filePath": "clients/web-raptix/server/src/services/planning-service.ts",
+      "lineRange": [
+        35,
+        76
+      ],
+      "summary": "Hàm readDocument (42 dòng) trong planning-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/planning-service.ts:readPlanningView",
+      "type": "function",
+      "name": "readPlanningView",
+      "filePath": "clients/web-raptix/server/src/services/planning-service.ts",
+      "lineRange": [
+        78,
+        101
+      ],
+      "summary": "Đọc và validate planning view theo schema.",
+      "tags": [
+        "planning",
+        "đọc",
+        "kiểm-chứng"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "file",
+      "name": "projects-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/projects-service.ts",
+      "summary": "Service dự án: CRUD engagement, guard target lifecycle, ánh xạ sang ProjectViewModel.",
+      "tags": [
+        "dự-án",
+        "service",
+        "engagement"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/projects-service.ts:toProjectViewModel",
+      "type": "function",
+      "name": "toProjectViewModel",
+      "filePath": "clients/web-raptix/server/src/services/projects-service.ts",
+      "lineRange": [
+        133,
+        150
+      ],
+      "summary": "Hàm toProjectViewModel (18 dòng) trong projects-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectApiError",
+      "type": "class",
+      "name": "ProjectApiError",
+      "filePath": "clients/web-raptix/server/src/services/projects-service.ts",
+      "lineRange": [
+        77,
+        85
+      ],
+      "summary": "Lỗi API dự án kèm status.",
+      "tags": [
+        "lỗi",
+        "dự-án",
+        "api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectNotFoundError",
+      "type": "class",
+      "name": "ProjectNotFoundError",
+      "filePath": "clients/web-raptix/server/src/services/projects-service.ts",
+      "lineRange": [
+        87,
+        91
+      ],
+      "summary": "Lỗi không tìm thấy dự án.",
+      "tags": [
+        "lỗi",
+        "dự-án",
+        "not-found"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectNameConflictError",
+      "type": "class",
+      "name": "ProjectNameConflictError",
+      "filePath": "clients/web-raptix/server/src/services/projects-service.ts",
+      "lineRange": [
+        93,
+        97
+      ],
+      "summary": "Lỗi trùng tên dự án.",
+      "tags": [
+        "lỗi",
+        "xung-đột",
+        "dự-án"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectsService",
+      "type": "class",
+      "name": "ProjectsService",
+      "filePath": "clients/web-raptix/server/src/services/projects-service.ts",
+      "lineRange": [
+        160,
+        276
+      ],
+      "summary": "Service CRUD engagement và ánh xạ view.",
+      "tags": [
+        "dự-án",
+        "service",
+        "engagement"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "type": "file",
+      "name": "runtime-ownership.ts",
+      "filePath": "clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "summary": "Sở hữu runtime: binding thread, reservation request idempotent và recovery view.",
+      "tags": [
+        "runtime",
+        "sở-hữu",
+        "binding"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/runtime-ownership.ts:RuntimeOwnershipService",
+      "type": "class",
+      "name": "RuntimeOwnershipService",
+      "filePath": "clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "lineRange": [
+        24,
+        240
+      ],
+      "summary": "Service sở hữu runtime: binding và reservation.",
+      "tags": [
+        "runtime",
+        "sở-hữu",
+        "service"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "type": "file",
+      "name": "history-projection.ts",
+      "filePath": "clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "summary": "Chiếu lịch sử transcript checkpoint: hợp nhất theo provenance key, đánh dấu truncated trung thực.",
+      "tags": [
+        "lịch-sử",
+        "transcript",
+        "chiếu"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/history-projection.ts:projectThreadHistory",
+      "type": "function",
+      "name": "projectThreadHistory",
+      "filePath": "clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "lineRange": [
+        20,
+        38
+      ],
+      "summary": "Chiếu transcript thread từ checkpoint values.",
+      "tags": [
+        "lịch-sử",
+        "chiếu",
+        "transcript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "type": "file",
+      "name": "interrupt-projection.ts",
+      "filePath": "clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "summary": "Chiếu interrupt chờ: tìm câu hỏi ask_user_question và kiểm tra đáp án resume.",
+      "tags": [
+        "interrupt",
+        "câu-hỏi",
+        "chiếu"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:questionFrom",
+      "type": "function",
+      "name": "questionFrom",
+      "filePath": "clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "lineRange": [
+        11,
+        24
+      ],
+      "summary": "Hàm questionFrom (14 dòng) trong interrupt-projection.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "runtime"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:findPendingQuestion",
+      "type": "function",
+      "name": "findPendingQuestion",
+      "filePath": "clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "lineRange": [
+        32,
+        53
+      ],
+      "summary": "Tìm câu hỏi interrupt đang chờ.",
+      "tags": [
+        "interrupt",
+        "câu-hỏi",
+        "tìm-kiếm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:assertResumeValue",
+      "type": "function",
+      "name": "assertResumeValue",
+      "filePath": "clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "lineRange": [
+        56,
+        64
+      ],
+      "summary": "Kiểm tra đáp án resume hợp lệ với options.",
+      "tags": [
+        "resume",
+        "kiểm-chứng",
+        "interrupt"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "type": "file",
+      "name": "run-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "summary": "Service run: tạo thread, gửi tin nhắn, resume/hủy, trạng thái terminal và history.",
+      "tags": [
+        "run",
+        "service",
+        "runtime"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/runtime/run-service.ts:RunService",
+      "type": "class",
+      "name": "RunService",
+      "filePath": "clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "lineRange": [
+        18,
+        217
+      ],
+      "summary": "Service vòng đời thread/run runtime.",
+      "tags": [
+        "run",
+        "service",
+        "runtime"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "file",
+      "name": "runtime-context.ts",
+      "filePath": "clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "summary": "Ngữ cảnh runtime tin cậy: parse selection, hydrate từ engagement và hash binding.",
+      "tags": [
+        "runtime",
+        "ngữ-cảnh",
+        "binding"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/runtime-context.ts:parseContextSelection",
+      "type": "function",
+      "name": "parseContextSelection",
+      "filePath": "clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "lineRange": [
+        21,
+        27
+      ],
+      "summary": "Parse lựa chọn context runtime.",
+      "tags": [
+        "parse",
+        "ngữ-cảnh",
+        "runtime"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/runtime/runtime-context.ts:RuntimeContextService",
+      "type": "class",
+      "name": "RuntimeContextService",
+      "filePath": "clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "lineRange": [
+        28,
+        70
+      ],
+      "summary": "Service hydrate ngữ cảnh runtime tin cậy.",
+      "tags": [
+        "runtime",
+        "ngữ-cảnh",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "type": "file",
+      "name": "stream-projection.ts",
+      "filePath": "clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "summary": "Chiếu frame stream public: chuẩn hóa sub-agent event, che secret trong preview/args.",
+      "tags": [
+        "stream",
+        "chiếu",
+        "che-dấu"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "TypeScript: che Bearer/sk-/password/token cả trong text lẫn args."
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:custom",
+      "type": "function",
+      "name": "custom",
+      "filePath": "clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "lineRange": [
+        20,
+        31
+      ],
+      "summary": "Hàm custom (12 dòng) trong stream-projection.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "runtime"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectCustomPayload",
+      "type": "function",
+      "name": "projectCustomPayload",
+      "filePath": "clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "lineRange": [
+        33,
+        35
+      ],
+      "summary": "Chiếu custom payload sub-agent thành public.",
+      "tags": [
+        "chiếu",
+        "payload",
+        "stream"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:message",
+      "type": "function",
+      "name": "message",
+      "filePath": "clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "lineRange": [
+        36,
+        57
+      ],
+      "summary": "Hàm message (22 dòng) trong stream-projection.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "runtime"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectStreamFrame",
+      "type": "function",
+      "name": "projectStreamFrame",
+      "filePath": "clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "lineRange": [
+        58,
+        102
+      ],
+      "summary": "Chiếu một frame stream thành sự kiện public.",
+      "tags": [
+        "chiếu",
+        "frame",
+        "stream"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "type": "file",
+      "name": "stream-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "summary": "Mở stream SSE: kiểm tra cursor, join runtime và publish frame có heartbeat.",
+      "tags": [
+        "stream",
+        "sse",
+        "service"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/runtime/stream-service.ts:streamCursor",
+      "type": "function",
+      "name": "streamCursor",
+      "filePath": "clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "lineRange": [
+        10,
+        14
+      ],
+      "summary": "Kiểm tra cursor replay stream.",
+      "tags": [
+        "cursor",
+        "stream",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/runtime/stream-service.ts:StreamService",
+      "type": "class",
+      "name": "StreamService",
+      "filePath": "clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "lineRange": [
+        16,
+        48
+      ],
+      "summary": "Service mở stream SSE runtime.",
+      "tags": [
+        "stream",
+        "sse",
+        "service"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "type": "file",
+      "name": "settings-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/settings-service.ts",
+      "summary": "Cài đặt engagement: view field đã persist, xóa là action nguy hiểm có guard in-flight.",
+      "tags": [
+        "cài-đặt",
+        "service",
+        "engagement"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/settings-service.ts:toSettingsView",
+      "type": "function",
+      "name": "toSettingsView",
+      "filePath": "clients/web-raptix/server/src/services/settings-service.ts",
+      "lineRange": [
+        57,
+        68
+      ],
+      "summary": "Ánh xạ sang settings view.",
+      "tags": [
+        "ánh-xạ",
+        "cài-đặt",
+        "view"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/settings-service.ts:buildView",
+      "type": "function",
+      "name": "buildView",
+      "filePath": "clients/web-raptix/server/src/services/settings-service.ts",
+      "lineRange": [
+        70,
+        82
+      ],
+      "summary": "Hàm buildView (13 dòng) trong settings-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/settings-service.ts:EngagementDeleteConflictError",
+      "type": "class",
+      "name": "EngagementDeleteConflictError",
+      "filePath": "clients/web-raptix/server/src/services/settings-service.ts",
+      "lineRange": [
+        16,
+        22
+      ],
+      "summary": "Lỗi xóa engagement khi còn in-flight (409).",
+      "tags": [
+        "lỗi",
+        "xóa",
+        "xung-đột"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/settings-service.ts:SettingsService",
+      "type": "class",
+      "name": "SettingsService",
+      "filePath": "clients/web-raptix/server/src/services/settings-service.ts",
+      "lineRange": [
+        24,
+        55
+      ],
+      "summary": "Service cài đặt và xóa engagement.",
+      "tags": [
+        "cài-đặt",
+        "service",
+        "engagement"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "type": "file",
+      "name": "timeline-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/timeline-service.ts",
+      "summary": "Timeline thao tác: hợp nhất run states, transcript checkpoint và marker mtime artifact, newest-first.",
+      "tags": [
+        "timeline",
+        "service",
+        "hợp-nhất"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/timeline-service.ts:TimelineService",
+      "type": "class",
+      "name": "TimelineService",
+      "filePath": "clients/web-raptix/server/src/services/timeline-service.ts",
+      "lineRange": [
+        25,
+        113
+      ],
+      "summary": "Service timeline thao tác hợp nhất 3 nguồn.",
+      "tags": [
+        "timeline",
+        "service",
+        "hợp-nhất"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "type": "file",
+      "name": "vault-service.ts",
+      "filePath": "clients/web-raptix/server/src/services/vault-service.ts",
+      "summary": "Vault credentials: mã hóa AES-256-GCM bằng key operator, view redacted, audit reveal.",
+      "tags": [
+        "vault",
+        "mã-hóa",
+        "bí-mật"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "TypeScript: thiếu key thì 503, không bao giờ lưu plaintext."
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/services/vault-service.ts:parseSecretInput",
+      "type": "function",
+      "name": "parseSecretInput",
+      "filePath": "clients/web-raptix/server/src/services/vault-service.ts",
+      "lineRange": [
+        141,
+        159
+      ],
+      "summary": "Hàm parseSecretInput (19 dòng) trong vault-service.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "services"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/services/vault-service.ts:VaultService",
+      "type": "class",
+      "name": "VaultService",
+      "filePath": "clients/web-raptix/server/src/services/vault-service.ts",
+      "lineRange": [
+        23,
+        126
+      ],
+      "summary": "Service vault mã hóa AES-256-GCM.",
+      "tags": [
+        "vault",
+        "mã-hóa",
+        "service"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/tests/approvals-service.test.ts",
+      "type": "file",
+      "name": "approvals-service.test.ts",
+      "filePath": "clients/web-raptix/server/tests/approvals-service.test.ts",
+      "summary": "Kiểm thử service approvals qua Fastify: request/decision JSONL và guard dự án.",
+      "tags": [
+        "test",
+        "vitest",
+        "hitl"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/tests/approvals-service.test.ts:buildHarness",
+      "type": "function",
+      "name": "buildHarness",
+      "filePath": "clients/web-raptix/server/tests/approvals-service.test.ts",
+      "lineRange": [
+        22,
+        42
+      ],
+      "summary": "Hàm buildHarness (21 dòng) trong approvals-service.test.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "tests"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/tests/bootstrap.test.ts",
+      "type": "file",
+      "name": "bootstrap.test.ts",
+      "filePath": "clients/web-raptix/server/tests/bootstrap.test.ts",
+      "summary": "Kiểm thử bootstrap app: repository in-memory, services dự án và wiring buildApp.",
+      "tags": [
+        "test",
+        "vitest",
+        "bootstrap"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/server/tests/bootstrap.test.ts:makeInMemoryRepository",
+      "type": "function",
+      "name": "makeInMemoryRepository",
+      "filePath": "clients/web-raptix/server/tests/bootstrap.test.ts",
+      "lineRange": [
+        17,
+        66
+      ],
+      "summary": "Hàm makeInMemoryRepository (50 dòng) trong bootstrap.test.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "tests"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "target": "function:clients/web-raptix/server/src/security/request-fingerprint.ts:canonical",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "target": "function:clients/web-raptix/server/src/security/request-fingerprint.ts:requestFingerprint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "target": "function:clients/web-raptix/server/src/security/request-fingerprint.ts:requestFingerprint",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseThreadCreate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseThreadCreate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseRunCreate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseRunCreate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseRunPage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseRunPage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseResumeCreate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseResumeCreate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseApprovalDecision",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/run-policy.ts:parseApprovalDecision",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/workspace-policy.ts:resolveEngagementWorkspaceDir",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/workspace-policy.ts:resolveEngagementWorkspaceDir",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/workspace-policy.ts:prepareEngagementPlanDir",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/workspace-policy.ts:prepareEngagementPlanDir",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/approvals-service.ts:toRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/approvals-service.ts:ApprovalsService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/approvals-service.ts:ApprovalsService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/artifacts-service.ts:ArtifactsService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/artifacts-service.ts:ArtifactsService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/c2-service.ts:ProviderUnavailableError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/c2-service.ts:ProviderUnavailableError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/c2-service.ts:C2Service",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/c2-service.ts:C2Service",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/campaign-deployment-service.ts:CampaignDeploymentService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/campaign-deployment-service.ts:CampaignDeploymentService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "target": "function:clients/web-raptix/server/src/services/campaign-job-ledger.ts:parseCampaignJobRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "target": "function:clients/web-raptix/server/src/services/campaign-job-ledger.ts:parseCampaignJobRequest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "target": "class:clients/web-raptix/server/src/services/campaign-job-ledger.ts:CampaignJobLedger",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "target": "class:clients/web-raptix/server/src/services/campaign-job-ledger.ts:CampaignJobLedger",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/campaign-service.ts:parseDraftInput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/campaign-service.ts:toCampaignView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/campaign-service.ts:toCampaignView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/campaign-service.ts:toJobView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/campaign-service.ts:CampaignValidationError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/campaign-service.ts:CampaignValidationError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/campaign-service.ts:CampaignService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/campaign-service.ts:CampaignService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/evilginx-campaign-service.ts:EvilginxCampaignService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/evilginx-campaign-service.ts:EvilginxCampaignService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/export-service.ts:isExportFormat",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/export-service.ts:isExportFormat",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/export-service.ts:buildMarkdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/export-service.ts:ExportService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/export-service.ts:ExportService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/findings-service.ts:parseFindingMarkdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/findings-service.ts:parseFindingMarkdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/findings-service.ts:FindingsService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/findings-service.ts:FindingsService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/graph-service.ts:runScopedQuery",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/graph-service.ts:toAssetSummaries",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/graph-service.ts:toAssetSummaries",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/graph-service.ts:GraphUnavailableError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/graph-service.ts:GraphUnavailableError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/graph-service.ts:GraphService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/graph-service.ts:GraphService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/members-service.ts:MembersUnsupportedError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/members-service.ts:MembersUnsupportedError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/members-service.ts:MembersService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/members-service.ts:MembersService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/planning-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/planning-service.ts:readDocument",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/planning-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/planning-service.ts:readPlanningView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/planning-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/planning-service.ts:readPlanningView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/projects-service.ts:toProjectViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectApiError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectApiError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectNotFoundError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectNotFoundError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectNameConflictError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectNameConflictError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectsService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectsService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "target": "class:clients/web-raptix/server/src/services/runtime-ownership.ts:RuntimeOwnershipService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "target": "class:clients/web-raptix/server/src/services/runtime-ownership.ts:RuntimeOwnershipService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/history-projection.ts:projectThreadHistory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/history-projection.ts:projectThreadHistory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:questionFrom",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:findPendingQuestion",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:findPendingQuestion",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:assertResumeValue",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:assertResumeValue",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/runtime/run-service.ts:RunService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/runtime/run-service.ts:RunService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/runtime-context.ts:parseContextSelection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/runtime-context.ts:parseContextSelection",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "class:clients/web-raptix/server/src/services/runtime/runtime-context.ts:RuntimeContextService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "class:clients/web-raptix/server/src/services/runtime/runtime-context.ts:RuntimeContextService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:custom",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectCustomPayload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectCustomPayload",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:message",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectStreamFrame",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectStreamFrame",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-service.ts:streamCursor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-service.ts:streamCursor",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/runtime/stream-service.ts:StreamService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/runtime/stream-service.ts:StreamService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/settings-service.ts:toSettingsView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/settings-service.ts:toSettingsView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/settings-service.ts:buildView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/settings-service.ts:EngagementDeleteConflictError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/settings-service.ts:EngagementDeleteConflictError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/settings-service.ts:SettingsService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/settings-service.ts:SettingsService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/timeline-service.ts:TimelineService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/timeline-service.ts:TimelineService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "target": "function:clients/web-raptix/server/src/services/vault-service.ts:parseSecretInput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/vault-service.ts:VaultService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "target": "class:clients/web-raptix/server/src/services/vault-service.ts:VaultService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/approvals-service.test.ts",
+      "target": "function:clients/web-raptix/server/tests/approvals-service.test.ts:buildHarness",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/bootstrap.test.ts",
+      "target": "function:clients/web-raptix/server/tests/bootstrap.test.ts:makeInMemoryRepository",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/campaign-deployment-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/campaign-job-ledger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/evilginx-campaign-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/planning-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/planning-schemas.json",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/planning-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/planning-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "target": "file:clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/run-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "file:clients/web-raptix/server/src/config/runtime.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "file:clients/web-raptix/server/src/security/request-fingerprint.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/stream-projection.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "target": "file:clients/web-raptix/server/src/security/workspace-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/approvals-service.test.ts",
+      "target": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/approvals-service.test.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/approvals-service.test.ts",
+      "target": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/approvals-service.test.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/bootstrap.test.ts",
+      "target": "file:clients/web-raptix/server/src/app.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/bootstrap.test.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/bootstrap.test.ts",
+      "target": "file:clients/web-raptix/server/src/config/env.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/bootstrap.test.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/tests/bootstrap.test.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/request-fingerprint.ts:requestFingerprint",
+      "target": "function:clients/web-raptix/server/src/security/request-fingerprint.ts:canonical",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/run-policy.ts:parseThreadCreate",
+      "target": "function:clients/web-raptix/server/src/services/runtime/runtime-context.ts:parseContextSelection",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/workspace-policy.ts:prepareEngagementPlanDir",
+      "target": "function:clients/web-raptix/server/src/security/workspace-policy.ts:resolveEngagementWorkspaceDir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/services/campaign-service.ts:toCampaignView",
+      "target": "function:clients/web-raptix/server/src/services/campaign-service.ts:toJobView",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/services/planning-service.ts:readPlanningView",
+      "target": "function:clients/web-raptix/server/src/services/planning-service.ts:readDocument",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/services/runtime/history-projection.ts:projectThreadHistory",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectCustomPayload",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:findPendingQuestion",
+      "target": "function:clients/web-raptix/server/src/services/runtime/interrupt-projection.ts:questionFrom",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectCustomPayload",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:custom",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectStreamFrame",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:custom",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:projectStreamFrame",
+      "target": "function:clients/web-raptix/server/src/services/runtime/stream-projection.ts:message",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/services/settings-service.ts:toSettingsView",
+      "target": "function:clients/web-raptix/server/src/services/settings-service.ts:buildView",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:clients/web-raptix/server/src/services/c2-service.ts:ProviderUnavailableError",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectApiError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:clients/web-raptix/server/src/services/campaign-service.ts:CampaignValidationError",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectApiError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:clients/web-raptix/server/src/services/members-service.ts:MembersUnsupportedError",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectApiError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectNotFoundError",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectApiError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectNameConflictError",
+      "target": "class:clients/web-raptix/server/src/services/projects-service.ts:ProjectApiError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "target": "file:clients/web-raptix/server/tests/approvals-service.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "target": "file:clients/web-raptix/server/tests/bootstrap.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,2950 @@
+{
+  "batchIndex": 37,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/tools/reversing/__init__.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/binary.py",
+      "language": "python",
+      "sizeLines": 214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "language": "python",
+      "sizeLines": 493,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/packer.py",
+      "language": "python",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/rop.py",
+      "language": "python",
+      "sizeLines": 75,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/scripts.py",
+      "language": "python",
+      "sizeLines": 79,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/strings.py",
+      "language": "python",
+      "sizeLines": 188,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/symbols.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/tools.py",
+      "language": "python",
+      "sizeLines": 187,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "language": "python",
+      "sizeLines": 238,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "language": "python",
+      "sizeLines": 852,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "language": "python",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/__init__.py",
+      "summary": "Barrel của gói reversing thuần Python (chạy không cần Ghidra/radare2): re-export identify_binary, extract_strings, detect_packer, find_rop_gadgets, summarize_symbols, script generators và bộ API Ghidra headless/MCP.",
+      "tags": [
+        "reversing",
+        "barrel",
+        "binary"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "type": "file",
+      "name": "binary.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/binary.py",
+      "summary": "Parser header ELF/PE/Mach-O tối giản: phát hiện format qua magic, kiến trúc (x86→s390, PE machine codes), bitness/endianness, entry point và flag NX/PIE/RELRO — đủ để agent quyết định đưa file cho Ghidra, radare2 hay unpack trước; chỉ đọc max_read bytes nên an toàn với firmware lớn.",
+      "tags": [
+        "binary",
+        "elf",
+        "pe",
+        "parser"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "type": "file",
+      "name": "ghidra.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "summary": "Tích hợp Ghidra headless + MCP bridge cho decompile/xref/function listing: backend MCP (GHIDRA_MCP_URL) được ưu tiên khi reachable, fallback analyzeHeadless với postScript dump JSON (GHIDRA_INSTALL_DIR); dataclass GhidraFunction/Decompilation/Analysis/Xref chuẩn hóa kết quả.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "headless",
+        "mcp"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "type": "file",
+      "name": "packer.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/packer.py",
+      "summary": "Phát hiện packer/obfuscation bằng Shannon entropy (>7.0 bits/byte) + signature matching cho UPX, ASPack, Themida, VMProtect, Enigma…; entropy rất cao không khớp signature được ghi chú là packer tùy biến.",
+      "tags": [
+        "packer",
+        "entropy",
+        "detection"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "type": "file",
+      "name": "rop.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/rop.py",
+      "summary": "ROP gadget finder x86/x86_64 dạng fast first pass: quét ngược từ các byte RET (0xC3/0xC2/0xCB/0xCA) và trả raw bytes + offset (dedupe qua set); disassembly đầy đủ để dành cho Ropper/ROPgadget.",
+      "tags": [
+        "rop",
+        "gadget",
+        "exploitation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "type": "file",
+      "name": "scripts.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/scripts.py",
+      "summary": "Sinh template script recon định hướng bug hunting: Ghidra headless (dump functions, external imports) và radare2 (aaa, sections, strings lọc secret, xrefs tới system/execve) để agent ghi ra disk và chạy qua bash.",
+      "tags": [
+        "ghidra",
+        "radare2",
+        "script-generation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "type": "file",
+      "name": "strings.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/strings.py",
+      "summary": "Trích chuỗi ASCII/UTF-16LE kiểu strings(1) kèm phân loại bucket tín hiệu cao: url, ip, email, path, crypto (hex key/PEM), version, format string, secret (Stripe/AWS/Google/GitHub/Slack/JWT), import hint — đầu vào cho knowledge graph và CVE lookup.",
+      "tags": [
+        "strings",
+        "classification",
+        "ioc"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "type": "file",
+      "name": "symbols.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/symbols.py",
+      "summary": "Tam giác symbol bằng pattern-match tên API nguy hiểm (strcpy/gets, system/execve, socket/curl, EVP/AES, sanitizer) với trọng số cộng dồn để ưu tiên binary cần phân tích sâu; không parse symbol table đầy đủ.",
+      "tags": [
+        "symbols",
+        "triage",
+        "risk"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "type": "file",
+      "name": "tools.py",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "summary": "LangChain @tool wrappers cho gói reversing: 12 tool từ triage (bin_identify, bin_strings, bin_packer, bin_rop, bin_symbols_report), script generators, đến Ghidra deep analysis (ghidra_analyze/decompile/xrefs/status) — tất cả trả JSON.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "type": "file",
+      "name": "test_binary_strings_packer.py",
+      "filePath": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "summary": "Bộ kiểm thử đơn vị cho identify_binary, extract_strings, detect_packer, find_rop_gadgets, summarize_symbols và script generators: dựng ELF64 tối giản, xác minh format/arch/bitness/PIE và happy path từng module.",
+      "tags": [
+        "tests",
+        "reversing",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "type": "file",
+      "name": "test_reversing_internals.py",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "summary": "Characterization tests mở rộng cho các submodule reversing (những gì test_binary_strings_packer chưa phủ): ELF32/big-endian/ARM/MIPS/RISC-V/Mach-O/WASM/Java-class, PT_GNU_STACK(NX)/RELRO, UTF-16LE, toàn bộ packer signature, 4 RET opcode, bucket symbol đầy đủ và boundary entropy.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "type": "file",
+      "name": "test_reversing_robustness.py",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "summary": "Kiểm thử độ bền cho gói reversing: dataclass Ghidra bỏ qua key lạ không raise, script generators chịu path chứa dấu {} và bin_r2_script trả source hợp lệ.",
+      "tags": [
+        "tests",
+        "robustness",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/binary.py:_detect_format",
+      "type": "function",
+      "name": "_detect_format",
+      "filePath": "packages/raptix/raptix/tools/reversing/binary.py",
+      "lineRange": [
+        102,
+        108
+      ],
+      "summary": "So khớp header bytes với bảng _MAGICS (prefix dài nhất trước để tránh xung đột java-class/macho-fat), trả \"unknown\" khi không khớp.",
+      "tags": [
+        "binary",
+        "parser",
+        "elf"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/binary.py:_parse_elf",
+      "type": "function",
+      "name": "_parse_elf",
+      "filePath": "packages/raptix/raptix/tools/reversing/binary.py",
+      "lineRange": [
+        111,
+        158
+      ],
+      "summary": "Parse ELF header: bitness/endianness từ ei_class/ei_data, e_machine → kiến trúc, entry point, PIE (ET_DYN) và quét program headers tìm PT_GNU_STACK (NX) / PT_GNU_RELRO.",
+      "tags": [
+        "binary",
+        "parser",
+        "elf"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/binary.py:_parse_pe",
+      "type": "function",
+      "name": "_parse_pe",
+      "filePath": "packages/raptix/raptix/tools/reversing/binary.py",
+      "lineRange": [
+        161,
+        186
+      ],
+      "summary": "Parse PE: offset PE signature từ DOS header, machine code → kiến trúc, bitness từ optional header magic, entry point và NX/PIE từ DllCharacteristics.",
+      "tags": [
+        "binary",
+        "parser",
+        "elf"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/binary.py:identify_binary",
+      "type": "function",
+      "name": "identify_binary",
+      "filePath": "packages/raptix/raptix/tools/reversing/binary.py",
+      "lineRange": [
+        189,
+        214
+      ],
+      "summary": "Hàm `identify_binary`: Inspect a binary's header and return a structured summary.",
+      "tags": [
+        "binary",
+        "parser",
+        "elf"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/binary.py:BinaryInfo",
+      "type": "class",
+      "name": "BinaryInfo",
+      "filePath": "packages/raptix/raptix/tools/reversing/binary.py",
+      "lineRange": [
+        26,
+        56
+      ],
+      "summary": "Lớp `BinaryInfo`: Result of ``identify_binary``.",
+      "tags": [
+        "binary",
+        "parser",
+        "elf"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_available",
+      "type": "function",
+      "name": "_mcp_available",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        117,
+        125
+      ],
+      "summary": "Hàm `_mcp_available`: Check if the Ghidra MCP server is reachable.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_post",
+      "type": "function",
+      "name": "_mcp_post",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        128,
+        135
+      ],
+      "summary": "Hàm `_mcp_post`: POST to the Ghidra MCP bridge and return parsed JSON.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_get",
+      "type": "function",
+      "name": "_mcp_get",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        138,
+        143
+      ],
+      "summary": "Hàm `_mcp_get`: GET from the Ghidra MCP bridge.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_find_analyze_headless",
+      "type": "function",
+      "name": "_find_analyze_headless",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        263,
+        274
+      ],
+      "summary": "Hàm `_find_analyze_headless`: Locate the analyzeHeadless script.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_run_headless",
+      "type": "function",
+      "name": "_run_headless",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        277,
+        353
+      ],
+      "summary": "Hàm `_run_headless`: Run a Ghidra headless analysis with a postScript and parse JSON output.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "type": "function",
+      "name": "ghidra_analyze_binary",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        361,
+        402
+      ],
+      "summary": "Hàm `ghidra_analyze_binary`: Analyze a binary with Ghidra — MCP if available, headless otherwise.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_decompile_function",
+      "type": "function",
+      "name": "ghidra_decompile_function",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        405,
+        458
+      ],
+      "summary": "Hàm `ghidra_decompile_function`: Decompile a single function — MCP if available, headless otherwise.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_get_xrefs",
+      "type": "function",
+      "name": "ghidra_get_xrefs",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        461,
+        483
+      ],
+      "summary": "Hàm `ghidra_get_xrefs`: Get cross-references to an address — MCP only (headless is too slow).",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_available",
+      "type": "function",
+      "name": "ghidra_available",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        486,
+        493
+      ],
+      "summary": "Hàm `ghidra_available`: Report which Ghidra backends are available.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraFunction",
+      "type": "class",
+      "name": "GhidraFunction",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        44,
+        52
+      ],
+      "summary": "Lớp `GhidraFunction` với 1 phương thức, đảm nhiệm logic GhidraFunction trong module.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraDecompilation",
+      "type": "class",
+      "name": "GhidraDecompilation",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        59,
+        66
+      ],
+      "summary": "Lớp `GhidraDecompilation` với 1 phương thức, đảm nhiệm logic GhidraDecompilation trong module.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraAnalysis",
+      "type": "class",
+      "name": "GhidraAnalysis",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        70,
+        98
+      ],
+      "summary": "Lớp `GhidraAnalysis` với 1 phương thức, đảm nhiệm logic GhidraAnalysis trong module.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraXref",
+      "type": "class",
+      "name": "GhidraXref",
+      "filePath": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "lineRange": [
+        102,
+        109
+      ],
+      "summary": "Lớp `GhidraXref` với 1 phương thức, đảm nhiệm logic GhidraXref trong module.",
+      "tags": [
+        "ghidra",
+        "decompile",
+        "analysis"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/packer.py:shannon_entropy",
+      "type": "function",
+      "name": "shannon_entropy",
+      "filePath": "packages/raptix/raptix/tools/reversing/packer.py",
+      "lineRange": [
+        35,
+        44
+      ],
+      "summary": "Tính Shannon entropy (bits/byte) của blob — cơ sở phát hiện nén/mã hóa.",
+      "tags": [
+        "packer",
+        "entropy",
+        "detection"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/packer.py:detect_packer",
+      "type": "function",
+      "name": "detect_packer",
+      "filePath": "packages/raptix/raptix/tools/reversing/packer.py",
+      "lineRange": [
+        72,
+        100
+      ],
+      "summary": "Hàm `detect_packer`: Compute entropy + match packer signatures.",
+      "tags": [
+        "packer",
+        "entropy",
+        "detection"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/packer.py:PackerVerdict",
+      "type": "class",
+      "name": "PackerVerdict",
+      "filePath": "packages/raptix/raptix/tools/reversing/packer.py",
+      "lineRange": [
+        18,
+        32
+      ],
+      "summary": "Lớp `PackerVerdict` với 1 phương thức, đảm nhiệm logic PackerVerdict trong module.",
+      "tags": [
+        "packer",
+        "entropy",
+        "detection"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/rop.py:find_rop_gadgets",
+      "type": "function",
+      "name": "find_rop_gadgets",
+      "filePath": "packages/raptix/raptix/tools/reversing/rop.py",
+      "lineRange": [
+        39,
+        69
+      ],
+      "summary": "Hàm `find_rop_gadgets`: Scan ``data`` for candidate ROP gadgets.",
+      "tags": [
+        "rop",
+        "gadget",
+        "offset"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/rop.py:filter_gadgets_by_pattern",
+      "type": "function",
+      "name": "filter_gadgets_by_pattern",
+      "filePath": "packages/raptix/raptix/tools/reversing/rop.py",
+      "lineRange": [
+        72,
+        75
+      ],
+      "summary": "Hàm `filter_gadgets_by_pattern`: Filter to gadgets containing a specific byte pattern (hex).",
+      "tags": [
+        "rop",
+        "gadget",
+        "offset"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/rop.py:RopGadget",
+      "type": "class",
+      "name": "RopGadget",
+      "filePath": "packages/raptix/raptix/tools/reversing/rop.py",
+      "lineRange": [
+        24,
+        36
+      ],
+      "summary": "Lớp `RopGadget` với 1 phương thức, đảm nhiệm logic RopGadget trong module.",
+      "tags": [
+        "rop",
+        "gadget",
+        "offset"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/scripts.py:ghidra_recon_script",
+      "type": "function",
+      "name": "ghidra_recon_script",
+      "filePath": "packages/raptix/raptix/tools/reversing/scripts.py",
+      "lineRange": [
+        72,
+        74
+      ],
+      "summary": "Hàm `ghidra_recon_script`: Return a Ghidra headless script body targeting ``binary``.",
+      "tags": [
+        "script-generation",
+        "ghidra",
+        "radare2"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/scripts.py:r2_recon_script",
+      "type": "function",
+      "name": "r2_recon_script",
+      "filePath": "packages/raptix/raptix/tools/reversing/scripts.py",
+      "lineRange": [
+        77,
+        79
+      ],
+      "summary": "Hàm `r2_recon_script`: Return a radare2 script body; feed via ``r2 -q -i <script> <binary>``.",
+      "tags": [
+        "script-generation",
+        "ghidra",
+        "radare2"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/strings.py:_classify",
+      "type": "function",
+      "name": "_classify",
+      "filePath": "packages/raptix/raptix/tools/reversing/strings.py",
+      "lineRange": [
+        110,
+        139
+      ],
+      "summary": "Phân loại một chuỗi in được vào bucket theo thứ tự regex: crypto, url, ip, email, path, version, format, import, fallback text.",
+      "tags": [
+        "strings",
+        "classification",
+        "ioc"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/strings.py:extract_strings",
+      "type": "function",
+      "name": "extract_strings",
+      "filePath": "packages/raptix/raptix/tools/reversing/strings.py",
+      "lineRange": [
+        142,
+        180
+      ],
+      "summary": "Hàm `extract_strings`: Extract printable ASCII / UTF-16LE strings with category tags.",
+      "tags": [
+        "strings",
+        "classification",
+        "ioc"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/strings.py:group_by_category",
+      "type": "function",
+      "name": "group_by_category",
+      "filePath": "packages/raptix/raptix/tools/reversing/strings.py",
+      "lineRange": [
+        183,
+        188
+      ],
+      "summary": "Hàm `group_by_category`: Group extracted strings by category, preserving order.",
+      "tags": [
+        "strings",
+        "classification",
+        "ioc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/strings.py:ExtractedString",
+      "type": "class",
+      "name": "ExtractedString",
+      "filePath": "packages/raptix/raptix/tools/reversing/strings.py",
+      "lineRange": [
+        95,
+        107
+      ],
+      "summary": "Lớp `ExtractedString` với 1 phương thức, đảm nhiệm logic ExtractedString trong module.",
+      "tags": [
+        "strings",
+        "classification",
+        "ioc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/symbols.py:summarize_symbols",
+      "type": "function",
+      "name": "summarize_symbols",
+      "filePath": "packages/raptix/raptix/tools/reversing/symbols.py",
+      "lineRange": [
+        147,
+        159
+      ],
+      "summary": "Hàm `summarize_symbols`: Bucket a flat list of symbol names into security categories.",
+      "tags": [
+        "symbols",
+        "triage",
+        "risk"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/reversing/symbols.py:SymbolReport",
+      "type": "class",
+      "name": "SymbolReport",
+      "filePath": "packages/raptix/raptix/tools/reversing/symbols.py",
+      "lineRange": [
+        113,
+        144
+      ],
+      "summary": "Lớp `SymbolReport` với 2 phương thức, đảm nhiệm logic SymbolReport trong module.",
+      "tags": [
+        "symbols",
+        "triage",
+        "risk"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "function",
+      "name": "_json",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        25,
+        26
+      ],
+      "summary": "Serialize JSON indent=2, default=str, ensure_ascii=False cho mọi tool output.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_identify",
+      "type": "function",
+      "name": "bin_identify",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        30,
+        33
+      ],
+      "summary": "Hàm `bin_identify`: Parse a binary's header and return format, arch, bitness, NX/PIE, entry point.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_strings",
+      "type": "function",
+      "name": "bin_strings",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        37,
+        63
+      ],
+      "summary": "Hàm `bin_strings`: Extract and classify strings from a binary.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_packer",
+      "type": "function",
+      "name": "bin_packer",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        67,
+        73
+      ],
+      "summary": "Hàm `bin_packer`: Compute entropy and match packer signatures against a binary.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_rop",
+      "type": "function",
+      "name": "bin_rop",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        77,
+        92
+      ],
+      "summary": "Hàm `bin_rop`: Scan for ROP gadgets (bytes ending in a RET opcode).",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_symbols_report",
+      "type": "function",
+      "name": "bin_symbols_report",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        96,
+        103
+      ],
+      "summary": "Hàm `bin_symbols_report`: Classify a newline-separated list of symbol names into risk buckets.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_ghidra_script",
+      "type": "function",
+      "name": "bin_ghidra_script",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        107,
+        109
+      ],
+      "summary": "Hàm `bin_ghidra_script`: Emit a Ghidra headless recon script body the agent can write to disk.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_r2_script",
+      "type": "function",
+      "name": "bin_r2_script",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        113,
+        115
+      ],
+      "summary": "Hàm `bin_r2_script`: Emit a radare2 recon script body the agent can feed via ``r2 -i``.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_analyze",
+      "type": "function",
+      "name": "ghidra_analyze",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        124,
+        132
+      ],
+      "summary": "Hàm `ghidra_analyze`: Run full Ghidra analysis on a binary — functions, imports, exports.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_decompile",
+      "type": "function",
+      "name": "ghidra_decompile",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        136,
+        144
+      ],
+      "summary": "Hàm `ghidra_decompile`: Decompile a single function from a binary using Ghidra.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_xrefs",
+      "type": "function",
+      "name": "ghidra_xrefs",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        148,
+        155
+      ],
+      "summary": "Hàm `ghidra_xrefs`: Get cross-references to an address or symbol in a Ghidra-analyzed binary.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_status",
+      "type": "function",
+      "name": "ghidra_status",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        159,
+        161
+      ],
+      "summary": "Hàm `ghidra_status`: Check Ghidra availability — headless install and MCP server.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/reversing/tools.py:re_status",
+      "type": "function",
+      "name": "re_status",
+      "filePath": "packages/raptix/raptix/tools/reversing/tools.py",
+      "lineRange": [
+        165,
+        167
+      ],
+      "summary": "Hàm `re_status`: Report which reverse engineering backends are available.",
+      "tags": [
+        "langchain",
+        "tools",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:_minimal_elf64",
+      "type": "function",
+      "name": "_minimal_elf64",
+      "filePath": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "lineRange": [
+        19,
+        29
+      ],
+      "summary": "Hàm trợ giúp `_minimal_elf64` dựng fixture và rút gọn thiết lập dạng chung cho module kiểm thử.",
+      "tags": [
+        "tests",
+        "reversing",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestIdentifyBinary",
+      "type": "class",
+      "name": "TestIdentifyBinary",
+      "filePath": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "lineRange": [
+        32,
+        80
+      ],
+      "summary": "Lớp kiểm thử `TestIdentifyBinary` — nhóm case pytest cho identify_binary trên ELF64 PIE/non-PIE, x86 và format lạ.",
+      "tags": [
+        "tests",
+        "reversing",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestStringsExtraction",
+      "type": "class",
+      "name": "TestStringsExtraction",
+      "filePath": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "lineRange": [
+        86,
+        127
+      ],
+      "summary": "Lớp kiểm thử `TestStringsExtraction` — nhóm case pytest cho extract_strings: ASCII, category filter, min_length và group_by_category.",
+      "tags": [
+        "tests",
+        "reversing",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestPacker",
+      "type": "class",
+      "name": "TestPacker",
+      "filePath": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "lineRange": [
+        133,
+        167
+      ],
+      "summary": "Lớp kiểm thử `TestPacker` — nhóm case pytest cho detect_packer: entropy cao/thẤp, signature UPX và verdict.",
+      "tags": [
+        "tests",
+        "reversing",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestRop",
+      "type": "class",
+      "name": "TestRop",
+      "filePath": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "lineRange": [
+        173,
+        196
+      ],
+      "summary": "Lớp kiểm thử `TestRop` — nhóm case pytest cho find_rop_gadgets và filter_gadgets_by_pattern.",
+      "tags": [
+        "tests",
+        "reversing",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestSymbols",
+      "type": "class",
+      "name": "TestSymbols",
+      "filePath": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "lineRange": [
+        202,
+        223
+      ],
+      "summary": "Lớp kiểm thử `TestSymbols` — nhóm case pytest cho summarize_symbols với các bucket nguy hiểm.",
+      "tags": [
+        "tests",
+        "reversing",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestScripts",
+      "type": "class",
+      "name": "TestScripts",
+      "filePath": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "lineRange": [
+        229,
+        238
+      ],
+      "summary": "Lớp kiểm thử `TestScripts` — nhóm case pytest cho ghidra_recon_script và r2_recon_script.",
+      "tags": [
+        "tests",
+        "reversing",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_elf32",
+      "type": "function",
+      "name": "_make_elf32",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        41,
+        53
+      ],
+      "summary": "Hàm `_make_elf32`: Build a minimal but parseable ELF32 header (no program headers).",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_elf64_with_phdr",
+      "type": "function",
+      "name": "_make_elf64_with_phdr",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        56,
+        85
+      ],
+      "summary": "Hàm `_make_elf64_with_phdr`: Build an ELF64 header with one or two program header entries.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_pe",
+      "type": "function",
+      "name": "_make_pe",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        88,
+        101
+      ],
+      "summary": "Hàm `_make_pe`: Build a minimal PE buffer.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestDetectFormat",
+      "type": "class",
+      "name": "TestDetectFormat",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        107,
+        136
+      ],
+      "summary": "Lớp kiểm thử `TestDetectFormat` — phủ mọi magic number của _detect_format kể cả xung đột prefix java-class/macho-fat.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestIdentifyBinaryExtended",
+      "type": "class",
+      "name": "TestIdentifyBinaryExtended",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        142,
+        368
+      ],
+      "summary": "Lớp kiểm thử `TestIdentifyBinaryExtended` — mở rộng identify_binary: ELF32/big-endian/ARM/MIPS/RISC-V/Mach-O/WASM/Java, NX & RELRO qua PT_GNU_STACK, PE 32-bit, string path arg và to_dict.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestStringsExtended",
+      "type": "class",
+      "name": "TestStringsExtended",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        374,
+        482
+      ],
+      "summary": "Lớp kiểm thử `TestStringsExtended` — mở rộng extract_strings: UTF-16LE, crypto/PEM/email/version/import/text, Windows path và min_length gate.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestPackerExtended",
+      "type": "class",
+      "name": "TestPackerExtended",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        488,
+        599
+      ],
+      "summary": "Lớp kiểm thử `TestPackerExtended` — mở rộng detect_packer: toàn bộ signature, file-path input, to_dict và boundary entropy 7.0/7.5.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestRopExtended",
+      "type": "class",
+      "name": "TestRopExtended",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        605,
+        682
+      ],
+      "summary": "Lớp kiểm thử `TestRopExtended` — mở rộng find_rop_gadgets: cả 4 RET opcode (0xC3/0xC2/0xCB/0xCA), to_dict, empty data, max_length và filter no-match.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestSymbolsExtended",
+      "type": "class",
+      "name": "TestSymbolsExtended",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        688,
+        795
+      ],
+      "summary": "Lớp kiểm thử `TestSymbolsExtended` — mở rộng summarize_symbols: bucket crypto & dynamic_code, sanitizer prefix, risk score cộng dồn và floor 0.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestScriptsExtended",
+      "type": "class",
+      "name": "TestScriptsExtended",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "lineRange": [
+        801,
+        852
+      ],
+      "summary": "Lớp kiểm thử `TestScriptsExtended` — mở rộng script generators: binary name trong output, tham số script_name và các lệnh phân tích chính.",
+      "tags": [
+        "tests",
+        "reversing",
+        "characterization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestGhidraFunctionExtraKeys",
+      "type": "class",
+      "name": "TestGhidraFunctionExtraKeys",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "lineRange": [
+        10,
+        59
+      ],
+      "summary": "Lớp kiểm thử `TestGhidraFunctionExtraKeys` — độ bền GhidraFunction/GhidraAnalysis: key lạ/tương lai bị bỏ qua mà không raise.",
+      "tags": [
+        "tests",
+        "robustness",
+        "reversing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestScriptsBracePath",
+      "type": "class",
+      "name": "TestScriptsBracePath",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "lineRange": [
+        62,
+        87
+      ],
+      "summary": "Lớp kiểm thử `TestScriptsBracePath` — script generators chịu path chứa dấu { } mà không phá template format.",
+      "tags": [
+        "tests",
+        "robustness",
+        "reversing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestBinR2ScriptNoDeadReturn",
+      "type": "class",
+      "name": "TestBinR2ScriptNoDeadReturn",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "lineRange": [
+        90,
+        101
+      ],
+      "summary": "Lớp kiểm thử `TestBinR2ScriptNoDeadReturn` — bin_r2_script luôn trả source r2 hợp lệ (không dead return).",
+      "tags": [
+        "tests",
+        "robustness",
+        "reversing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestGhidraReconEntryPoint",
+      "type": "class",
+      "name": "TestGhidraReconEntryPoint",
+      "filePath": "packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "lineRange": [
+        104,
+        108
+      ],
+      "summary": "Lớp kiểm thử `TestGhidraReconEntryPoint` — ghidra recon script giữ entry point khai báo đúng.",
+      "tags": [
+        "tests",
+        "robustness",
+        "reversing"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_detect_format",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_detect_format",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_parse_elf",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_parse_elf",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_parse_pe",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_parse_pe",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:identify_binary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:identify_binary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/binary.py:BinaryInfo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/binary.py:BinaryInfo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_available",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_available",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_post",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_post",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_get",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_get",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_find_analyze_headless",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_find_analyze_headless",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_run_headless",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_run_headless",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_decompile_function",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_decompile_function",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_get_xrefs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_get_xrefs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_available",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_available",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraFunction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraFunction",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraDecompilation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraDecompilation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraAnalysis",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraAnalysis",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraXref",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraXref",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/packer.py:shannon_entropy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/packer.py:shannon_entropy",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/packer.py:detect_packer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/packer.py:detect_packer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/packer.py:PackerVerdict",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/packer.py:PackerVerdict",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/rop.py:find_rop_gadgets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/rop.py:find_rop_gadgets",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/rop.py:filter_gadgets_by_pattern",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/rop.py:filter_gadgets_by_pattern",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/rop.py:RopGadget",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/rop.py:RopGadget",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/scripts.py:ghidra_recon_script",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/scripts.py:ghidra_recon_script",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/scripts.py:r2_recon_script",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/scripts.py:r2_recon_script",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:_classify",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:_classify",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:extract_strings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:extract_strings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:group_by_category",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:group_by_category",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/strings.py:ExtractedString",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/strings.py:ExtractedString",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/symbols.py:summarize_symbols",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/symbols.py:summarize_symbols",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/symbols.py:SymbolReport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "target": "class:packages/raptix/raptix/tools/reversing/symbols.py:SymbolReport",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_identify",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_identify",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_strings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_strings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_packer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_packer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_rop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_rop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_symbols_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_symbols_report",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_ghidra_script",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_ghidra_script",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_r2_script",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_r2_script",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_analyze",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_analyze",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_decompile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_decompile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_xrefs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_xrefs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_status",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_status",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:re_status",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:re_status",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "function:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:_minimal_elf64",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "function:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:_minimal_elf64",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestIdentifyBinary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestIdentifyBinary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestStringsExtraction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestStringsExtraction",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestPacker",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestPacker",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestRop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestRop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestSymbols",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestSymbols",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestScripts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py:TestScripts",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_elf32",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_elf32",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_elf64_with_phdr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_elf64_with_phdr",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_pe",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "function:packages/raptix/tests/unit/reversing/test_reversing_internals.py:_make_pe",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestDetectFormat",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestDetectFormat",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestIdentifyBinaryExtended",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestIdentifyBinaryExtended",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestStringsExtended",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestStringsExtended",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestPackerExtended",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestPackerExtended",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestRopExtended",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestRopExtended",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestSymbolsExtended",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestSymbolsExtended",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestScriptsExtended",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_internals.py:TestScriptsExtended",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestGhidraFunctionExtraKeys",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestGhidraFunctionExtraKeys",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestScriptsBracePath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestScriptsBracePath",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestBinR2ScriptNoDeadReturn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestBinR2ScriptNoDeadReturn",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestGhidraReconEntryPoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "class:packages/raptix/tests/unit/reversing/test_reversing_robustness.py:TestGhidraReconEntryPoint",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "target": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/binary.py:identify_binary",
+      "target": "class:packages/raptix/raptix/tools/reversing/binary.py:BinaryInfo",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/binary.py:identify_binary",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_detect_format",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/binary.py:identify_binary",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_parse_elf",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/binary.py:identify_binary",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:_parse_pe",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_run_headless",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_find_analyze_headless",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_available",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_post",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraAnalysis",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraFunction",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_run_headless",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_decompile_function",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_available",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_decompile_function",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_post",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_decompile_function",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraDecompilation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_decompile_function",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_run_headless",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_get_xrefs",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_available",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_get_xrefs",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_post",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_get_xrefs",
+      "target": "class:packages/raptix/raptix/tools/reversing/ghidra.py:GhidraXref",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_available",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_find_analyze_headless",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_available",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:_mcp_available",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/packer.py:detect_packer",
+      "target": "class:packages/raptix/raptix/tools/reversing/packer.py:PackerVerdict",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/packer.py:detect_packer",
+      "target": "function:packages/raptix/raptix/tools/reversing/packer.py:shannon_entropy",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/rop.py:find_rop_gadgets",
+      "target": "class:packages/raptix/raptix/tools/reversing/rop.py:RopGadget",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/strings.py:extract_strings",
+      "target": "class:packages/raptix/raptix/tools/reversing/strings.py:ExtractedString",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/strings.py:extract_strings",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:_classify",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/symbols.py:summarize_symbols",
+      "target": "class:packages/raptix/raptix/tools/reversing/symbols.py:SymbolReport",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_identify",
+      "target": "function:packages/raptix/raptix/tools/reversing/binary.py:identify_binary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_identify",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_strings",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:extract_strings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_strings",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_strings",
+      "target": "function:packages/raptix/raptix/tools/reversing/strings.py:group_by_category",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_packer",
+      "target": "function:packages/raptix/raptix/tools/reversing/packer.py:detect_packer",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_packer",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_rop",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_rop",
+      "target": "function:packages/raptix/raptix/tools/reversing/rop.py:find_rop_gadgets",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_rop",
+      "target": "function:packages/raptix/raptix/tools/reversing/rop.py:filter_gadgets_by_pattern",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_symbols_report",
+      "target": "function:packages/raptix/raptix/tools/reversing/symbols.py:summarize_symbols",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_symbols_report",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_ghidra_script",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_ghidra_script",
+      "target": "function:packages/raptix/raptix/tools/reversing/scripts.py:ghidra_recon_script",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_r2_script",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:bin_r2_script",
+      "target": "function:packages/raptix/raptix/tools/reversing/scripts.py:r2_recon_script",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_analyze",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_analyze_binary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_analyze",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_decompile",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_decompile_function",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_decompile",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_xrefs",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_get_xrefs",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_xrefs",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_status",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:ghidra_status",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_available",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:re_status",
+      "target": "function:packages/raptix/raptix/tools/reversing/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/reversing/tools.py:re_status",
+      "target": "function:packages/raptix/raptix/tools/reversing/ghidra.py:ghidra_available",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/binary.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/packer.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/rop.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/strings.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/symbols.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/ghidra.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/scripts.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/reversing/tools.py",
+      "target": "file:packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

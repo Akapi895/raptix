@@ -1,0 +1,2833 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 14,
+  "filesSkipped": [
+    "clients/web/src/app/globals.css",
+    "clients/web/src/styles/canvas-graph.css",
+    "containers/c2-sliver.Dockerfile",
+    "containers/cli.Dockerfile",
+    "containers/langgraph.Dockerfile",
+    "containers/litellm.Dockerfile",
+    "containers/sandbox.Dockerfile",
+    "containers/skillogy.Dockerfile",
+    "containers/web-raptix-proxy.conf",
+    "containers/web-raptix-server.Dockerfile",
+    "containers/web-raptix.Dockerfile"
+  ],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 14,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 9,
+      "failed": 0,
+      "skipped": 5
+    }
+  },
+  "results": [
+    {
+      "path": "clients/web/src/app/(dashboard)/error.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 41,
+      "nonEmptyLines": 38,
+      "functions": [
+        {
+          "name": "DashboardError",
+          "startLine": 6,
+          "endLine": 41,
+          "params": [
+            "{\n  error,\n  reset,\n}"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "DashboardError",
+          "line": 6,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "DashboardError",
+          "callee": "useEffect",
+          "lineNumber": 13
+        },
+        {
+          "caller": "DashboardError",
+          "callee": "console.error",
+          "lineNumber": 14
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web/src/app/(dashboard)/loading.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 10,
+      "functions": [
+        {
+          "name": "DashboardLoading",
+          "startLine": 1,
+          "endLine": 10,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "DashboardLoading",
+          "line": 1,
+          "isDefault": true
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web/src/app/api/health/route.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 105,
+      "nonEmptyLines": 96,
+      "functions": [
+        {
+          "name": "checkService",
+          "startLine": 20,
+          "endLine": 41,
+          "params": [
+            "name",
+            "url",
+            "headers",
+            "timeout"
+          ]
+        },
+        {
+          "name": "checkPostgres",
+          "startLine": 43,
+          "endLine": 65,
+          "params": []
+        },
+        {
+          "name": "GET",
+          "startLine": 67,
+          "endLine": 105,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "GET",
+          "line": 67,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "checkService",
+          "callee": "Date.now",
+          "lineNumber": 26
+        },
+        {
+          "caller": "checkService",
+          "callee": "fetch",
+          "lineNumber": 28
+        },
+        {
+          "caller": "checkService",
+          "callee": "AbortSignal.timeout",
+          "lineNumber": 30
+        },
+        {
+          "caller": "checkService",
+          "callee": "Date.now",
+          "lineNumber": 32
+        },
+        {
+          "caller": "checkService",
+          "callee": "res.json().catch",
+          "lineNumber": 34
+        },
+        {
+          "caller": "checkService",
+          "callee": "res.json",
+          "lineNumber": 34
+        },
+        {
+          "caller": "checkService",
+          "callee": "JSON.stringify(data).slice",
+          "lineNumber": 35
+        },
+        {
+          "caller": "checkService",
+          "callee": "JSON.stringify",
+          "lineNumber": 35
+        },
+        {
+          "caller": "checkPostgres",
+          "callee": "Date.now",
+          "lineNumber": 47
+        },
+        {
+          "caller": "checkPostgres",
+          "callee": "import",
+          "lineNumber": 49
+        },
+        {
+          "caller": "checkPostgres",
+          "callee": "prisma.$queryRaw",
+          "lineNumber": 50
+        },
+        {
+          "caller": "checkPostgres",
+          "callee": "Date.now",
+          "lineNumber": 55
+        },
+        {
+          "caller": "checkPostgres",
+          "callee": "Date.now",
+          "lineNumber": 62
+        },
+        {
+          "caller": "GET",
+          "callee": "Promise.all",
+          "lineNumber": 72
+        },
+        {
+          "caller": "GET",
+          "callee": "checkService",
+          "lineNumber": 73
+        },
+        {
+          "caller": "GET",
+          "callee": "checkService",
+          "lineNumber": 75
+        },
+        {
+          "caller": "GET",
+          "callee": "Promise.resolve",
+          "lineNumber": 76
+        },
+        {
+          "caller": "GET",
+          "callee": "checkService",
+          "lineNumber": 81
+        },
+        {
+          "caller": "GET",
+          "callee": "checkPostgres",
+          "lineNumber": 82
+        },
+        {
+          "caller": "GET",
+          "callee": "JSON.parse",
+          "lineNumber": 89
+        },
+        {
+          "caller": "GET",
+          "callee": "services.every",
+          "lineNumber": 98
+        },
+        {
+          "caller": "GET",
+          "callee": "NextResponse.json",
+          "lineNumber": 100
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web/src/app/error.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 35,
+      "nonEmptyLines": 32,
+      "functions": [
+        {
+          "name": "GlobalError",
+          "startLine": 5,
+          "endLine": 35,
+          "params": [
+            "{\n  error,\n  reset,\n}"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "GlobalError",
+          "line": 5,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "GlobalError",
+          "callee": "useEffect",
+          "lineNumber": 12
+        },
+        {
+          "caller": "GlobalError",
+          "callee": "console.error",
+          "lineNumber": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web/src/app/loading.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 10,
+      "functions": [
+        {
+          "name": "GlobalLoading",
+          "startLine": 1,
+          "endLine": 10,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "GlobalLoading",
+          "line": 1,
+          "isDefault": true
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web/src/components/agents/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 2,
+      "nonEmptyLines": 2,
+      "exports": [
+        {
+          "name": "AgentCard",
+          "line": 1,
+          "isDefault": false
+        },
+        {
+          "name": "AgentAvatar",
+          "line": 2,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web/src/lib/chat/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 6,
+      "nonEmptyLines": 6,
+      "exports": [
+        {
+          "name": "ChatMessage",
+          "line": 1,
+          "isDefault": false
+        },
+        {
+          "name": "DocumentRef",
+          "line": 1,
+          "isDefault": false
+        },
+        {
+          "name": "MessageRenderer",
+          "line": 1,
+          "isDefault": false
+        },
+        {
+          "name": "MarkdownMessageRenderer",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "defaultRenderer",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "config/claude4_compat.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 36,
+      "nonEmptyLines": 35,
+      "sections": [
+        {
+          "heading": "trigger_terms",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "config/litellm.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 888,
+      "nonEmptyLines": 829,
+      "sections": [
+        {
+          "heading": "model_list",
+          "level": 1,
+          "line": 22
+        },
+        {
+          "heading": "litellm_settings",
+          "level": 1,
+          "line": 771
+        },
+        {
+          "heading": "router_settings",
+          "level": 1,
+          "line": 790
+        },
+        {
+          "heading": "general_settings",
+          "level": 1,
+          "line": 885
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "containers/campaign-bridge/evilginx_bridge.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 262,
+      "nonEmptyLines": 236,
+      "functions": [
+        {
+          "name": "main",
+          "startLine": 252,
+          "endLine": 258,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "BridgeError",
+          "startLine": 29,
+          "endLine": 32,
+          "methods": [
+            "__init__"
+          ],
+          "properties": []
+        },
+        {
+          "name": "NativeConsole",
+          "startLine": 35,
+          "endLine": 147,
+          "methods": [
+            "__init__",
+            "_prompt",
+            "_command",
+            "config",
+            "prepare",
+            "enable",
+            "inspect"
+          ],
+          "properties": []
+        },
+        {
+          "name": "LabBridge",
+          "startLine": 150,
+          "endLine": 209,
+          "methods": [
+            "__init__",
+            "execute"
+          ],
+          "properties": []
+        },
+        {
+          "name": "Handler",
+          "startLine": 212,
+          "endLine": 249,
+          "methods": [
+            "setup",
+            "log_message",
+            "do_POST"
+          ],
+          "properties": [
+            "bridge",
+            "token"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BridgeError",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "NativeConsole",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "LabBridge",
+          "line": 150,
+          "isDefault": false
+        },
+        {
+          "name": "Handler",
+          "line": 212,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 252,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 31
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 31
+        },
+        {
+          "caller": "__init__",
+          "callee": "NATIVE.mkdir",
+          "lineNumber": 42
+        },
+        {
+          "caller": "__init__",
+          "callee": "config.exists",
+          "lineNumber": 44
+        },
+        {
+          "caller": "__init__",
+          "callee": "config.write_text",
+          "lineNumber": 45
+        },
+        {
+          "caller": "__init__",
+          "callee": "json.dumps",
+          "lineNumber": 46
+        },
+        {
+          "caller": "__init__",
+          "callee": "pty.openpty",
+          "lineNumber": 60
+        },
+        {
+          "caller": "__init__",
+          "callee": "fcntl.ioctl",
+          "lineNumber": 61
+        },
+        {
+          "caller": "__init__",
+          "callee": "struct.pack",
+          "lineNumber": 61
+        },
+        {
+          "caller": "__init__",
+          "callee": "subprocess.Popen",
+          "lineNumber": 63
+        },
+        {
+          "caller": "__init__",
+          "callee": "str",
+          "lineNumber": 72
+        },
+        {
+          "caller": "__init__",
+          "callee": "str",
+          "lineNumber": 79
+        },
+        {
+          "caller": "__init__",
+          "callee": "os.close",
+          "lineNumber": 81
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._prompt",
+          "lineNumber": 82
+        },
+        {
+          "caller": "_prompt",
+          "callee": "time.monotonic",
+          "lineNumber": 85
+        },
+        {
+          "caller": "_prompt",
+          "callee": "time.monotonic",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_prompt",
+          "callee": "self.process.poll",
+          "lineNumber": 88
+        },
+        {
+          "caller": "_prompt",
+          "callee": "BridgeError",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_prompt",
+          "callee": "select.select",
+          "lineNumber": 90
+        },
+        {
+          "caller": "_prompt",
+          "callee": "os.read",
+          "lineNumber": 91
+        },
+        {
+          "caller": "_prompt",
+          "callee": "len",
+          "lineNumber": 92
+        },
+        {
+          "caller": "_prompt",
+          "callee": "BridgeError",
+          "lineNumber": 93
+        },
+        {
+          "caller": "_prompt",
+          "callee": "ANSI.sub(\"\", output.decode(\"utf-8\", errors=\"replace\"))\n                    .replace(\"\\r\", \"\")\n                    .replace",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_prompt",
+          "callee": "ANSI.sub(\"\", output.decode(\"utf-8\", errors=\"replace\"))\n                    .replace",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_prompt",
+          "callee": "ANSI.sub",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_prompt",
+          "callee": "output.decode",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_prompt",
+          "callee": "re.search",
+          "lineNumber": 99
+        },
+        {
+          "caller": "_prompt",
+          "callee": "BridgeError",
+          "lineNumber": 101
+        },
+        {
+          "caller": "_command",
+          "callee": "os.write",
+          "lineNumber": 104
+        },
+        {
+          "caller": "_command",
+          "callee": "(command + \"\\n\").encode",
+          "lineNumber": 104
+        },
+        {
+          "caller": "_command",
+          "callee": "self._prompt",
+          "lineNumber": 105
+        },
+        {
+          "caller": "config",
+          "callee": "json.loads",
+          "lineNumber": 108
+        },
+        {
+          "caller": "config",
+          "callee": "(NATIVE / \"config.json\").read_text",
+          "lineNumber": 108
+        },
+        {
+          "caller": "prepare",
+          "callee": "any",
+          "lineNumber": 112
+        },
+        {
+          "caller": "prepare",
+          "callee": "child.get",
+          "lineNumber": 112
+        },
+        {
+          "caller": "prepare",
+          "callee": "self.config().get",
+          "lineNumber": 112
+        },
+        {
+          "caller": "prepare",
+          "callee": "self.config",
+          "lineNumber": 112
+        },
+        {
+          "caller": "prepare",
+          "callee": "self._command",
+          "lineNumber": 113
+        },
+        {
+          "caller": "prepare",
+          "callee": "self._command",
+          "lineNumber": 114
+        },
+        {
+          "caller": "prepare",
+          "callee": "any",
+          "lineNumber": 115
+        },
+        {
+          "caller": "prepare",
+          "callee": "lure.get",
+          "lineNumber": 115
+        },
+        {
+          "caller": "prepare",
+          "callee": "self.config().get",
+          "lineNumber": 115
+        },
+        {
+          "caller": "prepare",
+          "callee": "self.config",
+          "lineNumber": 115
+        },
+        {
+          "caller": "prepare",
+          "callee": "self._command",
+          "lineNumber": 116
+        },
+        {
+          "caller": "enable",
+          "callee": "self._command",
+          "lineNumber": 120
+        },
+        {
+          "caller": "inspect",
+          "callee": "self.config",
+          "lineNumber": 123
+        },
+        {
+          "caller": "inspect",
+          "callee": "config.get(\"phishlets\", {}).get",
+          "lineNumber": 124
+        },
+        {
+          "caller": "inspect",
+          "callee": "config.get",
+          "lineNumber": 124
+        },
+        {
+          "caller": "inspect",
+          "callee": "BridgeError",
+          "lineNumber": 126
+        },
+        {
+          "caller": "inspect",
+          "callee": "enumerate",
+          "lineNumber": 129
+        },
+        {
+          "caller": "inspect",
+          "callee": "config.get",
+          "lineNumber": 129
+        },
+        {
+          "caller": "inspect",
+          "callee": "lure.get",
+          "lineNumber": 130
+        },
+        {
+          "caller": "inspect",
+          "callee": "len",
+          "lineNumber": 132
+        },
+        {
+          "caller": "inspect",
+          "callee": "BridgeError",
+          "lineNumber": 133
+        },
+        {
+          "caller": "inspect",
+          "callee": "hostname.endswith",
+          "lineNumber": 136
+        },
+        {
+          "caller": "inspect",
+          "callee": "BridgeError",
+          "lineNumber": 137
+        },
+        {
+          "caller": "inspect",
+          "callee": "urlunsplit",
+          "lineNumber": 139
+        },
+        {
+          "caller": "inspect",
+          "callee": "phishlet.get",
+          "lineNumber": 146
+        },
+        {
+          "caller": "__init__",
+          "callee": "threading.Lock",
+          "lineNumber": 153
+        },
+        {
+          "caller": "__init__",
+          "callee": "sqlite3.connect",
+          "lineNumber": 154
+        },
+        {
+          "caller": "__init__",
+          "callee": "db.execute",
+          "lineNumber": 155
+        },
+        {
+          "caller": "execute",
+          "callee": "isinstance",
+          "lineNumber": 160
+        },
+        {
+          "caller": "execute",
+          "callee": "set",
+          "lineNumber": 160
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 166
+        },
+        {
+          "caller": "execute",
+          "callee": "all",
+          "lineNumber": 171
+        },
+        {
+          "caller": "execute",
+          "callee": "isinstance",
+          "lineNumber": 172
+        },
+        {
+          "caller": "execute",
+          "callee": "IDENTIFIER.fullmatch",
+          "lineNumber": 172
+        },
+        {
+          "caller": "execute",
+          "callee": "type",
+          "lineNumber": 175
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 178
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 180
+        },
+        {
+          "caller": "execute",
+          "callee": "sqlite3.connect",
+          "lineNumber": 181
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256(Path(\"/profiles/lab.yaml\").read_bytes()).hexdigest",
+          "lineNumber": 182
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256",
+          "lineNumber": 182
+        },
+        {
+          "caller": "execute",
+          "callee": "Path(\"/profiles/lab.yaml\").read_bytes",
+          "lineNumber": 182
+        },
+        {
+          "caller": "execute",
+          "callee": "Path",
+          "lineNumber": 182
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute(\n                \"SELECT site,fingerprint FROM ownership WHERE engagement=? AND campaign=? AND version=?\",\n                (engagement, campaign, version),\n            ).fetchone",
+          "lineNumber": 183
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute",
+          "lineNumber": 183
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 188
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256(\n                    json.dumps([engagement, campaign, version], separators=(\",\", \":\")).encode()\n                ).hexdigest",
+          "lineNumber": 190
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256",
+          "lineNumber": 190
+        },
+        {
+          "caller": "execute",
+          "callee": "json.dumps([engagement, campaign, version], separators=(\",\", \":\")).encode",
+          "lineNumber": 191
+        },
+        {
+          "caller": "execute",
+          "callee": "json.dumps",
+          "lineNumber": 191
+        },
+        {
+          "caller": "execute",
+          "callee": "self.native.prepare",
+          "lineNumber": 193
+        },
+        {
+          "caller": "execute",
+          "callee": "self.native.inspect",
+          "lineNumber": 194
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute",
+          "lineNumber": 195
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 201
+        },
+        {
+          "caller": "execute",
+          "callee": "self.native.enable",
+          "lineNumber": 204
+        },
+        {
+          "caller": "execute",
+          "callee": "self.native.inspect",
+          "lineNumber": 205
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 207
+        },
+        {
+          "caller": "execute",
+          "callee": "manifest.update",
+          "lineNumber": 208
+        },
+        {
+          "caller": "setup",
+          "callee": "super().setup",
+          "lineNumber": 217
+        },
+        {
+          "caller": "setup",
+          "callee": "super",
+          "lineNumber": 217
+        },
+        {
+          "caller": "setup",
+          "callee": "self.connection.settimeout",
+          "lineNumber": 218
+        },
+        {
+          "caller": "do_POST",
+          "callee": "urlsplit",
+          "lineNumber": 225
+        },
+        {
+          "caller": "do_POST",
+          "callee": "urlsplit",
+          "lineNumber": 225
+        },
+        {
+          "caller": "do_POST",
+          "callee": "BridgeError",
+          "lineNumber": 226
+        },
+        {
+          "caller": "do_POST",
+          "callee": "hmac.compare_digest",
+          "lineNumber": 227
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get(\"Authorization\", \"\").encode",
+          "lineNumber": 228
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get",
+          "lineNumber": 228
+        },
+        {
+          "caller": "do_POST",
+          "callee": "f\"Bearer {self.token}\".encode",
+          "lineNumber": 228
+        },
+        {
+          "caller": "do_POST",
+          "callee": "BridgeError",
+          "lineNumber": 230
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get",
+          "lineNumber": 232
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get(\"Content-Length\", \"\").isdigit",
+          "lineNumber": 233
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get",
+          "lineNumber": 233
+        },
+        {
+          "caller": "do_POST",
+          "callee": "BridgeError",
+          "lineNumber": 235
+        },
+        {
+          "caller": "do_POST",
+          "callee": "int",
+          "lineNumber": 236
+        },
+        {
+          "caller": "do_POST",
+          "callee": "BridgeError",
+          "lineNumber": 238
+        },
+        {
+          "caller": "do_POST",
+          "callee": "json.loads",
+          "lineNumber": 239
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.rfile.read",
+          "lineNumber": 239
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.bridge.execute",
+          "lineNumber": 240
+        },
+        {
+          "caller": "do_POST",
+          "callee": "str",
+          "lineNumber": 244
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.send_response",
+          "lineNumber": 245
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.send_header",
+          "lineNumber": 246
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.send_header",
+          "lineNumber": 247
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.end_headers",
+          "lineNumber": 248
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.wfile.write",
+          "lineNumber": 249
+        },
+        {
+          "caller": "do_POST",
+          "callee": "json.dumps(response).encode",
+          "lineNumber": 249
+        },
+        {
+          "caller": "do_POST",
+          "callee": "json.dumps",
+          "lineNumber": 249
+        },
+        {
+          "caller": "main",
+          "callee": "os.environ.get",
+          "lineNumber": 253
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 254
+        },
+        {
+          "caller": "main",
+          "callee": "BridgeError",
+          "lineNumber": 255
+        },
+        {
+          "caller": "main",
+          "callee": "LabBridge",
+          "lineNumber": 257
+        },
+        {
+          "caller": "main",
+          "callee": "NativeConsole",
+          "lineNumber": 257
+        },
+        {
+          "caller": "main",
+          "callee": "ThreadingHTTPServer((\"0.0.0.0\", 9000), Handler).serve_forever",
+          "lineNumber": 258
+        },
+        {
+          "caller": "main",
+          "callee": "ThreadingHTTPServer",
+          "lineNumber": 258
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 1,
+        "classCount": 4
+      }
+    },
+    {
+      "path": "containers/campaign-bridge/lab.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 15,
+      "nonEmptyLines": 15,
+      "sections": [
+        {
+          "heading": "author",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "min_ver",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "params",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "proxy_hosts",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "auth_tokens",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "credentials",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "login",
+          "level": 1,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "containers/sliver-bridge/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 49,
+      "nonEmptyLines": 40,
+      "sections": [
+        {
+          "heading": "IW-09 private Sliver lab bridge",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Configuration",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Verified scope",
+          "level": 2,
+          "line": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "containers/sliver-bridge/entrypoint.sh",
+      "language": "shell",
+      "fileCategory": "script",
+      "totalLines": 30,
+      "nonEmptyLines": 30,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "containers/sliver-bridge/sliver_bridge.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 637,
+      "nonEmptyLines": 586,
+      "functions": [
+        {
+          "name": "_auth_metadata",
+          "startLine": 48,
+          "endLine": 49,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "_bound",
+          "startLine": 223,
+          "endLine": 226,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "_project_session",
+          "startLine": 229,
+          "endLine": 244,
+          "params": [
+            "session"
+          ]
+        },
+        {
+          "name": "_project_profile",
+          "startLine": 247,
+          "endLine": 257,
+          "params": [
+            "profile"
+          ]
+        },
+        {
+          "name": "_owned",
+          "startLine": 536,
+          "endLine": 558,
+          "params": [
+            "sessions",
+            "listeners"
+          ]
+        },
+        {
+          "name": "_identifier",
+          "startLine": 561,
+          "endLine": 565,
+          "params": [
+            "payload",
+            "key"
+          ]
+        },
+        {
+          "name": "_command",
+          "startLine": 568,
+          "endLine": 584,
+          "params": [
+            "payload"
+          ]
+        },
+        {
+          "name": "main",
+          "startLine": 627,
+          "endLine": 633,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "BridgeError",
+          "startLine": 42,
+          "endLine": 45,
+          "methods": [
+            "__init__"
+          ],
+          "properties": []
+        },
+        {
+          "name": "Operator",
+          "startLine": 52,
+          "endLine": 220,
+          "methods": [
+            "__init__",
+            "_metadata",
+            "sessions",
+            "execute",
+            "http_profiles",
+            "http_profile",
+            "save_http_profile",
+            "start_mtls",
+            "start_http",
+            "kill_job",
+            "jobs",
+            "generate_implant"
+          ],
+          "properties": []
+        },
+        {
+          "name": "LabBridge",
+          "startLine": 260,
+          "endLine": 533,
+          "methods": [
+            "__init__",
+            "execute",
+            "_listeners",
+            "_allocate",
+            "_restore_listeners",
+            "_owned_session",
+            "_sessions"
+          ],
+          "properties": []
+        },
+        {
+          "name": "Handler",
+          "startLine": 587,
+          "endLine": 624,
+          "methods": [
+            "setup",
+            "log_message",
+            "do_POST"
+          ],
+          "properties": [
+            "bridge",
+            "token"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BridgeError",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "_auth_metadata",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "Operator",
+          "line": 52,
+          "isDefault": false
+        },
+        {
+          "name": "_bound",
+          "line": 223,
+          "isDefault": false
+        },
+        {
+          "name": "_project_session",
+          "line": 229,
+          "isDefault": false
+        },
+        {
+          "name": "_project_profile",
+          "line": 247,
+          "isDefault": false
+        },
+        {
+          "name": "LabBridge",
+          "line": 260,
+          "isDefault": false
+        },
+        {
+          "name": "_owned",
+          "line": 536,
+          "isDefault": false
+        },
+        {
+          "name": "_identifier",
+          "line": 561,
+          "isDefault": false
+        },
+        {
+          "name": "_command",
+          "line": 568,
+          "isDefault": false
+        },
+        {
+          "name": "Handler",
+          "line": 587,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 627,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 44
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 44
+        },
+        {
+          "caller": "__init__",
+          "callee": "json.loads",
+          "lineNumber": 54
+        },
+        {
+          "caller": "__init__",
+          "callee": "OPERATOR_CFG.read_text",
+          "lineNumber": 54
+        },
+        {
+          "caller": "__init__",
+          "callee": "config.get",
+          "lineNumber": 56
+        },
+        {
+          "caller": "__init__",
+          "callee": "BridgeError",
+          "lineNumber": 57
+        },
+        {
+          "caller": "__init__",
+          "callee": "grpc.ssl_channel_credentials",
+          "lineNumber": 58
+        },
+        {
+          "caller": "__init__",
+          "callee": "config[\"ca_certificate\"].encode",
+          "lineNumber": 59
+        },
+        {
+          "caller": "__init__",
+          "callee": "config[\"private_key\"].encode",
+          "lineNumber": 60
+        },
+        {
+          "caller": "__init__",
+          "callee": "config[\"certificate\"].encode",
+          "lineNumber": 61
+        },
+        {
+          "caller": "__init__",
+          "callee": "grpc.secure_channel",
+          "lineNumber": 63
+        },
+        {
+          "caller": "__init__",
+          "callee": "services_pb2_grpc.SliverRPCStub",
+          "lineNumber": 72
+        },
+        {
+          "caller": "__init__",
+          "callee": "self.rpc.GetVersion",
+          "lineNumber": 73
+        },
+        {
+          "caller": "__init__",
+          "callee": "common_pb2.Empty",
+          "lineNumber": 74
+        },
+        {
+          "caller": "__init__",
+          "callee": "_auth_metadata",
+          "lineNumber": 74
+        },
+        {
+          "caller": "__init__",
+          "callee": "BridgeError",
+          "lineNumber": 77
+        },
+        {
+          "caller": "_metadata",
+          "callee": "_auth_metadata",
+          "lineNumber": 80
+        },
+        {
+          "caller": "sessions",
+          "callee": "self.rpc.GetSessions",
+          "lineNumber": 84
+        },
+        {
+          "caller": "sessions",
+          "callee": "common_pb2.Empty",
+          "lineNumber": 85
+        },
+        {
+          "caller": "sessions",
+          "callee": "self._metadata",
+          "lineNumber": 85
+        },
+        {
+          "caller": "sessions",
+          "callee": "BridgeError",
+          "lineNumber": 88
+        },
+        {
+          "caller": "sessions",
+          "callee": "list",
+          "lineNumber": 89
+        },
+        {
+          "caller": "execute",
+          "callee": "sliver_pb2.ExecuteReq",
+          "lineNumber": 92
+        },
+        {
+          "caller": "execute",
+          "callee": "common_pb2.Request",
+          "lineNumber": 98
+        },
+        {
+          "caller": "execute",
+          "callee": "self.rpc.Execute",
+          "lineNumber": 101
+        },
+        {
+          "caller": "execute",
+          "callee": "self._metadata",
+          "lineNumber": 102
+        },
+        {
+          "caller": "execute",
+          "callee": "error.code",
+          "lineNumber": 105
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 106
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 107
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 109
+        },
+        {
+          "caller": "execute",
+          "callee": "_bound",
+          "lineNumber": 113
+        },
+        {
+          "caller": "execute",
+          "callee": "_bound",
+          "lineNumber": 114
+        },
+        {
+          "caller": "http_profiles",
+          "callee": "self.rpc.GetHTTPC2Profiles",
+          "lineNumber": 119
+        },
+        {
+          "caller": "http_profiles",
+          "callee": "common_pb2.Empty",
+          "lineNumber": 120
+        },
+        {
+          "caller": "http_profiles",
+          "callee": "self._metadata",
+          "lineNumber": 120
+        },
+        {
+          "caller": "http_profiles",
+          "callee": "BridgeError",
+          "lineNumber": 123
+        },
+        {
+          "caller": "http_profiles",
+          "callee": "list",
+          "lineNumber": 124
+        },
+        {
+          "caller": "http_profile",
+          "callee": "self.rpc.GetHTTPC2ProfileByName",
+          "lineNumber": 128
+        },
+        {
+          "caller": "http_profile",
+          "callee": "client_pb2.C2ProfileReq",
+          "lineNumber": 129
+        },
+        {
+          "caller": "http_profile",
+          "callee": "self._metadata",
+          "lineNumber": 130
+        },
+        {
+          "caller": "http_profile",
+          "callee": "BridgeError",
+          "lineNumber": 134
+        },
+        {
+          "caller": "save_http_profile",
+          "callee": "self.rpc.SaveHTTPC2Profile",
+          "lineNumber": 138
+        },
+        {
+          "caller": "save_http_profile",
+          "callee": "client_pb2.HTTPC2ConfigReq",
+          "lineNumber": 139
+        },
+        {
+          "caller": "save_http_profile",
+          "callee": "self._metadata",
+          "lineNumber": 140
+        },
+        {
+          "caller": "save_http_profile",
+          "callee": "BridgeError",
+          "lineNumber": 144
+        },
+        {
+          "caller": "start_mtls",
+          "callee": "self.rpc.StartMTLSListener",
+          "lineNumber": 148
+        },
+        {
+          "caller": "start_mtls",
+          "callee": "client_pb2.MTLSListenerReq",
+          "lineNumber": 149
+        },
+        {
+          "caller": "start_mtls",
+          "callee": "self._metadata",
+          "lineNumber": 150
+        },
+        {
+          "caller": "start_mtls",
+          "callee": "BridgeError",
+          "lineNumber": 154
+        },
+        {
+          "caller": "start_http",
+          "callee": "self.rpc.StartHTTPListener",
+          "lineNumber": 159
+        },
+        {
+          "caller": "start_http",
+          "callee": "client_pb2.HTTPListenerReq",
+          "lineNumber": 160
+        },
+        {
+          "caller": "start_http",
+          "callee": "self._metadata",
+          "lineNumber": 161
+        },
+        {
+          "caller": "start_http",
+          "callee": "BridgeError",
+          "lineNumber": 165
+        },
+        {
+          "caller": "kill_job",
+          "callee": "self.rpc.KillJob",
+          "lineNumber": 170
+        },
+        {
+          "caller": "kill_job",
+          "callee": "client_pb2.KillJobReq",
+          "lineNumber": 171
+        },
+        {
+          "caller": "kill_job",
+          "callee": "self._metadata",
+          "lineNumber": 172
+        },
+        {
+          "caller": "kill_job",
+          "callee": "BridgeError",
+          "lineNumber": 176
+        },
+        {
+          "caller": "kill_job",
+          "callee": "BridgeError",
+          "lineNumber": 178
+        },
+        {
+          "caller": "jobs",
+          "callee": "list",
+          "lineNumber": 182
+        },
+        {
+          "caller": "jobs",
+          "callee": "self.rpc.GetJobs",
+          "lineNumber": 183
+        },
+        {
+          "caller": "jobs",
+          "callee": "common_pb2.Empty",
+          "lineNumber": 184
+        },
+        {
+          "caller": "jobs",
+          "callee": "self._metadata",
+          "lineNumber": 184
+        },
+        {
+          "caller": "jobs",
+          "callee": "BridgeError",
+          "lineNumber": 188
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "urlsplit",
+          "lineNumber": 191
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "client_pb2.ImplantConfig",
+          "lineNumber": 193
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "client_pb2.ImplantConfig",
+          "lineNumber": 197
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "BridgeError",
+          "lineNumber": 201
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "config.C2.append",
+          "lineNumber": 202
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "client_pb2.ImplantC2",
+          "lineNumber": 202
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "self.rpc.Generate",
+          "lineNumber": 209
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "client_pb2.GenerateReq",
+          "lineNumber": 210
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "self._metadata",
+          "lineNumber": 211
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "BridgeError",
+          "lineNumber": 215
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "IMPLANTS.mkdir",
+          "lineNumber": 216
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "path.write_bytes",
+          "lineNumber": 218
+        },
+        {
+          "caller": "generate_implant",
+          "callee": "path.chmod",
+          "lineNumber": 219
+        },
+        {
+          "caller": "_bound",
+          "callee": "len",
+          "lineNumber": 224
+        },
+        {
+          "caller": "_bound",
+          "callee": "data[:OUTPUT_CAP].decode",
+          "lineNumber": 225
+        },
+        {
+          "caller": "_bound",
+          "callee": "data.decode",
+          "lineNumber": 226
+        },
+        {
+          "caller": "_project_session",
+          "callee": "int",
+          "lineNumber": 239
+        },
+        {
+          "caller": "_project_session",
+          "callee": "bool",
+          "lineNumber": 241
+        },
+        {
+          "caller": "_project_session",
+          "callee": "int",
+          "lineNumber": 243
+        },
+        {
+          "caller": "_project_profile",
+          "callee": "int",
+          "lineNumber": 251
+        },
+        {
+          "caller": "_project_profile",
+          "callee": "len",
+          "lineNumber": 253
+        },
+        {
+          "caller": "_project_profile",
+          "callee": "len",
+          "lineNumber": 254
+        },
+        {
+          "caller": "_project_profile",
+          "callee": "len",
+          "lineNumber": 255
+        },
+        {
+          "caller": "_project_profile",
+          "callee": "len",
+          "lineNumber": 256
+        },
+        {
+          "caller": "__init__",
+          "callee": "threading.Lock",
+          "lineNumber": 263
+        },
+        {
+          "caller": "__init__",
+          "callee": "sqlite3.connect",
+          "lineNumber": 264
+        },
+        {
+          "caller": "__init__",
+          "callee": "db.execute",
+          "lineNumber": 265
+        },
+        {
+          "caller": "__init__",
+          "callee": "db.execute",
+          "lineNumber": 268
+        },
+        {
+          "caller": "__init__",
+          "callee": "db.execute",
+          "lineNumber": 271
+        },
+        {
+          "caller": "__init__",
+          "callee": "self._restore_listeners",
+          "lineNumber": 274
+        },
+        {
+          "caller": "execute",
+          "callee": "isinstance",
+          "lineNumber": 277
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 278
+        },
+        {
+          "caller": "execute",
+          "callee": "isinstance",
+          "lineNumber": 292
+        },
+        {
+          "caller": "execute",
+          "callee": "set",
+          "lineNumber": 292
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 293
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 297
+        },
+        {
+          "caller": "execute",
+          "callee": "self._sessions",
+          "lineNumber": 299
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 301
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 302
+        },
+        {
+          "caller": "execute",
+          "callee": "self._owned_session",
+          "lineNumber": 303
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 305
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 306
+        },
+        {
+          "caller": "execute",
+          "callee": "_command",
+          "lineNumber": 307
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 308
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256(\n                json.dumps([session_id, path, args], separators=(\",\", \":\")).encode()\n            ).hexdigest",
+          "lineNumber": 309
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256",
+          "lineNumber": 309
+        },
+        {
+          "caller": "execute",
+          "callee": "json.dumps([session_id, path, args], separators=(\",\", \":\")).encode",
+          "lineNumber": 310
+        },
+        {
+          "caller": "execute",
+          "callee": "json.dumps",
+          "lineNumber": 310
+        },
+        {
+          "caller": "execute",
+          "callee": "sqlite3.connect",
+          "lineNumber": 312
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute(\n                    \"SELECT hash,state,outcome FROM commands WHERE engagement=? AND request=?\",\n                    (engagement, request_id),\n                ).fetchone",
+          "lineNumber": 313
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute",
+          "lineNumber": 313
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 319
+        },
+        {
+          "caller": "execute",
+          "callee": "json.loads",
+          "lineNumber": 322
+        },
+        {
+          "caller": "execute",
+          "callee": "self._owned_session",
+          "lineNumber": 324
+        },
+        {
+          "caller": "execute",
+          "callee": "time.time",
+          "lineNumber": 325
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 326
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute",
+          "lineNumber": 327
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.execute",
+          "lineNumber": 332
+        },
+        {
+          "caller": "execute",
+          "callee": "sqlite3.connect",
+          "lineNumber": 336
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute",
+          "lineNumber": 337
+        },
+        {
+          "caller": "execute",
+          "callee": "json.dumps",
+          "lineNumber": 341
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 349
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 350
+        },
+        {
+          "caller": "execute",
+          "callee": "sqlite3.connect",
+          "lineNumber": 352
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute(\n                    \"SELECT state,outcome FROM commands WHERE engagement=? AND request=?\",\n                    (engagement, request_id),\n                ).fetchone",
+          "lineNumber": 353
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute",
+          "lineNumber": 353
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 358
+        },
+        {
+          "caller": "execute",
+          "callee": "json.loads",
+          "lineNumber": 359
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 361
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256(engagement.encode()).hexdigest",
+          "lineNumber": 362
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256",
+          "lineNumber": 362
+        },
+        {
+          "caller": "execute",
+          "callee": "engagement.encode",
+          "lineNumber": 362
+        },
+        {
+          "caller": "execute",
+          "callee": "_project_profile",
+          "lineNumber": 366
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.http_profile",
+          "lineNumber": 366
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.http_profiles",
+          "lineNumber": 367
+        },
+        {
+          "caller": "execute",
+          "callee": "profile.Name.startswith",
+          "lineNumber": 368
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 372
+        },
+        {
+          "caller": "execute",
+          "callee": "payload.get",
+          "lineNumber": 373
+        },
+        {
+          "caller": "execute",
+          "callee": "isinstance",
+          "lineNumber": 374
+        },
+        {
+          "caller": "execute",
+          "callee": "PROFILE_NAME.fullmatch",
+          "lineNumber": 374
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 375
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256(engagement.encode()).hexdigest",
+          "lineNumber": 378
+        },
+        {
+          "caller": "execute",
+          "callee": "hashlib.sha256",
+          "lineNumber": 378
+        },
+        {
+          "caller": "execute",
+          "callee": "engagement.encode",
+          "lineNumber": 378
+        },
+        {
+          "caller": "execute",
+          "callee": "next",
+          "lineNumber": 380
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.http_profiles",
+          "lineNumber": 381
+        },
+        {
+          "caller": "execute",
+          "callee": "_project_profile",
+          "lineNumber": 384
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.http_profile",
+          "lineNumber": 384
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.http_profile",
+          "lineNumber": 385
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.save_http_profile",
+          "lineNumber": 399
+        },
+        {
+          "caller": "execute",
+          "callee": "_project_profile",
+          "lineNumber": 400
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.http_profile",
+          "lineNumber": 400
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 402
+        },
+        {
+          "caller": "execute",
+          "callee": "payload.get",
+          "lineNumber": 403
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 405
+        },
+        {
+          "caller": "execute",
+          "callee": "self._listeners",
+          "lineNumber": 407
+        },
+        {
+          "caller": "execute",
+          "callee": "next",
+          "lineNumber": 408
+        },
+        {
+          "caller": "execute",
+          "callee": "self._allocate",
+          "lineNumber": 414
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.start_mtls",
+          "lineNumber": 416
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.start_http",
+          "lineNumber": 418
+        },
+        {
+          "caller": "execute",
+          "callee": "sqlite3.connect",
+          "lineNumber": 420
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute",
+          "lineNumber": 421
+        },
+        {
+          "caller": "execute",
+          "callee": "int",
+          "lineNumber": 423
+        },
+        {
+          "caller": "execute",
+          "callee": "time.time",
+          "lineNumber": 423
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 435
+        },
+        {
+          "caller": "execute",
+          "callee": "self._listeners",
+          "lineNumber": 437
+        },
+        {
+          "caller": "execute",
+          "callee": "_identifier",
+          "lineNumber": 439
+        },
+        {
+          "caller": "execute",
+          "callee": "payload.get",
+          "lineNumber": 440
+        },
+        {
+          "caller": "execute",
+          "callee": "type",
+          "lineNumber": 441
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 442
+        },
+        {
+          "caller": "execute",
+          "callee": "self._listeners",
+          "lineNumber": 444
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 446
+        },
+        {
+          "caller": "execute",
+          "callee": "self.operator.kill_job",
+          "lineNumber": 447
+        },
+        {
+          "caller": "execute",
+          "callee": "sqlite3.connect",
+          "lineNumber": 448
+        },
+        {
+          "caller": "execute",
+          "callee": "db.execute",
+          "lineNumber": 449
+        },
+        {
+          "caller": "execute",
+          "callee": "BridgeError",
+          "lineNumber": 454
+        },
+        {
+          "caller": "_listeners",
+          "callee": "sqlite3.connect",
+          "lineNumber": 457
+        },
+        {
+          "caller": "_listeners",
+          "callee": "db.execute(\n                \"SELECT protocol, port, job_id, created, active FROM listeners WHERE engagement=?\",\n                (engagement,),\n            ).fetchall",
+          "lineNumber": 458
+        },
+        {
+          "caller": "_listeners",
+          "callee": "db.execute",
+          "lineNumber": 458
+        },
+        {
+          "caller": "_listeners",
+          "callee": "bool",
+          "lineNumber": 469
+        },
+        {
+          "caller": "_allocate",
+          "callee": "sqlite3.connect",
+          "lineNumber": 476
+        },
+        {
+          "caller": "_allocate",
+          "callee": "db.execute(\"SELECT port FROM listeners\").fetchall",
+          "lineNumber": 477
+        },
+        {
+          "caller": "_allocate",
+          "callee": "db.execute",
+          "lineNumber": 477
+        },
+        {
+          "caller": "_allocate",
+          "callee": "taken.update",
+          "lineNumber": 478
+        },
+        {
+          "caller": "_allocate",
+          "callee": "self.operator.jobs",
+          "lineNumber": 478
+        },
+        {
+          "caller": "_allocate",
+          "callee": "int",
+          "lineNumber": 479
+        },
+        {
+          "caller": "_allocate",
+          "callee": "hashlib.sha256(f\"{engagement}:{protocol}\".encode()).hexdigest",
+          "lineNumber": 479
+        },
+        {
+          "caller": "_allocate",
+          "callee": "hashlib.sha256",
+          "lineNumber": 479
+        },
+        {
+          "caller": "_allocate",
+          "callee": "f\"{engagement}:{protocol}\".encode",
+          "lineNumber": 479
+        },
+        {
+          "caller": "_allocate",
+          "callee": "list",
+          "lineNumber": 480
+        },
+        {
+          "caller": "_allocate",
+          "callee": "range",
+          "lineNumber": 481
+        },
+        {
+          "caller": "_allocate",
+          "callee": "len",
+          "lineNumber": 481
+        },
+        {
+          "caller": "_allocate",
+          "callee": "len",
+          "lineNumber": 482
+        },
+        {
+          "caller": "_allocate",
+          "callee": "BridgeError",
+          "lineNumber": 485
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "self.operator.jobs",
+          "lineNumber": 488
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "sqlite3.connect",
+          "lineNumber": 489
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "db.execute(\n                \"SELECT engagement,protocol,port FROM listeners WHERE active=1\"\n            ).fetchall",
+          "lineNumber": 490
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "db.execute",
+          "lineNumber": 490
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "next",
+          "lineNumber": 494
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "job.Name.lower",
+          "lineNumber": 495
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "self.operator.start_mtls",
+          "lineNumber": 499
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "self.operator.start_http",
+          "lineNumber": 501
+        },
+        {
+          "caller": "_restore_listeners",
+          "callee": "db.execute",
+          "lineNumber": 505
+        },
+        {
+          "caller": "_owned_session",
+          "callee": "self._sessions",
+          "lineNumber": 511
+        },
+        {
+          "caller": "_owned_session",
+          "callee": "BridgeError",
+          "lineNumber": 515
+        },
+        {
+          "caller": "_sessions",
+          "callee": "self.operator.sessions",
+          "lineNumber": 518
+        },
+        {
+          "caller": "_sessions",
+          "callee": "_owned",
+          "lineNumber": 519
+        },
+        {
+          "caller": "_sessions",
+          "callee": "self._listeners",
+          "lineNumber": 519
+        },
+        {
+          "caller": "_sessions",
+          "callee": "sqlite3.connect",
+          "lineNumber": 521
+        },
+        {
+          "caller": "_sessions",
+          "callee": "next",
+          "lineNumber": 523
+        },
+        {
+          "caller": "_sessions",
+          "callee": "db.execute",
+          "lineNumber": 524
+        },
+        {
+          "caller": "_sessions",
+          "callee": "db.execute(\n                    \"SELECT engagement,uuid FROM session_owner WHERE session=?\", (session[\"id\"],)\n                ).fetchone",
+          "lineNumber": 528
+        },
+        {
+          "caller": "_sessions",
+          "callee": "db.execute",
+          "lineNumber": 528
+        },
+        {
+          "caller": "_sessions",
+          "callee": "safe.append",
+          "lineNumber": 532
+        },
+        {
+          "caller": "_owned",
+          "callee": "urlsplit",
+          "lineNumber": 540
+        },
+        {
+          "caller": "_owned",
+          "callee": "_project_session",
+          "lineNumber": 554
+        },
+        {
+          "caller": "_owned",
+          "callee": "owned.append",
+          "lineNumber": 556
+        },
+        {
+          "caller": "_identifier",
+          "callee": "payload.get",
+          "lineNumber": 562
+        },
+        {
+          "caller": "_identifier",
+          "callee": "isinstance",
+          "lineNumber": 563
+        },
+        {
+          "caller": "_identifier",
+          "callee": "IDENTIFIER.fullmatch",
+          "lineNumber": 563
+        },
+        {
+          "caller": "_identifier",
+          "callee": "BridgeError",
+          "lineNumber": 564
+        },
+        {
+          "caller": "_command",
+          "callee": "payload.get",
+          "lineNumber": 569
+        },
+        {
+          "caller": "_command",
+          "callee": "payload.get",
+          "lineNumber": 570
+        },
+        {
+          "caller": "_command",
+          "callee": "isinstance",
+          "lineNumber": 571
+        },
+        {
+          "caller": "_command",
+          "callee": "PRINTABLE_PATH.fullmatch",
+          "lineNumber": 571
+        },
+        {
+          "caller": "_command",
+          "callee": "BridgeError",
+          "lineNumber": 572
+        },
+        {
+          "caller": "_command",
+          "callee": "isinstance",
+          "lineNumber": 574
+        },
+        {
+          "caller": "_command",
+          "callee": "len",
+          "lineNumber": 575
+        },
+        {
+          "caller": "_command",
+          "callee": "all",
+          "lineNumber": 576
+        },
+        {
+          "caller": "_command",
+          "callee": "isinstance",
+          "lineNumber": 577
+        },
+        {
+          "caller": "_command",
+          "callee": "len",
+          "lineNumber": 578
+        },
+        {
+          "caller": "_command",
+          "callee": "any",
+          "lineNumber": 579
+        },
+        {
+          "caller": "_command",
+          "callee": "BridgeError",
+          "lineNumber": 583
+        },
+        {
+          "caller": "_command",
+          "callee": "list",
+          "lineNumber": 584
+        },
+        {
+          "caller": "setup",
+          "callee": "super().setup",
+          "lineNumber": 592
+        },
+        {
+          "caller": "setup",
+          "callee": "super",
+          "lineNumber": 592
+        },
+        {
+          "caller": "setup",
+          "callee": "self.connection.settimeout",
+          "lineNumber": 593
+        },
+        {
+          "caller": "do_POST",
+          "callee": "urlsplit",
+          "lineNumber": 600
+        },
+        {
+          "caller": "do_POST",
+          "callee": "urlsplit",
+          "lineNumber": 600
+        },
+        {
+          "caller": "do_POST",
+          "callee": "BridgeError",
+          "lineNumber": 601
+        },
+        {
+          "caller": "do_POST",
+          "callee": "hmac.compare_digest",
+          "lineNumber": 602
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get(\"Authorization\", \"\").encode",
+          "lineNumber": 603
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get",
+          "lineNumber": 603
+        },
+        {
+          "caller": "do_POST",
+          "callee": "f\"Bearer {self.token}\".encode",
+          "lineNumber": 603
+        },
+        {
+          "caller": "do_POST",
+          "callee": "BridgeError",
+          "lineNumber": 605
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get",
+          "lineNumber": 607
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get(\"Content-Length\", \"\").isdigit",
+          "lineNumber": 608
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.headers.get",
+          "lineNumber": 608
+        },
+        {
+          "caller": "do_POST",
+          "callee": "BridgeError",
+          "lineNumber": 610
+        },
+        {
+          "caller": "do_POST",
+          "callee": "int",
+          "lineNumber": 611
+        },
+        {
+          "caller": "do_POST",
+          "callee": "BridgeError",
+          "lineNumber": 613
+        },
+        {
+          "caller": "do_POST",
+          "callee": "json.loads",
+          "lineNumber": 614
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.rfile.read",
+          "lineNumber": 614
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.bridge.execute",
+          "lineNumber": 615
+        },
+        {
+          "caller": "do_POST",
+          "callee": "str",
+          "lineNumber": 619
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.send_response",
+          "lineNumber": 620
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.send_header",
+          "lineNumber": 621
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.send_header",
+          "lineNumber": 622
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.end_headers",
+          "lineNumber": 623
+        },
+        {
+          "caller": "do_POST",
+          "callee": "self.wfile.write",
+          "lineNumber": 624
+        },
+        {
+          "caller": "do_POST",
+          "callee": "json.dumps(response).encode",
+          "lineNumber": 624
+        },
+        {
+          "caller": "do_POST",
+          "callee": "json.dumps",
+          "lineNumber": 624
+        },
+        {
+          "caller": "main",
+          "callee": "os.environ.get",
+          "lineNumber": 628
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 629
+        },
+        {
+          "caller": "main",
+          "callee": "BridgeError",
+          "lineNumber": 630
+        },
+        {
+          "caller": "main",
+          "callee": "LabBridge",
+          "lineNumber": 632
+        },
+        {
+          "caller": "main",
+          "callee": "Operator",
+          "lineNumber": 632
+        },
+        {
+          "caller": "main",
+          "callee": "ThreadingHTTPServer((\"0.0.0.0\", 9000), Handler).serve_forever",
+          "lineNumber": 633
+        },
+        {
+          "caller": "main",
+          "callee": "ThreadingHTTPServer",
+          "lineNumber": 633
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 12,
+        "functionCount": 8,
+        "classCount": 4
+      }
+    }
+  ]
+}

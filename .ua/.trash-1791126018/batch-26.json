@@ -1,0 +1,2938 @@
+{
+  "batchIndex": 26,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/__init__.py",
+      "language": "python",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/capabilities/__init__.py",
+      "language": "python",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/capabilities/contracts.py",
+      "language": "python",
+      "sizeLines": 130,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/capabilities/evidence.py",
+      "language": "python",
+      "sizeLines": 137,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/capabilities/scorecards.py",
+      "language": "python",
+      "sizeLines": 138,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/graph_registry.py",
+      "language": "python",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/server/__init__.py",
+      "language": "python",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/server/plugins_api.py",
+      "language": "python",
+      "sizeLines": 280,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/__init__.py",
+      "language": "python",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/__main__.py",
+      "language": "python",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/aliases.py",
+      "language": "python",
+      "sizeLines": 49,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/canonical.py",
+      "language": "python",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/cli.py",
+      "language": "python",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/frontmatter.py",
+      "language": "python",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/mitre.py",
+      "language": "python",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/path_kind.py",
+      "language": "python",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/audit/rules.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/__init__.py",
+      "language": "python",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/__main__.py",
+      "language": "python",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/cli.py",
+      "language": "python",
+      "sizeLines": 183,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "class:packages/raptix/raptix/capabilities/contracts.py:CapabilityContract",
+      "type": "class",
+      "name": "CapabilityContract",
+      "filePath": "packages/raptix/raptix/capabilities/contracts.py",
+      "lineRange": [
+        38,
+        61
+      ],
+      "summary": "Lớp CapabilityContract; thuộc tính: lane, scope, environment, required_tools, evidence, verification, negative_control, scorecard; phương thức: _require_unique_nonempty_strings.",
+      "tags": [
+        "capability",
+        "contract",
+        "xác-thực",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/capabilities/contracts.py:CapabilityLane",
+      "type": "class",
+      "name": "CapabilityLane",
+      "filePath": "packages/raptix/raptix/capabilities/contracts.py",
+      "lineRange": [
+        20,
+        28
+      ],
+      "summary": "Lớp CapabilityLane.",
+      "tags": [
+        "capability",
+        "contract",
+        "xác-thực",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/capabilities/contracts.py:ContractIssue",
+      "type": "class",
+      "name": "ContractIssue",
+      "filePath": "packages/raptix/raptix/capabilities/contracts.py",
+      "lineRange": [
+        65,
+        69
+      ],
+      "summary": "Lớp ContractIssue; thuộc tính: path, detail.",
+      "tags": [
+        "capability",
+        "contract",
+        "xác-thực",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/capabilities/contracts.py:DiscoveredContract",
+      "type": "class",
+      "name": "DiscoveredContract",
+      "filePath": "packages/raptix/raptix/capabilities/contracts.py",
+      "lineRange": [
+        73,
+        78
+      ],
+      "summary": "Lớp DiscoveredContract; thuộc tính: path, skill_name, contract.",
+      "tags": [
+        "capability",
+        "contract",
+        "xác-thực",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/capabilities/contracts.py:ScopeClass",
+      "type": "class",
+      "name": "ScopeClass",
+      "filePath": "packages/raptix/raptix/capabilities/contracts.py",
+      "lineRange": [
+        31,
+        35
+      ],
+      "summary": "Lớp ScopeClass.",
+      "tags": [
+        "capability",
+        "contract",
+        "xác-thực",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/capabilities/evidence.py:EvidenceValidation",
+      "type": "class",
+      "name": "EvidenceValidation",
+      "filePath": "packages/raptix/raptix/capabilities/evidence.py",
+      "lineRange": [
+        16,
+        29
+      ],
+      "summary": "Lớp EvidenceValidation: mô hình kết quả trả về; thuộc tính: validated, success_matches, negative_matches, noise_matches, errors; phương thức: reason.",
+      "tags": [
+        "evidence",
+        "xác-thực",
+        "regex",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/capabilities/scorecards.py:EvaluationRecord",
+      "type": "class",
+      "name": "EvaluationRecord",
+      "filePath": "packages/raptix/raptix/capabilities/scorecards.py",
+      "lineRange": [
+        16,
+        24
+      ],
+      "summary": "Lớp EvaluationRecord: mô hình dữ liệu tổng hợp; thuộc tính: lane, verified, duration_seconds, cost_usd, root_cause_id, visible_to_user.",
+      "tags": [
+        "scorecard",
+        "đánh-giá",
+        "tổng-hợp",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/capabilities/scorecards.py:LaneScorecard",
+      "type": "class",
+      "name": "LaneScorecard",
+      "filePath": "packages/raptix/raptix/capabilities/scorecards.py",
+      "lineRange": [
+        28,
+        39
+      ],
+      "summary": "Lớp LaneScorecard; thuộc tính: lane, attempts, validated, validated_rate, visible_validated, visible_validated_rate, unique_root_causes, median_duration_seconds.",
+      "tags": [
+        "scorecard",
+        "đánh-giá",
+        "tổng-hợp",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/server/plugins_api.py:BundleStatus",
+      "type": "class",
+      "name": "BundleStatus",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        62,
+        65
+      ],
+      "summary": "Lớp BundleStatus; thuộc tính: name, enabled, graphs.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/server/plugins_api.py:BundlesResponse",
+      "type": "class",
+      "name": "BundlesResponse",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        68,
+        69
+      ],
+      "summary": "Lớp BundlesResponse: mô hình kết quả trả về; thuộc tính: bundles.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/server/plugins_api.py:ToggleResponse",
+      "type": "class",
+      "name": "ToggleResponse",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        72,
+        76
+      ],
+      "summary": "Lớp ToggleResponse: mô hình kết quả trả về; thuộc tính: bundle, enabled, graphs, skipped.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/skills/audit/cli.py:CorpusReport",
+      "type": "class",
+      "name": "CorpusReport",
+      "filePath": "packages/raptix/raptix/skills/audit/cli.py",
+      "lineRange": [
+        29,
+        33
+      ],
+      "summary": "Lớp CorpusReport; thuộc tính: files_scanned, violations.",
+      "tags": [
+        "cli",
+        "quét-corpus",
+        "báo-cáo",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/skills/audit/cli.py:ExitCode",
+      "type": "class",
+      "name": "ExitCode",
+      "filePath": "packages/raptix/raptix/skills/audit/cli.py",
+      "lineRange": [
+        22,
+        25
+      ],
+      "summary": "Lớp ExitCode.",
+      "tags": [
+        "cli",
+        "quét-corpus",
+        "báo-cáo",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/skills/audit/frontmatter.py:FrontmatterParseError",
+      "type": "class",
+      "name": "FrontmatterParseError",
+      "filePath": "packages/raptix/raptix/skills/audit/frontmatter.py",
+      "lineRange": [
+        22,
+        23
+      ],
+      "summary": "Lớp FrontmatterParseError: lớp lỗi chuyên biệt.",
+      "tags": [
+        "frontmatter",
+        "yaml",
+        "phân-tích",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/skills/audit/mitre.py:MitreMatrix",
+      "type": "class",
+      "name": "MitreMatrix",
+      "filePath": "packages/raptix/raptix/skills/audit/mitre.py",
+      "lineRange": [
+        28,
+        33
+      ],
+      "summary": "Lớp MitreMatrix.",
+      "tags": [
+        "mitre",
+        "phân-loại",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/skills/audit/rules.py:RuleId",
+      "type": "class",
+      "name": "RuleId",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        27,
+        36
+      ],
+      "summary": "Lớp RuleId.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "class",
+      "name": "Violation",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        40,
+        45
+      ],
+      "summary": "Lớp Violation; thuộc tính: path, rule_id, detail.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/skills/engine/builder/cli.py:ExitCode",
+      "type": "class",
+      "name": "ExitCode",
+      "filePath": "packages/raptix/raptix/skills/engine/builder/cli.py",
+      "lineRange": [
+        27,
+        30
+      ],
+      "summary": "Lớp ExitCode.",
+      "tags": [
+        "cli",
+        "builder",
+        "cypher",
+        "đồ-thị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/__init__.py",
+      "summary": "Điểm khởi động package raptix: công bố version, bỏ qua boot trong sandbox (RAPTIX_SKIP_BOOT) và chạy framework boot cùng compat legacy imports.",
+      "tags": [
+        "khởi-động",
+        "package",
+        "boot",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/capabilities/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/capabilities/__init__.py",
+      "summary": "Barrel tái xuất contract, evidence và scorecard năng lực cho specialist.",
+      "tags": [
+        "barrel",
+        "capability",
+        "tái-xuất",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "type": "file",
+      "name": "contracts.py",
+      "filePath": "packages/raptix/raptix/capabilities/contracts.py",
+      "summary": "Định nghĩa CapabilityContract (lane, scope, evidence, verification, negative_control) cùng validate metadata và khám phá contract từ SKILL.md.",
+      "tags": [
+        "capability",
+        "contract",
+        "xác-thực",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "type": "file",
+      "name": "evidence.py",
+      "filePath": "packages/raptix/raptix/capabilities/evidence.py",
+      "summary": "Cổng kiểm chứng bằng chứng: biên dịch regex success/negative, đối chiếu output và giới hạn đường dẫn file trong workspace.",
+      "tags": [
+        "evidence",
+        "xác-thực",
+        "regex",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "type": "file",
+      "name": "scorecards.py",
+      "filePath": "packages/raptix/raptix/capabilities/scorecards.py",
+      "summary": "Tổng hợp scorecard theo lane từ EvaluationRecord: tỉ lệ validated, root cause duy nhất, median duration và tổng chi phí.",
+      "tags": [
+        "scorecard",
+        "đánh-giá",
+        "tổng-hợp",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/graph_registry.py",
+      "type": "file",
+      "name": "graph_registry.py",
+      "filePath": "packages/raptix/raptix/graph_registry.py",
+      "summary": "Registry manifest LangGraph: gộp graph theo bundle được bật và plugin entry-point, xuất biến môi trường LANGSERVE_GRAPHS.",
+      "tags": [
+        "langgraph",
+        "registry",
+        "manifest",
+        "plugin",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/server/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/server/__init__.py",
+      "summary": "Package server rỗng, đánh dấu namespace cho plugins_api.",
+      "tags": [
+        "package",
+        "namespace",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/server/plugins_api.py",
+      "type": "file",
+      "name": "plugins_api.py",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "summary": "API quản trị bundle/plugin: liệt kê, enable/disable bundle, nạp graph theo module:attr, hỗ trợ postgres và gRPC.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/skills/audit/__init__.py",
+      "summary": "Khởi tạo package kiểm toán skill, tái xuất canonical subdomain list.",
+      "tags": [
+        "package",
+        "skill-audit",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/__main__.py",
+      "type": "file",
+      "name": "__main__.py",
+      "filePath": "packages/raptix/raptix/skills/audit/__main__.py",
+      "summary": "Entry-point `python -m` cho CLI kiểm toán skill.",
+      "tags": [
+        "entry-point",
+        "cli",
+        "skill-audit",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/aliases.py",
+      "type": "file",
+      "name": "aliases.py",
+      "filePath": "packages/raptix/raptix/skills/audit/aliases.py",
+      "summary": "Bảng ánh xạ alias subdomain về dạng canonical, phân giải không phân biệt hoa thường.",
+      "tags": [
+        "alias",
+        "subdomain",
+        "chuẩn-hoá",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/canonical.py",
+      "type": "file",
+      "name": "canonical.py",
+      "filePath": "packages/raptix/raptix/skills/audit/canonical.py",
+      "summary": "Nạp danh sách subdomain canonical từ YAML đóng gói thành frozenset.",
+      "tags": [
+        "canonical",
+        "subdomain",
+        "yaml",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "type": "file",
+      "name": "cli.py",
+      "filePath": "packages/raptix/raptix/skills/audit/cli.py",
+      "summary": "CLI quét corpus SKILL.md, phát hiện tên trùng và định dạng báo cáo theo ExitCode.",
+      "tags": [
+        "cli",
+        "quét-corpus",
+        "báo-cáo",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/frontmatter.py",
+      "type": "file",
+      "name": "frontmatter.py",
+      "filePath": "packages/raptix/raptix/skills/audit/frontmatter.py",
+      "summary": "Phân tích frontmatter YAML của SKILL.md, ném FrontmatterParseError khi thiếu block hoặc sai định dạng.",
+      "tags": [
+        "frontmatter",
+        "yaml",
+        "phân-tích",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "type": "file",
+      "name": "mitre.py",
+      "filePath": "packages/raptix/raptix/skills/audit/mitre.py",
+      "summary": "Phân loại MITRE ID (enterprise/mobile/ICS/ATLAS) và ép danh sách mitre từ YAML list hoặc chuỗi CSV.",
+      "tags": [
+        "mitre",
+        "phân-loại",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/path_kind.py",
+      "type": "file",
+      "name": "path_kind.py",
+      "filePath": "packages/raptix/raptix/skills/audit/path_kind.py",
+      "summary": "Nhận diện đường dẫn offensive qua regex loại trừ các cây non-offensive.",
+      "tags": [
+        "đường-dẫn",
+        "offensive",
+        "regex",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "type": "file",
+      "name": "rules.py",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "summary": "Bộ rule kiểm tra skill: trường bắt buộc, subdomain, định dạng MITRE, attribution và capability contract.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/engine/builder/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/skills/engine/builder/__init__.py",
+      "summary": "Khởi tạo package builder đồ thị skill, tái xuất seeds.",
+      "tags": [
+        "package",
+        "builder",
+        "đồ-thị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/engine/builder/__main__.py",
+      "type": "file",
+      "name": "__main__.py",
+      "filePath": "packages/raptix/raptix/skills/engine/builder/__main__.py",
+      "summary": "Entry-point `python -m` cho builder đồ thị skill.",
+      "tags": [
+        "entry-point",
+        "builder",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "type": "file",
+      "name": "cli.py",
+      "filePath": "packages/raptix/raptix/skills/engine/builder/cli.py",
+      "summary": "CLI dựng skills.cypher từ seed, STIX bundle và SKILL.md; ghi commit SHA và thời gian build.",
+      "tags": [
+        "cli",
+        "builder",
+        "cypher",
+        "đồ-thị",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/capabilities/contracts.py:discover_contracts",
+      "type": "function",
+      "name": "discover_contracts",
+      "filePath": "packages/raptix/raptix/capabilities/contracts.py",
+      "lineRange": [
+        101,
+        130
+      ],
+      "summary": "Khám phá contracts (tham số: skills_root); gọi skills_root.rglob, parse_frontmatter, skill_path.read_text.",
+      "tags": [
+        "capability",
+        "contract",
+        "xác-thực",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/capabilities/contracts.py:validate_contract_metadata",
+      "type": "function",
+      "name": "validate_contract_metadata",
+      "filePath": "packages/raptix/raptix/capabilities/contracts.py",
+      "lineRange": [
+        81,
+        98
+      ],
+      "summary": "Xác thực contract metadata (tham số: metadata); gọi CapabilityContract.model_validate, \".\".join, exc.errors.",
+      "tags": [
+        "capability",
+        "contract",
+        "xác-thực",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/capabilities/evidence.py:_compile_patterns",
+      "type": "function",
+      "name": "_compile_patterns",
+      "filePath": "packages/raptix/raptix/capabilities/evidence.py",
+      "lineRange": [
+        32,
+        43
+      ],
+      "summary": "Hàm  compile patterns (tham số: patterns, label); gọi pattern.strip, errors.append, compiled.append.",
+      "tags": [
+        "evidence",
+        "xác-thực",
+        "regex",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/capabilities/evidence.py:_within_workspace",
+      "type": "function",
+      "name": "_within_workspace",
+      "filePath": "packages/raptix/raptix/capabilities/evidence.py",
+      "lineRange": [
+        94,
+        104
+      ],
+      "summary": "Hàm  within workspace (tham số: workspace, relative_path); gọi Path, candidate.is_absolute, ValueError.",
+      "tags": [
+        "evidence",
+        "xác-thực",
+        "regex",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence",
+      "type": "function",
+      "name": "validate_evidence",
+      "filePath": "packages/raptix/raptix/capabilities/evidence.py",
+      "lineRange": [
+        46,
+        91
+      ],
+      "summary": "Xác thực evidence (tham số: success_output, negative_output, success_patterns, negative_patterns); gọi _compile_patterns, _compile_patterns, errors.append.",
+      "tags": [
+        "evidence",
+        "xác-thực",
+        "regex",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence_files",
+      "type": "function",
+      "name": "validate_evidence_files",
+      "filePath": "packages/raptix/raptix/capabilities/evidence.py",
+      "lineRange": [
+        107,
+        137
+      ],
+      "summary": "Xác thực evidence files (tham số: workspace, success_path, negative_path, success_patterns, negative_patterns); gọi _within_workspace, _within_workspace, EvidenceValidation.",
+      "tags": [
+        "evidence",
+        "xác-thực",
+        "regex",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/capabilities/scorecards.py:build_scorecards",
+      "type": "function",
+      "name": "build_scorecards",
+      "filePath": "packages/raptix/raptix/capabilities/scorecards.py",
+      "lineRange": [
+        42,
+        82
+      ],
+      "summary": "Dựng scorecards (tham số: records); gọi defaultdict, ValueError, ValueError.",
+      "tags": [
+        "scorecard",
+        "đánh-giá",
+        "tổng-hợp",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/capabilities/scorecards.py:load_evaluation_records",
+      "type": "function",
+      "name": "load_evaluation_records",
+      "filePath": "packages/raptix/raptix/capabilities/scorecards.py",
+      "lineRange": [
+        85,
+        138
+      ],
+      "summary": "Tải evaluation records (tham số: path); gọi path.read_text(encoding=\"utf-8\").splitlines, path.read_text, raw.strip.",
+      "tags": [
+        "scorecard",
+        "đánh-giá",
+        "tổng-hợp",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/graph_registry.py:build_langserve_graphs",
+      "type": "function",
+      "name": "build_langserve_graphs",
+      "filePath": "packages/raptix/raptix/graph_registry.py",
+      "lineRange": [
+        83,
+        99
+      ],
+      "summary": "Dựng langserve graphs; gọi _BUNDLE_TO_GRAPHS.items, is_bundle_enabled, merged.update.",
+      "tags": [
+        "langgraph",
+        "registry",
+        "manifest",
+        "plugin",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/graph_registry.py:emit_langserve_env",
+      "type": "function",
+      "name": "emit_langserve_env",
+      "filePath": "packages/raptix/raptix/graph_registry.py",
+      "lineRange": [
+        102,
+        104
+      ],
+      "summary": "Phát langserve env; gọi json.dumps, build_langserve_graphs.",
+      "tags": [
+        "langgraph",
+        "registry",
+        "manifest",
+        "plugin",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/graph_registry.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "packages/raptix/raptix/graph_registry.py",
+      "lineRange": [
+        107,
+        109
+      ],
+      "summary": "Hàm main; gọi emit_langserve_env.",
+      "tags": [
+        "langgraph",
+        "registry",
+        "manifest",
+        "plugin",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/server/plugins_api.py:_load_graph",
+      "type": "function",
+      "name": "_load_graph",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        98,
+        107
+      ],
+      "summary": "Hàm  load graph (tham số: module_path, variable); gọi importlib.import_module, HTTPException.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/server/plugins_api.py:_path_to_module",
+      "type": "function",
+      "name": "_path_to_module",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        82,
+        95
+      ],
+      "summary": "Hàm  path to module (tham số: spec); gọi spec.partition, ValueError, path.removeprefix(\"./\").removesuffix(\".py\").replace(\"/\", \".\").lstrip.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/server/plugins_api.py:_registered_graph_ids",
+      "type": "function",
+      "name": "_registered_graph_ids",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        118,
+        128
+      ],
+      "summary": "Hàm  registered graph ids; gọi GRAPHS.keys.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/server/plugins_api.py:_resolve_bundle",
+      "type": "function",
+      "name": "_resolve_bundle",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        110,
+        115
+      ],
+      "summary": "Hàm  resolve bundle (tham số: name); gọi HTTPException.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/server/plugins_api.py:disable_bundle",
+      "type": "function",
+      "name": "disable_bundle",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        204,
+        273
+      ],
+      "summary": "Vô hiệu hoá bundle (tham số: name); gọi Path, HTTPException, lg_api_feature_postgres.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/server/plugins_api.py:enable_bundle",
+      "type": "function",
+      "name": "enable_bundle",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        163,
+        200
+      ],
+      "summary": "Kích hoạt bundle (tham số: name); gọi Path, _resolve_bundle, graphs.items.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/server/plugins_api.py:lg_api_feature_postgres",
+      "type": "function",
+      "name": "lg_api_feature_postgres",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        276,
+        280
+      ],
+      "summary": "Hàm lg api feature postgres.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/server/plugins_api.py:list_bundles",
+      "type": "function",
+      "name": "list_bundles",
+      "filePath": "packages/raptix/raptix/server/plugins_api.py",
+      "lineRange": [
+        141,
+        159
+      ],
+      "summary": "Liệt kê bundles; gọi _registered_graph_ids, BundlesResponse, BundleStatus.",
+      "tags": [
+        "api",
+        "plugin",
+        "bundle",
+        "quản-trị",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/aliases.py:resolve_subdomain",
+      "type": "function",
+      "name": "resolve_subdomain",
+      "filePath": "packages/raptix/raptix/skills/audit/aliases.py",
+      "lineRange": [
+        42,
+        49
+      ],
+      "summary": "Phân giải subdomain (tham số: raw); gọi raw.strip().lower, raw.strip, SUBDOMAIN_ALIASES.get.",
+      "tags": [
+        "alias",
+        "subdomain",
+        "chuẩn-hoá",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/canonical.py:load_canonical_subdomains",
+      "type": "function",
+      "name": "load_canonical_subdomains",
+      "filePath": "packages/raptix/raptix/skills/audit/canonical.py",
+      "lineRange": [
+        19,
+        34
+      ],
+      "summary": "Tải canonical subdomains; gọi yaml.safe_load, SUBDOMAIN_LIST_PATH.read_text, ValueError.",
+      "tags": [
+        "canonical",
+        "subdomain",
+        "yaml",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/cli.py:_build_argparser",
+      "type": "function",
+      "name": "_build_argparser",
+      "filePath": "packages/raptix/raptix/skills/audit/cli.py",
+      "lineRange": [
+        86,
+        103
+      ],
+      "summary": "Hàm  build argparser; gọi argparse.ArgumentParser, parser.add_argument, Path.",
+      "tags": [
+        "cli",
+        "quét-corpus",
+        "báo-cáo",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/cli.py:_format_report",
+      "type": "function",
+      "name": "_format_report",
+      "filePath": "packages/raptix/raptix/skills/audit/cli.py",
+      "lineRange": [
+        79,
+        83
+      ],
+      "summary": "Hàm  format report (tham số: report); gọi lines.append, \"\\n\".join.",
+      "tags": [
+        "cli",
+        "quét-corpus",
+        "báo-cáo",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/cli.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "packages/raptix/raptix/skills/audit/cli.py",
+      "lineRange": [
+        106,
+        115
+      ],
+      "summary": "Hàm main (tham số: argv); gọi _build_argparser().parse_args, _build_argparser, args.root.exists.",
+      "tags": [
+        "cli",
+        "quét-corpus",
+        "báo-cáo",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/cli.py:scan_corpus",
+      "type": "function",
+      "name": "scan_corpus",
+      "filePath": "packages/raptix/raptix/skills/audit/cli.py",
+      "lineRange": [
+        36,
+        76
+      ],
+      "summary": "Quét corpus (tham số: root); gọi root.rglob, skill_md.read_text, violations.extend.",
+      "tags": [
+        "cli",
+        "quét-corpus",
+        "báo-cáo",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/frontmatter.py:parse_frontmatter",
+      "type": "function",
+      "name": "parse_frontmatter",
+      "filePath": "packages/raptix/raptix/skills/audit/frontmatter.py",
+      "lineRange": [
+        26,
+        47
+      ],
+      "summary": "Phân tích frontmatter (tham số: text); gọi _FRONTMATTER_RE.match, FrontmatterParseError, match.group.",
+      "tags": [
+        "frontmatter",
+        "yaml",
+        "phân-tích",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/mitre.py:classify_mitre_id",
+      "type": "function",
+      "name": "classify_mitre_id",
+      "filePath": "packages/raptix/raptix/skills/audit/mitre.py",
+      "lineRange": [
+        36,
+        51
+      ],
+      "summary": "Phân loại mitre id (tham số: raw); gọi raw.strip, _ICS_RE.match, _ENT_OR_MOBILE_RE.match.",
+      "tags": [
+        "mitre",
+        "phân-loại",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/mitre.py:coerce_mitre_list",
+      "type": "function",
+      "name": "coerce_mitre_list",
+      "filePath": "packages/raptix/raptix/skills/audit/mitre.py",
+      "lineRange": [
+        54,
+        65
+      ],
+      "summary": "Ép kiểu mitre list (tham số: raw); gọi str(item).strip, str(item).strip, token.strip.",
+      "tags": [
+        "mitre",
+        "phân-loại",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/path_kind.py:is_offensive_path",
+      "type": "function",
+      "name": "is_offensive_path",
+      "filePath": "packages/raptix/raptix/skills/audit/path_kind.py",
+      "lineRange": [
+        21,
+        23
+      ],
+      "summary": "Kiểm tra offensive path (tham số: path); gọi _NON_OFFENSIVE_RE.search.",
+      "tags": [
+        "đường-dẫn",
+        "offensive",
+        "regex",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/rules.py:_check_attribution",
+      "type": "function",
+      "name": "_check_attribution",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        131,
+        148
+      ],
+      "summary": "Hàm  check attribution (tham số: path, meta); gọi is_offensive_path, meta.get, coerce_mitre_list.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/rules.py:_check_capability_contract",
+      "type": "function",
+      "name": "_check_capability_contract",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        151,
+        155
+      ],
+      "summary": "Hàm  check capability contract (tham số: path, meta); gọi meta.get, validate_contract_metadata, Violation.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/rules.py:_check_mitre",
+      "type": "function",
+      "name": "_check_mitre",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        114,
+        128
+      ],
+      "summary": "Hàm  check mitre (tham số: path, meta); gọi meta.get, metadata.get, coerce_mitre_list.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/rules.py:_check_required",
+      "type": "function",
+      "name": "_check_required",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        64,
+        94
+      ],
+      "summary": "Hàm  check required (tham số: path, meta); gọi _truthy_string, meta.get, out.append.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/rules.py:_check_subdomain",
+      "type": "function",
+      "name": "_check_subdomain",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        97,
+        111
+      ],
+      "summary": "Hàm  check subdomain (tham số: path, meta); gọi meta.get, metadata.get, raw.strip.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/rules.py:_truthy_string",
+      "type": "function",
+      "name": "_truthy_string",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        158,
+        159
+      ],
+      "summary": "Hàm  truthy string (tham số: value); gọi value.strip.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "type": "function",
+      "name": "validate_skill_file",
+      "filePath": "packages/raptix/raptix/skills/audit/rules.py",
+      "lineRange": [
+        48,
+        61
+      ],
+      "summary": "Xác thực skill file (tham số: path, text); gọi parse_frontmatter, Violation, violations.extend.",
+      "tags": [
+        "rule",
+        "kiểm-tra",
+        "skill",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/engine/builder/cli.py:_build_argparser",
+      "type": "function",
+      "name": "_build_argparser",
+      "filePath": "packages/raptix/raptix/skills/engine/builder/cli.py",
+      "lineRange": [
+        79,
+        128
+      ],
+      "summary": "Hàm  build argparser; gọi argparse.ArgumentParser, parser.add_argument, Path.",
+      "tags": [
+        "cli",
+        "builder",
+        "cypher",
+        "đồ-thị",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/engine/builder/cli.py:_git_head",
+      "type": "function",
+      "name": "_git_head",
+      "filePath": "packages/raptix/raptix/skills/engine/builder/cli.py",
+      "lineRange": [
+        33,
+        47
+      ],
+      "summary": "Hàm  git head; gọi subprocess.run, result.stdout.strip.",
+      "tags": [
+        "cli",
+        "builder",
+        "cypher",
+        "đồ-thị",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/engine/builder/cli.py:build_graph",
+      "type": "function",
+      "name": "build_graph",
+      "filePath": "packages/raptix/raptix/skills/engine/builder/cli.py",
+      "lineRange": [
+        50,
+        76
+      ],
+      "summary": "Dựng graph (tham số: skills_root, stix_bundle, commit_sha, built_at); gọi emit_all_seed_records, nodes.extend, edges.extend.",
+      "tags": [
+        "cli",
+        "builder",
+        "cypher",
+        "đồ-thị",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/engine/builder/cli.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "packages/raptix/raptix/skills/engine/builder/cli.py",
+      "lineRange": [
+        131,
+        183
+      ],
+      "summary": "Hàm main (tham số: argv); gọi _build_argparser().parse_args, _build_argparser, args.skills_root.exists.",
+      "tags": [
+        "cli",
+        "builder",
+        "cypher",
+        "đồ-thị",
+        "python"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "function:packages/raptix/raptix/capabilities/contracts.py:discover_contracts",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:ContractIssue",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/contracts.py:discover_contracts",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:DiscoveredContract",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/contracts.py:discover_contracts",
+      "target": "function:packages/raptix/raptix/capabilities/contracts.py:validate_contract_metadata",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/contracts.py:discover_contracts",
+      "target": "function:packages/raptix/raptix/skills/audit/frontmatter.py:parse_frontmatter",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence",
+      "target": "class:packages/raptix/raptix/capabilities/evidence.py:EvidenceValidation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:_compile_patterns",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence_files",
+      "target": "class:packages/raptix/raptix/capabilities/evidence.py:EvidenceValidation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence_files",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:_within_workspace",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence_files",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/scorecards.py:build_scorecards",
+      "target": "class:packages/raptix/raptix/capabilities/scorecards.py:LaneScorecard",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/scorecards.py:load_evaluation_records",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:CapabilityLane",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/capabilities/scorecards.py:load_evaluation_records",
+      "target": "class:packages/raptix/raptix/capabilities/scorecards.py:EvaluationRecord",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/graph_registry.py:emit_langserve_env",
+      "target": "function:packages/raptix/raptix/graph_registry.py:build_langserve_graphs",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/graph_registry.py:main",
+      "target": "function:packages/raptix/raptix/graph_registry.py:emit_langserve_env",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:disable_bundle",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:ToggleResponse",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:disable_bundle",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_resolve_bundle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:disable_bundle",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:lg_api_feature_postgres",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:enable_bundle",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:ToggleResponse",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:enable_bundle",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_load_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:enable_bundle",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_path_to_module",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:enable_bundle",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_resolve_bundle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:list_bundles",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:BundleStatus",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:list_bundles",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:BundlesResponse",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/server/plugins_api.py:list_bundles",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_registered_graph_ids",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/cli.py:main",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:_build_argparser",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/cli.py:main",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:_format_report",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/cli.py:main",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:scan_corpus",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/cli.py:scan_corpus",
+      "target": "class:packages/raptix/raptix/skills/audit/cli.py:CorpusReport",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/cli.py:scan_corpus",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/cli.py:scan_corpus",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/frontmatter.py:parse_frontmatter",
+      "target": "class:packages/raptix/raptix/skills/audit/frontmatter.py:FrontmatterParseError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_attribution",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_attribution",
+      "target": "function:packages/raptix/raptix/skills/audit/mitre.py:coerce_mitre_list",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_attribution",
+      "target": "function:packages/raptix/raptix/skills/audit/path_kind.py:is_offensive_path",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_attribution",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_truthy_string",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_capability_contract",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_capability_contract",
+      "target": "function:packages/raptix/raptix/capabilities/contracts.py:validate_contract_metadata",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_mitre",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_mitre",
+      "target": "function:packages/raptix/raptix/skills/audit/mitre.py:classify_mitre_id",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_mitre",
+      "target": "function:packages/raptix/raptix/skills/audit/mitre.py:coerce_mitre_list",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_required",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_required",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_truthy_string",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_subdomain",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_subdomain",
+      "target": "function:packages/raptix/raptix/skills/audit/aliases.py:resolve_subdomain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:_check_subdomain",
+      "target": "function:packages/raptix/raptix/skills/audit/canonical.py:load_canonical_subdomains",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "target": "function:packages/raptix/raptix/skills/audit/frontmatter.py:parse_frontmatter",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_attribution",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_capability_contract",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_mitre",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_required",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_subdomain",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/engine/builder/cli.py:main",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:_build_argparser",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/engine/builder/cli.py:main",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:_git_head",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/skills/engine/builder/cli.py:main",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:build_graph",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:CapabilityContract",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:CapabilityLane",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:ContractIssue",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:DiscoveredContract",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:ScopeClass",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "function:packages/raptix/raptix/capabilities/contracts.py:discover_contracts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "function:packages/raptix/raptix/capabilities/contracts.py:validate_contract_metadata",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "class:packages/raptix/raptix/capabilities/evidence.py:EvidenceValidation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:_compile_patterns",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:_within_workspace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence_files",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "class:packages/raptix/raptix/capabilities/scorecards.py:EvaluationRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "class:packages/raptix/raptix/capabilities/scorecards.py:LaneScorecard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "function:packages/raptix/raptix/capabilities/scorecards.py:build_scorecards",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "function:packages/raptix/raptix/capabilities/scorecards.py:load_evaluation_records",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/graph_registry.py",
+      "target": "function:packages/raptix/raptix/graph_registry.py:build_langserve_graphs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/graph_registry.py",
+      "target": "function:packages/raptix/raptix/graph_registry.py:emit_langserve_env",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/graph_registry.py",
+      "target": "function:packages/raptix/raptix/graph_registry.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:BundleStatus",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:BundlesResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:ToggleResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_load_graph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_path_to_module",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_registered_graph_ids",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_resolve_bundle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:disable_bundle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:enable_bundle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:lg_api_feature_postgres",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:list_bundles",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/aliases.py",
+      "target": "function:packages/raptix/raptix/skills/audit/aliases.py:resolve_subdomain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/canonical.py",
+      "target": "function:packages/raptix/raptix/skills/audit/canonical.py:load_canonical_subdomains",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "class:packages/raptix/raptix/skills/audit/cli.py:CorpusReport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "class:packages/raptix/raptix/skills/audit/cli.py:ExitCode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:_build_argparser",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:_format_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:scan_corpus",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/frontmatter.py",
+      "target": "class:packages/raptix/raptix/skills/audit/frontmatter.py:FrontmatterParseError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/frontmatter.py",
+      "target": "function:packages/raptix/raptix/skills/audit/frontmatter.py:parse_frontmatter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "target": "class:packages/raptix/raptix/skills/audit/mitre.py:MitreMatrix",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "target": "function:packages/raptix/raptix/skills/audit/mitre.py:classify_mitre_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "target": "function:packages/raptix/raptix/skills/audit/mitre.py:coerce_mitre_list",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/path_kind.py",
+      "target": "function:packages/raptix/raptix/skills/audit/path_kind.py:is_offensive_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:RuleId",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_attribution",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_capability_contract",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_mitre",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_required",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_subdomain",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_truthy_string",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "class:packages/raptix/raptix/skills/engine/builder/cli.py:ExitCode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:_build_argparser",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:_git_head",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:build_graph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:CapabilityContract",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:CapabilityLane",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:ContractIssue",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:DiscoveredContract",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "class:packages/raptix/raptix/capabilities/contracts.py:ScopeClass",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "function:packages/raptix/raptix/capabilities/contracts.py:discover_contracts",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "function:packages/raptix/raptix/capabilities/contracts.py:validate_contract_metadata",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "class:packages/raptix/raptix/capabilities/evidence.py:EvidenceValidation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:_compile_patterns",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:_within_workspace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "function:packages/raptix/raptix/capabilities/evidence.py:validate_evidence_files",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "class:packages/raptix/raptix/capabilities/scorecards.py:EvaluationRecord",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "class:packages/raptix/raptix/capabilities/scorecards.py:LaneScorecard",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "function:packages/raptix/raptix/capabilities/scorecards.py:build_scorecards",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "function:packages/raptix/raptix/capabilities/scorecards.py:load_evaluation_records",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/graph_registry.py",
+      "target": "function:packages/raptix/raptix/graph_registry.py:build_langserve_graphs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/graph_registry.py",
+      "target": "function:packages/raptix/raptix/graph_registry.py:emit_langserve_env",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/graph_registry.py",
+      "target": "function:packages/raptix/raptix/graph_registry.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:BundleStatus",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:BundlesResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "class:packages/raptix/raptix/server/plugins_api.py:ToggleResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_load_graph",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_path_to_module",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_registered_graph_ids",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:_resolve_bundle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:disable_bundle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:enable_bundle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:lg_api_feature_postgres",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "function:packages/raptix/raptix/server/plugins_api.py:list_bundles",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/aliases.py",
+      "target": "function:packages/raptix/raptix/skills/audit/aliases.py:resolve_subdomain",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/canonical.py",
+      "target": "function:packages/raptix/raptix/skills/audit/canonical.py:load_canonical_subdomains",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "class:packages/raptix/raptix/skills/audit/cli.py:CorpusReport",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "class:packages/raptix/raptix/skills/audit/cli.py:ExitCode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:_build_argparser",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:_format_report",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "function:packages/raptix/raptix/skills/audit/cli.py:scan_corpus",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/frontmatter.py",
+      "target": "class:packages/raptix/raptix/skills/audit/frontmatter.py:FrontmatterParseError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/frontmatter.py",
+      "target": "function:packages/raptix/raptix/skills/audit/frontmatter.py:parse_frontmatter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "target": "class:packages/raptix/raptix/skills/audit/mitre.py:MitreMatrix",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "target": "function:packages/raptix/raptix/skills/audit/mitre.py:classify_mitre_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "target": "function:packages/raptix/raptix/skills/audit/mitre.py:coerce_mitre_list",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/path_kind.py",
+      "target": "function:packages/raptix/raptix/skills/audit/path_kind.py:is_offensive_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:RuleId",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "class:packages/raptix/raptix/skills/audit/rules.py:Violation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_attribution",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_capability_contract",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_mitre",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_required",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_check_subdomain",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:_truthy_string",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "function:packages/raptix/raptix/skills/audit/rules.py:validate_skill_file",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "class:packages/raptix/raptix/skills/engine/builder/cli.py:ExitCode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:_build_argparser",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:_git_head",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:build_graph",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "function:packages/raptix/raptix/skills/engine/builder/cli.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/__init__.py",
+      "target": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/__init__.py",
+      "target": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/__init__.py",
+      "target": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "file:packages/raptix/raptix/skills/audit/frontmatter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "file:packages/raptix/raptix/graph_registry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/__init__.py",
+      "target": "file:packages/raptix/raptix/skills/audit/canonical.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/__main__.py",
+      "target": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "file:packages/raptix/raptix/skills/audit/aliases.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "file:packages/raptix/raptix/skills/audit/canonical.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "file:packages/raptix/raptix/skills/audit/frontmatter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "file:packages/raptix/raptix/skills/audit/path_kind.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/__init__.py",
+      "target": "file:packages/raptix/raptix/skills/engine/builder/seeds.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/__main__.py",
+      "target": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "file:packages/raptix/raptix/skills/engine/builder/emit.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "file:packages/raptix/raptix/skills/engine/builder/mitre_stix.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "file:packages/raptix/raptix/skills/engine/builder/model.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "file:packages/raptix/raptix/skills/engine/builder/seeds_to_graph.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/engine/builder/cli.py",
+      "target": "file:packages/raptix/raptix/skills/engine/builder/skills.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/__init__.py",
+      "target": "file:packages/raptix/tests/unit/agents/test_registry_parity.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "file:packages/raptix/tests/unit/capabilities/test_contracts.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/contracts.py",
+      "target": "file:packages/raptix/tests/unit/capabilities/test_scorecards.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/evidence.py",
+      "target": "file:packages/raptix/tests/unit/capabilities/test_evidence.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/capabilities/scorecards.py",
+      "target": "file:packages/raptix/tests/unit/capabilities/test_scorecards.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/graph_registry.py",
+      "target": "file:packages/raptix/tests/unit/agents/test_registry_parity.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/graph_registry.py",
+      "target": "file:packages/raptix/tests/unit/server/test_plugins_api.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/__init__.py",
+      "target": "file:packages/raptix/tests/unit/server/test_plugins_api.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/server/plugins_api.py",
+      "target": "file:packages/raptix/tests/unit/server/test_plugins_api.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/aliases.py",
+      "target": "file:packages/raptix/tests/unit/skill_audit/test_aliases.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/canonical.py",
+      "target": "file:packages/raptix/tests/unit/skill_audit/test_canonical.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/cli.py",
+      "target": "file:packages/raptix/tests/unit/skill_audit/test_cli.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/frontmatter.py",
+      "target": "file:packages/raptix/tests/unit/skill_audit/test_frontmatter.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/mitre.py",
+      "target": "file:packages/raptix/tests/unit/skill_audit/test_mitre.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/path_kind.py",
+      "target": "file:packages/raptix/tests/unit/skill_audit/test_path_kind.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "file:packages/raptix/tests/unit/capabilities/test_contracts.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/audit/rules.py",
+      "target": "file:packages/raptix/tests/unit/skill_audit/test_rules.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,608 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 12,
+  "filesSkipped": [
+    "prompt.txt"
+  ],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 12,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 12
+    }
+  },
+  "results": [
+    {
+      "path": "SECURITY.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 45,
+      "nonEmptyLines": 30,
+      "sections": [
+        {
+          "heading": "Security Policy",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Supported Versions",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Reporting a Vulnerability",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "What to Report",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "What NOT to Report",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Response Timeline",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "Responsible Use",
+          "level": 2,
+          "line": 43
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "SPEC.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 56,
+      "nonEmptyLines": 49,
+      "sections": [
+        {
+          "heading": "SPEC",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "§G GOAL",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "§C CONSTRAINTS",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "§I INTERFACES",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "§R RESEARCH",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "§V INVARIANTS",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "§T TASKS",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "§B BUGS",
+          "level": 2,
+          "line": 49
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "TELEMETRY.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 186,
+      "nonEmptyLines": 155,
+      "sections": [
+        {
+          "heading": "Raptix Telemetry",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "TL;DR",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "Controls",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "What is collected",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Example (exactly what leaves the machine)",
+          "level": 3,
+          "line": 94
+        },
+        {
+          "heading": "Example — a `research` trajectory (masked, role-labeled, ordered)",
+          "level": 3,
+          "line": 112
+        },
+        {
+          "heading": "What is blocked before sending (Tier C)",
+          "level": 2,
+          "line": 143
+        },
+        {
+          "heading": "Where it goes, and for how long",
+          "level": 2,
+          "line": 160
+        },
+        {
+          "heading": "How it is sent",
+          "level": 2,
+          "line": 178
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "THIRD_PARTY_LICENSES.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 57,
+      "nonEmptyLines": 43,
+      "sections": [
+        {
+          "heading": "Third-Party Licenses",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Vendored (git submodule)",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "PayloadsAllTheThings",
+          "level": 3,
+          "line": 10
+        },
+        {
+          "heading": "Referenced (not vendored)",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "h4cker",
+          "level": 3,
+          "line": 22
+        },
+        {
+          "heading": "Awesome-Hacking",
+          "level": 3,
+          "line": 29
+        },
+        {
+          "heading": "Raptix's own license",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Updating",
+          "level": 2,
+          "line": 42
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "docker-compose.dev.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 31,
+      "nonEmptyLines": 30,
+      "sections": [
+        {
+          "heading": "services",
+          "level": 1,
+          "line": 26
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "docker-compose.opscontrol.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 15,
+      "nonEmptyLines": 14,
+      "sections": [
+        {
+          "heading": "services",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "docker-compose.watch.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 56,
+      "nonEmptyLines": 54,
+      "sections": [
+        {
+          "heading": "services",
+          "level": 1,
+          "line": 11
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "docker-compose.web-raptix.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 70,
+      "nonEmptyLines": 66,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "services",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "volumes",
+          "level": 1,
+          "line": 62
+        },
+        {
+          "heading": "networks",
+          "level": 1,
+          "line": 67
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "docker-compose.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 754,
+      "nonEmptyLines": 733,
+      "sections": [
+        {
+          "heading": "x-logging",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "services",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "volumes",
+          "level": 1,
+          "line": 739
+        },
+        {
+          "heading": "networks",
+          "level": 1,
+          "line": 750
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "langgraph.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 36,
+      "nonEmptyLines": 36,
+      "sections": [
+        {
+          "heading": "dependencies",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "graphs",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "env",
+          "level": 1,
+          "line": 27
+        },
+        {
+          "heading": "python_version",
+          "level": 1,
+          "line": 28
+        },
+        {
+          "heading": "checkpointer",
+          "level": 1,
+          "line": 29
+        },
+        {
+          "heading": "http",
+          "level": 1,
+          "line": 32
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 39,
+      "nonEmptyLines": 39,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "private",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "workspaces",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "scripts",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "dependencies",
+          "level": 1,
+          "line": 23
+        },
+        {
+          "heading": "devDependencies",
+          "level": 1,
+          "line": 26
+        },
+        {
+          "heading": "overrides",
+          "level": 1,
+          "line": 29
+        },
+        {
+          "heading": "allowScripts",
+          "level": 1,
+          "line": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 366,
+      "nonEmptyLines": 343,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.optional-dependencies",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "tool.uv",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "tool.uv.workspace",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "tool.uv.sources",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "tool.raptix.plugins",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "dependency-groups",
+          "level": 1,
+          "line": 50
+        },
+        {
+          "heading": "tool.ruff",
+          "level": 2,
+          "line": 79
+        },
+        {
+          "heading": "tool.ruff.lint",
+          "level": 3,
+          "line": 88
+        },
+        {
+          "heading": "tool.ruff.lint.isort",
+          "level": 4,
+          "line": 95
+        },
+        {
+          "heading": "tool.ruff.lint.flake8-tidy-imports.banned-api",
+          "level": 5,
+          "line": 101
+        },
+        {
+          "heading": "tool.ruff.lint.per-file-ignores",
+          "level": 4,
+          "line": 115
+        },
+        {
+          "heading": "tool.pytest.ini_options",
+          "level": 3,
+          "line": 127
+        },
+        {
+          "heading": "tool.coverage.run",
+          "level": 3,
+          "line": 157
+        },
+        {
+          "heading": "tool.coverage.html",
+          "level": 3,
+          "line": 165
+        },
+        {
+          "heading": "tool.coverage.report",
+          "level": 3,
+          "line": 168
+        },
+        {
+          "heading": "tool.basedpyright",
+          "level": 2,
+          "line": 179
+        },
+        {
+          "heading": "tool.bandit",
+          "level": 2,
+          "line": 242
+        },
+        {
+          "heading": "tool.mypy",
+          "level": 2,
+          "line": 252
+        },
+        {
+          "heading": "tool.refurb",
+          "level": 2,
+          "line": 305
+        },
+        {
+          "heading": "tool.vulture",
+          "level": 2,
+          "line": 318
+        },
+        {
+          "heading": "tool.deptry",
+          "level": 2,
+          "line": 352
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 22
+      }
+    }
+  ]
+}

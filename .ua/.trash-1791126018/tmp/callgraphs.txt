@@ -1,0 +1,4710 @@
+=== clients/launcher/cmd/health.go
+  init -> rootCmd.AddCommand
+=== clients/launcher/cmd/logs.go
+  init -> rootCmd.AddCommand
+=== clients/launcher/cmd/ollama_models.go
+  probeOllamaForOnboard -> candidateProbeURLs
+  probeOllamaForOnboard -> fetchOllamaTags
+  probeOllamaForOnboard -> filterToolCapable
+  filterToolCapable -> make
+  filterToolCapable -> len
+  filterToolCapable -> wg.Add
+  filterToolCapable -> func(i int, m string) {
+			defer wg.Done()
+			results[i] = hasOllamaToolsCapability(baseURL, m)
+		}
+  filterToolCapable -> wg.Done
+  filterToolCapable -> hasOllamaToolsCapability
+  filterToolCapable -> wg.Wait
+  filterToolCapable -> make
+  filterToolCapable -> len
+  filterToolCapable -> append
+  fetchOllamaTags -> ollamaProbeClient.Get
+  fetchOllamaTags -> strings.TrimRight
+  fetchOllamaTags -> resp.Body.Close
+  fetchOllamaTags -> io.ReadAll
+  fetchOllamaTags -> io.LimitReader
+  fetchOllamaTags -> json.Unmarshal
+  fetchOllamaTags -> make
+  fetchOllamaTags -> len
+  fetchOllamaTags -> strings.TrimSpace
+  fetchOllamaTags -> append
+  hasOllamaToolsCapability -> json.Marshal
+  hasOllamaToolsCapability -> ollamaProbeClient.Post
+  hasOllamaToolsCapability -> strings.TrimRight
+  hasOllamaToolsCapability -> bytes.NewReader
+  hasOllamaToolsCapability -> resp.Body.Close
+  hasOllamaToolsCapability -> io.ReadAll
+  hasOllamaToolsCapability -> io.LimitReader
+  hasOllamaToolsCapability -> json.Unmarshal
+=== clients/launcher/cmd/ollama_models_test.go
+  withOllamaProbeClient -> t.Helper
+  withOllamaProbeClient -> t.Cleanup
+  ollamaTestServer -> t.Helper
+  ollamaTestServer -> http.NewServeMux
+  ollamaTestServer -> mux.HandleFunc
+  ollamaTestServer -> make
+  ollamaTestServer -> len
+  ollamaTestServer -> append
+  ollamaTestServer -> json.NewEncoder(w).Encode
+  ollamaTestServer -> json.NewEncoder
+  ollamaTestServer -> mux.HandleFunc
+  ollamaTestServer -> io.ReadAll
+  ollamaTestServer -> http.Error
+  ollamaTestServer -> json.Unmarshal
+  ollamaTestServer -> http.Error
+  ollamaTestServer -> http.Error
+  ollamaTestServer -> json.NewEncoder(w).Encode
+  ollamaTestServer -> json.NewEncoder
+  ollamaTestServer -> json.NewEncoder(w).Encode
+  ollamaTestServer -> json.NewEncoder
+  ollamaTestServer -> httptest.NewServer
+  ollamaTestServer -> t.Cleanup
+  sortedCopy -> append
+  sortedCopy -> sort.Strings
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> withProbeStubs
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> ollamaTestServer
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> withOllamaProbeClient
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> probeOllamaForOnboard
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> t.Fatalf
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> reflect.DeepEqual
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> sortedCopy
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> t.Errorf
+  TestProbeOllamaForOnboard_FiltersToToolSupporters -> t.Errorf
+  TestProbeOllamaForOnboard_EmptyTagsIsReachableButNoModels -> withProbeStubs
+  TestProbeOllamaForOnboard_EmptyTagsIsReachableButNoModels -> ollamaTestServer
+  TestProbeOllamaForOnboard_EmptyTagsIsReachableButNoModels -> withOllamaProbeClient
+  TestProbeOllamaForOnboard_EmptyTagsIsReachableButNoModels -> probeOllamaForOnboard
+  TestProbeOllamaForOnboard_EmptyTagsIsReachableButNoModels -> t.Errorf
+  TestProbeOllamaForOnboard_EmptyTagsIsReachableButNoModels -> len
+  TestProbeOllamaForOnboard_EmptyTagsIsReachableButNoModels -> t.Errorf
+  TestProbeOllamaForOnboard_AllModelsLackToolsReturnsEmpty -> withProbeStubs
+  TestProbeOllamaForOnboard_AllModelsLackToolsReturnsEmpty -> ollamaTestServer
+  TestProbeOllamaForOnboard_AllModelsLackToolsReturnsEmpty -> withOllamaProbeClient
+  TestProbeOllamaForOnboard_AllModelsLackToolsReturnsEmpty -> probeOllamaForOnboard
+  TestProbeOllamaForOnboard_AllModelsLackToolsReturnsEmpty -> t.Errorf
+  TestProbeOllamaForOnboard_AllModelsLackToolsReturnsEmpty -> len
+  TestProbeOllamaForOnboard_AllModelsLackToolsReturnsEmpty -> t.Errorf
+  TestProbeOllamaForOnboard_OllamaDownReturnsUnreachable -> withProbeStubs
+  TestProbeOllamaForOnboard_OllamaDownReturnsUnreachable -> withOllamaProbeClient
+  TestProbeOllamaForOnboard_OllamaDownReturnsUnreachable -> probeOllamaForOnboard
+  TestProbeOllamaForOnboard_OllamaDownReturnsUnreachable -> t.Errorf
+  TestProbeOllamaForOnboard_OllamaDownReturnsUnreachable -> t.Errorf
+  TestProbeOllamaForOnboard_MissingCapabilitiesIsTreatedAsIncompatible -> withProbeStubs
+  TestProbeOllamaForOnboard_MissingCapabilitiesIsTreatedAsIncompatible -> ollamaTestServer
+  TestProbeOllamaForOnboard_MissingCapabilitiesIsTreatedAsIncompatible -> withOllamaProbeClient
+  TestProbeOllamaForOnboard_MissingCapabilitiesIsTreatedAsIncompatible -> probeOllamaForOnboard
+  TestProbeOllamaForOnboard_MissingCapabilitiesIsTreatedAsIncompatible -> t.Errorf
+  TestProbeOllamaForOnboard_MissingCapabilitiesIsTreatedAsIncompatible -> len
+  TestProbeOllamaForOnboard_MissingCapabilitiesIsTreatedAsIncompatible -> t.Errorf
+  TestProbeOllamaForOnboard_TrimsTrailingSlash -> withProbeStubs
+  TestProbeOllamaForOnboard_TrimsTrailingSlash -> ollamaTestServer
+  TestProbeOllamaForOnboard_TrimsTrailingSlash -> withOllamaProbeClient
+  TestProbeOllamaForOnboard_TrimsTrailingSlash -> probeOllamaForOnboard
+  TestProbeOllamaForOnboard_TrimsTrailingSlash -> t.Errorf
+  TestProbeOllamaForOnboard_TrimsTrailingSlash -> reflect.DeepEqual
+  TestProbeOllamaForOnboard_TrimsTrailingSlash -> t.Errorf
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> withProbeStubs
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> http.NewServeMux
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> mux.HandleFunc
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> w.Write
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> httptest.NewServer
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> t.Cleanup
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> withOllamaProbeClient
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> probeOllamaForOnboard
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> t.Errorf
+  TestProbeOllamaForOnboard_MalformedTagsBodyIsTolerated -> t.Errorf
+  TestHasOllamaToolsCapability_PostsExpectedBody -> withProbeStubs
+  TestHasOllamaToolsCapability_PostsExpectedBody -> http.NewServeMux
+  TestHasOllamaToolsCapability_PostsExpectedBody -> mux.HandleFunc
+  TestHasOllamaToolsCapability_PostsExpectedBody -> t.Errorf
+  TestHasOllamaToolsCapability_PostsExpectedBody -> io.ReadAll
+  TestHasOllamaToolsCapability_PostsExpectedBody -> string
+  TestHasOllamaToolsCapability_PostsExpectedBody -> json.NewEncoder(w).Encode
+  TestHasOllamaToolsCapability_PostsExpectedBody -> json.NewEncoder
+  TestHasOllamaToolsCapability_PostsExpectedBody -> httptest.NewServer
+  TestHasOllamaToolsCapability_PostsExpectedBody -> t.Cleanup
+  TestHasOllamaToolsCapability_PostsExpectedBody -> withOllamaProbeClient
+  TestHasOllamaToolsCapability_PostsExpectedBody -> hasOllamaToolsCapability
+  TestHasOllamaToolsCapability_PostsExpectedBody -> t.Errorf
+  TestHasOllamaToolsCapability_PostsExpectedBody -> strings.Contains
+  TestHasOllamaToolsCapability_PostsExpectedBody -> t.Errorf
+=== clients/launcher/cmd/onboard.go
+  init -> onboardCmd.Flags().BoolVar
+  init -> onboardCmd.Flags
+  init -> rootCmd.AddCommand
+  systemCheckGroup -> sys.OSLabel
+  systemCheckGroup -> b.WriteString
+  systemCheckGroup -> b.WriteString
+  systemCheckGroup -> sys.Ready
+  systemCheckGroup -> b.WriteString
+  systemCheckGroup -> b.WriteString
+  systemCheckGroup -> sys.DockerHint
+  systemCheckGroup -> b.WriteString
+  systemCheckGroup -> huh.NewGroup
+  systemCheckGroup -> huh.NewNote().
+			Title("System Check").
+			Description
+  systemCheckGroup -> huh.NewNote().
+			Title
+  systemCheckGroup -> huh.NewNote
+  systemCheckGroup -> b.String
+  runOnboard -> config.EnvExists
+  runOnboard -> ui.Info
+  runOnboard -> config.EnvPath
+  runOnboard -> ui.DimText
+  runOnboard -> config.EnvExists
+  runOnboard -> config.LoadEnv
+  runOnboard -> config.EnvPath
+  runOnboard -> fmt.Errorf
+  runOnboard -> make
+  runOnboard -> func() {
+		probeCh <- probeOllamaForOnboard(defaultOllamaAPIBase)
+	}
+  runOnboard -> probeOllamaForOnboard
+  runOnboard -> time.NewTimer
+  runOnboard -> probeTimer.Stop
+  runOnboard -> buildOllamaModelField
+  runOnboard -> platform.Detect
+  runOnboard -> huh.NewForm(
+		// Step 0: system check.
+		systemCheckGroup(sysInfo),
+
+		// Intro
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Raptix Setup").
+				Description("Configure auth methods, model profile, and\nobservability.\n\nUse ↑↓ to navigate, space to toggle, Enter to confirm."),
+		),
+
+		// Step 1: Auth methods (multi-select)
+		huh.NewGroup(
+			huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description("Press SPACE to toggle, ENTER to confirm.\nUse ↑↓ to scroll, '/' to filter the list.\nPick every credential you have — each is an\nindependent fallback in priority order.").
+				Filterable(true).
+				Height(15).
+				Options(
+					huh.NewOption("Claude Code OAuth — Anthropic subscription (auth/*)", methodAnthropicOAuth),
+					huh.NewOption("Anthropic API Key — sk-ant-...", methodAnthropicAPI),
+					huh.NewOption("ChatGPT OAuth     — ChatGPT Pro/Plus/Team subscription via `codex login` (auth/gpt-*)", methodOpenAIOAuth),
+					huh.NewOption("OpenAI API Key    — sk-...", methodOpenAIAPI),
+					huh.NewOption("Google API Key    — AIza... (Gemini)", methodGoogleAPI),
+					huh.NewOption("MiniMax API Key   — eyJ...", methodMiniMaxAPI),
+					huh.NewOption("DeepSeek API Key  — sk-...", methodDeepSeekAPI),
+					huh.NewOption("xAI API Key       — xai-... (Grok)", methodXAIAPI),
+					huh.NewOption("Mistral API Key   — (no fixed prefix)", methodMistralAPI),
+					huh.NewOption("OpenRouter API Key — sk-or-...", methodOpenRouterAPI),
+					huh.NewOption("Nvidia NIM API Key — nvapi-...", methodNvidiaAPI),
+					huh.NewOption("Gemini Advanced     — Google One AI Premium subscription (gemini-sub/*)", methodGoogleOAuth),
+					huh.NewOption("SuperGrok           — X Premium+ Grok subscription (grok-sub/*)", methodGrokOAuth),
+					huh.NewOption("GitHub Copilot Pro  — Copilot subscription (copilot/*)", methodCopilotOAuth),
+					huh.NewOption("Perplexity Pro      — Perplexity subscription (pplx-sub/*)", methodPerplexityOAuth),
+					huh.NewOption("AWS Bedrock         — Anthropic models on AWS (bedrock/*)", methodBedrockAPI),
+					huh.NewOption("GCP Vertex AI       — Anthropic + Gemini on GCP (vertex_ai/*)", methodVertexAPI),
+					huh.NewOption("Azure OpenAI        — Azure-hosted GPT deployments (azure/*)", methodAzureAPI),
+					huh.NewOption("GitHub Models       — GPT family via GitHub PAT (github/*)", methodGitHubModelsAPI),
+					huh.NewOption("Groq Cloud          — LPU-accelerated Llama (groq/*)", methodGroqAPI),
+					huh.NewOption("Together AI         — Llama / Mixtral hub (together_ai/*)", methodTogetherAPI),
+					huh.NewOption("Fireworks AI        — Llama / Mixtral hub (fireworks_ai/*)", methodFireworksAPI),
+					huh.NewOption("Cohere Command      — Command-A / Command-R (cohere/*)", methodCohereAPI),
+					huh.NewOption("Moonshot Kimi K2    — Kimi K2 (moonshot/*)", methodMoonshotAPI),
+					huh.NewOption("Kimi for Coding     — Kimi K3 / K2.7 Coding (kimi/*)", methodKimiAPI),
+					huh.NewOption("Z.ai GLM-4.5        — GLM-4.5 / GLM-4.5-Air (zai/*)", methodZaiAPI),
+					huh.NewOption("Alibaba DashScope   — Qwen Max/Plus/Turbo (dashscope/*)", methodDashscopeAPI),
+					huh.NewOption("LM Studio (local)   — local OpenAI-compatible server (lm_studio/*)", methodLMStudioLocal),
+					huh.NewOption("Local LLM (Ollama)  — any pulled model, no API key", methodOllamaLocal),
+					huh.NewOption("Ollama Cloud        — hosted Ollama (ollama_chat/* via cloud)", methodOllamaCloud),
+					huh.NewOption("Custom OpenAI Endpoint — bring-your-own OpenAI-compatible URL", methodCustomOpenAIAPI),
+				).
+				Value(&methods).
+				Validate(func(s []string) error {
+					if len(s) == 0 {
+						return fmt.Errorf("select at least one credential")
+					}
+					return nil
+				}),
+		).Title("1 / 5  ·  Credentials").
+			Description("Select all that apply"),
+
+		// Step 2-claude-oauth: Claude Code subscription long-lived token.
+		// Run `claude setup-token` once (any machine, interactive browser
+		// OAuth) → paste the 1-year token here. It is honored via the
+		// ANTHROPIC_OAUTH_TOKEN env override, which carries expiresAt=0 so it
+		// is never auto-refreshed — headless-safe for 24/7 / cloud, with no
+		// live Claude Code session and no ~/.claude/.credentials.json mount.
+		// Optional: leave blank to fall back to the rotating on-disk
+		// credentials from an interactive `claude` login.
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Claude Code Subscription — 1-year token").
+				Description(
+					"Two steps:\n\n"+
+						"1) Generate a 1-year token — run:\n"+
+						"      claude setup-token\n"+
+						"   (opens browser OAuth; needs a Pro / Max / Team /\n"+
+						"   Enterprise plan). Docs / issue link:\n"+
+						"   "+claudeSetupTokenDocsURL+"\n\n"+
+						"2) Paste the sk-ant-oat01-… token it prints into the\n"+
+						"   field below.\n\n"+
+						"Headless-safe: never refreshed, no live Claude Code\n"+
+						"session. Leave blank to use a rotating\n"+
+						"~/.claude/.credentials.json from a `claude` login.",
+				),
+			huh.NewInput().
+				Title("ANTHROPIC_OAUTH_TOKEN").
+				Placeholder("sk-ant-oat01-...   (leave blank to use credentials file)").
+				EchoMode(huh.EchoModePassword).
+				Value(&claudeOAuthToken).
+				Validate(optionalClaudeOAuthToken),
+		).Title("2 / 5  ·  Claude Code Subscription").
+			WithHideFunc(func() bool { return !contains(methods, methodAnthropicOAuth) }),
+
+		// Step 2a: Anthropic API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Anthropic API Key").
+				Placeholder("sk-ant-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&anthropicKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Anthropic API").
+			WithHideFunc(func() bool { return !contains(methods, methodAnthropicAPI) }),
+
+		// Step 2c: OpenAI API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("OpenAI API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&openaiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  OpenAI API").
+			WithHideFunc(func() bool { return !contains(methods, methodOpenAIAPI) }),
+
+		// Step 2c: Google API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Google (Gemini) API Key").
+				Placeholder("AIza...").
+				EchoMode(huh.EchoModePassword).
+				Value(&geminiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Google API").
+			WithHideFunc(func() bool { return !contains(methods, methodGoogleAPI) }),
+
+		// Step 2d: MiniMax API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("MiniMax API Key").
+				Placeholder("eyJ...").
+				EchoMode(huh.EchoModePassword).
+				Value(&minimaxKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  MiniMax API").
+			WithHideFunc(func() bool { return !contains(methods, methodMiniMaxAPI) }),
+
+		// Step 2d-i: DeepSeek API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("DeepSeek API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&deepseekKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  DeepSeek API").
+			WithHideFunc(func() bool { return !contains(methods, methodDeepSeekAPI) }),
+
+		// Step 2d-ii: xAI API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("xAI API Key").
+				Placeholder("xai-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&xaiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  xAI API (Grok)").
+			WithHideFunc(func() bool { return !contains(methods, methodXAIAPI) }),
+
+		// Step 2d-iii: Mistral API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Mistral API Key").
+				Placeholder("paste your Mistral API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&mistralKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Mistral API").
+			WithHideFunc(func() bool { return !contains(methods, methodMistralAPI) }),
+
+		// Step 2e: OpenRouter API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("OpenRouter API Key").
+				Placeholder("sk-or-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&openrouterKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  OpenRouter API").
+			WithHideFunc(func() bool { return !contains(methods, methodOpenRouterAPI) }),
+
+		// Step 2f: Nvidia NIM API key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Nvidia NIM API Key").
+				Placeholder("nvapi-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&nvidiaKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Nvidia NIM API").
+			WithHideFunc(func() bool { return !contains(methods, methodNvidiaAPI) }),
+
+		// Step 2-oauth-i: Gemini Advanced subscription
+		// Multi-cookie value (NID + Secure-1PSID + Secure-1PSIDTS, etc.)
+		// joined with semicolons. Optional — power users can drop a
+		// tokens.json under ~/.config/gemini/ instead and skip with Enter.
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Gemini Advanced Subscription").
+				Description("Open gemini.google.com → DevTools → Application →\nCookies → gemini.google.com. Copy the values of\nNID, __Secure-1PSID, __Secure-1PSIDTS as a single\nsemicolon-joined string. Or leave blank to use\nGEMINI_ACCESS_TOKEN / ~/.config/gemini/tokens.json."),
+			huh.NewInput().
+				Title("GEMINI_SESSION_COOKIES").
+				Placeholder("NID=...; __Secure-1PSID=...   (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&geminiSessionCookies),
+		).Title("2 / 5  ·  Gemini Advanced").
+			WithHideFunc(func() bool { return !contains(methods, methodGoogleOAuth) }),
+
+		// Step 2-oauth-ii: SuperGrok subscription
+		huh.NewGroup(
+			huh.NewNote().
+				Title("SuperGrok Subscription").
+				Description("Open grok.com → DevTools → Application →\nCookies → grok.com → copy the value of\n`auth_token`. Or leave blank to use\nGROK_ACCESS_TOKEN / ~/.config/grok/tokens.json."),
+			huh.NewInput().
+				Title("GROK_SESSION_TOKEN").
+				Placeholder("paste auth_token cookie value (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&grokSessionToken),
+		).Title("2 / 5  ·  SuperGrok").
+			WithHideFunc(func() bool { return !contains(methods, methodGrokOAuth) }),
+
+		// Step 2-oauth-iii: GitHub Copilot Pro subscription
+		// Refresh token rotation, not a single session cookie. Devs can
+		// extract one from VSCode's Copilot extension config or follow
+		// gh-copilot-cli onboarding. Optional via tokens.json fallback.
+		huh.NewGroup(
+			huh.NewNote().
+				Title("GitHub Copilot Pro Subscription").
+				Description("Provide a Copilot refresh token (long-lived, used\nto rotate access tokens). Or leave blank to use\nCOPILOT_ACCESS_TOKEN / ~/.config/copilot/tokens.json."),
+			huh.NewInput().
+				Title("COPILOT_REFRESH_TOKEN").
+				Placeholder("ghu_... or ghr_... (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&copilotRefreshToken),
+		).Title("2 / 5  ·  Copilot Pro").
+			WithHideFunc(func() bool { return !contains(methods, methodCopilotOAuth) }),
+
+		// Step 2-oauth-iv: Perplexity Pro subscription
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Perplexity Pro Subscription").
+				Description("Open perplexity.ai → DevTools → Application →\nCookies → perplexity.ai → copy the value of\n`next-auth.session-token`. Or leave blank to use\nPERPLEXITY_ACCESS_TOKEN / ~/.config/perplexity/tokens.json."),
+			huh.NewInput().
+				Title("PERPLEXITY_SESSION_TOKEN").
+				Placeholder("paste next-auth.session-token (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&perplexitySessionToken),
+		).Title("2 / 5  ·  Perplexity Pro").
+			WithHideFunc(func() bool { return !contains(methods, methodPerplexityOAuth) }),
+
+		// Step 2g: Local Ollama. The OLLAMA_MODEL field is built from
+		// the host probe (buildOllamaModelField): a strict Select when
+		// tool-capable models are pulled, a remediation Note otherwise.
+		// The post-form gate refuses to write .env in the Note cases.
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Local Ollama").
+				Description("Ollama must already be running on your host with\nat least one tool-capable model pulled. Launch it\nbound to all interfaces so the Raptix container\ncan reach it:\n\n  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n\nThe default 127.0.0.1 binding only accepts host-side\nconnections — containers won't see it.\n\nThe default URL `host.docker.internal:11434` works\non macOS, Linux, and WSL2 (with or without Docker\nDesktop). Only change it for remote / custom setups.\nNote: the model list is probed against the default URL\nat wizard start; if you customize OLLAMA_API_BASE,\nfinish the wizard then re-run 'raptix onboard\n--reset' so the probe targets the new endpoint."),
+			huh.NewInput().
+				Title("OLLAMA_API_BASE").
+				Placeholder(defaultOllamaAPIBase).
+				Value(&ollamaAPIBase).
+				Validate(nonEmpty),
+			ollamaModelField,
+		).Title("2 / 5  ·  Local LLM (Ollama)").
+			WithHideFunc(func() bool { return !contains(methods, methodOllamaLocal) }),
+
+		// Step 2-cloud-i: AWS Bedrock — three-field group (key + secret + region)
+		huh.NewGroup(
+			huh.NewNote().
+				Title("AWS Bedrock").
+				Description("Bedrock uses AWS SigV4 — provide IAM access key,\nsecret, and the region where Anthropic models are\nenabled (us-east-1 or us-west-2 typically)."),
+			huh.NewInput().
+				Title("AWS_ACCESS_KEY_ID").
+				Placeholder("AKIA...").
+				Value(&awsAccessKeyID).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AWS_SECRET_ACCESS_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&awsSecretAccessKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AWS_REGION").
+				Placeholder("us-east-1").
+				Value(&awsRegion).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  AWS Bedrock").
+			WithHideFunc(func() bool { return !contains(methods, methodBedrockAPI) }),
+
+		// Step 2-cloud-ii: GCP Vertex AI — service-account JSON path + project + region
+		huh.NewGroup(
+			huh.NewNote().
+				Title("GCP Vertex AI").
+				Description("Vertex AI uses a Google Cloud service-account JSON.\nDownload one from IAM & Admin → Service Accounts and\npaste the absolute file path. Project + region must\nmatch where you enabled Anthropic + Gemini models."),
+			huh.NewInput().
+				Title("GOOGLE_APPLICATION_CREDENTIALS").
+				Placeholder("/abs/path/to/service-account.json").
+				Value(&vertexCredsPath).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("VERTEXAI_PROJECT").
+				Placeholder("my-gcp-project-id").
+				Value(&vertexProject).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("VERTEXAI_LOCATION").
+				Placeholder("us-central1").
+				Value(&vertexLocation).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  GCP Vertex AI").
+			WithHideFunc(func() bool { return !contains(methods, methodVertexAPI) }),
+
+		// Step 2-cloud-iii: Azure OpenAI — key + endpoint + version
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Azure OpenAI Service").
+				Description("Endpoint is your azure-openai resource URL,\ne.g. https://my-resource.openai.azure.com.\nThe deployment names map 1:1 to gpt-5.5/gpt-5.4/...\nso the model matrix in DF resolves out of the box."),
+			huh.NewInput().
+				Title("AZURE_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&azureAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AZURE_API_BASE").
+				Placeholder("https://<resource>.openai.azure.com").
+				Value(&azureAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AZURE_API_VERSION").
+				Placeholder(defaultAzureAPIVersion).
+				Value(&azureAPIVersion).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Azure OpenAI").
+			WithHideFunc(func() bool { return !contains(methods, methodAzureAPI) }),
+
+		// Step 2-cloud-iv: GitHub Models — PAT
+		huh.NewGroup(
+			huh.NewInput().
+				Title("GITHUB_TOKEN").
+				Description("Fine-grained PAT with the 'models' permission scope.\nGenerate at github.com/settings/personal-access-tokens.").
+				Placeholder("github_pat_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&githubToken).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  GitHub Models").
+			WithHideFunc(func() bool { return !contains(methods, methodGitHubModelsAPI) }),
+
+		// Step 2-cloud-v: Groq
+		huh.NewGroup(
+			huh.NewInput().
+				Title("GROQ_API_KEY").
+				Placeholder("gsk_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&groqKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Groq Cloud").
+			WithHideFunc(func() bool { return !contains(methods, methodGroqAPI) }),
+
+		// Step 2-cloud-vi: Together AI
+		huh.NewGroup(
+			huh.NewInput().
+				Title("TOGETHER_API_KEY").
+				Placeholder("paste your Together AI API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&togetherKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Together AI").
+			WithHideFunc(func() bool { return !contains(methods, methodTogetherAPI) }),
+
+		// Step 2-cloud-vii: Fireworks AI
+		huh.NewGroup(
+			huh.NewInput().
+				Title("FIREWORKS_API_KEY").
+				Placeholder("fw_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&fireworksKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Fireworks AI").
+			WithHideFunc(func() bool { return !contains(methods, methodFireworksAPI) }),
+
+		// Step 2-cloud-viii: Cohere
+		huh.NewGroup(
+			huh.NewInput().
+				Title("COHERE_API_KEY").
+				Placeholder("paste your Cohere API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&cohereKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Cohere").
+			WithHideFunc(func() bool { return !contains(methods, methodCohereAPI) }),
+
+		// Step 2-cloud-ix: Moonshot Kimi K2
+		huh.NewGroup(
+			huh.NewInput().
+				Title("MOONSHOT_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&moonshotKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Moonshot Kimi K2").
+			WithHideFunc(func() bool { return !contains(methods, methodMoonshotAPI) }),
+
+		// Step 2-cloud-ix-b: Kimi for Coding (K3 / K2.7)
+		huh.NewGroup(
+			huh.NewInput().
+				Title("KIMI_API_KEY").
+				Description("Kimi for Coding platform (api.kimi.com/coding) — separate\nfrom the legacy Moonshot API. Keys start with 'sk-kimi-'.").
+				Placeholder("sk-kimi-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&kimiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Kimi for Coding").
+			WithHideFunc(func() bool { return !contains(methods, methodKimiAPI) }),
+
+		// Step 2-cloud-x: Z.ai GLM-4.5
+		huh.NewGroup(
+			huh.NewInput().
+				Title("ZAI_API_KEY").
+				Description("Z.ai is OpenAI-compatible — base URL is hard-wired to\nhttps://api.z.ai/api/paas/v4. Get a key at z.ai/manage.").
+				Placeholder("paste your Z.ai API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&zaiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Z.ai GLM-4.5").
+			WithHideFunc(func() bool { return !contains(methods, methodZaiAPI) }),
+
+		// Step 2-cloud-xi: Alibaba DashScope (Qwen)
+		huh.NewGroup(
+			huh.NewInput().
+				Title("DASHSCOPE_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&dashscopeKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  DashScope (Qwen)").
+			WithHideFunc(func() bool { return !contains(methods, methodDashscopeAPI) }),
+
+		// Step 2-local-ii: LM Studio (local OpenAI-compatible)
+		huh.NewGroup(
+			huh.NewNote().
+				Title("LM Studio").
+				Description("LM Studio runs a local OpenAI-compatible server.\nLaunch the LM Studio app and start the server\n(Developer tab → Start). The default port is 1234."),
+			huh.NewInput().
+				Title("LMSTUDIO_API_BASE").
+				Placeholder(defaultLMStudioAPIBase).
+				Value(&lmStudioAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("LMSTUDIO_MODEL").
+				Description("Model identifier as shown in LM Studio (e.g.\nqwen2.5-coder-7b-instruct).").
+				Placeholder(defaultLMStudioModel).
+				Value(&lmStudioModel).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  LM Studio").
+			WithHideFunc(func() bool { return !contains(methods, methodLMStudioLocal) }),
+
+		// Step 2-local-iii: Ollama Cloud (hosted)
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Ollama Cloud").
+				Description("Hosted Ollama — same /api/chat tool-calling endpoint\nas local Ollama, just behind an API key."),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_API_BASE").
+				Placeholder("https://api.ollama.com/v1").
+				Value(&ollamaCloudAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&ollamaCloudAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_MODEL").
+				Placeholder("llama3.3:70b").
+				Value(&ollamaCloudModel).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Ollama Cloud").
+			WithHideFunc(func() bool { return !contains(methods, methodOllamaCloud) }),
+
+		// Step 2-custom: Custom OpenAI-compatible endpoint
+		huh.NewGroup(
+			huh.NewNote().
+				Title("Custom OpenAI-compatible Endpoint").
+				Description("Point at any OpenAI-compatible server (gateways,\nself-hosted vLLM, internal LiteLLM, etc.). The model\nname is sent verbatim to the upstream — match what\nyour gateway exposes."),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_API_BASE").
+				Placeholder("https://gateway.example.com/v1").
+				Value(&customOpenAIAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&customOpenAIAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_MODEL").
+				Placeholder("gpt-4o-mini").
+				Value(&customOpenAIModel).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Custom OpenAI Endpoint").
+			WithHideFunc(func() bool { return !contains(methods, methodCustomOpenAIAPI) }),
+
+		// Step 3: Model profile
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Model Profile").
+				Description("eco  per-agent tier (recommended)\nmax  every agent on HIGH (expensive)\ntest every agent on LOW (development)").
+				Options(
+					huh.NewOption("eco  — per-agent tier (recommended)", "eco"),
+					huh.NewOption("max  — every agent on HIGH (expensive)", "max"),
+					huh.NewOption("test — every agent on LOW (development)", "test"),
+				).
+				Value(&profile),
+		).Title("3 / 5  ·  Profile"),
+
+		// Step 4: Language
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Agent Language").
+				Description("Language for all agent prose output (menus, questions,\nsummaries, errors). Technical output stays in English.\nCountry codes (dk, se, jp, cn) are auto-resolved.").
+				Options(
+					huh.NewOption("en     — English (default)", "en"),
+					huh.NewOption("no     — Norwegian", "no"),
+					huh.NewOption("da     — Danish", "da"),
+					huh.NewOption("sv     — Swedish", "sv"),
+					huh.NewOption("fi     — Finnish", "fi"),
+					huh.NewOption("is     — Icelandic", "is"),
+					huh.NewOption("ko     — Korean", "ko"),
+					huh.NewOption("ja     — Japanese", "ja"),
+					huh.NewOption("zh     — Chinese", "zh"),
+					huh.NewOption("zh-tw  — Traditional Chinese", "zh-tw"),
+					huh.NewOption("es     — Spanish", "es"),
+					huh.NewOption("pt     — Portuguese", "pt"),
+					huh.NewOption("pt-br  — Brazilian Portuguese", "pt-br"),
+					huh.NewOption("de     — German", "de"),
+					huh.NewOption("fr     — French", "fr"),
+					huh.NewOption("nl     — Dutch", "nl"),
+					huh.NewOption("it     — Italian", "it"),
+					huh.NewOption("pl     — Polish", "pl"),
+					huh.NewOption("cs     — Czech", "cs"),
+					huh.NewOption("uk     — Ukrainian", "uk"),
+					huh.NewOption("ro     — Romanian", "ro"),
+					huh.NewOption("hr     — Croatian", "hr"),
+					huh.NewOption("bg     — Bulgarian", "bg"),
+					huh.NewOption("ru     — Russian", "ru"),
+					huh.NewOption("el     — Greek", "el"),
+					huh.NewOption("hu     — Hungarian", "hu"),
+					huh.NewOption("tr     — Turkish", "tr"),
+					huh.NewOption("ar     — Arabic", "ar"),
+					huh.NewOption("fa     — Persian", "fa"),
+					huh.NewOption("he     — Hebrew", "he"),
+					huh.NewOption("hi     — Hindi", "hi"),
+					huh.NewOption("th     — Thai", "th"),
+					huh.NewOption("vi     — Vietnamese", "vi"),
+					huh.NewOption("id     — Indonesian", "id"),
+					huh.NewOption("ms     — Malay", "ms"),
+					huh.NewOption("tl     — Filipino", "tl"),
+					huh.NewOption("sw     — Swahili", "sw"),
+					huh.NewOption("af     — Afrikaans", "af"),
+					huh.NewOption("wenyan — 文言文 + English technical terms", "wenyan"),
+				).
+				Value(&language),
+		).Title("4 / 5  ·  Language"),
+
+		// Step 5a: LangSmith toggle
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Enable LangSmith?").
+				Description("LLM observability and trace collection").
+				Affirmative("Yes").
+				Negative("No").
+				Value(&useLangSmith),
+		).Title("5 / 5  ·  Observability"),
+
+		// Step 5b: LangSmith key
+		huh.NewGroup(
+			huh.NewInput().
+				Title("LangSmith API Key").
+				Placeholder("lsv2_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&langSmithKey).
+				Validate(nonEmpty),
+		).Title("5 / 5  ·  LangSmith").
+			WithHideFunc(func() bool { return !useLangSmith }),
+
+		// Step 5c: usage telemetry consent (opt-out — default yes)
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Share anonymous + masked red-team telemetry?").
+				Description(
+					"Raptix is free/OSS — sharing usage helps fund and improve it,\n"+
+						"and contributes masked red-team reasoning to train future open\n"+
+						"offensive-security agents.\n\n"+
+						"  • anonymous structural stats (tools used, finding severity/CWE,\n"+
+						"    kill-chain phase)\n"+
+						"  • the agent's red-team REASONING, with target identifiers MASKED\n"+
+						"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n"+
+						"Never sent: raw prompts, real target IPs/hosts, credentials. Your\n"+
+						"IP is dropped at the gateway. Change anytime: RAPTIX_TELEMETRY=off\n"+
+						"(or basic) in .env, `raptix-cli telemetry off`, or DO_NOT_TRACK=1.",
+				).
+				Affirmative("Yes, share (recommended)").
+				Negative("No, keep it off").
+				Value(&telemetryConsent),
+		).Title("5 / 5  ·  Usage telemetry"),
+	).WithTheme
+  runOnboard -> huh.NewForm
+  runOnboard -> systemCheckGroup
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("Raptix Setup").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewGroup(
+			huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description("Press SPACE to toggle, ENTER to confirm.\nUse ↑↓ to scroll, '/' to filter the list.\nPick every credential you have — each is an\nindependent fallback in priority order.").
+				Filterable(true).
+				Height(15).
+				Options(
+					huh.NewOption("Claude Code OAuth — Anthropic subscription (auth/*)", methodAnthropicOAuth),
+					huh.NewOption("Anthropic API Key — sk-ant-...", methodAnthropicAPI),
+					huh.NewOption("ChatGPT OAuth     — ChatGPT Pro/Plus/Team subscription via `codex login` (auth/gpt-*)", methodOpenAIOAuth),
+					huh.NewOption("OpenAI API Key    — sk-...", methodOpenAIAPI),
+					huh.NewOption("Google API Key    — AIza... (Gemini)", methodGoogleAPI),
+					huh.NewOption("MiniMax API Key   — eyJ...", methodMiniMaxAPI),
+					huh.NewOption("DeepSeek API Key  — sk-...", methodDeepSeekAPI),
+					huh.NewOption("xAI API Key       — xai-... (Grok)", methodXAIAPI),
+					huh.NewOption("Mistral API Key   — (no fixed prefix)", methodMistralAPI),
+					huh.NewOption("OpenRouter API Key — sk-or-...", methodOpenRouterAPI),
+					huh.NewOption("Nvidia NIM API Key — nvapi-...", methodNvidiaAPI),
+					huh.NewOption("Gemini Advanced     — Google One AI Premium subscription (gemini-sub/*)", methodGoogleOAuth),
+					huh.NewOption("SuperGrok           — X Premium+ Grok subscription (grok-sub/*)", methodGrokOAuth),
+					huh.NewOption("GitHub Copilot Pro  — Copilot subscription (copilot/*)", methodCopilotOAuth),
+					huh.NewOption("Perplexity Pro      — Perplexity subscription (pplx-sub/*)", methodPerplexityOAuth),
+					huh.NewOption("AWS Bedrock         — Anthropic models on AWS (bedrock/*)", methodBedrockAPI),
+					huh.NewOption("GCP Vertex AI       — Anthropic + Gemini on GCP (vertex_ai/*)", methodVertexAPI),
+					huh.NewOption("Azure OpenAI        — Azure-hosted GPT deployments (azure/*)", methodAzureAPI),
+					huh.NewOption("GitHub Models       — GPT family via GitHub PAT (github/*)", methodGitHubModelsAPI),
+					huh.NewOption("Groq Cloud          — LPU-accelerated Llama (groq/*)", methodGroqAPI),
+					huh.NewOption("Together AI         — Llama / Mixtral hub (together_ai/*)", methodTogetherAPI),
+					huh.NewOption("Fireworks AI        — Llama / Mixtral hub (fireworks_ai/*)", methodFireworksAPI),
+					huh.NewOption("Cohere Command      — Command-A / Command-R (cohere/*)", methodCohereAPI),
+					huh.NewOption("Moonshot Kimi K2    — Kimi K2 (moonshot/*)", methodMoonshotAPI),
+					huh.NewOption("Kimi for Coding     — Kimi K3 / K2.7 Coding (kimi/*)", methodKimiAPI),
+					huh.NewOption("Z.ai GLM-4.5        — GLM-4.5 / GLM-4.5-Air (zai/*)", methodZaiAPI),
+					huh.NewOption("Alibaba DashScope   — Qwen Max/Plus/Turbo (dashscope/*)", methodDashscopeAPI),
+					huh.NewOption("LM Studio (local)   — local OpenAI-compatible server (lm_studio/*)", methodLMStudioLocal),
+					huh.NewOption("Local LLM (Ollama)  — any pulled model, no API key", methodOllamaLocal),
+					huh.NewOption("Ollama Cloud        — hosted Ollama (ollama_chat/* via cloud)", methodOllamaCloud),
+					huh.NewOption("Custom OpenAI Endpoint — bring-your-own OpenAI-compatible URL", methodCustomOpenAIAPI),
+				).
+				Value(&methods).
+				Validate(func(s []string) error {
+					if len(s) == 0 {
+						return fmt.Errorf("select at least one credential")
+					}
+					return nil
+				}),
+		).Title("1 / 5  ·  Credentials").
+			Description
+  runOnboard -> huh.NewGroup(
+			huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description("Press SPACE to toggle, ENTER to confirm.\nUse ↑↓ to scroll, '/' to filter the list.\nPick every credential you have — each is an\nindependent fallback in priority order.").
+				Filterable(true).
+				Height(15).
+				Options(
+					huh.NewOption("Claude Code OAuth — Anthropic subscription (auth/*)", methodAnthropicOAuth),
+					huh.NewOption("Anthropic API Key — sk-ant-...", methodAnthropicAPI),
+					huh.NewOption("ChatGPT OAuth     — ChatGPT Pro/Plus/Team subscription via `codex login` (auth/gpt-*)", methodOpenAIOAuth),
+					huh.NewOption("OpenAI API Key    — sk-...", methodOpenAIAPI),
+					huh.NewOption("Google API Key    — AIza... (Gemini)", methodGoogleAPI),
+					huh.NewOption("MiniMax API Key   — eyJ...", methodMiniMaxAPI),
+					huh.NewOption("DeepSeek API Key  — sk-...", methodDeepSeekAPI),
+					huh.NewOption("xAI API Key       — xai-... (Grok)", methodXAIAPI),
+					huh.NewOption("Mistral API Key   — (no fixed prefix)", methodMistralAPI),
+					huh.NewOption("OpenRouter API Key — sk-or-...", methodOpenRouterAPI),
+					huh.NewOption("Nvidia NIM API Key — nvapi-...", methodNvidiaAPI),
+					huh.NewOption("Gemini Advanced     — Google One AI Premium subscription (gemini-sub/*)", methodGoogleOAuth),
+					huh.NewOption("SuperGrok           — X Premium+ Grok subscription (grok-sub/*)", methodGrokOAuth),
+					huh.NewOption("GitHub Copilot Pro  — Copilot subscription (copilot/*)", methodCopilotOAuth),
+					huh.NewOption("Perplexity Pro      — Perplexity subscription (pplx-sub/*)", methodPerplexityOAuth),
+					huh.NewOption("AWS Bedrock         — Anthropic models on AWS (bedrock/*)", methodBedrockAPI),
+					huh.NewOption("GCP Vertex AI       — Anthropic + Gemini on GCP (vertex_ai/*)", methodVertexAPI),
+					huh.NewOption("Azure OpenAI        — Azure-hosted GPT deployments (azure/*)", methodAzureAPI),
+					huh.NewOption("GitHub Models       — GPT family via GitHub PAT (github/*)", methodGitHubModelsAPI),
+					huh.NewOption("Groq Cloud          — LPU-accelerated Llama (groq/*)", methodGroqAPI),
+					huh.NewOption("Together AI         — Llama / Mixtral hub (together_ai/*)", methodTogetherAPI),
+					huh.NewOption("Fireworks AI        — Llama / Mixtral hub (fireworks_ai/*)", methodFireworksAPI),
+					huh.NewOption("Cohere Command      — Command-A / Command-R (cohere/*)", methodCohereAPI),
+					huh.NewOption("Moonshot Kimi K2    — Kimi K2 (moonshot/*)", methodMoonshotAPI),
+					huh.NewOption("Kimi for Coding     — Kimi K3 / K2.7 Coding (kimi/*)", methodKimiAPI),
+					huh.NewOption("Z.ai GLM-4.5        — GLM-4.5 / GLM-4.5-Air (zai/*)", methodZaiAPI),
+					huh.NewOption("Alibaba DashScope   — Qwen Max/Plus/Turbo (dashscope/*)", methodDashscopeAPI),
+					huh.NewOption("LM Studio (local)   — local OpenAI-compatible server (lm_studio/*)", methodLMStudioLocal),
+					huh.NewOption("Local LLM (Ollama)  — any pulled model, no API key", methodOllamaLocal),
+					huh.NewOption("Ollama Cloud        — hosted Ollama (ollama_chat/* via cloud)", methodOllamaCloud),
+					huh.NewOption("Custom OpenAI Endpoint — bring-your-own OpenAI-compatible URL", methodCustomOpenAIAPI),
+				).
+				Value(&methods).
+				Validate(func(s []string) error {
+					if len(s) == 0 {
+						return fmt.Errorf("select at least one credential")
+					}
+					return nil
+				}),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description("Press SPACE to toggle, ENTER to confirm.\nUse ↑↓ to scroll, '/' to filter the list.\nPick every credential you have — each is an\nindependent fallback in priority order.").
+				Filterable(true).
+				Height(15).
+				Options(
+					huh.NewOption("Claude Code OAuth — Anthropic subscription (auth/*)", methodAnthropicOAuth),
+					huh.NewOption("Anthropic API Key — sk-ant-...", methodAnthropicAPI),
+					huh.NewOption("ChatGPT OAuth     — ChatGPT Pro/Plus/Team subscription via `codex login` (auth/gpt-*)", methodOpenAIOAuth),
+					huh.NewOption("OpenAI API Key    — sk-...", methodOpenAIAPI),
+					huh.NewOption("Google API Key    — AIza... (Gemini)", methodGoogleAPI),
+					huh.NewOption("MiniMax API Key   — eyJ...", methodMiniMaxAPI),
+					huh.NewOption("DeepSeek API Key  — sk-...", methodDeepSeekAPI),
+					huh.NewOption("xAI API Key       — xai-... (Grok)", methodXAIAPI),
+					huh.NewOption("Mistral API Key   — (no fixed prefix)", methodMistralAPI),
+					huh.NewOption("OpenRouter API Key — sk-or-...", methodOpenRouterAPI),
+					huh.NewOption("Nvidia NIM API Key — nvapi-...", methodNvidiaAPI),
+					huh.NewOption("Gemini Advanced     — Google One AI Premium subscription (gemini-sub/*)", methodGoogleOAuth),
+					huh.NewOption("SuperGrok           — X Premium+ Grok subscription (grok-sub/*)", methodGrokOAuth),
+					huh.NewOption("GitHub Copilot Pro  — Copilot subscription (copilot/*)", methodCopilotOAuth),
+					huh.NewOption("Perplexity Pro      — Perplexity subscription (pplx-sub/*)", methodPerplexityOAuth),
+					huh.NewOption("AWS Bedrock         — Anthropic models on AWS (bedrock/*)", methodBedrockAPI),
+					huh.NewOption("GCP Vertex AI       — Anthropic + Gemini on GCP (vertex_ai/*)", methodVertexAPI),
+					huh.NewOption("Azure OpenAI        — Azure-hosted GPT deployments (azure/*)", methodAzureAPI),
+					huh.NewOption("GitHub Models       — GPT family via GitHub PAT (github/*)", methodGitHubModelsAPI),
+					huh.NewOption("Groq Cloud          — LPU-accelerated Llama (groq/*)", methodGroqAPI),
+					huh.NewOption("Together AI         — Llama / Mixtral hub (together_ai/*)", methodTogetherAPI),
+					huh.NewOption("Fireworks AI        — Llama / Mixtral hub (fireworks_ai/*)", methodFireworksAPI),
+					huh.NewOption("Cohere Command      — Command-A / Command-R (cohere/*)", methodCohereAPI),
+					huh.NewOption("Moonshot Kimi K2    — Kimi K2 (moonshot/*)", methodMoonshotAPI),
+					huh.NewOption("Kimi for Coding     — Kimi K3 / K2.7 Coding (kimi/*)", methodKimiAPI),
+					huh.NewOption("Z.ai GLM-4.5        — GLM-4.5 / GLM-4.5-Air (zai/*)", methodZaiAPI),
+					huh.NewOption("Alibaba DashScope   — Qwen Max/Plus/Turbo (dashscope/*)", methodDashscopeAPI),
+					huh.NewOption("LM Studio (local)   — local OpenAI-compatible server (lm_studio/*)", methodLMStudioLocal),
+					huh.NewOption("Local LLM (Ollama)  — any pulled model, no API key", methodOllamaLocal),
+					huh.NewOption("Ollama Cloud        — hosted Ollama (ollama_chat/* via cloud)", methodOllamaCloud),
+					huh.NewOption("Custom OpenAI Endpoint — bring-your-own OpenAI-compatible URL", methodCustomOpenAIAPI),
+				).
+				Value(&methods).
+				Validate
+  runOnboard -> huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description("Press SPACE to toggle, ENTER to confirm.\nUse ↑↓ to scroll, '/' to filter the list.\nPick every credential you have — each is an\nindependent fallback in priority order.").
+				Filterable(true).
+				Height(15).
+				Options(
+					huh.NewOption("Claude Code OAuth — Anthropic subscription (auth/*)", methodAnthropicOAuth),
+					huh.NewOption("Anthropic API Key — sk-ant-...", methodAnthropicAPI),
+					huh.NewOption("ChatGPT OAuth     — ChatGPT Pro/Plus/Team subscription via `codex login` (auth/gpt-*)", methodOpenAIOAuth),
+					huh.NewOption("OpenAI API Key    — sk-...", methodOpenAIAPI),
+					huh.NewOption("Google API Key    — AIza... (Gemini)", methodGoogleAPI),
+					huh.NewOption("MiniMax API Key   — eyJ...", methodMiniMaxAPI),
+					huh.NewOption("DeepSeek API Key  — sk-...", methodDeepSeekAPI),
+					huh.NewOption("xAI API Key       — xai-... (Grok)", methodXAIAPI),
+					huh.NewOption("Mistral API Key   — (no fixed prefix)", methodMistralAPI),
+					huh.NewOption("OpenRouter API Key — sk-or-...", methodOpenRouterAPI),
+					huh.NewOption("Nvidia NIM API Key — nvapi-...", methodNvidiaAPI),
+					huh.NewOption("Gemini Advanced     — Google One AI Premium subscription (gemini-sub/*)", methodGoogleOAuth),
+					huh.NewOption("SuperGrok           — X Premium+ Grok subscription (grok-sub/*)", methodGrokOAuth),
+					huh.NewOption("GitHub Copilot Pro  — Copilot subscription (copilot/*)", methodCopilotOAuth),
+					huh.NewOption("Perplexity Pro      — Perplexity subscription (pplx-sub/*)", methodPerplexityOAuth),
+					huh.NewOption("AWS Bedrock         — Anthropic models on AWS (bedrock/*)", methodBedrockAPI),
+					huh.NewOption("GCP Vertex AI       — Anthropic + Gemini on GCP (vertex_ai/*)", methodVertexAPI),
+					huh.NewOption("Azure OpenAI        — Azure-hosted GPT deployments (azure/*)", methodAzureAPI),
+					huh.NewOption("GitHub Models       — GPT family via GitHub PAT (github/*)", methodGitHubModelsAPI),
+					huh.NewOption("Groq Cloud          — LPU-accelerated Llama (groq/*)", methodGroqAPI),
+					huh.NewOption("Together AI         — Llama / Mixtral hub (together_ai/*)", methodTogetherAPI),
+					huh.NewOption("Fireworks AI        — Llama / Mixtral hub (fireworks_ai/*)", methodFireworksAPI),
+					huh.NewOption("Cohere Command      — Command-A / Command-R (cohere/*)", methodCohereAPI),
+					huh.NewOption("Moonshot Kimi K2    — Kimi K2 (moonshot/*)", methodMoonshotAPI),
+					huh.NewOption("Kimi for Coding     — Kimi K3 / K2.7 Coding (kimi/*)", methodKimiAPI),
+					huh.NewOption("Z.ai GLM-4.5        — GLM-4.5 / GLM-4.5-Air (zai/*)", methodZaiAPI),
+					huh.NewOption("Alibaba DashScope   — Qwen Max/Plus/Turbo (dashscope/*)", methodDashscopeAPI),
+					huh.NewOption("LM Studio (local)   — local OpenAI-compatible server (lm_studio/*)", methodLMStudioLocal),
+					huh.NewOption("Local LLM (Ollama)  — any pulled model, no API key", methodOllamaLocal),
+					huh.NewOption("Ollama Cloud        — hosted Ollama (ollama_chat/* via cloud)", methodOllamaCloud),
+					huh.NewOption("Custom OpenAI Endpoint — bring-your-own OpenAI-compatible URL", methodCustomOpenAIAPI),
+				).
+				Value
+  runOnboard -> huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description("Press SPACE to toggle, ENTER to confirm.\nUse ↑↓ to scroll, '/' to filter the list.\nPick every credential you have — each is an\nindependent fallback in priority order.").
+				Filterable(true).
+				Height(15).
+				Options
+  runOnboard -> huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description("Press SPACE to toggle, ENTER to confirm.\nUse ↑↓ to scroll, '/' to filter the list.\nPick every credential you have — each is an\nindependent fallback in priority order.").
+				Filterable(true).
+				Height
+  runOnboard -> huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description("Press SPACE to toggle, ENTER to confirm.\nUse ↑↓ to scroll, '/' to filter the list.\nPick every credential you have — each is an\nindependent fallback in priority order.").
+				Filterable
+  runOnboard -> huh.NewMultiSelect[string]().
+				Title("Auth Methods").
+				Description
+  runOnboard -> huh.NewMultiSelect[string]().
+				Title
+  runOnboard -> huh.NewMultiSelect[string]
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> len
+  runOnboard -> fmt.Errorf
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Claude Code Subscription — 1-year token").
+				Description(
+					"Two steps:\n\n"+
+						"1) Generate a 1-year token — run:\n"+
+						"      claude setup-token\n"+
+						"   (opens browser OAuth; needs a Pro / Max / Team /\n"+
+						"   Enterprise plan). Docs / issue link:\n"+
+						"   "+claudeSetupTokenDocsURL+"\n\n"+
+						"2) Paste the sk-ant-oat01-… token it prints into the\n"+
+						"   field below.\n\n"+
+						"Headless-safe: never refreshed, no live Claude Code\n"+
+						"session. Leave blank to use a rotating\n"+
+						"~/.claude/.credentials.json from a `claude` login.",
+				),
+			huh.NewInput().
+				Title("ANTHROPIC_OAUTH_TOKEN").
+				Placeholder("sk-ant-oat01-...   (leave blank to use credentials file)").
+				EchoMode(huh.EchoModePassword).
+				Value(&claudeOAuthToken).
+				Validate(optionalClaudeOAuthToken),
+		).Title("2 / 5  ·  Claude Code Subscription").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Claude Code Subscription — 1-year token").
+				Description(
+					"Two steps:\n\n"+
+						"1) Generate a 1-year token — run:\n"+
+						"      claude setup-token\n"+
+						"   (opens browser OAuth; needs a Pro / Max / Team /\n"+
+						"   Enterprise plan). Docs / issue link:\n"+
+						"   "+claudeSetupTokenDocsURL+"\n\n"+
+						"2) Paste the sk-ant-oat01-… token it prints into the\n"+
+						"   field below.\n\n"+
+						"Headless-safe: never refreshed, no live Claude Code\n"+
+						"session. Leave blank to use a rotating\n"+
+						"~/.claude/.credentials.json from a `claude` login.",
+				),
+			huh.NewInput().
+				Title("ANTHROPIC_OAUTH_TOKEN").
+				Placeholder("sk-ant-oat01-...   (leave blank to use credentials file)").
+				EchoMode(huh.EchoModePassword).
+				Value(&claudeOAuthToken).
+				Validate(optionalClaudeOAuthToken),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("Claude Code Subscription — 1-year token").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("ANTHROPIC_OAUTH_TOKEN").
+				Placeholder("sk-ant-oat01-...   (leave blank to use credentials file)").
+				EchoMode(huh.EchoModePassword).
+				Value(&claudeOAuthToken).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("ANTHROPIC_OAUTH_TOKEN").
+				Placeholder("sk-ant-oat01-...   (leave blank to use credentials file)").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("ANTHROPIC_OAUTH_TOKEN").
+				Placeholder("sk-ant-oat01-...   (leave blank to use credentials file)").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("ANTHROPIC_OAUTH_TOKEN").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("Anthropic API Key").
+				Placeholder("sk-ant-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&anthropicKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Anthropic API").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("Anthropic API Key").
+				Placeholder("sk-ant-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&anthropicKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("Anthropic API Key").
+				Placeholder("sk-ant-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&anthropicKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("Anthropic API Key").
+				Placeholder("sk-ant-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("Anthropic API Key").
+				Placeholder("sk-ant-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("Anthropic API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("OpenAI API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&openaiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  OpenAI API").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("OpenAI API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&openaiKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("OpenAI API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&openaiKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("OpenAI API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("OpenAI API Key").
+				Placeholder("sk-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("OpenAI API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("Google (Gemini) API Key").
+				Placeholder("AIza...").
+				EchoMode(huh.EchoModePassword).
+				Value(&geminiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Google API").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("Google (Gemini) API Key").
+				Placeholder("AIza...").
+				EchoMode(huh.EchoModePassword).
+				Value(&geminiKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("Google (Gemini) API Key").
+				Placeholder("AIza...").
+				EchoMode(huh.EchoModePassword).
+				Value(&geminiKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("Google (Gemini) API Key").
+				Placeholder("AIza...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("Google (Gemini) API Key").
+				Placeholder("AIza...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("Google (Gemini) API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("MiniMax API Key").
+				Placeholder("eyJ...").
+				EchoMode(huh.EchoModePassword).
+				Value(&minimaxKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  MiniMax API").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("MiniMax API Key").
+				Placeholder("eyJ...").
+				EchoMode(huh.EchoModePassword).
+				Value(&minimaxKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("MiniMax API Key").
+				Placeholder("eyJ...").
+				EchoMode(huh.EchoModePassword).
+				Value(&minimaxKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("MiniMax API Key").
+				Placeholder("eyJ...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("MiniMax API Key").
+				Placeholder("eyJ...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("MiniMax API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("DeepSeek API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&deepseekKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  DeepSeek API").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("DeepSeek API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&deepseekKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("DeepSeek API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&deepseekKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("DeepSeek API Key").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("DeepSeek API Key").
+				Placeholder("sk-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("DeepSeek API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("xAI API Key").
+				Placeholder("xai-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&xaiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  xAI API (Grok)").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("xAI API Key").
+				Placeholder("xai-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&xaiKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("xAI API Key").
+				Placeholder("xai-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&xaiKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("xAI API Key").
+				Placeholder("xai-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("xAI API Key").
+				Placeholder("xai-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("xAI API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("Mistral API Key").
+				Placeholder("paste your Mistral API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&mistralKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Mistral API").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("Mistral API Key").
+				Placeholder("paste your Mistral API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&mistralKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("Mistral API Key").
+				Placeholder("paste your Mistral API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&mistralKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("Mistral API Key").
+				Placeholder("paste your Mistral API key").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("Mistral API Key").
+				Placeholder("paste your Mistral API key").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("Mistral API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("OpenRouter API Key").
+				Placeholder("sk-or-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&openrouterKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  OpenRouter API").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("OpenRouter API Key").
+				Placeholder("sk-or-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&openrouterKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("OpenRouter API Key").
+				Placeholder("sk-or-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&openrouterKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("OpenRouter API Key").
+				Placeholder("sk-or-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("OpenRouter API Key").
+				Placeholder("sk-or-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("OpenRouter API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("Nvidia NIM API Key").
+				Placeholder("nvapi-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&nvidiaKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Nvidia NIM API").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("Nvidia NIM API Key").
+				Placeholder("nvapi-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&nvidiaKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("Nvidia NIM API Key").
+				Placeholder("nvapi-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&nvidiaKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("Nvidia NIM API Key").
+				Placeholder("nvapi-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("Nvidia NIM API Key").
+				Placeholder("nvapi-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("Nvidia NIM API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Gemini Advanced Subscription").
+				Description("Open gemini.google.com → DevTools → Application →\nCookies → gemini.google.com. Copy the values of\nNID, __Secure-1PSID, __Secure-1PSIDTS as a single\nsemicolon-joined string. Or leave blank to use\nGEMINI_ACCESS_TOKEN / ~/.config/gemini/tokens.json."),
+			huh.NewInput().
+				Title("GEMINI_SESSION_COOKIES").
+				Placeholder("NID=...; __Secure-1PSID=...   (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&geminiSessionCookies),
+		).Title("2 / 5  ·  Gemini Advanced").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Gemini Advanced Subscription").
+				Description("Open gemini.google.com → DevTools → Application →\nCookies → gemini.google.com. Copy the values of\nNID, __Secure-1PSID, __Secure-1PSIDTS as a single\nsemicolon-joined string. Or leave blank to use\nGEMINI_ACCESS_TOKEN / ~/.config/gemini/tokens.json."),
+			huh.NewInput().
+				Title("GEMINI_SESSION_COOKIES").
+				Placeholder("NID=...; __Secure-1PSID=...   (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&geminiSessionCookies),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("Gemini Advanced Subscription").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("GEMINI_SESSION_COOKIES").
+				Placeholder("NID=...; __Secure-1PSID=...   (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("GEMINI_SESSION_COOKIES").
+				Placeholder("NID=...; __Secure-1PSID=...   (leave blank to skip)").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("GEMINI_SESSION_COOKIES").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("SuperGrok Subscription").
+				Description("Open grok.com → DevTools → Application →\nCookies → grok.com → copy the value of\n`auth_token`. Or leave blank to use\nGROK_ACCESS_TOKEN / ~/.config/grok/tokens.json."),
+			huh.NewInput().
+				Title("GROK_SESSION_TOKEN").
+				Placeholder("paste auth_token cookie value (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&grokSessionToken),
+		).Title("2 / 5  ·  SuperGrok").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("SuperGrok Subscription").
+				Description("Open grok.com → DevTools → Application →\nCookies → grok.com → copy the value of\n`auth_token`. Or leave blank to use\nGROK_ACCESS_TOKEN / ~/.config/grok/tokens.json."),
+			huh.NewInput().
+				Title("GROK_SESSION_TOKEN").
+				Placeholder("paste auth_token cookie value (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&grokSessionToken),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("SuperGrok Subscription").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("GROK_SESSION_TOKEN").
+				Placeholder("paste auth_token cookie value (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("GROK_SESSION_TOKEN").
+				Placeholder("paste auth_token cookie value (leave blank to skip)").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("GROK_SESSION_TOKEN").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("GitHub Copilot Pro Subscription").
+				Description("Provide a Copilot refresh token (long-lived, used\nto rotate access tokens). Or leave blank to use\nCOPILOT_ACCESS_TOKEN / ~/.config/copilot/tokens.json."),
+			huh.NewInput().
+				Title("COPILOT_REFRESH_TOKEN").
+				Placeholder("ghu_... or ghr_... (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&copilotRefreshToken),
+		).Title("2 / 5  ·  Copilot Pro").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("GitHub Copilot Pro Subscription").
+				Description("Provide a Copilot refresh token (long-lived, used\nto rotate access tokens). Or leave blank to use\nCOPILOT_ACCESS_TOKEN / ~/.config/copilot/tokens.json."),
+			huh.NewInput().
+				Title("COPILOT_REFRESH_TOKEN").
+				Placeholder("ghu_... or ghr_... (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&copilotRefreshToken),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("GitHub Copilot Pro Subscription").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("COPILOT_REFRESH_TOKEN").
+				Placeholder("ghu_... or ghr_... (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("COPILOT_REFRESH_TOKEN").
+				Placeholder("ghu_... or ghr_... (leave blank to skip)").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("COPILOT_REFRESH_TOKEN").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Perplexity Pro Subscription").
+				Description("Open perplexity.ai → DevTools → Application →\nCookies → perplexity.ai → copy the value of\n`next-auth.session-token`. Or leave blank to use\nPERPLEXITY_ACCESS_TOKEN / ~/.config/perplexity/tokens.json."),
+			huh.NewInput().
+				Title("PERPLEXITY_SESSION_TOKEN").
+				Placeholder("paste next-auth.session-token (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&perplexitySessionToken),
+		).Title("2 / 5  ·  Perplexity Pro").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Perplexity Pro Subscription").
+				Description("Open perplexity.ai → DevTools → Application →\nCookies → perplexity.ai → copy the value of\n`next-auth.session-token`. Or leave blank to use\nPERPLEXITY_ACCESS_TOKEN / ~/.config/perplexity/tokens.json."),
+			huh.NewInput().
+				Title("PERPLEXITY_SESSION_TOKEN").
+				Placeholder("paste next-auth.session-token (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value(&perplexitySessionToken),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("Perplexity Pro Subscription").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("PERPLEXITY_SESSION_TOKEN").
+				Placeholder("paste next-auth.session-token (leave blank to skip)").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("PERPLEXITY_SESSION_TOKEN").
+				Placeholder("paste next-auth.session-token (leave blank to skip)").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("PERPLEXITY_SESSION_TOKEN").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Local Ollama").
+				Description("Ollama must already be running on your host with\nat least one tool-capable model pulled. Launch it\nbound to all interfaces so the Raptix container\ncan reach it:\n\n  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n\nThe default 127.0.0.1 binding only accepts host-side\nconnections — containers won't see it.\n\nThe default URL `host.docker.internal:11434` works\non macOS, Linux, and WSL2 (with or without Docker\nDesktop). Only change it for remote / custom setups.\nNote: the model list is probed against the default URL\nat wizard start; if you customize OLLAMA_API_BASE,\nfinish the wizard then re-run 'raptix onboard\n--reset' so the probe targets the new endpoint."),
+			huh.NewInput().
+				Title("OLLAMA_API_BASE").
+				Placeholder(defaultOllamaAPIBase).
+				Value(&ollamaAPIBase).
+				Validate(nonEmpty),
+			ollamaModelField,
+		).Title("2 / 5  ·  Local LLM (Ollama)").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Local Ollama").
+				Description("Ollama must already be running on your host with\nat least one tool-capable model pulled. Launch it\nbound to all interfaces so the Raptix container\ncan reach it:\n\n  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n\nThe default 127.0.0.1 binding only accepts host-side\nconnections — containers won't see it.\n\nThe default URL `host.docker.internal:11434` works\non macOS, Linux, and WSL2 (with or without Docker\nDesktop). Only change it for remote / custom setups.\nNote: the model list is probed against the default URL\nat wizard start; if you customize OLLAMA_API_BASE,\nfinish the wizard then re-run 'raptix onboard\n--reset' so the probe targets the new endpoint."),
+			huh.NewInput().
+				Title("OLLAMA_API_BASE").
+				Placeholder(defaultOllamaAPIBase).
+				Value(&ollamaAPIBase).
+				Validate(nonEmpty),
+			ollamaModelField,
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("Local Ollama").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_API_BASE").
+				Placeholder(defaultOllamaAPIBase).
+				Value(&ollamaAPIBase).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_API_BASE").
+				Placeholder(defaultOllamaAPIBase).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_API_BASE").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("AWS Bedrock").
+				Description("Bedrock uses AWS SigV4 — provide IAM access key,\nsecret, and the region where Anthropic models are\nenabled (us-east-1 or us-west-2 typically)."),
+			huh.NewInput().
+				Title("AWS_ACCESS_KEY_ID").
+				Placeholder("AKIA...").
+				Value(&awsAccessKeyID).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AWS_SECRET_ACCESS_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&awsSecretAccessKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AWS_REGION").
+				Placeholder("us-east-1").
+				Value(&awsRegion).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  AWS Bedrock").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("AWS Bedrock").
+				Description("Bedrock uses AWS SigV4 — provide IAM access key,\nsecret, and the region where Anthropic models are\nenabled (us-east-1 or us-west-2 typically)."),
+			huh.NewInput().
+				Title("AWS_ACCESS_KEY_ID").
+				Placeholder("AKIA...").
+				Value(&awsAccessKeyID).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AWS_SECRET_ACCESS_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&awsSecretAccessKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AWS_REGION").
+				Placeholder("us-east-1").
+				Value(&awsRegion).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("AWS Bedrock").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("AWS_ACCESS_KEY_ID").
+				Placeholder("AKIA...").
+				Value(&awsAccessKeyID).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("AWS_ACCESS_KEY_ID").
+				Placeholder("AKIA...").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("AWS_ACCESS_KEY_ID").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("AWS_SECRET_ACCESS_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&awsSecretAccessKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("AWS_SECRET_ACCESS_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("AWS_SECRET_ACCESS_KEY").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("AWS_REGION").
+				Placeholder("us-east-1").
+				Value(&awsRegion).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("AWS_REGION").
+				Placeholder("us-east-1").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("AWS_REGION").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("GCP Vertex AI").
+				Description("Vertex AI uses a Google Cloud service-account JSON.\nDownload one from IAM & Admin → Service Accounts and\npaste the absolute file path. Project + region must\nmatch where you enabled Anthropic + Gemini models."),
+			huh.NewInput().
+				Title("GOOGLE_APPLICATION_CREDENTIALS").
+				Placeholder("/abs/path/to/service-account.json").
+				Value(&vertexCredsPath).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("VERTEXAI_PROJECT").
+				Placeholder("my-gcp-project-id").
+				Value(&vertexProject).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("VERTEXAI_LOCATION").
+				Placeholder("us-central1").
+				Value(&vertexLocation).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  GCP Vertex AI").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("GCP Vertex AI").
+				Description("Vertex AI uses a Google Cloud service-account JSON.\nDownload one from IAM & Admin → Service Accounts and\npaste the absolute file path. Project + region must\nmatch where you enabled Anthropic + Gemini models."),
+			huh.NewInput().
+				Title("GOOGLE_APPLICATION_CREDENTIALS").
+				Placeholder("/abs/path/to/service-account.json").
+				Value(&vertexCredsPath).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("VERTEXAI_PROJECT").
+				Placeholder("my-gcp-project-id").
+				Value(&vertexProject).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("VERTEXAI_LOCATION").
+				Placeholder("us-central1").
+				Value(&vertexLocation).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("GCP Vertex AI").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("GOOGLE_APPLICATION_CREDENTIALS").
+				Placeholder("/abs/path/to/service-account.json").
+				Value(&vertexCredsPath).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("GOOGLE_APPLICATION_CREDENTIALS").
+				Placeholder("/abs/path/to/service-account.json").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("GOOGLE_APPLICATION_CREDENTIALS").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("VERTEXAI_PROJECT").
+				Placeholder("my-gcp-project-id").
+				Value(&vertexProject).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("VERTEXAI_PROJECT").
+				Placeholder("my-gcp-project-id").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("VERTEXAI_PROJECT").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("VERTEXAI_LOCATION").
+				Placeholder("us-central1").
+				Value(&vertexLocation).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("VERTEXAI_LOCATION").
+				Placeholder("us-central1").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("VERTEXAI_LOCATION").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Azure OpenAI Service").
+				Description("Endpoint is your azure-openai resource URL,\ne.g. https://my-resource.openai.azure.com.\nThe deployment names map 1:1 to gpt-5.5/gpt-5.4/...\nso the model matrix in DF resolves out of the box."),
+			huh.NewInput().
+				Title("AZURE_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&azureAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AZURE_API_BASE").
+				Placeholder("https://<resource>.openai.azure.com").
+				Value(&azureAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AZURE_API_VERSION").
+				Placeholder(defaultAzureAPIVersion).
+				Value(&azureAPIVersion).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Azure OpenAI").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Azure OpenAI Service").
+				Description("Endpoint is your azure-openai resource URL,\ne.g. https://my-resource.openai.azure.com.\nThe deployment names map 1:1 to gpt-5.5/gpt-5.4/...\nso the model matrix in DF resolves out of the box."),
+			huh.NewInput().
+				Title("AZURE_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&azureAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AZURE_API_BASE").
+				Placeholder("https://<resource>.openai.azure.com").
+				Value(&azureAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("AZURE_API_VERSION").
+				Placeholder(defaultAzureAPIVersion).
+				Value(&azureAPIVersion).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("Azure OpenAI Service").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&azureAPIKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_KEY").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_BASE").
+				Placeholder("https://<resource>.openai.azure.com").
+				Value(&azureAPIBase).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_BASE").
+				Placeholder("https://<resource>.openai.azure.com").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_BASE").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_VERSION").
+				Placeholder(defaultAzureAPIVersion).
+				Value(&azureAPIVersion).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_VERSION").
+				Placeholder(defaultAzureAPIVersion).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("AZURE_API_VERSION").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("GITHUB_TOKEN").
+				Description("Fine-grained PAT with the 'models' permission scope.\nGenerate at github.com/settings/personal-access-tokens.").
+				Placeholder("github_pat_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&githubToken).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  GitHub Models").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("GITHUB_TOKEN").
+				Description("Fine-grained PAT with the 'models' permission scope.\nGenerate at github.com/settings/personal-access-tokens.").
+				Placeholder("github_pat_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&githubToken).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("GITHUB_TOKEN").
+				Description("Fine-grained PAT with the 'models' permission scope.\nGenerate at github.com/settings/personal-access-tokens.").
+				Placeholder("github_pat_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&githubToken).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("GITHUB_TOKEN").
+				Description("Fine-grained PAT with the 'models' permission scope.\nGenerate at github.com/settings/personal-access-tokens.").
+				Placeholder("github_pat_...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("GITHUB_TOKEN").
+				Description("Fine-grained PAT with the 'models' permission scope.\nGenerate at github.com/settings/personal-access-tokens.").
+				Placeholder("github_pat_...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("GITHUB_TOKEN").
+				Description("Fine-grained PAT with the 'models' permission scope.\nGenerate at github.com/settings/personal-access-tokens.").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title("GITHUB_TOKEN").
+				Description
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("GROQ_API_KEY").
+				Placeholder("gsk_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&groqKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Groq Cloud").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("GROQ_API_KEY").
+				Placeholder("gsk_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&groqKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("GROQ_API_KEY").
+				Placeholder("gsk_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&groqKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("GROQ_API_KEY").
+				Placeholder("gsk_...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("GROQ_API_KEY").
+				Placeholder("gsk_...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("GROQ_API_KEY").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("TOGETHER_API_KEY").
+				Placeholder("paste your Together AI API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&togetherKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Together AI").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("TOGETHER_API_KEY").
+				Placeholder("paste your Together AI API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&togetherKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("TOGETHER_API_KEY").
+				Placeholder("paste your Together AI API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&togetherKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("TOGETHER_API_KEY").
+				Placeholder("paste your Together AI API key").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("TOGETHER_API_KEY").
+				Placeholder("paste your Together AI API key").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("TOGETHER_API_KEY").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("FIREWORKS_API_KEY").
+				Placeholder("fw_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&fireworksKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Fireworks AI").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("FIREWORKS_API_KEY").
+				Placeholder("fw_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&fireworksKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("FIREWORKS_API_KEY").
+				Placeholder("fw_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&fireworksKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("FIREWORKS_API_KEY").
+				Placeholder("fw_...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("FIREWORKS_API_KEY").
+				Placeholder("fw_...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("FIREWORKS_API_KEY").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("COHERE_API_KEY").
+				Placeholder("paste your Cohere API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&cohereKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Cohere").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("COHERE_API_KEY").
+				Placeholder("paste your Cohere API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&cohereKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("COHERE_API_KEY").
+				Placeholder("paste your Cohere API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&cohereKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("COHERE_API_KEY").
+				Placeholder("paste your Cohere API key").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("COHERE_API_KEY").
+				Placeholder("paste your Cohere API key").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("COHERE_API_KEY").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("MOONSHOT_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&moonshotKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Moonshot Kimi K2").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("MOONSHOT_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&moonshotKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("MOONSHOT_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&moonshotKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("MOONSHOT_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("MOONSHOT_API_KEY").
+				Placeholder("sk-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("MOONSHOT_API_KEY").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("KIMI_API_KEY").
+				Description("Kimi for Coding platform (api.kimi.com/coding) — separate\nfrom the legacy Moonshot API. Keys start with 'sk-kimi-'.").
+				Placeholder("sk-kimi-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&kimiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Kimi for Coding").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("KIMI_API_KEY").
+				Description("Kimi for Coding platform (api.kimi.com/coding) — separate\nfrom the legacy Moonshot API. Keys start with 'sk-kimi-'.").
+				Placeholder("sk-kimi-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&kimiKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("KIMI_API_KEY").
+				Description("Kimi for Coding platform (api.kimi.com/coding) — separate\nfrom the legacy Moonshot API. Keys start with 'sk-kimi-'.").
+				Placeholder("sk-kimi-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&kimiKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("KIMI_API_KEY").
+				Description("Kimi for Coding platform (api.kimi.com/coding) — separate\nfrom the legacy Moonshot API. Keys start with 'sk-kimi-'.").
+				Placeholder("sk-kimi-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("KIMI_API_KEY").
+				Description("Kimi for Coding platform (api.kimi.com/coding) — separate\nfrom the legacy Moonshot API. Keys start with 'sk-kimi-'.").
+				Placeholder("sk-kimi-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("KIMI_API_KEY").
+				Description("Kimi for Coding platform (api.kimi.com/coding) — separate\nfrom the legacy Moonshot API. Keys start with 'sk-kimi-'.").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title("KIMI_API_KEY").
+				Description
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("ZAI_API_KEY").
+				Description("Z.ai is OpenAI-compatible — base URL is hard-wired to\nhttps://api.z.ai/api/paas/v4. Get a key at z.ai/manage.").
+				Placeholder("paste your Z.ai API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&zaiKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Z.ai GLM-4.5").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("ZAI_API_KEY").
+				Description("Z.ai is OpenAI-compatible — base URL is hard-wired to\nhttps://api.z.ai/api/paas/v4. Get a key at z.ai/manage.").
+				Placeholder("paste your Z.ai API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&zaiKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("ZAI_API_KEY").
+				Description("Z.ai is OpenAI-compatible — base URL is hard-wired to\nhttps://api.z.ai/api/paas/v4. Get a key at z.ai/manage.").
+				Placeholder("paste your Z.ai API key").
+				EchoMode(huh.EchoModePassword).
+				Value(&zaiKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("ZAI_API_KEY").
+				Description("Z.ai is OpenAI-compatible — base URL is hard-wired to\nhttps://api.z.ai/api/paas/v4. Get a key at z.ai/manage.").
+				Placeholder("paste your Z.ai API key").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("ZAI_API_KEY").
+				Description("Z.ai is OpenAI-compatible — base URL is hard-wired to\nhttps://api.z.ai/api/paas/v4. Get a key at z.ai/manage.").
+				Placeholder("paste your Z.ai API key").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("ZAI_API_KEY").
+				Description("Z.ai is OpenAI-compatible — base URL is hard-wired to\nhttps://api.z.ai/api/paas/v4. Get a key at z.ai/manage.").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title("ZAI_API_KEY").
+				Description
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("DASHSCOPE_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&dashscopeKey).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  DashScope (Qwen)").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("DASHSCOPE_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&dashscopeKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("DASHSCOPE_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value(&dashscopeKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("DASHSCOPE_API_KEY").
+				Placeholder("sk-...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("DASHSCOPE_API_KEY").
+				Placeholder("sk-...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("DASHSCOPE_API_KEY").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("LM Studio").
+				Description("LM Studio runs a local OpenAI-compatible server.\nLaunch the LM Studio app and start the server\n(Developer tab → Start). The default port is 1234."),
+			huh.NewInput().
+				Title("LMSTUDIO_API_BASE").
+				Placeholder(defaultLMStudioAPIBase).
+				Value(&lmStudioAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("LMSTUDIO_MODEL").
+				Description("Model identifier as shown in LM Studio (e.g.\nqwen2.5-coder-7b-instruct).").
+				Placeholder(defaultLMStudioModel).
+				Value(&lmStudioModel).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  LM Studio").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("LM Studio").
+				Description("LM Studio runs a local OpenAI-compatible server.\nLaunch the LM Studio app and start the server\n(Developer tab → Start). The default port is 1234."),
+			huh.NewInput().
+				Title("LMSTUDIO_API_BASE").
+				Placeholder(defaultLMStudioAPIBase).
+				Value(&lmStudioAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("LMSTUDIO_MODEL").
+				Description("Model identifier as shown in LM Studio (e.g.\nqwen2.5-coder-7b-instruct).").
+				Placeholder(defaultLMStudioModel).
+				Value(&lmStudioModel).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("LM Studio").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("LMSTUDIO_API_BASE").
+				Placeholder(defaultLMStudioAPIBase).
+				Value(&lmStudioAPIBase).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("LMSTUDIO_API_BASE").
+				Placeholder(defaultLMStudioAPIBase).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("LMSTUDIO_API_BASE").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("LMSTUDIO_MODEL").
+				Description("Model identifier as shown in LM Studio (e.g.\nqwen2.5-coder-7b-instruct).").
+				Placeholder(defaultLMStudioModel).
+				Value(&lmStudioModel).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("LMSTUDIO_MODEL").
+				Description("Model identifier as shown in LM Studio (e.g.\nqwen2.5-coder-7b-instruct).").
+				Placeholder(defaultLMStudioModel).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("LMSTUDIO_MODEL").
+				Description("Model identifier as shown in LM Studio (e.g.\nqwen2.5-coder-7b-instruct).").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title("LMSTUDIO_MODEL").
+				Description
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Ollama Cloud").
+				Description("Hosted Ollama — same /api/chat tool-calling endpoint\nas local Ollama, just behind an API key."),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_API_BASE").
+				Placeholder("https://api.ollama.com/v1").
+				Value(&ollamaCloudAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&ollamaCloudAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_MODEL").
+				Placeholder("llama3.3:70b").
+				Value(&ollamaCloudModel).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Ollama Cloud").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Ollama Cloud").
+				Description("Hosted Ollama — same /api/chat tool-calling endpoint\nas local Ollama, just behind an API key."),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_API_BASE").
+				Placeholder("https://api.ollama.com/v1").
+				Value(&ollamaCloudAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&ollamaCloudAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("OLLAMA_CLOUD_MODEL").
+				Placeholder("llama3.3:70b").
+				Value(&ollamaCloudModel).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("Ollama Cloud").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_API_BASE").
+				Placeholder("https://api.ollama.com/v1").
+				Value(&ollamaCloudAPIBase).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_API_BASE").
+				Placeholder("https://api.ollama.com/v1").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_API_BASE").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&ollamaCloudAPIKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_API_KEY").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_MODEL").
+				Placeholder("llama3.3:70b").
+				Value(&ollamaCloudModel).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_MODEL").
+				Placeholder("llama3.3:70b").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("OLLAMA_CLOUD_MODEL").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Custom OpenAI-compatible Endpoint").
+				Description("Point at any OpenAI-compatible server (gateways,\nself-hosted vLLM, internal LiteLLM, etc.). The model\nname is sent verbatim to the upstream — match what\nyour gateway exposes."),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_API_BASE").
+				Placeholder("https://gateway.example.com/v1").
+				Value(&customOpenAIAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&customOpenAIAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_MODEL").
+				Placeholder("gpt-4o-mini").
+				Value(&customOpenAIModel).
+				Validate(nonEmpty),
+		).Title("2 / 5  ·  Custom OpenAI Endpoint").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewNote().
+				Title("Custom OpenAI-compatible Endpoint").
+				Description("Point at any OpenAI-compatible server (gateways,\nself-hosted vLLM, internal LiteLLM, etc.). The model\nname is sent verbatim to the upstream — match what\nyour gateway exposes."),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_API_BASE").
+				Placeholder("https://gateway.example.com/v1").
+				Value(&customOpenAIAPIBase).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&customOpenAIAPIKey).
+				Validate(nonEmpty),
+			huh.NewInput().
+				Title("CUSTOM_OPENAI_MODEL").
+				Placeholder("gpt-4o-mini").
+				Value(&customOpenAIModel).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewNote().
+				Title("Custom OpenAI-compatible Endpoint").
+				Description
+  runOnboard -> huh.NewNote().
+				Title
+  runOnboard -> huh.NewNote
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_API_BASE").
+				Placeholder("https://gateway.example.com/v1").
+				Value(&customOpenAIAPIBase).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_API_BASE").
+				Placeholder("https://gateway.example.com/v1").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_API_BASE").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value(&customOpenAIAPIKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_API_KEY").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_API_KEY").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_MODEL").
+				Placeholder("gpt-4o-mini").
+				Value(&customOpenAIModel).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_MODEL").
+				Placeholder("gpt-4o-mini").
+				Value
+  runOnboard -> huh.NewInput().
+				Title("CUSTOM_OPENAI_MODEL").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> contains
+  runOnboard -> huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Model Profile").
+				Description("eco  per-agent tier (recommended)\nmax  every agent on HIGH (expensive)\ntest every agent on LOW (development)").
+				Options(
+					huh.NewOption("eco  — per-agent tier (recommended)", "eco"),
+					huh.NewOption("max  — every agent on HIGH (expensive)", "max"),
+					huh.NewOption("test — every agent on LOW (development)", "test"),
+				).
+				Value(&profile),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewSelect[string]().
+				Title("Model Profile").
+				Description("eco  per-agent tier (recommended)\nmax  every agent on HIGH (expensive)\ntest every agent on LOW (development)").
+				Options(
+					huh.NewOption("eco  — per-agent tier (recommended)", "eco"),
+					huh.NewOption("max  — every agent on HIGH (expensive)", "max"),
+					huh.NewOption("test — every agent on LOW (development)", "test"),
+				).
+				Value
+  runOnboard -> huh.NewSelect[string]().
+				Title("Model Profile").
+				Description("eco  per-agent tier (recommended)\nmax  every agent on HIGH (expensive)\ntest every agent on LOW (development)").
+				Options
+  runOnboard -> huh.NewSelect[string]().
+				Title("Model Profile").
+				Description
+  runOnboard -> huh.NewSelect[string]().
+				Title
+  runOnboard -> huh.NewSelect[string]
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Agent Language").
+				Description("Language for all agent prose output (menus, questions,\nsummaries, errors). Technical output stays in English.\nCountry codes (dk, se, jp, cn) are auto-resolved.").
+				Options(
+					huh.NewOption("en     — English (default)", "en"),
+					huh.NewOption("no     — Norwegian", "no"),
+					huh.NewOption("da     — Danish", "da"),
+					huh.NewOption("sv     — Swedish", "sv"),
+					huh.NewOption("fi     — Finnish", "fi"),
+					huh.NewOption("is     — Icelandic", "is"),
+					huh.NewOption("ko     — Korean", "ko"),
+					huh.NewOption("ja     — Japanese", "ja"),
+					huh.NewOption("zh     — Chinese", "zh"),
+					huh.NewOption("zh-tw  — Traditional Chinese", "zh-tw"),
+					huh.NewOption("es     — Spanish", "es"),
+					huh.NewOption("pt     — Portuguese", "pt"),
+					huh.NewOption("pt-br  — Brazilian Portuguese", "pt-br"),
+					huh.NewOption("de     — German", "de"),
+					huh.NewOption("fr     — French", "fr"),
+					huh.NewOption("nl     — Dutch", "nl"),
+					huh.NewOption("it     — Italian", "it"),
+					huh.NewOption("pl     — Polish", "pl"),
+					huh.NewOption("cs     — Czech", "cs"),
+					huh.NewOption("uk     — Ukrainian", "uk"),
+					huh.NewOption("ro     — Romanian", "ro"),
+					huh.NewOption("hr     — Croatian", "hr"),
+					huh.NewOption("bg     — Bulgarian", "bg"),
+					huh.NewOption("ru     — Russian", "ru"),
+					huh.NewOption("el     — Greek", "el"),
+					huh.NewOption("hu     — Hungarian", "hu"),
+					huh.NewOption("tr     — Turkish", "tr"),
+					huh.NewOption("ar     — Arabic", "ar"),
+					huh.NewOption("fa     — Persian", "fa"),
+					huh.NewOption("he     — Hebrew", "he"),
+					huh.NewOption("hi     — Hindi", "hi"),
+					huh.NewOption("th     — Thai", "th"),
+					huh.NewOption("vi     — Vietnamese", "vi"),
+					huh.NewOption("id     — Indonesian", "id"),
+					huh.NewOption("ms     — Malay", "ms"),
+					huh.NewOption("tl     — Filipino", "tl"),
+					huh.NewOption("sw     — Swahili", "sw"),
+					huh.NewOption("af     — Afrikaans", "af"),
+					huh.NewOption("wenyan — 文言文 + English technical terms", "wenyan"),
+				).
+				Value(&language),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewSelect[string]().
+				Title("Agent Language").
+				Description("Language for all agent prose output (menus, questions,\nsummaries, errors). Technical output stays in English.\nCountry codes (dk, se, jp, cn) are auto-resolved.").
+				Options(
+					huh.NewOption("en     — English (default)", "en"),
+					huh.NewOption("no     — Norwegian", "no"),
+					huh.NewOption("da     — Danish", "da"),
+					huh.NewOption("sv     — Swedish", "sv"),
+					huh.NewOption("fi     — Finnish", "fi"),
+					huh.NewOption("is     — Icelandic", "is"),
+					huh.NewOption("ko     — Korean", "ko"),
+					huh.NewOption("ja     — Japanese", "ja"),
+					huh.NewOption("zh     — Chinese", "zh"),
+					huh.NewOption("zh-tw  — Traditional Chinese", "zh-tw"),
+					huh.NewOption("es     — Spanish", "es"),
+					huh.NewOption("pt     — Portuguese", "pt"),
+					huh.NewOption("pt-br  — Brazilian Portuguese", "pt-br"),
+					huh.NewOption("de     — German", "de"),
+					huh.NewOption("fr     — French", "fr"),
+					huh.NewOption("nl     — Dutch", "nl"),
+					huh.NewOption("it     — Italian", "it"),
+					huh.NewOption("pl     — Polish", "pl"),
+					huh.NewOption("cs     — Czech", "cs"),
+					huh.NewOption("uk     — Ukrainian", "uk"),
+					huh.NewOption("ro     — Romanian", "ro"),
+					huh.NewOption("hr     — Croatian", "hr"),
+					huh.NewOption("bg     — Bulgarian", "bg"),
+					huh.NewOption("ru     — Russian", "ru"),
+					huh.NewOption("el     — Greek", "el"),
+					huh.NewOption("hu     — Hungarian", "hu"),
+					huh.NewOption("tr     — Turkish", "tr"),
+					huh.NewOption("ar     — Arabic", "ar"),
+					huh.NewOption("fa     — Persian", "fa"),
+					huh.NewOption("he     — Hebrew", "he"),
+					huh.NewOption("hi     — Hindi", "hi"),
+					huh.NewOption("th     — Thai", "th"),
+					huh.NewOption("vi     — Vietnamese", "vi"),
+					huh.NewOption("id     — Indonesian", "id"),
+					huh.NewOption("ms     — Malay", "ms"),
+					huh.NewOption("tl     — Filipino", "tl"),
+					huh.NewOption("sw     — Swahili", "sw"),
+					huh.NewOption("af     — Afrikaans", "af"),
+					huh.NewOption("wenyan — 文言文 + English technical terms", "wenyan"),
+				).
+				Value
+  runOnboard -> huh.NewSelect[string]().
+				Title("Agent Language").
+				Description("Language for all agent prose output (menus, questions,\nsummaries, errors). Technical output stays in English.\nCountry codes (dk, se, jp, cn) are auto-resolved.").
+				Options
+  runOnboard -> huh.NewSelect[string]().
+				Title("Agent Language").
+				Description
+  runOnboard -> huh.NewSelect[string]().
+				Title
+  runOnboard -> huh.NewSelect[string]
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewOption
+  runOnboard -> huh.NewGroup(
+			huh.NewConfirm().
+				Title("Enable LangSmith?").
+				Description("LLM observability and trace collection").
+				Affirmative("Yes").
+				Negative("No").
+				Value(&useLangSmith),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewConfirm().
+				Title("Enable LangSmith?").
+				Description("LLM observability and trace collection").
+				Affirmative("Yes").
+				Negative("No").
+				Value
+  runOnboard -> huh.NewConfirm().
+				Title("Enable LangSmith?").
+				Description("LLM observability and trace collection").
+				Affirmative("Yes").
+				Negative
+  runOnboard -> huh.NewConfirm().
+				Title("Enable LangSmith?").
+				Description("LLM observability and trace collection").
+				Affirmative
+  runOnboard -> huh.NewConfirm().
+				Title("Enable LangSmith?").
+				Description
+  runOnboard -> huh.NewConfirm().
+				Title
+  runOnboard -> huh.NewConfirm
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("LangSmith API Key").
+				Placeholder("lsv2_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&langSmithKey).
+				Validate(nonEmpty),
+		).Title("5 / 5  ·  LangSmith").
+			WithHideFunc
+  runOnboard -> huh.NewGroup(
+			huh.NewInput().
+				Title("LangSmith API Key").
+				Placeholder("lsv2_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&langSmithKey).
+				Validate(nonEmpty),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewInput().
+				Title("LangSmith API Key").
+				Placeholder("lsv2_...").
+				EchoMode(huh.EchoModePassword).
+				Value(&langSmithKey).
+				Validate
+  runOnboard -> huh.NewInput().
+				Title("LangSmith API Key").
+				Placeholder("lsv2_...").
+				EchoMode(huh.EchoModePassword).
+				Value
+  runOnboard -> huh.NewInput().
+				Title("LangSmith API Key").
+				Placeholder("lsv2_...").
+				EchoMode
+  runOnboard -> huh.NewInput().
+				Title("LangSmith API Key").
+				Placeholder
+  runOnboard -> huh.NewInput().
+				Title
+  runOnboard -> huh.NewInput
+  runOnboard -> huh.NewGroup(
+			huh.NewConfirm().
+				Title("Share anonymous + masked red-team telemetry?").
+				Description(
+					"Raptix is free/OSS — sharing usage helps fund and improve it,\n"+
+						"and contributes masked red-team reasoning to train future open\n"+
+						"offensive-security agents.\n\n"+
+						"  • anonymous structural stats (tools used, finding severity/CWE,\n"+
+						"    kill-chain phase)\n"+
+						"  • the agent's red-team REASONING, with target identifiers MASKED\n"+
+						"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n"+
+						"Never sent: raw prompts, real target IPs/hosts, credentials. Your\n"+
+						"IP is dropped at the gateway. Change anytime: RAPTIX_TELEMETRY=off\n"+
+						"(or basic) in .env, `raptix-cli telemetry off`, or DO_NOT_TRACK=1.",
+				).
+				Affirmative("Yes, share (recommended)").
+				Negative("No, keep it off").
+				Value(&telemetryConsent),
+		).Title
+  runOnboard -> huh.NewGroup
+  runOnboard -> huh.NewConfirm().
+				Title("Share anonymous + masked red-team telemetry?").
+				Description(
+					"Raptix is free/OSS — sharing usage helps fund and improve it,\n"+
+						"and contributes masked red-team reasoning to train future open\n"+
+						"offensive-security agents.\n\n"+
+						"  • anonymous structural stats (tools used, finding severity/CWE,\n"+
+						"    kill-chain phase)\n"+
+						"  • the agent's red-team REASONING, with target identifiers MASKED\n"+
+						"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n"+
+						"Never sent: raw prompts, real target IPs/hosts, credentials. Your\n"+
+						"IP is dropped at the gateway. Change anytime: RAPTIX_TELEMETRY=off\n"+
+						"(or basic) in .env, `raptix-cli telemetry off`, or DO_NOT_TRACK=1.",
+				).
+				Affirmative("Yes, share (recommended)").
+				Negative("No, keep it off").
+				Value
+  runOnboard -> huh.NewConfirm().
+				Title("Share anonymous + masked red-team telemetry?").
+				Description(
+					"Raptix is free/OSS — sharing usage helps fund and improve it,\n"+
+						"and contributes masked red-team reasoning to train future open\n"+
+						"offensive-security agents.\n\n"+
+						"  • anonymous structural stats (tools used, finding severity/CWE,\n"+
+						"    kill-chain phase)\n"+
+						"  • the agent's red-team REASONING, with target identifiers MASKED\n"+
+						"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n"+
+						"Never sent: raw prompts, real target IPs/hosts, credentials. Your\n"+
+						"IP is dropped at the gateway. Change anytime: RAPTIX_TELEMETRY=off\n"+
+						"(or basic) in .env, `raptix-cli telemetry off`, or DO_NOT_TRACK=1.",
+				).
+				Affirmative("Yes, share (recommended)").
+				Negative
+  runOnboard -> huh.NewConfirm().
+				Title("Share anonymous + masked red-team telemetry?").
+				Description(
+					"Raptix is free/OSS — sharing usage helps fund and improve it,\n"+
+						"and contributes masked red-team reasoning to train future open\n"+
+						"offensive-security agents.\n\n"+
+						"  • anonymous structural stats (tools used, finding severity/CWE,\n"+
+						"    kill-chain phase)\n"+
+						"  • the agent's red-team REASONING, with target identifiers MASKED\n"+
+						"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n"+
+						"Never sent: raw prompts, real target IPs/hosts, credentials. Your\n"+
+						"IP is dropped at the gateway. Change anytime: RAPTIX_TELEMETRY=off\n"+
+						"(or basic) in .env, `raptix-cli telemetry off`, or DO_NOT_TRACK=1.",
+				).
+				Affirmative
+  runOnboard -> huh.NewConfirm().
+				Title("Share anonymous + masked red-team telemetry?").
+				Description
+  runOnboard -> huh.NewConfirm().
+				Title
+  runOnboard -> huh.NewConfirm
+  runOnboard -> huh.ThemeFunc
+  runOnboard -> form.Run
+  runOnboard -> fmt.Errorf
+  runOnboard -> contains
+  runOnboard -> len
+  runOnboard -> ollamaUnusableError
+  runOnboard -> make
+  runOnboard -> len
+  runOnboard -> contains
+  runOnboard -> append
+  runOnboard -> onboardingInstallationSecrets
+  runOnboard -> fmt.Errorf
+  runOnboard -> strings.Join
+  runOnboard -> boolStr
+  runOnboard -> contains
+  runOnboard -> boolStr
+  runOnboard -> contains
+  runOnboard -> boolStr
+  runOnboard -> contains
+  runOnboard -> boolStr
+  runOnboard -> contains
+  runOnboard -> boolStr
+  runOnboard -> contains
+  runOnboard -> boolStr
+  runOnboard -> contains
+  runOnboard -> strings.TrimSpace
+  runOnboard -> contains
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> contains
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> contains
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> contains
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> contains
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> contains
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> contains
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> strings.TrimSpace
+  runOnboard -> config.WriteEnvFromEmbed
+  runOnboard -> config.EnvPath
+  runOnboard -> fmt.Errorf
+  runOnboard -> migrate.MarkAcked
+  runOnboard -> config.RaptixHome
+  runOnboard -> ui.Warning
+  runOnboard -> err.Error
+  runOnboard -> fmt.Println
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Green.Render
+  runOnboard -> fmt.Println
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> ui.Cyan.Render
+  runOnboard -> ui.Dim.Render
+  runOnboard -> strings.Join
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> ui.Cyan.Render
+  runOnboard -> ui.Dim.Render
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> ui.Cyan.Render
+  runOnboard -> ui.Dim.Render
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> ui.Cyan.Render
+  runOnboard -> ui.Green.Render
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> ui.Cyan.Render
+  runOnboard -> ui.Green.Render
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> ui.Dim.Render
+  runOnboard -> config.EnvPath
+  runOnboard -> fmt.Println
+  runOnboard -> ui.Dim.Render
+  runOnboard -> fmt.Println
+  runOnboard -> fmt.Println
+  runOnboard -> opscontrol.EnsureInstalled
+  runOnboard -> ui.Warning
+  runOnboard -> err.Error
+  runOnboard -> fmt.Println
+  runOnboard -> starprompt.PromptIfNotStarred
+  runOnboard -> ui.DimText
+  onboardingInstallationSecrets -> config.NewInstallationSecrets
+  onboardingInstallationSecrets -> strings.TrimSpace
+  onboardingInstallationSecrets -> strings.TrimSpace
+  onboardingInstallationSecrets -> strings.TrimSpace
+  onboardingInstallationSecrets -> strings.TrimSpace
+  contains -> slices.Contains
+  nonEmpty -> strings.TrimSpace
+  nonEmpty -> fmt.Errorf
+  optionalClaudeOAuthToken -> strings.TrimSpace
+  optionalClaudeOAuthToken -> strings.HasPrefix
+  optionalClaudeOAuthToken -> fmt.Errorf
+  buildOllamaModelField -> len
+  buildOllamaModelField -> make
+  buildOllamaModelField -> len
+  buildOllamaModelField -> append
+  buildOllamaModelField -> huh.NewOption
+  buildOllamaModelField -> slices.Contains
+  buildOllamaModelField -> huh.NewSelect[string]().
+			Title("OLLAMA_MODEL").
+			Description("Tool-capable models found on your host. Raptix\nagents always emit tool calls — these are the only\nmodels the wizard will accept.").
+			Options(options...).
+			Value
+  buildOllamaModelField -> huh.NewSelect[string]().
+			Title("OLLAMA_MODEL").
+			Description("Tool-capable models found on your host. Raptix\nagents always emit tool calls — these are the only\nmodels the wizard will accept.").
+			Options
+  buildOllamaModelField -> huh.NewSelect[string]().
+			Title("OLLAMA_MODEL").
+			Description
+  buildOllamaModelField -> huh.NewSelect[string]().
+			Title
+  buildOllamaModelField -> huh.NewSelect[string]
+  buildOllamaModelField -> huh.NewNote().
+			Title("OLLAMA_MODEL — no tool-capable models found").
+			Description
+  buildOllamaModelField -> huh.NewNote().
+			Title
+  buildOllamaModelField -> huh.NewNote
+  buildOllamaModelField -> huh.NewNote().
+		Title("OLLAMA_MODEL — Ollama not reachable").
+		Description
+  buildOllamaModelField -> huh.NewNote().
+		Title
+  buildOllamaModelField -> huh.NewNote
+  ollamaUnusableError -> fmt.Errorf
+  ollamaUnusableError -> fmt.Errorf
+=== clients/launcher/cmd/onboard_secrets_test.go
+  TestOnboardingInstallationSecretsPreservesExistingValues -> onboardingInstallationSecrets
+  TestOnboardingInstallationSecretsPreservesExistingValues -> t.Fatalf
+  TestOnboardingInstallationSecretsPreservesExistingValues -> t.Fatalf
+  TestOnboardingInstallationSecretsFillsMissingValues -> onboardingInstallationSecrets
+  TestOnboardingInstallationSecretsFillsMissingValues -> t.Fatalf
+  TestOnboardingInstallationSecretsFillsMissingValues -> t.Fatalf
+  TestOnboardingInstallationSecretsFillsMissingValues -> t.Fatal
+=== clients/launcher/cmd/opscontrol/daemon.go
+  runDaemon -> internal.EnsureRunDir
+  runDaemon -> fmt.Errorf
+  runDaemon -> internal.LoadAllowlist
+  runDaemon -> internal.NewDockerComposeBackend
+  runDaemon -> filepath.Join
+  runDaemon -> filepath.Dir
+  runDaemon -> os.Stat
+  runDaemon -> append
+  runDaemon -> os.Setenv
+  runDaemon -> internal.HostSocketPath
+  runDaemon -> fmt.Errorf
+  runDaemon -> slog.New
+  runDaemon -> slog.NewTextHandler
+  runDaemon -> internal.NewServer
+  runDaemon -> internal.PIDFilePath
+  runDaemon -> os.WriteFile
+  runDaemon -> strconv.Itoa
+  runDaemon -> os.Getpid
+  runDaemon -> fmt.Errorf
+  runDaemon -> os.Remove
+  runDaemon -> signal.NotifyContext
+  runDaemon -> context.Background
+  runDaemon -> cancel
+  runDaemon -> internal.HostSocketPath
+  runDaemon -> logger.Info
+  runDaemon -> backend.Name
+  runDaemon -> len
+  runDaemon -> allow.Members
+  runDaemon -> server.Listen
+  runDaemon -> logger.Info
+=== clients/launcher/cmd/opscontrol/install.go
+  runInstall -> EnsureInstalled
+  EnsureInstalled -> internal.DetectServiceManager
+  EnsureInstalled -> mgr.Available
+  EnsureInstalled -> ui.Warning
+  EnsureInstalled -> ui.Info
+  EnsureInstalled -> os.Executable
+  EnsureInstalled -> fmt.Errorf
+  EnsureInstalled -> config.RaptixHome
+  EnsureInstalled -> os.MkdirAll
+  EnsureInstalled -> fmt.Errorf
+  EnsureInstalled -> internal.EnsureRunDir
+  EnsureInstalled -> fmt.Errorf
+  EnsureInstalled -> internal.StackName
+  EnsureInstalled -> ui.Info
+  EnsureInstalled -> fmt.Sprintf
+  EnsureInstalled -> mgr.Name
+  EnsureInstalled -> internal.ServiceUnitName
+  EnsureInstalled -> mgr.Install
+  EnsureInstalled -> waitForActive
+  EnsureInstalled -> ui.Success
+  EnsureInstalled -> fmt.Sprintf
+  EnsureInstalled -> internal.HostSocketPath
+  waitForActive -> time.Now().Add
+  waitForActive -> time.Now
+  waitForActive -> internal.HostSocketPath
+  waitForActive -> time.Now().Before
+  waitForActive -> time.Now
+  waitForActive -> mgr.Active
+  waitForActive -> fmt.Errorf
+  waitForActive -> os.Stat
+  waitForActive -> info.Mode
+  waitForActive -> time.Sleep
+  waitForActive -> errors.New
+  waitForActive -> timeout.String
+  waitForActive -> internal.ServiceUnitName
+  init -> Cmd.AddCommand
+=== clients/launcher/cmd/opscontrol/opscontrol.go
+  init -> Cmd.AddCommand
+=== clients/launcher/cmd/opscontrol/status.go
+  runStatus -> internal.DetectServiceManager
+  runStatus -> ui.Info
+  runStatus -> mgr.Name
+  runStatus -> mgr.Available
+  runStatus -> mgr.Installed
+  runStatus -> mgr.Active
+  runStatus -> ui.Info
+  runStatus -> fmt.Sprintf
+  runStatus -> internal.ServiceUnitName
+  runStatus -> probeHealth
+  runStatus -> internal.HostSocketPath
+  runStatus -> ui.Warning
+  runStatus -> err.Error
+  runStatus -> ui.Success
+  runStatus -> json.MarshalIndent
+  runStatus -> fmt.Println
+  runStatus -> string
+  probeHealth -> net.DialTimeout
+  probeHealth -> client.Get
+  probeHealth -> errors.New
+  probeHealth -> strings.TrimSpace
+  probeHealth -> err.Error
+  probeHealth -> resp.Body.Close
+  probeHealth -> errors.New
+  probeHealth -> strconv.Itoa
+  probeHealth -> json.NewDecoder(resp.Body).Decode
+  probeHealth -> json.NewDecoder
+  init -> Cmd.AddCommand
+=== clients/launcher/cmd/opscontrol/supervisor.go
+  writeComposeOverlay -> filepath.Join
+  writeComposeOverlay -> config.RaptixHome
+  writeComposeOverlay -> os.WriteFile
+  EnsureRunning -> internal.EnsureRunDir
+  EnsureRunning -> writeComposeOverlay
+  EnsureRunning -> fmt.Errorf
+  EnsureRunning -> internal.HostSocketPath
+  EnsureRunning -> internal.DetectServiceManager
+  EnsureRunning -> mgr.Available
+  EnsureRunning -> mgr.Installed
+  EnsureRunning -> mgr.Active
+  EnsureRunning -> mgr.Start
+  EnsureRunning -> waitForSocket
+  EnsureRunning -> fmt.Errorf
+  EnsureRunning -> ensureRunningLauncherSpawn
+  Stop -> internal.DetectServiceManager
+  Stop -> mgr.Available
+  Stop -> mgr.Installed
+  Stop -> stopLauncherSpawn
+  ensureRunningLauncherSpawn -> readPID
+  ensureRunningLauncherSpawn -> os.Stat
+  ensureRunningLauncherSpawn -> info.Mode
+  ensureRunningLauncherSpawn -> terminateDaemon
+  ensureRunningLauncherSpawn -> os.Remove
+  ensureRunningLauncherSpawn -> internal.PIDFilePath
+  ensureRunningLauncherSpawn -> os.Executable
+  ensureRunningLauncherSpawn -> fmt.Errorf
+  ensureRunningLauncherSpawn -> exec.Command
+  ensureRunningLauncherSpawn -> os.OpenFile
+  ensureRunningLauncherSpawn -> daemonLogPath
+  ensureRunningLauncherSpawn -> setDetached
+  ensureRunningLauncherSpawn -> append
+  ensureRunningLauncherSpawn -> os.Environ
+  ensureRunningLauncherSpawn -> cmd.Start
+  ensureRunningLauncherSpawn -> fmt.Errorf
+  ensureRunningLauncherSpawn -> cmd.Process.Release
+  ensureRunningLauncherSpawn -> waitForSocket
+  ensureRunningLauncherSpawn -> fmt.Errorf
+  ensureRunningLauncherSpawn -> daemonLogPath
+  stopLauncherSpawn -> readPID
+  stopLauncherSpawn -> terminateDaemon
+  stopLauncherSpawn -> fmt.Errorf
+  stopLauncherSpawn -> time.Now().Add
+  stopLauncherSpawn -> time.Now
+  stopLauncherSpawn -> time.Now().Before
+  stopLauncherSpawn -> time.Now
+  stopLauncherSpawn -> readPID
+  stopLauncherSpawn -> os.Remove
+  stopLauncherSpawn -> internal.HostSocketPath
+  stopLauncherSpawn -> time.Sleep
+  stopLauncherSpawn -> errors.New
+  waitForSocket -> time.Now().Add
+  waitForSocket -> time.Now
+  waitForSocket -> time.Now().Before
+  waitForSocket -> time.Now
+  waitForSocket -> os.Stat
+  waitForSocket -> info.Mode
+  waitForSocket -> time.Sleep
+  waitForSocket -> fmt.Errorf
+  readPID -> os.ReadFile
+  readPID -> internal.PIDFilePath
+  readPID -> strconv.Atoi
+  readPID -> strings.TrimSpace
+  readPID -> string
+  readPID -> processAlive
+  daemonLogPath -> internal.PIDFilePath
+=== clients/launcher/cmd/opscontrol/supervisor_unix.go
+  terminateDaemon -> syscall.Kill
+  processAlive -> syscall.Kill
+  processAlive -> syscall.Signal
+=== clients/launcher/cmd/opscontrol/supervisor_windows.go
+  terminateDaemon -> os.FindProcess
+  terminateDaemon -> p.Kill
+  processAlive -> os.FindProcess
+  processAlive -> p.Release
+=== clients/launcher/cmd/opscontrol/uninstall.go
+  runUninstall -> internal.DetectServiceManager
+  runUninstall -> mgr.Available
+  runUninstall -> ui.Info
+  runUninstall -> mgr.Installed
+  runUninstall -> ui.Info
+  runUninstall -> mgr.Uninstall
+  runUninstall -> ui.Success
+  init -> Cmd.AddCommand
+=== clients/launcher/cmd/opscontrol_register.go
+  init -> rootCmd.AddCommand
+=== clients/launcher/cmd/remove.go
+  init -> removeCmd.Flags().BoolVar
+  init -> removeCmd.Flags
+  init -> rootCmd.AddCommand
+  runRemove -> huh.NewForm
+  runRemove -> huh.NewGroup
+  runRemove -> huh.NewConfirm().
+					Title("Remove Raptix?").
+					Description("This will stop all services, remove Docker images, and delete configuration.").
+					Affirmative("Yes, remove").
+					Negative("Cancel").
+					Value
+  runRemove -> huh.NewConfirm().
+					Title("Remove Raptix?").
+					Description("This will stop all services, remove Docker images, and delete configuration.").
+					Affirmative("Yes, remove").
+					Negative
+  runRemove -> huh.NewConfirm().
+					Title("Remove Raptix?").
+					Description("This will stop all services, remove Docker images, and delete configuration.").
+					Affirmative
+  runRemove -> huh.NewConfirm().
+					Title("Remove Raptix?").
+					Description
+  runRemove -> huh.NewConfirm().
+					Title
+  runRemove -> huh.NewConfirm
+  runRemove -> form.Run
+  runRemove -> ui.Info
+  runRemove -> config.RaptixHome
+  runRemove -> compose.New
+  runRemove -> ui.Info
+  runRemove -> c.DownAndPurge
+  runRemove -> c.RemoveOrphanedCLI
+  runRemove -> ui.Info
+  runRemove -> exec.Command("docker", "images", "--format", "{{.Repository}}:{{.Tag}}", "--filter", "reference=*raptix*").Output
+  runRemove -> exec.Command
+  runRemove -> strings.Fields
+  runRemove -> strings.TrimSpace
+  runRemove -> string
+  runRemove -> exec.Command("docker", "rmi", "-f", img).Run
+  runRemove -> exec.Command
+  runRemove -> huh.NewForm
+  runRemove -> huh.NewGroup
+  runRemove -> huh.NewConfirm().
+					Title("Preserve workspace data?").
+					Description(filepath.Join(home, "workspace")).
+					Affirmative("Yes, keep my data").
+					Negative("No, delete everything").
+					Value
+  runRemove -> huh.NewConfirm().
+					Title("Preserve workspace data?").
+					Description(filepath.Join(home, "workspace")).
+					Affirmative("Yes, keep my data").
+					Negative
+  runRemove -> huh.NewConfirm().
+					Title("Preserve workspace data?").
+					Description(filepath.Join(home, "workspace")).
+					Affirmative
+  runRemove -> huh.NewConfirm().
+					Title("Preserve workspace data?").
+					Description
+  runRemove -> huh.NewConfirm().
+					Title
+  runRemove -> huh.NewConfirm
+  runRemove -> filepath.Join
+  runRemove -> form.Run
+  runRemove -> os.UserHomeDir
+  runRemove -> filepath.Join
+  runRemove -> filepath.Join
+  runRemove -> ui.Info
+  runRemove -> backupWorkspace
+  runRemove -> ui.Warning
+  runRemove -> err.Error
+  runRemove -> ui.Warning
+  runRemove -> ui.DimText
+  runRemove -> ui.Info
+  runRemove -> os.RemoveAll
+  runRemove -> ui.Error
+  runRemove -> err.Error
+  runRemove -> ui.DimText
+  runRemove -> os.Executable
+  runRemove -> ui.Info
+  runRemove -> os.Remove
+  runRemove -> cleanShellRC
+  runRemove -> ui.Success
+  runRemove -> ui.DimText
+  cleanShellRC -> os.UserHomeDir
+  cleanShellRC -> filepath.Join
+  cleanShellRC -> filepath.Join
+  cleanShellRC -> filepath.Join
+  cleanShellRC -> filepath.Join
+  cleanShellRC -> cleanPathFromFile
+  cleanPathFromFile -> os.Open
+  cleanPathFromFile -> bufio.NewScanner
+  cleanPathFromFile -> scanner.Scan
+  cleanPathFromFile -> append
+  cleanPathFromFile -> scanner.Text
+  cleanPathFromFile -> f.Close
+  cleanPathFromFile -> make
+  cleanPathFromFile -> len
+  cleanPathFromFile -> len
+  cleanPathFromFile -> strings.TrimSpace
+  cleanPathFromFile -> len
+  cleanPathFromFile -> isInstallPathLine
+  cleanPathFromFile -> len
+  cleanPathFromFile -> strings.TrimSpace
+  cleanPathFromFile -> append
+  cleanPathFromFile -> os.WriteFile
+  cleanPathFromFile -> strings.Join
+  isInstallPathLine -> strings.TrimSpace
+  isInstallPathLine -> strings.Contains
+  isInstallPathLine -> strings.HasPrefix
+  isInstallPathLine -> strings.HasPrefix
+  backupWorkspace -> os.Stat
+  backupWorkspace -> fmt.Errorf
+  backupWorkspace -> os.Rename
+  backupWorkspace -> copyDirRecursive
+  backupWorkspace -> exec.Command("cp", "-r", src, dst).CombinedOutput
+  backupWorkspace -> exec.Command
+  backupWorkspace -> fmt.Errorf
+  backupWorkspace -> os.RemoveAll
+  copyDirRecursive -> filepath.Walk
+  copyDirRecursive -> filepath.Rel
+  copyDirRecursive -> filepath.Join
+  copyDirRecursive -> info.IsDir
+  copyDirRecursive -> os.MkdirAll
+  copyDirRecursive -> info.Mode
+  copyDirRecursive -> os.ReadFile
+  copyDirRecursive -> os.WriteFile
+  copyDirRecursive -> info.Mode
+=== clients/launcher/cmd/root.go
+  Execute -> updater.CleanupOldBinary
+  Execute -> rootCmd.Execute
+  Execute -> ui.Error
+  Execute -> err.Error
+  Execute -> os.Exit
+  init -> rootCmd.SetVersionTemplate
+  init -> fmt.Sprintf
+=== clients/launcher/cmd/start.go
+  applyAutoUpdate -> updater.ResolveChannel
+  applyAutoUpdate -> config.Get
+  applyAutoUpdate -> strings.ToLower
+  applyAutoUpdate -> strings.TrimSpace
+  applyAutoUpdate -> config.Get
+  applyAutoUpdate -> autoUpdateFn
+  applyAutoUpdate -> ui.Warning
+  applyAutoUpdate -> err.Error
+  applyAutoUpdate -> promptUpdateFn
+  applyAutoUpdate -> ui.Warning
+  applyAutoUpdate -> err.Error
+  init -> rootCmd.AddCommand
+  init -> rootCmd.PersistentFlags().BoolVar
+  init -> rootCmd.PersistentFlags
+  init -> runStart
+  runStart -> config.EnvExists
+  runStart -> ui.Warning
+  runStart -> fmt.Println
+  runStart -> runOnboard
+  runStart -> fmt.Println
+  runStart -> config.MigrateActiveComposeProfiles
+  runStart -> config.EnvPath
+  runStart -> ui.Warning
+  runStart -> mErr.Error
+  runStart -> ui.Info
+  runStart -> config.EnvPath
+  runStart -> config.LoadEnv
+  runStart -> config.EnvPath
+  runStart -> fmt.Errorf
+  runStart -> migrate.RunAll
+  runStart -> config.ValidateAuth
+  runStart -> exec.LookPath
+  runStart -> fmt.Errorf
+  runStart -> exec.Command("docker", "compose", "version").CombinedOutput
+  runStart -> exec.Command
+  runStart -> fmt.Errorf
+  runStart -> strings.TrimSpace
+  runStart -> string
+  runStart -> probeOllamaIfSelected
+  runStart -> config.RaptixHome
+  runStart -> filepath.Join
+  runStart -> os.Stat
+  runStart -> os.IsNotExist
+  runStart -> config.Get
+  runStart -> ui.Info
+  runStart -> updater.SyncConfigFiles
+  runStart -> fmt.Errorf
+  runStart -> os.MkdirAll
+  runStart -> filepath.Join
+  runStart -> os.MkdirAll
+  runStart -> filepath.Join
+  runStart -> config.Get
+  runStart -> config.AppendEnvLine
+  runStart -> config.EnvPath
+  runStart -> ui.Warning
+  runStart -> err.Error
+  runStart -> os.UserHomeDir
+  runStart -> ui.Warning
+  runStart -> homeErr.Error
+  runStart -> os.Setenv
+  runStart -> nullDevice
+  runStart -> os.Setenv
+  runStart -> nullDevice
+  runStart -> filepath.Join
+  runStart -> os.Stat
+  runStart -> os.Setenv
+  runStart -> os.Setenv
+  runStart -> nullDevice
+  runStart -> filepath.Join
+  runStart -> os.Stat
+  runStart -> os.Setenv
+  runStart -> os.Setenv
+  runStart -> nullDevice
+  runStart -> applyAutoUpdate
+  runStart -> starprompt.PromptIfNotStarred
+  runStart -> fmt.Println
+  runStart -> engagement.Select
+  runStart -> os.Setenv
+  runStart -> fmt.Errorf
+  runStart -> opscontrol.EnsureRunning
+  runStart -> ui.Warning
+  runStart -> err.Error
+  runStart -> os.Setenv
+  runStart -> ui.Warning
+  runStart -> err.Error
+  runStart -> checkDefaultCredentials
+  runStart -> compose.New
+  runStart -> ui.Info
+  runStart -> c.Up
+  runStart -> fmt.Errorf
+  runStart -> health.WaitForServices
+  runStart -> fmt.Println
+  runStart -> ui.Info
+  runStart -> config.Get
+  runStart -> c.RunInteractive
+  runStart -> ui.Warning
+  runStart -> err.Error
+  runStart -> fmt.Errorf
+  runStart -> ui.DimText
+  checkDefaultCredentials -> make
+  checkDefaultCredentials -> len
+  checkDefaultCredentials -> strings.TrimSpace
+  checkDefaultCredentials -> config.Get
+  checkDefaultCredentials -> slices.Contains
+  checkDefaultCredentials -> append
+  checkDefaultCredentials -> len
+  checkDefaultCredentials -> slices.Sort
+  checkDefaultCredentials -> fmt.Errorf
+  checkDefaultCredentials -> config.EnvPath
+  checkDefaultCredentials -> strings.Join
+  checkDefaultCredentials -> config.EnvPath
+  probeOllamaIfSelected -> strings.ToLower
+  probeOllamaIfSelected -> strings.Contains
+  probeOllamaIfSelected -> strings.TrimSpace
+  probeOllamaIfSelected -> ui.Warning
+  probeOllamaIfSelected -> candidateProbeURLs
+  probeOllamaIfSelected -> client.Get
+  probeOllamaIfSelected -> resp.Body.Close
+  probeOllamaIfSelected -> ui.DimText
+  probeOllamaIfSelected -> fmt.Sprintf
+  probeOllamaIfSelected -> ui.Warning
+  probeOllamaIfSelected -> fmt.Sprintf
+  probeOllamaIfSelected -> ui.Warning
+  probeOllamaIfSelected -> fmt.Sprintf
+  candidateProbeURLs -> url.Parse
+  candidateProbeURLs -> net.SplitHostPort
+  candidateProbeURLs -> net.JoinHostPort
+  candidateProbeURLs -> v.String
+  candidateProbeURLs -> append
+  candidateProbeURLs -> isWSLFn
+  candidateProbeURLs -> wslHostIPFn
+  candidateProbeURLs -> add
+  candidateProbeURLs -> add
+=== clients/launcher/cmd/start_test.go
+  withProbeStubs -> t.Helper
+  withProbeStubs -> t.Cleanup
+  TestCandidateProbeURLs_NonDockerHostPassesThrough -> withProbeStubs
+  TestCandidateProbeURLs_NonDockerHostPassesThrough -> candidateProbeURLs
+  TestCandidateProbeURLs_NonDockerHostPassesThrough -> reflect.DeepEqual
+  TestCandidateProbeURLs_NonDockerHostPassesThrough -> t.Errorf
+  TestCandidateProbeURLs_NativeLinuxFallsBackToLoopback -> withProbeStubs
+  TestCandidateProbeURLs_NativeLinuxFallsBackToLoopback -> candidateProbeURLs
+  TestCandidateProbeURLs_NativeLinuxFallsBackToLoopback -> reflect.DeepEqual
+  TestCandidateProbeURLs_NativeLinuxFallsBackToLoopback -> t.Errorf
+  TestCandidateProbeURLs_WSLAddsResolvedHostThenLoopback -> withProbeStubs
+  TestCandidateProbeURLs_WSLAddsResolvedHostThenLoopback -> candidateProbeURLs
+  TestCandidateProbeURLs_WSLAddsResolvedHostThenLoopback -> reflect.DeepEqual
+  TestCandidateProbeURLs_WSLAddsResolvedHostThenLoopback -> t.Errorf
+  TestCandidateProbeURLs_WSLWithoutResolvedHostStillTriesLoopback -> withProbeStubs
+  TestCandidateProbeURLs_WSLWithoutResolvedHostStillTriesLoopback -> candidateProbeURLs
+  TestCandidateProbeURLs_WSLWithoutResolvedHostStillTriesLoopback -> reflect.DeepEqual
+  TestCandidateProbeURLs_WSLWithoutResolvedHostStillTriesLoopback -> t.Errorf
+  TestCandidateProbeURLs_DedupesWhenResolvedHostIsLoopback -> withProbeStubs
+  TestCandidateProbeURLs_DedupesWhenResolvedHostIsLoopback -> candidateProbeURLs
+  TestCandidateProbeURLs_DedupesWhenResolvedHostIsLoopback -> reflect.DeepEqual
+  TestCandidateProbeURLs_DedupesWhenResolvedHostIsLoopback -> t.Errorf
+  TestCandidateProbeURLs_HostWithoutPortRewritesCleanly -> withProbeStubs
+  TestCandidateProbeURLs_HostWithoutPortRewritesCleanly -> candidateProbeURLs
+  TestCandidateProbeURLs_HostWithoutPortRewritesCleanly -> reflect.DeepEqual
+  TestCandidateProbeURLs_HostWithoutPortRewritesCleanly -> t.Errorf
+  TestCandidateProbeURLs_PreservesScheme -> withProbeStubs
+  TestCandidateProbeURLs_PreservesScheme -> candidateProbeURLs
+  TestCandidateProbeURLs_PreservesScheme -> reflect.DeepEqual
+  TestCandidateProbeURLs_PreservesScheme -> t.Errorf
+  withUpdateStubs -> t.Helper
+  withUpdateStubs -> t.Cleanup
+  TestApplyAutoUpdate_RoutingMatrix -> t.Run
+  TestApplyAutoUpdate_RoutingMatrix -> withUpdateStubs
+  TestApplyAutoUpdate_RoutingMatrix -> applyAutoUpdate
+  TestApplyAutoUpdate_RoutingMatrix -> t.Errorf
+  TestApplyAutoUpdate_NoUpdateFlagAlwaysWins -> t.Run
+  TestApplyAutoUpdate_NoUpdateFlagAlwaysWins -> withUpdateStubs
+  TestApplyAutoUpdate_NoUpdateFlagAlwaysWins -> applyAutoUpdate
+  TestApplyAutoUpdate_NoUpdateFlagAlwaysWins -> t.Errorf
+  TestCheckDefaultCredentials_RefusesDefaults -> maps.Clone
+  TestCheckDefaultCredentials_RefusesDefaults -> checkDefaultCredentials
+  TestCheckDefaultCredentials_RefusesDefaults -> t.Fatalf
+  TestCheckDefaultCredentials_AllowsCustom -> checkDefaultCredentials
+  TestCheckDefaultCredentials_AllowsCustom -> t.Fatalf
+  TestCheckDefaultCredentials_RefusesMissingOrEmpty -> maps.Clone
+  TestCheckDefaultCredentials_RefusesMissingOrEmpty -> delete
+  TestCheckDefaultCredentials_RefusesMissingOrEmpty -> checkDefaultCredentials
+  TestCheckDefaultCredentials_RefusesMissingOrEmpty -> t.Fatalf
+  TestCheckDefaultCredentials_RefusesMissingOrEmpty -> checkDefaultCredentials
+  TestCheckDefaultCredentials_RefusesMissingOrEmpty -> t.Fatalf
+=== clients/launcher/cmd/status.go
+  init -> rootCmd.AddCommand
+=== clients/launcher/cmd/stop.go
+  init -> rootCmd.AddCommand
+=== clients/launcher/cmd/update.go
+  init -> updateCmd.Flags().BoolVarP
+  init -> updateCmd.Flags
+  init -> updateCmd.Flags().StringVar
+  init -> updateCmd.Flags
+  init -> rootCmd.AddCommand
+  runUpdate -> make
+  runUpdate -> config.EnvExists
+  runUpdate -> config.LoadEnv
+  runUpdate -> config.EnvPath
+  runUpdate -> config.Get
+  runUpdate -> updater.ResolveChannel
+  runUpdate -> ui.Info
+  runUpdate -> fmt.Sprintf
+  runUpdate -> updater.FetchRelease
+  runUpdate -> fmt.Errorf
+  runUpdate -> updater.CompareVersions
+  runUpdate -> ui.Success
+  runUpdate -> fmt.Sprintf
+  runUpdate -> ui.Info
+  runUpdate -> fmt.Sprintf
+  runUpdate -> ui.Info
+  runUpdate -> strings.TrimSpace
+  runUpdate -> updater.ApplyUpdate
+  runUpdate -> ui.Warning
+  runUpdate -> err.Error
+  runUpdate -> ui.Info
+  runUpdate -> strings.TrimPrefix
+  runUpdate -> updater.SyncConfigFiles
+  runUpdate -> ui.Warning
+  runUpdate -> err.Error
+  runUpdate -> compose.New
+  runUpdate -> strings.TrimPrefix
+  runUpdate -> ui.Info
+  runUpdate -> c.Pull
+  runUpdate -> ui.Warning
+  runUpdate -> err.Error
+  runUpdate -> ui.Success
+  runUpdate -> ui.DimText
+=== clients/launcher/cmd/web.go
+  init -> compose.New
+  init -> os.Stat
+  init -> filepath.Join
+  init -> fmt.Errorf
+  init -> cmd.Flags().GetBool
+  init -> cmd.Flags
+  init -> base.Pull
+  init -> base.Web().Pull
+  init -> base.Web
+  init -> cmd.Flags().GetBool
+  init -> cmd.Flags
+  init -> base.Up
+  init -> base.EnsureWebDatabase
+  init -> base.Web().Up
+  init -> base.Web
+  init -> os.Getenv
+  init -> config.LoadEnv
+  init -> fmt.Fprintln
+  init -> cmd.OutOrStdout
+  init -> start.Flags().Bool
+  init -> start.Flags
+  init -> start.Flags().Bool
+  init -> start.Flags
+  init -> web.AddCommand
+  init -> compose.New().Web().Down
+  init -> compose.New().Web
+  init -> compose.New
+  init -> compose.New().Web().Ps
+  init -> compose.New().Web
+  init -> compose.New
+  init -> rootCmd.AddCommand
+=== clients/launcher/internal/compose/compose.go
+  New -> config.RaptixHome
+  New -> runtime.Detect
+  New -> filepath.Join
+  New -> filepath.Join
+  baseArgs -> append
+  baseArgs -> opscontrol.ComposeProjectName
+  baseArgs -> append
+  baseArgs -> append
+  baseArgs -> filepath.Join
+  baseArgs -> fileExists
+  baseArgs -> os.Getenv
+  baseArgs -> append
+  fileExists -> os.Stat
+  ContainerName -> strings.TrimSpace
+  ContainerName -> os.Getenv
+  readVersion -> os.ReadFile
+  readVersion -> filepath.Join
+  readVersion -> strings.TrimSpace
+  readVersion -> string
+  composeEnv -> opscontrol.ComposeCommandEnv
+  composeEnv -> c.readVersion
+  composeEnv -> append
+  composeEnv -> imageTag
+  composeEnv -> c.Runtime.Apply
+  run -> append
+  run -> c.baseArgs
+  run -> exec.Command
+  run -> c.composeEnv
+  run -> cmd.Run
+  run -> fmt.Errorf
+  run -> strings.Join
+  Up -> append
+  Up -> append
+  Up -> startupTimeoutSeconds
+  Up -> c.run
+  startupTimeoutSeconds -> os.Getenv
+  startupTimeoutSeconds -> strconv.Atoi
+  startupTimeoutSeconds -> strconv.Itoa
+  Down -> AllProfiles
+  Down -> append
+  Down -> c.run
+  DownAndPurge -> AllProfiles
+  DownAndPurge -> append
+  DownAndPurge -> c.run
+  Pull -> exec.Command
+  Pull -> append
+  Pull -> c.baseArgs
+  Pull -> c.composeEnv
+  Pull -> append
+  Pull -> imageTag
+  Pull -> cmd.Run
+  Pull -> fmt.Errorf
+  imageTag -> strings.TrimPrefix
+  imageTag -> strings.TrimSpace
+  Ps -> c.run
+  Logs -> append
+  Logs -> c.run
+  Exec -> append
+  Exec -> c.run
+  Web -> filepath.Join
+  Web -> opscontrol.ComposeProjectName
+  EnsureWebDatabase -> append
+  EnsureWebDatabase -> c.baseArgs
+  EnsureWebDatabase -> exec.Command
+  EnsureWebDatabase -> c.composeEnv
+  EnsureWebDatabase -> cmd.Output
+  EnsureWebDatabase -> fmt.Errorf
+  EnsureWebDatabase -> strings.TrimSpace
+  EnsureWebDatabase -> string
+  EnsureWebDatabase -> c.Exec
+  RunInteractive -> c.baseArgs
+  RunInteractive -> append
+  RunInteractive -> append
+  RunInteractive -> append
+  RunInteractive -> append
+  RunInteractive -> append
+  RunInteractive -> exec.Command
+  RunInteractive -> c.composeEnv
+  RunInteractive -> cmd.Run
+  RunInteractive -> fmt.Errorf
+  CleanScratch -> exec.Command
+  CleanScratch -> ContainerName
+  CleanScratch -> c.composeEnv
+  CleanScratch -> cmd.Run
+  RemoveOrphanedCLI -> strings.TrimSpace
+  RemoveOrphanedCLI -> os.Getenv
+  RemoveOrphanedCLI -> exec.Command
+  RemoveOrphanedCLI -> fmt.Sprintf
+  RemoveOrphanedCLI -> c.composeEnv
+  RemoveOrphanedCLI -> ps.Output
+  RemoveOrphanedCLI -> len
+  RemoveOrphanedCLI -> strings.Fields
+  RemoveOrphanedCLI -> strings.TrimSpace
+  RemoveOrphanedCLI -> string
+  RemoveOrphanedCLI -> exec.Command
+  RemoveOrphanedCLI -> c.composeEnv
+  RemoveOrphanedCLI -> rm.Run
+=== clients/launcher/internal/compose/compose_test.go
+  TestNew -> t.TempDir
+  TestNew -> t.Setenv
+  TestNew -> New
+  TestNew -> t.Errorf
+  TestNew -> filepath.Join
+  TestNew -> t.Errorf
+  TestNew -> filepath.Join
+  TestNew -> t.Errorf
+  TestAllProfiles -> AllProfiles
+  TestAllProfiles -> len
+  TestAllProfiles -> len
+  TestAllProfiles -> t.Fatalf
+  TestAllProfiles -> len
+  TestAllProfiles -> len
+  TestAllProfiles -> t.Errorf
+  TestBaseArgs -> t.Setenv
+  TestBaseArgs -> c.baseArgs
+  TestBaseArgs -> len
+  TestBaseArgs -> len
+  TestBaseArgs -> t.Fatalf
+  TestBaseArgs -> len
+  TestBaseArgs -> len
+  TestBaseArgs -> t.Errorf
+  TestBaseArgs_StackNameOverridesProjectName -> t.Setenv
+  TestBaseArgs_StackNameOverridesProjectName -> c.baseArgs
+  TestBaseArgs_StackNameOverridesProjectName -> t.Errorf
+  TestImageTag -> imageTag
+  TestImageTag -> t.Errorf
+=== clients/launcher/internal/compose/web_test.go
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> t.TempDir
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> t.Setenv
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> t.Setenv
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> os.WriteFile
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> filepath.Join
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> t.Fatal
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> filepath.Join
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> filepath.Join
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> base.Web
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> filepath.Join
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> reflect.DeepEqual
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> web.baseArgs
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> t.Fatalf
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> web.baseArgs
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> filepath.Join
+  TestWebProjectDoesNotMergeBaseOrOpscontrol -> t.Fatal
+=== clients/launcher/internal/config/config.go
+  RaptixHome -> os.Getenv
+  RaptixHome -> os.UserHomeDir
+  RaptixHome -> filepath.Join
+  RaptixHome -> filepath.Join
+  EnvPath -> filepath.Join
+  EnvPath -> RaptixHome
+  EnvExists -> os.Stat
+  EnvExists -> EnvPath
+  LoadEnv -> os.Open
+  LoadEnv -> fmt.Errorf
+  LoadEnv -> f.Close
+  LoadEnv -> make
+  LoadEnv -> bufio.NewScanner
+  LoadEnv -> scanner.Scan
+  LoadEnv -> strings.TrimSpace
+  LoadEnv -> scanner.Text
+  LoadEnv -> strings.HasPrefix
+  LoadEnv -> parseEnvLine
+  LoadEnv -> scanner.Err
+  LoadEnv -> fmt.Errorf
+  parseEnvLine -> strings.IndexByte
+  parseEnvLine -> strings.TrimSpace
+  parseEnvLine -> strings.TrimSpace
+  parseEnvLine -> len
+  parseEnvLine -> len
+  parseEnvLine -> len
+  parseEnvLine -> len
+  WriteEnvFromEmbed -> writeEnvFromString
+  WriteEnv -> os.ReadFile
+  WriteEnv -> fmt.Errorf
+  WriteEnv -> writeEnvFromString
+  WriteEnv -> string
+  writeEnvFromString -> strings.Split
+  writeEnvFromString -> make
+  writeEnvFromString -> strings.TrimSpace
+  writeEnvFromString -> append
+  writeEnvFromString -> strings.HasPrefix
+  writeEnvFromString -> strings.TrimSpace
+  writeEnvFromString -> strings.TrimPrefix
+  writeEnvFromString -> parseEnvLine
+  writeEnvFromString -> append
+  writeEnvFromString -> append
+  writeEnvFromString -> parseEnvLine
+  writeEnvFromString -> append
+  writeEnvFromString -> append
+  writeEnvFromString -> append
+  writeEnvFromString -> append
+  writeEnvFromString -> os.MkdirAll
+  writeEnvFromString -> filepath.Dir
+  writeEnvFromString -> fmt.Errorf
+  writeEnvFromString -> writePrivateFile
+  writeEnvFromString -> strings.Join
+  writePrivateFile -> filepath.Dir
+  writePrivateFile -> os.CreateTemp
+  writePrivateFile -> fmt.Errorf
+  writePrivateFile -> tmp.Name
+  writePrivateFile -> func() {
+		_ = tmp.Close()
+		if retErr != nil {
+			_ = os.Remove(tmpPath)
+		}
+	}
+  writePrivateFile -> tmp.Close
+  writePrivateFile -> os.Remove
+  writePrivateFile -> tmp.Chmod
+  writePrivateFile -> fmt.Errorf
+  writePrivateFile -> tmp.Write
+  writePrivateFile -> fmt.Errorf
+  writePrivateFile -> tmp.Close
+  writePrivateFile -> fmt.Errorf
+  writePrivateFile -> os.Rename
+  writePrivateFile -> fmt.Errorf
+  IsPlaceholder -> strings.HasSuffix
+  validateKeyFormat -> os.Stat
+  validateKeyFormat -> len
+  validateKeyFormat -> strings.HasPrefix
+  ValidateAPIKeys -> make
+  ValidateAPIKeys -> IsPlaceholder
+  ValidateAPIKeys -> validateKeyFormat
+  ValidateAPIKeys -> append
+  ValidateAPIKeys -> len
+  ValidateAPIKeys -> msg.WriteString
+  ValidateAPIKeys -> len
+  ValidateAPIKeys -> msg.WriteString
+  ValidateAPIKeys -> msg.WriteString
+  ValidateAPIKeys -> fmt.Sprintf
+  ValidateAPIKeys -> msg.WriteString
+  ValidateAPIKeys -> fmt.Errorf
+  ValidateAPIKeys -> msg.String
+  ValidateAuth -> isTruthy
+  ValidateAuth -> Get
+  ValidateAuth -> validateOllamaCredentials
+  ValidateAuth -> ValidateAPIKeys
+  ValidateAuth -> validateClaudeCredentials
+  ValidateAuth -> isTruthy
+  ValidateAuth -> Get
+  ValidateAuth -> validateSubscriptionCredentials
+  ValidateAuth -> validateClaudeCredentials
+  ValidateAuth -> isTruthy
+  ValidateAuth -> Get
+  ValidateAuth -> validateSubscriptionCredentials
+  ValidateAuth -> hasOllamaSelected
+  hasOllamaSelected -> strings.ToLower
+  hasOllamaSelected -> strings.TrimSpace
+  hasOllamaSelected -> strings.Split
+  hasOllamaSelected -> strings.TrimSpace
+  validateOllamaCredentials -> hasOllamaSelected
+  validateOllamaCredentials -> fmt.Errorf
+  validateOllamaCredentials -> strings.TrimSpace
+  validateOllamaCredentials -> fmt.Errorf
+  isTruthy -> strings.ToLower
+  isTruthy -> strings.TrimSpace
+  validateClaudeCredentials -> os.UserHomeDir
+  validateClaudeCredentials -> fmt.Errorf
+  validateClaudeCredentials -> filepath.Join
+  validateClaudeCredentials -> os.Stat
+  validateClaudeCredentials -> os.IsNotExist
+  validateClaudeCredentials -> fmt.Errorf
+  validateClaudeCredentials -> fmt.Errorf
+  validateClaudeCredentials -> info.IsDir
+  validateClaudeCredentials -> fmt.Errorf
+  validateClaudeCredentials -> os.ReadFile
+  validateClaudeCredentials -> fmt.Errorf
+  validateClaudeCredentials -> json.Unmarshal
+  validateClaudeCredentials -> fmt.Errorf
+  validateClaudeCredentials -> extractClaudeAccessToken
+  validateClaudeCredentials -> fmt.Errorf
+  validateSubscriptionCredentials -> strings.TrimSpace
+  validateSubscriptionCredentials -> os.UserHomeDir
+  validateSubscriptionCredentials -> fmt.Errorf
+  validateSubscriptionCredentials -> subscriptionTokenPaths
+  validateSubscriptionCredentials -> os.Stat
+  validateSubscriptionCredentials -> strings.Join
+  validateSubscriptionCredentials -> fmt.Errorf
+  validateSubscriptionCredentials -> strings.Join
+  subscriptionTokenPaths -> append
+  subscriptionTokenPaths -> filepath.Join
+  subscriptionTokenPaths -> dedupeStrings
+  subscriptionTokenPaths -> strings.TrimSpace
+  subscriptionTokenPaths -> Get
+  subscriptionTokenPaths -> os.Getenv
+  subscriptionTokenPaths -> append
+  subscriptionTokenPaths -> filepath.Join
+  subscriptionTokenPaths -> append
+  subscriptionTokenPaths -> filepath.Join
+  subscriptionTokenPaths -> append
+  subscriptionTokenPaths -> filepath.Join
+  subscriptionTokenPaths -> dedupeStrings
+  dedupeStrings -> make
+  dedupeStrings -> len
+  dedupeStrings -> make
+  dedupeStrings -> len
+  dedupeStrings -> append
+  AppendEnvLine -> os.ReadFile
+  AppendEnvLine -> strings.Split
+  AppendEnvLine -> string
+  AppendEnvLine -> parseEnvLine
+  AppendEnvLine -> strings.TrimSpace
+  AppendEnvLine -> os.OpenFile
+  AppendEnvLine -> f.Close
+  AppendEnvLine -> fmt.Fprintf
+  BackfillEnvFromEmbed -> os.ReadFile
+  BackfillEnvFromEmbed -> os.IsNotExist
+  BackfillEnvFromEmbed -> make
+  BackfillEnvFromEmbed -> strings.Split
+  BackfillEnvFromEmbed -> string
+  BackfillEnvFromEmbed -> strings.TrimSpace
+  BackfillEnvFromEmbed -> strings.HasPrefix
+  BackfillEnvFromEmbed -> parseEnvLine
+  BackfillEnvFromEmbed -> make
+  BackfillEnvFromEmbed -> strings.Split
+  BackfillEnvFromEmbed -> strings.TrimSpace
+  BackfillEnvFromEmbed -> strings.HasPrefix
+  BackfillEnvFromEmbed -> parseEnvLine
+  BackfillEnvFromEmbed -> append
+  BackfillEnvFromEmbed -> append
+  BackfillEnvFromEmbed -> len
+  BackfillEnvFromEmbed -> os.Stat
+  BackfillEnvFromEmbed -> os.IsNotExist
+  BackfillEnvFromEmbed -> os.WriteFile
+  BackfillEnvFromEmbed -> fmt.Errorf
+  BackfillEnvFromEmbed -> b.Write
+  BackfillEnvFromEmbed -> len
+  BackfillEnvFromEmbed -> strings.HasSuffix
+  BackfillEnvFromEmbed -> string
+  BackfillEnvFromEmbed -> b.WriteByte
+  BackfillEnvFromEmbed -> b.WriteString
+  BackfillEnvFromEmbed -> b.WriteString
+  BackfillEnvFromEmbed -> b.WriteByte
+  BackfillEnvFromEmbed -> os.WriteFile
+  BackfillEnvFromEmbed -> b.String
+  SetEnvKey -> os.ReadFile
+  SetEnvKey -> strings.Split
+  SetEnvKey -> string
+  SetEnvKey -> strings.TrimSpace
+  SetEnvKey -> strings.HasPrefix
+  SetEnvKey -> parseEnvLine
+  SetEnvKey -> append
+  SetEnvKey -> os.WriteFile
+  SetEnvKey -> strings.Join
+  MigrateActiveComposeProfiles -> os.ReadFile
+  MigrateActiveComposeProfiles -> os.IsNotExist
+  MigrateActiveComposeProfiles -> strings.Split
+  MigrateActiveComposeProfiles -> string
+  MigrateActiveComposeProfiles -> strings.TrimSpace
+  MigrateActiveComposeProfiles -> strings.HasPrefix
+  MigrateActiveComposeProfiles -> parseEnvLine
+  MigrateActiveComposeProfiles -> os.Stat
+  MigrateActiveComposeProfiles -> os.IsNotExist
+  MigrateActiveComposeProfiles -> os.WriteFile
+  MigrateActiveComposeProfiles -> fmt.Errorf
+  MigrateActiveComposeProfiles -> os.WriteFile
+  MigrateActiveComposeProfiles -> strings.Join
+=== clients/launcher/internal/config/config_test.go
+  TestParseEnvLine -> parseEnvLine
+  TestParseEnvLine -> t.Errorf
+  TestLoadEnv -> t.TempDir
+  TestLoadEnv -> filepath.Join
+  TestLoadEnv -> os.WriteFile
+  TestLoadEnv -> t.Fatal
+  TestLoadEnv -> LoadEnv
+  TestLoadEnv -> t.Fatalf
+  TestLoadEnv -> t.Errorf
+  TestLoadEnv -> t.Errorf
+  TestLoadEnv -> len
+  TestLoadEnv -> t.Errorf
+  TestLoadEnv -> len
+  TestIsPlaceholder -> IsPlaceholder
+  TestIsPlaceholder -> t.Error
+  TestIsPlaceholder -> IsPlaceholder
+  TestIsPlaceholder -> t.Error
+  TestIsPlaceholder -> IsPlaceholder
+  TestIsPlaceholder -> t.Error
+  TestIsPlaceholder -> IsPlaceholder
+  TestIsPlaceholder -> t.Error
+  TestValidateAPIKeys -> ValidateAPIKeys
+  TestValidateAPIKeys -> t.Error
+  TestValidateAPIKeys -> ValidateAPIKeys
+  TestValidateAPIKeys -> t.Errorf
+  TestValidateAPIKeys -> ValidateAPIKeys
+  TestValidateAPIKeys -> t.Error
+  TestValidateAPIKeys_RejectsBadFormat -> t.Run
+  TestValidateAPIKeys_RejectsBadFormat -> ValidateAPIKeys
+  TestValidateAPIKeys_RejectsBadFormat -> t.Errorf
+  TestValidateAPIKeys_AcceptsAllProviders -> t.Run
+  TestValidateAPIKeys_AcceptsAllProviders -> ValidateAPIKeys
+  TestValidateAPIKeys_AcceptsAllProviders -> t.Errorf
+  TestValidateAuth_OAuthSubscriptions -> t.Run
+  TestValidateAuth_OAuthSubscriptions -> t.TempDir
+  TestValidateAuth_OAuthSubscriptions -> t.Setenv
+  TestValidateAuth_OAuthSubscriptions -> t.Setenv
+  TestValidateAuth_OAuthSubscriptions -> ValidateAuth
+  TestValidateAuth_OAuthSubscriptions -> t.Errorf
+  TestValidateAuth_OAuthSubscriptions -> t.Run
+  TestValidateAuth_OAuthSubscriptions -> t.TempDir
+  TestValidateAuth_OAuthSubscriptions -> t.Setenv
+  TestValidateAuth_OAuthSubscriptions -> t.Setenv
+  TestValidateAuth_OAuthSubscriptions -> filepath.Join
+  TestValidateAuth_OAuthSubscriptions -> os.MkdirAll
+  TestValidateAuth_OAuthSubscriptions -> t.Fatal
+  TestValidateAuth_OAuthSubscriptions -> os.WriteFile
+  TestValidateAuth_OAuthSubscriptions -> filepath.Join
+  TestValidateAuth_OAuthSubscriptions -> t.Fatal
+  TestValidateAuth_OAuthSubscriptions -> ValidateAuth
+  TestValidateAuth_OAuthSubscriptions -> t.Errorf
+  TestValidateAuth_OAuthSubscriptions -> t.Run
+  TestValidateAuth_OAuthSubscriptions -> t.TempDir
+  TestValidateAuth_OAuthSubscriptions -> t.Setenv
+  TestValidateAuth_OAuthSubscriptions -> t.Setenv
+  TestValidateAuth_OAuthSubscriptions -> ValidateAuth
+  TestValidateAuth_OAuthSubscriptions -> t.Errorf
+  TestValidateAuth_ChatGPTNativeOAuth -> t.Run
+  TestValidateAuth_ChatGPTNativeOAuth -> t.TempDir
+  TestValidateAuth_ChatGPTNativeOAuth -> t.Setenv
+  TestValidateAuth_ChatGPTNativeOAuth -> t.Setenv
+  TestValidateAuth_ChatGPTNativeOAuth -> ValidateAuth
+  TestValidateAuth_ChatGPTNativeOAuth -> t.Errorf
+  TestValidateAuth_ChatGPTNativeOAuth -> t.Run
+  TestValidateAuth_ChatGPTNativeOAuth -> t.TempDir
+  TestValidateAuth_ChatGPTNativeOAuth -> t.Setenv
+  TestValidateAuth_ChatGPTNativeOAuth -> t.Setenv
+  TestValidateAuth_ChatGPTNativeOAuth -> subscriptionTokenPaths
+  TestValidateAuth_ChatGPTNativeOAuth -> filepath.Join
+  TestValidateAuth_ChatGPTNativeOAuth -> reflect.DeepEqual
+  TestValidateAuth_ChatGPTNativeOAuth -> t.Errorf
+  TestValidateAuth_OllamaLocal -> t.TempDir
+  TestValidateAuth_OllamaLocal -> t.Setenv
+  TestValidateAuth_OllamaLocal -> t.Setenv
+  TestValidateAuth_OllamaLocal -> t.Run
+  TestValidateAuth_OllamaLocal -> ValidateAuth
+  TestValidateAuth_OllamaLocal -> t.Errorf
+  TestValidateAuth_OllamaLocal -> t.Run
+  TestValidateAuth_OllamaLocal -> ValidateAuth
+  TestValidateAuth_OllamaLocal -> t.Fatal
+  TestValidateAuth_OllamaLocal -> strings.Contains
+  TestValidateAuth_OllamaLocal -> err.Error
+  TestValidateAuth_OllamaLocal -> t.Errorf
+  TestValidateAuth_OllamaLocal -> t.Run
+  TestValidateAuth_OllamaLocal -> ValidateAuth
+  TestValidateAuth_OllamaLocal -> t.Errorf
+  TestValidateAuth_OAuth -> t.TempDir
+  TestValidateAuth_OAuth -> t.Setenv
+  TestValidateAuth_OAuth -> t.Setenv
+  TestValidateAuth_OAuth -> ValidateAuth
+  TestValidateAuth_OAuth -> t.Error
+  TestValidateAuth_OAuth -> filepath.Join
+  TestValidateAuth_OAuth -> os.MkdirAll
+  TestValidateAuth_OAuth -> t.Fatal
+  TestValidateAuth_OAuth -> filepath.Join
+  TestValidateAuth_OAuth -> os.WriteFile
+  TestValidateAuth_OAuth -> t.Fatal
+  TestValidateAuth_OAuth -> ValidateAuth
+  TestValidateAuth_OAuth -> t.Error
+  TestValidateAuth_OAuth -> os.WriteFile
+  TestValidateAuth_OAuth -> t.Fatal
+  TestValidateAuth_OAuth -> ValidateAuth
+  TestValidateAuth_OAuth -> t.Error
+  TestValidateAuth_OAuth -> os.WriteFile
+  TestValidateAuth_OAuth -> t.Fatal
+  TestValidateAuth_OAuth -> ValidateAuth
+  TestValidateAuth_OAuth -> t.Errorf
+  TestValidateAuth_OAuth -> os.WriteFile
+  TestValidateAuth_OAuth -> t.Fatal
+  TestValidateAuth_OAuth -> ValidateAuth
+  TestValidateAuth_OAuth -> t.Errorf
+  TestValidateAuth_OAuth -> os.WriteFile
+  TestValidateAuth_OAuth -> t.Fatal
+  TestValidateAuth_OAuth -> ValidateAuth
+  TestValidateAuth_OAuth -> t.Errorf
+  TestValidateAuth_OAuthFallsBackToAPIKey -> t.TempDir
+  TestValidateAuth_OAuthFallsBackToAPIKey -> t.Setenv
+  TestValidateAuth_OAuthFallsBackToAPIKey -> t.Setenv
+  TestValidateAuth_OAuthFallsBackToAPIKey -> ValidateAuth
+  TestValidateAuth_OAuthFallsBackToAPIKey -> t.Errorf
+  TestValidateAuth_NeitherConfigured -> t.TempDir
+  TestValidateAuth_NeitherConfigured -> t.Setenv
+  TestValidateAuth_NeitherConfigured -> t.Setenv
+  TestValidateAuth_NeitherConfigured -> ValidateAuth
+  TestValidateAuth_NeitherConfigured -> t.Error
+  TestWriteEnv -> t.TempDir
+  TestWriteEnv -> filepath.Join
+  TestWriteEnv -> filepath.Join
+  TestWriteEnv -> os.WriteFile
+  TestWriteEnv -> t.Fatal
+  TestWriteEnv -> WriteEnv
+  TestWriteEnv -> t.Fatalf
+  TestWriteEnv -> LoadEnv
+  TestWriteEnv -> t.Fatalf
+  TestWriteEnv -> t.Errorf
+  TestWriteEnv -> t.Errorf
+  TestWriteEnv -> t.Errorf
+  TestTelemetryConsentWritesEnv -> filepath.Join
+  TestTelemetryConsentWritesEnv -> t.TempDir
+  TestTelemetryConsentWritesEnv -> WriteEnvFromEmbed
+  TestTelemetryConsentWritesEnv -> t.Fatalf
+  TestTelemetryConsentWritesEnv -> LoadEnv
+  TestTelemetryConsentWritesEnv -> t.Fatalf
+  TestTelemetryConsentWritesEnv -> t.Errorf
+  TestTelemetryConsentWritesEnv -> t.Error
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> filepath.Join
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> t.TempDir
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> os.WriteFile
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> t.Fatalf
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> WriteEnvFromEmbed
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> t.Fatalf
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> os.Stat
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> t.Fatalf
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> info.Mode().Perm
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> info.Mode
+  TestWriteEnvFromEmbedReplacesPermissiveFilePrivately -> t.Fatalf
+  TestBackfillEnvFromEmbed -> filepath.Join
+  TestBackfillEnvFromEmbed -> t.TempDir
+  TestBackfillEnvFromEmbed -> os.WriteFile
+  TestBackfillEnvFromEmbed -> t.Fatalf
+  TestBackfillEnvFromEmbed -> BackfillEnvFromEmbed
+  TestBackfillEnvFromEmbed -> t.Fatalf
+  TestBackfillEnvFromEmbed -> strings.Contains
+  TestBackfillEnvFromEmbed -> strings.Join
+  TestBackfillEnvFromEmbed -> t.Errorf
+  TestBackfillEnvFromEmbed -> LoadEnv
+  TestBackfillEnvFromEmbed -> t.Fatalf
+  TestBackfillEnvFromEmbed -> t.Error
+  TestBackfillEnvFromEmbed -> t.Errorf
+  TestBackfillEnvFromEmbed -> t.Errorf
+  TestBackfillEnvFromEmbed -> os.Stat
+  TestBackfillEnvFromEmbed -> t.Errorf
+  TestBackfillEnvFromEmbed -> BackfillEnvFromEmbed
+  TestBackfillEnvFromEmbed -> t.Fatalf
+  TestBackfillEnvFromEmbed -> len
+  TestBackfillEnvFromEmbed -> t.Errorf
+  TestSetEnvKey -> filepath.Join
+  TestSetEnvKey -> t.TempDir
+  TestSetEnvKey -> os.WriteFile
+  TestSetEnvKey -> t.Fatalf
+  TestSetEnvKey -> SetEnvKey
+  TestSetEnvKey -> t.Fatalf
+  TestSetEnvKey -> SetEnvKey
+  TestSetEnvKey -> t.Fatalf
+  TestSetEnvKey -> LoadEnv
+  TestSetEnvKey -> t.Fatalf
+  TestSetEnvKey -> t.Errorf
+  TestSetEnvKey -> t.Errorf
+  TestSetEnvKey -> t.Errorf
+  TestWriteEnv_CommentedOutLines -> t.TempDir
+  TestWriteEnv_CommentedOutLines -> filepath.Join
+  TestWriteEnv_CommentedOutLines -> filepath.Join
+  TestWriteEnv_CommentedOutLines -> os.WriteFile
+  TestWriteEnv_CommentedOutLines -> t.Fatal
+  TestWriteEnv_CommentedOutLines -> WriteEnv
+  TestWriteEnv_CommentedOutLines -> t.Fatalf
+  TestWriteEnv_CommentedOutLines -> LoadEnv
+  TestWriteEnv_CommentedOutLines -> t.Fatalf
+  TestWriteEnv_CommentedOutLines -> t.Errorf
+  TestWriteEnv_CommentedOutLines -> t.Errorf
+  TestWriteEnv_CommentedOutLines -> t.Errorf
+  TestWriteEnv_CommentedOutLines -> t.Errorf
+  TestRaptixHome -> t.Setenv
+  TestRaptixHome -> RaptixHome
+  TestRaptixHome -> t.Errorf
+  TestRaptixHome -> t.Setenv
+  TestRaptixHome -> RaptixHome
+  TestRaptixHome -> filepath.IsAbs
+  TestRaptixHome -> t.Errorf
+  TestGet -> Get
+  TestGet -> t.Error
+  TestGet -> Get
+  TestGet -> t.Error
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.TempDir
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> filepath.Join
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> os.WriteFile
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Fatal
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> MigrateActiveComposeProfiles
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Fatalf
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Fatalf
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> os.ReadFile
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Fatal
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> strings.Contains
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> string
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Errorf
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> strings.Contains
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> string
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Errorf
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> strings.Contains
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> string
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Errorf
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> strings.Contains
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> string
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Errorf
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> os.ReadFile
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Fatalf
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> string
+  TestMigrateActiveComposeProfiles_RewritesActiveLine -> t.Errorf
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> t.TempDir
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> filepath.Join
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> os.WriteFile
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> t.Fatal
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> MigrateActiveComposeProfiles
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> t.Fatalf
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> t.Errorf
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> os.ReadFile
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> string
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> t.Errorf
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> os.Stat
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> os.IsNotExist
+  TestMigrateActiveComposeProfiles_LeavesCommentedLineAlone -> t.Errorf
+  TestMigrateActiveComposeProfiles_Idempotent -> t.TempDir
+  TestMigrateActiveComposeProfiles_Idempotent -> filepath.Join
+  TestMigrateActiveComposeProfiles_Idempotent -> os.WriteFile
+  TestMigrateActiveComposeProfiles_Idempotent -> t.Fatal
+  TestMigrateActiveComposeProfiles_Idempotent -> MigrateActiveComposeProfiles
+  TestMigrateActiveComposeProfiles_Idempotent -> t.Fatalf
+  TestMigrateActiveComposeProfiles_Idempotent -> os.ReadFile
+  TestMigrateActiveComposeProfiles_Idempotent -> MigrateActiveComposeProfiles
+  TestMigrateActiveComposeProfiles_Idempotent -> t.Fatalf
+  TestMigrateActiveComposeProfiles_Idempotent -> os.ReadFile
+  TestMigrateActiveComposeProfiles_Idempotent -> string
+  TestMigrateActiveComposeProfiles_Idempotent -> string
+  TestMigrateActiveComposeProfiles_Idempotent -> t.Errorf
+  TestMigrateActiveComposeProfiles_NoEnvFile -> t.TempDir
+  TestMigrateActiveComposeProfiles_NoEnvFile -> filepath.Join
+  TestMigrateActiveComposeProfiles_NoEnvFile -> MigrateActiveComposeProfiles
+  TestMigrateActiveComposeProfiles_NoEnvFile -> t.Fatalf
+  TestMigrateActiveComposeProfiles_NoEnvFile -> t.Errorf
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> t.TempDir
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> filepath.Join
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> os.WriteFile
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> t.Fatal
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> MigrateActiveComposeProfiles
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> t.Fatal
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> os.ReadFile
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> os.WriteFile
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> t.Fatal
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> MigrateActiveComposeProfiles
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> t.Fatal
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> os.ReadFile
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> string
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> string
+  TestMigrateActiveComposeProfiles_BackupNotOverwritten -> t.Errorf
+=== clients/launcher/internal/config/secrets.go
+  NewInstallationSecrets -> randomHex
+  NewInstallationSecrets -> fmt.Errorf
+  NewInstallationSecrets -> randomHex
+  NewInstallationSecrets -> fmt.Errorf
+  NewInstallationSecrets -> randomHex
+  NewInstallationSecrets -> fmt.Errorf
+  NewInstallationSecrets -> randomHex
+  NewInstallationSecrets -> fmt.Errorf
+  randomHex -> make
+  randomHex -> rand.Read
+  randomHex -> fmt.Errorf
+  randomHex -> hex.EncodeToString
+=== clients/launcher/internal/config/secrets_test.go
+  TestNewInstallationSecrets_generates_nondefault_credentials -> NewInstallationSecrets
+  TestNewInstallationSecrets_generates_nondefault_credentials -> t.Fatalf
+  TestNewInstallationSecrets_generates_nondefault_credentials -> t.Fatal
+  TestNewInstallationSecrets_generates_nondefault_credentials -> t.Fatal
+  TestNewInstallationSecrets_generates_nondefault_credentials -> strings.HasPrefix
+  TestNewInstallationSecrets_generates_nondefault_credentials -> t.Fatalf
+  TestNewInstallationSecrets_generates_nondefault_credentials -> len
+  TestNewInstallationSecrets_generates_nondefault_credentials -> t.Fatalf
+  TestNewInstallationSecrets_generates_nondefault_credentials -> len
+  TestNewInstallationSecrets_generates_independent_values -> NewInstallationSecrets
+  TestNewInstallationSecrets_generates_independent_values -> t.Fatalf
+  TestNewInstallationSecrets_generates_independent_values -> len
+  TestNewInstallationSecrets_generates_independent_values -> t.Fatalf
+  TestNewInstallationSecrets_generates_independent_values -> len
+=== clients/launcher/internal/engagement/picker.go
+  isReady -> filepath.Join
+  isReady -> os.Stat
+  isReady -> filepath.Join
+  ScanEngagements -> filepath.Join
+  ScanEngagements -> os.ReadDir
+  ScanEngagements -> os.IsNotExist
+  ScanEngagements -> fmt.Errorf
+  ScanEngagements -> e.IsDir
+  ScanEngagements -> e.Name
+  ScanEngagements -> strings.HasPrefix
+  ScanEngagements -> isReady
+  ScanEngagements -> os.Stat
+  ScanEngagements -> filepath.Join
+  ScanEngagements -> st.ModTime().Unix
+  ScanEngagements -> st.ModTime
+  ScanEngagements -> e.Info
+  ScanEngagements -> info.ModTime().Unix
+  ScanEngagements -> info.ModTime
+  ScanEngagements -> append
+  ScanEngagements -> sort.SliceStable
+  listAllSlugs -> ScanEngagements
+  listAllSlugs -> make
+  listAllSlugs -> len
+  validateSlug -> slugRe.MatchString
+  validateSlug -> fmt.Errorf
+  validateSlug -> listAllSlugs
+  validateSlug -> fmt.Errorf
+  newPickerKeys -> key.NewBinding
+  newPickerKeys -> key.WithKeys
+  newPickerKeys -> key.NewBinding
+  newPickerKeys -> key.WithKeys
+  newPickerKeys -> key.WithHelp
+  resizeList -> m.renderConfirmOverlay
+  resizeList -> lipgloss.Height
+  resizeList -> m.list.SetSize
+  renderConfirmOverlay -> lipgloss.JoinVertical
+  renderConfirmOverlay -> confirmTextStyle.Render
+  renderConfirmOverlay -> fmt.Sprintf
+  renderConfirmOverlay -> confirmHintStyle.Render
+  renderConfirmOverlay -> confirmHintStyle.Render
+  renderConfirmOverlay -> confirmStyle.Render
+  newPickerModel -> buildItems
+  newPickerModel -> list.NewDefaultDelegate
+  newPickerModel -> list.New
+  newPickerModel -> l.SetShowHelp
+  newPickerModel -> l.SetShowStatusBar
+  newPickerModel -> l.SetFilteringEnabled
+  newPickerModel -> lipgloss.NewStyle().Bold(true).Foreground
+  newPickerModel -> lipgloss.NewStyle().Bold
+  newPickerModel -> lipgloss.NewStyle
+  newPickerModel -> lipgloss.Color
+  newPickerModel -> newPickerKeys
+  buildItems -> append
+  Update -> m.resizeList
+  Update -> strings.ToLower
+  Update -> msg.String
+  Update -> filepath.Join
+  Update -> os.RemoveAll
+  Update -> m.resizeList
+  Update -> m.refresh
+  Update -> m.resizeList
+  Update -> key.Matches
+  Update -> key.Matches
+  Update -> m.list.SelectedItem
+  Update -> m.resizeList
+  Update -> msg.String
+  Update -> m.list.SelectedItem
+  Update -> m.list.Update
+  refresh -> ScanEngagements
+  refresh -> m.list.SetItems
+  refresh -> buildItems
+  View -> tea.NewView
+  View -> m.list.View
+  View -> m.renderConfirmOverlay
+  View -> tea.NewView
+  Select -> ScanEngagements
+  Select -> ui.Warning
+  Select -> err.Error
+  Select -> newPickerModel
+  Select -> tea.NewProgram(model).Run
+  Select -> tea.NewProgram
+  Select -> fmt.Errorf
+  Select -> fmt.Errorf
+  Select -> fmt.Errorf
+  Select -> filepath.Join
+  Select -> promptNewSlug
+  Select -> filepath.Join
+  Select -> os.MkdirAll
+  Select -> filepath.Join
+  Select -> fmt.Errorf
+  Select -> isReady
+  Select -> filepath.Join
+  promptNewSlug -> huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Engagement name").
+				Description("Lowercase, hyphens allowed. Used as the workspace directory name (e.g., acme-external-2026).").
+				Placeholder("e.g., acme-external-2026").
+				Value(&slug).
+				Validate(func(s string) error { return validateSlug(home, s) }),
+		).Title("New engagement").Description("Create the engagement workspace"),
+	).WithTheme
+  promptNewSlug -> huh.NewForm
+  promptNewSlug -> huh.NewGroup(
+			huh.NewInput().
+				Title("Engagement name").
+				Description("Lowercase, hyphens allowed. Used as the workspace directory name (e.g., acme-external-2026).").
+				Placeholder("e.g., acme-external-2026").
+				Value(&slug).
+				Validate(func(s string) error { return validateSlug(home, s) }),
+		).Title("New engagement").Description
+  promptNewSlug -> huh.NewGroup(
+			huh.NewInput().
+				Title("Engagement name").
+				Description("Lowercase, hyphens allowed. Used as the workspace directory name (e.g., acme-external-2026).").
+				Placeholder("e.g., acme-external-2026").
+				Value(&slug).
+				Validate(func(s string) error { return validateSlug(home, s) }),
+		).Title
+  promptNewSlug -> huh.NewGroup
+  promptNewSlug -> huh.NewInput().
+				Title("Engagement name").
+				Description("Lowercase, hyphens allowed. Used as the workspace directory name (e.g., acme-external-2026).").
+				Placeholder("e.g., acme-external-2026").
+				Value(&slug).
+				Validate
+  promptNewSlug -> huh.NewInput().
+				Title("Engagement name").
+				Description("Lowercase, hyphens allowed. Used as the workspace directory name (e.g., acme-external-2026).").
+				Placeholder("e.g., acme-external-2026").
+				Value
+  promptNewSlug -> huh.NewInput().
+				Title("Engagement name").
+				Description("Lowercase, hyphens allowed. Used as the workspace directory name (e.g., acme-external-2026).").
+				Placeholder
+  promptNewSlug -> huh.NewInput().
+				Title("Engagement name").
+				Description
+  promptNewSlug -> huh.NewInput().
+				Title
+  promptNewSlug -> huh.NewInput
+  promptNewSlug -> validateSlug
+  promptNewSlug -> huh.ThemeFunc
+  promptNewSlug -> form.Run
+  promptNewSlug -> fmt.Errorf
+=== clients/launcher/internal/engagement/picker_test.go
+  mkPlan -> t.Helper
+  mkPlan -> filepath.Join
+  mkPlan -> os.MkdirAll
+  mkPlan -> t.Fatal
+  mkPlan -> os.WriteFile
+  mkPlan -> filepath.Join
+  mkPlan -> t.Fatal
+  mkBareDir -> t.Helper
+  mkBareDir -> os.MkdirAll
+  mkBareDir -> filepath.Join
+  mkBareDir -> t.Fatal
+  TestScanEngagements_NoWorkspace -> t.TempDir
+  TestScanEngagements_NoWorkspace -> ScanEngagements
+  TestScanEngagements_NoWorkspace -> t.Fatalf
+  TestScanEngagements_NoWorkspace -> len
+  TestScanEngagements_NoWorkspace -> t.Errorf
+  TestScanEngagements_ReadyAndInProgress -> t.TempDir
+  TestScanEngagements_ReadyAndInProgress -> mkPlan
+  TestScanEngagements_ReadyAndInProgress -> mkPlan
+  TestScanEngagements_ReadyAndInProgress -> mkBareDir
+  TestScanEngagements_ReadyAndInProgress -> ScanEngagements
+  TestScanEngagements_ReadyAndInProgress -> t.Fatalf
+  TestScanEngagements_ReadyAndInProgress -> len
+  TestScanEngagements_ReadyAndInProgress -> t.Fatalf
+  TestScanEngagements_ReadyAndInProgress -> len
+  TestScanEngagements_ReadyAndInProgress -> t.Errorf
+  TestScanEngagements_ReadyAndInProgress -> t.Errorf
+  TestScanEngagements_ReadyAndInProgress -> t.Errorf
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> t.TempDir
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> mkBareDir
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> mkBareDir
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> mkBareDir
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> ScanEngagements
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> t.Fatalf
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> len
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> t.Fatalf
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> len
+  TestScanEngagements_IgnoresHiddenWorkspaceDirs -> t.Fatalf
+  TestScanEngagements_ReadyEngagementsBubbleUp -> t.TempDir
+  TestScanEngagements_ReadyEngagementsBubbleUp -> time.Now
+  TestScanEngagements_ReadyEngagementsBubbleUp -> mkBareDir
+  TestScanEngagements_ReadyEngagementsBubbleUp -> os.Chtimes
+  TestScanEngagements_ReadyEngagementsBubbleUp -> filepath.Join
+  TestScanEngagements_ReadyEngagementsBubbleUp -> t.Fatal
+  TestScanEngagements_ReadyEngagementsBubbleUp -> mkPlan
+  TestScanEngagements_ReadyEngagementsBubbleUp -> now.Add
+  TestScanEngagements_ReadyEngagementsBubbleUp -> os.Chtimes
+  TestScanEngagements_ReadyEngagementsBubbleUp -> filepath.Join
+  TestScanEngagements_ReadyEngagementsBubbleUp -> t.Fatal
+  TestScanEngagements_ReadyEngagementsBubbleUp -> ScanEngagements
+  TestScanEngagements_ReadyEngagementsBubbleUp -> t.Fatalf
+  TestScanEngagements_ReadyEngagementsBubbleUp -> len
+  TestScanEngagements_ReadyEngagementsBubbleUp -> t.Fatalf
+  TestScanEngagements_ReadyEngagementsBubbleUp -> len
+  TestScanEngagements_ReadyEngagementsBubbleUp -> t.Errorf
+  TestScanEngagements_ReadyEngagementsBubbleUp -> t.Errorf
+  TestIsReady -> t.TempDir
+  TestIsReady -> mkPlan
+  TestIsReady -> mkPlan
+  TestIsReady -> isReady
+  TestIsReady -> t.Errorf
+  TestIsReady -> isReady
+  TestIsReady -> t.Errorf
+  TestIsReady -> isReady
+  TestIsReady -> t.Errorf
+  TestValidateSlug_AcceptsReasonableSlugs -> t.TempDir
+  TestValidateSlug_AcceptsReasonableSlugs -> validateSlug
+  TestValidateSlug_AcceptsReasonableSlugs -> t.Errorf
+  TestValidateSlug_RejectsBadShape -> t.TempDir
+  TestValidateSlug_RejectsBadShape -> string
+  TestValidateSlug_RejectsBadShape -> make
+  TestValidateSlug_RejectsBadShape -> t.Run
+  TestValidateSlug_RejectsBadShape -> validateSlug
+  TestValidateSlug_RejectsBadShape -> t.Errorf
+  TestValidateSlug_RejectsCollisionWithExistingDir -> t.TempDir
+  TestValidateSlug_RejectsCollisionWithExistingDir -> os.MkdirAll
+  TestValidateSlug_RejectsCollisionWithExistingDir -> filepath.Join
+  TestValidateSlug_RejectsCollisionWithExistingDir -> t.Fatal
+  TestValidateSlug_RejectsCollisionWithExistingDir -> validateSlug
+  TestValidateSlug_RejectsCollisionWithExistingDir -> t.Error
+=== clients/launcher/internal/health/health.go
+  CheckLangGraph -> config.Get
+  CheckLangGraph -> fmt.Sprintf
+  CheckLangGraph -> json.Marshal
+  CheckLangGraph -> os.Getenv
+  CheckLangGraph -> strconv.Atoi
+  CheckLangGraph -> time.Duration
+  CheckLangGraph -> time.Now().Add
+  CheckLangGraph -> time.Now
+  CheckLangGraph -> time.Now().Before
+  CheckLangGraph -> time.Now
+  CheckLangGraph -> client.Post
+  CheckLangGraph -> bytes.NewReader
+  CheckLangGraph -> io.ReadAll
+  CheckLangGraph -> resp.Body.Close
+  CheckLangGraph -> bytes.Contains
+  CheckLangGraph -> resp.Body.Close
+  CheckLangGraph -> time.Sleep
+  CheckLangGraph -> fmt.Errorf
+  CheckLiteLLM -> config.Get
+  CheckLiteLLM -> fmt.Sprintf
+  CheckLiteLLM -> time.Now().Add
+  CheckLiteLLM -> time.Now
+  CheckLiteLLM -> time.Now().Before
+  CheckLiteLLM -> time.Now
+  CheckLiteLLM -> client.Get
+  CheckLiteLLM -> resp.Body.Close
+  CheckLiteLLM -> time.Sleep
+  CheckLiteLLM -> fmt.Errorf
+  CheckNeo4j -> config.Get
+  CheckNeo4j -> fmt.Sprintf
+  CheckNeo4j -> time.Now().Add
+  CheckNeo4j -> time.Now
+  CheckNeo4j -> time.Now().Before
+  CheckNeo4j -> time.Now
+  CheckNeo4j -> client.Get
+  CheckNeo4j -> resp.Body.Close
+  CheckNeo4j -> time.Sleep
+  CheckNeo4j -> fmt.Errorf
+  CheckWeb -> config.Get
+  CheckWeb -> fmt.Sprintf
+  CheckWeb -> time.Now().Add
+  CheckWeb -> time.Now
+  CheckWeb -> time.Now().Before
+  CheckWeb -> time.Now
+  CheckWeb -> client.Get
+  CheckWeb -> resp.Body.Close
+  CheckWeb -> time.Sleep
+  CheckWeb -> fmt.Errorf
+  WaitForServices -> ui.Info
+  WaitForServices -> CheckLangGraph
+  WaitForServices -> ui.Error
+  WaitForServices -> err.Error
+  WaitForServices -> ui.Success
+=== clients/launcher/internal/health/health_test.go
+  TestCheckLangGraph_Success -> httptest.NewServer
+  TestCheckLangGraph_Success -> http.HandlerFunc
+  TestCheckLangGraph_Success -> json.NewDecoder(r.Body).Decode
+  TestCheckLangGraph_Success -> json.NewDecoder
+  TestCheckLangGraph_Success -> t.Fatalf
+  TestCheckLangGraph_Success -> t.Fatalf
+  TestCheckLangGraph_Success -> w.WriteHeader
+  TestCheckLangGraph_Success -> w.Write
+  TestCheckLangGraph_Success -> w.WriteHeader
+  TestCheckLangGraph_Success -> server.Close
+  TestCheckLangGraph_Success -> server.Listener.Addr().String
+  TestCheckLangGraph_Success -> server.Listener.Addr
+  TestCheckLangGraph_Success -> len
+  TestCheckLangGraph_Success -> CheckLangGraph
+  TestCheckLangGraph_Success -> t.Errorf
+  TestCheckLangGraph_RejectsEmptyBody -> func() { LangGraphTimeout = prev }
+  TestCheckLangGraph_RejectsEmptyBody -> httptest.NewServer
+  TestCheckLangGraph_RejectsEmptyBody -> http.HandlerFunc
+  TestCheckLangGraph_RejectsEmptyBody -> w.WriteHeader
+  TestCheckLangGraph_RejectsEmptyBody -> w.Write
+  TestCheckLangGraph_RejectsEmptyBody -> server.Close
+  TestCheckLangGraph_RejectsEmptyBody -> server.Listener.Addr().String
+  TestCheckLangGraph_RejectsEmptyBody -> server.Listener.Addr
+  TestCheckLangGraph_RejectsEmptyBody -> len
+  TestCheckLangGraph_RejectsEmptyBody -> CheckLangGraph
+  TestCheckLangGraph_RejectsEmptyBody -> t.Error
+  TestCheckLiteLLM_Success -> httptest.NewServer
+  TestCheckLiteLLM_Success -> http.HandlerFunc
+  TestCheckLiteLLM_Success -> w.WriteHeader
+  TestCheckLiteLLM_Success -> w.WriteHeader
+  TestCheckLiteLLM_Success -> server.Close
+  TestCheckLiteLLM_Success -> server.Listener.Addr().String
+  TestCheckLiteLLM_Success -> server.Listener.Addr
+  TestCheckLiteLLM_Success -> len
+  TestCheckLiteLLM_Success -> CheckLiteLLM
+  TestCheckLiteLLM_Success -> t.Errorf
+  TestCheckNeo4j_Success -> httptest.NewServer
+  TestCheckNeo4j_Success -> http.HandlerFunc
+  TestCheckNeo4j_Success -> w.WriteHeader
+  TestCheckNeo4j_Success -> server.Close
+  TestCheckNeo4j_Success -> server.Listener.Addr().String
+  TestCheckNeo4j_Success -> server.Listener.Addr
+  TestCheckNeo4j_Success -> len
+  TestCheckNeo4j_Success -> CheckNeo4j
+  TestCheckNeo4j_Success -> t.Errorf
+  TestCheckWeb_Success -> httptest.NewServer
+  TestCheckWeb_Success -> http.HandlerFunc
+  TestCheckWeb_Success -> w.WriteHeader
+  TestCheckWeb_Success -> server.Close
+  TestCheckWeb_Success -> server.Listener.Addr().String
+  TestCheckWeb_Success -> server.Listener.Addr
+  TestCheckWeb_Success -> len
+  TestCheckWeb_Success -> CheckWeb
+  TestCheckWeb_Success -> t.Errorf
+=== clients/launcher/internal/migrate/migrate.go
+  RunAll -> config.RaptixHome
+  RunAll -> config.EnvPath
+  RunAll -> isInteractive
+  RunAll -> filepath.Join
+  RunAll -> c.loadAcks
+  RunAll -> Run
+  RunAll -> Registry
+  Run -> c.Acked
+  Run -> s.Apply
+  Run -> ui.Warning
+  Run -> fmt.Sprintf
+  Run -> ui.Info
+  Run -> c.ack
+  Run -> ui.Warning
+  Run -> fmt.Sprintf
+  MarkAcked -> filepath.Join
+  MarkAcked -> c.loadAcks
+  MarkAcked -> c.ack
+  loadAcks -> os.ReadFile
+  loadAcks -> json.Unmarshal
+  ack -> os.MkdirAll
+  ack -> filepath.Dir
+  ack -> json.MarshalIndent
+  ack -> os.WriteFile

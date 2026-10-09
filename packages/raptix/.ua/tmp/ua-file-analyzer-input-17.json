@@ -1,0 +1,168 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+  "batchFiles": [
+    {
+      "path": "raptix/mcp_server/__init__.py",
+      "language": "python",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/__main__.py",
+      "language": "python",
+      "sizeLines": 131,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/auth.py",
+      "language": "python",
+      "sizeLines": 208,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/config.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/conversation.py",
+      "language": "python",
+      "sizeLines": 110,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/engagements.py",
+      "language": "python",
+      "sizeLines": 235,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/findings.py",
+      "language": "python",
+      "sizeLines": 105,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/models.py",
+      "language": "python",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/server.py",
+      "language": "python",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/streaming.py",
+      "language": "python",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/tools_interactive.py",
+      "language": "python",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/mcp_server/tools_lifecycle.py",
+      "language": "python",
+      "sizeLines": 123,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/mcp_server/test_auth.py",
+      "language": "python",
+      "sizeLines": 215,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/mcp_server/test_config.py",
+      "language": "python",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/mcp_server/test_conversation.py",
+      "language": "python",
+      "sizeLines": 78,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/mcp_server/test_engagements.py",
+      "language": "python",
+      "sizeLines": 211,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/mcp_server/test_findings.py",
+      "language": "python",
+      "sizeLines": 96,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "raptix/mcp_server/__init__.py": [
+      "raptix/mcp_server/__main__.py",
+      "raptix/mcp_server/config.py"
+    ],
+    "raptix/mcp_server/__main__.py": [
+      "raptix/mcp_server/config.py"
+    ],
+    "raptix/mcp_server/auth.py": [],
+    "raptix/mcp_server/config.py": [],
+    "raptix/mcp_server/conversation.py": [
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/mcp_server/engagements.py": [
+      "raptix/mcp_server/config.py",
+      "raptix/mcp_server/models.py",
+      "raptix/mcp_server/streaming.py"
+    ],
+    "raptix/mcp_server/findings.py": [
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/mcp_server/models.py": [],
+    "raptix/mcp_server/server.py": [
+      "raptix/mcp_server/auth.py",
+      "raptix/mcp_server/config.py",
+      "raptix/mcp_server/engagements.py",
+      "raptix/mcp_server/tools_interactive.py",
+      "raptix/mcp_server/tools_lifecycle.py"
+    ],
+    "raptix/mcp_server/streaming.py": [
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/mcp_server/tools_interactive.py": [
+      "raptix/mcp_server/conversation.py",
+      "raptix/mcp_server/engagements.py",
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/mcp_server/tools_lifecycle.py": [
+      "raptix/mcp_server/config.py",
+      "raptix/mcp_server/engagements.py",
+      "raptix/mcp_server/findings.py",
+      "raptix/mcp_server/models.py"
+    ],
+    "tests/unit/mcp_server/test_auth.py": [
+      "raptix/mcp_server/auth.py",
+      "raptix/mcp_server/config.py"
+    ],
+    "tests/unit/mcp_server/test_config.py": [
+      "raptix/mcp_server/config.py"
+    ],
+    "tests/unit/mcp_server/test_conversation.py": [
+      "raptix/mcp_server/conversation.py"
+    ],
+    "tests/unit/mcp_server/test_engagements.py": [
+      "raptix/mcp_server/config.py",
+      "raptix/mcp_server/engagements.py"
+    ],
+    "tests/unit/mcp_server/test_findings.py": [
+      "raptix/mcp_server/findings.py"
+    ]
+  }
+}

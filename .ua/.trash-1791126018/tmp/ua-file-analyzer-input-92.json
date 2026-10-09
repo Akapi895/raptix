@@ -1,0 +1,34 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "docs/proposals/156-compose-architecture.md",
+                           "language":  "markdown",
+                           "sizeLines":  123,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/proposals/redamon-feature-integration.md",
+                           "language":  "markdown",
+                           "sizeLines":  142,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/proposals/redamon-top3-integration-plan.md",
+                           "language":  "markdown",
+                           "sizeLines":  98,
+                           "fileCategory":  "docs"
+                       }
+                   ],
+    "batchImportData":  {
+                            "docs/proposals/156-compose-architecture.md":  [
+
+                                                                           ],
+                            "docs/proposals/redamon-feature-integration.md":  [
+
+                                                                              ],
+                            "docs/proposals/redamon-top3-integration-plan.md":  [
+
+                                                                                ]
+                        }
+}

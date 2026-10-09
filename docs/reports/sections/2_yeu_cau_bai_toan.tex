@@ -1,0 +1,78 @@
+% =====================================================================
+%  File: sections/2_yeu_cau_bai_toan.tex
+%  Mục đích: Phần II - Yêu cầu bài toán
+% =====================================================================
+
+\section{Yêu cầu bài toán}
+\label{sec:yeu-cau-bai-toan}
+
+% ---------------------------------------------------------------
+\subsection{Phạm vi và đối tượng}
+\label{sec:pham-vi-doi-tuong}
+
+Đối tượng nghiên cứu của đề tài là hệ thống AI Agent Red Team tự động, hoạt động theo mô hình black-box hoặc gray-box trong môi trường được cấp quyền. Agent không được giả định có quyền truy cập mã nguồn, tài liệu thiết kế hay thông tin nội bộ của mục tiêu nếu benchmark không cung cấp. Khác với các hệ thống pentest chỉ tập trung vào một mục tiêu đơn lẻ, hệ thống được nghiên cứu phải có khả năng thực thi chuỗi tấn công hoàn chỉnh trên nhiều host, từ giai đoạn trinh sát ban đầu cho đến khi đạt mục tiêu cuối cùng.
+
+Các capability chính được xác định cho hệ thống bao gồm: khai thác web (web exploitation); khai thác dịch vụ hạ tầng Linux và giao thức mạng; chiếm đoạt nhiều host (multi-host compromise); leo thang đặc quyền (privilege escalation); pivoting qua các host trung gian; di chuyển ngang (lateral movement); tấn công Windows/Active Directory; và các chiến dịch red team dài hạn (long-horizon operations). Việc tách capability thành các nhóm riêng biệt giúp khung benchmark không bị lệch về một nhóm lỗ hổng dễ đo như web injection, đồng thời phản ánh chính xác hơn yêu cầu của một hệ thống red team tổng quát.
+
+Do đặc thù của đề tài, phạm vi nghiên cứu được giới hạn trong môi trường lab và benchmark được cấp quyền. Mọi hoạt động khai thác chỉ diễn ra trên các target cô lập, có scope và objective được xác định trước, tuân thủ nguyên tắc không ảnh hưởng đến hệ thống ngoài phạm vi. Hệ thống không được thiết kế để hoạt động trong môi trường sản xuất thực tế nếu chưa có sự phê duyệt tường minh từ các bên liên quan.
+
+% ---------------------------------------------------------------
+\subsection{Yêu cầu chức năng và phi chức năng}
+\label{sec:yeu-cau-chuc-nang-phi-chuc-nang}
+
+\subsubsection*{Yêu cầu chức năng}
+
+Hệ thống Raptix cần đáp ứng các yêu cầu chức năng sau:
+
+\begin{itemize}
+    \item Nhận mission (mục tiêu, scope, policy) và duy trì ranh giới mục tiêu trong toàn bộ phiên làm việc.
+    \item Lập kế hoạch và phân rã nhiệm vụ theo hai pha: \textbf{Initial Foothold} (khai thác theo chiều ngang) và \textbf{Network Propagation} (khai thác theo chiều sâu). Cơ chế chuyển pha dựa trên trạng thái của Attack Knowledge Graph (AKG).
+    \item Gọi công cụ qua interface thống nhất, quản lý timeout, lỗi, output lớn và trạng thái thực thi; hỗ trợ các phiên tương tác dài như \texttt{msfconsole} hay \texttt{sliver-client}.
+    \item Lưu trữ có cấu trúc các thực thể asset, identity, credential, vulnerability, finding, action và evidence vào AKG; biểu diễn quan hệ giữa chúng dưới dạng cạnh có nhãn và có hướng.
+    \item Truy vấn AKG để suy luận attack path: tìm đường đi từ foothold hiện tại tới mục tiêu cuối, phát hiện credential reuse path, privilege escalation path, và loại trừ các nhánh đã thất bại.
+    \item Tái sử dụng kiến thức ổn định (playbook, tool usage, remediation pattern) nhưng không biến suy đoán chưa kiểm chứng thành fact.
+    \item Sinh báo cáo cuối cùng dựa trên bằng chứng; chỉ kết luận khi mức xác minh của finding đáp ứng tiêu chí (candidate, validated, verified, reported).
+\end{itemize}
+
+\subsubsection*{Yêu cầu phi chức năng}
+
+\begin{itemize}
+    \item \textbf{Auditability:} có thể truy ngược mọi finding về tool call và bằng chứng tương ứng thông qua event stream của AKG.
+    \item \textbf{Reliability:} có khả năng tiếp tục khi tool lỗi, timeout hoặc agent con thất bại; state được phục hồi từ event stream mà không mất mát.
+    \item \textbf{Efficiency:} kiểm soát token, model calls, tool calls, thời gian thực thi và coordination overhead; hạn chế việc nhồi toàn bộ state vào context LLM.
+    \item \textbf{Extensibility:} có thể thêm tool, skill, agent hoặc benchmark mới mà không phá vỡ contract hiện có.
+    \item \textbf{Safety \& scope control:} mọi hoạt động thực thi phải nằm trong phạm vi đã được phê duyệt; scope guard được kiểm tra ở tầng tool executor trước khi chạy lệnh.
+\end{itemize}
+
+% ---------------------------------------------------------------
+\subsection{Phạm vi công việc cá nhân}
+\label{sec:pham-vi-cong-viec-ca-nhan}
+
+Trong bài toán lớn về tự động hóa red team bằng AI Agent, phần việc của em tập trung vào lớp nghiên cứu kiến trúc và khung đánh giá, đồng thời chuẩn bị nền tảng để triển khai các thay đổi vào prototype Raptix. Em không đặt mục tiêu ghép càng nhiều công cụ càng tốt, mà ưu tiên xác định những cơ chế làm hệ thống chạy đúng trong mission dài: quản lý state trên đồ thị, điều phối agent theo hai pha, governance cho tool, kiểm chứng bằng chứng và đo non-regression.
+
+Cụ thể, các hạng mục công việc chính bao gồm:
+
+\begin{itemize}
+    \item Khảo sát và phân tích Decepticon cùng Incalmo để rút ra các pattern kiến trúc về orchestration, sandbox, tách planning/execution và quản lý state ngoài context.
+    \item Thiết kế Attack Knowledge Graph (AKG) với schema cho node và edge, các invariant (schema, provenance, scope) và cơ chế versioning.
+    \item Thiết kế mô hình khai thác hai pha (Initial Foothold, Network Propagation), tiêu chí chuyển pha và cơ chế đồng bộ giữa hai pha.
+    \item Xây dựng quy trình benchmark theo ba trục Effectiveness, Efficiency và Reliability, với baseline được pin theo commit, model, provider và toolset.
+\end{itemize}
+
+Kết quả của giai đoạn này chưa nhằm khẳng định Raptix vượt các hệ thống tham chiếu về solve rate, mà tạo ``đường ray'' cho quá trình phát triển tiếp theo: biết cần thay đổi ở đâu, đo bằng gì và dữ liệu nào phải được giữ để kết luận.
+
+% ---------------------------------------------------------------
+\subsection{Tiêu chí đánh giá}
+\label{sec:tieu-chi-danh-gia}
+
+Khung đánh giá của đề tài sử dụng ba trục chính nhằm tránh việc tối ưu theo cảm tính hoặc chỉ tập trung vào một khía cạnh duy nhất:
+
+\begin{itemize}
+    \item \textbf{Effectiveness:} đo hệ thống có thực sự phát hiện, xác minh và hoàn thành mục tiêu tấn công hợp lệ hay không. Các chỉ số bao gồm task success rate, số verified findings, số flag hoặc objective đạt được, và mức độ hoàn thành attack-chain.
+    \item \textbf{Efficiency:} đo lượng tài nguyên cần dùng để đạt kết quả. Các chỉ số bao gồm token tiêu thụ, số model calls, số tool calls, wall-clock time, số vòng retry và coordination overhead giữa các agent.
+    \item \textbf{Reliability:} đo khả năng lặp lại kết quả qua nhiều lần chạy và khả năng sống sót trước lỗi. Các chỉ số bao gồm tỷ lệ thành công qua nhiều run, variance, khả năng recovery sau timeout hoặc failure, và tính nhất quán của state.
+\end{itemize}
+
+Để so sánh công bằng giữa các phiên bản của Raptix và với baseline, mọi yếu tố môi trường cần được cố định trước khi bắt đầu một vòng tối ưu: commit của mã nguồn, model và provider LLM, toolset, cấu hình benchmark và giới hạn tài nguyên. Sau mỗi nhóm thay đổi, hệ thống được chạy lại trên cùng điều kiện; nếu tăng solve rate nhưng chi phí hoặc độ bất ổn tăng quá lớn, thay đổi đó không được xem là tối ưu toàn diện.
+
+Ngoài ba trục chính, do đặc thù của mô hình khai thác hai pha, benchmark cần ghi thêm một số chỉ số bổ trợ: thời điểm chuyển pha Initial Foothold sang Network Propagation, số attack path đã được thử trong AKG, và tỷ lệ credential được tái sử dụng thành công trên nhiều host. Những chỉ số này giúp đánh giá đúng đắn vai trò của AKG và cơ chế chuyển pha trong toàn bộ vòng đời mission.

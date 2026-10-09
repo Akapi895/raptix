@@ -1,0 +1,186 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/tests/unit/research/test_graph.py",
+   "language": "python",
+   "sizeLines": 171,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/research/test_no_neo4j_at_import.py",
+   "language": "python",
+   "sizeLines": 15,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/reversing/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/runtime/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/runtime/test_shutdown.py",
+   "language": "python",
+   "sizeLines": 508,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_kernel/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_server/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_server/test_app.py",
+   "language": "python",
+   "sizeLines": 508,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_server/test_app_consttime_auth.py",
+   "language": "python",
+   "sizeLines": 93,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/schemas/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/server/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/server/test_checkpoint_persistence.py",
+   "language": "python",
+   "sizeLines": 54,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/skill_audit/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/skillogy/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/skillogy/test_stix_bootstrap.py",
+   "language": "python",
+   "sizeLines": 64,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/telemetry/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/test_next_version.py",
+   "language": "python",
+   "sizeLines": 54,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/test_plugin_loader.py",
+   "language": "python",
+   "sizeLines": 490,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/test_wheel_contents.py",
+   "language": "python",
+   "sizeLines": 35,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/tools/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/tools/bash/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/tools/test_misc_tool_wrappers.py",
+   "language": "python",
+   "sizeLines": 499,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/tools/web/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/web/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "scripts/bootstrap_skillogy_stix.py",
+   "language": "python",
+   "sizeLines": 23,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/tests/unit/research/test_graph.py": [],
+  "packages/raptix/tests/unit/research/test_no_neo4j_at_import.py": [],
+  "packages/raptix/tests/unit/reversing/__init__.py": [],
+  "packages/raptix/tests/unit/runtime/__init__.py": [],
+  "packages/raptix/tests/unit/runtime/test_shutdown.py": [],
+  "packages/raptix/tests/unit/sandbox_kernel/__init__.py": [],
+  "packages/raptix/tests/unit/sandbox_server/__init__.py": [],
+  "packages/raptix/tests/unit/sandbox_server/test_app.py": [],
+  "packages/raptix/tests/unit/sandbox_server/test_app_consttime_auth.py": [],
+  "packages/raptix/tests/unit/schemas/__init__.py": [],
+  "packages/raptix/tests/unit/server/__init__.py": [],
+  "packages/raptix/tests/unit/server/test_checkpoint_persistence.py": [
+   "packages/raptix/raptix/server/checkpointer.py"
+  ],
+  "packages/raptix/tests/unit/skill_audit/__init__.py": [],
+  "packages/raptix/tests/unit/skillogy/__init__.py": [],
+  "packages/raptix/tests/unit/skillogy/test_stix_bootstrap.py": [
+   "packages/raptix/raptix/skills/engine/builder/stix_bootstrap.py"
+  ],
+  "packages/raptix/tests/unit/telemetry/__init__.py": [],
+  "packages/raptix/tests/unit/test_next_version.py": [],
+  "packages/raptix/tests/unit/test_plugin_loader.py": [],
+  "packages/raptix/tests/unit/test_wheel_contents.py": [],
+  "packages/raptix/tests/unit/tools/__init__.py": [],
+  "packages/raptix/tests/unit/tools/bash/__init__.py": [],
+  "packages/raptix/tests/unit/tools/test_misc_tool_wrappers.py": [],
+  "packages/raptix/tests/unit/tools/web/__init__.py": [],
+  "packages/raptix/tests/unit/web/__init__.py": [],
+  "scripts/bootstrap_skillogy_stix.py": []
+ }
+}

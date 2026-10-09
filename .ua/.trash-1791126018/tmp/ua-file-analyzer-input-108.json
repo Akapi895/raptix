@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix",
+  "batchFiles": [
+    {
+      "path": "benchmark/results/XBEN-032-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-032-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-032-24/report.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-032-24/report.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-033-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-033-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 8,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-033-24/report.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-033-24/report.md",
+      "language": "markdown",
+      "sizeLines": 8,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-034-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-034-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 9,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-034-24/report.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-034-24/report.md",
+      "language": "markdown",
+      "sizeLines": 9,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-036-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 16,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-036-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-036-24/report.json",
+      "language": "json",
+      "sizeLines": 16,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-036-24/report.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-037-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 16,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-037-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 8,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-037-24/report.json",
+      "language": "json",
+      "sizeLines": 16,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-037-24/report.md",
+      "language": "markdown",
+      "sizeLines": 8,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-038-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-038-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-038-24/report.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-038-24/report.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-039-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "benchmark/results/XBEN-032-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-032-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-032-24/report.json": [],
+    "benchmark/results/XBEN-032-24/report.md": [],
+    "benchmark/results/XBEN-033-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-033-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-033-24/report.json": [],
+    "benchmark/results/XBEN-033-24/report.md": [],
+    "benchmark/results/XBEN-034-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-034-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-034-24/report.json": [],
+    "benchmark/results/XBEN-034-24/report.md": [],
+    "benchmark/results/XBEN-036-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-036-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-036-24/report.json": [],
+    "benchmark/results/XBEN-036-24/report.md": [],
+    "benchmark/results/XBEN-037-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-037-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-037-24/report.json": [],
+    "benchmark/results/XBEN-037-24/report.md": [],
+    "benchmark/results/XBEN-038-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-038-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-038-24/report.json": [],
+    "benchmark/results/XBEN-038-24/report.md": [],
+    "benchmark/results/XBEN-039-24/evidence/summary.json": []
+  }
+}

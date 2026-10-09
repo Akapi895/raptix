@@ -1,0 +1,119 @@
+{
+  "batchIndex": 75,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/d3-visualization.md",
+      "language": "markdown",
+      "sizeLines": 62,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/design-md.md",
+      "language": "markdown",
+      "sizeLines": 108,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/product-design-and-ux.md",
+      "language": "markdown",
+      "sizeLines": 67,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/ui-animation.md",
+      "language": "markdown",
+      "sizeLines": 236,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/web-accessibility.md",
+      "language": "markdown",
+      "sizeLines": 62,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/webapp-ui-skill.md",
+      "language": "markdown",
+      "sizeLines": 61,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:clients/web-raptix/docs/design-reference/imports/d3-visualization.md",
+      "type": "document",
+      "name": "d3-visualization.md",
+      "filePath": "clients/web-raptix/docs/design-reference/imports/d3-visualization.md",
+      "lineRange": [1, 62],
+      "summary": "Entry catalogue OpenDesign cho skill d3-visualization (curated từ @jiannanya/snow-d3, category diagrams, mode prototype): dạy agent tạo biểu đồ D3 và data visualization tương tác trên nhiều chart types (bar, line, map, force graph, sankey, treemap, sunburst, choropleth, animation, scroll) — dùng cho editorial dashboards, reports, prototypes giàu dữ liệu và explanatory graphics; frontmatter liệt kê triggers ('d3', 'interactive chart', 'd3 force graph', 'snow-d3'...); hướng dẫn cài upstream bundle vào skills/ rồi invoke bằng tên skill hoặc trigger phrase.",
+      "tags": ["skill-catalogue", "d3", "visualization", "design-reference"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/design-reference/imports/design-md.md",
+      "type": "document",
+      "name": "design-md.md",
+      "filePath": "clients/web-raptix/docs/design-reference/imports/design-md.md",
+      "lineRange": [1, 108],
+      "summary": "Skill design-md (MIT): tạo/cập nhật DESIGN.md — design-language contract sống cho AI agents và con người — cùng portable frontend-design skill; Phase 0 audit evidence (package.json, token layer, fonts, component system, motion, các surface hoàn thiện nhất, docs hiện có) rồi classify đúng một mode: A Document (trích xuất từ code, cite file chứng minh), B Merge (hợp nhất docs cũ, giữ mọi rule local, không regenerate), C Propose (greenfield — bắt buộc user approval trước khi viết); deliverables DESIGN.md + .agents/skills/frontend-design/SKILL.md + link từ AGENTS.md Quick Links; quy tắc viết (cite real files, name budgets, one-liner, sizes over adjectives, semantic tokens), constraints (không restyle UI theo doc, không copy design language của product khác) và verification pass bắt buộc trước khi xong.",
+      "tags": ["skill-catalogue", "design-system", "documentation", "design-reference"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/design-reference/imports/product-design-and-ux.md",
+      "type": "document",
+      "name": "product-design-and-ux.md",
+      "filePath": "clients/web-raptix/docs/design-reference/imports/product-design-and-ux.md",
+      "lineRange": [1, 67],
+      "summary": "Skill product-design-and-ux (MIT): định nghĩa user-facing product behavior từ validated evidence và approved scope — information architecture, task flows, state & recovery models, interface contracts, usability-study plans, tradeoffs interaction pattern, AI interaction contracts và engineering handoff; Entry Check xác nhận scope/users/evidence/goals, ghi thiếu input thay vì bịa; workflow 9 bước (trace outcomes → IA → content & cognitive demand → task flows mọi role kể cả recipient-side → state inventory → framework-neutral contracts → pattern selection → usability testing có consent → handoff với acceptance evidence); Load On Demand theo reference; guardrails: WCAG/ARIA route sang web-accessibility, spec route sang spec-driven-development, không coi AI output là bằng chứng đúng đắn.",
+      "tags": ["skill-catalogue", "ux", "task-flows", "design-reference"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/design-reference/imports/ui-animation.md",
+      "type": "document",
+      "name": "ui-animation.md",
+      "filePath": "clients/web-raptix/docs/design-reference/imports/ui-animation.md",
+      "lineRange": [1, 236],
+      "summary": "Skill ui-animation: build/review/đo UI motion — springs, gestures, drag, scroll effects, curve fitting từ screen recording, sparse interface SFX; core rules (chỉ animate transform/opacity, cấm animate layout properties và transition: all, ưu tiên CSS transitions > WAAPI > keyframes > JS, asymmetric timing cho high-frequency UI, @starting-style cho DOM entry); motion design principles (continuity, emerge từ trigger, confirm in place, delight tỉ lệ nghịch tần suất); bảng easing defaults theo element với named curves (Enter/Move/Drawer iOS-like/Expo out); transition decision rules theo UI pattern, spatial & sequencing (paired elements cùng easing/duration), accessibility (gate hover qua @media hover, prefers-reduced-motion), performance (pause looping off-screen, will-change tạm thời), anti-patterns, và workflow Discovery/Reverse-engineer với scripts extract_frames/track_motion/fit_curves.",
+      "tags": ["skill-catalogue", "animation", "motion", "performance", "design-reference"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/design-reference/imports/web-accessibility.md",
+      "type": "document",
+      "name": "web-accessibility.md",
+      "filePath": "clients/web-raptix/docs/design-reference/imports/web-accessibility.md",
+      "lineRange": [1, 62],
+      "summary": "Skill web-accessibility (MIT, WCAG 2.2 / WAI-ARIA 1.2): design/build/review web interface accessible — native semantics, keyboard & focus, forms & recovery, responsive input, motion, assistive-technology testing với bounded evidence; workflow 7 bước từ acceptance criteria template → ưu tiên native HTML → spec mọi interactive state (role/name/state/value, focus entry/exit/return) → visual/input adaptation → chỉ implement sau khi contract định nghĩa → verify ghi tool/version/browser-AT combos; decision rules (ARIA chỉ khi native semantics không đủ, ưu tiên <dialog>.showModal() cho modal, responsive navigation là disclosure không phải ARIA menu, Target Size tối thiểu 24×24 CSS px ở WCAG 2.2 AA); không phát conformance verdict từ automated scan, không biến thiếu testing thành pass.",
+      "tags": ["skill-catalogue", "accessibility", "wcag", "design-reference"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/design-reference/imports/webapp-ui-skill.md",
+      "type": "document",
+      "name": "webapp-ui-skill.md",
+      "filePath": "clients/web-raptix/docs/design-reference/imports/webapp-ui-skill.md",
+      "lineRange": [1, 61],
+      "summary": "Skill webapp-ui-skill: build/refactor/audit/validate dense web application UI (SaaS dashboards, admin panels, CRM, internal tools, data tables, settings flows) với 4 operating modes (build, audit, state-coverage, verify); required workflow: đọc dashboard-patterns và state-model references, dùng state-matrix + implementation-report templates, chạy scripts check_state_coverage.ts và visual_smoke_test.mjs khi có source/URL, trả notes có Ran/Skipped/Planned/Manual; design doctrine ưu tiên scanning/comparison/repeated action, compact headings, stable grids, explicit state handling, không hero sections/nested cards/viewport-scaled typography; validation qua quick_validate.py và lint_production_skill.py.",
+      "tags": ["skill-catalogue", "dashboard", "state-coverage", "design-reference"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:clients/web-raptix/docs/design-reference/imports/product-design-and-ux.md",
+      "target": "document:clients/web-raptix/docs/design-reference/imports/web-accessibility.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/design-reference/imports/ui-animation.md",
+      "target": "document:clients/web-raptix/docs/design-reference/imports/product-design-and-ux.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

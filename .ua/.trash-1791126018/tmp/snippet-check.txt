@@ -1,0 +1,1 @@
+Hàm trích danh sách subdomain từ text bằng re.findall với pattern domain, chuyển lowercase; hàm export của script, được main gọi.

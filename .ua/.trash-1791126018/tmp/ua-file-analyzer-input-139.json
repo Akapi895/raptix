@@ -1,0 +1,232 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  69,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/web-recon/api-enumeration/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  67,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/web-recon/auth-mapping/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  40,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/web-recon/cms-scanning/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  39,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/web-recon/cookie-audit/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  45,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/web-recon/discovery/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  116,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/web-recon/subdomain-takeover/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  175,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/web-recon/waf-detection/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  39,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/recon/wireless-security/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  380,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  45,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/android-malware/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  333,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/anti-debug-bypass/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  198,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/ctf-triage/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  350,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/deep-analysis/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  235,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/dotnet-malware/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  304,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/fileless-malware/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  319,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/firmware/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  67,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/fuzzing/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  272,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/game-security/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  52,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/ghidra/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  69,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/ios-static/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  162,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/malware-triage/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  142,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/packer-unpacking/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  177,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/ransomware-analysis/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  343,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/rootkit-analysis/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  428,
+                           "fileCategory":  "docs"
+                       }
+                   ],
+    "batchImportData":  {
+                            "packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md":  [
+
+                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/recon/web-recon/api-enumeration/SKILL.md":  [
+
+                                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/recon/web-recon/auth-mapping/SKILL.md":  [
+
+                                                                                                                  ],
+                            "packages/raptix/raptix/skills/defs/standard/recon/web-recon/cms-scanning/SKILL.md":  [
+
+                                                                                                                  ],
+                            "packages/raptix/raptix/skills/defs/standard/recon/web-recon/cookie-audit/SKILL.md":  [
+
+                                                                                                                  ],
+                            "packages/raptix/raptix/skills/defs/standard/recon/web-recon/discovery/SKILL.md":  [
+
+                                                                                                               ],
+                            "packages/raptix/raptix/skills/defs/standard/recon/web-recon/subdomain-takeover/SKILL.md":  [
+
+                                                                                                                        ],
+                            "packages/raptix/raptix/skills/defs/standard/recon/web-recon/waf-detection/SKILL.md":  [
+
+                                                                                                                   ],
+                            "packages/raptix/raptix/skills/defs/standard/recon/wireless-security/SKILL.md":  [
+
+                                                                                                             ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md":  [
+
+                                                                                              ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/android-malware/SKILL.md":  [
+
+                                                                                                              ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/anti-debug-bypass/SKILL.md":  [
+
+                                                                                                                ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/ctf-triage/SKILL.md":  [
+
+                                                                                                         ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/deep-analysis/SKILL.md":  [
+
+                                                                                                            ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/dotnet-malware/SKILL.md":  [
+
+                                                                                                             ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/fileless-malware/SKILL.md":  [
+
+                                                                                                               ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/firmware/SKILL.md":  [
+
+                                                                                                       ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/fuzzing/SKILL.md":  [
+
+                                                                                                      ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/game-security/SKILL.md":  [
+
+                                                                                                            ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/ghidra/SKILL.md":  [
+
+                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/ios-static/SKILL.md":  [
+
+                                                                                                         ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/malware-triage/SKILL.md":  [
+
+                                                                                                             ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/packer-unpacking/SKILL.md":  [
+
+                                                                                                               ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/ransomware-analysis/SKILL.md":  [
+
+                                                                                                                  ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/rootkit-analysis/SKILL.md":  [
+
+                                                                                                               ]
+                        }
+}

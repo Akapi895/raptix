@@ -1,0 +1,35 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/server/.env.example",
+      "language": "config",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/server/package.json",
+      "language": "json",
+      "sizeLines": 37,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/server/tsconfig.build.json",
+      "language": "json",
+      "sizeLines": 11,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/server/tsconfig.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "clients/web-raptix/server/.env.example": [],
+    "clients/web-raptix/server/package.json": [],
+    "clients/web-raptix/server/tsconfig.build.json": [],
+    "clients/web-raptix/server/tsconfig.json": []
+  }
+}

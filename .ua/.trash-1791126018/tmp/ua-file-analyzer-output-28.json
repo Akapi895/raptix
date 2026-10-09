@@ -1,0 +1,4601 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 19,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 19,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 19,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/emit.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 151,
+      "nonEmptyLines": 128,
+      "functions": [
+        {
+          "name": "_escape_string",
+          "startLine": 30,
+          "endLine": 47,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "cypher_literal",
+          "startLine": 50,
+          "endLine": 68,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "_node_merge",
+          "startLine": 71,
+          "endLine": 83,
+          "params": [
+            "node"
+          ]
+        },
+        {
+          "name": "_edge_merge",
+          "startLine": 86,
+          "endLine": 100,
+          "params": [
+            "edge"
+          ]
+        },
+        {
+          "name": "_dedup_nodes",
+          "startLine": 103,
+          "endLine": 113,
+          "params": [
+            "nodes"
+          ]
+        },
+        {
+          "name": "_dedup_edges",
+          "startLine": 116,
+          "endLine": 125,
+          "params": [
+            "edges"
+          ]
+        },
+        {
+          "name": "emit_cypher",
+          "startLine": 128,
+          "endLine": 151,
+          "params": [
+            "nodes",
+            "edges"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_escape_string",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "cypher_literal",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "_node_merge",
+          "line": 71,
+          "isDefault": false
+        },
+        {
+          "name": "_edge_merge",
+          "line": 86,
+          "isDefault": false
+        },
+        {
+          "name": "_dedup_nodes",
+          "line": 103,
+          "isDefault": false
+        },
+        {
+          "name": "_dedup_edges",
+          "line": 116,
+          "isDefault": false
+        },
+        {
+          "name": "emit_cypher",
+          "line": 128,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_escape_string",
+          "callee": "value.replace(\"\\\\\", \"\\\\\\\\\")\n        .replace(\"'\", \"\\\\'\")\n        .replace(\"\\n\", \"\\\\n\")\n        .replace(\"\\r\", \"\\\\r\")\n        .replace",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_escape_string",
+          "callee": "value.replace(\"\\\\\", \"\\\\\\\\\")\n        .replace(\"'\", \"\\\\'\")\n        .replace(\"\\n\", \"\\\\n\")\n        .replace",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_escape_string",
+          "callee": "value.replace(\"\\\\\", \"\\\\\\\\\")\n        .replace(\"'\", \"\\\\'\")\n        .replace",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_escape_string",
+          "callee": "value.replace(\"\\\\\", \"\\\\\\\\\")\n        .replace",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_escape_string",
+          "callee": "value.replace",
+          "lineNumber": 41
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "isinstance",
+          "lineNumber": 54
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "isinstance",
+          "lineNumber": 57
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "str",
+          "lineNumber": 58
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "isinstance",
+          "lineNumber": 59
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "repr",
+          "lineNumber": 60
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "isinstance",
+          "lineNumber": 61
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "_escape_string",
+          "lineNumber": 62
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "isinstance",
+          "lineNumber": 63
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "\", \".join",
+          "lineNumber": 64
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "cypher_literal",
+          "lineNumber": 64
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "isinstance",
+          "lineNumber": 65
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "\", \".join",
+          "lineNumber": 66
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "cypher_literal",
+          "lineNumber": 66
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "sorted",
+          "lineNumber": 66
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "value.items",
+          "lineNumber": 66
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "TypeError",
+          "lineNumber": 68
+        },
+        {
+          "caller": "cypher_literal",
+          "callee": "type",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_node_merge",
+          "callee": "cypher_literal",
+          "lineNumber": 77
+        },
+        {
+          "caller": "_node_merge",
+          "callee": "node.properties.items",
+          "lineNumber": 79
+        },
+        {
+          "caller": "_node_merge",
+          "callee": "\", \".join",
+          "lineNumber": 82
+        },
+        {
+          "caller": "_node_merge",
+          "callee": "cypher_literal",
+          "lineNumber": 82
+        },
+        {
+          "caller": "_node_merge",
+          "callee": "sorted",
+          "lineNumber": 82
+        },
+        {
+          "caller": "_node_merge",
+          "callee": "extra_props.items",
+          "lineNumber": 82
+        },
+        {
+          "caller": "_edge_merge",
+          "callee": "cypher_literal",
+          "lineNumber": 88
+        },
+        {
+          "caller": "_edge_merge",
+          "callee": "cypher_literal",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_edge_merge",
+          "callee": "\", \".join",
+          "lineNumber": 97
+        },
+        {
+          "caller": "_edge_merge",
+          "callee": "cypher_literal",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_edge_merge",
+          "callee": "sorted",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_edge_merge",
+          "callee": "edge.properties.items",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_dedup_nodes",
+          "callee": "set",
+          "lineNumber": 105
+        },
+        {
+          "caller": "_dedup_nodes",
+          "callee": "n.sort_key",
+          "lineNumber": 108
+        },
+        {
+          "caller": "_dedup_nodes",
+          "callee": "seen.add",
+          "lineNumber": 111
+        },
+        {
+          "caller": "_dedup_nodes",
+          "callee": "out.append",
+          "lineNumber": 112
+        },
+        {
+          "caller": "_dedup_edges",
+          "callee": "set",
+          "lineNumber": 117
+        },
+        {
+          "caller": "_dedup_edges",
+          "callee": "e.sort_key",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_dedup_edges",
+          "callee": "seen.add",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_dedup_edges",
+          "callee": "out.append",
+          "lineNumber": 124
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "sorted",
+          "lineNumber": 133
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "_dedup_nodes",
+          "lineNumber": 133
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "sorted",
+          "lineNumber": 134
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "_dedup_edges",
+          "lineNumber": 134
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "len",
+          "lineNumber": 138
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "len",
+          "lineNumber": 138
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "lines.append",
+          "lineNumber": 142
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "lines.append",
+          "lineNumber": 144
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "_node_merge",
+          "lineNumber": 144
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "lines.append",
+          "lineNumber": 145
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "lines.append",
+          "lineNumber": 147
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "lines.append",
+          "lineNumber": 149
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "_edge_merge",
+          "lineNumber": 149
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "lines.append",
+          "lineNumber": 150
+        },
+        {
+          "caller": "emit_cypher",
+          "callee": "\"\\n\".join",
+          "lineNumber": 151
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 7,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/mitre_stix.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 193,
+      "nonEmptyLines": 172,
+      "functions": [
+        {
+          "name": "_attck_id",
+          "startLine": 40,
+          "endLine": 47,
+          "params": [
+            "obj"
+          ]
+        },
+        {
+          "name": "_is_alive",
+          "startLine": 50,
+          "endLine": 51,
+          "params": [
+            "obj"
+          ]
+        },
+        {
+          "name": "emit_mitre_records",
+          "startLine": 54,
+          "endLine": 193,
+          "params": [
+            "bundle_path"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_attck_id",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "_is_alive",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "emit_mitre_records",
+          "line": 54,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_attck_id",
+          "callee": "obj.get",
+          "lineNumber": 42
+        },
+        {
+          "caller": "_attck_id",
+          "callee": "ref.get",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_attck_id",
+          "callee": "ref.get",
+          "lineNumber": 44
+        },
+        {
+          "caller": "_attck_id",
+          "callee": "isinstance",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_is_alive",
+          "callee": "obj.get",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_is_alive",
+          "callee": "obj.get",
+          "lineNumber": 51
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "bundle_path.exists",
+          "lineNumber": 56
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "FileNotFoundError",
+          "lineNumber": 57
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "json.loads",
+          "lineNumber": 58
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "bundle_path.read_text",
+          "lineNumber": 58
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "payload.get",
+          "lineNumber": 59
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "isinstance",
+          "lineNumber": 60
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "ValueError",
+          "lineNumber": 61
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "isinstance",
+          "lineNumber": 71
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "obj.get",
+          "lineNumber": 73
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "_attck_id",
+          "lineNumber": 75
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "obj.get",
+          "lineNumber": 76
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "_is_alive",
+          "lineNumber": 77
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "obj.get",
+          "lineNumber": 80
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "_attck_id",
+          "lineNumber": 82
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "_is_alive",
+          "lineNumber": 83
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "obj.get",
+          "lineNumber": 86
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "obj.get",
+          "lineNumber": 88
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "relationships.append",
+          "lineNumber": 89
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "sorted",
+          "lineNumber": 95
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tactic_by_shortname.items",
+          "lineNumber": 95
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "nodes.append",
+          "lineNumber": 96
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "Node",
+          "lineNumber": 97
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "str",
+          "lineNumber": 102
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tac.get",
+          "lineNumber": 102
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "str",
+          "lineNumber": 103
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tac.get",
+          "lineNumber": 103
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "bool",
+          "lineNumber": 108
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tac.get",
+          "lineNumber": 108
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "bool",
+          "lineNumber": 109
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tac.get",
+          "lineNumber": 109
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "sorted",
+          "lineNumber": 115
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "technique_by_id.items",
+          "lineNumber": 115
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "bool",
+          "lineNumber": 116
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tech.get",
+          "lineNumber": 116
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "attck_id.split",
+          "lineNumber": 119
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "list",
+          "lineNumber": 120
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tech.get",
+          "lineNumber": 120
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "nodes.append",
+          "lineNumber": 121
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "Node",
+          "lineNumber": 122
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "str",
+          "lineNumber": 127
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tech.get",
+          "lineNumber": 127
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "str",
+          "lineNumber": 128
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tech.get",
+          "lineNumber": 128
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "sorted",
+          "lineNumber": 133
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "bool",
+          "lineNumber": 135
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tech.get",
+          "lineNumber": 135
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "bool",
+          "lineNumber": 136
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tech.get",
+          "lineNumber": 136
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tech.get",
+          "lineNumber": 141
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "phase.get",
+          "lineNumber": 142
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "phase.get",
+          "lineNumber": 144
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "tactic_by_shortname.get",
+          "lineNumber": 145
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "edges.append",
+          "lineNumber": 148
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "Edge",
+          "lineNumber": 149
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "rel.get",
+          "lineNumber": 162
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "rel.get",
+          "lineNumber": 163
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "uuid_to_attck.get",
+          "lineNumber": 164
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "uuid_to_attck.get",
+          "lineNumber": 165
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "edges.append",
+          "lineNumber": 168
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "Edge",
+          "lineNumber": 169
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "nodes.append",
+          "lineNumber": 181
+        },
+        {
+          "caller": "emit_mitre_records",
+          "callee": "Node",
+          "lineNumber": 182
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/model.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 106,
+      "nonEmptyLines": 83,
+      "functions": [
+        {
+          "name": "_canonical_props",
+          "startLine": 22,
+          "endLine": 24,
+          "params": [
+            "props"
+          ]
+        },
+        {
+          "name": "canonicalize_node",
+          "startLine": 86,
+          "endLine": 92,
+          "params": [
+            "node"
+          ]
+        },
+        {
+          "name": "canonicalize_edge",
+          "startLine": 95,
+          "endLine": 106,
+          "params": [
+            "edge"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "Node",
+          "startLine": 28,
+          "endLine": 54,
+          "methods": [
+            "__post_init__",
+            "key",
+            "sort_key"
+          ],
+          "properties": [
+            "label",
+            "key_field",
+            "properties"
+          ]
+        },
+        {
+          "name": "Edge",
+          "startLine": 58,
+          "endLine": 83,
+          "methods": [
+            "sort_key"
+          ],
+          "properties": [
+            "edge_type",
+            "from_label",
+            "from_key_field",
+            "from_key",
+            "to_label",
+            "to_key_field",
+            "to_key",
+            "properties"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_canonical_props",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "Node",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "Edge",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "canonicalize_node",
+          "line": 86,
+          "isDefault": false
+        },
+        {
+          "name": "canonicalize_edge",
+          "line": 95,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_canonical_props",
+          "callee": "dict",
+          "lineNumber": 24
+        },
+        {
+          "caller": "_canonical_props",
+          "callee": "sorted",
+          "lineNumber": 24
+        },
+        {
+          "caller": "_canonical_props",
+          "callee": "props.items",
+          "lineNumber": 24
+        },
+        {
+          "caller": "__post_init__",
+          "callee": "ValueError",
+          "lineNumber": 44
+        },
+        {
+          "caller": "__post_init__",
+          "callee": "sorted",
+          "lineNumber": 46
+        },
+        {
+          "caller": "sort_key",
+          "callee": "str",
+          "lineNumber": 54
+        },
+        {
+          "caller": "sort_key",
+          "callee": "str",
+          "lineNumber": 79
+        },
+        {
+          "caller": "sort_key",
+          "callee": "str",
+          "lineNumber": 82
+        },
+        {
+          "caller": "canonicalize_node",
+          "callee": "Node",
+          "lineNumber": 88
+        },
+        {
+          "caller": "canonicalize_node",
+          "callee": "_canonical_props",
+          "lineNumber": 91
+        },
+        {
+          "caller": "canonicalize_edge",
+          "callee": "Edge",
+          "lineNumber": 97
+        },
+        {
+          "caller": "canonicalize_edge",
+          "callee": "_canonical_props",
+          "lineNumber": 105
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 3,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/seeds.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 162,
+      "nonEmptyLines": 142,
+      "functions": [
+        {
+          "name": "_read_yaml",
+          "startLine": 45,
+          "endLine": 51,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "load_phases",
+          "startLine": 54,
+          "endLine": 84,
+          "params": []
+        },
+        {
+          "name": "load_asset_types",
+          "startLine": 87,
+          "endLine": 129,
+          "params": []
+        },
+        {
+          "name": "load_mocs",
+          "startLine": 132,
+          "endLine": 162,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "PhaseSeed",
+          "startLine": 25,
+          "endLine": 28,
+          "methods": [],
+          "properties": [
+            "name",
+            "kill_chain_order",
+            "kind"
+          ]
+        },
+        {
+          "name": "AssetTypeSeed",
+          "startLine": 32,
+          "endLine": 35,
+          "methods": [],
+          "properties": [
+            "name",
+            "category",
+            "phases"
+          ]
+        },
+        {
+          "name": "MocSeed",
+          "startLine": 39,
+          "endLine": 42,
+          "methods": [],
+          "properties": [
+            "name",
+            "parent_phase",
+            "description"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "PhaseSeed",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "AssetTypeSeed",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "MocSeed",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "_read_yaml",
+          "line": 45,
+          "isDefault": false
+        },
+        {
+          "name": "load_phases",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "load_asset_types",
+          "line": 87,
+          "isDefault": false
+        },
+        {
+          "name": "load_mocs",
+          "line": 132,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_read_yaml",
+          "callee": "path.exists",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_read_yaml",
+          "callee": "FileNotFoundError",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_read_yaml",
+          "callee": "yaml.safe_load",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_read_yaml",
+          "callee": "path.read_text",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_read_yaml",
+          "callee": "isinstance",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_read_yaml",
+          "callee": "ValueError",
+          "lineNumber": 50
+        },
+        {
+          "caller": "load_phases",
+          "callee": "_read_yaml",
+          "lineNumber": 59
+        },
+        {
+          "caller": "load_phases",
+          "callee": "raw.get",
+          "lineNumber": 60
+        },
+        {
+          "caller": "load_phases",
+          "callee": "isinstance",
+          "lineNumber": 61
+        },
+        {
+          "caller": "load_phases",
+          "callee": "ValueError",
+          "lineNumber": 62
+        },
+        {
+          "caller": "load_phases",
+          "callee": "set",
+          "lineNumber": 63
+        },
+        {
+          "caller": "load_phases",
+          "callee": "isinstance",
+          "lineNumber": 66
+        },
+        {
+          "caller": "load_phases",
+          "callee": "ValueError",
+          "lineNumber": 67
+        },
+        {
+          "caller": "load_phases",
+          "callee": "str",
+          "lineNumber": 69
+        },
+        {
+          "caller": "load_phases",
+          "callee": "int",
+          "lineNumber": 70
+        },
+        {
+          "caller": "load_phases",
+          "callee": "str",
+          "lineNumber": 71
+        },
+        {
+          "caller": "load_phases",
+          "callee": "ValueError",
+          "lineNumber": 73
+        },
+        {
+          "caller": "load_phases",
+          "callee": "ValueError",
+          "lineNumber": 77
+        },
+        {
+          "caller": "load_phases",
+          "callee": "ValueError",
+          "lineNumber": 81
+        },
+        {
+          "caller": "load_phases",
+          "callee": "seen.add",
+          "lineNumber": 82
+        },
+        {
+          "caller": "load_phases",
+          "callee": "out.append",
+          "lineNumber": 83
+        },
+        {
+          "caller": "load_phases",
+          "callee": "PhaseSeed",
+          "lineNumber": 83
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "_read_yaml",
+          "lineNumber": 89
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "raw.get",
+          "lineNumber": 90
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "isinstance",
+          "lineNumber": 91
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "ValueError",
+          "lineNumber": 92
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "set",
+          "lineNumber": 93
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "isinstance",
+          "lineNumber": 96
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "ValueError",
+          "lineNumber": 97
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "str",
+          "lineNumber": 99
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "str",
+          "lineNumber": 100
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "ValueError",
+          "lineNumber": 102
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "ValueError",
+          "lineNumber": 106
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "seen.add",
+          "lineNumber": 107
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "entry.get",
+          "lineNumber": 108
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "isinstance",
+          "lineNumber": 109
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "tuple",
+          "lineNumber": 111
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "str",
+          "lineNumber": 111
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "out.append",
+          "lineNumber": 112
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "AssetTypeSeed",
+          "lineNumber": 112
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "ValueError",
+          "lineNumber": 117
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "load_phases",
+          "lineNumber": 122
+        },
+        {
+          "caller": "load_asset_types",
+          "callee": "ValueError",
+          "lineNumber": 126
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "_read_yaml",
+          "lineNumber": 134
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "raw.get",
+          "lineNumber": 135
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "isinstance",
+          "lineNumber": 136
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "ValueError",
+          "lineNumber": 137
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "set",
+          "lineNumber": 138
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "isinstance",
+          "lineNumber": 141
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "ValueError",
+          "lineNumber": 142
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "str",
+          "lineNumber": 144
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "str",
+          "lineNumber": 145
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "str",
+          "lineNumber": 146
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "ValueError",
+          "lineNumber": 148
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "ValueError",
+          "lineNumber": 152
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "seen.add",
+          "lineNumber": 153
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "out.append",
+          "lineNumber": 154
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "MocSeed",
+          "lineNumber": 154
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "load_phases",
+          "lineNumber": 156
+        },
+        {
+          "caller": "load_mocs",
+          "callee": "ValueError",
+          "lineNumber": 159
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 4,
+        "classCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/seeds_to_graph.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 128,
+      "nonEmptyLines": 115,
+      "functions": [
+        {
+          "name": "emit_phase_records",
+          "startLine": 18,
+          "endLine": 32,
+          "params": []
+        },
+        {
+          "name": "emit_asset_type_records",
+          "startLine": 35,
+          "endLine": 80,
+          "params": []
+        },
+        {
+          "name": "emit_moc_records",
+          "startLine": 83,
+          "endLine": 117,
+          "params": []
+        },
+        {
+          "name": "emit_all_seed_records",
+          "startLine": 120,
+          "endLine": 128,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "emit_phase_records",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "emit_asset_type_records",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "emit_moc_records",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "emit_all_seed_records",
+          "line": 120,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "emit_phase_records",
+          "callee": "Node",
+          "lineNumber": 21
+        },
+        {
+          "caller": "emit_phase_records",
+          "callee": "load_phases",
+          "lineNumber": 30
+        },
+        {
+          "caller": "emit_asset_type_records",
+          "callee": "load_asset_types",
+          "lineNumber": 45
+        },
+        {
+          "caller": "emit_asset_type_records",
+          "callee": "Node",
+          "lineNumber": 47
+        },
+        {
+          "caller": "emit_asset_type_records",
+          "callee": "edges.append",
+          "lineNumber": 57
+        },
+        {
+          "caller": "emit_asset_type_records",
+          "callee": "Edge",
+          "lineNumber": 58
+        },
+        {
+          "caller": "emit_asset_type_records",
+          "callee": "edges.append",
+          "lineNumber": 69
+        },
+        {
+          "caller": "emit_asset_type_records",
+          "callee": "Edge",
+          "lineNumber": 70
+        },
+        {
+          "caller": "emit_moc_records",
+          "callee": "load_mocs",
+          "lineNumber": 92
+        },
+        {
+          "caller": "emit_moc_records",
+          "callee": "Node",
+          "lineNumber": 94
+        },
+        {
+          "caller": "emit_moc_records",
+          "callee": "Edge",
+          "lineNumber": 106
+        },
+        {
+          "caller": "emit_all_seed_records",
+          "callee": "fn",
+          "lineNumber": 125
+        },
+        {
+          "caller": "emit_all_seed_records",
+          "callee": "all_nodes.extend",
+          "lineNumber": 126
+        },
+        {
+          "caller": "emit_all_seed_records",
+          "callee": "all_edges.extend",
+          "lineNumber": 127
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/builder/skills.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 214,
+      "nonEmptyLines": 186,
+      "functions": [
+        {
+          "name": "_canonical_skill_path",
+          "startLine": 50,
+          "endLine": 53,
+          "params": [
+            "skill_md",
+            "root"
+          ]
+        },
+        {
+          "name": "_coerce_str_list",
+          "startLine": 56,
+          "endLine": 64,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "_truthy_str",
+          "startLine": 67,
+          "endLine": 68,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "_build_moc_lookup",
+          "startLine": 71,
+          "endLine": 76,
+          "params": []
+        },
+        {
+          "name": "emit_skill_records",
+          "startLine": 79,
+          "endLine": 214,
+          "params": [
+            "skills_root",
+            "commit_sha",
+            "built_at"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_canonical_skill_path",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "_coerce_str_list",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "_truthy_str",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "_build_moc_lookup",
+          "line": 71,
+          "isDefault": false
+        },
+        {
+          "name": "emit_skill_records",
+          "line": 79,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_canonical_skill_path",
+          "callee": "skill_md.relative_to(root).as_posix",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_canonical_skill_path",
+          "callee": "skill_md.relative_to",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "isinstance",
+          "lineNumber": 60
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "str(v).strip",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "str",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "str(v).strip",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "str",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "isinstance",
+          "lineNumber": 62
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "t.strip",
+          "lineNumber": 63
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "value.split",
+          "lineNumber": 63
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "t.strip",
+          "lineNumber": 63
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "str(value).strip",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "str",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "str(value).strip",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_coerce_str_list",
+          "callee": "str",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_truthy_str",
+          "callee": "value.strip",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_truthy_str",
+          "callee": "isinstance",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_truthy_str",
+          "callee": "value.strip",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_build_moc_lookup",
+          "callee": "load_mocs",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_build_moc_lookup",
+          "callee": "out.setdefault(moc.parent_phase, []).append",
+          "lineNumber": 75
+        },
+        {
+          "caller": "_build_moc_lookup",
+          "callee": "out.setdefault",
+          "lineNumber": 75
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "skills_root.exists",
+          "lineNumber": 92
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "FileNotFoundError",
+          "lineNumber": 93
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "datetime.now",
+          "lineNumber": 95
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "built_at.isoformat",
+          "lineNumber": 96
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "_build_moc_lookup",
+          "lineNumber": 98
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "set",
+          "lineNumber": 101
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "sorted",
+          "lineNumber": 103
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "skills_root.rglob",
+          "lineNumber": 103
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "skill_md.read_text",
+          "lineNumber": 104
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "parse_frontmatter",
+          "lineNumber": 106
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "RuntimeError",
+          "lineNumber": 108
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "str(meta.get(\"name\") or \"\").strip",
+          "lineNumber": 112
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "str",
+          "lineNumber": 112
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "meta.get",
+          "lineNumber": 112
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "str(meta.get(\"description\") or \"\").strip",
+          "lineNumber": 113
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "str",
+          "lineNumber": 113
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "meta.get",
+          "lineNumber": 113
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "RuntimeError",
+          "lineNumber": 115
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "meta.get",
+          "lineNumber": 118
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "isinstance",
+          "lineNumber": 119
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "str(metadata.get(\"subdomain\") or \"\").strip",
+          "lineNumber": 120
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "str",
+          "lineNumber": 120
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "metadata.get",
+          "lineNumber": 120
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "resolve_subdomain",
+          "lineNumber": 121
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "_canonical_skill_path",
+          "lineNumber": 123
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "body.encode",
+          "lineNumber": 124
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "hashlib.sha256(body_bytes).hexdigest",
+          "lineNumber": 125
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "hashlib.sha256",
+          "lineNumber": 125
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "coerce_mitre_list",
+          "lineNumber": 127
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "metadata.get",
+          "lineNumber": 127
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "_coerce_str_list",
+          "lineNumber": 128
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "metadata.get",
+          "lineNumber": 128
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "_coerce_str_list",
+          "lineNumber": 129
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "metadata.get",
+          "lineNumber": 129
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "_truthy_str",
+          "lineNumber": 130
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "metadata.get",
+          "lineNumber": 130
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "_truthy_str",
+          "lineNumber": 131
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "metadata.get",
+          "lineNumber": 131
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "_coerce_str_list",
+          "lineNumber": 132
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "meta.get",
+          "lineNumber": 132
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "meta.get",
+          "lineNumber": 132
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "len",
+          "lineNumber": 141
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "nodes.append",
+          "lineNumber": 152
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "Node",
+          "lineNumber": 152
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "edges.append",
+          "lineNumber": 156
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "Edge",
+          "lineNumber": 157
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "moc_lookup.get",
+          "lineNumber": 168
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "len",
+          "lineNumber": 169
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "edges.append",
+          "lineNumber": 170
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "Edge",
+          "lineNumber": 171
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "seen_tags.add",
+          "lineNumber": 185
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "nodes.append",
+          "lineNumber": 186
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "Node",
+          "lineNumber": 186
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "edges.append",
+          "lineNumber": 187
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "Edge",
+          "lineNumber": 188
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "classify_mitre_id",
+          "lineNumber": 201
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "edges.append",
+          "lineNumber": 202
+        },
+        {
+          "caller": "emit_skill_records",
+          "callee": "Edge",
+          "lineNumber": 203
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 5,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/agents/test_registry_parity.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 192,
+      "nonEmptyLines": 150,
+      "functions": [
+        {
+          "name": "_find_repo_file",
+          "startLine": 32,
+          "endLine": 37,
+          "params": [
+            "name"
+          ]
+        },
+        {
+          "name": "_subagent_entry_point_names",
+          "startLine": 40,
+          "endLine": 41,
+          "params": []
+        },
+        {
+          "name": "test_every_registered_subagent_has_a_graph",
+          "startLine": 44,
+          "endLine": 52,
+          "params": []
+        },
+        {
+          "name": "test_orchestrator_discovers_specialists_under_canonical_role",
+          "startLine": 55,
+          "endLine": 65,
+          "params": []
+        },
+        {
+          "name": "test_every_slot_role_has_a_model_tier",
+          "startLine": 68,
+          "endLine": 75,
+          "params": []
+        },
+        {
+          "name": "test_langgraph_manifest_covers_standard_graphs",
+          "startLine": 78,
+          "endLine": 90,
+          "params": []
+        },
+        {
+          "name": "test_langgraph_manifest_exports_runnable",
+          "startLine": 94,
+          "endLine": 105,
+          "params": [
+            "graph_name"
+          ]
+        },
+        {
+          "name": "test_known_specialists_fully_wired",
+          "startLine": 112,
+          "endLine": 117,
+          "params": [
+            "role"
+          ]
+        },
+        {
+          "name": "_seeded_phase_names",
+          "startLine": 130,
+          "endLine": 132,
+          "params": []
+        },
+        {
+          "name": "test_skillogy_phase_values_are_seeded_phases",
+          "startLine": 135,
+          "endLine": 139,
+          "params": []
+        },
+        {
+          "name": "test_every_standard_graph_has_a_skillogy_phase",
+          "startLine": 142,
+          "endLine": 146,
+          "params": []
+        },
+        {
+          "name": "test_moc_parent_phases_are_seeded",
+          "startLine": 154,
+          "endLine": 161,
+          "params": []
+        },
+        {
+          "name": "test_asset_taxonomy_covers_entry_domains",
+          "startLine": 187,
+          "endLine": 192,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_find_repo_file",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "_subagent_entry_point_names",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "test_every_registered_subagent_has_a_graph",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "test_orchestrator_discovers_specialists_under_canonical_role",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "test_every_slot_role_has_a_model_tier",
+          "line": 68,
+          "isDefault": false
+        },
+        {
+          "name": "test_langgraph_manifest_covers_standard_graphs",
+          "line": 78,
+          "isDefault": false
+        },
+        {
+          "name": "test_langgraph_manifest_exports_runnable",
+          "line": 93,
+          "isDefault": false
+        },
+        {
+          "name": "test_known_specialists_fully_wired",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "_seeded_phase_names",
+          "line": 130,
+          "isDefault": false
+        },
+        {
+          "name": "test_skillogy_phase_values_are_seeded_phases",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "test_every_standard_graph_has_a_skillogy_phase",
+          "line": 142,
+          "isDefault": false
+        },
+        {
+          "name": "test_moc_parent_phases_are_seeded",
+          "line": 154,
+          "isDefault": false
+        },
+        {
+          "name": "test_asset_taxonomy_covers_entry_domains",
+          "line": 187,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_find_repo_file",
+          "callee": "Path(__file__).resolve",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_find_repo_file",
+          "callee": "Path",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_find_repo_file",
+          "callee": "candidate.exists",
+          "lineNumber": 35
+        },
+        {
+          "caller": "_find_repo_file",
+          "callee": "FileNotFoundError",
+          "lineNumber": 37
+        },
+        {
+          "caller": "_subagent_entry_point_names",
+          "callee": "sorted",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_subagent_entry_point_names",
+          "callee": "entry_points",
+          "lineNumber": 41
+        },
+        {
+          "caller": "test_every_registered_subagent_has_a_graph",
+          "callee": "_subagent_entry_point_names",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_orchestrator_discovers_specialists_under_canonical_role",
+          "callee": "load_subagents_for_parent",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_every_slot_role_has_a_model_tier",
+          "callee": "sorted",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_every_slot_role_has_a_model_tier",
+          "callee": "set",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_every_slot_role_has_a_model_tier",
+          "callee": "set",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_langgraph_manifest_covers_standard_graphs",
+          "callee": "json.loads",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_langgraph_manifest_covers_standard_graphs",
+          "callee": "_find_repo_file(\"langgraph.json\").read_text",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_langgraph_manifest_covers_standard_graphs",
+          "callee": "_find_repo_file",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_langgraph_manifest_covers_standard_graphs",
+          "callee": "set",
+          "lineNumber": 85
+        },
+        {
+          "caller": "test_langgraph_manifest_covers_standard_graphs",
+          "callee": "set",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_langgraph_manifest_covers_standard_graphs",
+          "callee": "sorted",
+          "lineNumber": 87
+        },
+        {
+          "caller": "test_langgraph_manifest_covers_standard_graphs",
+          "callee": "sorted",
+          "lineNumber": 88
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "json.loads",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "_find_repo_file(\"langgraph.json\").read_text",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "_find_repo_file",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "manifest[\"graphs\"][graph_name].rsplit",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "Path(module_path)\n        .relative_to(\"packages/raptix\")\n        .with_suffix(\"\")\n        .as_posix()\n        .replace",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "Path(module_path)\n        .relative_to(\"packages/raptix\")\n        .with_suffix(\"\")\n        .as_posix",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "Path(module_path)\n        .relative_to(\"packages/raptix\")\n        .with_suffix",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "Path(module_path)\n        .relative_to",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "Path",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "getattr",
+          "lineNumber": 104
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "import_module",
+          "lineNumber": 104
+        },
+        {
+          "caller": "test_langgraph_manifest_exports_runnable",
+          "callee": "isinstance",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_known_specialists_fully_wired",
+          "callee": "_subagent_entry_point_names",
+          "lineNumber": 117
+        },
+        {
+          "caller": "_seeded_phase_names",
+          "callee": "yaml.safe_load",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_seeded_phase_names",
+          "callee": "_PHASES_YAML.read_text",
+          "lineNumber": 131
+        },
+        {
+          "caller": "test_skillogy_phase_values_are_seeded_phases",
+          "callee": "_seeded_phase_names",
+          "lineNumber": 137
+        },
+        {
+          "caller": "test_skillogy_phase_values_are_seeded_phases",
+          "callee": "_PHASE_FOR_ROLE.items",
+          "lineNumber": 138
+        },
+        {
+          "caller": "test_every_standard_graph_has_a_skillogy_phase",
+          "callee": "sorted",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_every_standard_graph_has_a_skillogy_phase",
+          "callee": "set",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_every_standard_graph_has_a_skillogy_phase",
+          "callee": "set",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_moc_parent_phases_are_seeded",
+          "callee": "_seeded_phase_names",
+          "lineNumber": 156
+        },
+        {
+          "caller": "test_moc_parent_phases_are_seeded",
+          "callee": "yaml.safe_load",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_moc_parent_phases_are_seeded",
+          "callee": "_MOC_YAML.read_text",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_asset_taxonomy_covers_entry_domains",
+          "callee": "load_asset_types",
+          "lineNumber": 190
+        },
+        {
+          "caller": "test_asset_taxonomy_covers_entry_domains",
+          "callee": "sorted",
+          "lineNumber": 191
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 13,
+        "functionCount": 13,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/capabilities/test_contracts.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 112,
+      "nonEmptyLines": 91,
+      "functions": [
+        {
+          "name": "_contract",
+          "startLine": 13,
+          "endLine": 24,
+          "params": []
+        },
+        {
+          "name": "test_contract_metadata_accepts_complete_contract",
+          "startLine": 27,
+          "endLine": 28,
+          "params": []
+        },
+        {
+          "name": "test_contract_metadata_rejects_unknown_fields_and_missing_negative_control",
+          "startLine": 31,
+          "endLine": 39,
+          "params": []
+        },
+        {
+          "name": "test_skill_audit_reports_invalid_capability_contract",
+          "startLine": 42,
+          "endLine": 57,
+          "params": []
+        },
+        {
+          "name": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "startLine": 60,
+          "endLine": 96,
+          "params": [
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_shipped_specialist_contracts_cover_every_supported_lane",
+          "startLine": 99,
+          "endLine": 112,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_contract",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "test_contract_metadata_accepts_complete_contract",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "test_contract_metadata_rejects_unknown_fields_and_missing_negative_control",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "test_skill_audit_reports_invalid_capability_contract",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "test_shipped_specialist_contracts_cover_every_supported_lane",
+          "line": 99,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_contract_metadata_accepts_complete_contract",
+          "callee": "validate_contract_metadata",
+          "lineNumber": 28
+        },
+        {
+          "caller": "test_contract_metadata_accepts_complete_contract",
+          "callee": "_contract",
+          "lineNumber": 28
+        },
+        {
+          "caller": "test_contract_metadata_rejects_unknown_fields_and_missing_negative_control",
+          "callee": "_contract",
+          "lineNumber": 32
+        },
+        {
+          "caller": "test_contract_metadata_rejects_unknown_fields_and_missing_negative_control",
+          "callee": "raw.pop",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_contract_metadata_rejects_unknown_fields_and_missing_negative_control",
+          "callee": "validate_contract_metadata",
+          "lineNumber": 36
+        },
+        {
+          "caller": "test_contract_metadata_rejects_unknown_fields_and_missing_negative_control",
+          "callee": "any",
+          "lineNumber": 38
+        },
+        {
+          "caller": "test_contract_metadata_rejects_unknown_fields_and_missing_negative_control",
+          "callee": "any",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_skill_audit_reports_invalid_capability_contract",
+          "callee": "validate_skill_file",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "callee": "web3.mkdir",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "callee": "web3.joinpath(\"SKILL.md\").write_text",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "callee": "web3.joinpath",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "callee": "legacy.mkdir",
+          "lineNumber": 85
+        },
+        {
+          "caller": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "callee": "legacy.joinpath(\"SKILL.md\").write_text",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "callee": "legacy.joinpath",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "callee": "discover_contracts",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_discover_contracts_loads_only_declared_valid_contracts",
+          "callee": "len",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_shipped_specialist_contracts_cover_every_supported_lane",
+          "callee": "discover_contracts",
+          "lineNumber": 102
+        },
+        {
+          "caller": "test_shipped_specialist_contracts_cover_every_supported_lane",
+          "callee": "Path",
+          "lineNumber": 102
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/capabilities/test_evidence.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 72,
+      "nonEmptyLines": 54,
+      "functions": [
+        {
+          "name": "test_evidence_requires_positive_and_baseline_signals",
+          "startLine": 8,
+          "endLine": 18,
+          "params": []
+        },
+        {
+          "name": "test_evidence_rejects_signal_that_also_appears_in_negative_control",
+          "startLine": 21,
+          "endLine": 31,
+          "params": []
+        },
+        {
+          "name": "test_evidence_rejects_invalid_regex_instead_of_falling_back_to_substring",
+          "startLine": 34,
+          "endLine": 43,
+          "params": []
+        },
+        {
+          "name": "test_evidence_file_paths_are_confined_to_workspace",
+          "startLine": 46,
+          "endLine": 56,
+          "params": [
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_evidence_files_must_be_distinct",
+          "startLine": 59,
+          "endLine": 72,
+          "params": [
+            "tmp_path"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_evidence_requires_positive_and_baseline_signals",
+          "line": 8,
+          "isDefault": false
+        },
+        {
+          "name": "test_evidence_rejects_signal_that_also_appears_in_negative_control",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "test_evidence_rejects_invalid_regex_instead_of_falling_back_to_substring",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "test_evidence_file_paths_are_confined_to_workspace",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "test_evidence_files_must_be_distinct",
+          "line": 59,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_evidence_requires_positive_and_baseline_signals",
+          "callee": "validate_evidence",
+          "lineNumber": 9
+        },
+        {
+          "caller": "test_evidence_rejects_signal_that_also_appears_in_negative_control",
+          "callee": "validate_evidence",
+          "lineNumber": 22
+        },
+        {
+          "caller": "test_evidence_rejects_invalid_regex_instead_of_falling_back_to_substring",
+          "callee": "validate_evidence",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_evidence_file_paths_are_confined_to_workspace",
+          "callee": "validate_evidence_files",
+          "lineNumber": 47
+        },
+        {
+          "caller": "test_evidence_files_must_be_distinct",
+          "callee": "evidence.write_text",
+          "lineNumber": 61
+        },
+        {
+          "caller": "test_evidence_files_must_be_distinct",
+          "callee": "validate_evidence_files",
+          "lineNumber": 63
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 5,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/capabilities/test_scorecards.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 48,
+      "nonEmptyLines": 36,
+      "functions": [
+        {
+          "name": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "startLine": 15,
+          "endLine": 33,
+          "params": []
+        },
+        {
+          "name": "test_held_out_fixture_covers_each_capability_lane",
+          "startLine": 36,
+          "endLine": 43,
+          "params": []
+        },
+        {
+          "name": "test_scorecards_reject_negative_measurements",
+          "startLine": 46,
+          "endLine": 48,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "test_held_out_fixture_covers_each_capability_lane",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "test_scorecards_reject_negative_measurements",
+          "line": 46,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "callee": "build_scorecards",
+          "lineNumber": 16
+        },
+        {
+          "caller": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "callee": "EvaluationRecord",
+          "lineNumber": 18
+        },
+        {
+          "caller": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "callee": "EvaluationRecord",
+          "lineNumber": 19
+        },
+        {
+          "caller": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "callee": "EvaluationRecord",
+          "lineNumber": 20
+        },
+        {
+          "caller": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "callee": "len",
+          "lineNumber": 24
+        },
+        {
+          "caller": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "callee": "pytest.approx",
+          "lineNumber": 28
+        },
+        {
+          "caller": "test_scorecards_preserve_unknown_cost_and_count_unique_verified_root_causes",
+          "callee": "pytest.approx",
+          "lineNumber": 30
+        },
+        {
+          "caller": "test_held_out_fixture_covers_each_capability_lane",
+          "callee": "Path",
+          "lineNumber": 37
+        },
+        {
+          "caller": "test_held_out_fixture_covers_each_capability_lane",
+          "callee": "load_evaluation_records",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_held_out_fixture_covers_each_capability_lane",
+          "callee": "set",
+          "lineNumber": 41
+        },
+        {
+          "caller": "test_held_out_fixture_covers_each_capability_lane",
+          "callee": "all",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_held_out_fixture_covers_each_capability_lane",
+          "callee": "build_scorecards",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_held_out_fixture_covers_each_capability_lane",
+          "callee": "set",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_scorecards_reject_negative_measurements",
+          "callee": "pytest.raises",
+          "lineNumber": 47
+        },
+        {
+          "caller": "test_scorecards_reject_negative_measurements",
+          "callee": "build_scorecards",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_scorecards_reject_negative_measurements",
+          "callee": "EvaluationRecord",
+          "lineNumber": 48
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/server/test_plugins_api.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 378,
+      "nonEmptyLines": 297,
+      "functions": [
+        {
+          "name": "_clean_lg_modules",
+          "startLine": 53,
+          "endLine": 69,
+          "params": []
+        },
+        {
+          "name": "_install_graph_module",
+          "startLine": 72,
+          "endLine": 82,
+          "params": [
+            "graphs",
+            "register_calls"
+          ]
+        },
+        {
+          "name": "test_path_to_module_happy_path",
+          "startLine": 88,
+          "endLine": 91,
+          "params": []
+        },
+        {
+          "name": "test_path_to_module_strips_leading_dot_slash_and_py_suffix",
+          "startLine": 94,
+          "endLine": 97,
+          "params": []
+        },
+        {
+          "name": "test_path_to_module_missing_variable_suffix_raises_value_error",
+          "startLine": 100,
+          "endLine": 102,
+          "params": []
+        },
+        {
+          "name": "test_resolve_bundle_known_returns_graph_map",
+          "startLine": 108,
+          "endLine": 110,
+          "params": []
+        },
+        {
+          "name": "test_resolve_bundle_unknown_raises_404",
+          "startLine": 113,
+          "endLine": 117,
+          "params": []
+        },
+        {
+          "name": "test_list_bundles_all_registered_reports_enabled_true",
+          "startLine": 123,
+          "endLine": 132,
+          "params": []
+        },
+        {
+          "name": "test_list_bundles_partial_registration_reports_enabled_false",
+          "startLine": 135,
+          "endLine": 143,
+          "params": []
+        },
+        {
+          "name": "test_list_bundles_nothing_registered_reports_enabled_false",
+          "startLine": 146,
+          "endLine": 151,
+          "params": []
+        },
+        {
+          "name": "test_enable_bundle_registers_every_graph",
+          "startLine": 157,
+          "endLine": 171,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        },
+        {
+          "name": "test_enable_bundle_skips_already_registered_graphs",
+          "startLine": 174,
+          "endLine": 189,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        },
+        {
+          "name": "test_enable_bundle_unknown_name_is_404",
+          "startLine": 192,
+          "endLine": 196,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        },
+        {
+          "name": "test_enable_bundle_register_graph_failure_is_500",
+          "startLine": 199,
+          "endLine": 215,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        },
+        {
+          "name": "test_disable_bundle_standard_is_400_before_any_import",
+          "startLine": 221,
+          "endLine": 226,
+          "params": []
+        },
+        {
+          "name": "test_disable_bundle_unknown_name_is_404",
+          "startLine": 229,
+          "endLine": 233,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        },
+        {
+          "name": "_install_disable_stubs",
+          "startLine": 236,
+          "endLine": 306,
+          "params": [
+            "graphs",
+            "deleted",
+            "postgres",
+            "delete_raises"
+          ]
+        },
+        {
+          "name": "test_disable_bundle_happy_path_removes_graphs",
+          "startLine": 309,
+          "endLine": 326,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        },
+        {
+          "name": "test_disable_bundle_skips_graphs_not_registered",
+          "startLine": 329,
+          "endLine": 343,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        },
+        {
+          "name": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "startLine": 346,
+          "endLine": 359,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        },
+        {
+          "name": "test_disable_bundle_swallows_assistants_delete_failure",
+          "startLine": 362,
+          "endLine": 378,
+          "params": [
+            "_clean_lg_modules"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_clean_lg_modules",
+          "line": 52,
+          "isDefault": false
+        },
+        {
+          "name": "_install_graph_module",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "test_path_to_module_happy_path",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "test_path_to_module_strips_leading_dot_slash_and_py_suffix",
+          "line": 94,
+          "isDefault": false
+        },
+        {
+          "name": "test_path_to_module_missing_variable_suffix_raises_value_error",
+          "line": 100,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_bundle_known_returns_graph_map",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_bundle_unknown_raises_404",
+          "line": 113,
+          "isDefault": false
+        },
+        {
+          "name": "test_list_bundles_all_registered_reports_enabled_true",
+          "line": 123,
+          "isDefault": false
+        },
+        {
+          "name": "test_list_bundles_partial_registration_reports_enabled_false",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "test_list_bundles_nothing_registered_reports_enabled_false",
+          "line": 146,
+          "isDefault": false
+        },
+        {
+          "name": "test_enable_bundle_registers_every_graph",
+          "line": 157,
+          "isDefault": false
+        },
+        {
+          "name": "test_enable_bundle_skips_already_registered_graphs",
+          "line": 174,
+          "isDefault": false
+        },
+        {
+          "name": "test_enable_bundle_unknown_name_is_404",
+          "line": 192,
+          "isDefault": false
+        },
+        {
+          "name": "test_enable_bundle_register_graph_failure_is_500",
+          "line": 199,
+          "isDefault": false
+        },
+        {
+          "name": "test_disable_bundle_standard_is_400_before_any_import",
+          "line": 221,
+          "isDefault": false
+        },
+        {
+          "name": "test_disable_bundle_unknown_name_is_404",
+          "line": 229,
+          "isDefault": false
+        },
+        {
+          "name": "_install_disable_stubs",
+          "line": 236,
+          "isDefault": false
+        },
+        {
+          "name": "test_disable_bundle_happy_path_removes_graphs",
+          "line": 309,
+          "isDefault": false
+        },
+        {
+          "name": "test_disable_bundle_skips_graphs_not_registered",
+          "line": 329,
+          "isDefault": false
+        },
+        {
+          "name": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "line": 346,
+          "isDefault": false
+        },
+        {
+          "name": "test_disable_bundle_swallows_assistants_delete_failure",
+          "line": 362,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_clean_lg_modules",
+          "callee": "sys.modules.get",
+          "lineNumber": 59
+        },
+        {
+          "caller": "_clean_lg_modules",
+          "callee": "sys.modules.pop",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_clean_lg_modules",
+          "callee": "saved.items",
+          "lineNumber": 65
+        },
+        {
+          "caller": "_clean_lg_modules",
+          "callee": "sys.modules.pop",
+          "lineNumber": 67
+        },
+        {
+          "caller": "register_graph",
+          "callee": "register_calls.append",
+          "lineNumber": 77
+        },
+        {
+          "caller": "_install_graph_module",
+          "callee": "types.ModuleType",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_path_to_module_happy_path",
+          "callee": "_path_to_module",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_path_to_module_strips_leading_dot_slash_and_py_suffix",
+          "callee": "_path_to_module",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_path_to_module_missing_variable_suffix_raises_value_error",
+          "callee": "pytest.raises",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_path_to_module_missing_variable_suffix_raises_value_error",
+          "callee": "_path_to_module",
+          "lineNumber": 102
+        },
+        {
+          "caller": "test_resolve_bundle_known_returns_graph_map",
+          "callee": "_resolve_bundle",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_resolve_bundle_unknown_raises_404",
+          "callee": "pytest.raises",
+          "lineNumber": 114
+        },
+        {
+          "caller": "test_resolve_bundle_unknown_raises_404",
+          "callee": "_resolve_bundle",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_resolve_bundle_unknown_raises_404",
+          "callee": "str",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_list_bundles_all_registered_reports_enabled_true",
+          "callee": "_BUNDLE_TO_GRAPHS.values",
+          "lineNumber": 124
+        },
+        {
+          "caller": "test_list_bundles_all_registered_reports_enabled_true",
+          "callee": "patch.object",
+          "lineNumber": 125
+        },
+        {
+          "caller": "test_list_bundles_all_registered_reports_enabled_true",
+          "callee": "client.get",
+          "lineNumber": 126
+        },
+        {
+          "caller": "test_list_bundles_all_registered_reports_enabled_true",
+          "callee": "resp.json",
+          "lineNumber": 128
+        },
+        {
+          "caller": "test_list_bundles_all_registered_reports_enabled_true",
+          "callee": "set",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_list_bundles_all_registered_reports_enabled_true",
+          "callee": "set",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_list_bundles_all_registered_reports_enabled_true",
+          "callee": "bundles.items",
+          "lineNumber": 130
+        },
+        {
+          "caller": "test_list_bundles_all_registered_reports_enabled_true",
+          "callee": "list",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_list_bundles_partial_registration_reports_enabled_false",
+          "callee": "list",
+          "lineNumber": 138
+        },
+        {
+          "caller": "test_list_bundles_partial_registration_reports_enabled_false",
+          "callee": "patch.object",
+          "lineNumber": 139
+        },
+        {
+          "caller": "test_list_bundles_partial_registration_reports_enabled_false",
+          "callee": "client.get",
+          "lineNumber": 140
+        },
+        {
+          "caller": "test_list_bundles_partial_registration_reports_enabled_false",
+          "callee": "resp.json",
+          "lineNumber": 142
+        },
+        {
+          "caller": "test_list_bundles_nothing_registered_reports_enabled_false",
+          "callee": "patch.object",
+          "lineNumber": 147
+        },
+        {
+          "caller": "test_list_bundles_nothing_registered_reports_enabled_false",
+          "callee": "set",
+          "lineNumber": 147
+        },
+        {
+          "caller": "test_list_bundles_nothing_registered_reports_enabled_false",
+          "callee": "client.get",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_list_bundles_nothing_registered_reports_enabled_false",
+          "callee": "resp.json",
+          "lineNumber": 150
+        },
+        {
+          "caller": "test_enable_bundle_registers_every_graph",
+          "callee": "_install_graph_module",
+          "lineNumber": 159
+        },
+        {
+          "caller": "test_enable_bundle_registers_every_graph",
+          "callee": "object",
+          "lineNumber": 160
+        },
+        {
+          "caller": "test_enable_bundle_registers_every_graph",
+          "callee": "patch.object",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_enable_bundle_registers_every_graph",
+          "callee": "client.post",
+          "lineNumber": 162
+        },
+        {
+          "caller": "test_enable_bundle_registers_every_graph",
+          "callee": "resp.json",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_enable_bundle_registers_every_graph",
+          "callee": "list",
+          "lineNumber": 165
+        },
+        {
+          "caller": "test_enable_bundle_registers_every_graph",
+          "callee": "all",
+          "lineNumber": 171
+        },
+        {
+          "caller": "test_enable_bundle_skips_already_registered_graphs",
+          "callee": "list",
+          "lineNumber": 177
+        },
+        {
+          "caller": "test_enable_bundle_skips_already_registered_graphs",
+          "callee": "_install_graph_module",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_enable_bundle_skips_already_registered_graphs",
+          "callee": "object",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_enable_bundle_skips_already_registered_graphs",
+          "callee": "patch.object",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_enable_bundle_skips_already_registered_graphs",
+          "callee": "object",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_enable_bundle_skips_already_registered_graphs",
+          "callee": "client.post",
+          "lineNumber": 184
+        },
+        {
+          "caller": "test_enable_bundle_skips_already_registered_graphs",
+          "callee": "resp.json",
+          "lineNumber": 186
+        },
+        {
+          "caller": "test_enable_bundle_unknown_name_is_404",
+          "callee": "_install_graph_module",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_enable_bundle_unknown_name_is_404",
+          "callee": "client.post",
+          "lineNumber": 194
+        },
+        {
+          "caller": "test_enable_bundle_unknown_name_is_404",
+          "callee": "resp.json",
+          "lineNumber": 196
+        },
+        {
+          "caller": "failing_register",
+          "callee": "RuntimeError",
+          "lineNumber": 203
+        },
+        {
+          "caller": "test_enable_bundle_register_graph_failure_is_500",
+          "callee": "types.ModuleType",
+          "lineNumber": 205
+        },
+        {
+          "caller": "test_enable_bundle_register_graph_failure_is_500",
+          "callee": "patch.object",
+          "lineNumber": 210
+        },
+        {
+          "caller": "test_enable_bundle_register_graph_failure_is_500",
+          "callee": "object",
+          "lineNumber": 210
+        },
+        {
+          "caller": "test_enable_bundle_register_graph_failure_is_500",
+          "callee": "client.post",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_enable_bundle_register_graph_failure_is_500",
+          "callee": "resp.json",
+          "lineNumber": 213
+        },
+        {
+          "caller": "test_disable_bundle_standard_is_400_before_any_import",
+          "callee": "client.post",
+          "lineNumber": 224
+        },
+        {
+          "caller": "test_disable_bundle_standard_is_400_before_any_import",
+          "callee": "resp.json",
+          "lineNumber": 226
+        },
+        {
+          "caller": "test_disable_bundle_unknown_name_is_404",
+          "callee": "_install_disable_stubs",
+          "lineNumber": 230
+        },
+        {
+          "caller": "test_disable_bundle_unknown_name_is_404",
+          "callee": "client.post",
+          "lineNumber": 231
+        },
+        {
+          "caller": "test_disable_bundle_unknown_name_is_404",
+          "callee": "resp.json",
+          "lineNumber": 233
+        },
+        {
+          "caller": "_install_disable_stubs",
+          "callee": "types.ModuleType",
+          "lineNumber": 257
+        },
+        {
+          "caller": "_install_disable_stubs",
+          "callee": "set",
+          "lineNumber": 260
+        },
+        {
+          "caller": "_install_disable_stubs",
+          "callee": "types.ModuleType",
+          "lineNumber": 263
+        },
+        {
+          "caller": "connect",
+          "callee": "_Conn",
+          "lineNumber": 275
+        },
+        {
+          "caller": "_install_disable_stubs",
+          "callee": "types.ModuleType",
+          "lineNumber": 277
+        },
+        {
+          "caller": "delete",
+          "callee": "deleted.append",
+          "lineNumber": 284
+        },
+        {
+          "caller": "delete",
+          "callee": "RuntimeError",
+          "lineNumber": 286
+        },
+        {
+          "caller": "delete",
+          "callee": "_empty",
+          "lineNumber": 292
+        },
+        {
+          "caller": "_install_disable_stubs",
+          "callee": "types.ModuleType",
+          "lineNumber": 298
+        },
+        {
+          "caller": "_install_disable_stubs",
+          "callee": "types.ModuleType",
+          "lineNumber": 300
+        },
+        {
+          "caller": "_install_disable_stubs",
+          "callee": "types.ModuleType",
+          "lineNumber": 304
+        },
+        {
+          "caller": "test_disable_bundle_happy_path_removes_graphs",
+          "callee": "list",
+          "lineNumber": 312
+        },
+        {
+          "caller": "test_disable_bundle_happy_path_removes_graphs",
+          "callee": "object",
+          "lineNumber": 313
+        },
+        {
+          "caller": "test_disable_bundle_happy_path_removes_graphs",
+          "callee": "_install_disable_stubs",
+          "lineNumber": 315
+        },
+        {
+          "caller": "test_disable_bundle_happy_path_removes_graphs",
+          "callee": "client.post",
+          "lineNumber": 317
+        },
+        {
+          "caller": "test_disable_bundle_happy_path_removes_graphs",
+          "callee": "resp.json",
+          "lineNumber": 319
+        },
+        {
+          "caller": "test_disable_bundle_happy_path_removes_graphs",
+          "callee": "len",
+          "lineNumber": 326
+        },
+        {
+          "caller": "test_disable_bundle_happy_path_removes_graphs",
+          "callee": "len",
+          "lineNumber": 326
+        },
+        {
+          "caller": "test_disable_bundle_skips_graphs_not_registered",
+          "callee": "list",
+          "lineNumber": 332
+        },
+        {
+          "caller": "test_disable_bundle_skips_graphs_not_registered",
+          "callee": "object",
+          "lineNumber": 334
+        },
+        {
+          "caller": "test_disable_bundle_skips_graphs_not_registered",
+          "callee": "_install_disable_stubs",
+          "lineNumber": 336
+        },
+        {
+          "caller": "test_disable_bundle_skips_graphs_not_registered",
+          "callee": "client.post",
+          "lineNumber": 338
+        },
+        {
+          "caller": "test_disable_bundle_skips_graphs_not_registered",
+          "callee": "resp.json",
+          "lineNumber": 340
+        },
+        {
+          "caller": "test_disable_bundle_skips_graphs_not_registered",
+          "callee": "len",
+          "lineNumber": 343
+        },
+        {
+          "caller": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "callee": "list",
+          "lineNumber": 350
+        },
+        {
+          "caller": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "callee": "object",
+          "lineNumber": 351
+        },
+        {
+          "caller": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "callee": "_install_disable_stubs",
+          "lineNumber": 353
+        },
+        {
+          "caller": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "callee": "client.post",
+          "lineNumber": 355
+        },
+        {
+          "caller": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "callee": "resp.json",
+          "lineNumber": 357
+        },
+        {
+          "caller": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "callee": "len",
+          "lineNumber": 358
+        },
+        {
+          "caller": "test_disable_bundle_uses_grpc_assistants_when_postgres",
+          "callee": "len",
+          "lineNumber": 358
+        },
+        {
+          "caller": "test_disable_bundle_swallows_assistants_delete_failure",
+          "callee": "list",
+          "lineNumber": 368
+        },
+        {
+          "caller": "test_disable_bundle_swallows_assistants_delete_failure",
+          "callee": "object",
+          "lineNumber": 369
+        },
+        {
+          "caller": "test_disable_bundle_swallows_assistants_delete_failure",
+          "callee": "_install_disable_stubs",
+          "lineNumber": 371
+        },
+        {
+          "caller": "test_disable_bundle_swallows_assistants_delete_failure",
+          "callee": "client.post",
+          "lineNumber": 373
+        },
+        {
+          "caller": "test_disable_bundle_swallows_assistants_delete_failure",
+          "callee": "resp.json",
+          "lineNumber": 375
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 21,
+        "functionCount": 21,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/skill_audit/test_aliases.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 48,
+      "nonEmptyLines": 37,
+      "functions": [
+        {
+          "name": "test_resolve_subdomain_returns_canonical_form",
+          "startLine": 26,
+          "endLine": 27,
+          "params": [
+            "raw",
+            "expected"
+          ]
+        },
+        {
+          "name": "test_resolve_subdomain_passes_through_unknown_values",
+          "startLine": 30,
+          "endLine": 33,
+          "params": []
+        },
+        {
+          "name": "test_resolve_subdomain_is_case_insensitive",
+          "startLine": 36,
+          "endLine": 38,
+          "params": []
+        },
+        {
+          "name": "test_alias_map_is_exposed_and_well_formed",
+          "startLine": 41,
+          "endLine": 48,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_resolve_subdomain_returns_canonical_form",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_subdomain_passes_through_unknown_values",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_subdomain_is_case_insensitive",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "test_alias_map_is_exposed_and_well_formed",
+          "line": 41,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_resolve_subdomain_returns_canonical_form",
+          "callee": "resolve_subdomain",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_resolve_subdomain_passes_through_unknown_values",
+          "callee": "resolve_subdomain",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_resolve_subdomain_is_case_insensitive",
+          "callee": "resolve_subdomain",
+          "lineNumber": 37
+        },
+        {
+          "caller": "test_resolve_subdomain_is_case_insensitive",
+          "callee": "resolve_subdomain",
+          "lineNumber": 38
+        },
+        {
+          "caller": "test_alias_map_is_exposed_and_well_formed",
+          "callee": "isinstance",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_alias_map_is_exposed_and_well_formed",
+          "callee": "set",
+          "lineNumber": 45
+        },
+        {
+          "caller": "test_alias_map_is_exposed_and_well_formed",
+          "callee": "SUBDOMAIN_ALIASES.values",
+          "lineNumber": 45
+        },
+        {
+          "caller": "test_alias_map_is_exposed_and_well_formed",
+          "callee": "set",
+          "lineNumber": 46
+        },
+        {
+          "caller": "test_alias_map_is_exposed_and_well_formed",
+          "callee": "SUBDOMAIN_ALIASES.keys",
+          "lineNumber": 46
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/skill_audit/test_canonical.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 37,
+      "nonEmptyLines": 27,
+      "functions": [
+        {
+          "name": "test_subdomain_list_path_points_at_packaged_yaml",
+          "startLine": 11,
+          "endLine": 13,
+          "params": []
+        },
+        {
+          "name": "test_load_canonical_subdomains_returns_frozenset_of_strings",
+          "startLine": 16,
+          "endLine": 20,
+          "params": []
+        },
+        {
+          "name": "test_canonical_list_contains_known_phases",
+          "startLine": 23,
+          "endLine": 27,
+          "params": []
+        },
+        {
+          "name": "test_canonical_list_excludes_known_aliases",
+          "startLine": 30,
+          "endLine": 37,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_subdomain_list_path_points_at_packaged_yaml",
+          "line": 11,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_canonical_subdomains_returns_frozenset_of_strings",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "test_canonical_list_contains_known_phases",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "test_canonical_list_excludes_known_aliases",
+          "line": 30,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_subdomain_list_path_points_at_packaged_yaml",
+          "callee": "SUBDOMAIN_LIST_PATH.exists",
+          "lineNumber": 13
+        },
+        {
+          "caller": "test_load_canonical_subdomains_returns_frozenset_of_strings",
+          "callee": "load_canonical_subdomains",
+          "lineNumber": 17
+        },
+        {
+          "caller": "test_load_canonical_subdomains_returns_frozenset_of_strings",
+          "callee": "isinstance",
+          "lineNumber": 18
+        },
+        {
+          "caller": "test_load_canonical_subdomains_returns_frozenset_of_strings",
+          "callee": "all",
+          "lineNumber": 19
+        },
+        {
+          "caller": "test_load_canonical_subdomains_returns_frozenset_of_strings",
+          "callee": "isinstance",
+          "lineNumber": 19
+        },
+        {
+          "caller": "test_canonical_list_contains_known_phases",
+          "callee": "load_canonical_subdomains",
+          "lineNumber": 24
+        },
+        {
+          "caller": "test_canonical_list_excludes_known_aliases",
+          "callee": "load_canonical_subdomains",
+          "lineNumber": 31
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/skill_audit/test_cli.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 90,
+      "nonEmptyLines": 72,
+      "functions": [
+        {
+          "name": "_make_corpus",
+          "startLine": 18,
+          "endLine": 38,
+          "params": [
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_scan_corpus_walks_every_skill_md",
+          "startLine": 41,
+          "endLine": 44,
+          "params": [
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_scan_corpus_reports_violations_per_file",
+          "startLine": 47,
+          "endLine": 57,
+          "params": [
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_main_exits_zero_when_warn_mode_and_violations",
+          "startLine": 60,
+          "endLine": 69,
+          "params": [
+            "tmp_path",
+            "capsys"
+          ]
+        },
+        {
+          "name": "test_main_exits_nonzero_when_strict_mode_and_violations",
+          "startLine": 72,
+          "endLine": 77,
+          "params": [
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_main_exits_zero_in_strict_mode_with_clean_corpus",
+          "startLine": 80,
+          "endLine": 90,
+          "params": [
+            "tmp_path"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_make_corpus",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "test_scan_corpus_walks_every_skill_md",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "test_scan_corpus_reports_violations_per_file",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "test_main_exits_zero_when_warn_mode_and_violations",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "test_main_exits_nonzero_when_strict_mode_and_violations",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "test_main_exits_zero_in_strict_mode_with_clean_corpus",
+          "line": 80,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_make_corpus",
+          "callee": "layout.items",
+          "lineNumber": 31
+        },
+        {
+          "caller": "_make_corpus",
+          "callee": "skill_dir.mkdir",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_make_corpus",
+          "callee": "(skill_dir / \"SKILL.md\").write_text",
+          "lineNumber": 34
+        },
+        {
+          "caller": "_make_corpus",
+          "callee": "(FIXTURES / fixture).read_text",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_scan_corpus_walks_every_skill_md",
+          "callee": "_make_corpus",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_scan_corpus_walks_every_skill_md",
+          "callee": "scan_corpus",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_scan_corpus_reports_violations_per_file",
+          "callee": "_make_corpus",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_scan_corpus_reports_violations_per_file",
+          "callee": "scan_corpus",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_scan_corpus_reports_violations_per_file",
+          "callee": "any",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_scan_corpus_reports_violations_per_file",
+          "callee": "any",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_scan_corpus_reports_violations_per_file",
+          "callee": "any",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_scan_corpus_reports_violations_per_file",
+          "callee": "any",
+          "lineNumber": 56
+        },
+        {
+          "caller": "test_scan_corpus_reports_violations_per_file",
+          "callee": "any",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_main_exits_zero_when_warn_mode_and_violations",
+          "callee": "_make_corpus",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_main_exits_zero_when_warn_mode_and_violations",
+          "callee": "main",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_main_exits_zero_when_warn_mode_and_violations",
+          "callee": "str",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_main_exits_zero_when_warn_mode_and_violations",
+          "callee": "capsys.readouterr",
+          "lineNumber": 66
+        },
+        {
+          "caller": "test_main_exits_nonzero_when_strict_mode_and_violations",
+          "callee": "_make_corpus",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_main_exits_nonzero_when_strict_mode_and_violations",
+          "callee": "main",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_main_exits_nonzero_when_strict_mode_and_violations",
+          "callee": "str",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_main_exits_zero_in_strict_mode_with_clean_corpus",
+          "callee": "(root / \"standard\" / \"recon\" / \"clean\").mkdir",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_main_exits_zero_in_strict_mode_with_clean_corpus",
+          "callee": "(root / \"standard\" / \"recon\" / \"clean\" / \"SKILL.md\").write_text",
+          "lineNumber": 85
+        },
+        {
+          "caller": "test_main_exits_zero_in_strict_mode_with_clean_corpus",
+          "callee": "(FIXTURES / \"clean.md\").read_text",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_main_exits_zero_in_strict_mode_with_clean_corpus",
+          "callee": "main",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_main_exits_zero_in_strict_mode_with_clean_corpus",
+          "callee": "str",
+          "lineNumber": 89
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/skill_audit/test_frontmatter.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 90,
+      "nonEmptyLines": 75,
+      "functions": [
+        {
+          "name": "test_parses_minimal_valid_frontmatter",
+          "startLine": 13,
+          "endLine": 29,
+          "params": []
+        },
+        {
+          "name": "test_handles_list_valued_mitre_field",
+          "startLine": 32,
+          "endLine": 47,
+          "params": []
+        },
+        {
+          "name": "test_handles_comma_separated_mitre_field",
+          "startLine": 50,
+          "endLine": 64,
+          "params": []
+        },
+        {
+          "name": "test_raises_when_frontmatter_block_is_missing",
+          "startLine": 67,
+          "endLine": 70,
+          "params": []
+        },
+        {
+          "name": "test_raises_when_yaml_is_malformed",
+          "startLine": 73,
+          "endLine": 76,
+          "params": []
+        },
+        {
+          "name": "test_returns_empty_body_when_only_frontmatter_present",
+          "startLine": 79,
+          "endLine": 90,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_parses_minimal_valid_frontmatter",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "test_handles_list_valued_mitre_field",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "test_handles_comma_separated_mitre_field",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "test_raises_when_frontmatter_block_is_missing",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "test_raises_when_yaml_is_malformed",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "test_returns_empty_body_when_only_frontmatter_present",
+          "line": 79,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_parses_minimal_valid_frontmatter",
+          "callee": "parse_frontmatter",
+          "lineNumber": 24
+        },
+        {
+          "caller": "test_handles_list_valued_mitre_field",
+          "callee": "parse_frontmatter",
+          "lineNumber": 46
+        },
+        {
+          "caller": "test_handles_comma_separated_mitre_field",
+          "callee": "parse_frontmatter",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_raises_when_frontmatter_block_is_missing",
+          "callee": "pytest.raises",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_raises_when_frontmatter_block_is_missing",
+          "callee": "parse_frontmatter",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_raises_when_yaml_is_malformed",
+          "callee": "pytest.raises",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_raises_when_yaml_is_malformed",
+          "callee": "parse_frontmatter",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_returns_empty_body_when_only_frontmatter_present",
+          "callee": "parse_frontmatter",
+          "lineNumber": 89
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/skill_audit/test_mitre.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 66,
+      "nonEmptyLines": 51,
+      "functions": [
+        {
+          "name": "test_classify_mitre_id_accepts_valid_formats",
+          "startLine": 25,
+          "endLine": 26,
+          "params": [
+            "raw",
+            "expected"
+          ]
+        },
+        {
+          "name": "test_classify_mitre_id_rejects_invalid_formats",
+          "startLine": 43,
+          "endLine": 44,
+          "params": [
+            "bad"
+          ]
+        },
+        {
+          "name": "test_coerce_mitre_list_from_yaml_list",
+          "startLine": 47,
+          "endLine": 51,
+          "params": []
+        },
+        {
+          "name": "test_coerce_mitre_list_from_csv_string",
+          "startLine": 54,
+          "endLine": 55,
+          "params": []
+        },
+        {
+          "name": "test_coerce_mitre_list_from_none_returns_empty",
+          "startLine": 58,
+          "endLine": 59,
+          "params": []
+        },
+        {
+          "name": "test_coerce_mitre_list_strips_whitespace_and_empties",
+          "startLine": 62,
+          "endLine": 66,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_classify_mitre_id_accepts_valid_formats",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "test_classify_mitre_id_rejects_invalid_formats",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "test_coerce_mitre_list_from_yaml_list",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "test_coerce_mitre_list_from_csv_string",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "test_coerce_mitre_list_from_none_returns_empty",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "test_coerce_mitre_list_strips_whitespace_and_empties",
+          "line": 62,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_classify_mitre_id_accepts_valid_formats",
+          "callee": "classify_mitre_id",
+          "lineNumber": 26
+        },
+        {
+          "caller": "test_classify_mitre_id_rejects_invalid_formats",
+          "callee": "classify_mitre_id",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_coerce_mitre_list_from_yaml_list",
+          "callee": "coerce_mitre_list",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_coerce_mitre_list_from_csv_string",
+          "callee": "coerce_mitre_list",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_coerce_mitre_list_from_none_returns_empty",
+          "callee": "coerce_mitre_list",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_coerce_mitre_list_strips_whitespace_and_empties",
+          "callee": "coerce_mitre_list",
+          "lineNumber": 63
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/skill_audit/test_path_kind.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 41,
+      "nonEmptyLines": 32,
+      "functions": [
+        {
+          "name": "test_offensive_paths_return_true",
+          "startLine": 21,
+          "endLine": 22,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "test_non_offensive_paths_return_false",
+          "startLine": 33,
+          "endLine": 34,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "test_handles_relative_paths",
+          "startLine": 37,
+          "endLine": 41,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_offensive_paths_return_true",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "test_non_offensive_paths_return_false",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "test_handles_relative_paths",
+          "line": 37,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_offensive_paths_return_true",
+          "callee": "is_offensive_path",
+          "lineNumber": 22
+        },
+        {
+          "caller": "test_non_offensive_paths_return_false",
+          "callee": "is_offensive_path",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_handles_relative_paths",
+          "callee": "is_offensive_path",
+          "lineNumber": 40
+        },
+        {
+          "caller": "test_handles_relative_paths",
+          "callee": "is_offensive_path",
+          "lineNumber": 41
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/skill_audit/test_rules.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 89,
+      "nonEmptyLines": 67,
+      "functions": [
+        {
+          "name": "_path_inside_offensive_tree",
+          "startLine": 17,
+          "endLine": 23,
+          "params": [
+            "name"
+          ]
+        },
+        {
+          "name": "_ids",
+          "startLine": 26,
+          "endLine": 27,
+          "params": [
+            "violations"
+          ]
+        },
+        {
+          "name": "test_clean_fixture_produces_no_violations",
+          "startLine": 30,
+          "endLine": 33,
+          "params": []
+        },
+        {
+          "name": "test_missing_subdomain_triggers_missing_required",
+          "startLine": 36,
+          "endLine": 39,
+          "params": []
+        },
+        {
+          "name": "test_bad_mitre_triggers_bad_mitre_format",
+          "startLine": 42,
+          "endLine": 45,
+          "params": []
+        },
+        {
+          "name": "test_no_attribution_triggers_when_offensive",
+          "startLine": 48,
+          "endLine": 51,
+          "params": []
+        },
+        {
+          "name": "test_reporting_skill_is_exempt_from_attribution_rule",
+          "startLine": 54,
+          "endLine": 57,
+          "params": []
+        },
+        {
+          "name": "test_bad_subdomain_triggers_bad_subdomain_rule",
+          "startLine": 60,
+          "endLine": 72,
+          "params": []
+        },
+        {
+          "name": "test_aliased_subdomain_is_accepted_as_canonical",
+          "startLine": 75,
+          "endLine": 89,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_path_inside_offensive_tree",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "_ids",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "test_clean_fixture_produces_no_violations",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "test_missing_subdomain_triggers_missing_required",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "test_bad_mitre_triggers_bad_mitre_format",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "test_no_attribution_triggers_when_offensive",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "test_reporting_skill_is_exempt_from_attribution_rule",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "test_bad_subdomain_triggers_bad_subdomain_rule",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "test_aliased_subdomain_is_accepted_as_canonical",
+          "line": 75,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_clean_fixture_produces_no_violations",
+          "callee": "(FIXTURES / \"clean.md\").read_text",
+          "lineNumber": 31
+        },
+        {
+          "caller": "test_clean_fixture_produces_no_violations",
+          "callee": "validate_skill_file",
+          "lineNumber": 32
+        },
+        {
+          "caller": "test_clean_fixture_produces_no_violations",
+          "callee": "_path_inside_offensive_tree",
+          "lineNumber": 32
+        },
+        {
+          "caller": "test_missing_subdomain_triggers_missing_required",
+          "callee": "(FIXTURES / \"missing_subdomain.md\").read_text",
+          "lineNumber": 37
+        },
+        {
+          "caller": "test_missing_subdomain_triggers_missing_required",
+          "callee": "validate_skill_file",
+          "lineNumber": 38
+        },
+        {
+          "caller": "test_missing_subdomain_triggers_missing_required",
+          "callee": "_path_inside_offensive_tree",
+          "lineNumber": 38
+        },
+        {
+          "caller": "test_missing_subdomain_triggers_missing_required",
+          "callee": "_ids",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_bad_mitre_triggers_bad_mitre_format",
+          "callee": "(FIXTURES / \"bad_mitre.md\").read_text",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_bad_mitre_triggers_bad_mitre_format",
+          "callee": "validate_skill_file",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_bad_mitre_triggers_bad_mitre_format",
+          "callee": "_path_inside_offensive_tree",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_bad_mitre_triggers_bad_mitre_format",
+          "callee": "_ids",
+          "lineNumber": 45
+        },
+        {
+          "caller": "test_no_attribution_triggers_when_offensive",
+          "callee": "(FIXTURES / \"no_attribution.md\").read_text",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_no_attribution_triggers_when_offensive",
+          "callee": "validate_skill_file",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_no_attribution_triggers_when_offensive",
+          "callee": "_path_inside_offensive_tree",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_no_attribution_triggers_when_offensive",
+          "callee": "_ids",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_reporting_skill_is_exempt_from_attribution_rule",
+          "callee": "(FIXTURES / \"reporting_skill.md\").read_text",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_reporting_skill_is_exempt_from_attribution_rule",
+          "callee": "validate_skill_file",
+          "lineNumber": 56
+        },
+        {
+          "caller": "test_reporting_skill_is_exempt_from_attribution_rule",
+          "callee": "_path_inside_offensive_tree",
+          "lineNumber": 56
+        },
+        {
+          "caller": "test_reporting_skill_is_exempt_from_attribution_rule",
+          "callee": "_ids",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_bad_subdomain_triggers_bad_subdomain_rule",
+          "callee": "validate_skill_file",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_bad_subdomain_triggers_bad_subdomain_rule",
+          "callee": "_ids",
+          "lineNumber": 72
+        },
+        {
+          "caller": "test_aliased_subdomain_is_accepted_as_canonical",
+          "callee": "validate_skill_file",
+          "lineNumber": 88
+        },
+        {
+          "caller": "test_aliased_subdomain_is_accepted_as_canonical",
+          "callee": "_ids",
+          "lineNumber": 89
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 9,
+        "functionCount": 9,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/skillogy/test_asset_types.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 106,
+      "nonEmptyLines": 95,
+      "functions": [
+        {
+          "name": "test_asset_type_seed_covers_requested_asset_and_domain_types",
+          "startLine": 87,
+          "endLine": 96,
+          "params": []
+        },
+        {
+          "name": "test_asset_type_graph_emits_subtype_edge_for_each_non_root_seed",
+          "startLine": 99,
+          "endLine": 106,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_asset_type_seed_covers_requested_asset_and_domain_types",
+          "line": 87,
+          "isDefault": false
+        },
+        {
+          "name": "test_asset_type_graph_emits_subtype_edge_for_each_non_root_seed",
+          "line": 99,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_asset_type_seed_covers_requested_asset_and_domain_types",
+          "callee": "load_asset_types",
+          "lineNumber": 88
+        },
+        {
+          "caller": "test_asset_type_seed_covers_requested_asset_and_domain_types",
+          "callee": "REQUESTED_ASSET_TYPE_COVERAGE.items",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_asset_type_graph_emits_subtype_edge_for_each_non_root_seed",
+          "callee": "load_asset_types",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_asset_type_graph_emits_subtype_edge_for_each_non_root_seed",
+          "callee": "emit_asset_type_records",
+          "lineNumber": 101
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    }
+  ]
+}

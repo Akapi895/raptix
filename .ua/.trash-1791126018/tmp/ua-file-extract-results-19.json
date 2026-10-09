@@ -1,0 +1,4826 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 28,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 28,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 28,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "clients/web-raptix/server/src/app.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 142,
+      "nonEmptyLines": 134,
+      "functions": [
+        {
+          "name": "buildApp",
+          "startLine": 72,
+          "endLine": 142,
+          "params": [
+            "options"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "buildApp",
+          "line": 72,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "buildApp",
+          "callee": "Fastify",
+          "lineNumber": 73
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerErrorHandler",
+          "lineNumber": 77
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerHealthRoutes",
+          "lineNumber": 78
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerCapabilitiesRoutes",
+          "lineNumber": 79
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 99
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerProjectRoutes",
+          "lineNumber": 100
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerRunRoutes",
+          "lineNumber": 108
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 108
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerEventRoutes",
+          "lineNumber": 109
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 109
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerApprovalRoutes",
+          "lineNumber": 110
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 110
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerFindingsRoutes",
+          "lineNumber": 111
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 111
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerGraphRoutes",
+          "lineNumber": 112
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 112
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerTimelineRoutes",
+          "lineNumber": 113
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 113
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerSettingsRoutes",
+          "lineNumber": 114
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 114
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerCampaignRoutes",
+          "lineNumber": 115
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 115
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerVaultRoutes",
+          "lineNumber": 116
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 116
+        },
+        {
+          "caller": "buildApp",
+          "callee": "registerMembersRoutes",
+          "lineNumber": 117
+        },
+        {
+          "caller": "buildApp",
+          "callee": "getLocalIdentity",
+          "lineNumber": 117
+        },
+        {
+          "caller": "sweep",
+          "callee": "ownership.sweepStaleCreating().then(() => options.runsService?.reconcileStale()).catch",
+          "lineNumber": 121
+        },
+        {
+          "caller": "sweep",
+          "callee": "ownership.sweepStaleCreating().then",
+          "lineNumber": 121
+        },
+        {
+          "caller": "sweep",
+          "callee": "ownership.sweepStaleCreating",
+          "lineNumber": 121
+        },
+        {
+          "caller": "sweep",
+          "callee": "options.runsService?.reconcileStale",
+          "lineNumber": 121
+        },
+        {
+          "caller": "sweep",
+          "callee": "app.log.error",
+          "lineNumber": 121
+        },
+        {
+          "caller": "buildApp",
+          "callee": "app.addHook",
+          "lineNumber": 122
+        },
+        {
+          "caller": "buildApp",
+          "callee": "ownership.sweepStaleCreating",
+          "lineNumber": 123
+        },
+        {
+          "caller": "buildApp",
+          "callee": "app.log.error",
+          "lineNumber": 124
+        },
+        {
+          "caller": "buildApp",
+          "callee": "options.runsService?.reconcileStale().catch",
+          "lineNumber": 125
+        },
+        {
+          "caller": "buildApp",
+          "callee": "options.runsService?.reconcileStale",
+          "lineNumber": 125
+        },
+        {
+          "caller": "buildApp",
+          "callee": "app.log.error",
+          "lineNumber": 125
+        },
+        {
+          "caller": "buildApp",
+          "callee": "setInterval",
+          "lineNumber": 127
+        },
+        {
+          "caller": "buildApp",
+          "callee": "timer.unref",
+          "lineNumber": 128
+        },
+        {
+          "caller": "buildApp",
+          "callee": "app.addHook",
+          "lineNumber": 129
+        },
+        {
+          "caller": "buildApp",
+          "callee": "clearInterval",
+          "lineNumber": 129
+        },
+        {
+          "caller": "buildApp",
+          "callee": "options.databaseHealth?.dispose?.bind",
+          "lineNumber": 132
+        },
+        {
+          "caller": "buildApp",
+          "callee": "app.addHook",
+          "lineNumber": 136
+        },
+        {
+          "caller": "buildApp",
+          "callee": "disposeDatabase",
+          "lineNumber": 137
+        }
+      ],
+      "metrics": {
+        "importCount": 31,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/auth/identity-provider.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 16,
+      "functions": [
+        {
+          "name": "getLocalIdentity",
+          "startLine": 17,
+          "endLine": 19,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "LOCAL_USER_ID",
+          "line": 8,
+          "isDefault": false
+        },
+        {
+          "name": "getLocalIdentity",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/config/env.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 298,
+      "nonEmptyLines": 279,
+      "functions": [
+        {
+          "name": "readHost",
+          "startLine": 76,
+          "endLine": 86,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "readPort",
+          "startLine": 88,
+          "endLine": 105,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "readNodeEnv",
+          "startLine": 107,
+          "endLine": 115,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "readLogLevel",
+          "startLine": 117,
+          "endLine": 139,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "readDatabaseUrl",
+          "startLine": 145,
+          "endLine": 156,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "readWorkspacePath",
+          "startLine": 159,
+          "endLine": 170,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "readGraphConfig",
+          "startLine": 178,
+          "endLine": 199,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "readVaultKey",
+          "startLine": 205,
+          "endLine": 221,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "readGoPhish",
+          "startLine": 223,
+          "endLine": 241,
+          "params": [
+            "source",
+            "issues"
+          ]
+        },
+        {
+          "name": "loadServerEnv",
+          "startLine": 243,
+          "endLine": 284,
+          "params": [
+            "source"
+          ]
+        },
+        {
+          "name": "readServerEnv",
+          "startLine": 286,
+          "endLine": 288,
+          "params": []
+        },
+        {
+          "name": "readSliver",
+          "startLine": 290,
+          "endLine": 298,
+          "params": [
+            "source",
+            "issues"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EnvValidationError",
+          "startLine": 64,
+          "endLine": 74,
+          "methods": [
+            "constructor"
+          ],
+          "properties": [
+            "issues"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "SERVER_ENV_DEFAULTS",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "EnvValidationError",
+          "line": 64,
+          "isDefault": false
+        },
+        {
+          "name": "loadServerEnv",
+          "line": 243,
+          "isDefault": false
+        },
+        {
+          "name": "readServerEnv",
+          "line": 286,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 68
+        },
+        {
+          "caller": "constructor",
+          "callee": "issues.join",
+          "lineNumber": 69
+        },
+        {
+          "caller": "readHost",
+          "callee": "HOST_PATTERN.test",
+          "lineNumber": 79
+        },
+        {
+          "caller": "readHost",
+          "callee": "issues.push",
+          "lineNumber": 80
+        },
+        {
+          "caller": "readPort",
+          "callee": "PORT_PATTERN.test",
+          "lineNumber": 91
+        },
+        {
+          "caller": "readPort",
+          "callee": "issues.push",
+          "lineNumber": 92
+        },
+        {
+          "caller": "readPort",
+          "callee": "Number.parseInt",
+          "lineNumber": 95
+        },
+        {
+          "caller": "readPort",
+          "callee": "Number.isSafeInteger",
+          "lineNumber": 97
+        },
+        {
+          "caller": "readPort",
+          "callee": "issues.push",
+          "lineNumber": 101
+        },
+        {
+          "caller": "readNodeEnv",
+          "callee": "issues.push",
+          "lineNumber": 111
+        },
+        {
+          "caller": "readLogLevel",
+          "callee": "allowed.find",
+          "lineNumber": 131
+        },
+        {
+          "caller": "readLogLevel",
+          "callee": "issues.push",
+          "lineNumber": 133
+        },
+        {
+          "caller": "readLogLevel",
+          "callee": "allowed.join",
+          "lineNumber": 134
+        },
+        {
+          "caller": "readDatabaseUrl",
+          "callee": "raw.trim",
+          "lineNumber": 151
+        },
+        {
+          "caller": "readDatabaseUrl",
+          "callee": "issues.push",
+          "lineNumber": 152
+        },
+        {
+          "caller": "readWorkspacePath",
+          "callee": "raw.trim",
+          "lineNumber": 165
+        },
+        {
+          "caller": "readWorkspacePath",
+          "callee": "issues.push",
+          "lineNumber": 166
+        },
+        {
+          "caller": "readGraphConfig",
+          "callee": "password.trim",
+          "lineNumber": 184
+        },
+        {
+          "caller": "readGraphConfig",
+          "callee": "issues.push",
+          "lineNumber": 185
+        },
+        {
+          "caller": "readGraphConfig",
+          "callee": "issues.push",
+          "lineNumber": 189
+        },
+        {
+          "caller": "readGraphConfig",
+          "callee": "/^\\d{1,5}$/.test",
+          "lineNumber": 193
+        },
+        {
+          "caller": "readGraphConfig",
+          "callee": "Number",
+          "lineNumber": 193
+        },
+        {
+          "caller": "readGraphConfig",
+          "callee": "Number",
+          "lineNumber": 193
+        },
+        {
+          "caller": "readGraphConfig",
+          "callee": "issues.push",
+          "lineNumber": 194
+        },
+        {
+          "caller": "readVaultKey",
+          "callee": "raw.trim",
+          "lineNumber": 211
+        },
+        {
+          "caller": "readVaultKey",
+          "callee": "issues.push",
+          "lineNumber": 212
+        },
+        {
+          "caller": "readVaultKey",
+          "callee": "Buffer.from",
+          "lineNumber": 215
+        },
+        {
+          "caller": "readVaultKey",
+          "callee": "issues.push",
+          "lineNumber": 217
+        },
+        {
+          "caller": "readGoPhish",
+          "callee": "apiKey.trim",
+          "lineNumber": 226
+        },
+        {
+          "caller": "readGoPhish",
+          "callee": "/[\\r\\n]/.test",
+          "lineNumber": 226
+        },
+        {
+          "caller": "readGoPhish",
+          "callee": "issues.push",
+          "lineNumber": 227
+        },
+        {
+          "caller": "readGoPhish",
+          "callee": "issues.push",
+          "lineNumber": 231
+        },
+        {
+          "caller": "readGoPhish",
+          "callee": "['localhost', '127.0.0.1', '[::1]', 'gophish'].includes",
+          "lineNumber": 232
+        },
+        {
+          "caller": "readGoPhish",
+          "callee": "issues.push",
+          "lineNumber": 234
+        },
+        {
+          "caller": "readGoPhish",
+          "callee": "issues.push",
+          "lineNumber": 237
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readHost",
+          "lineNumber": 247
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readPort",
+          "lineNumber": 248
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readNodeEnv",
+          "lineNumber": 249
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readLogLevel",
+          "lineNumber": 250
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readDatabaseUrl",
+          "lineNumber": 251
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readWorkspacePath",
+          "lineNumber": 252
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readGraphConfig",
+          "lineNumber": 253
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readVaultKey",
+          "lineNumber": 254
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readGoPhish",
+          "lineNumber": 255
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "readSliver",
+          "lineNumber": 256
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "apiKey.trim",
+          "lineNumber": 260
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "/[\\r\\n]/.test",
+          "lineNumber": 260
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "issues.push",
+          "lineNumber": 260
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "['127.0.0.1', 'localhost', '[::1]', 'evilginx-bridge'].includes",
+          "lineNumber": 263
+        },
+        {
+          "caller": "loadServerEnv",
+          "callee": "issues.push",
+          "lineNumber": 266
+        },
+        {
+          "caller": "readServerEnv",
+          "callee": "loadServerEnv",
+          "lineNumber": 287
+        },
+        {
+          "caller": "readSliver",
+          "callee": "key.trim",
+          "lineNumber": 293
+        },
+        {
+          "caller": "readSliver",
+          "callee": "/[\\r\\n]/.test",
+          "lineNumber": 293
+        },
+        {
+          "caller": "readSliver",
+          "callee": "issues.push",
+          "lineNumber": 293
+        },
+        {
+          "caller": "readSliver",
+          "callee": "['sliver-bridge','localhost','127.0.0.1','[::1]'].includes",
+          "lineNumber": 295
+        },
+        {
+          "caller": "readSliver",
+          "callee": "issues.push",
+          "lineNumber": 297
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 4,
+        "functionCount": 12,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/config/runtime.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 29,
+      "functions": [
+        {
+          "name": "url",
+          "startLine": 9,
+          "endLine": 15,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "loadRuntimeConfig",
+          "startLine": 16,
+          "endLine": 30,
+          "params": [
+            "source"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "loadRuntimeConfig",
+          "line": 16,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "url",
+          "callee": "['http:', 'https:'].includes",
+          "lineNumber": 12
+        },
+        {
+          "caller": "url",
+          "callee": "parsed.href.replace",
+          "lineNumber": 13
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "['RAPTIX_RUNTIME_WORKSPACE_ROOT', 'RAPTIX_RUNTIME_WORKSPACE_SLUG', 'RAPTIX_RUNTIME_LANGUAGE', 'RAPTIX_RUNTIME_SANDBOX_URL', 'RAPTIX_RUNTIME_ASSISTANTS'].some",
+          "lineNumber": 18
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "root.startsWith",
+          "lineNumber": 22
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "root.endsWith",
+          "lineNumber": 22
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "root.includes",
+          "lineNumber": 22
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "path.posix.normalize",
+          "lineNumber": 22
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "root.split('/').includes",
+          "lineNumber": 22
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "root.split",
+          "lineNumber": 22
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "/[\\x00-\\x1f]/.test",
+          "lineNumber": 22
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "isProjectSlug",
+          "lineNumber": 24
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "(source.RAPTIX_RUNTIME_ASSISTANTS ?? 'soundwave,decepticon,raptix,vulnresearch').split",
+          "lineNumber": 25
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "assistants.some",
+          "lineNumber": 26
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "/^[a-z][a-z0-9_-]{0,63}$/.test",
+          "lineNumber": 26
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "/^[a-z]{2}$/.test",
+          "lineNumber": 28
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "url",
+          "lineNumber": 29
+        },
+        {
+          "caller": "loadRuntimeConfig",
+          "callee": "url",
+          "lineNumber": 29
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/db/client.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 23,
+      "functions": [
+        {
+          "name": "createDbClient",
+          "startLine": 18,
+          "endLine": 21,
+          "params": [
+            "options"
+          ]
+        },
+        {
+          "name": "disconnectDb",
+          "startLine": 24,
+          "endLine": 26,
+          "params": [
+            "client"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "createDbClient",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "disconnectDb",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "disconnectDb",
+          "callee": "client.$disconnect",
+          "lineNumber": 25
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/error-handler.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 72,
+      "nonEmptyLines": 66,
+      "functions": [
+        {
+          "name": "statusCodeToCode",
+          "startLine": 19,
+          "endLine": 38,
+          "params": [
+            "statusCode"
+          ]
+        },
+        {
+          "name": "apiErrorBody",
+          "startLine": 40,
+          "endLine": 49,
+          "params": [
+            "statusCode",
+            "message",
+            "details"
+          ]
+        },
+        {
+          "name": "registerErrorHandler",
+          "startLine": 51,
+          "endLine": 72,
+          "params": [
+            "app"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "apiErrorBody",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "registerErrorHandler",
+          "line": 51,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "apiErrorBody",
+          "callee": "statusCodeToCode",
+          "lineNumber": 44
+        },
+        {
+          "caller": "registerErrorHandler",
+          "callee": "app.setNotFoundHandler",
+          "lineNumber": 52
+        },
+        {
+          "caller": "registerErrorHandler",
+          "callee": "reply\n      .status(404)\n      .send",
+          "lineNumber": 53
+        },
+        {
+          "caller": "registerErrorHandler",
+          "callee": "reply\n      .status",
+          "lineNumber": 53
+        },
+        {
+          "caller": "registerErrorHandler",
+          "callee": "apiErrorBody",
+          "lineNumber": 55
+        },
+        {
+          "caller": "registerErrorHandler",
+          "callee": "app.setErrorHandler",
+          "lineNumber": 58
+        },
+        {
+          "caller": "registerErrorHandler",
+          "callee": "reply.status(statusCode).send",
+          "lineNumber": 69
+        },
+        {
+          "caller": "registerErrorHandler",
+          "callee": "reply.status",
+          "lineNumber": 69
+        },
+        {
+          "caller": "registerErrorHandler",
+          "callee": "apiErrorBody",
+          "lineNumber": 69
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 18,
+      "functions": [
+        {
+          "name": "registerApprovalRoutes",
+          "startLine": 7,
+          "endLine": 19,
+          "params": [
+            "app",
+            "service",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerApprovalRoutes",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerApprovalRoutes",
+          "callee": "app.get",
+          "lineNumber": 9
+        },
+        {
+          "caller": "registerApprovalRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 9
+        },
+        {
+          "caller": "registerApprovalRoutes",
+          "callee": "reply.header",
+          "lineNumber": 10
+        },
+        {
+          "caller": "registerApprovalRoutes",
+          "callee": "service.list",
+          "lineNumber": 12
+        },
+        {
+          "caller": "registerApprovalRoutes",
+          "callee": "app.post",
+          "lineNumber": 14
+        },
+        {
+          "caller": "registerApprovalRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 14
+        },
+        {
+          "caller": "registerApprovalRoutes",
+          "callee": "service.decide",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerApprovalRoutes",
+          "callee": "reply.status",
+          "lineNumber": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 71,
+      "nonEmptyLines": 69,
+      "functions": [
+        {
+          "name": "registerCampaignRoutes",
+          "startLine": 13,
+          "endLine": 71,
+          "params": [
+            "app",
+            "campaigns",
+            "c2",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerCampaignRoutes",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.get",
+          "lineNumber": 14
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 14
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 15
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "campaigns.capabilities",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.get",
+          "lineNumber": 18
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 18
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 19
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "campaigns.list",
+          "lineNumber": 21
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.post",
+          "lineNumber": 23
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 23
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "campaigns.create",
+          "lineNumber": 25
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.code",
+          "lineNumber": 26
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.get",
+          "lineNumber": 29
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 29
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 30
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "campaigns.get",
+          "lineNumber": 32
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.post",
+          "lineNumber": 34
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 34
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 35
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "campaigns.runJob",
+          "lineNumber": 37
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.post",
+          "lineNumber": 39
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 39
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 40
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "campaigns.runJob",
+          "lineNumber": 42
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.get",
+          "lineNumber": 45
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 45
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 46
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "c2.sessions",
+          "lineNumber": 48
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.post",
+          "lineNumber": 50
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 50
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 51
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "campaigns.reconcile",
+          "lineNumber": 53
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.post",
+          "lineNumber": 55
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 55
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 56
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "c2.dispatchCommand",
+          "lineNumber": 58
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.post",
+          "lineNumber": 60
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 60
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "c2.configure",
+          "lineNumber": 60
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.post",
+          "lineNumber": 61
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 61
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "c2.configure",
+          "lineNumber": 61
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.delete",
+          "lineNumber": 62
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 62
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "c2.stopListener",
+          "lineNumber": 63
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "Number",
+          "lineNumber": 63
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.get",
+          "lineNumber": 65
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 65
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "reply.header",
+          "lineNumber": 66
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "c2.history",
+          "lineNumber": 66
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "app.post",
+          "lineNumber": 68
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 68
+        },
+        {
+          "caller": "registerCampaignRoutes",
+          "callee": "c2.reconcile",
+          "lineNumber": 69
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 195,
+      "nonEmptyLines": 187,
+      "functions": [
+        {
+          "name": "missingCapability",
+          "startLine": 45,
+          "endLine": 47,
+          "params": []
+        },
+        {
+          "name": "buildCapabilitiesResponse",
+          "startLine": 59,
+          "endLine": 150,
+          "params": [
+            "projectsSupported",
+            "databaseHealth",
+            "runtimeContext",
+            "runsSupported",
+            "approvalsSupported",
+            "findingsSupported",
+            "artifactsSupported",
+            "graphsSupported",
+            "timelineSupported",
+            "reportsSupported",
+            "campaignsSupported",
+            "c2Supported",
+            "vaultSupported",
+            "vaultKeyConfigured",
+            "membersSupported",
+            "c2ProviderConfigured"
+          ]
+        },
+        {
+          "name": "registerCapabilitiesRoutes",
+          "startLine": 171,
+          "endLine": 195,
+          "params": [
+            "app",
+            "options"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CAPABILITIES_VERSION",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "buildCapabilitiesResponse",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "registerCapabilitiesRoutes",
+          "line": 171,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 79
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "probeDatabase",
+          "lineNumber": 82
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 92
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "runtimeContext.agents",
+          "lineNumber": 94
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 97
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 100
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 104
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 105
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 109
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 112
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 113
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 114
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 118
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 121
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 125
+        },
+        {
+          "caller": "buildCapabilitiesResponse",
+          "callee": "missingCapability",
+          "lineNumber": 128
+        },
+        {
+          "caller": "registerCapabilitiesRoutes",
+          "callee": "app.get",
+          "lineNumber": 175
+        },
+        {
+          "caller": "registerCapabilitiesRoutes",
+          "callee": "buildCapabilitiesResponse",
+          "lineNumber": 176
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 20,
+      "functions": [
+        {
+          "name": "registerEventRoutes",
+          "startLine": 6,
+          "endLine": 20,
+          "params": [
+            "app",
+            "service",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerEventRoutes",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerEventRoutes",
+          "callee": "app.get",
+          "lineNumber": 7
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 7
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "Object.keys(query).some",
+          "lineNumber": 9
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "Object.keys",
+          "lineNumber": 9
+        },
+        {
+          "caller": "abort",
+          "callee": "controller.abort",
+          "lineNumber": 12
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "reply.raw.once",
+          "lineNumber": 13
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "request.raw.once",
+          "lineNumber": 13
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "service.open",
+          "lineNumber": 15
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "body.once",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "reply.raw.removeListener",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "request.raw.removeListener",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "controller.abort",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "reply.header('Content-Type', 'text/event-stream; charset=utf-8').header('Cache-Control', 'no-cache, no-transform').header('X-Accel-Buffering', 'no').send",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "reply.header('Content-Type', 'text/event-stream; charset=utf-8').header('Cache-Control', 'no-cache, no-transform').header",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "reply.header('Content-Type', 'text/event-stream; charset=utf-8').header",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "reply.header",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "reply.raw.removeListener",
+          "lineNumber": 18
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "request.raw.removeListener",
+          "lineNumber": 18
+        },
+        {
+          "caller": "registerEventRoutes",
+          "callee": "controller.abort",
+          "lineNumber": 18
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 33,
+      "nonEmptyLines": 32,
+      "functions": [
+        {
+          "name": "registerFindingsRoutes",
+          "startLine": 9,
+          "endLine": 33,
+          "params": [
+            "app",
+            "findings",
+            "artifacts",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerFindingsRoutes",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "app.get",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "reply.header",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "findings.list",
+          "lineNumber": 19
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "app.get",
+          "lineNumber": 21
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 21
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "reply.header",
+          "lineNumber": 22
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "artifacts.list",
+          "lineNumber": 24
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "app.get",
+          "lineNumber": 26
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 26
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "reply.header",
+          "lineNumber": 27
+        },
+        {
+          "caller": "registerFindingsRoutes",
+          "callee": "artifacts.content",
+          "lineNumber": 31
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 29,
+      "nonEmptyLines": 28,
+      "functions": [
+        {
+          "name": "registerGraphRoutes",
+          "startLine": 12,
+          "endLine": 29,
+          "params": [
+            "app",
+            "graphs",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerGraphRoutes",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "handler",
+          "callee": "runProjectsHandler",
+          "lineNumber": 15
+        },
+        {
+          "caller": "handler",
+          "callee": "reply.header",
+          "lineNumber": 16
+        },
+        {
+          "caller": "handler",
+          "callee": "operation",
+          "lineNumber": 18
+        },
+        {
+          "caller": "handler",
+          "callee": "reply.code",
+          "lineNumber": 21
+        },
+        {
+          "caller": "registerGraphRoutes",
+          "callee": "app.get",
+          "lineNumber": 27
+        },
+        {
+          "caller": "registerGraphRoutes",
+          "callee": "handler",
+          "lineNumber": 27
+        },
+        {
+          "caller": "registerGraphRoutes",
+          "callee": "graphs.graph",
+          "lineNumber": 27
+        },
+        {
+          "caller": "registerGraphRoutes",
+          "callee": "app.get",
+          "lineNumber": 28
+        },
+        {
+          "caller": "registerGraphRoutes",
+          "callee": "handler",
+          "lineNumber": 28
+        },
+        {
+          "caller": "registerGraphRoutes",
+          "callee": "graphs.assets",
+          "lineNumber": 28
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 115,
+      "nonEmptyLines": 103,
+      "functions": [
+        {
+          "name": "toHealthCheck",
+          "startLine": 61,
+          "endLine": 63,
+          "params": [
+            "result"
+          ]
+        },
+        {
+          "name": "probeDatabase",
+          "startLine": 71,
+          "endLine": 79,
+          "params": [
+            "databaseHealth"
+          ]
+        },
+        {
+          "name": "registerHealthRoutes",
+          "startLine": 81,
+          "endLine": 115,
+          "params": [
+            "app",
+            "options"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "probeDatabase",
+          "line": 71,
+          "isDefault": false
+        },
+        {
+          "name": "registerHealthRoutes",
+          "line": 81,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "probeDatabase",
+          "callee": "toHealthCheck",
+          "lineNumber": 75
+        },
+        {
+          "caller": "probeDatabase",
+          "callee": "databaseHealth.check",
+          "lineNumber": 75
+        },
+        {
+          "caller": "registerHealthRoutes",
+          "callee": "app.get",
+          "lineNumber": 85
+        },
+        {
+          "caller": "registerHealthRoutes",
+          "callee": "app.get",
+          "lineNumber": 87
+        },
+        {
+          "caller": "registerHealthRoutes",
+          "callee": "probeDatabase",
+          "lineNumber": 91
+        },
+        {
+          "caller": "registerHealthRoutes",
+          "callee": "options.runtimeContext.agents",
+          "lineNumber": 95
+        },
+        {
+          "caller": "registerHealthRoutes",
+          "callee": "reply.status",
+          "lineNumber": 111
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 24,
+      "functions": [
+        {
+          "name": "registerMembersRoutes",
+          "startLine": 11,
+          "endLine": 25,
+          "params": [
+            "app",
+            "members",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerMembersRoutes",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "app.get",
+          "lineNumber": 12
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 12
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "reply.header",
+          "lineNumber": 13
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "members.list",
+          "lineNumber": 15
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "app.post",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "members.invite",
+          "lineNumber": 19
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "app.delete",
+          "lineNumber": 21
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 21
+        },
+        {
+          "caller": "registerMembersRoutes",
+          "callee": "members.removeMember",
+          "lineNumber": 23
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 140,
+      "nonEmptyLines": 129,
+      "functions": [
+        {
+          "name": "sendProjectsError",
+          "startLine": 30,
+          "endLine": 46,
+          "params": [
+            "request",
+            "reply",
+            "error"
+          ]
+        },
+        {
+          "name": "runProjectsHandler",
+          "startLine": 48,
+          "endLine": 58,
+          "params": [
+            "request",
+            "reply",
+            "action"
+          ]
+        },
+        {
+          "name": "readProjectId",
+          "startLine": 60,
+          "endLine": 63,
+          "params": [
+            "request"
+          ]
+        },
+        {
+          "name": "registerProjectRoutes",
+          "startLine": 72,
+          "endLine": 140,
+          "params": [
+            "app",
+            "deps"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "runProjectsHandler",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "registerProjectRoutes",
+          "line": 72,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "sendProjectsError",
+          "callee": "reply.status(status).send",
+          "lineNumber": 37
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "reply.status",
+          "lineNumber": 37
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "apiErrorBody",
+          "lineNumber": 37
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "reply\n      .status(error.statusCode)\n      .send",
+          "lineNumber": 40
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "reply\n      .status",
+          "lineNumber": 40
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "apiErrorBody",
+          "lineNumber": 42
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "request.log.error",
+          "lineNumber": 44
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "reply.status(500).send",
+          "lineNumber": 45
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "reply.status",
+          "lineNumber": 45
+        },
+        {
+          "caller": "sendProjectsError",
+          "callee": "apiErrorBody",
+          "lineNumber": 45
+        },
+        {
+          "caller": "runProjectsHandler",
+          "callee": "action",
+          "lineNumber": 54
+        },
+        {
+          "caller": "runProjectsHandler",
+          "callee": "sendProjectsError",
+          "lineNumber": 56
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.get",
+          "lineNumber": 79
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "reply.header",
+          "lineNumber": 80
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 81
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "context.agents",
+          "lineNumber": 81
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.get",
+          "lineNumber": 83
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "reply.header",
+          "lineNumber": 84
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 85
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "context.resolve",
+          "lineNumber": 85
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "readProjectId",
+          "lineNumber": 85
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.get",
+          "lineNumber": 90
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "reply.header",
+          "lineNumber": 91
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 93
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "ownership.recover",
+          "lineNumber": 93
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.get",
+          "lineNumber": 95
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "reply.header",
+          "lineNumber": 96
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 98
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "ownership.getBinding",
+          "lineNumber": 98
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.get",
+          "lineNumber": 102
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "reply.header",
+          "lineNumber": 103
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 104
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "service.getPlanning",
+          "lineNumber": 104
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "readProjectId",
+          "lineNumber": 104
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.get",
+          "lineNumber": 106
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "reply.header",
+          "lineNumber": 107
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 108
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "service.getPlanning",
+          "lineNumber": 108
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "readProjectId",
+          "lineNumber": 108
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.get",
+          "lineNumber": 111
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 112
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "service.listProjects",
+          "lineNumber": 113
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.post",
+          "lineNumber": 117
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 118
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "service.createProject",
+          "lineNumber": 119
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "reply.status",
+          "lineNumber": 120
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.get",
+          "lineNumber": 125
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 126
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "service.getProject",
+          "lineNumber": 127
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "readProjectId",
+          "lineNumber": 127
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "app.patch",
+          "lineNumber": 131
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 132
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "service.patchProject",
+          "lineNumber": 133
+        },
+        {
+          "caller": "registerProjectRoutes",
+          "callee": "readProjectId",
+          "lineNumber": 135
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 2,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 54,
+      "nonEmptyLines": 53,
+      "functions": [
+        {
+          "name": "registerRunRoutes",
+          "startLine": 7,
+          "endLine": 54,
+          "params": [
+            "app",
+            "service",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerRunRoutes",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.post",
+          "lineNumber": 9
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 9
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.createThread",
+          "lineNumber": 11
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "reply.status",
+          "lineNumber": 12
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.post",
+          "lineNumber": 14
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 14
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.submit",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "reply.status",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.post",
+          "lineNumber": 19
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 19
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.resume",
+          "lineNumber": 21
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "reply.status",
+          "lineNumber": 22
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.post",
+          "lineNumber": 24
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 24
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.cancelRun",
+          "lineNumber": 26
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "reply.status",
+          "lineNumber": 27
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.get",
+          "lineNumber": 29
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 29
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "reply.header",
+          "lineNumber": 30
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.listThreads",
+          "lineNumber": 32
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.get",
+          "lineNumber": 34
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 34
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "reply.header",
+          "lineNumber": 35
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.snapshot",
+          "lineNumber": 37
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.get",
+          "lineNumber": 39
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 39
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "reply.header",
+          "lineNumber": 40
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.listRuns",
+          "lineNumber": 42
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.get",
+          "lineNumber": 44
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 44
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "reply.header",
+          "lineNumber": 45
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.getRun",
+          "lineNumber": 47
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "app.post",
+          "lineNumber": 49
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 49
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "Array.isArray",
+          "lineNumber": 50
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "Object.keys",
+          "lineNumber": 50
+        },
+        {
+          "caller": "registerRunRoutes",
+          "callee": "service.reconcile",
+          "lineNumber": 52
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 29,
+      "functions": [
+        {
+          "name": "registerSettingsRoutes",
+          "startLine": 12,
+          "endLine": 30,
+          "params": [
+            "app",
+            "settings",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerSettingsRoutes",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerSettingsRoutes",
+          "callee": "app.get",
+          "lineNumber": 13
+        },
+        {
+          "caller": "registerSettingsRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 13
+        },
+        {
+          "caller": "registerSettingsRoutes",
+          "callee": "reply.header",
+          "lineNumber": 14
+        },
+        {
+          "caller": "registerSettingsRoutes",
+          "callee": "settings.settings",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerSettingsRoutes",
+          "callee": "app.delete",
+          "lineNumber": 18
+        },
+        {
+          "caller": "registerSettingsRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 18
+        },
+        {
+          "caller": "registerSettingsRoutes",
+          "callee": "settings.deleteEngagement",
+          "lineNumber": 21
+        },
+        {
+          "caller": "registerSettingsRoutes",
+          "callee": "reply.code",
+          "lineNumber": 24
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 33,
+      "nonEmptyLines": 32,
+      "functions": [
+        {
+          "name": "registerTimelineRoutes",
+          "startLine": 13,
+          "endLine": 33,
+          "params": [
+            "app",
+            "timeline",
+            "exports",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerTimelineRoutes",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "app.get",
+          "lineNumber": 15
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 15
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "reply.header",
+          "lineNumber": 16
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "timeline.timeline",
+          "lineNumber": 18
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "app.get",
+          "lineNumber": 20
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 20
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "isExportFormat",
+          "lineNumber": 22
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "reply.code",
+          "lineNumber": 23
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "EXPORT_FORMATS.join",
+          "lineNumber": 24
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "exports.export",
+          "lineNumber": 27
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "reply.header",
+          "lineNumber": 28
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "reply.header",
+          "lineNumber": 29
+        },
+        {
+          "caller": "registerTimelineRoutes",
+          "callee": "reply.header",
+          "lineNumber": 30
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 32,
+      "nonEmptyLines": 31,
+      "functions": [
+        {
+          "name": "registerVaultRoutes",
+          "startLine": 11,
+          "endLine": 32,
+          "params": [
+            "app",
+            "vault",
+            "identity"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerVaultRoutes",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "app.get",
+          "lineNumber": 12
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 12
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "reply.header",
+          "lineNumber": 13
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "vault.list",
+          "lineNumber": 15
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "app.post",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 17
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "vault.create",
+          "lineNumber": 19
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "reply.code",
+          "lineNumber": 20
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "app.post",
+          "lineNumber": 23
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 23
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "reply.header",
+          "lineNumber": 24
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "vault.reveal",
+          "lineNumber": 26
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "app.delete",
+          "lineNumber": 28
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "runProjectsHandler",
+          "lineNumber": 28
+        },
+        {
+          "caller": "registerVaultRoutes",
+          "callee": "vault.revoke",
+          "lineNumber": 30
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 25,
+      "classes": [
+        {
+          "name": "SliverClient",
+          "startLine": 4,
+          "endLine": 25,
+          "methods": [
+            "constructor",
+            "call"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "SliverClient",
+          "line": 4,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "call",
+          "callee": "AbortSignal.timeout",
+          "lineNumber": 7
+        },
+        {
+          "caller": "call",
+          "callee": "fetch",
+          "lineNumber": 9
+        },
+        {
+          "caller": "call",
+          "callee": "JSON.stringify",
+          "lineNumber": 10
+        },
+        {
+          "caller": "call",
+          "callee": "response.body?.cancel",
+          "lineNumber": 11
+        },
+        {
+          "caller": "call",
+          "callee": "[400,404,409].includes",
+          "lineNumber": 11
+        },
+        {
+          "caller": "call",
+          "callee": "response.body.getReader",
+          "lineNumber": 13
+        },
+        {
+          "caller": "call",
+          "callee": "reader.read",
+          "lineNumber": 14
+        },
+        {
+          "caller": "call",
+          "callee": "reader.cancel",
+          "lineNumber": 15
+        },
+        {
+          "caller": "call",
+          "callee": "chunks.push",
+          "lineNumber": 15
+        },
+        {
+          "caller": "call",
+          "callee": "JSON.parse",
+          "lineNumber": 16
+        },
+        {
+          "caller": "call",
+          "callee": "Buffer.concat(chunks).toString",
+          "lineNumber": 16
+        },
+        {
+          "caller": "call",
+          "callee": "Buffer.concat",
+          "lineNumber": 16
+        },
+        {
+          "caller": "call",
+          "callee": "Array.isArray",
+          "lineNumber": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 47,
+      "nonEmptyLines": 47,
+      "classes": [
+        {
+          "name": "EvilginxBridgeError",
+          "startLine": 8,
+          "endLine": 10,
+          "methods": [
+            "constructor"
+          ],
+          "properties": []
+        },
+        {
+          "name": "EvilginxClient",
+          "startLine": 11,
+          "endLine": 47,
+          "methods": [
+            "constructor",
+            "operate"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "EvilginxBridgeError",
+          "line": 8,
+          "isDefault": false
+        },
+        {
+          "name": "EvilginxClient",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 9
+        },
+        {
+          "caller": "operate",
+          "callee": "fetch",
+          "lineNumber": 15
+        },
+        {
+          "caller": "operate",
+          "callee": "JSON.stringify",
+          "lineNumber": 17
+        },
+        {
+          "caller": "operate",
+          "callee": "AbortSignal.timeout",
+          "lineNumber": 17
+        },
+        {
+          "caller": "operate",
+          "callee": "response.body?.cancel",
+          "lineNumber": 19
+        },
+        {
+          "caller": "operate",
+          "callee": "response.body.getReader",
+          "lineNumber": 20
+        },
+        {
+          "caller": "operate",
+          "callee": "reader.read",
+          "lineNumber": 24
+        },
+        {
+          "caller": "operate",
+          "callee": "reader.cancel",
+          "lineNumber": 26
+        },
+        {
+          "caller": "operate",
+          "callee": "chunks.push",
+          "lineNumber": 27
+        },
+        {
+          "caller": "operate",
+          "callee": "JSON.parse",
+          "lineNumber": 29
+        },
+        {
+          "caller": "operate",
+          "callee": "Buffer.concat(chunks).toString",
+          "lineNumber": 29
+        },
+        {
+          "caller": "operate",
+          "callee": "Buffer.concat",
+          "lineNumber": 29
+        },
+        {
+          "caller": "operate",
+          "callee": "createHash('sha256').update(JSON.stringify([engagementId, campaignId, version])).digest('hex').slice",
+          "lineNumber": 32
+        },
+        {
+          "caller": "operate",
+          "callee": "createHash('sha256').update(JSON.stringify([engagementId, campaignId, version])).digest",
+          "lineNumber": 32
+        },
+        {
+          "caller": "operate",
+          "callee": "createHash('sha256').update",
+          "lineNumber": 32
+        },
+        {
+          "caller": "operate",
+          "callee": "createHash",
+          "lineNumber": 32
+        },
+        {
+          "caller": "operate",
+          "callee": "JSON.stringify",
+          "lineNumber": 32
+        },
+        {
+          "caller": "operate",
+          "callee": "Number.isSafeInteger",
+          "lineNumber": 34
+        },
+        {
+          "caller": "operate",
+          "callee": "['enabled', 'disabled'].includes",
+          "lineNumber": 35
+        },
+        {
+          "caller": "operate",
+          "callee": "String",
+          "lineNumber": 35
+        },
+        {
+          "caller": "operate",
+          "callee": "/^[a-f0-9]{64}$/.test",
+          "lineNumber": 36
+        },
+        {
+          "caller": "operate",
+          "callee": "raw.phishlet.slice",
+          "lineNumber": 38
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 141,
+      "nonEmptyLines": 130,
+      "functions": [
+        {
+          "name": "isObject",
+          "startLine": 141,
+          "endLine": 141,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "GoPhishError",
+          "startLine": 16,
+          "endLine": 18,
+          "methods": [
+            "constructor"
+          ],
+          "properties": []
+        },
+        {
+          "name": "GoPhishClient",
+          "startLine": 22,
+          "endLine": 139,
+          "methods": [
+            "constructor",
+            "canDeploy",
+            "prepare",
+            "deployLab",
+            "summary",
+            "discover",
+            "read",
+            "request"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "GoPhishError",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "GoPhishClient",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 17
+        },
+        {
+          "caller": "prepare",
+          "callee": "Promise.all",
+          "lineNumber": 31
+        },
+        {
+          "caller": "prepare",
+          "callee": "refs.map",
+          "lineNumber": 31
+        },
+        {
+          "caller": "prepare",
+          "callee": "this.read",
+          "lineNumber": 31
+        },
+        {
+          "caller": "prepare",
+          "callee": "Array.isArray",
+          "lineNumber": 35
+        },
+        {
+          "caller": "prepare",
+          "callee": "group.targets.every",
+          "lineNumber": 36
+        },
+        {
+          "caller": "prepare",
+          "callee": "createHash('sha256').update(JSON.stringify([\n      template, page, group, { id: smtp.id, name: smtp.name, host: smtp.host, from_address: smtp.from_address, modified_date: smtp.modified_date },\n    ])).digest",
+          "lineNumber": 41
+        },
+        {
+          "caller": "prepare",
+          "callee": "createHash('sha256').update",
+          "lineNumber": 41
+        },
+        {
+          "caller": "prepare",
+          "callee": "createHash",
+          "lineNumber": 41
+        },
+        {
+          "caller": "prepare",
+          "callee": "JSON.stringify",
+          "lineNumber": 41
+        },
+        {
+          "caller": "prepare",
+          "callee": "refs.map",
+          "lineNumber": 45
+        },
+        {
+          "caller": "deployLab",
+          "callee": "this.prepare",
+          "lineNumber": 55
+        },
+        {
+          "caller": "deployLab",
+          "callee": "Promise.all",
+          "lineNumber": 57
+        },
+        {
+          "caller": "deployLab",
+          "callee": "this.read",
+          "lineNumber": 57
+        },
+        {
+          "caller": "deployLab",
+          "callee": "this.read",
+          "lineNumber": 57
+        },
+        {
+          "caller": "deployLab",
+          "callee": "this.read",
+          "lineNumber": 57
+        },
+        {
+          "caller": "deployLab",
+          "callee": "Array.isArray",
+          "lineNumber": 59
+        },
+        {
+          "caller": "deployLab",
+          "callee": "targets.every",
+          "lineNumber": 59
+        },
+        {
+          "caller": "deployLab",
+          "callee": "/^[A-Za-z0-9._+-]+@example\\.test$/.test",
+          "lineNumber": 60
+        },
+        {
+          "caller": "deployLab",
+          "callee": "this.request",
+          "lineNumber": 65
+        },
+        {
+          "caller": "deployLab",
+          "callee": "isObject",
+          "lineNumber": 66
+        },
+        {
+          "caller": "deployLab",
+          "callee": "this.request",
+          "lineNumber": 67
+        },
+        {
+          "caller": "deployLab",
+          "callee": "isObject",
+          "lineNumber": 70
+        },
+        {
+          "caller": "deployLab",
+          "callee": "Number.isSafeInteger",
+          "lineNumber": 70
+        },
+        {
+          "caller": "deployLab",
+          "callee": "String",
+          "lineNumber": 73
+        },
+        {
+          "caller": "summary",
+          "callee": "/^[1-9]\\d{0,15}$/.test",
+          "lineNumber": 77
+        },
+        {
+          "caller": "summary",
+          "callee": "this.request",
+          "lineNumber": 78
+        },
+        {
+          "caller": "summary",
+          "callee": "isObject",
+          "lineNumber": 79
+        },
+        {
+          "caller": "summary",
+          "callee": "Number",
+          "lineNumber": 79
+        },
+        {
+          "caller": "summary",
+          "callee": "isObject",
+          "lineNumber": 80
+        },
+        {
+          "caller": "summary",
+          "callee": "[summary.stats.total, summary.stats.sent, summary.stats.error].every",
+          "lineNumber": 80
+        },
+        {
+          "caller": "summary",
+          "callee": "Number.isSafeInteger",
+          "lineNumber": 80
+        },
+        {
+          "caller": "discover",
+          "callee": "this.request",
+          "lineNumber": 87
+        },
+        {
+          "caller": "discover",
+          "callee": "isObject",
+          "lineNumber": 88
+        },
+        {
+          "caller": "discover",
+          "callee": "Array.isArray",
+          "lineNumber": 88
+        },
+        {
+          "caller": "discover",
+          "callee": "summary.campaigns.filter",
+          "lineNumber": 89
+        },
+        {
+          "caller": "discover",
+          "callee": "isObject",
+          "lineNumber": 89
+        },
+        {
+          "caller": "discover",
+          "callee": "isObject",
+          "lineNumber": 93
+        },
+        {
+          "caller": "discover",
+          "callee": "this.summary",
+          "lineNumber": 94
+        },
+        {
+          "caller": "discover",
+          "callee": "String",
+          "lineNumber": 94
+        },
+        {
+          "caller": "read",
+          "callee": "this.request",
+          "lineNumber": 98
+        },
+        {
+          "caller": "read",
+          "callee": "isObject",
+          "lineNumber": 99
+        },
+        {
+          "caller": "request",
+          "callee": "AbortSignal.timeout",
+          "lineNumber": 106
+        },
+        {
+          "caller": "request",
+          "callee": "fetch",
+          "lineNumber": 108
+        },
+        {
+          "caller": "request",
+          "callee": "JSON.stringify",
+          "lineNumber": 109
+        },
+        {
+          "caller": "request",
+          "callee": "response.body?.cancel",
+          "lineNumber": 114
+        },
+        {
+          "caller": "request",
+          "callee": "response.body.getReader",
+          "lineNumber": 118
+        },
+        {
+          "caller": "request",
+          "callee": "reader.read",
+          "lineNumber": 122
+        },
+        {
+          "caller": "request",
+          "callee": "reader.cancel",
+          "lineNumber": 126
+        },
+        {
+          "caller": "request",
+          "callee": "chunks.push",
+          "lineNumber": 129
+        },
+        {
+          "caller": "request",
+          "callee": "JSON.parse",
+          "lineNumber": 131
+        },
+        {
+          "caller": "request",
+          "callee": "Buffer.concat(chunks).toString",
+          "lineNumber": 131
+        },
+        {
+          "caller": "request",
+          "callee": "Buffer.concat",
+          "lineNumber": 131
+        },
+        {
+          "caller": "isObject",
+          "callee": "Array.isArray",
+          "lineNumber": 141
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 60,
+      "nonEmptyLines": 59,
+      "functions": [
+        {
+          "name": "record",
+          "startLine": 19,
+          "endLine": 19,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "run",
+          "startLine": 20,
+          "endLine": 23,
+          "params": [
+            "value",
+            "threadId"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RuntimeExecutionClient",
+          "startLine": 24,
+          "endLine": 60,
+          "methods": [
+            "createThread",
+            "createRun",
+            "createResumeRun",
+            "cancelRun",
+            "run",
+            "listRuns"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "RuntimeExecutionClient",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "record",
+          "callee": "Array.isArray",
+          "lineNumber": 19
+        },
+        {
+          "caller": "run",
+          "callee": "record",
+          "lineNumber": 21
+        },
+        {
+          "caller": "run",
+          "callee": "/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test",
+          "lineNumber": 21
+        },
+        {
+          "caller": "run",
+          "callee": "record",
+          "lineNumber": 21
+        },
+        {
+          "caller": "run",
+          "callee": "Number.isFinite",
+          "lineNumber": 21
+        },
+        {
+          "caller": "run",
+          "callee": "Date.parse",
+          "lineNumber": 21
+        },
+        {
+          "caller": "run",
+          "callee": "Number.isFinite",
+          "lineNumber": 21
+        },
+        {
+          "caller": "run",
+          "callee": "Date.parse",
+          "lineNumber": 21
+        },
+        {
+          "caller": "run",
+          "callee": "new Date(value.created_at).toISOString",
+          "lineNumber": 22
+        },
+        {
+          "caller": "run",
+          "callee": "new Date(value.updated_at).toISOString",
+          "lineNumber": 22
+        },
+        {
+          "caller": "createThread",
+          "callee": "Object.fromEntries",
+          "lineNumber": 26
+        },
+        {
+          "caller": "createThread",
+          "callee": "Object.entries(initial).filter",
+          "lineNumber": 26
+        },
+        {
+          "caller": "createThread",
+          "callee": "Object.entries",
+          "lineNumber": 26
+        },
+        {
+          "caller": "createThread",
+          "callee": "this.read",
+          "lineNumber": 27
+        },
+        {
+          "caller": "createThread",
+          "callee": "record",
+          "lineNumber": 28
+        },
+        {
+          "caller": "createThread",
+          "callee": "record",
+          "lineNumber": 28
+        },
+        {
+          "caller": "createRun",
+          "callee": "run",
+          "lineNumber": 32
+        },
+        {
+          "caller": "createRun",
+          "callee": "this.read",
+          "lineNumber": 32
+        },
+        {
+          "caller": "createRun",
+          "callee": "encodeURIComponent",
+          "lineNumber": 32
+        },
+        {
+          "caller": "createResumeRun",
+          "callee": "run",
+          "lineNumber": 40
+        },
+        {
+          "caller": "createResumeRun",
+          "callee": "this.read",
+          "lineNumber": 40
+        },
+        {
+          "caller": "createResumeRun",
+          "callee": "encodeURIComponent",
+          "lineNumber": 40
+        },
+        {
+          "caller": "cancelRun",
+          "callee": "this.raw",
+          "lineNumber": 48
+        },
+        {
+          "caller": "cancelRun",
+          "callee": "encodeURIComponent",
+          "lineNumber": 48
+        },
+        {
+          "caller": "cancelRun",
+          "callee": "encodeURIComponent",
+          "lineNumber": 48
+        },
+        {
+          "caller": "run",
+          "callee": "run",
+          "lineNumber": 51
+        },
+        {
+          "caller": "run",
+          "callee": "this.read",
+          "lineNumber": 51
+        },
+        {
+          "caller": "run",
+          "callee": "encodeURIComponent",
+          "lineNumber": 51
+        },
+        {
+          "caller": "run",
+          "callee": "encodeURIComponent",
+          "lineNumber": 51
+        },
+        {
+          "caller": "listRuns",
+          "callee": "this.read",
+          "lineNumber": 56
+        },
+        {
+          "caller": "listRuns",
+          "callee": "encodeURIComponent",
+          "lineNumber": 56
+        },
+        {
+          "caller": "listRuns",
+          "callee": "Array.isArray",
+          "lineNumber": 57
+        },
+        {
+          "caller": "listRuns",
+          "callee": "rows.map",
+          "lineNumber": 58
+        },
+        {
+          "caller": "listRuns",
+          "callee": "run",
+          "lineNumber": 58
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 21,
+      "classes": [
+        {
+          "name": "RuntimeJoinClient",
+          "startLine": 5,
+          "endLine": 21,
+          "methods": [
+            "constructor",
+            "open"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "RuntimeJoinClient",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "abort",
+          "callee": "controller.abort",
+          "lineNumber": 9
+        },
+        {
+          "caller": "open",
+          "callee": "signal.addEventListener",
+          "lineNumber": 10
+        },
+        {
+          "caller": "open",
+          "callee": "abort",
+          "lineNumber": 11
+        },
+        {
+          "caller": "open",
+          "callee": "setTimeout",
+          "lineNumber": 12
+        },
+        {
+          "caller": "close",
+          "callee": "clearTimeout",
+          "lineNumber": 13
+        },
+        {
+          "caller": "close",
+          "callee": "signal.removeEventListener",
+          "lineNumber": 13
+        },
+        {
+          "caller": "close",
+          "callee": "controller.abort",
+          "lineNumber": 13
+        },
+        {
+          "caller": "open",
+          "callee": "fetch",
+          "lineNumber": 15
+        },
+        {
+          "caller": "open",
+          "callee": "encodeURIComponent",
+          "lineNumber": 15
+        },
+        {
+          "caller": "open",
+          "callee": "encodeURIComponent",
+          "lineNumber": 15
+        },
+        {
+          "caller": "open",
+          "callee": "clearTimeout",
+          "lineNumber": 16
+        },
+        {
+          "caller": "open",
+          "callee": "response.headers.get('content-type')?.startsWith",
+          "lineNumber": 17
+        },
+        {
+          "caller": "open",
+          "callee": "response.headers.get",
+          "lineNumber": 17
+        },
+        {
+          "caller": "open",
+          "callee": "response.body?.cancel",
+          "lineNumber": 17
+        },
+        {
+          "caller": "open",
+          "callee": "decodeSse",
+          "lineNumber": 18
+        },
+        {
+          "caller": "open",
+          "callee": "close",
+          "lineNumber": 19
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 81,
+      "nonEmptyLines": 80,
+      "functions": [
+        {
+          "name": "record",
+          "startLine": 17,
+          "endLine": 17,
+          "params": [
+            "v"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RuntimeUnavailableError",
+          "startLine": 3,
+          "endLine": 5,
+          "methods": [
+            "constructor"
+          ],
+          "properties": []
+        },
+        {
+          "name": "RuntimeCheckpointMissingError",
+          "startLine": 6,
+          "endLine": 8,
+          "methods": [
+            "constructor"
+          ],
+          "properties": []
+        },
+        {
+          "name": "RuntimeRejectedError",
+          "startLine": 9,
+          "endLine": 11,
+          "methods": [
+            "constructor"
+          ],
+          "properties": []
+        },
+        {
+          "name": "RuntimeReadClient",
+          "startLine": 18,
+          "endLine": 81,
+          "methods": [
+            "constructor",
+            "read",
+            "raw",
+            "catalog",
+            "thread",
+            "state"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "RuntimeUnavailableError",
+          "line": 3,
+          "isDefault": false
+        },
+        {
+          "name": "RuntimeCheckpointMissingError",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "RuntimeRejectedError",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "RuntimeReadClient",
+          "line": 18,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 4
+        },
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 7
+        },
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 10
+        },
+        {
+          "caller": "record",
+          "callee": "Array.isArray",
+          "lineNumber": 17
+        },
+        {
+          "caller": "read",
+          "callee": "setTimeout",
+          "lineNumber": 22
+        },
+        {
+          "caller": "read",
+          "callee": "controller.abort",
+          "lineNumber": 22
+        },
+        {
+          "caller": "read",
+          "callee": "fetch",
+          "lineNumber": 24
+        },
+        {
+          "caller": "read",
+          "callee": "JSON.stringify",
+          "lineNumber": 24
+        },
+        {
+          "caller": "read",
+          "callee": "[400, 404, 409, 422].includes",
+          "lineNumber": 25
+        },
+        {
+          "caller": "read",
+          "callee": "response.body.getReader",
+          "lineNumber": 29
+        },
+        {
+          "caller": "read",
+          "callee": "reader.read",
+          "lineNumber": 33
+        },
+        {
+          "caller": "read",
+          "callee": "chunks.push",
+          "lineNumber": 37
+        },
+        {
+          "caller": "read",
+          "callee": "reader.cancel",
+          "lineNumber": 39
+        },
+        {
+          "caller": "read",
+          "callee": "JSON.parse",
+          "lineNumber": 40
+        },
+        {
+          "caller": "read",
+          "callee": "Buffer.concat(chunks).toString",
+          "lineNumber": 40
+        },
+        {
+          "caller": "read",
+          "callee": "Buffer.concat",
+          "lineNumber": 40
+        },
+        {
+          "caller": "read",
+          "callee": "clearTimeout",
+          "lineNumber": 42
+        },
+        {
+          "caller": "raw",
+          "callee": "setTimeout",
+          "lineNumber": 47
+        },
+        {
+          "caller": "raw",
+          "callee": "controller.abort",
+          "lineNumber": 47
+        },
+        {
+          "caller": "raw",
+          "callee": "fetch",
+          "lineNumber": 49
+        },
+        {
+          "caller": "raw",
+          "callee": "[400, 404, 409, 422].includes",
+          "lineNumber": 50
+        },
+        {
+          "caller": "raw",
+          "callee": "response.text",
+          "lineNumber": 53
+        },
+        {
+          "caller": "raw",
+          "callee": "JSON.parse",
+          "lineNumber": 55
+        },
+        {
+          "caller": "raw",
+          "callee": "clearTimeout",
+          "lineNumber": 57
+        },
+        {
+          "caller": "catalog",
+          "callee": "this.read",
+          "lineNumber": 60
+        },
+        {
+          "caller": "catalog",
+          "callee": "record",
+          "lineNumber": 61
+        },
+        {
+          "caller": "catalog",
+          "callee": "this.read",
+          "lineNumber": 64
+        },
+        {
+          "caller": "catalog",
+          "callee": "Array.isArray",
+          "lineNumber": 65
+        },
+        {
+          "caller": "catalog",
+          "callee": "page.every",
+          "lineNumber": 65
+        },
+        {
+          "caller": "catalog",
+          "callee": "record",
+          "lineNumber": 65
+        },
+        {
+          "caller": "catalog",
+          "callee": "/^[a-z][a-z0-9_-]{0,63}$/.test",
+          "lineNumber": 65
+        },
+        {
+          "caller": "catalog",
+          "callee": "graphs.add",
+          "lineNumber": 66
+        },
+        {
+          "caller": "catalog",
+          "callee": "[...graphs].sort",
+          "lineNumber": 67
+        },
+        {
+          "caller": "thread",
+          "callee": "this.read",
+          "lineNumber": 72
+        },
+        {
+          "caller": "thread",
+          "callee": "encodeURIComponent",
+          "lineNumber": 72
+        },
+        {
+          "caller": "thread",
+          "callee": "record",
+          "lineNumber": 73
+        },
+        {
+          "caller": "thread",
+          "callee": "record",
+          "lineNumber": 73
+        },
+        {
+          "caller": "state",
+          "callee": "this.read",
+          "lineNumber": 77
+        },
+        {
+          "caller": "state",
+          "callee": "encodeURIComponent",
+          "lineNumber": 77
+        },
+        {
+          "caller": "state",
+          "callee": "record",
+          "lineNumber": 78
+        },
+        {
+          "caller": "state",
+          "callee": "record",
+          "lineNumber": 78
+        },
+        {
+          "caller": "state",
+          "callee": "Array.isArray",
+          "lineNumber": 79
+        },
+        {
+          "caller": "state",
+          "callee": "record",
+          "lineNumber": 79
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 4,
+        "functionCount": 1,
+        "classCount": 4
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/main.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 174,
+      "nonEmptyLines": 162,
+      "functions": [
+        {
+          "name": "createDatabaseHealth",
+          "startLine": 38,
+          "endLine": 49,
+          "params": [
+            "client"
+          ]
+        },
+        {
+          "name": "main",
+          "startLine": 51,
+          "endLine": 166,
+          "params": []
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "check",
+          "callee": "client.$queryRaw",
+          "lineNumber": 42
+        },
+        {
+          "caller": "main",
+          "callee": "readServerEnv",
+          "lineNumber": 52
+        },
+        {
+          "caller": "main",
+          "callee": "loadRuntimeConfig",
+          "lineNumber": 53
+        },
+        {
+          "caller": "main",
+          "callee": "mkdir",
+          "lineNumber": 63
+        },
+        {
+          "caller": "main",
+          "callee": "String",
+          "lineNumber": 66
+        },
+        {
+          "caller": "main",
+          "callee": "createDbClient",
+          "lineNumber": 79
+        },
+        {
+          "caller": "main",
+          "callee": "createDatabaseHealth",
+          "lineNumber": 80
+        },
+        {
+          "caller": "main",
+          "callee": "getLocalIdentity",
+          "lineNumber": 84
+        },
+        {
+          "caller": "main",
+          "callee": "getLocalIdentity",
+          "lineNumber": 99
+        },
+        {
+          "caller": "main",
+          "callee": "buildApp",
+          "lineNumber": 104
+        },
+        {
+          "caller": "shutdown",
+          "callee": "app.log.info",
+          "lineNumber": 129
+        },
+        {
+          "caller": "shutdown",
+          "callee": "app.close",
+          "lineNumber": 131
+        },
+        {
+          "caller": "shutdown",
+          "callee": "disconnectDb",
+          "lineNumber": 132
+        },
+        {
+          "caller": "shutdown",
+          "callee": "app.log.info",
+          "lineNumber": 133
+        },
+        {
+          "caller": "shutdown",
+          "callee": "process.exit",
+          "lineNumber": 134
+        },
+        {
+          "caller": "shutdown",
+          "callee": "app.log.error",
+          "lineNumber": 136
+        },
+        {
+          "caller": "shutdown",
+          "callee": "process.exit",
+          "lineNumber": 137
+        },
+        {
+          "caller": "main",
+          "callee": "app.listen",
+          "lineNumber": 142
+        },
+        {
+          "caller": "main",
+          "callee": "app.close",
+          "lineNumber": 144
+        },
+        {
+          "caller": "main",
+          "callee": "disconnectDb",
+          "lineNumber": 145
+        },
+        {
+          "caller": "main",
+          "callee": "app.log.info",
+          "lineNumber": 149
+        },
+        {
+          "caller": "main",
+          "callee": "process.once",
+          "lineNumber": 160
+        },
+        {
+          "caller": "main",
+          "callee": "shutdown",
+          "lineNumber": 161
+        },
+        {
+          "caller": "main",
+          "callee": "process.once",
+          "lineNumber": 163
+        },
+        {
+          "caller": "main",
+          "callee": "shutdown",
+          "lineNumber": 164
+        }
+      ],
+      "metrics": {
+        "importCount": 28,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 205,
+      "nonEmptyLines": 189,
+      "functions": [
+        {
+          "name": "isUniqueConstraintViolation",
+          "startLine": 70,
+          "endLine": 77,
+          "params": [
+            "error"
+          ]
+        },
+        {
+          "name": "toRecord",
+          "startLine": 79,
+          "endLine": 95,
+          "params": [
+            "row"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EngagementNameConflictError",
+          "startLine": 58,
+          "endLine": 68,
+          "methods": [
+            "constructor"
+          ],
+          "properties": [
+            "userId",
+            "requestedName"
+          ]
+        },
+        {
+          "name": "EngagementsRepository",
+          "startLine": 102,
+          "endLine": 205,
+          "methods": [
+            "constructor",
+            "list",
+            "findById",
+            "getByName",
+            "create",
+            "update"
+          ],
+          "properties": [
+            "db"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "EngagementNameConflictError",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "EngagementsRepository",
+          "line": 102,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 63
+        },
+        {
+          "caller": "list",
+          "callee": "this.db.findMany",
+          "lineNumber": 110
+        },
+        {
+          "caller": "list",
+          "callee": "rows.map",
+          "lineNumber": 114
+        },
+        {
+          "caller": "findById",
+          "callee": "this.db.findFirst",
+          "lineNumber": 121
+        },
+        {
+          "caller": "findById",
+          "callee": "toRecord",
+          "lineNumber": 122
+        },
+        {
+          "caller": "getByName",
+          "callee": "this.db.findFirst",
+          "lineNumber": 129
+        },
+        {
+          "caller": "getByName",
+          "callee": "toRecord",
+          "lineNumber": 130
+        },
+        {
+          "caller": "create",
+          "callee": "this.db.create",
+          "lineNumber": 138
+        },
+        {
+          "caller": "create",
+          "callee": "toRecord",
+          "lineNumber": 150
+        },
+        {
+          "caller": "create",
+          "callee": "isUniqueConstraintViolation",
+          "lineNumber": 152
+        },
+        {
+          "caller": "update",
+          "callee": "this.db.updateMany",
+          "lineNumber": 187
+        },
+        {
+          "caller": "update",
+          "callee": "this.db.findFirst",
+          "lineNumber": 192
+        },
+        {
+          "caller": "update",
+          "callee": "this.db.findFirst",
+          "lineNumber": 195
+        },
+        {
+          "caller": "update",
+          "callee": "toRecord",
+          "lineNumber": 196
+        },
+        {
+          "caller": "update",
+          "callee": "isUniqueConstraintViolation",
+          "lineNumber": 198
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/src/security/project-policy.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 233,
+      "nonEmptyLines": 208,
+      "functions": [
+        {
+          "name": "isProjectSlug",
+          "startLine": 30,
+          "endLine": 32,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isProjectTargetType",
+          "startLine": 37,
+          "endLine": 39,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "badField",
+          "startLine": 45,
+          "endLine": 47,
+          "params": [
+            "field",
+            "message"
+          ]
+        },
+        {
+          "name": "isPlainObject",
+          "startLine": 49,
+          "endLine": 51,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "parseDisplayName",
+          "startLine": 53,
+          "endLine": 59,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "assertWebUrlTarget",
+          "startLine": 61,
+          "endLine": 80,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "assertIpRangeTarget",
+          "startLine": 82,
+          "endLine": 102,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "assertProjectTarget",
+          "startLine": 105,
+          "endLine": 108,
+          "params": [
+            "targetType",
+            "targetValue"
+          ]
+        },
+        {
+          "name": "parseCreateProject",
+          "startLine": 121,
+          "endLine": 151,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "parseProjectPatch",
+          "startLine": 176,
+          "endLine": 211,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "assertProjectTargetChangeAllowed",
+          "startLine": 226,
+          "endLine": 233,
+          "params": [
+            "context"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProjectPolicyError",
+          "startLine": 15,
+          "endLine": 25,
+          "methods": [
+            "constructor"
+          ],
+          "properties": [
+            "code",
+            "details"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProjectPolicyError",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "PROJECT_SLUG_RE",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "isProjectSlug",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "PROJECT_TARGET_TYPES",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "isProjectTargetType",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "assertProjectTarget",
+          "line": 105,
+          "isDefault": false
+        },
+        {
+          "name": "parseCreateProject",
+          "line": 121,
+          "isDefault": false
+        },
+        {
+          "name": "parseProjectPatch",
+          "line": 176,
+          "isDefault": false
+        },
+        {
+          "name": "assertProjectTargetChangeAllowed",
+          "line": 226,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 20
+        },
+        {
+          "caller": "isProjectSlug",
+          "callee": "PROJECT_SLUG_RE.test",
+          "lineNumber": 31
+        },
+        {
+          "caller": "isProjectTargetType",
+          "callee": "(PROJECT_TARGET_TYPES as readonly string[]).includes",
+          "lineNumber": 38
+        },
+        {
+          "caller": "isPlainObject",
+          "callee": "Array.isArray",
+          "lineNumber": 50
+        },
+        {
+          "caller": "parseDisplayName",
+          "callee": "raw.trim",
+          "lineNumber": 55
+        },
+        {
+          "caller": "parseDisplayName",
+          "callee": "badField",
+          "lineNumber": 56
+        },
+        {
+          "caller": "assertWebUrlTarget",
+          "callee": "/\\s/.test",
+          "lineNumber": 62
+        },
+        {
+          "caller": "assertWebUrlTarget",
+          "callee": "badField",
+          "lineNumber": 63
+        },
+        {
+          "caller": "assertWebUrlTarget",
+          "callee": "badField",
+          "lineNumber": 69
+        },
+        {
+          "caller": "assertWebUrlTarget",
+          "callee": "badField",
+          "lineNumber": 72
+        },
+        {
+          "caller": "assertWebUrlTarget",
+          "callee": "badField",
+          "lineNumber": 75
+        },
+        {
+          "caller": "assertWebUrlTarget",
+          "callee": "badField",
+          "lineNumber": 78
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "value.indexOf",
+          "lineNumber": 83
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "value.slice",
+          "lineNumber": 84
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "value.slice",
+          "lineNumber": 85
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "address.includes",
+          "lineNumber": 86
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "badField",
+          "lineNumber": 87
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "net.isIP",
+          "lineNumber": 89
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "badField",
+          "lineNumber": 91
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "/^(0|[1-9][0-9]*)$/.test",
+          "lineNumber": 94
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "badField",
+          "lineNumber": 95
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "Number",
+          "lineNumber": 98
+        },
+        {
+          "caller": "assertIpRangeTarget",
+          "callee": "badField",
+          "lineNumber": 99
+        },
+        {
+          "caller": "assertProjectTarget",
+          "callee": "assertWebUrlTarget",
+          "lineNumber": 106
+        },
+        {
+          "caller": "assertProjectTarget",
+          "callee": "assertIpRangeTarget",
+          "lineNumber": 107
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "isPlainObject",
+          "lineNumber": 122
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "Object.keys",
+          "lineNumber": 125
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "(CREATE_ALLOWED_KEYS as readonly string[]).includes",
+          "lineNumber": 126
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "badField",
+          "lineNumber": 127
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "isProjectSlug",
+          "lineNumber": 130
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "badField",
+          "lineNumber": 131
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "parseDisplayName",
+          "lineNumber": 133
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "isProjectTargetType",
+          "lineNumber": 134
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "badField",
+          "lineNumber": 135
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "PROJECT_TARGET_TYPES.join",
+          "lineNumber": 135
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "badField",
+          "lineNumber": 138
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "assertProjectTarget",
+          "lineNumber": 140
+        },
+        {
+          "caller": "parseCreateProject",
+          "callee": "badField",
+          "lineNumber": 142
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "isPlainObject",
+          "lineNumber": 177
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "Object.keys",
+          "lineNumber": 180
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "badField",
+          "lineNumber": 182
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "(PATCH_ALLOWED_KEYS as readonly string[]).includes",
+          "lineNumber": 183
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "badField",
+          "lineNumber": 184
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "parseDisplayName",
+          "lineNumber": 187
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "isProjectTargetType",
+          "lineNumber": 190
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "badField",
+          "lineNumber": 191
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "PROJECT_TARGET_TYPES.join",
+          "lineNumber": 191
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "badField",
+          "lineNumber": 198
+        },
+        {
+          "caller": "parseProjectPatch",
+          "callee": "assertProjectTarget",
+          "lineNumber": 205
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 9,
+        "functionCount": 11,
+        "classCount": 1
+      }
+    }
+  ]
+}

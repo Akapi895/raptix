@@ -1,0 +1,64 @@
+% =====================================================================
+%  File: sections/3_2_van_de_ky_thuat.tex
+%  Mục đích: Phần 3.2 - Các vấn đề kỹ thuật cốt lõi
+% =====================================================================
+
+\subsection{Các vấn đề kỹ thuật cốt lõi}
+\label{sec:van-de-ky-thuat}
+
+Sau khi xác định khái niệm AI Agent trong red team, phần này phân tích bốn vấn đề kỹ thuật cốt lõi mà bất kỳ hệ thống red team tự động nào cũng phải giải quyết: điều phối và phân rã nhiệm vụ, quản lý state - event - evidence, suy luận attack vector, và governance cho tool execution. Bốn vấn đề này không độc lập mà có quan hệ chặt chẽ với nhau; thiết kế của mỗi vấn đề ảnh hưởng trực tiếp đến hiệu quả của các vấn đề còn lại.
+
+\subsubsection*{Điều phối và phân rã nhiệm vụ}
+
+Bài toán điều phối đặt ra câu hỏi: trong một mission dài với hàng trăm bước, ai ra quyết định hành động tiếp theo, và quyết định đó được đưa ra ở mức trừu tượng nào? Có ba chiến lược chính:
+
+\begin{itemize}
+    \item \textbf{Single-agent:} một agent duy nhất thực hiện toàn bộ mission. Ưu điểm là đơn giản, ít overhead phối hợp. Nhược điểm là context dễ bị quá tải khi mission kéo dài, và agent khó đồng thời giỏi ở nhiều domain khác nhau (recon, web exploitation, AD attack).
+    \item \textbf{Multi-agent với supervisor:} một orchestrator trung tâm phân chia nhiệm vụ cho các sub-agent chuyên biệt. Ưu điểm là cho phép chuyên môn hóa và chạy song song. Nhược điểm là phát sinh chi phí phối hợp, nguy cơ agent con làm trùng việc, và khó kiểm soát state chia sẻ nếu không có cơ chế đồng bộ tốt.
+    \item \textbf{Plan-execute tách biệt:} một lớp planner quyết định ``làm gì'' ở mức trừu tượng cao, một lớp executor quyết định ``thực thi như thế nào''. Đây là cách tiếp cận mà Incalmo sử dụng, cho phép planner chỉ cần suy luận trên các declarative task thay vì câu lệnh shell cấp thấp.
+\end{itemize}
+
+Trong prototype Raptix, em kế thừa kiến trúc multi-agent của Decepticon nhưng bổ sung cơ chế chuyển pha tường minh dựa trên state của Attack Knowledge Graph. Multi-agent không được kích hoạt mặc định cho mọi task, mà chỉ được dùng khi có lợi ích rõ về phân tách nhiệm vụ hoặc chạy song song đủ để bù đắp chi phí phối hợp.
+
+\subsubsection*{Quản lý state, event và evidence}
+
+Đây là vấn đề kỹ thuật quan trọng nhất trong thiết kế red team agent, vì hầu hết các thất bại của hệ thống LLM-assisted offense đều bắt nguồn từ việc quản lý state kém. Cần phân biệt ba khái niệm:
+
+\begin{itemize}
+    \item \textbf{Event:} sự kiện xảy ra trong runtime - một tool call bắt đầu, một agent con kết thúc, một finding được xác minh. Event là \emph{bất biến} (append-only) và không thể sửa sau khi ghi.
+    \item \textbf{State:} hình ảnh hiện tại của hệ thống, được suy ra từ các event. State có thể được cập nhật, nhưng mọi thay đổi state phải có event tương ứng để đảm bảo tính truy vết.
+    \item \textbf{Evidence:} dữ liệu thô đủ mạnh để hỗ trợ một kết luận - output của nmap, HTTP response, dump credential, screenshot. Evidence là cơ sở để verifier chấp nhận hoặc từ chối một finding.
+\end{itemize}
+
+Việc tách ba lớp này mang lại ba lợi ích cụ thể. Thứ nhất, hệ thống có thể \emph{replay} toàn bộ mission từ event stream để debug khi cần. Thứ hai, có thể \emph{kiểm tra} tại sao agent đưa ra một quyết định cụ thể bằng cách truy vết từ finding ngược về action và evidence. Thứ ba, cho phép \emph{phục hồi} state khi agent crash mà không mất mát dữ liệu, vì state luôn có thể được tái tạo từ event stream.
+
+Một nguyên tắc quan trọng là không được nhầm lẫn giữa \emph{fact} và \emph{hypothesis}. Output của nmap cho thấy port 22 đang mở là một fact, có evidence rõ ràng. Nhưng kết luận ``host này có thể bị khai thác qua SSH weak credential'' chỉ là hypothesis cho đến khi có xác minh thực tế. Nếu state không phân biệt được hai loại này, agent sẽ dễ đưa ra kết luận sai và verifier sẽ không thể kiểm chứng.
+
+\subsubsection*{Suy luận attack vector}
+
+Trong red team, câu hỏi trung tâm không phải là ``mục tiêu có lỗ hổng gì'' mà là ``từ vị trí hiện tại, đường đi ngắn nhất tới mục tiêu cuối là gì''. Đây là bài toán suy luận trên đồ thị, đòi hỏi hệ thống phải có khả năng:
+
+\begin{itemize}
+    \item \textbf{Truy vấn đường đi:} tìm các attack path khả thi từ foothold hiện tại tới mục tiêu cuối, có tính đến chi phí thực thi và rủi ro OPSEC.
+    \item \textbf{Phát hiện credential reuse path:} nhận diện các credential có thể tái sử dụng trên nhiều host, cho phép pivot mà không cần khai thác lỗ hổng mới.
+    \item \textbf{Phát hiện privilege escalation path:} nhận diện các chuỗi leo thang đặc quyền (ví dụ: user thường → group có quyền đặc biệt → domain admin) thông qua quan hệ thành viên nhóm và đặc quyền.
+    \item \textbf{Loại trừ nhánh đã thất bại:} đánh dấu các nhánh đã thử và thất bại để tránh lặp lại trong các vòng lặp sau.
+\end{itemize}
+
+Nếu state được lưu dưới dạng danh sách phẳng (list of facts), bốn loại suy luận này đều rất khó thực hiện vì không có cấu trúc quan hệ. Đây là động cơ chính để em thiết kế \textbf{Attack Knowledge Graph (AKG)} - một đồ thị có hướng, có nhãn, biểu diễn tường minh quan hệ giữa các thực thể. Chi tiết thiết kế AKG sẽ được trình bày trong phần 3.4.2.
+
+\subsubsection*{Governance cho tool execution}
+
+Trong hoạt động an toàn thông tin, autonomy cần đi cùng governance. Bất kỳ hệ thống red team tự động nào cũng phải đảm bảo ba yêu cầu governance sau:
+
+\begin{itemize}
+    \item \textbf{Scope enforcement:} mọi tool call phải được kiểm tra trước khi chạy để đảm bảo target nằm trong scope đã được phê duyệt. Scope guard không thể là lớp giao diện phụ mà phải nằm ở tầng tool executor, trước khi lệnh được đưa xuống sandbox.
+    \item \textbf{Human-in-the-loop (HITL):} các hành động nhạy cảm (xóa dữ liệu, thay đổi cấu hình hệ thống, tấn công denial-of-service) cần có cơ chế phê duyệt của operator trước khi thực thi. HITL không nên được coi là ``optional feature'' mà là thành phần kiến trúc bắt buộc.
+    \item \textbf{Audit trail:} mọi tool call phải được ghi lại với execution\_id, thời gian, target, tham số và kết quả. Audit trail là cơ sở để chứng minh rằng hệ thống đã hoạt động đúng trong phạm vi được cấp quyền, đồng thời hỗ trợ quá trình phân tích sự cố sau này.
+\end{itemize}
+
+Ba yêu cầu này tương đồng với cách các hệ thống red team hiện đại như Decepticon và Pentest-AI đưa scope guard và HITL vào runtime. Trong prototype Raptix, em kế thừa các cơ chế này và bổ sung thêm một invariant ở tầng AKG: mọi node asset được ghi vào đồ thị phải nằm trong scope đã được phê duyệt; node ngoài scope bị từ chối ngay tại thời điểm ghi. Điều này tạo ra một lớp bảo vệ thứ hai, độc lập với scope guard ở tầng tool executor.
+
+\subsubsection*{Tổng kết}
+
+Bốn vấn đề kỹ thuật trên có quan hệ chặt chẽ với nhau. Điều phối tốt giúp phân tách nhiệm vụ hợp lý, giảm coordination overhead. Quản lý state tốt là điều kiện tiên quyết để điều phối hiệu quả trong mission dài. Suy luận attack vector dựa trên state có cấu trúc để tìm đường đi tối ưu. Và governance đảm bảo rằng mọi hoạt động tự động đều nằm trong phạm vi được cấp quyền. Ba phần tiếp theo của báo cáo (3.3, 3.4, 3.5) sẽ trình bày cách các hệ thống hiện có giải quyết bốn vấn đề này, và cách prototype Raptix kế thừa, điều chỉnh và mở rộng các giải pháp đó.

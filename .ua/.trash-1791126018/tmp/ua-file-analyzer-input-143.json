@@ -1,0 +1,186 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/tests/unit/core/test_logging.py",
+   "language": "python",
+   "sizeLines": 129,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/core/test_schemas.py",
+   "language": "python",
+   "sizeLines": 286,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+   "language": "python",
+   "sizeLines": 57,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/installer/test_install_sh.py",
+   "language": "python",
+   "sizeLines": 47,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+   "language": "python",
+   "sizeLines": 105,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+   "language": "python",
+   "sizeLines": 244,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+   "language": "python",
+   "sizeLines": 207,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+   "language": "python",
+   "sizeLines": 122,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_http_client.py",
+   "language": "python",
+   "sizeLines": 111,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_litellm_dynamic_config.py",
+   "language": "python",
+   "sizeLines": 792,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_models.py",
+   "language": "python",
+   "sizeLines": 590,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+   "language": "python",
+   "sizeLines": 574,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_oauth_token_store.py",
+   "language": "python",
+   "sizeLines": 479,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/llm/test_ollama_probe.py",
+   "language": "python",
+   "sizeLines": 458,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/mcp_server/__init__.py",
+   "language": "python",
+   "sizeLines": 1,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/middleware/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/ops/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/prompts/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/prompts/test_claude4_compat.py",
+   "language": "python",
+   "sizeLines": 132,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/references/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/reporting/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/research/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/research/test_apoc_safety.py",
+   "language": "python",
+   "sizeLines": 144,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/research/test_fuzz.py",
+   "language": "python",
+   "sizeLines": 178,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/tests/unit/core/test_logging.py": [],
+  "packages/raptix/tests/unit/core/test_schemas.py": [],
+  "packages/raptix/tests/unit/core/test_workspace_scaffold.py": [],
+  "packages/raptix/tests/unit/installer/test_install_sh.py": [],
+  "packages/raptix/tests/unit/llm/__init__.py": [],
+  "packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py": [],
+  "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py": [],
+  "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py": [],
+  "packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py": [],
+  "packages/raptix/tests/unit/llm/test_http_client.py": [],
+  "packages/raptix/tests/unit/llm/test_litellm_dynamic_config.py": [],
+  "packages/raptix/tests/unit/llm/test_models.py": [],
+  "packages/raptix/tests/unit/llm/test_oauth_handlers.py": [],
+  "packages/raptix/tests/unit/llm/test_oauth_token_store.py": [],
+  "packages/raptix/tests/unit/llm/test_ollama_probe.py": [],
+  "packages/raptix/tests/unit/mcp_server/__init__.py": [],
+  "packages/raptix/tests/unit/middleware/__init__.py": [],
+  "packages/raptix/tests/unit/ops/__init__.py": [],
+  "packages/raptix/tests/unit/prompts/__init__.py": [],
+  "packages/raptix/tests/unit/prompts/test_claude4_compat.py": [],
+  "packages/raptix/tests/unit/references/__init__.py": [],
+  "packages/raptix/tests/unit/reporting/__init__.py": [],
+  "packages/raptix/tests/unit/research/__init__.py": [],
+  "packages/raptix/tests/unit/research/test_apoc_safety.py": [
+   "packages/raptix/raptix/tools/research/_apoc_safety.py"
+  ],
+  "packages/raptix/tests/unit/research/test_fuzz.py": [
+   "packages/raptix/raptix/tools/research/fuzz.py"
+  ]
+ }
+}

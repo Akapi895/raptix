@@ -1,0 +1,227 @@
+{
+  "batchIndex": 81,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/021-graph.json",
+      "language": "json",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/022-threads.json",
+      "language": "json",
+      "sizeLines": 8,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "language": "json",
+      "sizeLines": 261,
+      "fileCategory": "config"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "config:clients/web-raptix/tests/fixtures/w00/http/021-graph.json",
+      "type": "config",
+      "name": "021-graph.json",
+      "filePath": "clients/web-raptix/tests/fixtures/w00/http/021-graph.json",
+      "summary": "Fixture HTTP w00 thứ 21: GET /api/engagements/:id/graph trả 503 với thông báo lỗi NEO4J_PASSWORD thiếu hoặc còn mặc định công khai, từ chối truy vấn graph và trỏ tới docs/security/neo4j-hardening.md — mẫu phản hồi từ chối khi Neo4j chưa harden.",
+      "tags": [
+        "test-fixture",
+        "http",
+        "graph",
+        "security",
+        "error-response"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Fixture kiểu provenance \"legacy-http-controlled\": ghi lại nguyên vẹn method/path/status/contentType/body của một lần gọi API thật."
+    },
+    {
+      "id": "config:clients/web-raptix/tests/fixtures/w00/http/022-threads.json",
+      "type": "config",
+      "name": "022-threads.json",
+      "filePath": "clients/web-raptix/tests/fixtures/w00/http/022-threads.json",
+      "summary": "Fixture HTTP w00 thứ 22: GET /api/engagements/:id/threads trả 200 với body rỗng ([]) — mẫu danh sách threads chưa có session nào cho engagement.",
+      "tags": [
+        "test-fixture",
+        "http",
+        "threads",
+        "api-response"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "type": "config",
+      "name": "index.json",
+      "filePath": "clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "summary": "Manifest của bộ fixture HTTP w00: provenance \"legacy-http-controlled\", captureContext (legacy API chạy trên 127.0.0.1:5290 với DB test riêng, workspace là host-bind root), danh sách 22 bước capture (001-022) kèm method/path/status/expected/ok, thông tin provisioning và trường fatal.",
+      "tags": [
+        "test-fixture",
+        "manifest",
+        "http-capture",
+        "provenance",
+        "regression"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Mỗi entry trong steps[] tham chiếu 1-1 tới file fixture cùng thư mục, cho phép kiểm tra tất-or-nothing khi replay bộ capture."
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/001-health.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/002-catalog.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/003-create-invalid-400.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/004-create-201.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/005-create-duplicate-409.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/006-list.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/007-detail.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/008-patch-status.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/009-plan-docs.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/010-opplan.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/011-findings.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/012-timeline.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/013-files.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/014-file-content.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/015-approvals-pending.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/016-approval-allow.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/017-approval-duplicate-409.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/018-export-json.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/019-export-markdown.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/020-export-invalid-format.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/021-graph.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/http/index.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/http/022-threads.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

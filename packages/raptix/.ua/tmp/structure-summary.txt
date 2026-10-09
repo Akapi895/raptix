@@ -1,0 +1,593 @@
+### batch 21 | raptix/tools/reversing/__init__.py | total=57 nonEmpty=51 metrics=[{"importCount":7,"exportCount":0,"functionCount":0,"classCount":0}]
+### batch 21 | raptix/tools/reversing/binary.py | total=214 nonEmpty=187 metrics=[{"importCount":0,"exportCount":5,"functionCount":4,"classCount":1}]
+  FN _detect_format [102-108](7)
+  FN _parse_elf [111-158](48)
+  FN _parse_pe [161-186](26)
+  FN identify_binary [189-214](26)
+  CL BinaryInfo [26-56](31) methods=[to_dict]
+  EX BinaryInfo
+  EX _detect_format
+  EX _parse_elf
+  EX _parse_pe
+  EX identify_binary
+### batch 21 | raptix/tools/reversing/ghidra.py | total=493 nonEmpty=418 metrics=[{"importCount":0,"exportCount":13,"functionCount":9,"classCount":4}]
+  FN _mcp_available [117-125](9)
+  FN _mcp_post [128-135](8)
+  FN _mcp_get [138-143](6)
+  FN _find_analyze_headless [263-274](12)
+  FN _run_headless [277-353](77)
+  FN ghidra_analyze_binary [361-402](42)
+  FN ghidra_decompile_function [405-458](54)
+  FN ghidra_get_xrefs [461-483](23)
+  FN ghidra_available [486-493](8)
+  CL GhidraFunction [44-52](9) methods=[to_dict]
+  CL GhidraDecompilation [59-66](8) methods=[to_dict]
+  CL GhidraAnalysis [70-98](29) methods=[to_dict]
+  CL GhidraXref [102-109](8) methods=[to_dict]
+  EX GhidraFunction
+  EX GhidraDecompilation
+  EX GhidraAnalysis
+  EX GhidraXref
+  EX _mcp_available
+  EX _mcp_post
+  EX _mcp_get
+  EX _find_analyze_headless
+  EX _run_headless
+  EX ghidra_analyze_binary
+  EX ghidra_decompile_function
+  EX ghidra_get_xrefs
+  EX ghidra_available
+### batch 21 | raptix/tools/reversing/packer.py | total=100 nonEmpty=84 metrics=[{"importCount":0,"exportCount":3,"functionCount":2,"classCount":1}]
+  FN shannon_entropy [35-44](10)
+  FN detect_packer [72-100](29)
+  CL PackerVerdict [18-32](15) methods=[to_dict]
+  EX PackerVerdict
+  EX shannon_entropy
+  EX detect_packer
+### batch 21 | raptix/tools/reversing/rop.py | total=75 nonEmpty=62 metrics=[{"importCount":0,"exportCount":3,"functionCount":2,"classCount":1}]
+  FN find_rop_gadgets [39-69](31)
+  FN filter_gadgets_by_pattern [72-75](4)
+  CL RopGadget [24-36](13) methods=[to_dict]
+  EX RopGadget
+  EX find_rop_gadgets
+  EX filter_gadgets_by_pattern
+### batch 21 | raptix/tools/reversing/scripts.py | total=79 nonEmpty=65 metrics=[{"importCount":0,"exportCount":2,"functionCount":2,"classCount":0}]
+  FN ghidra_recon_script [72-74](3)
+  FN r2_recon_script [77-79](3)
+  EX ghidra_recon_script
+  EX r2_recon_script
+### batch 21 | raptix/tools/reversing/strings.py | total=188 nonEmpty=168 metrics=[{"importCount":0,"exportCount":4,"functionCount":3,"classCount":1}]
+  FN _classify [110-139](30)
+  FN extract_strings [142-180](39)
+  FN group_by_category [183-188](6)
+  CL ExtractedString [95-107](13) methods=[to_dict]
+  EX ExtractedString
+  EX _classify
+  EX extract_strings
+  EX group_by_category
+### batch 21 | raptix/tools/reversing/symbols.py | total=159 nonEmpty=149 metrics=[{"importCount":0,"exportCount":2,"functionCount":1,"classCount":1}]
+  FN summarize_symbols [147-159](13)
+  CL SymbolReport [113-144](32) methods=[risk_score,to_dict]
+  EX SymbolReport
+  EX summarize_symbols
+### batch 21 | raptix/tools/reversing/tools.py | total=187 nonEmpty=147 metrics=[{"importCount":7,"exportCount":13,"functionCount":13,"classCount":0}]
+  FN _json [25-26](2)
+  FN bin_identify [30-33](4)
+  FN bin_strings [37-63](27)
+  FN bin_packer [67-73](7)
+  FN bin_rop [77-92](16)
+  FN bin_symbols_report [96-103](8)
+  FN bin_ghidra_script [107-109](3)
+  FN bin_r2_script [113-115](3)
+  FN ghidra_analyze [124-132](9)
+  FN ghidra_decompile [136-144](9)
+  FN ghidra_xrefs [148-155](8)
+  FN ghidra_status [159-161](3)
+  FN re_status [165-167](3)
+  EX _json
+  EX bin_identify
+  EX bin_strings
+  EX bin_packer
+  EX bin_rop
+  EX bin_symbols_report
+  EX bin_ghidra_script
+  EX bin_r2_script
+  EX ghidra_analyze
+  EX ghidra_decompile
+  EX ghidra_xrefs
+  EX ghidra_status
+  EX re_status
+### batch 21 | tests/unit/reversing/test_binary_strings_packer.py | total=238 nonEmpty=188 metrics=[{"importCount":6,"exportCount":7,"functionCount":1,"classCount":6}]
+  FN _minimal_elf64 [19-29](11)
+  CL TestIdentifyBinary [32-80](49) methods=[test_elf64,test_elf64_pie,test_pe_header,test_unknown_format,test_missing_file]
+  CL TestStringsExtraction [86-127](42) methods=[test_ascii_strings,test_category_url,test_category_ip,test_category_secret,test_category_format_string,test_category_path,test_group_by_category]
+  CL TestPacker [133-167](35) methods=[test_entropy_bounds,test_detects_upx,test_detects_vmp,test_high_entropy_no_sig,test_low_entropy_text,test_empty_data]
+  CL TestRop [173-196](24) methods=[test_finds_simple_ret,test_filter_by_pattern,test_base_offset_applied,test_deduplicates_identical_gadgets]
+  CL TestSymbols [202-223](22) methods=[test_categorises_known_functions,test_sanitizer_detection,test_risk_score_nontrivial,test_sanitizer_reduces_score]
+  CL TestScripts [229-238](10) methods=[test_ghidra_template_non_empty,test_r2_template_non_empty]
+  EX _minimal_elf64
+  EX TestIdentifyBinary
+  EX TestStringsExtraction
+  EX TestPacker
+  EX TestRop
+  EX TestSymbols
+  EX TestScripts
+### batch 21 | tests/unit/reversing/test_reversing_internals.py | total=852 nonEmpty=698 metrics=[{"importCount":6,"exportCount":10,"functionCount":3,"classCount":7}]
+  FN _make_elf32 [41-53](13)
+  FN _make_elf64_with_phdr [56-85](30)
+  FN _make_pe [88-101](14)
+  CL TestDetectFormat [107-136](30) methods=[test_elf,test_pe,test_macho64_le,test_macho32_le,test_macho_fat,test_macho_big_endian,test_macho_big_endian64,test_wasm,test_unknown]
+  CL TestIdentifyBinaryExtended [142-368](227) methods=[test_elf32_x86,test_elf32_arm,test_elf32_mips,test_elf32_riscv,test_elf32_powerpc,test_elf32_unknown_machine,test_elf32_big_endian,test_elf32_pie,test_elf64_nx_enabled,test_elf64_nx_disabled,test_elf64_relro_detected,test_elf64_arm64,test_elf_truncated_header,test_pe_x86_32bit,test_pe_arm,test_pe_arm64,test_pe_unknown_machine,test_pe_nx_off_pie_off,test_pe_no_signature,test_pe_truncated_dos_header,test_macho32,test_macho64,test_macho_big_endian_parsed,test_macho64_big_endian_parsed,test_macho_architecture_deferred,test_wasm_format,test_string_path_accepted,test_size_recorded,test_to_dict_structure,test_to_dict_entry_point_hex,test_to_dict_entry_point_none_when_absent]
+  CL TestStringsExtended [374-482](109) methods=[test_utf16le_extracted,test_utf16le_disabled,test_min_length_filters_short,test_category_crypto_hex_key_32,test_category_crypto_hex_key_64,test_category_crypto_hex_key_wrong_length_not_crypto,test_category_crypto_pem,test_category_email,test_category_version,test_category_import_direct,test_category_import_substring,test_category_text_fallback,test_category_windows_path,test_offset_is_correct,test_to_dict_fields,test_to_dict_truncates_long_text,test_group_by_category_empty_input,test_path_input,test_str_path_input]
+  CL TestPackerExtended [488-599](112) methods=[test_packer_signature,test_multiple_signatures_captured,test_first_packer_wins,test_entropy_above_7_no_sig_no_very_high_note,test_entropy_exact_maximum,test_entropy_empty_bytes,test_entropy_all_same_byte,test_entropy_two_symbols,test_file_path_input,test_str_path_input,test_to_dict_fields,test_to_dict_entropy_rounded,test_empty_data_verdict,test_low_entropy_note_below_4]
+  CL TestRopExtended [605-682](78) methods=[test_ret_imm16_0xc2,test_retf_0xcb,test_retf_imm16_0xca,test_all_four_ret_opcodes,test_empty_data_returns_empty,test_no_ret_in_data,test_max_length_respected,test_gadget_hex_matches_bytes,test_to_dict_fields,test_to_dict_ret_opcode_format,test_dedup_across_different_positions,test_filter_gadgets_pattern_no_match,test_filter_gadgets_empty_input,test_base_address_in_offset]
+  CL TestSymbolsExtended [688-795](108) methods=[test_empty_list,test_crypto_bucket,test_dynamic_code_bucket,test_network_bucket,test_dangerous_c_bucket,test_sanitizer_prefix_variants,test_sanitizer_reduces_score_to_zero_if_dominant,test_risk_score_floor_is_zero,test_risk_score_additive,test_risk_score_command_exec_weighted_highest,test_deduplication_via_set,test_unknown_symbols_ignored,test_to_dict_structure,test_to_dict_lists_are_copies,test_results_sorted]
+  CL TestScriptsExtended [801-852](52) methods=[test_ghidra_script_contains_binary_name,test_ghidra_script_custom_script_name,test_ghidra_script_default_script_name,test_ghidra_script_has_function_iteration,test_r2_script_contains_binary_placeholder,test_r2_script_contains_analysis_command,test_r2_script_contains_import_check,test_r2_script_contains_xref_system,test_r2_script_string_filter_contains_secret_keywords,test_ghidra_script_minimal_length,test_r2_script_minimal_length]
+  EX _make_elf32
+  EX _make_elf64_with_phdr
+  EX _make_pe
+  EX TestDetectFormat
+  EX TestIdentifyBinaryExtended
+  EX TestStringsExtended
+  EX TestPackerExtended
+  EX TestRopExtended
+  EX TestSymbolsExtended
+  EX TestScriptsExtended
+### batch 21 | tests/unit/reversing/test_reversing_robustness.py | total=108 nonEmpty=93 metrics=[{"importCount":3,"exportCount":4,"functionCount":0,"classCount":4}]
+  CL TestGhidraFunctionExtraKeys [10-59](50) methods=[test_extra_keys_do_not_raise,test_ghidra_analysis_with_extra_function_fields]
+  CL TestScriptsBracePath [62-87](26) methods=[test_ghidra_recon_script_brace_in_binary,test_ghidra_recon_script_brace_in_script_name,test_r2_recon_script_brace_in_binary,test_scripts_normal_path_preserved]
+  CL TestBinR2ScriptNoDeadReturn [90-101](12) methods=[test_returns_json_with_source_key,test_brace_in_binary_does_not_raise]
+  CL TestGhidraReconEntryPoint [104-108](5) methods=[test_recon_script_does_not_iterate_single_entry_point]
+  EX TestGhidraFunctionExtraKeys
+  EX TestScriptsBracePath
+  EX TestBinR2ScriptNoDeadReturn
+  EX TestGhidraReconEntryPoint
+### batch 22 | raptix/tools/defense/__init__.py | total=39 nonEmpty=33 metrics=[{"importCount":1,"exportCount":0,"functionCount":0,"classCount":0}]
+### batch 22 | raptix/tools/defense/conops.py | total=113 nonEmpty=91 metrics=[{"importCount":0,"exportCount":7,"functionCount":6,"classCount":1}]
+  FN _resolve_workspace [35-36](2)
+  FN _load_conops [39-51](13)
+  FN resolve_siem_target [54-69](16)
+  FN list_targets [72-81](10)
+  FN resolve_auth_value [84-100](17)
+  FN engagement_slug [103-113](11)
+  CL ConOpsLookupError [28-29](2) methods=[]
+  EX ConOpsLookupError
+  EX _resolve_workspace
+  EX _load_conops
+  EX resolve_siem_target
+  EX list_targets
+  EX resolve_auth_value
+  EX engagement_slug
+### batch 22 | raptix/tools/defense/edr.py | total=222 nonEmpty=194 metrics=[{"importCount":1,"exportCount":3,"functionCount":3,"classCount":0}]
+  FN _extract_yara_metadata [31-37](7)
+  FN push_defender_xdr_detection [40-117](78)
+  FN push_crowdstrike_ioa [133-222](90)
+  EX _extract_yara_metadata
+  EX push_defender_xdr_detection
+  EX push_crowdstrike_ioa
+### batch 22 | raptix/tools/defense/elastic.py | total=178 nonEmpty=155 metrics=[{"importCount":1,"exportCount":5,"functionCount":4,"classCount":1}]
+  FN _field_clause_lucene [27-41](15)
+  FN _selection_to_lucene [44-53](10)
+  FN sigma_to_lucene [56-85](30)
+  FN push_detection_rule [97-178](82)
+  CL SigmaToElasticError [23-24](2) methods=[]
+  EX SigmaToElasticError
+  EX _field_clause_lucene
+  EX _selection_to_lucene
+  EX sigma_to_lucene
+  EX push_detection_rule
+### batch 22 | raptix/tools/defense/sentinel.py | total=216 nonEmpty=186 metrics=[{"importCount":1,"exportCount":6,"functionCount":5,"classCount":1}]
+  FN _table_for_logsource [47-50](4)
+  FN _field_clause_kql [53-67](15)
+  FN _selection_to_kql [70-79](10)
+  FN sigma_to_kql [82-115](34)
+  FN push_analytic_rule [127-216](90)
+  CL SigmaToKqlError [30-31](2) methods=[]
+  EX SigmaToKqlError
+  EX _table_for_logsource
+  EX _field_clause_kql
+  EX _selection_to_kql
+  EX sigma_to_kql
+  EX push_analytic_rule
+### batch 22 | raptix/tools/defense/splunk.py | total=186 nonEmpty=157 metrics=[{"importCount":1,"exportCount":6,"functionCount":5,"classCount":1}]
+  FN _quote_spl [31-35](5)
+  FN _selection_to_spl [38-50](13)
+  FN _field_clause [53-68](16)
+  FN sigma_to_spl [71-113](43)
+  FN push_savedsearch [116-186](71)
+  CL SigmaConversionError [27-28](2) methods=[]
+  EX SigmaConversionError
+  EX _quote_spl
+  EX _selection_to_spl
+  EX _field_clause
+  EX sigma_to_spl
+  EX push_savedsearch
+### batch 22 | raptix/tools/defense/tools.py | total=208 nonEmpty=179 metrics=[{"importCount":5,"exportCount":8,"functionCount":8,"classCount":0}]
+  FN _coerce_sigma [20-32](13)
+  FN _json [35-36](2)
+  FN list_siem_targets [40-48](9)
+  FN sigma_to_splunk_savedsearch [52-80](29)
+  FN sigma_to_sentinel_analyticrule [84-114](31)
+  FN sigma_to_elastic_detection_rule [118-150](33)
+  FN yara_to_defender_xdr_custom_detection [154-174](21)
+  FN yara_to_crowdstrike_ioa [178-198](21)
+  EX _coerce_sigma
+  EX _json
+  EX list_siem_targets
+  EX sigma_to_splunk_savedsearch
+  EX sigma_to_sentinel_analyticrule
+  EX sigma_to_elastic_detection_rule
+  EX yara_to_defender_xdr_custom_detection
+  EX yara_to_crowdstrike_ioa
+### batch 22 | tests/unit/tools/test_defense.py | total=293 nonEmpty=236 metrics=[{"importCount":5,"exportCount":23,"functionCount":23,"classCount":0}]
+  FN _basic_sigma [27-38](12)
+  FN test_sigma_to_spl_basic [41-44](4)
+  FN test_sigma_to_spl_with_or_condition [47-57](11)
+  FN test_sigma_to_spl_with_list_value [60-69](10)
+  FN test_sigma_to_spl_unknown_modifier_raises [72-80](9)
+  FN test_sigma_to_spl_unknown_selection_raises [83-91](9)
+  FN test_sigma_to_kql_picks_security_event_for_windows [94-98](5)
+  FN test_sigma_to_kql_unknown_modifier_raises [101-110](10)
+  FN test_sigma_to_lucene_basic [113-116](4)
+  FN test_sigma_to_lucene_unknown_token_raises [119-127](9)
+  FN test_extract_yara_metadata_pulls_meta_kvs [130-146](17)
+  FN test_extract_yara_metadata_empty_when_no_meta_block [149-151](3)
+  FN test_resolve_siem_target_missing_conops_raises [154-157](4)
+  FN test_resolve_siem_target_missing_target_raises [160-164](5)
+  FN test_resolve_siem_target_success [167-179](13)
+  FN test_resolve_auth_value_missing_env_raises [182-185](4)
+  FN test_resolve_auth_value_success [188-190](3)
+  FN test_sigma_to_spl_contains_with_spaces_stays_quoted [193-201](9)
+  FN test_sigma_to_spl_contains_with_special_chars_escaped [204-212](9)
+  FN _yara_with_sha256 [215-225](11)
+  FN _yara_no_indicator [228-238](11)
+  FN test_push_defender_xdr_kql_built_from_sha256 [241-269](29)
+  FN test_push_defender_xdr_no_indicator_returns_error [272-293](22)
+  EX _basic_sigma
+  EX test_sigma_to_spl_basic
+  EX test_sigma_to_spl_with_or_condition
+  EX test_sigma_to_spl_with_list_value
+  EX test_sigma_to_spl_unknown_modifier_raises
+  EX test_sigma_to_spl_unknown_selection_raises
+  EX test_sigma_to_kql_picks_security_event_for_windows
+  EX test_sigma_to_kql_unknown_modifier_raises
+  EX test_sigma_to_lucene_basic
+  EX test_sigma_to_lucene_unknown_token_raises
+  EX test_extract_yara_metadata_pulls_meta_kvs
+  EX test_extract_yara_metadata_empty_when_no_meta_block
+  EX test_resolve_siem_target_missing_conops_raises
+  EX test_resolve_siem_target_missing_target_raises
+  EX test_resolve_siem_target_success
+  EX test_resolve_auth_value_missing_env_raises
+  EX test_resolve_auth_value_success
+  EX test_sigma_to_spl_contains_with_spaces_stays_quoted
+  EX test_sigma_to_spl_contains_with_special_chars_escaped
+  EX _yara_with_sha256
+  EX _yara_no_indicator
+  EX test_push_defender_xdr_kql_built_from_sha256
+  EX test_push_defender_xdr_no_indicator_returns_error
+### batch 22 | tests/unit/tools/test_defense_edr.py | total=434 nonEmpty=375 metrics=[{"importCount":1,"exportCount":7,"functionCount":2,"classCount":5}]
+  FN _write_defender_conops [49-51](3)
+  FN _write_crowdstrike_conops [54-56](3)
+  CL TestPushDefenderXdrDetectionSuccess [59-135](77) methods=[test_success_path_returns_pushed_status_with_correct_fields,test_tags_include_yara_meta_tags_split_and_technique_id,test_tags_with_no_meta_tags_and_no_technique_id]
+  CL TestPushDefenderXdrDetectionErrorBranches [138-207](70) methods=[test_missing_conops_returns_error,test_missing_auth_key_in_defender_config_returns_error,test_auth_env_var_unset_returns_error,test_requests_not_installed_returns_error,test_requests_post_raises_exception_returns_error,test_http_400_or_above_returns_error_with_body_truncated]
+  CL TestPushCrowdstrikeIoaSuccess [210-306](97) methods=[test_success_path_returns_pushed_status_with_correct_indicator_fields,test_indicator_value_falls_back_to_ioc_meta_key,test_type_mapping_for_ip_url_domain_aliases]
+  CL TestPushCrowdstrikeIoaErrorBranches [309-426](118) methods=[test_missing_conops_returns_error,test_missing_url_in_crowdstrike_config_returns_error,test_missing_auth_in_crowdstrike_config_returns_error,test_auth_env_var_unset_returns_error,test_missing_indicator_meta_returns_structured_error,test_missing_indicator_value_with_type_present_returns_structured_error,test_unsupported_indicator_type_returns_error,test_requests_not_installed_returns_error,test_requests_post_raises_exception_returns_error,test_http_400_or_above_returns_error_with_body_truncated]
+  CL TestCrowdstrikeTypeMap [429-434](6) methods=[test_type_map_contains_expected_keys_and_values]
+  EX _write_defender_conops
+  EX _write_crowdstrike_conops
+  EX TestPushDefenderXdrDetectionSuccess
+  EX TestPushDefenderXdrDetectionErrorBranches
+  EX TestPushCrowdstrikeIoaSuccess
+  EX TestPushCrowdstrikeIoaErrorBranches
+  EX TestCrowdstrikeTypeMap
+### batch 22 | tests/unit/tools/test_defense_push.py | total=1096 nonEmpty=943 metrics=[{"importCount":5,"exportCount":12,"functionCount":2,"classCount":10}]
+  FN _conops_with [59-65](7)
+  FN _mock_response [68-72](5)
+  CL TestConOpsHelpers [80-150](71) methods=[test_load_conops_invalid_json,test_load_conops_finds_alternate_filenames,test_list_targets_returns_sorted_keys,test_list_targets_empty_when_no_conops,test_list_targets_empty_when_no_blue_team,test_engagement_slug_uses_env_var,test_engagement_slug_from_conops,test_engagement_slug_falls_back_to_unscoped,test_resolve_auth_value_malformed_spec_raises,test_resolve_siem_target_no_blue_team_raises]
+  CL TestSplunkConverter [158-245](88) methods=[test_quote_spl_non_string,test_quote_spl_escapes_backslash_and_quote,test_field_clause_equals,test_field_clause_startswith,test_field_clause_contains,test_field_clause_endswith,test_field_clause_non_string_with_modifier,test_field_clause_unknown_modifier_raises,test_selection_to_spl_list_values,test_sigma_to_spl_no_detection_raises,test_sigma_to_spl_no_condition_raises,test_sigma_to_spl_empty_selections_raises,test_sigma_to_spl_selection_not_dict_raises,test_sigma_to_spl_and_condition,test_sigma_to_spl_not_condition,test_sigma_to_spl_parenthesised_condition]
+  CL TestSentinelConverter [253-346](94) methods=[test_table_for_logsource_known,test_table_for_logsource_unknown_falls_back_to_syslog,test_table_for_logsource_empty,test_field_clause_kql_equals_string,test_field_clause_kql_contains,test_field_clause_kql_startswith,test_field_clause_kql_endswith,test_field_clause_kql_non_string_equals,test_field_clause_kql_unsupported_modifier_raises,test_selection_to_kql_list_or,test_sigma_to_kql_missing_detection_raises,test_sigma_to_kql_no_condition_raises,test_sigma_to_kql_selection_not_dict_raises,test_sigma_to_kql_unknown_token_raises,test_sigma_to_kql_and_or_not_parens,test_sigma_to_kql_escapes_double_quote,test_severity_map_critical_maps_to_high]
+  CL TestElasticConverter [354-423](70) methods=[test_field_clause_lucene_equals_string,test_field_clause_lucene_contains,test_field_clause_lucene_startswith,test_field_clause_lucene_endswith,test_field_clause_lucene_non_string_equals,test_field_clause_lucene_unsupported_modifier_raises,test_field_clause_lucene_non_string_unsupported_raises,test_selection_to_lucene_list_or,test_sigma_to_lucene_missing_detection_raises,test_sigma_to_lucene_no_condition_raises,test_sigma_to_lucene_selection_not_dict_raises,test_sigma_to_lucene_and_or_not,test_sigma_to_lucene_escapes_double_quote,test_severity_map_informational_is_low]
+  CL TestExtractYaraMetadata [431-451](21) methods=[test_tags_field_extracted,test_empty_meta_block,test_crowdstrike_type_map_completeness]
+  CL TestPushSavedsearch [459-559](101) methods=[_setup_conops,test_success_200,test_http_4xx_returns_error,test_network_exception_returns_error,test_missing_conops_returns_error,test_missing_url_returns_error,test_missing_auth_returns_error,test_unresolvable_auth_env_returns_error,test_payload_contains_technique_id,test_payload_no_technique_id]
+  CL TestPushDetectionRule [567-697](131) methods=[_setup_conops,test_success_200,test_409_triggers_put,test_4xx_after_put_returns_error,test_network_exception_returns_error,test_put_network_exception_returns_error,test_custom_index_patterns,test_default_index_patterns,test_missing_conops_returns_error,test_severity_normalised]
+  CL TestPushAnalyticRule [705-828](124) methods=[_setup_conops,test_success_200,test_technique_id_in_body_properties,test_no_technique_id_omits_techniques_key,test_severity_critical_maps_to_high,test_http_4xx_returns_error,test_network_exception_returns_error,test_missing_conops_returns_error,test_incomplete_sentinel_config_returns_error,test_url_contains_subscription_and_workspace]
+  CL TestPushDefenderXdr [836-927](92) methods=[_setup_conops,test_success_200,test_tags_from_yara_meta_included,test_technique_id_in_tags,test_http_4xx_returns_error,test_network_exception_returns_error,test_missing_auth_returns_error,test_missing_conops_returns_error]
+  CL TestPushCrowdstrikeIoa [935-1096](162) methods=[_setup_conops,test_success_200,test_missing_indicator_type_returns_error,test_missing_indicator_value_returns_error,test_unsupported_indicator_type_returns_error,test_http_4xx_returns_error,test_network_exception_returns_error,test_missing_conops_returns_error,test_missing_url_returns_error,test_ioc_fallback_key_for_value,test_all_crowdstrike_mapped_types_accepted]
+  EX _conops_with
+  EX _mock_response
+  EX TestConOpsHelpers
+  EX TestSplunkConverter
+  EX TestSentinelConverter
+  EX TestElasticConverter
+  EX TestExtractYaraMetadata
+  EX TestPushSavedsearch
+  EX TestPushDetectionRule
+  EX TestPushAnalyticRule
+  EX TestPushDefenderXdr
+  EX TestPushCrowdstrikeIoa
+### batch 23 | raptix/tools/interaction/__init__.py | total=13 nonEmpty=10 metrics=[{"importCount":2,"exportCount":0,"functionCount":0,"classCount":0}]
+### batch 23 | raptix/tools/interaction/ask_user.py | total=187 nonEmpty=156 metrics=[{"importCount":0,"exportCount":6,"functionCount":5,"classCount":1}]
+  FN _strip_recommended_suffix [32-54](23)
+  FN _coerce_options_list [57-85](29)
+  FN _truncate_header [88-91](4)
+  FN _safe_writer [109-114](6)
+  FN ask_user_question [118-187](70)
+  CL QuestionOption [94-106](13) methods=[]
+  EX _strip_recommended_suffix
+  EX _coerce_options_list
+  EX _truncate_header
+  EX QuestionOption
+  EX _safe_writer
+  EX ask_user_question
+### batch 23 | raptix/tools/interaction/complete_planning.py | total=123 nonEmpty=106 metrics=[{"importCount":0,"exportCount":4,"functionCount":4,"classCount":0}]
+  FN validate_planning_bundle [35-66](32)
+  FN _runtime_context [69-83](15)
+  FN _safe_writer [86-90](5)
+  FN complete_engagement_planning [94-123](30)
+  EX validate_planning_bundle
+  EX _runtime_context
+  EX _safe_writer
+  EX complete_engagement_planning
+### batch 23 | tests/unit/tools/test_ask_user_question.py | total=342 nonEmpty=287 metrics=[{"importCount":1,"exportCount":19,"functionCount":19,"classCount":0}]
+  FN _two_options [18-22](5)
+  FN _invoke [25-52](28)
+  FN test_emits_custom_event_with_id_and_payload [55-83](29)
+  FN test_returns_interrupt_value_verbatim_for_single_select [86-97](12)
+  FN test_returns_list_verbatim_for_multi_select [100-112](13)
+  FN test_returns_free_text_when_allow_other_selected [115-127](13)
+  FN test_skips_writer_when_outside_graph_context [130-147](18)
+  FN test_truncates_header_longer_than_max [150-166](17)
+  FN test_coerces_options_json_string_from_local_models [169-190](22)
+  FN test_coerces_options_python_literal_string_from_local_models [193-209](17)
+  FN test_accepts_empty_options [212-220](9)
+  FN test_rejects_too_many_options [223-230](8)
+  FN test_accepts_max_option_counts [233-246](14)
+  FN test_rejects_option_without_label_or_description [249-259](11)
+  FN test_strips_recommended_suffix_from_single_select_return [262-277](16)
+  FN test_strips_recommended_suffix_from_multi_select_return [280-293](14)
+  FN test_preserves_free_text_without_recommended_suffix [296-310](15)
+  FN test_does_not_strip_recommended_when_not_a_trailing_suffix [313-328](16)
+  FN test_rejects_option_with_extra_fields [331-342](12)
+  EX _two_options
+  EX _invoke
+  EX test_emits_custom_event_with_id_and_payload
+  EX test_returns_interrupt_value_verbatim_for_single_select
+  EX test_returns_list_verbatim_for_multi_select
+  EX test_returns_free_text_when_allow_other_selected
+  EX test_skips_writer_when_outside_graph_context
+  EX test_truncates_header_longer_than_max
+  EX test_coerces_options_json_string_from_local_models
+  EX test_coerces_options_python_literal_string_from_local_models
+  EX test_accepts_empty_options
+  EX test_rejects_too_many_options
+  EX test_accepts_max_option_counts
+  EX test_rejects_option_without_label_or_description
+  EX test_strips_recommended_suffix_from_single_select_return
+  EX test_strips_recommended_suffix_from_multi_select_return
+  EX test_preserves_free_text_without_recommended_suffix
+  EX test_does_not_strip_recommended_when_not_a_trailing_suffix
+  EX test_rejects_option_with_extra_fields
+### batch 23 | tests/unit/tools/test_complete_planning.py | total=79 nonEmpty=65 metrics=[{"importCount":1,"exportCount":4,"functionCount":4,"classCount":0}]
+  FN _write_bundle [11-50](40)
+  FN test_validate_planning_bundle_accepts_complete_authorized_bundle [53-63](11)
+  FN test_validate_planning_bundle_rejects_unconfirmed_authorization [66-71](6)
+  FN test_validate_planning_bundle_rejects_declared_target_outside_roe [74-79](6)
+  EX _write_bundle
+  EX test_validate_planning_bundle_accepts_complete_authorized_bundle
+  EX test_validate_planning_bundle_rejects_unconfirmed_authorization
+  EX test_validate_planning_bundle_rejects_declared_target_outside_roe
+### batch 24 | raptix/middleware/egress.py | total=141 nonEmpty=112 metrics=[{"importCount":1,"exportCount":6,"functionCount":6,"classCount":0}]
+  FN _is_ip_or_cidr [57-62](6)
+  FN _classify [65-71](7)
+  FN _rule_patterns [74-77](4)
+  FN _norm [80-81](2)
+  FN osint_egress_hosts [95-99](5)
+  FN compile_egress_policy [102-133](32)
+  EX _is_ip_or_cidr
+  EX _classify
+  EX _rule_patterns
+  EX _norm
+  EX osint_egress_hosts
+  EX compile_egress_policy
+### batch 24 | raptix/sandbox_kernel/egress.py | total=466 nonEmpty=404 metrics=[{"importCount":0,"exportCount":17,"functionCount":15,"classCount":2}]
+  FN _norm [100-101](2)
+  FN _split_family [104-113](10)
+  FN _daddr_rules [116-128](13)
+  FN _wildcard_host [131-132](2)
+  FN render_nftables [135-191](57)
+  FN render_dns_allowlist [194-205](12)
+  FN discover_management_cidrs [208-248](41)
+  FN _proc_route_onlink_cidrs [251-286](36)
+  FN _le_hex_to_ipv4 [289-294](6)
+  FN _read_ip_routes [297-304](8)
+  FN discover_resolvers [307-320](14)
+  FN resolve_hosts [323-344](22)
+  FN _resolve_one [347-349](3)
+  FN apply_egress [352-443](92)
+  FN _run_nft [446-454](9)
+  CL EgressPolicy [48-86](39) methods=[to_dict,from_dict]
+  CL EgressApplyResult [90-97](8) methods=[]
+  EX EgressPolicy
+  EX EgressApplyResult
+  EX _norm
+  EX _split_family
+  EX _daddr_rules
+  EX _wildcard_host
+  EX render_nftables
+  EX render_dns_allowlist
+  EX discover_management_cidrs
+  EX _proc_route_onlink_cidrs
+  EX _le_hex_to_ipv4
+  EX _read_ip_routes
+  EX discover_resolvers
+  EX resolve_hosts
+  EX _resolve_one
+  EX apply_egress
+  EX _run_nft
+### batch 24 | tests/unit/middleware/test_egress.py | total=221 nonEmpty=161 metrics=[{"importCount":1,"exportCount":24,"functionCount":24,"classCount":0}]
+  FN _rules [23-24](2)
+  FN test_audit_mode_does_not_enforce [30-33](4)
+  FN test_warn_mode_does_not_enforce [36-38](3)
+  FN test_enforce_with_in_scope_sets_default_drop [41-45](5)
+  FN test_in_scope_literal_ip_is_allowed_cidr [48-50](3)
+  FN test_in_scope_host_and_glob_go_to_allowed_hosts [53-57](5)
+  FN test_signed_root_url_compiles_to_host_allowlist [60-67](8)
+  FN test_path_specific_url_cannot_open_egress [70-78](9)
+  FN test_url_exclusion_denies_host_even_with_path [81-90](10)
+  FN test_osint_search_providers_are_always_allowed [93-98](6)
+  FN test_cloud_metadata_denied_by_default [101-104](4)
+  FN test_cloud_metadata_opt_out_removes_default_denies [107-111](5)
+  FN test_out_of_scope_cidr_and_host_are_denied [114-123](10)
+  FN test_enforce_without_in_scope_does_not_default_drop [126-132](7)
+  FN test_render_flushes_table_for_idempotent_reapply [138-144](7)
+  FN test_render_audit_mode_has_no_drop_policy [147-153](7)
+  FN test_render_enforce_emits_drop_policy_and_management_allow [156-164](9)
+  FN test_render_resolved_host_ips_added_to_allow_set [167-170](4)
+  FN test_render_denies_precede_allows [173-180](8)
+  FN test_render_allows_dns_resolver_for_name_resolution [183-186](4)
+  FN test_render_audit_mode_with_no_rules_is_valid_nonempty_script [189-192](4)
+  FN test_dns_allowlist_lists_in_scope_hosts_only [198-206](9)
+  FN test_dns_allowlist_empty_when_not_enforcing [209-211](3)
+  FN test_egress_policy_is_frozen [214-221](8)
+  EX _rules
+  EX test_audit_mode_does_not_enforce
+  EX test_warn_mode_does_not_enforce
+  EX test_enforce_with_in_scope_sets_default_drop
+  EX test_in_scope_literal_ip_is_allowed_cidr
+  EX test_in_scope_host_and_glob_go_to_allowed_hosts
+  EX test_signed_root_url_compiles_to_host_allowlist
+  EX test_path_specific_url_cannot_open_egress
+  EX test_url_exclusion_denies_host_even_with_path
+  EX test_osint_search_providers_are_always_allowed
+  EX test_cloud_metadata_denied_by_default
+  EX test_cloud_metadata_opt_out_removes_default_denies
+  EX test_out_of_scope_cidr_and_host_are_denied
+  EX test_enforce_without_in_scope_does_not_default_drop
+  EX test_render_flushes_table_for_idempotent_reapply
+  EX test_render_audit_mode_has_no_drop_policy
+  EX test_render_enforce_emits_drop_policy_and_management_allow
+  EX test_render_resolved_host_ips_added_to_allow_set
+  EX test_render_denies_precede_allows
+  EX test_render_allows_dns_resolver_for_name_resolution
+  EX test_render_audit_mode_with_no_rules_is_valid_nonempty_script
+  EX test_dns_allowlist_lists_in_scope_hosts_only
+  EX test_dns_allowlist_empty_when_not_enforcing
+  EX test_egress_policy_is_frozen
+### batch 24 | tests/unit/sandbox_kernel/test_egress_applier.py | total=323 nonEmpty=261 metrics=[{"importCount":2,"exportCount":19,"functionCount":17,"classCount":2}]
+  FN _enforce_policy [34-37](4)
+  FN test_discover_management_cidrs_from_ip_route_onlink [43-56](14)
+  FN test_discover_management_cidrs_from_proc_route_no_ip_binary [59-71](13)
+  FN test_discover_management_cidrs_survives_total_failure [74-79](6)
+  FN test_discover_management_cidrs_default_proc_path_is_readable [82-86](5)
+  FN test_discover_resolvers_reads_nameservers [89-94](6)
+  FN test_resolve_hosts_skips_wildcards_and_resolves_literals [97-102](6)
+  FN test_apply_disabled_never_runs_nft [108-126](19)
+  FN test_apply_audit_policy_does_not_run_nft_even_when_enabled [129-146](18)
+  FN test_apply_enabled_loads_ruleset_via_nft [155-175](21)
+  FN test_apply_reports_nft_failure_without_raising [184-194](11)
+  FN test_apply_resolves_allowed_hosts_into_nft_allow [197-214](18)
+  FN test_denied_host_wins_over_allowed_host_and_cidr [217-244](28)
+  FN test_wildcard_denied_host_fails_closed_without_dns_firewall [247-264](18)
+  FN test_unresolved_denied_host_fails_closed [267-283](17)
+  FN test_unresolved_cloud_metadata_alias_keeps_signed_target_reachable [286-310](25)
+  FN test_render_matches_apply_disabled_ruleset [313-323](11)
+  CL _OkProc [149-152](4) methods=[]
+  CL _FailProc [178-181](4) methods=[]
+  EX _enforce_policy
+  EX test_discover_management_cidrs_from_ip_route_onlink
+  EX test_discover_management_cidrs_from_proc_route_no_ip_binary
+  EX test_discover_management_cidrs_survives_total_failure
+  EX test_discover_management_cidrs_default_proc_path_is_readable
+  EX test_discover_resolvers_reads_nameservers
+  EX test_resolve_hosts_skips_wildcards_and_resolves_literals
+  EX test_apply_disabled_never_runs_nft
+  EX test_apply_audit_policy_does_not_run_nft_even_when_enabled
+  EX _OkProc
+  EX test_apply_enabled_loads_ruleset_via_nft
+  EX _FailProc
+  EX test_apply_reports_nft_failure_without_raising
+  EX test_apply_resolves_allowed_hosts_into_nft_allow
+  EX test_denied_host_wins_over_allowed_host_and_cidr
+  EX test_wildcard_denied_host_fails_closed_without_dns_firewall
+  EX test_unresolved_denied_host_fails_closed
+  EX test_unresolved_cloud_metadata_alias_keeps_signed_target_reachable
+  EX test_render_matches_apply_disabled_ruleset
+### batch 25 | raptix/tools/browser/__init__.py | total=29 nonEmpty=25 metrics=[{"importCount":1,"exportCount":0,"functionCount":0,"classCount":0}]
+### batch 25 | raptix/tools/browser/tools.py | total=384 nonEmpty=323 metrics=[{"importCount":0,"exportCount":9,"functionCount":6,"classCount":3}]
+  FN _safe_close [39-65](27)
+  FN get_session_manager [268-274](7)
+  FN _reset_session_manager_for_tests [277-281](5)
+  FN _json [284-285](2)
+  FN _dispatch [288-331](44)
+  FN browser_action [335-372](38)
+  CL BrowserActionError [68-74](7) methods=[]
+  CL _Tab [97-106](10) methods=[]
+  CL BrowserSessionManager [109-261](153) methods=[__init__,_import_playwright,_ensure_browser,launch,_new_tab,_active_tab,goto,click,type_text,scroll,screenshot,eval_js,console_logs,page_source,pdf,list_tabs,switch_tab,close]
+  EX _safe_close
+  EX BrowserActionError
+  EX _Tab
+  EX BrowserSessionManager
+  EX get_session_manager
+  EX _reset_session_manager_for_tests
+  EX _json
+  EX _dispatch
+  EX browser_action
+### batch 25 | tests/unit/tools/test_browser.py | total=281 nonEmpty=232 metrics=[{"importCount":1,"exportCount":22,"functionCount":22,"classCount":0}]
+  FN _reset_singleton [24-27](4)
+  FN _async_mock [30-33](4)
+  FN _fake_page [36-55](20)
+  FN _fake_browser_chain [58-75](18)
+  FN test_get_session_manager_is_singleton [78-81](4)
+  FN test_dispatcher_rejects_unknown_action [84-87](4)
+  FN test_dispatcher_rejects_bad_params_json [90-93](4)
+  FN test_dispatcher_rejects_non_object_params [96-99](4)
+  FN test_missing_required_parameter_surfaces_as_error_json [102-108](7)
+  FN test_missing_playwright_surfaces_install_hint [111-120](10)
+  FN test_launch_starts_browser_and_creates_main_tab [123-129](7)
+  FN test_goto_returns_url_status_title [132-148](17)
+  FN test_click_invokes_page_click [151-166](16)
+  FN test_type_invokes_page_fill [169-185](17)
+  FN test_screenshot_returns_base64_png [188-197](10)
+  FN test_eval_js_returns_result [200-212](13)
+  FN test_console_logs_returns_captured_messages [215-229](15)
+  FN test_page_source_returns_html_and_url [232-240](9)
+  FN test_list_tabs_and_switch_tab [243-258](16)
+  FN test_close_resets_session_state [261-268](8)
+  FN test_browser_tools_export [271-273](3)
+  FN test_active_tab_required_for_navigation [276-281](6)
+  EX _reset_singleton
+  EX _async_mock
+  EX _fake_page
+  EX _fake_browser_chain
+  EX test_get_session_manager_is_singleton
+  EX test_dispatcher_rejects_unknown_action
+  EX test_dispatcher_rejects_bad_params_json
+  EX test_dispatcher_rejects_non_object_params
+  EX test_missing_required_parameter_surfaces_as_error_json
+  EX test_missing_playwright_surfaces_install_hint
+  EX test_launch_starts_browser_and_creates_main_tab
+  EX test_goto_returns_url_status_title
+  EX test_click_invokes_page_click
+  EX test_type_invokes_page_fill
+  EX test_screenshot_returns_base64_png
+  EX test_eval_js_returns_result
+  EX test_console_logs_returns_captured_messages
+  EX test_page_source_returns_html_and_url
+  EX test_list_tabs_and_switch_tab
+  EX test_close_resets_session_state
+  EX test_browser_tools_export
+  EX test_active_tab_required_for_navigation
+### batch 25 | tests/unit/tools/test_browser_cleanup.py | total=159 nonEmpty=117 metrics=[{"importCount":1,"exportCount":6,"functionCount":6,"classCount":0}]
+  FN _reset_singleton [22-25](4)
+  FN _propagate_decepticon_logger [29-38](10)
+  FN test_safe_close_logs_raised_exception [42-54](13)
+  FN test_safe_close_bounded_by_timeout [58-74](17)
+  FN test_close_continues_when_page_close_raises [78-131](54)
+  FN test_close_bounded_when_browser_close_hangs [135-159](25)
+  EX _reset_singleton
+  EX _propagate_decepticon_logger
+  EX test_safe_close_logs_raised_exception
+  EX test_safe_close_bounded_by_timeout
+  EX test_close_continues_when_page_close_raises
+  EX test_close_bounded_when_browser_close_hangs

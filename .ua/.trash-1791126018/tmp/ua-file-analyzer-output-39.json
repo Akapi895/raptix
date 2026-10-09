@@ -1,0 +1,5348 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 10,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 10,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 10,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/tools/defense/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 39,
+      "nonEmptyLines": 33,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/conops.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 113,
+      "nonEmptyLines": 91,
+      "functions": [
+        {
+          "name": "_resolve_workspace",
+          "startLine": 35,
+          "endLine": 36,
+          "params": []
+        },
+        {
+          "name": "_load_conops",
+          "startLine": 39,
+          "endLine": 51,
+          "params": []
+        },
+        {
+          "name": "resolve_siem_target",
+          "startLine": 54,
+          "endLine": 69,
+          "params": [
+            "name"
+          ]
+        },
+        {
+          "name": "list_targets",
+          "startLine": 72,
+          "endLine": 81,
+          "params": []
+        },
+        {
+          "name": "resolve_auth_value",
+          "startLine": 84,
+          "endLine": 100,
+          "params": [
+            "auth_spec"
+          ]
+        },
+        {
+          "name": "engagement_slug",
+          "startLine": 103,
+          "endLine": 113,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "ConOpsLookupError",
+          "startLine": 28,
+          "endLine": 29,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ConOpsLookupError",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "_resolve_workspace",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "_load_conops",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "resolve_siem_target",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "list_targets",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "resolve_auth_value",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "engagement_slug",
+          "line": 103,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_resolve_workspace",
+          "callee": "Path",
+          "lineNumber": 36
+        },
+        {
+          "caller": "_resolve_workspace",
+          "callee": "os.environ.get",
+          "lineNumber": 36
+        },
+        {
+          "caller": "_load_conops",
+          "callee": "_resolve_workspace",
+          "lineNumber": 40
+        },
+        {
+          "caller": "_load_conops",
+          "callee": "path.exists",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_load_conops",
+          "callee": "json.loads",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_load_conops",
+          "callee": "path.read_text",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_load_conops",
+          "callee": "ConOpsLookupError",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_load_conops",
+          "callee": "ConOpsLookupError",
+          "lineNumber": 48
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "_load_conops",
+          "lineNumber": 56
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "conops.get",
+          "lineNumber": 57
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "isinstance",
+          "lineNumber": 58
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "ConOpsLookupError",
+          "lineNumber": 59
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "blue_team.get",
+          "lineNumber": 63
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "isinstance",
+          "lineNumber": 64
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "ConOpsLookupError",
+          "lineNumber": 65
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "sorted",
+          "lineNumber": 67
+        },
+        {
+          "caller": "resolve_siem_target",
+          "callee": "blue_team.keys",
+          "lineNumber": 67
+        },
+        {
+          "caller": "list_targets",
+          "callee": "_load_conops",
+          "lineNumber": 75
+        },
+        {
+          "caller": "list_targets",
+          "callee": "conops.get",
+          "lineNumber": 78
+        },
+        {
+          "caller": "list_targets",
+          "callee": "isinstance",
+          "lineNumber": 79
+        },
+        {
+          "caller": "list_targets",
+          "callee": "sorted",
+          "lineNumber": 81
+        },
+        {
+          "caller": "list_targets",
+          "callee": "blue_team.keys",
+          "lineNumber": 81
+        },
+        {
+          "caller": "resolve_auth_value",
+          "callee": "ConOpsLookupError",
+          "lineNumber": 90
+        },
+        {
+          "caller": "resolve_auth_value",
+          "callee": "auth_spec.split",
+          "lineNumber": 93
+        },
+        {
+          "caller": "resolve_auth_value",
+          "callee": "os.environ.get",
+          "lineNumber": 94
+        },
+        {
+          "caller": "resolve_auth_value",
+          "callee": "ConOpsLookupError",
+          "lineNumber": 96
+        },
+        {
+          "caller": "engagement_slug",
+          "callee": "os.environ.get",
+          "lineNumber": 105
+        },
+        {
+          "caller": "engagement_slug",
+          "callee": "_load_conops",
+          "lineNumber": 109
+        },
+        {
+          "caller": "engagement_slug",
+          "callee": "conops.get",
+          "lineNumber": 112
+        },
+        {
+          "caller": "engagement_slug",
+          "callee": "conops.get",
+          "lineNumber": 112
+        },
+        {
+          "caller": "engagement_slug",
+          "callee": "str(name).lower().replace",
+          "lineNumber": 113
+        },
+        {
+          "caller": "engagement_slug",
+          "callee": "str(name).lower",
+          "lineNumber": 113
+        },
+        {
+          "caller": "engagement_slug",
+          "callee": "str",
+          "lineNumber": 113
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/edr.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 222,
+      "nonEmptyLines": 194,
+      "functions": [
+        {
+          "name": "_extract_yara_metadata",
+          "startLine": 31,
+          "endLine": 37,
+          "params": [
+            "yara_text"
+          ]
+        },
+        {
+          "name": "push_defender_xdr_detection",
+          "startLine": 40,
+          "endLine": 117,
+          "params": [
+            "rule_name",
+            "yara_rule",
+            "description",
+            "severity",
+            "technique_id"
+          ]
+        },
+        {
+          "name": "push_crowdstrike_ioa",
+          "startLine": 133,
+          "endLine": 222,
+          "params": [
+            "yara_rule",
+            "description",
+            "severity",
+            "technique_id"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_extract_yara_metadata",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "push_defender_xdr_detection",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "push_crowdstrike_ioa",
+          "line": 133,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_extract_yara_metadata",
+          "callee": "_YARA_META_PATTERN.search",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_extract_yara_metadata",
+          "callee": "block_match.group",
+          "lineNumber": 36
+        },
+        {
+          "caller": "_extract_yara_metadata",
+          "callee": "_YARA_KV_PATTERN.findall",
+          "lineNumber": 37
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "resolve_siem_target",
+          "lineNumber": 50
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "str",
+          "lineNumber": 52
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "target.get",
+          "lineNumber": 54
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "resolve_auth_value",
+          "lineNumber": 58
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "str",
+          "lineNumber": 60
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "engagement_slug",
+          "lineNumber": 62
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "_extract_yara_metadata",
+          "lineNumber": 63
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "meta.get",
+          "lineNumber": 65
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "meta.get",
+          "lineNumber": 65
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "engagement_slug",
+          "lineNumber": 75
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "engagement_slug",
+          "lineNumber": 85
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "meta.get(\"tags\", \"\").split",
+          "lineNumber": 86
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "meta.get",
+          "lineNumber": 86
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "meta.get",
+          "lineNumber": 86
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "requests.post",
+          "lineNumber": 102
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "json.dumps",
+          "lineNumber": 102
+        },
+        {
+          "caller": "push_defender_xdr_detection",
+          "callee": "engagement_slug",
+          "lineNumber": 114
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "resolve_siem_target",
+          "lineNumber": 142
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "str",
+          "lineNumber": 144
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "target.get",
+          "lineNumber": 146
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "target.get",
+          "lineNumber": 147
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "resolve_auth_value",
+          "lineNumber": 151
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "str",
+          "lineNumber": 153
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "_extract_yara_metadata",
+          "lineNumber": 155
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "(meta.get(\"indicator_type\") or \"\").lower",
+          "lineNumber": 156
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "meta.get",
+          "lineNumber": 156
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "meta.get",
+          "lineNumber": 157
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "meta.get",
+          "lineNumber": 157
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "_CROWDSTRIKE_TYPE_MAP.get",
+          "lineNumber": 167
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "engagement_slug",
+          "lineNumber": 182
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "engagement_slug",
+          "lineNumber": 186
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "base_url.rstrip",
+          "lineNumber": 204
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "requests.post",
+          "lineNumber": 206
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "json.dumps",
+          "lineNumber": 206
+        },
+        {
+          "caller": "push_crowdstrike_ioa",
+          "callee": "engagement_slug",
+          "lineNumber": 219
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/elastic.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 178,
+      "nonEmptyLines": 155,
+      "functions": [
+        {
+          "name": "_field_clause_lucene",
+          "startLine": 27,
+          "endLine": 41,
+          "params": [
+            "field",
+            "modifier",
+            "value"
+          ]
+        },
+        {
+          "name": "_selection_to_lucene",
+          "startLine": 44,
+          "endLine": 53,
+          "params": [
+            "selection"
+          ]
+        },
+        {
+          "name": "sigma_to_lucene",
+          "startLine": 56,
+          "endLine": 85,
+          "params": [
+            "sigma_rule"
+          ]
+        },
+        {
+          "name": "push_detection_rule",
+          "startLine": 97,
+          "endLine": 178,
+          "params": [
+            "rule_id",
+            "name",
+            "lucene_query",
+            "description",
+            "severity",
+            "technique_id",
+            "index_patterns"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "SigmaToElasticError",
+          "startLine": 23,
+          "endLine": 24,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "SigmaToElasticError",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "_field_clause_lucene",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "_selection_to_lucene",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "sigma_to_lucene",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "push_detection_rule",
+          "line": 97,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_field_clause_lucene",
+          "callee": "isinstance",
+          "lineNumber": 28
+        },
+        {
+          "caller": "_field_clause_lucene",
+          "callee": "value.replace",
+          "lineNumber": 29
+        },
+        {
+          "caller": "_field_clause_lucene",
+          "callee": "SigmaToElasticError",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "selection.items",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "field.split",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "isinstance",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "\" OR \".join",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "clauses.append",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "clauses.append",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_selection_to_lucene",
+          "callee": "\" AND \".join",
+          "lineNumber": 53
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "sigma_rule.get",
+          "lineNumber": 58
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "isinstance",
+          "lineNumber": 59
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "SigmaToElasticError",
+          "lineNumber": 60
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "detection.get",
+          "lineNumber": 61
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "isinstance",
+          "lineNumber": 62
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "SigmaToElasticError",
+          "lineNumber": 63
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "detection.items",
+          "lineNumber": 65
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "condition.replace(\"(\", \" ( \").replace(\")\", \" ) \").split",
+          "lineNumber": 66
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "condition.replace(\"(\", \" ( \").replace",
+          "lineNumber": 66
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "condition.replace",
+          "lineNumber": 66
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "tok.lower",
+          "lineNumber": 69
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "rendered.append",
+          "lineNumber": 71
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "rendered.append",
+          "lineNumber": 73
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "rendered.append",
+          "lineNumber": 75
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "rendered.append",
+          "lineNumber": 77
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "isinstance",
+          "lineNumber": 80
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "SigmaToElasticError",
+          "lineNumber": 81
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "rendered.append",
+          "lineNumber": 82
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "_selection_to_lucene",
+          "lineNumber": 82
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "SigmaToElasticError",
+          "lineNumber": 84
+        },
+        {
+          "caller": "sigma_to_lucene",
+          "callee": "\" \".join",
+          "lineNumber": 85
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "resolve_siem_target",
+          "lineNumber": 109
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "str",
+          "lineNumber": 111
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "target.get",
+          "lineNumber": 113
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "target.get",
+          "lineNumber": 114
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "resolve_auth_value",
+          "lineNumber": 118
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "str",
+          "lineNumber": 120
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "engagement_slug",
+          "lineNumber": 122
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "engagement_slug",
+          "lineNumber": 128
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "_SEVERITY_MAP.get",
+          "lineNumber": 131
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "severity.lower",
+          "lineNumber": 131
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "engagement_slug",
+          "lineNumber": 140
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "url.rstrip",
+          "lineNumber": 154
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "requests.post",
+          "lineNumber": 156
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "json.dumps",
+          "lineNumber": 156
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "requests.put",
+          "lineNumber": 163
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "json.dumps",
+          "lineNumber": 163
+        },
+        {
+          "caller": "push_detection_rule",
+          "callee": "engagement_slug",
+          "lineNumber": 175
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 216,
+      "nonEmptyLines": 186,
+      "functions": [
+        {
+          "name": "_table_for_logsource",
+          "startLine": 47,
+          "endLine": 50,
+          "params": [
+            "logsource"
+          ]
+        },
+        {
+          "name": "_field_clause_kql",
+          "startLine": 53,
+          "endLine": 67,
+          "params": [
+            "field",
+            "modifier",
+            "value"
+          ]
+        },
+        {
+          "name": "_selection_to_kql",
+          "startLine": 70,
+          "endLine": 79,
+          "params": [
+            "selection"
+          ]
+        },
+        {
+          "name": "sigma_to_kql",
+          "startLine": 82,
+          "endLine": 115,
+          "params": [
+            "sigma_rule"
+          ]
+        },
+        {
+          "name": "push_analytic_rule",
+          "startLine": 127,
+          "endLine": 216,
+          "params": [
+            "rule_id",
+            "display_name",
+            "kql_query",
+            "description",
+            "severity",
+            "technique_id"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "SigmaToKqlError",
+          "startLine": 30,
+          "endLine": 31,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "SigmaToKqlError",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "_table_for_logsource",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "_field_clause_kql",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "_selection_to_kql",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "sigma_to_kql",
+          "line": 82,
+          "isDefault": false
+        },
+        {
+          "name": "push_analytic_rule",
+          "line": 127,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_table_for_logsource",
+          "callee": "(logsource.get(\"product\") or \"\").lower",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_table_for_logsource",
+          "callee": "logsource.get",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_table_for_logsource",
+          "callee": "(logsource.get(\"category\") or \"\").lower",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_table_for_logsource",
+          "callee": "logsource.get",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_table_for_logsource",
+          "callee": "_LOGSOURCE_TO_TABLE.get",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_field_clause_kql",
+          "callee": "isinstance",
+          "lineNumber": 54
+        },
+        {
+          "caller": "_field_clause_kql",
+          "callee": "value.replace",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_field_clause_kql",
+          "callee": "SigmaToKqlError",
+          "lineNumber": 67
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "selection.items",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "field.split",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "isinstance",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "\" or \".join",
+          "lineNumber": 75
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "_field_clause_kql",
+          "lineNumber": 75
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "clauses.append",
+          "lineNumber": 76
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "clauses.append",
+          "lineNumber": 78
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "_field_clause_kql",
+          "lineNumber": 78
+        },
+        {
+          "caller": "_selection_to_kql",
+          "callee": "\" and \".join",
+          "lineNumber": 79
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "sigma_rule.get",
+          "lineNumber": 84
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "isinstance",
+          "lineNumber": 85
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "SigmaToKqlError",
+          "lineNumber": 86
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "sigma_rule.get",
+          "lineNumber": 87
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "_table_for_logsource",
+          "lineNumber": 88
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "detection.get",
+          "lineNumber": 90
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "isinstance",
+          "lineNumber": 91
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "SigmaToKqlError",
+          "lineNumber": 92
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "detection.items",
+          "lineNumber": 94
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "condition.replace(\"(\", \" ( \").replace(\")\", \" ) \").split",
+          "lineNumber": 95
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "condition.replace(\"(\", \" ( \").replace",
+          "lineNumber": 95
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "condition.replace",
+          "lineNumber": 95
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "tok.lower",
+          "lineNumber": 98
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "rendered.append",
+          "lineNumber": 100
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "rendered.append",
+          "lineNumber": 102
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "rendered.append",
+          "lineNumber": 104
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "rendered.append",
+          "lineNumber": 106
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "isinstance",
+          "lineNumber": 109
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "SigmaToKqlError",
+          "lineNumber": 110
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "rendered.append",
+          "lineNumber": 111
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "_selection_to_kql",
+          "lineNumber": 111
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "SigmaToKqlError",
+          "lineNumber": 113
+        },
+        {
+          "caller": "sigma_to_kql",
+          "callee": "\" \".join",
+          "lineNumber": 114
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "resolve_siem_target",
+          "lineNumber": 138
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "str",
+          "lineNumber": 140
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "target.get",
+          "lineNumber": 142
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "target.get",
+          "lineNumber": 143
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "target.get",
+          "lineNumber": 144
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "target.get",
+          "lineNumber": 145
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "all",
+          "lineNumber": 146
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "resolve_auth_value",
+          "lineNumber": 154
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "str",
+          "lineNumber": 156
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "engagement_slug",
+          "lineNumber": 158
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "engagement_slug",
+          "lineNumber": 173
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "_SEVERITY_MAP.get",
+          "lineNumber": 176
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "severity.lower",
+          "lineNumber": 176
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "requests.put",
+          "lineNumber": 201
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "json.dumps",
+          "lineNumber": 201
+        },
+        {
+          "caller": "push_analytic_rule",
+          "callee": "engagement_slug",
+          "lineNumber": 213
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 5,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/splunk.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 186,
+      "nonEmptyLines": 157,
+      "functions": [
+        {
+          "name": "_quote_spl",
+          "startLine": 31,
+          "endLine": 35,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "_selection_to_spl",
+          "startLine": 38,
+          "endLine": 50,
+          "params": [
+            "selection"
+          ]
+        },
+        {
+          "name": "_field_clause",
+          "startLine": 53,
+          "endLine": 68,
+          "params": [
+            "field",
+            "modifier",
+            "value"
+          ]
+        },
+        {
+          "name": "sigma_to_spl",
+          "startLine": 71,
+          "endLine": 113,
+          "params": [
+            "sigma_rule"
+          ]
+        },
+        {
+          "name": "push_savedsearch",
+          "startLine": 116,
+          "endLine": 186,
+          "params": [
+            "title",
+            "spl_query",
+            "description",
+            "technique_id",
+            "severity"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "SigmaConversionError",
+          "startLine": 27,
+          "endLine": 28,
+          "methods": [],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "SigmaConversionError",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "_quote_spl",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "_selection_to_spl",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "_field_clause",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "sigma_to_spl",
+          "line": 71,
+          "isDefault": false
+        },
+        {
+          "name": "push_savedsearch",
+          "line": 116,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_quote_spl",
+          "callee": "isinstance",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_quote_spl",
+          "callee": "value.replace(\"\\\\\", \"\\\\\\\\\").replace",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_quote_spl",
+          "callee": "value.replace",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_quote_spl",
+          "callee": "str",
+          "lineNumber": 35
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "selection.items",
+          "lineNumber": 40
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "field.split",
+          "lineNumber": 42
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "isinstance",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "\" OR \".join",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "_field_clause",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "clauses.append",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "clauses.append",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "_field_clause",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_selection_to_spl",
+          "callee": "\" \".join",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_field_clause",
+          "callee": "_quote_spl",
+          "lineNumber": 54
+        },
+        {
+          "caller": "_field_clause",
+          "callee": "isinstance",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_field_clause",
+          "callee": "value.replace(\"\\\\\", \"\\\\\\\\\").replace",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_field_clause",
+          "callee": "value.replace",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_field_clause",
+          "callee": "SigmaConversionError",
+          "lineNumber": 68
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "sigma_rule.get",
+          "lineNumber": 78
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "isinstance",
+          "lineNumber": 79
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "SigmaConversionError",
+          "lineNumber": 80
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "detection.get",
+          "lineNumber": 82
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "isinstance",
+          "lineNumber": 83
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "SigmaConversionError",
+          "lineNumber": 84
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "detection.items",
+          "lineNumber": 86
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "SigmaConversionError",
+          "lineNumber": 88
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "condition.replace(\"(\", \" ( \").replace(\")\", \" ) \").split",
+          "lineNumber": 90
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "condition.replace(\"(\", \" ( \").replace",
+          "lineNumber": 90
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "condition.replace",
+          "lineNumber": 90
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "tok.lower",
+          "lineNumber": 93
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "rendered.append",
+          "lineNumber": 95
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "rendered.append",
+          "lineNumber": 97
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "rendered.append",
+          "lineNumber": 99
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "rendered.append",
+          "lineNumber": 101
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "isinstance",
+          "lineNumber": 104
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "SigmaConversionError",
+          "lineNumber": 105
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "type",
+          "lineNumber": 106
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "rendered.append",
+          "lineNumber": 108
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "_selection_to_spl",
+          "lineNumber": 108
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "SigmaConversionError",
+          "lineNumber": 110
+        },
+        {
+          "caller": "sigma_to_spl",
+          "callee": "\" \".join",
+          "lineNumber": 113
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "resolve_siem_target",
+          "lineNumber": 134
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "str",
+          "lineNumber": 136
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "target.get",
+          "lineNumber": 138
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "target.get",
+          "lineNumber": 139
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "resolve_auth_value",
+          "lineNumber": 143
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "str",
+          "lineNumber": 145
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "engagement_slug",
+          "lineNumber": 147
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "engagement_slug",
+          "lineNumber": 161
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "url.rstrip",
+          "lineNumber": 169
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "requests.post",
+          "lineNumber": 171
+        },
+        {
+          "caller": "push_savedsearch",
+          "callee": "engagement_slug",
+          "lineNumber": 183
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 5,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/tools.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 208,
+      "nonEmptyLines": 179,
+      "functions": [
+        {
+          "name": "_coerce_sigma",
+          "startLine": 20,
+          "endLine": 32,
+          "params": [
+            "rule"
+          ]
+        },
+        {
+          "name": "_json",
+          "startLine": 35,
+          "endLine": 36,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "list_siem_targets",
+          "startLine": 40,
+          "endLine": 48,
+          "params": []
+        },
+        {
+          "name": "sigma_to_splunk_savedsearch",
+          "startLine": 52,
+          "endLine": 80,
+          "params": [
+            "sigma_rule",
+            "title",
+            "description",
+            "technique_id",
+            "severity"
+          ]
+        },
+        {
+          "name": "sigma_to_sentinel_analyticrule",
+          "startLine": 84,
+          "endLine": 114,
+          "params": [
+            "sigma_rule",
+            "rule_id",
+            "display_name",
+            "description",
+            "severity",
+            "technique_id"
+          ]
+        },
+        {
+          "name": "sigma_to_elastic_detection_rule",
+          "startLine": 118,
+          "endLine": 150,
+          "params": [
+            "sigma_rule",
+            "rule_id",
+            "name",
+            "description",
+            "severity",
+            "technique_id",
+            "index_patterns"
+          ]
+        },
+        {
+          "name": "yara_to_defender_xdr_custom_detection",
+          "startLine": 154,
+          "endLine": 174,
+          "params": [
+            "yara_rule",
+            "rule_name",
+            "description",
+            "severity",
+            "technique_id"
+          ]
+        },
+        {
+          "name": "yara_to_crowdstrike_ioa",
+          "startLine": 178,
+          "endLine": 198,
+          "params": [
+            "yara_rule",
+            "description",
+            "severity",
+            "technique_id"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_coerce_sigma",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "_json",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "list_siem_targets",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "sigma_to_splunk_savedsearch",
+          "line": 51,
+          "isDefault": false
+        },
+        {
+          "name": "sigma_to_sentinel_analyticrule",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "sigma_to_elastic_detection_rule",
+          "line": 117,
+          "isDefault": false
+        },
+        {
+          "name": "yara_to_defender_xdr_custom_detection",
+          "line": 153,
+          "isDefault": false
+        },
+        {
+          "name": "yara_to_crowdstrike_ioa",
+          "line": 177,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_coerce_sigma",
+          "callee": "isinstance",
+          "lineNumber": 21
+        },
+        {
+          "caller": "_coerce_sigma",
+          "callee": "RuntimeError",
+          "lineNumber": 26
+        },
+        {
+          "caller": "_coerce_sigma",
+          "callee": "yaml.safe_load",
+          "lineNumber": 29
+        },
+        {
+          "caller": "_coerce_sigma",
+          "callee": "isinstance",
+          "lineNumber": 30
+        },
+        {
+          "caller": "_coerce_sigma",
+          "callee": "RuntimeError",
+          "lineNumber": 31
+        },
+        {
+          "caller": "_json",
+          "callee": "json.dumps",
+          "lineNumber": 36
+        },
+        {
+          "caller": "list_siem_targets",
+          "callee": "_json",
+          "lineNumber": 48
+        },
+        {
+          "caller": "list_siem_targets",
+          "callee": "conops_mod.list_targets",
+          "lineNumber": 48
+        },
+        {
+          "caller": "sigma_to_splunk_savedsearch",
+          "callee": "_coerce_sigma",
+          "lineNumber": 66
+        },
+        {
+          "caller": "sigma_to_splunk_savedsearch",
+          "callee": "_json",
+          "lineNumber": 68
+        },
+        {
+          "caller": "sigma_to_splunk_savedsearch",
+          "callee": "splunk.sigma_to_spl",
+          "lineNumber": 70
+        },
+        {
+          "caller": "sigma_to_splunk_savedsearch",
+          "callee": "_json",
+          "lineNumber": 72
+        },
+        {
+          "caller": "sigma_to_splunk_savedsearch",
+          "callee": "splunk.push_savedsearch",
+          "lineNumber": 73
+        },
+        {
+          "caller": "sigma_to_splunk_savedsearch",
+          "callee": "_json",
+          "lineNumber": 80
+        },
+        {
+          "caller": "sigma_to_sentinel_analyticrule",
+          "callee": "_coerce_sigma",
+          "lineNumber": 99
+        },
+        {
+          "caller": "sigma_to_sentinel_analyticrule",
+          "callee": "_json",
+          "lineNumber": 101
+        },
+        {
+          "caller": "sigma_to_sentinel_analyticrule",
+          "callee": "sentinel.sigma_to_kql",
+          "lineNumber": 103
+        },
+        {
+          "caller": "sigma_to_sentinel_analyticrule",
+          "callee": "_json",
+          "lineNumber": 105
+        },
+        {
+          "caller": "sigma_to_sentinel_analyticrule",
+          "callee": "sentinel.push_analytic_rule",
+          "lineNumber": 106
+        },
+        {
+          "caller": "sigma_to_sentinel_analyticrule",
+          "callee": "_json",
+          "lineNumber": 114
+        },
+        {
+          "caller": "sigma_to_elastic_detection_rule",
+          "callee": "_coerce_sigma",
+          "lineNumber": 134
+        },
+        {
+          "caller": "sigma_to_elastic_detection_rule",
+          "callee": "_json",
+          "lineNumber": 136
+        },
+        {
+          "caller": "sigma_to_elastic_detection_rule",
+          "callee": "elastic.sigma_to_lucene",
+          "lineNumber": 138
+        },
+        {
+          "caller": "sigma_to_elastic_detection_rule",
+          "callee": "_json",
+          "lineNumber": 140
+        },
+        {
+          "caller": "sigma_to_elastic_detection_rule",
+          "callee": "elastic.push_detection_rule",
+          "lineNumber": 141
+        },
+        {
+          "caller": "sigma_to_elastic_detection_rule",
+          "callee": "_json",
+          "lineNumber": 150
+        },
+        {
+          "caller": "yara_to_defender_xdr_custom_detection",
+          "callee": "_json",
+          "lineNumber": 166
+        },
+        {
+          "caller": "yara_to_defender_xdr_custom_detection",
+          "callee": "edr.push_defender_xdr_detection",
+          "lineNumber": 167
+        },
+        {
+          "caller": "yara_to_crowdstrike_ioa",
+          "callee": "_json",
+          "lineNumber": 191
+        },
+        {
+          "caller": "yara_to_crowdstrike_ioa",
+          "callee": "edr.push_crowdstrike_ioa",
+          "lineNumber": 192
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 8,
+        "functionCount": 8,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_defense.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 293,
+      "nonEmptyLines": 236,
+      "functions": [
+        {
+          "name": "_basic_sigma",
+          "startLine": 27,
+          "endLine": 38,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_spl_basic",
+          "startLine": 41,
+          "endLine": 44,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_spl_with_or_condition",
+          "startLine": 47,
+          "endLine": 57,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_spl_with_list_value",
+          "startLine": 60,
+          "endLine": 69,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_spl_unknown_modifier_raises",
+          "startLine": 72,
+          "endLine": 80,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_spl_unknown_selection_raises",
+          "startLine": 83,
+          "endLine": 91,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_kql_picks_security_event_for_windows",
+          "startLine": 94,
+          "endLine": 98,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_kql_unknown_modifier_raises",
+          "startLine": 101,
+          "endLine": 110,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_lucene_basic",
+          "startLine": 113,
+          "endLine": 116,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_lucene_unknown_token_raises",
+          "startLine": 119,
+          "endLine": 127,
+          "params": []
+        },
+        {
+          "name": "test_extract_yara_metadata_pulls_meta_kvs",
+          "startLine": 130,
+          "endLine": 146,
+          "params": []
+        },
+        {
+          "name": "test_extract_yara_metadata_empty_when_no_meta_block",
+          "startLine": 149,
+          "endLine": 151,
+          "params": []
+        },
+        {
+          "name": "test_resolve_siem_target_missing_conops_raises",
+          "startLine": 154,
+          "endLine": 157,
+          "params": [
+            "tmp_path",
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_resolve_siem_target_missing_target_raises",
+          "startLine": 160,
+          "endLine": 164,
+          "params": [
+            "tmp_path",
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_resolve_siem_target_success",
+          "startLine": 167,
+          "endLine": 179,
+          "params": [
+            "tmp_path",
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_resolve_auth_value_missing_env_raises",
+          "startLine": 182,
+          "endLine": 185,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_resolve_auth_value_success",
+          "startLine": 188,
+          "endLine": 190,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_sigma_to_spl_contains_with_spaces_stays_quoted",
+          "startLine": 193,
+          "endLine": 201,
+          "params": []
+        },
+        {
+          "name": "test_sigma_to_spl_contains_with_special_chars_escaped",
+          "startLine": 204,
+          "endLine": 212,
+          "params": []
+        },
+        {
+          "name": "_yara_with_sha256",
+          "startLine": 215,
+          "endLine": 225,
+          "params": [
+            "sha256"
+          ]
+        },
+        {
+          "name": "_yara_no_indicator",
+          "startLine": 228,
+          "endLine": 238,
+          "params": []
+        },
+        {
+          "name": "test_push_defender_xdr_kql_built_from_sha256",
+          "startLine": 241,
+          "endLine": 269,
+          "params": [
+            "tmp_path",
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_push_defender_xdr_no_indicator_returns_error",
+          "startLine": 272,
+          "endLine": 293,
+          "params": [
+            "tmp_path",
+            "monkeypatch"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_basic_sigma",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_spl_basic",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_spl_with_or_condition",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_spl_with_list_value",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_spl_unknown_modifier_raises",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_spl_unknown_selection_raises",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_kql_picks_security_event_for_windows",
+          "line": 94,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_kql_unknown_modifier_raises",
+          "line": 101,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_lucene_basic",
+          "line": 113,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_lucene_unknown_token_raises",
+          "line": 119,
+          "isDefault": false
+        },
+        {
+          "name": "test_extract_yara_metadata_pulls_meta_kvs",
+          "line": 130,
+          "isDefault": false
+        },
+        {
+          "name": "test_extract_yara_metadata_empty_when_no_meta_block",
+          "line": 149,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_siem_target_missing_conops_raises",
+          "line": 154,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_siem_target_missing_target_raises",
+          "line": 160,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_siem_target_success",
+          "line": 167,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_auth_value_missing_env_raises",
+          "line": 182,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_auth_value_success",
+          "line": 188,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_spl_contains_with_spaces_stays_quoted",
+          "line": 193,
+          "isDefault": false
+        },
+        {
+          "name": "test_sigma_to_spl_contains_with_special_chars_escaped",
+          "line": 204,
+          "isDefault": false
+        },
+        {
+          "name": "_yara_with_sha256",
+          "line": 215,
+          "isDefault": false
+        },
+        {
+          "name": "_yara_no_indicator",
+          "line": 228,
+          "isDefault": false
+        },
+        {
+          "name": "test_push_defender_xdr_kql_built_from_sha256",
+          "line": 241,
+          "isDefault": false
+        },
+        {
+          "name": "test_push_defender_xdr_no_indicator_returns_error",
+          "line": 272,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_sigma_to_spl_basic",
+          "callee": "sigma_to_spl",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_sigma_to_spl_basic",
+          "callee": "_basic_sigma",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_sigma_to_spl_with_or_condition",
+          "callee": "sigma_to_spl",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_sigma_to_spl_with_list_value",
+          "callee": "sigma_to_spl",
+          "lineNumber": 67
+        },
+        {
+          "caller": "test_sigma_to_spl_unknown_modifier_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_sigma_to_spl_unknown_modifier_raises",
+          "callee": "sigma_to_spl",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_sigma_to_spl_unknown_selection_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_sigma_to_spl_unknown_selection_raises",
+          "callee": "sigma_to_spl",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_sigma_to_kql_picks_security_event_for_windows",
+          "callee": "sigma_to_kql",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_sigma_to_kql_picks_security_event_for_windows",
+          "callee": "_basic_sigma",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_sigma_to_kql_picks_security_event_for_windows",
+          "callee": "kql.startswith",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_sigma_to_kql_unknown_modifier_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_sigma_to_kql_unknown_modifier_raises",
+          "callee": "sigma_to_kql",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_sigma_to_lucene_basic",
+          "callee": "sigma_to_lucene",
+          "lineNumber": 114
+        },
+        {
+          "caller": "test_sigma_to_lucene_basic",
+          "callee": "_basic_sigma",
+          "lineNumber": 114
+        },
+        {
+          "caller": "test_sigma_to_lucene_unknown_token_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 126
+        },
+        {
+          "caller": "test_sigma_to_lucene_unknown_token_raises",
+          "callee": "sigma_to_lucene",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_extract_yara_metadata_pulls_meta_kvs",
+          "callee": "_extract_yara_metadata",
+          "lineNumber": 143
+        },
+        {
+          "caller": "test_extract_yara_metadata_empty_when_no_meta_block",
+          "callee": "_extract_yara_metadata",
+          "lineNumber": 151
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_conops_raises",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 155
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_conops_raises",
+          "callee": "str",
+          "lineNumber": 155
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_conops_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 156
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_conops_raises",
+          "callee": "conops_mod.resolve_siem_target",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_target_raises",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_target_raises",
+          "callee": "json.dumps",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_target_raises",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 162
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_target_raises",
+          "callee": "str",
+          "lineNumber": 162
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_target_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 163
+        },
+        {
+          "caller": "test_resolve_siem_target_missing_target_raises",
+          "callee": "conops_mod.resolve_siem_target",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_resolve_siem_target_success",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 168
+        },
+        {
+          "caller": "test_resolve_siem_target_success",
+          "callee": "json.dumps",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_resolve_siem_target_success",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 177
+        },
+        {
+          "caller": "test_resolve_siem_target_success",
+          "callee": "str",
+          "lineNumber": 177
+        },
+        {
+          "caller": "test_resolve_siem_target_success",
+          "callee": "conops_mod.resolve_siem_target",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_resolve_auth_value_missing_env_raises",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_resolve_auth_value_missing_env_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 184
+        },
+        {
+          "caller": "test_resolve_auth_value_missing_env_raises",
+          "callee": "conops_mod.resolve_auth_value",
+          "lineNumber": 185
+        },
+        {
+          "caller": "test_resolve_auth_value_success",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 189
+        },
+        {
+          "caller": "test_resolve_auth_value_success",
+          "callee": "conops_mod.resolve_auth_value",
+          "lineNumber": 190
+        },
+        {
+          "caller": "test_sigma_to_spl_contains_with_spaces_stays_quoted",
+          "callee": "sigma_to_spl",
+          "lineNumber": 200
+        },
+        {
+          "caller": "test_sigma_to_spl_contains_with_special_chars_escaped",
+          "callee": "sigma_to_spl",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "_yara_with_sha256",
+          "lineNumber": 243
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 245
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "json.dumps",
+          "lineNumber": 246
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 253
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "str",
+          "lineNumber": 253
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 254
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "MagicMock",
+          "lineNumber": 256
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "patch",
+          "lineNumber": 260
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 261
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "result.get",
+          "lineNumber": 263
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "json.loads",
+          "lineNumber": 264
+        },
+        {
+          "caller": "test_push_defender_xdr_kql_built_from_sha256",
+          "callee": "mock_post.call_args.kwargs.get",
+          "lineNumber": 264
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "_yara_no_indicator",
+          "lineNumber": 275
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 277
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "json.dumps",
+          "lineNumber": 278
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 285
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "str",
+          "lineNumber": 285
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 286
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "patch",
+          "lineNumber": 288
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 289
+        },
+        {
+          "caller": "test_push_defender_xdr_no_indicator_returns_error",
+          "callee": "mock_post.assert_not_called",
+          "lineNumber": 291
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 23,
+        "functionCount": 23,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 434,
+      "nonEmptyLines": 375,
+      "functions": [
+        {
+          "name": "_write_defender_conops",
+          "startLine": 49,
+          "endLine": 51,
+          "params": [
+            "tmp_path",
+            "defender_cfg"
+          ]
+        },
+        {
+          "name": "_write_crowdstrike_conops",
+          "startLine": 54,
+          "endLine": 56,
+          "params": [
+            "tmp_path",
+            "crowdstrike_cfg"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "TestPushDefenderXdrDetectionSuccess",
+          "startLine": 59,
+          "endLine": 135,
+          "methods": [
+            "test_success_path_returns_pushed_status_with_correct_fields",
+            "test_tags_include_yara_meta_tags_split_and_technique_id",
+            "test_tags_with_no_meta_tags_and_no_technique_id"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPushDefenderXdrDetectionErrorBranches",
+          "startLine": 138,
+          "endLine": 207,
+          "methods": [
+            "test_missing_conops_returns_error",
+            "test_missing_auth_key_in_defender_config_returns_error",
+            "test_auth_env_var_unset_returns_error",
+            "test_requests_not_installed_returns_error",
+            "test_requests_post_raises_exception_returns_error",
+            "test_http_400_or_above_returns_error_with_body_truncated"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPushCrowdstrikeIoaSuccess",
+          "startLine": 210,
+          "endLine": 306,
+          "methods": [
+            "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+            "test_indicator_value_falls_back_to_ioc_meta_key",
+            "test_type_mapping_for_ip_url_domain_aliases"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPushCrowdstrikeIoaErrorBranches",
+          "startLine": 309,
+          "endLine": 426,
+          "methods": [
+            "test_missing_conops_returns_error",
+            "test_missing_url_in_crowdstrike_config_returns_error",
+            "test_missing_auth_in_crowdstrike_config_returns_error",
+            "test_auth_env_var_unset_returns_error",
+            "test_missing_indicator_meta_returns_structured_error",
+            "test_missing_indicator_value_with_type_present_returns_structured_error",
+            "test_unsupported_indicator_type_returns_error",
+            "test_requests_not_installed_returns_error",
+            "test_requests_post_raises_exception_returns_error",
+            "test_http_400_or_above_returns_error_with_body_truncated"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestCrowdstrikeTypeMap",
+          "startLine": 429,
+          "endLine": 434,
+          "methods": [
+            "test_type_map_contains_expected_keys_and_values"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_write_defender_conops",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "_write_crowdstrike_conops",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushDefenderXdrDetectionSuccess",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushDefenderXdrDetectionErrorBranches",
+          "line": 138,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushCrowdstrikeIoaSuccess",
+          "line": 210,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushCrowdstrikeIoaErrorBranches",
+          "line": 309,
+          "isDefault": false
+        },
+        {
+          "name": "TestCrowdstrikeTypeMap",
+          "line": 429,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_write_defender_conops",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_write_defender_conops",
+          "callee": "json.dumps",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_write_crowdstrike_conops",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_write_crowdstrike_conops",
+          "callee": "json.dumps",
+          "lineNumber": 56
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_fields",
+          "callee": "_write_defender_conops",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_fields",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_fields",
+          "callee": "str",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_fields",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_fields",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 66
+        },
+        {
+          "caller": "fake_post",
+          "callee": "MagicMock",
+          "lineNumber": 73
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_fields",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 77
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_fields",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_fields",
+          "callee": "json.loads",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_tags_include_yara_meta_tags_split_and_technique_id",
+          "callee": "_write_defender_conops",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_tags_include_yara_meta_tags_split_and_technique_id",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_tags_include_yara_meta_tags_split_and_technique_id",
+          "callee": "str",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_tags_include_yara_meta_tags_split_and_technique_id",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_tags_include_yara_meta_tags_split_and_technique_id",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 102
+        },
+        {
+          "caller": "fake_post",
+          "callee": "MagicMock",
+          "lineNumber": 107
+        },
+        {
+          "caller": "test_tags_include_yara_meta_tags_split_and_technique_id",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_tags_include_yara_meta_tags_split_and_technique_id",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_tags_include_yara_meta_tags_split_and_technique_id",
+          "callee": "json.loads",
+          "lineNumber": 113
+        },
+        {
+          "caller": "test_tags_with_no_meta_tags_and_no_technique_id",
+          "callee": "_write_defender_conops",
+          "lineNumber": 119
+        },
+        {
+          "caller": "test_tags_with_no_meta_tags_and_no_technique_id",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 120
+        },
+        {
+          "caller": "test_tags_with_no_meta_tags_and_no_technique_id",
+          "callee": "str",
+          "lineNumber": 120
+        },
+        {
+          "caller": "test_tags_with_no_meta_tags_and_no_technique_id",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 121
+        },
+        {
+          "caller": "test_tags_with_no_meta_tags_and_no_technique_id",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 122
+        },
+        {
+          "caller": "fake_post",
+          "callee": "MagicMock",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_tags_with_no_meta_tags_and_no_technique_id",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 131
+        },
+        {
+          "caller": "test_tags_with_no_meta_tags_and_no_technique_id",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_tags_with_no_meta_tags_and_no_technique_id",
+          "callee": "json.loads",
+          "lineNumber": 133
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 142
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "str",
+          "lineNumber": 142
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 143
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "result[\"error\"].lower",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "result[\"error\"].lower",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_missing_auth_key_in_defender_config_returns_error",
+          "callee": "_write_defender_conops",
+          "lineNumber": 150
+        },
+        {
+          "caller": "test_missing_auth_key_in_defender_config_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 151
+        },
+        {
+          "caller": "test_missing_auth_key_in_defender_config_returns_error",
+          "callee": "str",
+          "lineNumber": 151
+        },
+        {
+          "caller": "test_missing_auth_key_in_defender_config_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 152
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "_write_defender_conops",
+          "lineNumber": 158
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 159
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "str",
+          "lineNumber": 159
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 160
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "_write_defender_conops",
+          "lineNumber": 168
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "str",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 170
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 171
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 172
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "_write_defender_conops",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 179
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "str",
+          "lineNumber": 179
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 180
+        },
+        {
+          "caller": "boom",
+          "callee": "RuntimeError",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 185
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 186
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "result[\"error\"].startswith",
+          "lineNumber": 187
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "_write_defender_conops",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 194
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "str",
+          "lineNumber": 194
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 195
+        },
+        {
+          "caller": "fake_post",
+          "callee": "MagicMock",
+          "lineNumber": 198
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 203
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 204
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "len",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 214
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 217
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+          "callee": "str",
+          "lineNumber": 217
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 218
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 219
+        },
+        {
+          "caller": "fake_post",
+          "callee": "MagicMock",
+          "lineNumber": 225
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 229
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 230
+        },
+        {
+          "caller": "test_success_path_returns_pushed_status_with_correct_indicator_fields",
+          "callee": "json.loads",
+          "lineNumber": 240
+        },
+        {
+          "caller": "test_indicator_value_falls_back_to_ioc_meta_key",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 246
+        },
+        {
+          "caller": "test_indicator_value_falls_back_to_ioc_meta_key",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 247
+        },
+        {
+          "caller": "test_indicator_value_falls_back_to_ioc_meta_key",
+          "callee": "str",
+          "lineNumber": 247
+        },
+        {
+          "caller": "test_indicator_value_falls_back_to_ioc_meta_key",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 248
+        },
+        {
+          "caller": "fake_post",
+          "callee": "MagicMock",
+          "lineNumber": 261
+        },
+        {
+          "caller": "test_indicator_value_falls_back_to_ioc_meta_key",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 265
+        },
+        {
+          "caller": "test_indicator_value_falls_back_to_ioc_meta_key",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 266
+        },
+        {
+          "caller": "test_type_mapping_for_ip_url_domain_aliases",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 287
+        },
+        {
+          "caller": "test_type_mapping_for_ip_url_domain_aliases",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 288
+        },
+        {
+          "caller": "test_type_mapping_for_ip_url_domain_aliases",
+          "callee": "str",
+          "lineNumber": 288
+        },
+        {
+          "caller": "test_type_mapping_for_ip_url_domain_aliases",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 289
+        },
+        {
+          "caller": "fake_post",
+          "callee": "MagicMock",
+          "lineNumber": 300
+        },
+        {
+          "caller": "test_type_mapping_for_ip_url_domain_aliases",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 304
+        },
+        {
+          "caller": "test_type_mapping_for_ip_url_domain_aliases",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 305
+        },
+        {
+          "caller": "test_type_mapping_for_ip_url_domain_aliases",
+          "callee": "result.get",
+          "lineNumber": 306
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 313
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "str",
+          "lineNumber": 313
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 314
+        },
+        {
+          "caller": "test_missing_url_in_crowdstrike_config_returns_error",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 320
+        },
+        {
+          "caller": "test_missing_url_in_crowdstrike_config_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 321
+        },
+        {
+          "caller": "test_missing_url_in_crowdstrike_config_returns_error",
+          "callee": "str",
+          "lineNumber": 321
+        },
+        {
+          "caller": "test_missing_url_in_crowdstrike_config_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 322
+        },
+        {
+          "caller": "test_missing_auth_in_crowdstrike_config_returns_error",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 328
+        },
+        {
+          "caller": "test_missing_auth_in_crowdstrike_config_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 329
+        },
+        {
+          "caller": "test_missing_auth_in_crowdstrike_config_returns_error",
+          "callee": "str",
+          "lineNumber": 329
+        },
+        {
+          "caller": "test_missing_auth_in_crowdstrike_config_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 330
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 336
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 339
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "str",
+          "lineNumber": 339
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 340
+        },
+        {
+          "caller": "test_auth_env_var_unset_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 341
+        },
+        {
+          "caller": "test_missing_indicator_meta_returns_structured_error",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 348
+        },
+        {
+          "caller": "test_missing_indicator_meta_returns_structured_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 349
+        },
+        {
+          "caller": "test_missing_indicator_meta_returns_structured_error",
+          "callee": "str",
+          "lineNumber": 349
+        },
+        {
+          "caller": "test_missing_indicator_meta_returns_structured_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 350
+        },
+        {
+          "caller": "test_missing_indicator_meta_returns_structured_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 351
+        },
+        {
+          "caller": "test_missing_indicator_value_with_type_present_returns_structured_error",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 358
+        },
+        {
+          "caller": "test_missing_indicator_value_with_type_present_returns_structured_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 359
+        },
+        {
+          "caller": "test_missing_indicator_value_with_type_present_returns_structured_error",
+          "callee": "str",
+          "lineNumber": 359
+        },
+        {
+          "caller": "test_missing_indicator_value_with_type_present_returns_structured_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 360
+        },
+        {
+          "caller": "test_missing_indicator_value_with_type_present_returns_structured_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 362
+        },
+        {
+          "caller": "test_unsupported_indicator_type_returns_error",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 369
+        },
+        {
+          "caller": "test_unsupported_indicator_type_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 370
+        },
+        {
+          "caller": "test_unsupported_indicator_type_returns_error",
+          "callee": "str",
+          "lineNumber": 370
+        },
+        {
+          "caller": "test_unsupported_indicator_type_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 371
+        },
+        {
+          "caller": "test_unsupported_indicator_type_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 380
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 388
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 389
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "str",
+          "lineNumber": 389
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 390
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "monkeypatch.setitem",
+          "lineNumber": 391
+        },
+        {
+          "caller": "test_requests_not_installed_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 392
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 398
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 399
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "str",
+          "lineNumber": 399
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 400
+        },
+        {
+          "caller": "boom",
+          "callee": "ConnectionError",
+          "lineNumber": 403
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 405
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 406
+        },
+        {
+          "caller": "test_requests_post_raises_exception_returns_error",
+          "callee": "result[\"error\"].startswith",
+          "lineNumber": 407
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "_write_crowdstrike_conops",
+          "lineNumber": 412
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 413
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "str",
+          "lineNumber": 413
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 414
+        },
+        {
+          "caller": "fake_post",
+          "callee": "MagicMock",
+          "lineNumber": 417
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "monkeypatch.setattr",
+          "lineNumber": 422
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 423
+        },
+        {
+          "caller": "test_http_400_or_above_returns_error_with_body_truncated",
+          "callee": "len",
+          "lineNumber": 426
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 7,
+        "functionCount": 2,
+        "classCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1096,
+      "nonEmptyLines": 943,
+      "functions": [
+        {
+          "name": "_conops_with",
+          "startLine": 59,
+          "endLine": 65,
+          "params": [
+            "tmp_path",
+            "blue_team"
+          ]
+        },
+        {
+          "name": "_mock_response",
+          "startLine": 68,
+          "endLine": 72,
+          "params": [
+            "status_code",
+            "text"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "TestConOpsHelpers",
+          "startLine": 80,
+          "endLine": 150,
+          "methods": [
+            "test_load_conops_invalid_json",
+            "test_load_conops_finds_alternate_filenames",
+            "test_list_targets_returns_sorted_keys",
+            "test_list_targets_empty_when_no_conops",
+            "test_list_targets_empty_when_no_blue_team",
+            "test_engagement_slug_uses_env_var",
+            "test_engagement_slug_from_conops",
+            "test_engagement_slug_falls_back_to_unscoped",
+            "test_resolve_auth_value_malformed_spec_raises",
+            "test_resolve_siem_target_no_blue_team_raises"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestSplunkConverter",
+          "startLine": 158,
+          "endLine": 245,
+          "methods": [
+            "test_quote_spl_non_string",
+            "test_quote_spl_escapes_backslash_and_quote",
+            "test_field_clause_equals",
+            "test_field_clause_startswith",
+            "test_field_clause_contains",
+            "test_field_clause_endswith",
+            "test_field_clause_non_string_with_modifier",
+            "test_field_clause_unknown_modifier_raises",
+            "test_selection_to_spl_list_values",
+            "test_sigma_to_spl_no_detection_raises",
+            "test_sigma_to_spl_no_condition_raises",
+            "test_sigma_to_spl_empty_selections_raises",
+            "test_sigma_to_spl_selection_not_dict_raises",
+            "test_sigma_to_spl_and_condition",
+            "test_sigma_to_spl_not_condition",
+            "test_sigma_to_spl_parenthesised_condition"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestSentinelConverter",
+          "startLine": 253,
+          "endLine": 346,
+          "methods": [
+            "test_table_for_logsource_known",
+            "test_table_for_logsource_unknown_falls_back_to_syslog",
+            "test_table_for_logsource_empty",
+            "test_field_clause_kql_equals_string",
+            "test_field_clause_kql_contains",
+            "test_field_clause_kql_startswith",
+            "test_field_clause_kql_endswith",
+            "test_field_clause_kql_non_string_equals",
+            "test_field_clause_kql_unsupported_modifier_raises",
+            "test_selection_to_kql_list_or",
+            "test_sigma_to_kql_missing_detection_raises",
+            "test_sigma_to_kql_no_condition_raises",
+            "test_sigma_to_kql_selection_not_dict_raises",
+            "test_sigma_to_kql_unknown_token_raises",
+            "test_sigma_to_kql_and_or_not_parens",
+            "test_sigma_to_kql_escapes_double_quote",
+            "test_severity_map_critical_maps_to_high"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestElasticConverter",
+          "startLine": 354,
+          "endLine": 423,
+          "methods": [
+            "test_field_clause_lucene_equals_string",
+            "test_field_clause_lucene_contains",
+            "test_field_clause_lucene_startswith",
+            "test_field_clause_lucene_endswith",
+            "test_field_clause_lucene_non_string_equals",
+            "test_field_clause_lucene_unsupported_modifier_raises",
+            "test_field_clause_lucene_non_string_unsupported_raises",
+            "test_selection_to_lucene_list_or",
+            "test_sigma_to_lucene_missing_detection_raises",
+            "test_sigma_to_lucene_no_condition_raises",
+            "test_sigma_to_lucene_selection_not_dict_raises",
+            "test_sigma_to_lucene_and_or_not",
+            "test_sigma_to_lucene_escapes_double_quote",
+            "test_severity_map_informational_is_low"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestExtractYaraMetadata",
+          "startLine": 431,
+          "endLine": 451,
+          "methods": [
+            "test_tags_field_extracted",
+            "test_empty_meta_block",
+            "test_crowdstrike_type_map_completeness"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPushSavedsearch",
+          "startLine": 459,
+          "endLine": 559,
+          "methods": [
+            "_setup_conops",
+            "test_success_200",
+            "test_http_4xx_returns_error",
+            "test_network_exception_returns_error",
+            "test_missing_conops_returns_error",
+            "test_missing_url_returns_error",
+            "test_missing_auth_returns_error",
+            "test_unresolvable_auth_env_returns_error",
+            "test_payload_contains_technique_id",
+            "test_payload_no_technique_id"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPushDetectionRule",
+          "startLine": 567,
+          "endLine": 697,
+          "methods": [
+            "_setup_conops",
+            "test_success_200",
+            "test_409_triggers_put",
+            "test_4xx_after_put_returns_error",
+            "test_network_exception_returns_error",
+            "test_put_network_exception_returns_error",
+            "test_custom_index_patterns",
+            "test_default_index_patterns",
+            "test_missing_conops_returns_error",
+            "test_severity_normalised"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPushAnalyticRule",
+          "startLine": 705,
+          "endLine": 828,
+          "methods": [
+            "_setup_conops",
+            "test_success_200",
+            "test_technique_id_in_body_properties",
+            "test_no_technique_id_omits_techniques_key",
+            "test_severity_critical_maps_to_high",
+            "test_http_4xx_returns_error",
+            "test_network_exception_returns_error",
+            "test_missing_conops_returns_error",
+            "test_incomplete_sentinel_config_returns_error",
+            "test_url_contains_subscription_and_workspace"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPushDefenderXdr",
+          "startLine": 836,
+          "endLine": 927,
+          "methods": [
+            "_setup_conops",
+            "test_success_200",
+            "test_tags_from_yara_meta_included",
+            "test_technique_id_in_tags",
+            "test_http_4xx_returns_error",
+            "test_network_exception_returns_error",
+            "test_missing_auth_returns_error",
+            "test_missing_conops_returns_error"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPushCrowdstrikeIoa",
+          "startLine": 935,
+          "endLine": 1096,
+          "methods": [
+            "_setup_conops",
+            "test_success_200",
+            "test_missing_indicator_type_returns_error",
+            "test_missing_indicator_value_returns_error",
+            "test_unsupported_indicator_type_returns_error",
+            "test_http_4xx_returns_error",
+            "test_network_exception_returns_error",
+            "test_missing_conops_returns_error",
+            "test_missing_url_returns_error",
+            "test_ioc_fallback_key_for_value",
+            "test_all_crowdstrike_mapped_types_accepted"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_conops_with",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "_mock_response",
+          "line": 68,
+          "isDefault": false
+        },
+        {
+          "name": "TestConOpsHelpers",
+          "line": 80,
+          "isDefault": false
+        },
+        {
+          "name": "TestSplunkConverter",
+          "line": 158,
+          "isDefault": false
+        },
+        {
+          "name": "TestSentinelConverter",
+          "line": 253,
+          "isDefault": false
+        },
+        {
+          "name": "TestElasticConverter",
+          "line": 354,
+          "isDefault": false
+        },
+        {
+          "name": "TestExtractYaraMetadata",
+          "line": 431,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushSavedsearch",
+          "line": 459,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushDetectionRule",
+          "line": 567,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushAnalyticRule",
+          "line": 705,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushDefenderXdr",
+          "line": 836,
+          "isDefault": false
+        },
+        {
+          "name": "TestPushCrowdstrikeIoa",
+          "line": 935,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_conops_with",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_conops_with",
+          "callee": "json.dumps",
+          "lineNumber": 62
+        },
+        {
+          "caller": "_mock_response",
+          "callee": "MagicMock",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_load_conops_invalid_json",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_load_conops_invalid_json",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 83
+        },
+        {
+          "caller": "test_load_conops_invalid_json",
+          "callee": "str",
+          "lineNumber": 83
+        },
+        {
+          "caller": "test_load_conops_invalid_json",
+          "callee": "pytest.raises",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_load_conops_invalid_json",
+          "callee": "conops_mod._load_conops",
+          "lineNumber": 85
+        },
+        {
+          "caller": "test_load_conops_finds_alternate_filenames",
+          "callee": "(tmp_path / \"ConOps.json\").write_text",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_load_conops_finds_alternate_filenames",
+          "callee": "json.dumps",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_load_conops_finds_alternate_filenames",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_load_conops_finds_alternate_filenames",
+          "callee": "str",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_load_conops_finds_alternate_filenames",
+          "callee": "conops_mod._load_conops",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_list_targets_returns_sorted_keys",
+          "callee": "_conops_with",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_list_targets_returns_sorted_keys",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_list_targets_returns_sorted_keys",
+          "callee": "str",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_list_targets_returns_sorted_keys",
+          "callee": "conops_mod.list_targets",
+          "lineNumber": 102
+        },
+        {
+          "caller": "test_list_targets_returns_sorted_keys",
+          "callee": "sorted",
+          "lineNumber": 103
+        },
+        {
+          "caller": "test_list_targets_empty_when_no_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 108
+        },
+        {
+          "caller": "test_list_targets_empty_when_no_conops",
+          "callee": "str",
+          "lineNumber": 108
+        },
+        {
+          "caller": "test_list_targets_empty_when_no_conops",
+          "callee": "conops_mod.list_targets",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_list_targets_empty_when_no_blue_team",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 114
+        },
+        {
+          "caller": "test_list_targets_empty_when_no_blue_team",
+          "callee": "json.dumps",
+          "lineNumber": 114
+        },
+        {
+          "caller": "test_list_targets_empty_when_no_blue_team",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_list_targets_empty_when_no_blue_team",
+          "callee": "str",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_list_targets_empty_when_no_blue_team",
+          "callee": "conops_mod.list_targets",
+          "lineNumber": 116
+        },
+        {
+          "caller": "test_engagement_slug_uses_env_var",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 119
+        },
+        {
+          "caller": "test_engagement_slug_uses_env_var",
+          "callee": "conops_mod.engagement_slug",
+          "lineNumber": 120
+        },
+        {
+          "caller": "test_engagement_slug_from_conops",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_engagement_slug_from_conops",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 124
+        },
+        {
+          "caller": "test_engagement_slug_from_conops",
+          "callee": "json.dumps",
+          "lineNumber": 125
+        },
+        {
+          "caller": "test_engagement_slug_from_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 128
+        },
+        {
+          "caller": "test_engagement_slug_from_conops",
+          "callee": "str",
+          "lineNumber": 128
+        },
+        {
+          "caller": "test_engagement_slug_from_conops",
+          "callee": "conops_mod.engagement_slug",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_engagement_slug_falls_back_to_unscoped",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 134
+        },
+        {
+          "caller": "test_engagement_slug_falls_back_to_unscoped",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_engagement_slug_falls_back_to_unscoped",
+          "callee": "str",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_engagement_slug_falls_back_to_unscoped",
+          "callee": "conops_mod.engagement_slug",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_resolve_auth_value_malformed_spec_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 139
+        },
+        {
+          "caller": "test_resolve_auth_value_malformed_spec_raises",
+          "callee": "conops_mod.resolve_auth_value",
+          "lineNumber": 140
+        },
+        {
+          "caller": "test_resolve_siem_target_no_blue_team_raises",
+          "callee": "(tmp_path / \"conops.json\").write_text",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_resolve_siem_target_no_blue_team_raises",
+          "callee": "json.dumps",
+          "lineNumber": 146
+        },
+        {
+          "caller": "test_resolve_siem_target_no_blue_team_raises",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_resolve_siem_target_no_blue_team_raises",
+          "callee": "str",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_resolve_siem_target_no_blue_team_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_resolve_siem_target_no_blue_team_raises",
+          "callee": "conops_mod.resolve_siem_target",
+          "lineNumber": 150
+        },
+        {
+          "caller": "test_quote_spl_non_string",
+          "callee": "_quote_spl",
+          "lineNumber": 160
+        },
+        {
+          "caller": "test_quote_spl_non_string",
+          "callee": "_quote_spl",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_quote_spl_escapes_backslash_and_quote",
+          "callee": "_quote_spl",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_field_clause_equals",
+          "callee": "_field_clause",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_field_clause_startswith",
+          "callee": "_field_clause",
+          "lineNumber": 172
+        },
+        {
+          "caller": "test_field_clause_contains",
+          "callee": "_field_clause",
+          "lineNumber": 175
+        },
+        {
+          "caller": "test_field_clause_endswith",
+          "callee": "_field_clause",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_field_clause_non_string_with_modifier",
+          "callee": "_field_clause",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_field_clause_unknown_modifier_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 186
+        },
+        {
+          "caller": "test_field_clause_unknown_modifier_raises",
+          "callee": "_field_clause",
+          "lineNumber": 187
+        },
+        {
+          "caller": "test_selection_to_spl_list_values",
+          "callee": "_selection_to_spl",
+          "lineNumber": 191
+        },
+        {
+          "caller": "test_sigma_to_spl_no_detection_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 197
+        },
+        {
+          "caller": "test_sigma_to_spl_no_detection_raises",
+          "callee": "sigma_to_spl",
+          "lineNumber": 198
+        },
+        {
+          "caller": "test_sigma_to_spl_no_condition_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_sigma_to_spl_no_condition_raises",
+          "callee": "sigma_to_spl",
+          "lineNumber": 202
+        },
+        {
+          "caller": "test_sigma_to_spl_empty_selections_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 205
+        },
+        {
+          "caller": "test_sigma_to_spl_empty_selections_raises",
+          "callee": "sigma_to_spl",
+          "lineNumber": 206
+        },
+        {
+          "caller": "test_sigma_to_spl_selection_not_dict_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 210
+        },
+        {
+          "caller": "test_sigma_to_spl_selection_not_dict_raises",
+          "callee": "sigma_to_spl",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_sigma_to_spl_and_condition",
+          "callee": "sigma_to_spl",
+          "lineNumber": 221
+        },
+        {
+          "caller": "test_sigma_to_spl_not_condition",
+          "callee": "sigma_to_spl",
+          "lineNumber": 232
+        },
+        {
+          "caller": "test_sigma_to_spl_parenthesised_condition",
+          "callee": "sigma_to_spl",
+          "lineNumber": 243
+        },
+        {
+          "caller": "test_table_for_logsource_known",
+          "callee": "_table_for_logsource",
+          "lineNumber": 255
+        },
+        {
+          "caller": "test_table_for_logsource_known",
+          "callee": "_table_for_logsource",
+          "lineNumber": 256
+        },
+        {
+          "caller": "test_table_for_logsource_known",
+          "callee": "_table_for_logsource",
+          "lineNumber": 257
+        },
+        {
+          "caller": "test_table_for_logsource_known",
+          "callee": "_table_for_logsource",
+          "lineNumber": 258
+        },
+        {
+          "caller": "test_table_for_logsource_known",
+          "callee": "_table_for_logsource",
+          "lineNumber": 259
+        },
+        {
+          "caller": "test_table_for_logsource_unknown_falls_back_to_syslog",
+          "callee": "_table_for_logsource",
+          "lineNumber": 262
+        },
+        {
+          "caller": "test_table_for_logsource_empty",
+          "callee": "_table_for_logsource",
+          "lineNumber": 265
+        },
+        {
+          "caller": "test_field_clause_kql_equals_string",
+          "callee": "_field_clause_kql",
+          "lineNumber": 268
+        },
+        {
+          "caller": "test_field_clause_kql_contains",
+          "callee": "_field_clause_kql",
+          "lineNumber": 271
+        },
+        {
+          "caller": "test_field_clause_kql_startswith",
+          "callee": "_field_clause_kql",
+          "lineNumber": 274
+        },
+        {
+          "caller": "test_field_clause_kql_endswith",
+          "callee": "_field_clause_kql",
+          "lineNumber": 277
+        },
+        {
+          "caller": "test_field_clause_kql_non_string_equals",
+          "callee": "_field_clause_kql",
+          "lineNumber": 280
+        },
+        {
+          "caller": "test_field_clause_kql_unsupported_modifier_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 283
+        },
+        {
+          "caller": "test_field_clause_kql_unsupported_modifier_raises",
+          "callee": "_field_clause_kql",
+          "lineNumber": 284
+        },
+        {
+          "caller": "test_selection_to_kql_list_or",
+          "callee": "_selection_to_kql",
+          "lineNumber": 288
+        },
+        {
+          "caller": "test_sigma_to_kql_missing_detection_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 293
+        },
+        {
+          "caller": "test_sigma_to_kql_missing_detection_raises",
+          "callee": "sigma_to_kql",
+          "lineNumber": 294
+        },
+        {
+          "caller": "test_sigma_to_kql_no_condition_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 297
+        },
+        {
+          "caller": "test_sigma_to_kql_no_condition_raises",
+          "callee": "sigma_to_kql",
+          "lineNumber": 298
+        },
+        {
+          "caller": "test_sigma_to_kql_selection_not_dict_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 305
+        },
+        {
+          "caller": "test_sigma_to_kql_selection_not_dict_raises",
+          "callee": "sigma_to_kql",
+          "lineNumber": 306
+        },
+        {
+          "caller": "test_sigma_to_kql_unknown_token_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 313
+        },
+        {
+          "caller": "test_sigma_to_kql_unknown_token_raises",
+          "callee": "sigma_to_kql",
+          "lineNumber": 314
+        },
+        {
+          "caller": "test_sigma_to_kql_and_or_not_parens",
+          "callee": "sigma_to_kql",
+          "lineNumber": 325
+        },
+        {
+          "caller": "test_sigma_to_kql_and_or_not_parens",
+          "callee": "kql.startswith",
+          "lineNumber": 326
+        },
+        {
+          "caller": "test_sigma_to_kql_escapes_double_quote",
+          "callee": "sigma_to_kql",
+          "lineNumber": 339
+        },
+        {
+          "caller": "test_field_clause_lucene_equals_string",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 356
+        },
+        {
+          "caller": "test_field_clause_lucene_contains",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 359
+        },
+        {
+          "caller": "test_field_clause_lucene_startswith",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 362
+        },
+        {
+          "caller": "test_field_clause_lucene_endswith",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 365
+        },
+        {
+          "caller": "test_field_clause_lucene_non_string_equals",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 368
+        },
+        {
+          "caller": "test_field_clause_lucene_unsupported_modifier_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 371
+        },
+        {
+          "caller": "test_field_clause_lucene_unsupported_modifier_raises",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 372
+        },
+        {
+          "caller": "test_field_clause_lucene_non_string_unsupported_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 375
+        },
+        {
+          "caller": "test_field_clause_lucene_non_string_unsupported_raises",
+          "callee": "_field_clause_lucene",
+          "lineNumber": 376
+        },
+        {
+          "caller": "test_selection_to_lucene_list_or",
+          "callee": "_selection_to_lucene",
+          "lineNumber": 380
+        },
+        {
+          "caller": "test_sigma_to_lucene_missing_detection_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 385
+        },
+        {
+          "caller": "test_sigma_to_lucene_missing_detection_raises",
+          "callee": "sigma_to_lucene",
+          "lineNumber": 386
+        },
+        {
+          "caller": "test_sigma_to_lucene_no_condition_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 389
+        },
+        {
+          "caller": "test_sigma_to_lucene_no_condition_raises",
+          "callee": "sigma_to_lucene",
+          "lineNumber": 390
+        },
+        {
+          "caller": "test_sigma_to_lucene_selection_not_dict_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 394
+        },
+        {
+          "caller": "test_sigma_to_lucene_selection_not_dict_raises",
+          "callee": "sigma_to_lucene",
+          "lineNumber": 395
+        },
+        {
+          "caller": "test_sigma_to_lucene_and_or_not",
+          "callee": "sigma_to_lucene",
+          "lineNumber": 405
+        },
+        {
+          "caller": "test_sigma_to_lucene_escapes_double_quote",
+          "callee": "sigma_to_lucene",
+          "lineNumber": 416
+        },
+        {
+          "caller": "test_tags_field_extracted",
+          "callee": "_extract_yara_metadata",
+          "lineNumber": 440
+        },
+        {
+          "caller": "test_empty_meta_block",
+          "callee": "_extract_yara_metadata",
+          "lineNumber": 446
+        },
+        {
+          "caller": "test_crowdstrike_type_map_completeness",
+          "callee": "_CROWDSTRIKE_TYPE_MAP.items",
+          "lineNumber": 450
+        },
+        {
+          "caller": "test_crowdstrike_type_map_completeness",
+          "callee": "isinstance",
+          "lineNumber": 451
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "_conops_with",
+          "lineNumber": 461
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 465
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "str",
+          "lineNumber": 465
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 466
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 467
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "self._setup_conops",
+          "lineNumber": 470
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "patch",
+          "lineNumber": 471
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "_mock_response",
+          "lineNumber": 473
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "push_savedsearch",
+          "lineNumber": 475
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "mock_post.assert_called_once",
+          "lineNumber": 486
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 491
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "patch",
+          "lineNumber": 492
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "_mock_response",
+          "lineNumber": 494
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "push_savedsearch",
+          "lineNumber": 496
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 501
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "patch",
+          "lineNumber": 502
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "ConnectionError",
+          "lineNumber": 504
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "push_savedsearch",
+          "lineNumber": 506
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 511
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "str",
+          "lineNumber": 511
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "push_savedsearch",
+          "lineNumber": 512
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "_conops_with",
+          "lineNumber": 516
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 517
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "str",
+          "lineNumber": 517
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 518
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "push_savedsearch",
+          "lineNumber": 519
+        },
+        {
+          "caller": "test_missing_auth_returns_error",
+          "callee": "_conops_with",
+          "lineNumber": 524
+        },
+        {
+          "caller": "test_missing_auth_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 525
+        },
+        {
+          "caller": "test_missing_auth_returns_error",
+          "callee": "str",
+          "lineNumber": 525
+        },
+        {
+          "caller": "test_missing_auth_returns_error",
+          "callee": "push_savedsearch",
+          "lineNumber": 526
+        },
+        {
+          "caller": "test_unresolvable_auth_env_returns_error",
+          "callee": "_conops_with",
+          "lineNumber": 532
+        },
+        {
+          "caller": "test_unresolvable_auth_env_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 536
+        },
+        {
+          "caller": "test_unresolvable_auth_env_returns_error",
+          "callee": "str",
+          "lineNumber": 536
+        },
+        {
+          "caller": "test_unresolvable_auth_env_returns_error",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 537
+        },
+        {
+          "caller": "test_unresolvable_auth_env_returns_error",
+          "callee": "push_savedsearch",
+          "lineNumber": 538
+        },
+        {
+          "caller": "test_payload_contains_technique_id",
+          "callee": "self._setup_conops",
+          "lineNumber": 542
+        },
+        {
+          "caller": "test_payload_contains_technique_id",
+          "callee": "patch",
+          "lineNumber": 543
+        },
+        {
+          "caller": "test_payload_contains_technique_id",
+          "callee": "_mock_response",
+          "lineNumber": 545
+        },
+        {
+          "caller": "test_payload_contains_technique_id",
+          "callee": "push_savedsearch",
+          "lineNumber": 547
+        },
+        {
+          "caller": "test_payload_no_technique_id",
+          "callee": "self._setup_conops",
+          "lineNumber": 552
+        },
+        {
+          "caller": "test_payload_no_technique_id",
+          "callee": "patch",
+          "lineNumber": 553
+        },
+        {
+          "caller": "test_payload_no_technique_id",
+          "callee": "_mock_response",
+          "lineNumber": 555
+        },
+        {
+          "caller": "test_payload_no_technique_id",
+          "callee": "push_savedsearch",
+          "lineNumber": 557
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "_conops_with",
+          "lineNumber": 569
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 578
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "str",
+          "lineNumber": 578
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 579
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 580
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "self._setup_conops",
+          "lineNumber": 583
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "patch",
+          "lineNumber": 584
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "_mock_response",
+          "lineNumber": 586
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "push_detection_rule",
+          "lineNumber": 588
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "mock_post.assert_called_once",
+          "lineNumber": 599
+        },
+        {
+          "caller": "test_409_triggers_put",
+          "callee": "self._setup_conops",
+          "lineNumber": 603
+        },
+        {
+          "caller": "test_409_triggers_put",
+          "callee": "_mock_response",
+          "lineNumber": 604
+        },
+        {
+          "caller": "test_409_triggers_put",
+          "callee": "_mock_response",
+          "lineNumber": 605
+        },
+        {
+          "caller": "test_409_triggers_put",
+          "callee": "patch",
+          "lineNumber": 607
+        },
+        {
+          "caller": "test_409_triggers_put",
+          "callee": "patch",
+          "lineNumber": 611
+        },
+        {
+          "caller": "test_409_triggers_put",
+          "callee": "push_detection_rule",
+          "lineNumber": 616
+        },
+        {
+          "caller": "test_409_triggers_put",
+          "callee": "mock_put.assert_called_once",
+          "lineNumber": 618
+        },
+        {
+          "caller": "test_4xx_after_put_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 621
+        },
+        {
+          "caller": "test_4xx_after_put_returns_error",
+          "callee": "patch",
+          "lineNumber": 623
+        },
+        {
+          "caller": "test_4xx_after_put_returns_error",
+          "callee": "_mock_response",
+          "lineNumber": 625
+        },
+        {
+          "caller": "test_4xx_after_put_returns_error",
+          "callee": "patch",
+          "lineNumber": 627
+        },
+        {
+          "caller": "test_4xx_after_put_returns_error",
+          "callee": "_mock_response",
+          "lineNumber": 629
+        },
+        {
+          "caller": "test_4xx_after_put_returns_error",
+          "callee": "push_detection_rule",
+          "lineNumber": 632
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 637
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "patch",
+          "lineNumber": 638
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "ConnectionError",
+          "lineNumber": 640
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "push_detection_rule",
+          "lineNumber": 642
+        },
+        {
+          "caller": "test_put_network_exception_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 649
+        },
+        {
+          "caller": "test_put_network_exception_returns_error",
+          "callee": "patch",
+          "lineNumber": 651
+        },
+        {
+          "caller": "test_put_network_exception_returns_error",
+          "callee": "_mock_response",
+          "lineNumber": 653
+        },
+        {
+          "caller": "test_put_network_exception_returns_error",
+          "callee": "patch",
+          "lineNumber": 655
+        },
+        {
+          "caller": "test_put_network_exception_returns_error",
+          "callee": "ConnectionError",
+          "lineNumber": 657
+        },
+        {
+          "caller": "test_put_network_exception_returns_error",
+          "callee": "push_detection_rule",
+          "lineNumber": 660
+        },
+        {
+          "caller": "test_custom_index_patterns",
+          "callee": "self._setup_conops",
+          "lineNumber": 665
+        },
+        {
+          "caller": "test_custom_index_patterns",
+          "callee": "patch",
+          "lineNumber": 666
+        },
+        {
+          "caller": "test_custom_index_patterns",
+          "callee": "_mock_response",
+          "lineNumber": 668
+        },
+        {
+          "caller": "test_custom_index_patterns",
+          "callee": "push_detection_rule",
+          "lineNumber": 670
+        },
+        {
+          "caller": "test_custom_index_patterns",
+          "callee": "json.loads",
+          "lineNumber": 671
+        },
+        {
+          "caller": "test_default_index_patterns",
+          "callee": "self._setup_conops",
+          "lineNumber": 675
+        },
+        {
+          "caller": "test_default_index_patterns",
+          "callee": "patch",
+          "lineNumber": 676
+        },
+        {
+          "caller": "test_default_index_patterns",
+          "callee": "_mock_response",
+          "lineNumber": 678
+        },
+        {
+          "caller": "test_default_index_patterns",
+          "callee": "push_detection_rule",
+          "lineNumber": 680
+        },
+        {
+          "caller": "test_default_index_patterns",
+          "callee": "json.loads",
+          "lineNumber": 681
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 685
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "str",
+          "lineNumber": 685
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "push_detection_rule",
+          "lineNumber": 686
+        },
+        {
+          "caller": "test_severity_normalised",
+          "callee": "self._setup_conops",
+          "lineNumber": 690
+        },
+        {
+          "caller": "test_severity_normalised",
+          "callee": "patch",
+          "lineNumber": 691
+        },
+        {
+          "caller": "test_severity_normalised",
+          "callee": "_mock_response",
+          "lineNumber": 693
+        },
+        {
+          "caller": "test_severity_normalised",
+          "callee": "push_detection_rule",
+          "lineNumber": 695
+        },
+        {
+          "caller": "test_severity_normalised",
+          "callee": "json.loads",
+          "lineNumber": 696
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "_conops_with",
+          "lineNumber": 707
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 718
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "str",
+          "lineNumber": 718
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 719
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 720
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "self._setup_conops",
+          "lineNumber": 723
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "patch",
+          "lineNumber": 724
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "_mock_response",
+          "lineNumber": 726
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "push_analytic_rule",
+          "lineNumber": 728
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "mock_put.assert_called_once",
+          "lineNumber": 737
+        },
+        {
+          "caller": "test_technique_id_in_body_properties",
+          "callee": "self._setup_conops",
+          "lineNumber": 740
+        },
+        {
+          "caller": "test_technique_id_in_body_properties",
+          "callee": "patch",
+          "lineNumber": 741
+        },
+        {
+          "caller": "test_technique_id_in_body_properties",
+          "callee": "_mock_response",
+          "lineNumber": 743
+        },
+        {
+          "caller": "test_technique_id_in_body_properties",
+          "callee": "push_analytic_rule",
+          "lineNumber": 745
+        },
+        {
+          "caller": "test_technique_id_in_body_properties",
+          "callee": "json.loads",
+          "lineNumber": 746
+        },
+        {
+          "caller": "test_no_technique_id_omits_techniques_key",
+          "callee": "self._setup_conops",
+          "lineNumber": 752
+        },
+        {
+          "caller": "test_no_technique_id_omits_techniques_key",
+          "callee": "patch",
+          "lineNumber": 753
+        },
+        {
+          "caller": "test_no_technique_id_omits_techniques_key",
+          "callee": "_mock_response",
+          "lineNumber": 755
+        },
+        {
+          "caller": "test_no_technique_id_omits_techniques_key",
+          "callee": "push_analytic_rule",
+          "lineNumber": 757
+        },
+        {
+          "caller": "test_no_technique_id_omits_techniques_key",
+          "callee": "json.loads",
+          "lineNumber": 758
+        },
+        {
+          "caller": "test_severity_critical_maps_to_high",
+          "callee": "self._setup_conops",
+          "lineNumber": 762
+        },
+        {
+          "caller": "test_severity_critical_maps_to_high",
+          "callee": "patch",
+          "lineNumber": 763
+        },
+        {
+          "caller": "test_severity_critical_maps_to_high",
+          "callee": "_mock_response",
+          "lineNumber": 765
+        },
+        {
+          "caller": "test_severity_critical_maps_to_high",
+          "callee": "push_analytic_rule",
+          "lineNumber": 767
+        },
+        {
+          "caller": "test_severity_critical_maps_to_high",
+          "callee": "json.loads",
+          "lineNumber": 768
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 772
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "patch",
+          "lineNumber": 773
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "_mock_response",
+          "lineNumber": 775
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "push_analytic_rule",
+          "lineNumber": 777
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 782
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "patch",
+          "lineNumber": 783
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "ConnectionError",
+          "lineNumber": 785
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "push_analytic_rule",
+          "lineNumber": 787
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 792
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "str",
+          "lineNumber": 792
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "push_analytic_rule",
+          "lineNumber": 793
+        },
+        {
+          "caller": "test_incomplete_sentinel_config_returns_error",
+          "callee": "_conops_with",
+          "lineNumber": 800
+        },
+        {
+          "caller": "test_incomplete_sentinel_config_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 810
+        },
+        {
+          "caller": "test_incomplete_sentinel_config_returns_error",
+          "callee": "str",
+          "lineNumber": 810
+        },
+        {
+          "caller": "test_incomplete_sentinel_config_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 811
+        },
+        {
+          "caller": "test_incomplete_sentinel_config_returns_error",
+          "callee": "push_analytic_rule",
+          "lineNumber": 812
+        },
+        {
+          "caller": "test_url_contains_subscription_and_workspace",
+          "callee": "self._setup_conops",
+          "lineNumber": 819
+        },
+        {
+          "caller": "test_url_contains_subscription_and_workspace",
+          "callee": "patch",
+          "lineNumber": 820
+        },
+        {
+          "caller": "test_url_contains_subscription_and_workspace",
+          "callee": "_mock_response",
+          "lineNumber": 822
+        },
+        {
+          "caller": "test_url_contains_subscription_and_workspace",
+          "callee": "push_analytic_rule",
+          "lineNumber": 824
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "_conops_with",
+          "lineNumber": 838
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 842
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "str",
+          "lineNumber": 842
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 843
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 844
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "self._setup_conops",
+          "lineNumber": 859
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "patch",
+          "lineNumber": 860
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "_mock_response",
+          "lineNumber": 862
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 864
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "mock_post.assert_called_once",
+          "lineNumber": 874
+        },
+        {
+          "caller": "test_tags_from_yara_meta_included",
+          "callee": "self._setup_conops",
+          "lineNumber": 877
+        },
+        {
+          "caller": "test_tags_from_yara_meta_included",
+          "callee": "patch",
+          "lineNumber": 878
+        },
+        {
+          "caller": "test_tags_from_yara_meta_included",
+          "callee": "_mock_response",
+          "lineNumber": 880
+        },
+        {
+          "caller": "test_tags_from_yara_meta_included",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 882
+        },
+        {
+          "caller": "test_tags_from_yara_meta_included",
+          "callee": "json.loads",
+          "lineNumber": 883
+        },
+        {
+          "caller": "test_tags_from_yara_meta_included",
+          "callee": "any",
+          "lineNumber": 885
+        },
+        {
+          "caller": "test_technique_id_in_tags",
+          "callee": "self._setup_conops",
+          "lineNumber": 888
+        },
+        {
+          "caller": "test_technique_id_in_tags",
+          "callee": "patch",
+          "lineNumber": 889
+        },
+        {
+          "caller": "test_technique_id_in_tags",
+          "callee": "_mock_response",
+          "lineNumber": 891
+        },
+        {
+          "caller": "test_technique_id_in_tags",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 893
+        },
+        {
+          "caller": "test_technique_id_in_tags",
+          "callee": "json.loads",
+          "lineNumber": 894
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 898
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "patch",
+          "lineNumber": 899
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "_mock_response",
+          "lineNumber": 901
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 903
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 908
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "patch",
+          "lineNumber": 909
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "ConnectionError",
+          "lineNumber": 911
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 913
+        },
+        {
+          "caller": "test_missing_auth_returns_error",
+          "callee": "_conops_with",
+          "lineNumber": 918
+        },
+        {
+          "caller": "test_missing_auth_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 919
+        },
+        {
+          "caller": "test_missing_auth_returns_error",
+          "callee": "str",
+          "lineNumber": 919
+        },
+        {
+          "caller": "test_missing_auth_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 920
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 925
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "str",
+          "lineNumber": 925
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "push_defender_xdr_detection",
+          "lineNumber": 926
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "_conops_with",
+          "lineNumber": 946
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 955
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "str",
+          "lineNumber": 955
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 956
+        },
+        {
+          "caller": "_setup_conops",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 957
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "self._setup_conops",
+          "lineNumber": 960
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "patch",
+          "lineNumber": 961
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "_mock_response",
+          "lineNumber": 963
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 965
+        },
+        {
+          "caller": "test_success_200",
+          "callee": "mock_post.assert_called_once",
+          "lineNumber": 974
+        },
+        {
+          "caller": "test_missing_indicator_type_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 981
+        },
+        {
+          "caller": "test_missing_indicator_type_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 989
+        },
+        {
+          "caller": "test_missing_indicator_value_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 996
+        },
+        {
+          "caller": "test_missing_indicator_value_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 1004
+        },
+        {
+          "caller": "test_unsupported_indicator_type_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 1011
+        },
+        {
+          "caller": "test_unsupported_indicator_type_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 1020
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 1025
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "patch",
+          "lineNumber": 1026
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "_mock_response",
+          "lineNumber": 1028
+        },
+        {
+          "caller": "test_http_4xx_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 1030
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "self._setup_conops",
+          "lineNumber": 1035
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "patch",
+          "lineNumber": 1036
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "ConnectionError",
+          "lineNumber": 1038
+        },
+        {
+          "caller": "test_network_exception_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 1040
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 1045
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "str",
+          "lineNumber": 1045
+        },
+        {
+          "caller": "test_missing_conops_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 1046
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "_conops_with",
+          "lineNumber": 1050
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 1051
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "str",
+          "lineNumber": 1051
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 1052
+        },
+        {
+          "caller": "test_missing_url_returns_error",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 1053
+        },
+        {
+          "caller": "test_ioc_fallback_key_for_value",
+          "callee": "self._setup_conops",
+          "lineNumber": 1058
+        },
+        {
+          "caller": "test_ioc_fallback_key_for_value",
+          "callee": "patch",
+          "lineNumber": 1067
+        },
+        {
+          "caller": "test_ioc_fallback_key_for_value",
+          "callee": "_mock_response",
+          "lineNumber": 1069
+        },
+        {
+          "caller": "test_ioc_fallback_key_for_value",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 1071
+        },
+        {
+          "caller": "test_all_crowdstrike_mapped_types_accepted",
+          "callee": "self._setup_conops",
+          "lineNumber": 1079
+        },
+        {
+          "caller": "test_all_crowdstrike_mapped_types_accepted",
+          "callee": "patch",
+          "lineNumber": 1089
+        },
+        {
+          "caller": "test_all_crowdstrike_mapped_types_accepted",
+          "callee": "_mock_response",
+          "lineNumber": 1091
+        },
+        {
+          "caller": "test_all_crowdstrike_mapped_types_accepted",
+          "callee": "push_crowdstrike_ioa",
+          "lineNumber": 1093
+        },
+        {
+          "caller": "test_all_crowdstrike_mapped_types_accepted",
+          "callee": "result.get",
+          "lineNumber": 1094
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 12,
+        "functionCount": 2,
+        "classCount": 10
+      }
+    }
+  ]
+}

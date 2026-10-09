@@ -1,0 +1,49 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "benchmark/EXPLOITBENCH-GAINS.md",
+      "language": "markdown",
+      "sizeLines": 157,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/README-cybench.md",
+      "language": "markdown",
+      "sizeLines": 87,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/README-cybergym.md",
+      "language": "markdown",
+      "sizeLines": 114,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/README-exploitbench.md",
+      "language": "markdown",
+      "sizeLines": 117,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/README-mhbench.md",
+      "language": "markdown",
+      "sizeLines": 332,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/README.md",
+      "language": "markdown",
+      "sizeLines": 252,
+      "fileCategory": "docs"
+    }
+  ],
+  "batchImportData": {
+    "benchmark/EXPLOITBENCH-GAINS.md": [],
+    "benchmark/README-cybench.md": [],
+    "benchmark/README-cybergym.md": [],
+    "benchmark/README-exploitbench.md": [],
+    "benchmark/README-mhbench.md": [],
+    "benchmark/README.md": []
+  }
+}

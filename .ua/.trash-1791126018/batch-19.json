@@ -1,0 +1,3534 @@
+{
+  "batchIndex": 19,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/server/src/app.ts",
+      "language": "typescript",
+      "sizeLines": 142,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/auth/identity-provider.ts",
+      "language": "typescript",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/config/env.ts",
+      "language": "typescript",
+      "sizeLines": 298,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/config/runtime.ts",
+      "language": "typescript",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/db/client.ts",
+      "language": "typescript",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/error-handler.ts",
+      "language": "typescript",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "language": "typescript",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "language": "typescript",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "language": "typescript",
+      "sizeLines": 195,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "language": "typescript",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "language": "typescript",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "language": "typescript",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "language": "typescript",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "language": "typescript",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "language": "typescript",
+      "sizeLines": 140,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "language": "typescript",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "language": "typescript",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "language": "typescript",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "language": "typescript",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "language": "typescript",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "language": "typescript",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "language": "typescript",
+      "sizeLines": 141,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "language": "typescript",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "language": "typescript",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "language": "typescript",
+      "sizeLines": 81,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/main.ts",
+      "language": "typescript",
+      "sizeLines": 174,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "language": "typescript",
+      "sizeLines": 205,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/server/src/security/project-policy.ts",
+      "language": "typescript",
+      "sizeLines": 233,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:clients/web-raptix/server/src/app.ts",
+      "type": "file",
+      "name": "app.ts",
+      "filePath": "clients/web-raptix/server/src/app.ts",
+      "summary": "Dựng Fastify app: đăng ký error handler, identity local, toàn bộ routes domain và services đã nối.",
+      "tags": [
+        "entry-point",
+        "fastify",
+        "bootstrap"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "type": "function",
+      "name": "buildApp",
+      "filePath": "clients/web-raptix/server/src/app.ts",
+      "lineRange": [
+        72,
+        142
+      ],
+      "summary": "Dựng Fastify app với error handler, identity và toàn bộ routes/services.",
+      "tags": [
+        "bootstrap",
+        "fastify",
+        "entry-point"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "file",
+      "name": "identity-provider.ts",
+      "filePath": "clients/web-raptix/server/src/auth/identity-provider.ts",
+      "summary": "Danh tính operator local duy nhất cho server đơn người dùng.",
+      "tags": [
+        "xác-thực",
+        "danh-tính",
+        "local"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/auth/identity-provider.ts:getLocalIdentity",
+      "type": "function",
+      "name": "getLocalIdentity",
+      "filePath": "clients/web-raptix/server/src/auth/identity-provider.ts",
+      "lineRange": [
+        17,
+        19
+      ],
+      "summary": "Trả về danh tính operator local.",
+      "tags": [
+        "danh-tính",
+        "local",
+        "xác-thực"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/config/env.ts",
+      "type": "file",
+      "name": "env.ts",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "summary": "Đọc và kiểm tra env server: host/port, database, workspace, graph, vault key, GoPhish/Sliver.",
+      "tags": [
+        "cấu-hình",
+        "env",
+        "kiểm-chứng"
+      ],
+      "complexity": "complex",
+      "languageNotes": "TypeScript: đọc từng biến có regex biên và giá trị mặc định an toàn."
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readHost",
+      "type": "function",
+      "name": "readHost",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        76,
+        86
+      ],
+      "summary": "Hàm readHost (11 dòng) trong env.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readPort",
+      "type": "function",
+      "name": "readPort",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        88,
+        105
+      ],
+      "summary": "Hàm readPort (18 dòng) trong env.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readLogLevel",
+      "type": "function",
+      "name": "readLogLevel",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        117,
+        139
+      ],
+      "summary": "Hàm readLogLevel (23 dòng) trong env.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "config"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readDatabaseUrl",
+      "type": "function",
+      "name": "readDatabaseUrl",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        145,
+        156
+      ],
+      "summary": "Hàm readDatabaseUrl (12 dòng) trong env.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readWorkspacePath",
+      "type": "function",
+      "name": "readWorkspacePath",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        159,
+        170
+      ],
+      "summary": "Hàm readWorkspacePath (12 dòng) trong env.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readGraphConfig",
+      "type": "function",
+      "name": "readGraphConfig",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        178,
+        199
+      ],
+      "summary": "Hàm readGraphConfig (22 dòng) trong env.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "config"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readVaultKey",
+      "type": "function",
+      "name": "readVaultKey",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        205,
+        221
+      ],
+      "summary": "Hàm readVaultKey (17 dòng) trong env.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readGoPhish",
+      "type": "function",
+      "name": "readGoPhish",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        223,
+        241
+      ],
+      "summary": "Hàm readGoPhish (19 dòng) trong env.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "type": "function",
+      "name": "loadServerEnv",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        243,
+        284
+      ],
+      "summary": "Đọc và kiểm tra toàn bộ env server, ném EnvValidationError khi sai.",
+      "tags": [
+        "cấu-hình",
+        "env",
+        "kiểm-chứng"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/env.ts:readServerEnv",
+      "type": "function",
+      "name": "readServerEnv",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        286,
+        288
+      ],
+      "summary": "Đọc env server đã kiểm chứng cho bootstrap.",
+      "tags": [
+        "cấu-hình",
+        "env",
+        "đọc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/config/env.ts:EnvValidationError",
+      "type": "class",
+      "name": "EnvValidationError",
+      "filePath": "clients/web-raptix/server/src/config/env.ts",
+      "lineRange": [
+        64,
+        74
+      ],
+      "summary": "Lỗi kiểm tra env server.",
+      "tags": [
+        "lỗi",
+        "env",
+        "kiểm-chứng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/config/runtime.ts",
+      "type": "file",
+      "name": "runtime.ts",
+      "filePath": "clients/web-raptix/server/src/config/runtime.ts",
+      "summary": "Nạp cấu hình runtime: chuẩn hóa URL và workspace root chống escape.",
+      "tags": [
+        "cấu-hình",
+        "runtime",
+        "bảo-mật"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/config/runtime.ts:loadRuntimeConfig",
+      "type": "function",
+      "name": "loadRuntimeConfig",
+      "filePath": "clients/web-raptix/server/src/config/runtime.ts",
+      "lineRange": [
+        16,
+        30
+      ],
+      "summary": "Nạp runtime config, chặn workspace root escape.",
+      "tags": [
+        "runtime",
+        "cấu-hình",
+        "bảo-mật"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/db/client.ts",
+      "type": "file",
+      "name": "client.ts",
+      "filePath": "clients/web-raptix/server/src/db/client.ts",
+      "summary": "Tạo và ngắt Prisma client cho server.",
+      "tags": [
+        "cơ-sở-dữ-liệu",
+        "prisma",
+        "client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/db/client.ts:createDbClient",
+      "type": "function",
+      "name": "createDbClient",
+      "filePath": "clients/web-raptix/server/src/db/client.ts",
+      "lineRange": [
+        18,
+        21
+      ],
+      "summary": "Tạo Prisma client.",
+      "tags": [
+        "cơ-sở-dữ-liệu",
+        "prisma",
+        "khởi-tạo"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/db/client.ts:disconnectDb",
+      "type": "function",
+      "name": "disconnectDb",
+      "filePath": "clients/web-raptix/server/src/db/client.ts",
+      "lineRange": [
+        24,
+        26
+      ],
+      "summary": "Ngắt Prisma client.",
+      "tags": [
+        "cơ-sở-dữ-liệu",
+        "prisma",
+        "dọn-dẹp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "type": "file",
+      "name": "error-handler.ts",
+      "filePath": "clients/web-raptix/server/src/http/error-handler.ts",
+      "summary": "Chuẩn hóa lỗi API: ánh xạ status sang mã lỗi và đăng ký handler Fastify.",
+      "tags": [
+        "xử-lý-lỗi",
+        "http",
+        "fastify"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/error-handler.ts:statusCodeToCode",
+      "type": "function",
+      "name": "statusCodeToCode",
+      "filePath": "clients/web-raptix/server/src/http/error-handler.ts",
+      "lineRange": [
+        19,
+        38
+      ],
+      "summary": "Hàm statusCodeToCode (20 dòng) trong error-handler.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "http"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/error-handler.ts:apiErrorBody",
+      "type": "function",
+      "name": "apiErrorBody",
+      "filePath": "clients/web-raptix/server/src/http/error-handler.ts",
+      "lineRange": [
+        40,
+        49
+      ],
+      "summary": "Dựng body lỗi API chuẩn từ status.",
+      "tags": [
+        "lỗi",
+        "api",
+        "định-dạng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/error-handler.ts:registerErrorHandler",
+      "type": "function",
+      "name": "registerErrorHandler",
+      "filePath": "clients/web-raptix/server/src/http/error-handler.ts",
+      "lineRange": [
+        51,
+        72
+      ],
+      "summary": "Đăng ký not-found và error handler cho Fastify.",
+      "tags": [
+        "lỗi",
+        "fastify",
+        "đăng-ký"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "type": "file",
+      "name": "approvals.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "summary": "Routes phê duyệt HITL: liệt kê và quyết định approval.",
+      "tags": [
+        "routes",
+        "hitl",
+        "phê-duyệt"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/approvals.routes.ts:registerApprovalRoutes",
+      "type": "function",
+      "name": "registerApprovalRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "lineRange": [
+        7,
+        19
+      ],
+      "summary": "Đăng ký routes liệt kê và quyết định approval.",
+      "tags": [
+        "routes",
+        "hitl",
+        "đăng-ký"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "type": "file",
+      "name": "campaign.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "summary": "Routes chiến dịch: capabilities, danh sách, tạo và chạy job.",
+      "tags": [
+        "routes",
+        "chiến-dịch",
+        "api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/campaign.routes.ts:registerCampaignRoutes",
+      "type": "function",
+      "name": "registerCampaignRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "lineRange": [
+        13,
+        71
+      ],
+      "summary": "Đăng ký routes capabilities/list/tạo/chạy job campaign.",
+      "tags": [
+        "routes",
+        "chiến-dịch",
+        "đăng-ký"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "type": "file",
+      "name": "capabilities.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "summary": "Routes capabilities: dựng đáp ứng khả dụng từ probe database và runtime context.",
+      "tags": [
+        "routes",
+        "khả-dụng",
+        "api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:buildCapabilitiesResponse",
+      "type": "function",
+      "name": "buildCapabilitiesResponse",
+      "filePath": "clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "lineRange": [
+        59,
+        150
+      ],
+      "summary": "Dựng đáp ứng capabilities từ probe và runtime context.",
+      "tags": [
+        "khả-dụng",
+        "đáp-ứng",
+        "probe"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:registerCapabilitiesRoutes",
+      "type": "function",
+      "name": "registerCapabilitiesRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "lineRange": [
+        171,
+        195
+      ],
+      "summary": "Đăng ký route capabilities.",
+      "tags": [
+        "routes",
+        "khả-dụng",
+        "đăng-ký"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "type": "file",
+      "name": "events.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "summary": "Routes sự kiện SSE: mở stream theo scope engagement.",
+      "tags": [
+        "routes",
+        "sse",
+        "sự-kiện"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/events.routes.ts:registerEventRoutes",
+      "type": "function",
+      "name": "registerEventRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "lineRange": [
+        6,
+        20
+      ],
+      "summary": "Đăng ký route stream sự kiện SSE có abort.",
+      "tags": [
+        "routes",
+        "sse",
+        "đăng-ký"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "type": "file",
+      "name": "findings.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "summary": "Routes findings và artifact: liệt kê findings và nội dung artifact.",
+      "tags": [
+        "routes",
+        "findings",
+        "artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/findings.routes.ts:registerFindingsRoutes",
+      "type": "function",
+      "name": "registerFindingsRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "lineRange": [
+        9,
+        33
+      ],
+      "summary": "Đăng ký routes findings và artifact.",
+      "tags": [
+        "routes",
+        "findings",
+        "đăng-ký"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "type": "file",
+      "name": "graph.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "summary": "Routes đồ thị tấn công và tài sản theo engagement.",
+      "tags": [
+        "routes",
+        "đồ-thị",
+        "tài-sản"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/graph.routes.ts:registerGraphRoutes",
+      "type": "function",
+      "name": "registerGraphRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "lineRange": [
+        12,
+        29
+      ],
+      "summary": "Đăng ký routes graph và assets.",
+      "tags": [
+        "routes",
+        "đồ-thị",
+        "đăng-ký"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "type": "file",
+      "name": "health.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "summary": "Routes sức khỏe: probe database và trạng thái runtime agents.",
+      "tags": [
+        "routes",
+        "sức-khỏe",
+        "giám-sát"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:probeDatabase",
+      "type": "function",
+      "name": "probeDatabase",
+      "filePath": "clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "lineRange": [
+        71,
+        79
+      ],
+      "summary": "Probe database cho health check.",
+      "tags": [
+        "sức-khỏe",
+        "probe",
+        "cơ-sở-dữ-liệu"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:registerHealthRoutes",
+      "type": "function",
+      "name": "registerHealthRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "lineRange": [
+        81,
+        115
+      ],
+      "summary": "Đăng ký routes sức khỏe.",
+      "tags": [
+        "routes",
+        "sức-khỏe",
+        "đăng-ký"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "type": "file",
+      "name": "members.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "summary": "Routes thành viên: liệt kê, mời và xóa.",
+      "tags": [
+        "routes",
+        "thành-viên",
+        "api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/members.routes.ts:registerMembersRoutes",
+      "type": "function",
+      "name": "registerMembersRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "lineRange": [
+        11,
+        25
+      ],
+      "summary": "Đăng ký routes liệt kê/mời/xóa thành viên.",
+      "tags": [
+        "routes",
+        "thành-viên",
+        "đăng-ký"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "file",
+      "name": "projects.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "summary": "Routes dự án: CRUD engagement, guard chạy theo dự án và đọc id.",
+      "tags": [
+        "routes",
+        "dự-án",
+        "engagement"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:sendProjectsError",
+      "type": "function",
+      "name": "sendProjectsError",
+      "filePath": "clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "lineRange": [
+        30,
+        46
+      ],
+      "summary": "Hàm sendProjectsError (17 dòng) trong projects.routes.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "routes"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "function",
+      "name": "runProjectsHandler",
+      "filePath": "clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "lineRange": [
+        48,
+        58
+      ],
+      "summary": "Guard chạy handler trong phạm vi dự án đã xác thực.",
+      "tags": [
+        "guard",
+        "dự-án",
+        "phạm-vi"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:registerProjectRoutes",
+      "type": "function",
+      "name": "registerProjectRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "lineRange": [
+        72,
+        140
+      ],
+      "summary": "Đăng ký routes CRUD dự án.",
+      "tags": [
+        "routes",
+        "dự-án",
+        "đăng-ký"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "type": "file",
+      "name": "runs.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "summary": "Routes run: tạo thread, gửi tin nhắn và điều khiển run.",
+      "tags": [
+        "routes",
+        "run",
+        "thread"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/runs.routes.ts:registerRunRoutes",
+      "type": "function",
+      "name": "registerRunRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "lineRange": [
+        7,
+        54
+      ],
+      "summary": "Đăng ký routes thread và run.",
+      "tags": [
+        "routes",
+        "run",
+        "đăng-ký"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "type": "file",
+      "name": "settings.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "summary": "Routes cài đặt engagement và xóa engagement.",
+      "tags": [
+        "routes",
+        "cài-đặt",
+        "api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/settings.routes.ts:registerSettingsRoutes",
+      "type": "function",
+      "name": "registerSettingsRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "lineRange": [
+        12,
+        30
+      ],
+      "summary": "Đăng ký routes cài đặt và xóa engagement.",
+      "tags": [
+        "routes",
+        "cài-đặt",
+        "đăng-ký"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "type": "file",
+      "name": "timeline.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "summary": "Routes timeline thao tác và export timeline.",
+      "tags": [
+        "routes",
+        "timeline",
+        "api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/timeline.routes.ts:registerTimelineRoutes",
+      "type": "function",
+      "name": "registerTimelineRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "lineRange": [
+        13,
+        33
+      ],
+      "summary": "Đăng ký routes timeline và export.",
+      "tags": [
+        "routes",
+        "timeline",
+        "đăng-ký"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "type": "file",
+      "name": "vault.routes.ts",
+      "filePath": "clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "summary": "Routes vault: liệt kê, tạo và reveal secret.",
+      "tags": [
+        "routes",
+        "vault",
+        "bí-mật"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/http/routes/vault.routes.ts:registerVaultRoutes",
+      "type": "function",
+      "name": "registerVaultRoutes",
+      "filePath": "clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "lineRange": [
+        11,
+        32
+      ],
+      "summary": "Đăng ký routes vault.",
+      "tags": [
+        "routes",
+        "vault",
+        "đăng-ký"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "type": "file",
+      "name": "sliver-client.ts",
+      "filePath": "clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "summary": "Client HTTP Sliver C2: gọi có timeout và hủy body an toàn.",
+      "tags": [
+        "c2",
+        "sliver",
+        "http-client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/c2/sliver-client.ts:SliverClient",
+      "type": "class",
+      "name": "SliverClient",
+      "filePath": "clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "lineRange": [
+        4,
+        25
+      ],
+      "summary": "Client gọi Sliver C2 qua HTTP có timeout.",
+      "tags": [
+        "c2",
+        "sliver",
+        "http-client"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "type": "file",
+      "name": "evilginx-client.ts",
+      "filePath": "clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "summary": "Client bridge evilginx2 cho lab campaign.",
+      "tags": [
+        "campaign",
+        "evilginx",
+        "http-client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts:EvilginxBridgeError",
+      "type": "class",
+      "name": "EvilginxBridgeError",
+      "filePath": "clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "lineRange": [
+        8,
+        10
+      ],
+      "summary": "Lỗi bridge evilginx2.",
+      "tags": [
+        "lỗi",
+        "evilginx",
+        "bridge"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts:EvilginxClient",
+      "type": "class",
+      "name": "EvilginxClient",
+      "filePath": "clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "lineRange": [
+        11,
+        47
+      ],
+      "summary": "Client vận hành lab evilginx2.",
+      "tags": [
+        "campaign",
+        "evilginx",
+        "client"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "type": "file",
+      "name": "gophish-client.ts",
+      "filePath": "clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "summary": "Client GoPhish: chuẩn bị bundle tài sản có fingerprint sha256.",
+      "tags": [
+        "campaign",
+        "gophish",
+        "http-client"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "TypeScript: fingerprint bundle bằng sha256 để phát hiện đổi tài sản."
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts:GoPhishError",
+      "type": "class",
+      "name": "GoPhishError",
+      "filePath": "clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "lineRange": [
+        16,
+        18
+      ],
+      "summary": "Lỗi GoPhish.",
+      "tags": [
+        "lỗi",
+        "gophish",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts:GoPhishClient",
+      "type": "class",
+      "name": "GoPhishClient",
+      "filePath": "clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "lineRange": [
+        22,
+        139
+      ],
+      "summary": "Client chuẩn bị và triển khai GoPhish.",
+      "tags": [
+        "campaign",
+        "gophish",
+        "client"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "type": "file",
+      "name": "execution-client.ts",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "summary": "Client thực thi runtime: kiểm tra id/metadata và gọi runtime.",
+      "tags": [
+        "runtime",
+        "thực-thi",
+        "client"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/runtime/execution-client.ts:RuntimeExecutionClient",
+      "type": "class",
+      "name": "RuntimeExecutionClient",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "lineRange": [
+        24,
+        60
+      ],
+      "summary": "Client thực thi run trên runtime.",
+      "tags": [
+        "runtime",
+        "thực-thi",
+        "client"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "type": "file",
+      "name": "join-client.ts",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "summary": "Client join stream runtime: mở subscription có abort và heartbeat.",
+      "tags": [
+        "runtime",
+        "stream",
+        "client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/runtime/join-client.ts:RuntimeJoinClient",
+      "type": "class",
+      "name": "RuntimeJoinClient",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "lineRange": [
+        5,
+        21
+      ],
+      "summary": "Client mở subscription stream runtime.",
+      "tags": [
+        "runtime",
+        "stream",
+        "client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "type": "file",
+      "name": "read-client.ts",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "summary": "Client đọc runtime: state checkpoint có timeout, lỗi unavailable/rejected/missing.",
+      "tags": [
+        "runtime",
+        "đọc",
+        "client"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeUnavailableError",
+      "type": "class",
+      "name": "RuntimeUnavailableError",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "lineRange": [
+        3,
+        5
+      ],
+      "summary": "Lỗi runtime không khả dụng.",
+      "tags": [
+        "lỗi",
+        "runtime",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeCheckpointMissingError",
+      "type": "class",
+      "name": "RuntimeCheckpointMissingError",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "lineRange": [
+        6,
+        8
+      ],
+      "summary": "Lỗi thiếu checkpoint runtime.",
+      "tags": [
+        "lỗi",
+        "checkpoint",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeRejectedError",
+      "type": "class",
+      "name": "RuntimeRejectedError",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "lineRange": [
+        9,
+        11
+      ],
+      "summary": "Lỗi runtime từ chối yêu cầu.",
+      "tags": [
+        "lỗi",
+        "runtime",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeReadClient",
+      "type": "class",
+      "name": "RuntimeReadClient",
+      "filePath": "clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "lineRange": [
+        18,
+        81
+      ],
+      "summary": "Client đọc state runtime có timeout và abort.",
+      "tags": [
+        "runtime",
+        "đọc",
+        "client"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/main.ts",
+      "type": "file",
+      "name": "main.ts",
+      "filePath": "clients/web-raptix/server/src/main.ts",
+      "summary": "Điểm vào server: đọc env, nối database, nạp services và listen.",
+      "tags": [
+        "entry-point",
+        "server",
+        "bootstrap"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/main.ts:createDatabaseHealth",
+      "type": "function",
+      "name": "createDatabaseHealth",
+      "filePath": "clients/web-raptix/server/src/main.ts",
+      "lineRange": [
+        38,
+        49
+      ],
+      "summary": "Hàm createDatabaseHealth (12 dòng) trong main.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "src"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/main.ts:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "clients/web-raptix/server/src/main.ts",
+      "lineRange": [
+        51,
+        166
+      ],
+      "summary": "Bootstrap server: env, database, services rồi listen.",
+      "tags": [
+        "bootstrap",
+        "server",
+        "entry-point"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "type": "file",
+      "name": "engagements-repository.ts",
+      "filePath": "clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "summary": "Repository engagement qua Prisma: liệt kê, tìm, tạo và cập nhật, báo xung đột tên.",
+      "tags": [
+        "repository",
+        "prisma",
+        "engagement"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/repositories/engagements-repository.ts:toRecord",
+      "type": "function",
+      "name": "toRecord",
+      "filePath": "clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "lineRange": [
+        79,
+        95
+      ],
+      "summary": "Hàm toRecord (17 dòng) trong engagements-repository.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "repositories"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/repositories/engagements-repository.ts:EngagementNameConflictError",
+      "type": "class",
+      "name": "EngagementNameConflictError",
+      "filePath": "clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "lineRange": [
+        58,
+        68
+      ],
+      "summary": "Lỗi trùng tên engagement.",
+      "tags": [
+        "lỗi",
+        "xung-đột",
+        "engagement"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/repositories/engagements-repository.ts:EngagementsRepository",
+      "type": "class",
+      "name": "EngagementsRepository",
+      "filePath": "clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "lineRange": [
+        102,
+        205
+      ],
+      "summary": "Repository engagement: CRUD qua Prisma, ánh xạ xung đột unique.",
+      "tags": [
+        "repository",
+        "prisma",
+        "engagement"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "file",
+      "name": "project-policy.ts",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "summary": "Chính sách tạo/sửa dự án: slug, target web/ip-range, display name và đổi target.",
+      "tags": [
+        "chính-sách",
+        "kiểm-chứng",
+        "dự-án"
+      ],
+      "complexity": "complex",
+      "languageNotes": "TypeScript: chỉ dùng parser stdlib, không resolve mạng hay suy diễn."
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectSlug",
+      "type": "function",
+      "name": "isProjectSlug",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        30,
+        32
+      ],
+      "summary": "Hàm isProjectSlug (3 dòng) trong project-policy.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "security"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectTargetType",
+      "type": "function",
+      "name": "isProjectTargetType",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        37,
+        39
+      ],
+      "summary": "Hàm isProjectTargetType (3 dòng) trong project-policy.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "security"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/project-policy.ts:assertWebUrlTarget",
+      "type": "function",
+      "name": "assertWebUrlTarget",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        61,
+        80
+      ],
+      "summary": "Hàm assertWebUrlTarget (20 dòng) trong project-policy.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "security"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/project-policy.ts:assertIpRangeTarget",
+      "type": "function",
+      "name": "assertIpRangeTarget",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        82,
+        102
+      ],
+      "summary": "Hàm assertIpRangeTarget (21 dòng) trong project-policy.ts.",
+      "tags": [
+        "tiện-ích",
+        "typescript",
+        "security"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTarget",
+      "type": "function",
+      "name": "assertProjectTarget",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        105,
+        108
+      ],
+      "summary": "Khẳng định target dự án hợp lệ theo loại.",
+      "tags": [
+        "kiểm-chứng",
+        "target",
+        "dự-án"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/project-policy.ts:parseCreateProject",
+      "type": "function",
+      "name": "parseCreateProject",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        121,
+        151
+      ],
+      "summary": "Parse và kiểm tra payload tạo dự án.",
+      "tags": [
+        "kiểm-chứng",
+        "tạo-dự-án",
+        "parse"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/project-policy.ts:parseProjectPatch",
+      "type": "function",
+      "name": "parseProjectPatch",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        176,
+        211
+      ],
+      "summary": "Parse và kiểm tra payload sửa dự án.",
+      "tags": [
+        "kiểm-chứng",
+        "sửa-dự-án",
+        "parse"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTargetChangeAllowed",
+      "type": "function",
+      "name": "assertProjectTargetChangeAllowed",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        226,
+        233
+      ],
+      "summary": "Khẳng định được phép đổi target theo lifecycle.",
+      "tags": [
+        "kiểm-chứng",
+        "target",
+        "lifecycle"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/server/src/security/project-policy.ts:ProjectPolicyError",
+      "type": "class",
+      "name": "ProjectPolicyError",
+      "filePath": "clients/web-raptix/server/src/security/project-policy.ts",
+      "lineRange": [
+        15,
+        25
+      ],
+      "summary": "Lỗi chính sách dự án kèm mã và field.",
+      "tags": [
+        "lỗi",
+        "chính-sách",
+        "dự-án"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "target": "function:clients/web-raptix/server/src/auth/identity-provider.ts:getLocalIdentity",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "target": "function:clients/web-raptix/server/src/auth/identity-provider.ts:getLocalIdentity",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readHost",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readPort",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readLogLevel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readDatabaseUrl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readWorkspacePath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readGraphConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readVaultKey",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readGoPhish",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readServerEnv",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readServerEnv",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "class:clients/web-raptix/server/src/config/env.ts:EnvValidationError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "class:clients/web-raptix/server/src/config/env.ts:EnvValidationError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/runtime.ts",
+      "target": "function:clients/web-raptix/server/src/config/runtime.ts:loadRuntimeConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/runtime.ts",
+      "target": "function:clients/web-raptix/server/src/config/runtime.ts:loadRuntimeConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/db/client.ts",
+      "target": "function:clients/web-raptix/server/src/db/client.ts:createDbClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/db/client.ts",
+      "target": "function:clients/web-raptix/server/src/db/client.ts:createDbClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/db/client.ts",
+      "target": "function:clients/web-raptix/server/src/db/client.ts:disconnectDb",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/db/client.ts",
+      "target": "function:clients/web-raptix/server/src/db/client.ts:disconnectDb",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:statusCodeToCode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:apiErrorBody",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:apiErrorBody",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:registerErrorHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:registerErrorHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/approvals.routes.ts:registerApprovalRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/approvals.routes.ts:registerApprovalRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/campaign.routes.ts:registerCampaignRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/campaign.routes.ts:registerCampaignRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:buildCapabilitiesResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:buildCapabilitiesResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:registerCapabilitiesRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:registerCapabilitiesRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/events.routes.ts:registerEventRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/events.routes.ts:registerEventRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/findings.routes.ts:registerFindingsRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/findings.routes.ts:registerFindingsRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/graph.routes.ts:registerGraphRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/graph.routes.ts:registerGraphRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:probeDatabase",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:probeDatabase",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:registerHealthRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:registerHealthRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/members.routes.ts:registerMembersRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/members.routes.ts:registerMembersRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:sendProjectsError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:registerProjectRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:registerProjectRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/runs.routes.ts:registerRunRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/runs.routes.ts:registerRunRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/settings.routes.ts:registerSettingsRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/settings.routes.ts:registerSettingsRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/timeline.routes.ts:registerTimelineRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/timeline.routes.ts:registerTimelineRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/vault.routes.ts:registerVaultRoutes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "target": "function:clients/web-raptix/server/src/http/routes/vault.routes.ts:registerVaultRoutes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/c2/sliver-client.ts:SliverClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/c2/sliver-client.ts:SliverClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts:EvilginxBridgeError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts:EvilginxBridgeError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts:EvilginxClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts:EvilginxClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts:GoPhishError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts:GoPhishError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts:GoPhishClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts:GoPhishClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/execution-client.ts:RuntimeExecutionClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/execution-client.ts:RuntimeExecutionClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/join-client.ts:RuntimeJoinClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/join-client.ts:RuntimeJoinClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeUnavailableError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeUnavailableError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeCheckpointMissingError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeCheckpointMissingError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeRejectedError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeRejectedError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeReadClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeReadClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "function:clients/web-raptix/server/src/main.ts:createDatabaseHealth",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "function:clients/web-raptix/server/src/main.ts:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "target": "function:clients/web-raptix/server/src/repositories/engagements-repository.ts:toRecord",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "target": "class:clients/web-raptix/server/src/repositories/engagements-repository.ts:EngagementNameConflictError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "target": "class:clients/web-raptix/server/src/repositories/engagements-repository.ts:EngagementNameConflictError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "target": "class:clients/web-raptix/server/src/repositories/engagements-repository.ts:EngagementsRepository",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "target": "class:clients/web-raptix/server/src/repositories/engagements-repository.ts:EngagementsRepository",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectSlug",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectSlug",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectTargetType",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectTargetType",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertWebUrlTarget",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertIpRangeTarget",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTarget",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTarget",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:parseCreateProject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:parseCreateProject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:parseProjectPatch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:parseProjectPatch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTargetChangeAllowed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTargetChangeAllowed",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "class:clients/web-raptix/server/src/security/project-policy.ts:ProjectPolicyError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "target": "class:clients/web-raptix/server/src/security/project-policy.ts:ProjectPolicyError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/app.ts",
+      "target": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/env.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/runtime.ts",
+      "target": "file:clients/web-raptix/server/src/config/env.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/config/runtime.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/approvals.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/capabilities.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/events.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/findings.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/graph.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/members.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/error-handler.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/runs.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/settings.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/timeline.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/projects.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/http/routes/vault.routes.ts",
+      "target": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/integrations/runtime/read-client.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/app.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/auth/identity-provider.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/config/env.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/config/runtime.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/db/client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/http/routes/health.routes.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/c2/sliver-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/campaigns/gophish-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/execution-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/integrations/runtime/join-client.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/approvals-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/artifacts-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/c2-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/campaign-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/export-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/findings-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/graph-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/members-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/projects-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime-ownership.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/run-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/runtime/stream-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/settings-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/timeline-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/main.ts",
+      "target": "file:clients/web-raptix/server/src/services/vault-service.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/server/src/repositories/engagements-repository.ts",
+      "target": "file:clients/web-raptix/server/src/security/project-policy.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:registerErrorHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:registerHealthRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:registerCapabilitiesRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/auth/identity-provider.ts:getLocalIdentity",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:registerProjectRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/runs.routes.ts:registerRunRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/events.routes.ts:registerEventRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/approvals.routes.ts:registerApprovalRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/findings.routes.ts:registerFindingsRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/graph.routes.ts:registerGraphRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/timeline.routes.ts:registerTimelineRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/settings.routes.ts:registerSettingsRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/campaign.routes.ts:registerCampaignRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/vault.routes.ts:registerVaultRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "target": "function:clients/web-raptix/server/src/http/routes/members.routes.ts:registerMembersRoutes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readHost",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readPort",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readLogLevel",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readDatabaseUrl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readWorkspacePath",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readGraphConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readVaultKey",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readGoPhish",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/env.ts:readServerEnv",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:loadServerEnv",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/config/runtime.ts:loadRuntimeConfig",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectSlug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/error-handler.ts:apiErrorBody",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:statusCodeToCode",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/error-handler.ts:registerErrorHandler",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:apiErrorBody",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/approvals.routes.ts:registerApprovalRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/campaign.routes.ts:registerCampaignRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:buildCapabilitiesResponse",
+      "target": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:probeDatabase",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:registerCapabilitiesRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/capabilities.routes.ts:buildCapabilitiesResponse",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/events.routes.ts:registerEventRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/findings.routes.ts:registerFindingsRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:registerHealthRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/health.routes.ts:probeDatabase",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/members.routes.ts:registerMembersRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:sendProjectsError",
+      "target": "function:clients/web-raptix/server/src/http/error-handler.ts:apiErrorBody",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:sendProjectsError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:registerProjectRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/runs.routes.ts:registerRunRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/settings.routes.ts:registerSettingsRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/timeline.routes.ts:registerTimelineRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/http/routes/vault.routes.ts:registerVaultRoutes",
+      "target": "function:clients/web-raptix/server/src/http/routes/projects.routes.ts:runProjectsHandler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/main.ts:main",
+      "target": "function:clients/web-raptix/server/src/config/env.ts:readServerEnv",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/main.ts:main",
+      "target": "function:clients/web-raptix/server/src/config/runtime.ts:loadRuntimeConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/main.ts:main",
+      "target": "function:clients/web-raptix/server/src/db/client.ts:createDbClient",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/main.ts:main",
+      "target": "function:clients/web-raptix/server/src/main.ts:createDatabaseHealth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/main.ts:main",
+      "target": "function:clients/web-raptix/server/src/auth/identity-provider.ts:getLocalIdentity",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/main.ts:main",
+      "target": "function:clients/web-raptix/server/src/app.ts:buildApp",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/main.ts:main",
+      "target": "function:clients/web-raptix/server/src/db/client.ts:disconnectDb",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTarget",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertWebUrlTarget",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTarget",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertIpRangeTarget",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/project-policy.ts:parseCreateProject",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectSlug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/project-policy.ts:parseCreateProject",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectTargetType",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/project-policy.ts:parseCreateProject",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTarget",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/project-policy.ts:parseProjectPatch",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:isProjectTargetType",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/server/src/security/project-policy.ts:parseProjectPatch",
+      "target": "function:clients/web-raptix/server/src/security/project-policy.ts:assertProjectTarget",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:clients/web-raptix/server/src/integrations/runtime/execution-client.ts:RuntimeExecutionClient",
+      "target": "class:clients/web-raptix/server/src/integrations/runtime/read-client.ts:RuntimeReadClient",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    }
+  ]
+}

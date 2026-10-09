@@ -1,0 +1,233 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 4,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 4,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 4
+    }
+  },
+  "results": [
+    {
+      "path": "clients/web-raptix/docs/api-mapping.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 92,
+      "nonEmptyLines": 75,
+      "sections": [
+        {
+          "heading": "API mapping — web-raptix ↔ clients/web backend",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Endpoints hiện có",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "2. Mutation contracts",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "3. Status mapping",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "4. Endpoints còn thiếu cho trải nghiệm chat trực tiếp (contract proposals — P4–P6)",
+          "level": 2,
+          "line": 69
+        },
+        {
+          "heading": "5. Gap map tóm tắt (P0.3)",
+          "level": 2,
+          "line": 81
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/correct-frontend-scope.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 68,
+      "nonEmptyLines": 56,
+      "sections": [
+        {
+          "heading": "Correct-source frontend visual delivery — 2026-10-01",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Implemented checklist",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Deliberate small changes beyond source copy",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Current verification",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Known demo-only limits",
+          "level": 2,
+          "line": 63
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/implementation-checklist.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 131,
+      "nonEmptyLines": 105,
+      "sections": [
+        {
+          "heading": "UI implementation coverage — 2026-10-01",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "P0/P1: baseline and standalone frontend",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "P2: shell, design system and responsibilities",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "P3: implemented UI acceptance",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Verification evidence",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "P4–P7: not claimed as backend integration completion",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "P8/P9: deferred architecture/deployment work",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "Confirmed backlog (§1.4/§22)",
+          "level": 2,
+          "line": 96
+        },
+        {
+          "heading": "Ensemble / repository integration",
+          "level": 2,
+          "line": 102
+        },
+        {
+          "heading": "Follow-up verification / user preview",
+          "level": 2,
+          "line": 117
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/screen-inventory.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 108,
+      "nonEmptyLines": 88,
+      "sections": [
+        {
+          "heading": "Screen & interaction inventory — web-raptix",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Điểm xuất phát render",
+          "level": 2,
+          "line": 6
+        },
+        {
+          "heading": "2. Screens",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "3. Canonical screens (chốt cho refactor)",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "4. Components shell",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "5. Modals & CTAs",
+          "level": 2,
+          "line": 63
+        },
+        {
+          "heading": "6. Dữ liệu giả cần xử lý khi ra real mode",
+          "level": 2,
+          "line": 72
+        },
+        {
+          "heading": "7. Visual baseline (P0.2)",
+          "level": 2,
+          "line": 82
+        },
+        {
+          "heading": "8. Empty/loading/error states hiện có",
+          "level": 2,
+          "line": 104
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    }
+  ]
+}

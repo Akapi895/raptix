@@ -1,0 +1,639 @@
+{
+  "batchIndex": 77,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/docs/integration/w07-faults.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-hydrated-context.json",
+      "language": "json",
+      "sizeLines": 59,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-hydration-failure.json",
+      "language": "json",
+      "sizeLines": 59,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-independence.json",
+      "language": "json",
+      "sizeLines": 39,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-live.json",
+      "language": "json",
+      "sizeLines": 15,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-migration-fresh.json",
+      "language": "json",
+      "sizeLines": 43,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-migration-oldcopy.json",
+      "language": "json",
+      "sizeLines": 43,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-oldcopy-faults.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-pristine-state.json",
+      "language": "json",
+      "sizeLines": 29,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-runs.md",
+      "language": "markdown",
+      "sizeLines": 132,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-faults.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-independence.json",
+      "language": "json",
+      "sizeLines": 39,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-live.json",
+      "language": "json",
+      "sizeLines": 106,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-oldcopy-faults.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-streaming.md",
+      "language": "markdown",
+      "sizeLines": 114,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w09-faults.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w09-history.md",
+      "language": "markdown",
+      "sizeLines": 103,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w09-live.json",
+      "language": "json",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w09-oldcopy-faults.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w10-console.md",
+      "language": "markdown",
+      "sizeLines": 108,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "type": "document",
+      "name": "w07-runs.md",
+      "filePath": "clients/web-raptix/docs/integration/w07-runs.md",
+      "summary": "Gate W07 về scoped thread/run APIs: bảng contract POST /threads, POST runs (202 ACK), GET snapshot/runs/requests/reconcile; submission 7 bước với reservation durable, conflict 409, một active slot mỗi thread trong PostgreSQL và native background-create với trusted metadata.",
+      "tags": [
+        "threads",
+        "runs",
+        "api",
+        "concurrency",
+        "w07"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        1,
+        132
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w08-streaming.md",
+      "type": "document",
+      "name": "w08-streaming.md",
+      "filePath": "clients/web-raptix/docs/integration/w08-streaming.md",
+      "summary": "Gate W08 về SSE scoped và stream state: GET events chỉ observe native GET /stream (cancel_on_disconnect=0), decoder chia mạng/tái kết nối, projection công khai redact credentials, eventId bền vững theo cursor + reducer client chống trùng lặp và không lưu full output.",
+      "tags": [
+        "sse",
+        "streaming",
+        "projection",
+        "cursor",
+        "w08"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        1,
+        114
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w09-history.md",
+      "type": "document",
+      "name": "w09-history.md",
+      "filePath": "clients/web-raptix/docs/integration/w09-history.md",
+      "summary": "Gate W09 về checkpoint history và khôi phục transcript: projection values.subagent_transcripts (≤500 mục) qua cùng pipeline redaction như SSE, attribution runId:null ổn định theo provenance key, và merge thuần túy mergeThreadHistory idempotent vào stream state W08.",
+      "tags": [
+        "history",
+        "checkpoint",
+        "transcript",
+        "merge",
+        "w09"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        103
+      ]
+    },
+    {
+      "id": "document:clients/web-raptix/docs/integration/w10-console.md",
+      "type": "document",
+      "name": "w10-console.md",
+      "filePath": "clients/web-raptix/docs/integration/w10-console.md",
+      "summary": "Gate W10 gắn Operator Console thật: ScopedThreadListView feed selector, use-console-session store canonical per-thread (ACK reservation + hydrate W09 + SSE W08), console-view mapping timeline thuần túy và RealConsole.tsx với transport chip trung thực LIVE/RECONNECTING/RECOVERY REQUIRED.",
+      "tags": [
+        "console",
+        "ui",
+        "real-mode",
+        "w10"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        108
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-faults.json",
+      "type": "config",
+      "name": "w07-faults.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-faults.json",
+      "summary": "Bằng chứng fault-injection gate W07 (lane fresh): 9 checks qua controlled HTTP fault runtime với PostgreSQL thật — 4 threadCreates/6 runCreates trải qua lỗi mạng, timeout và recovery.",
+      "tags": [
+        "evidence",
+        "fault-injection",
+        "gate",
+        "w07"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        17
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-hydrated-context.json",
+      "type": "config",
+      "name": "w07-hydrated-context.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-hydrated-context.json",
+      "summary": "Snapshot bằng chứng W07 thread đã hydrate thành công: runStatus success, threadMetadata/runtime_context_hash và values chứa trusted configurable (engagement_name, workspace_path, target, authorization_confirmed=true) khớp checkpointMetadata.",
+      "tags": [
+        "evidence",
+        "hydration",
+        "runtime-context",
+        "w07"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        59
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-hydration-failure.json",
+      "type": "config",
+      "name": "w07-hydration-failure.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-hydration-failure.json",
+      "summary": "Snapshot bằng chứng W07 trường hợp context không khớp: thread chạy success nhưng authorization_confirmed=false để đối chiếu sai lệch giữa thread values và checkpoint metadata.",
+      "tags": [
+        "evidence",
+        "hydration-failure",
+        "runtime-context",
+        "w07"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        59
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-independence.json",
+      "type": "config",
+      "name": "w07-independence.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-independence.json",
+      "summary": "Kết quả gate independence W07: 8 bước kiểm chứng build/test scoped thread/run APIs trong checkout không có clients/web (legacyOmitted=true).",
+      "tags": [
+        "evidence",
+        "independence",
+        "gate",
+        "w07"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        39
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-live.json",
+      "type": "config",
+      "name": "w07-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-live.json",
+      "summary": "Bằng chứng live gate W07: planning run thật trên API 5284/PostgreSQL/LangGraph 2400 với finalStatus success, 4 checks và fixture runtime sở hữu đã dọn sạch (ownedRuntimeFixtureRemoved=true).",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "run",
+        "w07"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        15
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-migration-fresh.json",
+      "type": "config",
+      "name": "w07-migration-fresh.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-migration-fresh.json",
+      "summary": "Bằng chứng durability W07 lane fresh: dispatch recovery migration bảo toàn row/checksum, restart intent được accept và giữ nguyên qua process restart.",
+      "tags": [
+        "evidence",
+        "durability",
+        "fresh-lane",
+        "w07"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        43
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-migration-oldcopy.json",
+      "type": "config",
+      "name": "w07-migration-oldcopy.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-migration-oldcopy.json",
+      "summary": "Bằng chứng durability W07 lane oldcopy: dữ liệu kế thừa bảo toàn (hash/checksum migration), reservation restart accepted và run preserved sau restart.",
+      "tags": [
+        "evidence",
+        "durability",
+        "oldcopy-lane",
+        "w07"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        43
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-oldcopy-faults.json",
+      "type": "config",
+      "name": "w07-oldcopy-faults.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-oldcopy-faults.json",
+      "summary": "Bằng chứng fault-injection gate W07 (lane oldcopy): 9 checks với fault runtime trên DB có dữ liệu cũ — 4 threadCreates/6 runCreates.",
+      "tags": [
+        "evidence",
+        "fault-injection",
+        "oldcopy-lane",
+        "w07"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        17
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w07-pristine-state.json",
+      "type": "config",
+      "name": "w07-pristine-state.json",
+      "filePath": "clients/web-raptix/docs/integration/w07-pristine-state.json",
+      "summary": "Bằng chứng pristine state W07: 15 keys state khởi đầu của thread planning (messages rỗng, checkpointPresent=true, graphId soundwave) trước khi submit run đầu tiên.",
+      "tags": [
+        "evidence",
+        "state",
+        "bootstrap",
+        "w07"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        29
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w08-faults.json",
+      "type": "config",
+      "name": "w08-faults.json",
+      "filePath": "clients/web-raptix/docs/integration/w08-faults.json",
+      "summary": "Bằng chứng fault-injection gate W08 (lane fresh): 10 checks SSE qua fault runtime — ngắt kết nối, replay cursor và recovery của stream events.",
+      "tags": [
+        "evidence",
+        "fault-injection",
+        "sse",
+        "w08"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        18
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w08-independence.json",
+      "type": "config",
+      "name": "w08-independence.json",
+      "filePath": "clients/web-raptix/docs/integration/w08-independence.json",
+      "summary": "Kết quả gate independence W08: 8 bước kiểm chứng streaming/SSE trong checkout không có folder legacy.",
+      "tags": [
+        "evidence",
+        "independence",
+        "gate",
+        "w08"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        39
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w08-live.json",
+      "type": "config",
+      "name": "w08-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w08-live.json",
+      "summary": "Bằng chứng live gate W08: stream SSE thật với streamCursor 1790935791368-0, 4 publicEvents, 7 wireShapes kiểm chứng định dạng wire và finalStatus success.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "sse",
+        "w08"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        106
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w08-oldcopy-faults.json",
+      "type": "config",
+      "name": "w08-oldcopy-faults.json",
+      "filePath": "clients/web-raptix/docs/integration/w08-oldcopy-faults.json",
+      "summary": "Bằng chứng fault-injection gate W08 (lane oldcopy): 10 checks SSE với fault runtime trên DB cũ.",
+      "tags": [
+        "evidence",
+        "fault-injection",
+        "oldcopy-lane",
+        "w08"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        18
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w09-faults.json",
+      "type": "config",
+      "name": "w09-faults.json",
+      "filePath": "clients/web-raptix/docs/integration/w09-faults.json",
+      "summary": "Bằng chứng fault-injection gate W09 (lane fresh): 11 checks history/transcript recovery qua fault runtime.",
+      "tags": [
+        "evidence",
+        "fault-injection",
+        "history",
+        "w09"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        19
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w09-live.json",
+      "type": "config",
+      "name": "w09-live.json",
+      "filePath": "clients/web-raptix/docs/integration/w09-live.json",
+      "summary": "Bằng chứng live gate W09: history projection thật với streamCursor, 4 publicEvents, 7 checks và fixture sở hữu đã dọn sạch.",
+      "tags": [
+        "evidence",
+        "live-gate",
+        "history",
+        "w09"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        20
+      ]
+    },
+    {
+      "id": "config:clients/web-raptix/docs/integration/w09-oldcopy-faults.json",
+      "type": "config",
+      "name": "w09-oldcopy-faults.json",
+      "filePath": "clients/web-raptix/docs/integration/w09-oldcopy-faults.json",
+      "summary": "Bằng chứng fault-injection gate W09 (lane oldcopy): 11 checks recovery transcript trên DB kế thừa.",
+      "tags": [
+        "evidence",
+        "fault-injection",
+        "oldcopy-lane",
+        "w09"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        19
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-faults.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-oldcopy-faults.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-independence.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-pristine-state.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-hydrated-context.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-hydration-failure.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-migration-fresh.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "config:clients/web-raptix/docs/integration/w07-migration-oldcopy.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w07-runs.md",
+      "target": "file:clients/web-raptix/server/src/services/runtime/runtime-context.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w08-streaming.md",
+      "target": "config:clients/web-raptix/docs/integration/w08-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w08-streaming.md",
+      "target": "config:clients/web-raptix/docs/integration/w08-faults.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w08-streaming.md",
+      "target": "config:clients/web-raptix/docs/integration/w08-oldcopy-faults.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w08-streaming.md",
+      "target": "config:clients/web-raptix/docs/integration/w08-independence.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w09-history.md",
+      "target": "config:clients/web-raptix/docs/integration/w09-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w09-history.md",
+      "target": "config:clients/web-raptix/docs/integration/w09-faults.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w09-history.md",
+      "target": "config:clients/web-raptix/docs/integration/w09-oldcopy-faults.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w09-history.md",
+      "target": "file:clients/web-raptix/server/src/services/runtime/history-projection.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w10-console.md",
+      "target": "config:clients/web-raptix/docs/integration/w10-live.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w10-console.md",
+      "target": "file:clients/web-raptix/src/features/agent-runs/RealConsole.tsx",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/integration/w10-console.md",
+      "target": "file:clients/web-raptix/src/features/agent-runs/use-console-session.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

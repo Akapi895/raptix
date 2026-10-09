@@ -1,0 +1,5655 @@
+{
+  "batchIndex": 18,
+  "batchFiles": [
+    {
+      "path": "benchmark/__init__.py",
+      "language": "python",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/__main__.py",
+      "language": "python",
+      "sizeLines": 4,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/config.py",
+      "language": "python",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/harness.py",
+      "language": "python",
+      "sizeLines": 976,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/provenance.py",
+      "language": "python",
+      "sizeLines": 264,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/__init__.py",
+      "language": "python",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/base.py",
+      "language": "python",
+      "sizeLines": 63,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/buttercup.py",
+      "language": "python",
+      "sizeLines": 286,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/cybench.py",
+      "language": "python",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/cybergym.py",
+      "language": "python",
+      "sizeLines": 248,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/exploitbench.py",
+      "language": "python",
+      "sizeLines": 793,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/exploitbench_capabilities.py",
+      "language": "python",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/mhbench.py",
+      "language": "python",
+      "sizeLines": 1339,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/xbow.py",
+      "language": "python",
+      "sizeLines": 277,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/reporter.py",
+      "language": "python",
+      "sizeLines": 244,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/runner.py",
+      "language": "python",
+      "sizeLines": 330,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/schemas.py",
+      "language": "python",
+      "sizeLines": 252,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/scorer.py",
+      "language": "python",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/state.py",
+      "language": "python",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "language": "python",
+      "sizeLines": 167,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "language": "python",
+      "sizeLines": 207,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_harness.py",
+      "language": "python",
+      "sizeLines": 420,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "language": "python",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "language": "python",
+      "sizeLines": 714,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "language": "python",
+      "sizeLines": 366,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "language": "python",
+      "sizeLines": 207,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "language": "python",
+      "sizeLines": 175,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "language": "python",
+      "sizeLines": 172,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:benchmark/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "benchmark/__init__.py",
+      "summary": "Barrel gói benchmark: điểm vào package, re-export cấu hình và schema.",
+      "tags": [
+        "barrel",
+        "entry-point",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/__main__.py",
+      "type": "file",
+      "name": "__main__.py",
+      "filePath": "benchmark/__main__.py",
+      "summary": "Điểm vào chạy benchmark qua runner (python -m benchmark).",
+      "tags": [
+        "entry-point",
+        "benchmark",
+        "cli"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "benchmark/config.py",
+      "summary": "Cấu hình benchmark: URL LangGraph/LiteLLM mặc định từ env và BenchmarkConfig.",
+      "tags": [
+        "cấu-hình",
+        "benchmark",
+        "env"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/config.py:_default_langgraph_url",
+      "type": "function",
+      "name": "_default_langgraph_url",
+      "filePath": "benchmark/config.py",
+      "lineRange": [
+        9,
+        15
+      ],
+      "summary": "URL LangGraph mặc định từ env cho benchmark.",
+      "tags": [
+        "cấu-hình",
+        "langgraph",
+        "env"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/config.py:_default_litellm_url",
+      "type": "function",
+      "name": "_default_litellm_url",
+      "filePath": "benchmark/config.py",
+      "lineRange": [
+        18,
+        24
+      ],
+      "summary": "URL LiteLLM mặc định từ env cho benchmark.",
+      "tags": [
+        "cấu-hình",
+        "litellm",
+        "env"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/config.py:BenchmarkConfig",
+      "type": "class",
+      "name": "BenchmarkConfig",
+      "filePath": "benchmark/config.py",
+      "lineRange": [
+        27,
+        55
+      ],
+      "summary": "Cấu hình benchmark: URL dịch vụ, provider và giới hạn chạy.",
+      "tags": [
+        "cấu-hình",
+        "benchmark",
+        "data-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/harness.py",
+      "type": "file",
+      "name": "harness.py",
+      "filePath": "benchmark/harness.py",
+      "summary": "Harness chạy challenge: gọi docker, dựng kickoff prompt, cộng token usage, truy vấn cost và provision workspace.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "thực-thi"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Python: cùng pattern StreamingEngine phía agent, đo lường cost theo window."
+    },
+    {
+      "id": "function:benchmark/harness.py:_run_docker",
+      "type": "function",
+      "name": "_run_docker",
+      "filePath": "benchmark/harness.py",
+      "lineRange": [
+        28,
+        40
+      ],
+      "summary": "Chạy lệnh docker qua subprocess, cảnh báo khi thiếu binary.",
+      "tags": [
+        "docker",
+        "subprocess",
+        "harness"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/harness.py:_sum_token_usage",
+      "type": "function",
+      "name": "_sum_token_usage",
+      "filePath": "benchmark/harness.py",
+      "lineRange": [
+        84,
+        107
+      ],
+      "summary": "Cộng token usage từ messages.",
+      "tags": [
+        "token",
+        "usage",
+        "tổng-hợp"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/harness.py:_build_kickoff_prompt",
+      "type": "function",
+      "name": "_build_kickoff_prompt",
+      "filePath": "benchmark/harness.py",
+      "lineRange": [
+        110,
+        128
+      ],
+      "summary": "Dựng prompt kickoff cho challenge.",
+      "tags": [
+        "prompt",
+        "kickoff",
+        "challenge"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/harness.py:AgentResponse",
+      "type": "class",
+      "name": "AgentResponse",
+      "filePath": "benchmark/harness.py",
+      "lineRange": [
+        44,
+        55
+      ],
+      "summary": "Phản hồi agent trong harness benchmark.",
+      "tags": [
+        "harness",
+        "phản-hồi",
+        "data-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/harness.py:_ActiveRun",
+      "type": "class",
+      "name": "_ActiveRun",
+      "filePath": "benchmark/harness.py",
+      "lineRange": [
+        59,
+        81
+      ],
+      "summary": "Trạng thái run đang hoạt động của harness.",
+      "tags": [
+        "harness",
+        "run",
+        "trạng-thái"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/harness.py:Harness",
+      "type": "class",
+      "name": "Harness",
+      "filePath": "benchmark/harness.py",
+      "lineRange": [
+        131,
+        976
+      ],
+      "summary": "Harness thực thi challenge: setup, kickoff agent, đo lường và cost.",
+      "tags": [
+        "harness",
+        "thực-thi",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:benchmark/provenance.py",
+      "type": "file",
+      "name": "provenance.py",
+      "filePath": "benchmark/provenance.py",
+      "summary": "Ghi provenance lượt chạy: model assignments, image container, git, hash artifact và sanitize config.",
+      "tags": [
+        "provenance",
+        "tái-lập",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:benchmark/provenance.py:capture_declared_model_assignments",
+      "type": "function",
+      "name": "capture_declared_model_assignments",
+      "filePath": "benchmark/provenance.py",
+      "lineRange": [
+        31,
+        87
+      ],
+      "summary": "Ghi nhận model assignments đã khai báo, kiểm tra priority container.",
+      "tags": [
+        "provenance",
+        "model",
+        "ghi-nhận"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/provenance.py:capture_container_images",
+      "type": "function",
+      "name": "capture_container_images",
+      "filePath": "benchmark/provenance.py",
+      "lineRange": [
+        90,
+        143
+      ],
+      "summary": "Ghi nhận image container: ưu tiên registry digest, giữ image id local.",
+      "tags": [
+        "provenance",
+        "container",
+        "image"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/provenance.py:_git",
+      "type": "function",
+      "name": "_git",
+      "filePath": "benchmark/provenance.py",
+      "lineRange": [
+        146,
+        157
+      ],
+      "summary": "Chạy lệnh git lấy thông tin nguồn.",
+      "tags": [
+        "git",
+        "provenance",
+        "nguồn"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/provenance.py:_artifact_hash",
+      "type": "function",
+      "name": "_artifact_hash",
+      "filePath": "benchmark/provenance.py",
+      "lineRange": [
+        160,
+        182
+      ],
+      "summary": "Hash artifact, bỏ qua cache Python sinh ra.",
+      "tags": [
+        "hash",
+        "artifact",
+        "provenance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/provenance.py:_sanitize",
+      "type": "function",
+      "name": "_sanitize",
+      "filePath": "benchmark/provenance.py",
+      "lineRange": [
+        185,
+        218
+      ],
+      "summary": "Sanitize config khỏi secret trước khi ghi provenance.",
+      "tags": [
+        "sanitize",
+        "bảo-mật",
+        "provenance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/provenance.py:_benchmark_revisions",
+      "type": "function",
+      "name": "_benchmark_revisions",
+      "filePath": "benchmark/provenance.py",
+      "lineRange": [
+        221,
+        227
+      ],
+      "summary": "Ghi nhận revision benchmark.",
+      "tags": [
+        "revision",
+        "provenance",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/provenance.py:capture_run_provenance",
+      "type": "function",
+      "name": "capture_run_provenance",
+      "filePath": "benchmark/provenance.py",
+      "lineRange": [
+        230,
+        264
+      ],
+      "summary": "Ghi toàn bộ provenance một lượt chạy benchmark.",
+      "tags": [
+        "provenance",
+        "lượt-chạy",
+        "tái-lập"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/provenance.py:ProvenanceCaptureError",
+      "type": "class",
+      "name": "ProvenanceCaptureError",
+      "filePath": "benchmark/provenance.py",
+      "lineRange": [
+        27,
+        28
+      ],
+      "summary": "Lỗi ghi provenance.",
+      "tags": [
+        "lỗi",
+        "provenance",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/providers/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "benchmark/providers/__init__.py",
+      "summary": "Barrel providers: gom base và các provider benchmark.",
+      "tags": [
+        "barrel",
+        "benchmark",
+        "provider"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/providers/base.py",
+      "type": "file",
+      "name": "base.py",
+      "filePath": "benchmark/providers/base.py",
+      "summary": "Lớp cơ sở BaseBenchmarkProvider cho mọi provider benchmark.",
+      "tags": [
+        "provider",
+        "lớp-cơ-sở",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/providers/base.py:BaseBenchmarkProvider",
+      "type": "class",
+      "name": "BaseBenchmarkProvider",
+      "filePath": "benchmark/providers/base.py",
+      "lineRange": [
+        12,
+        63
+      ],
+      "summary": "Giao diện provider benchmark: nạp challenge, setup và evaluate.",
+      "tags": [
+        "provider",
+        "lớp-cơ-sở",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/providers/buttercup.py",
+      "type": "file",
+      "name": "buttercup.py",
+      "filePath": "benchmark/providers/buttercup.py",
+      "summary": "Provider Buttercup: xác định challenges root, ensure upstream git và đọc metadata challenge.",
+      "tags": [
+        "provider",
+        "buttercup",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:benchmark/providers/buttercup.py:_challenges_root",
+      "type": "function",
+      "name": "_challenges_root",
+      "filePath": "benchmark/providers/buttercup.py",
+      "lineRange": [
+        60,
+        61
+      ],
+      "summary": "Thư mục challenges gốc của Buttercup.",
+      "tags": [
+        "buttercup",
+        "challenges",
+        "đường-dẫn"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/buttercup.py:_ensure_upstream",
+      "type": "function",
+      "name": "_ensure_upstream",
+      "filePath": "benchmark/providers/buttercup.py",
+      "lineRange": [
+        64,
+        85
+      ],
+      "summary": "Ensure upstream git đã clone, tạo thư mục cha khi thiếu.",
+      "tags": [
+        "upstream",
+        "git",
+        "đồng-bộ"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/providers/buttercup.py:_read_challenge_metadata",
+      "type": "function",
+      "name": "_read_challenge_metadata",
+      "filePath": "benchmark/providers/buttercup.py",
+      "lineRange": [
+        88,
+        96
+      ],
+      "summary": "Đọc metadata challenge từ file JSON.",
+      "tags": [
+        "metadata",
+        "challenge",
+        "đọc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/providers/buttercup.py:ButtercupProvider",
+      "type": "class",
+      "name": "ButtercupProvider",
+      "filePath": "benchmark/providers/buttercup.py",
+      "lineRange": [
+        99,
+        286
+      ],
+      "summary": "Provider nạp challenge Buttercup từ upstream.",
+      "tags": [
+        "provider",
+        "buttercup",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:benchmark/providers/cybench.py",
+      "type": "file",
+      "name": "cybench.py",
+      "filePath": "benchmark/providers/cybench.py",
+      "summary": "Provider CyBench: quét task docker từ thư mục benchmarks.",
+      "tags": [
+        "provider",
+        "cybench",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:benchmark/providers/cybench.py:CybenchProvider",
+      "type": "class",
+      "name": "CybenchProvider",
+      "filePath": "benchmark/providers/cybench.py",
+      "lineRange": [
+        49,
+        356
+      ],
+      "summary": "Provider quét task CyBench dạng docker.",
+      "tags": [
+        "provider",
+        "cybench",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:benchmark/providers/cybergym.py",
+      "type": "file",
+      "name": "cybergym.py",
+      "filePath": "benchmark/providers/cybergym.py",
+      "summary": "Provider CyberGym: nạp spec YAML, phát hiện crash và kiểm tra fix còn hiệu lực.",
+      "tags": [
+        "provider",
+        "cybergym",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:benchmark/providers/cybergym.py:_is_crash",
+      "type": "function",
+      "name": "_is_crash",
+      "filePath": "benchmark/providers/cybergym.py",
+      "lineRange": [
+        58,
+        69
+      ],
+      "summary": "Nhận biết bản ghi có phải crash không.",
+      "tags": [
+        "cybergym",
+        "crash",
+        "phát-hiện"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/cybergym.py:_fix_survives",
+      "type": "function",
+      "name": "_fix_survives",
+      "filePath": "benchmark/providers/cybergym.py",
+      "lineRange": [
+        72,
+        75
+      ],
+      "summary": "Kiểm tra fix còn hiệu lực sau chạy.",
+      "tags": [
+        "cybergym",
+        "fix",
+        "kiểm-tra"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/providers/cybergym.py:CyberGymProvider",
+      "type": "class",
+      "name": "CyberGymProvider",
+      "filePath": "benchmark/providers/cybergym.py",
+      "lineRange": [
+        78,
+        248
+      ],
+      "summary": "Provider CyberGym từ spec YAML qua HTTP.",
+      "tags": [
+        "provider",
+        "cybergym",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:benchmark/providers/exploitbench.py",
+      "type": "file",
+      "name": "exploitbench.py",
+      "filePath": "benchmark/providers/exploitbench.py",
+      "summary": "Provider ExploitBench: parse năm từ bug id, phân loại subsystem và lặp JSON cân bằng.",
+      "tags": [
+        "provider",
+        "exploitbench",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:benchmark/providers/exploitbench.py:_parse_year_from_bug_id",
+      "type": "function",
+      "name": "_parse_year_from_bug_id",
+      "filePath": "benchmark/providers/exploitbench.py",
+      "lineRange": [
+        123,
+        133
+      ],
+      "summary": "Parse năm từ bug id bằng regex.",
+      "tags": [
+        "parse",
+        "bug-id",
+        "năm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/exploitbench.py:_classify_subsystem",
+      "type": "function",
+      "name": "_classify_subsystem",
+      "filePath": "benchmark/providers/exploitbench.py",
+      "lineRange": [
+        136,
+        153
+      ],
+      "summary": "Phân loại subsystem từ bug id và tags.",
+      "tags": [
+        "phân-loại",
+        "subsystem",
+        "tags"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/exploitbench.py:_iter_balanced_json_objects",
+      "type": "function",
+      "name": "_iter_balanced_json_objects",
+      "filePath": "benchmark/providers/exploitbench.py",
+      "lineRange": [
+        749,
+        787
+      ],
+      "summary": "Lặp đối tượng JSON cân bằng giữa các nhóm.",
+      "tags": [
+        "lặp",
+        "cân-bằng",
+        "json"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/providers/exploitbench.py:ExploitBenchProvider",
+      "type": "class",
+      "name": "ExploitBenchProvider",
+      "filePath": "benchmark/providers/exploitbench.py",
+      "lineRange": [
+        156,
+        741
+      ],
+      "summary": "Provider ExploitBench với phân loại subsystem và capability.",
+      "tags": [
+        "provider",
+        "exploitbench",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:benchmark/providers/exploitbench_capabilities.py",
+      "type": "file",
+      "name": "exploitbench_capabilities.py",
+      "filePath": "benchmark/providers/exploitbench_capabilities.py",
+      "summary": "Chấm capability ExploitBench: tier tốt nhất, điểm số, trung bình và hợp nhất.",
+      "tags": [
+        "capability",
+        "chấm-điểm",
+        "exploitbench"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/providers/exploitbench_capabilities.py:best_tier_for_caps",
+      "type": "function",
+      "name": "best_tier_for_caps",
+      "filePath": "benchmark/providers/exploitbench_capabilities.py",
+      "lineRange": [
+        99,
+        119
+      ],
+      "summary": "Tier tốt nhất cho capability map.",
+      "tags": [
+        "capability",
+        "tier",
+        "chấm-điểm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/providers/exploitbench_capabilities.py:capability_score",
+      "type": "function",
+      "name": "capability_score",
+      "filePath": "benchmark/providers/exploitbench_capabilities.py",
+      "lineRange": [
+        122,
+        134
+      ],
+      "summary": "Điểm số capability.",
+      "tags": [
+        "capability",
+        "điểm",
+        "chấm-điểm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/exploitbench_capabilities.py:capability_mean",
+      "type": "function",
+      "name": "capability_mean",
+      "filePath": "benchmark/providers/exploitbench_capabilities.py",
+      "lineRange": [
+        137,
+        153
+      ],
+      "summary": "Điểm trung bình capability.",
+      "tags": [
+        "capability",
+        "trung-bình",
+        "chấm-điểm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/exploitbench_capabilities.py:merge_capabilities",
+      "type": "function",
+      "name": "merge_capabilities",
+      "filePath": "benchmark/providers/exploitbench_capabilities.py",
+      "lineRange": [
+        156,
+        168
+      ],
+      "summary": "Hợp nhất nhiều capability map.",
+      "tags": [
+        "capability",
+        "hợp-nhất",
+        "tổng-hợp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/providers/mhbench.py",
+      "type": "file",
+      "name": "mhbench.py",
+      "filePath": "benchmark/providers/mhbench.py",
+      "summary": "Provider MHBench OpenStack: snapshot/spec topology, SSH key, chọn flag target và topology sinh sẵn.",
+      "tags": [
+        "provider",
+        "mhbench",
+        "openstack"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Python: module lớn nhất benchmark, quản lý vòng đời topology ngoài."
+    },
+    {
+      "id": "function:benchmark/providers/mhbench.py:_load_generated_topologies",
+      "type": "function",
+      "name": "_load_generated_topologies",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        184,
+        258
+      ],
+      "summary": "Nạp topology sinh sẵn từ thư mục gen.",
+      "tags": [
+        "topology",
+        "sinh-sẵn",
+        "nạp"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:benchmark/providers/mhbench.py:_workspace_root",
+      "type": "function",
+      "name": "_workspace_root",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1100,
+        1101
+      ],
+      "summary": "Thư mục workspace root cho MHBench.",
+      "tags": [
+        "workspace",
+        "đường-dẫn",
+        "mhbench"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/mhbench.py:_expected_flag",
+      "type": "function",
+      "name": "_expected_flag",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1104,
+        1111
+      ],
+      "summary": "Flag kỳ vọng dạng shape cho challenge.",
+      "tags": [
+        "flag",
+        "challenge",
+        "kỳ-vọng"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/mhbench.py:_resolve_ssh_key_path",
+      "type": "function",
+      "name": "_resolve_ssh_key_path",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1114,
+        1124
+      ],
+      "summary": "Giải quyết đường dẫn SSH key đã stage.",
+      "tags": [
+        "ssh",
+        "key",
+        "đường-dẫn"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/providers/mhbench.py:_resolve_external_topology",
+      "type": "function",
+      "name": "_resolve_external_topology",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1161,
+        1186
+      ],
+      "summary": "Giải quyết topology ngoài từ section cấu hình.",
+      "tags": [
+        "topology",
+        "ngoài",
+        "giải-quyết"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/providers/mhbench.py:_select_flag_target",
+      "type": "function",
+      "name": "_select_flag_target",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1189,
+        1224
+      ],
+      "summary": "Chọn flag target cho challenge.",
+      "tags": [
+        "flag",
+        "target",
+        "chọn"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/providers/mhbench.py:HostInfo",
+      "type": "class",
+      "name": "HostInfo",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        51,
+        56
+      ],
+      "summary": "Thông tin host topology MHBench.",
+      "tags": [
+        "topology",
+        "host",
+        "data-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/providers/mhbench.py:TopologySnapshot",
+      "type": "class",
+      "name": "TopologySnapshot",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        60,
+        74
+      ],
+      "summary": "Ảnh topology tại một thời điểm.",
+      "tags": [
+        "topology",
+        "snapshot",
+        "data-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/providers/mhbench.py:TopologySpec",
+      "type": "class",
+      "name": "TopologySpec",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        78,
+        118
+      ],
+      "summary": "Đặc tả topology MHBench.",
+      "tags": [
+        "topology",
+        "spec",
+        "data-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/providers/mhbench.py:MHBenchProvider",
+      "type": "class",
+      "name": "MHBenchProvider",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        278,
+        1075
+      ],
+      "summary": "Provider MHBench OpenStack: topology, SSH, flag và setup.",
+      "tags": [
+        "provider",
+        "mhbench",
+        "openstack"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:benchmark/providers/mhbench.py:_OpenStackQueryError",
+      "type": "class",
+      "name": "_OpenStackQueryError",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1083,
+        1084
+      ],
+      "summary": "Lỗi truy vấn OpenStack.",
+      "tags": [
+        "lỗi",
+        "openstack",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/providers/mhbench.py:_SshKeyStageError",
+      "type": "class",
+      "name": "_SshKeyStageError",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1087,
+        1088
+      ],
+      "summary": "Lỗi stage SSH key.",
+      "tags": [
+        "lỗi",
+        "ssh",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/providers/mhbench.py:_PostSetupError",
+      "type": "class",
+      "name": "_PostSetupError",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1091,
+        1097
+      ],
+      "summary": "Lỗi sau setup topology.",
+      "tags": [
+        "lỗi",
+        "setup",
+        "ngoại-lệ"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/providers/mhbench.py:ExternalTopology",
+      "type": "class",
+      "name": "ExternalTopology",
+      "filePath": "benchmark/providers/mhbench.py",
+      "lineRange": [
+        1128,
+        1158
+      ],
+      "summary": "Topology ngoài do cấu hình chỉ định.",
+      "tags": [
+        "topology",
+        "ngoài",
+        "data-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/providers/xbow.py",
+      "type": "file",
+      "name": "xbow.py",
+      "filePath": "benchmark/providers/xbow.py",
+      "summary": "Provider XBOW: nạp challenge từ file benchmark.json mỗi thư mục.",
+      "tags": [
+        "provider",
+        "xbow",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:benchmark/providers/xbow.py:XBOWProvider",
+      "type": "class",
+      "name": "XBOWProvider",
+      "filePath": "benchmark/providers/xbow.py",
+      "lineRange": [
+        21,
+        277
+      ],
+      "summary": "Provider XBOW từ benchmark.json.",
+      "tags": [
+        "provider",
+        "xbow",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:benchmark/reporter.py",
+      "type": "file",
+      "name": "reporter.py",
+      "filePath": "benchmark/reporter.py",
+      "summary": "Reporter kết quả batch: ghi JSON và markdown kèm provenance.",
+      "tags": [
+        "báo-cáo",
+        "benchmark",
+        "kết-quả"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:benchmark/reporter.py:Reporter",
+      "type": "class",
+      "name": "Reporter",
+      "filePath": "benchmark/reporter.py",
+      "lineRange": [
+        10,
+        244
+      ],
+      "summary": "Ghi báo cáo batch JSON/markdown kèm provenance.",
+      "tags": [
+        "báo-cáo",
+        "benchmark",
+        "kết-quả"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:benchmark/runner.py",
+      "type": "file",
+      "name": "runner.py",
+      "filePath": "benchmark/runner.py",
+      "summary": "Runner điều phối benchmark: dựng provider và provenance, chạy tuần tự, async và song song.",
+      "tags": [
+        "runner",
+        "điều-phối",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:benchmark/runner.py:_build_run_provenance",
+      "type": "function",
+      "name": "_build_run_provenance",
+      "filePath": "benchmark/runner.py",
+      "lineRange": [
+        36,
+        84
+      ],
+      "summary": "Dựng provenance lượt chạy từ config, filter và runtime inputs.",
+      "tags": [
+        "provenance",
+        "runner",
+        "tái-lập"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/runner.py:_build_provider",
+      "type": "function",
+      "name": "_build_provider",
+      "filePath": "benchmark/runner.py",
+      "lineRange": [
+        87,
+        110
+      ],
+      "summary": "Dựng provider theo tên đã chọn.",
+      "tags": [
+        "provider",
+        "factory",
+        "runner"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/runner.py:run",
+      "type": "function",
+      "name": "run",
+      "filePath": "benchmark/runner.py",
+      "lineRange": [
+        114,
+        263
+      ],
+      "summary": "Chạy benchmark theo chế độ đã cấu hình.",
+      "tags": [
+        "runner",
+        "chạy",
+        "điều-phối"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:benchmark/runner.py:_run_sequential",
+      "type": "function",
+      "name": "_run_sequential",
+      "filePath": "benchmark/runner.py",
+      "lineRange": [
+        266,
+        271
+      ],
+      "summary": "Chạy tuần tự các challenge.",
+      "tags": [
+        "runner",
+        "tuần-tự",
+        "thực-thi"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/runner.py:_run_sequential_async",
+      "type": "function",
+      "name": "_run_sequential_async",
+      "filePath": "benchmark/runner.py",
+      "lineRange": [
+        274,
+        292
+      ],
+      "summary": "Chạy tuần tự bất đồng bộ các challenge.",
+      "tags": [
+        "runner",
+        "async",
+        "thực-thi"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/runner.py:_run_parallel",
+      "type": "function",
+      "name": "_run_parallel",
+      "filePath": "benchmark/runner.py",
+      "lineRange": [
+        295,
+        326
+      ],
+      "summary": "Chạy song song các challenge.",
+      "tags": [
+        "runner",
+        "song-song",
+        "thực-thi"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/schemas.py",
+      "type": "file",
+      "name": "schemas.py",
+      "filePath": "benchmark/schemas.py",
+      "summary": "Schema Pydantic benchmark: Challenge, SetupResult, ChallengeResult, provenance, report, filter và env/spec.",
+      "tags": [
+        "schema",
+        "pydantic",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:benchmark/schemas.py:Challenge",
+      "type": "class",
+      "name": "Challenge",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        26,
+        71
+      ],
+      "summary": "Schema challenge benchmark.",
+      "tags": [
+        "schema",
+        "challenge",
+        "pydantic"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/schemas.py:SetupResult",
+      "type": "class",
+      "name": "SetupResult",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        74,
+        84
+      ],
+      "summary": "Kết quả setup challenge.",
+      "tags": [
+        "schema",
+        "setup",
+        "pydantic"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/schemas.py:ChallengeResult",
+      "type": "class",
+      "name": "ChallengeResult",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        87,
+        140
+      ],
+      "summary": "Kết quả một challenge.",
+      "tags": [
+        "schema",
+        "kết-quả",
+        "pydantic"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/schemas.py:RunProvenance",
+      "type": "class",
+      "name": "RunProvenance",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        143,
+        157
+      ],
+      "summary": "Provenance một lượt chạy.",
+      "tags": [
+        "schema",
+        "provenance",
+        "pydantic"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/schemas.py:BenchmarkReport",
+      "type": "class",
+      "name": "BenchmarkReport",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        160,
+        184
+      ],
+      "summary": "Báo cáo tổng hợp benchmark.",
+      "tags": [
+        "schema",
+        "báo-cáo",
+        "pydantic"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/schemas.py:FilterConfig",
+      "type": "class",
+      "name": "FilterConfig",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        187,
+        194
+      ],
+      "summary": "Cấu hình lọc challenge.",
+      "tags": [
+        "schema",
+        "lọc",
+        "pydantic"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/schemas.py:ExploitBenchEnv",
+      "type": "class",
+      "name": "ExploitBenchEnv",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        197,
+        209
+      ],
+      "summary": "Môi trường ExploitBench.",
+      "tags": [
+        "schema",
+        "exploitbench",
+        "env"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/schemas.py:ExploitBenchSpec",
+      "type": "class",
+      "name": "ExploitBenchSpec",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        212,
+        226
+      ],
+      "summary": "Đặc tả ExploitBench.",
+      "tags": [
+        "schema",
+        "exploitbench",
+        "spec"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/schemas.py:CyberGymSpec",
+      "type": "class",
+      "name": "CyberGymSpec",
+      "filePath": "benchmark/schemas.py",
+      "lineRange": [
+        229,
+        252
+      ],
+      "summary": "Lớp CyberGymSpec (0 phương thức, 24 dòng) trong schemas.py.",
+      "tags": [
+        "data-model",
+        "python",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/scorer.py",
+      "type": "file",
+      "name": "scorer.py",
+      "filePath": "benchmark/scorer.py",
+      "summary": "Scorer: chấm điểm theo level/tag và thời gian hoàn thành.",
+      "tags": [
+        "chấm-điểm",
+        "benchmark",
+        "kết-quả"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/scorer.py:Scorer",
+      "type": "class",
+      "name": "Scorer",
+      "filePath": "benchmark/scorer.py",
+      "lineRange": [
+        8,
+        66
+      ],
+      "summary": "Chấm điểm benchmark theo level/tag/thời gian.",
+      "tags": [
+        "chấm-điểm",
+        "benchmark",
+        "kết-quả"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/state.py",
+      "type": "file",
+      "name": "state.py",
+      "filePath": "benchmark/state.py",
+      "summary": "State benchmark: BenchmarkStepResult và BenchmarkRunState.",
+      "tags": [
+        "trạng-thái",
+        "benchmark",
+        "state"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/state.py:BenchmarkStepResult",
+      "type": "class",
+      "name": "BenchmarkStepResult",
+      "filePath": "benchmark/state.py",
+      "lineRange": [
+        6,
+        15
+      ],
+      "summary": "Kết quả một bước benchmark.",
+      "tags": [
+        "state",
+        "bước",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/state.py:BenchmarkRunState",
+      "type": "class",
+      "name": "BenchmarkRunState",
+      "filePath": "benchmark/state.py",
+      "lineRange": [
+        18,
+        21
+      ],
+      "summary": "State lượt chạy benchmark.",
+      "tags": [
+        "state",
+        "lượt-chạy",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "type": "file",
+      "name": "test_cybench_provider.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "summary": "Kiểm thử provider CyBench: phát hiện task docker và đánh giá.",
+      "tags": [
+        "test",
+        "pytest",
+        "cybench"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:_write_task",
+      "type": "function",
+      "name": "_write_task",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "lineRange": [
+        21,
+        50
+      ],
+      "summary": "Kiểm thử  với kịch bản write task.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:_state",
+      "type": "function",
+      "name": "_state",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "lineRange": [
+        53,
+        59
+      ],
+      "summary": "Kiểm thử  với kịch bản state.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:TestLoadChallenges",
+      "type": "class",
+      "name": "TestLoadChallenges",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "lineRange": [
+        62,
+        128
+      ],
+      "summary": "Nhóm kiểm thử load challenges cho cybench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "load-challenges"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:TestEvaluate",
+      "type": "class",
+      "name": "TestEvaluate",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "lineRange": [
+        131,
+        167
+      ],
+      "summary": "Nhóm kiểm thử evaluate cho cybench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "evaluate"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "type": "file",
+      "name": "test_cybergym_provider.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "summary": "Kiểm thử provider CyberGym: nạp task từ spec và kickoff PoC.",
+      "tags": [
+        "test",
+        "pytest",
+        "cybergym"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_write_spec",
+      "type": "function",
+      "name": "_write_spec",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "lineRange": [
+        22,
+        34
+      ],
+      "summary": "Kiểm thử  với kịch bản write spec.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_install_routes",
+      "type": "function",
+      "name": "_install_routes",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "lineRange": [
+        69,
+        70
+      ],
+      "summary": "Kiểm thử  với kịch bản install routes.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:test_poc_kickoff_uses_submission_workflow",
+      "type": "function",
+      "name": "test_poc_kickoff_uses_submission_workflow",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "lineRange": [
+        73,
+        87
+      ],
+      "summary": "Kiểm thử poc với kịch bản kickoff uses submission workflow.",
+      "tags": [
+        "test",
+        "pytest",
+        "poc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_FakeResponse",
+      "type": "class",
+      "name": "_FakeResponse",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "lineRange": [
+        37,
+        47
+      ],
+      "summary": "Nhóm kiểm thử _ fake response cho cybergym.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "_-fake-response"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_FakeClient",
+      "type": "class",
+      "name": "_FakeClient",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "lineRange": [
+        50,
+        66
+      ],
+      "summary": "Nhóm kiểm thử _ fake client cho cybergym.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "_-fake-client"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:TestLoadChallenges",
+      "type": "class",
+      "name": "TestLoadChallenges",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "lineRange": [
+        90,
+        108
+      ],
+      "summary": "Nhóm kiểm thử load challenges cho cybergym.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "load-challenges"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:TestEvaluate",
+      "type": "class",
+      "name": "TestEvaluate",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "lineRange": [
+        111,
+        207
+      ],
+      "summary": "Nhóm kiểm thử evaluate cho cybergym.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "evaluate"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "type": "file",
+      "name": "test_harness.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness.py",
+      "summary": "Kiểm thử Harness: chạy challenge với docker/docker giả và provider giả.",
+      "tags": [
+        "test",
+        "pytest",
+        "harness"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_isolate_home",
+      "type": "function",
+      "name": "_isolate_home",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness.py",
+      "lineRange": [
+        27,
+        45
+      ],
+      "summary": "Kiểm thử  với kịch bản isolate home.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_challenge",
+      "type": "function",
+      "name": "_make_challenge",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness.py",
+      "lineRange": [
+        48,
+        56
+      ],
+      "summary": "Kiểm thử  với kịch bản make challenge.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_provider",
+      "type": "function",
+      "name": "_make_provider",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness.py",
+      "lineRange": [
+        59,
+        79
+      ],
+      "summary": "Kiểm thử  với kịch bản make provider.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_harness.py:TestHarness",
+      "type": "class",
+      "name": "TestHarness",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness.py",
+      "lineRange": [
+        82,
+        420
+      ],
+      "summary": "Nhóm kiểm thử harness cho harness.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "harness"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "type": "file",
+      "name": "test_harness_cost.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "summary": "Kiểm thử truy vấn cost của Harness: cộng spend, non-200, rỗng và bỏ qua non-numeric.",
+      "tags": [
+        "test",
+        "pytest",
+        "cost"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "type": "function",
+      "name": "_harness_with_mock",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "lineRange": [
+        42,
+        64
+      ],
+      "summary": "Kiểm thử  với kịch bản harness with mock.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_sums_spend_rows",
+      "type": "function",
+      "name": "test_query_cost_sums_spend_rows",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "lineRange": [
+        68,
+        79
+      ],
+      "summary": "Kiểm thử query với kịch bản cost sums spend rows.",
+      "tags": [
+        "test",
+        "pytest",
+        "query"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_returns_none_on_non_200",
+      "type": "function",
+      "name": "test_query_cost_returns_none_on_non_200",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "lineRange": [
+        83,
+        89
+      ],
+      "summary": "Kiểm thử query với kịch bản cost returns none on non 200.",
+      "tags": [
+        "test",
+        "pytest",
+        "query"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_zero_when_no_rows",
+      "type": "function",
+      "name": "test_query_cost_zero_when_no_rows",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "lineRange": [
+        93,
+        99
+      ],
+      "summary": "Kiểm thử query với kịch bản cost zero when no rows.",
+      "tags": [
+        "test",
+        "pytest",
+        "query"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_ignores_non_numeric_spend",
+      "type": "function",
+      "name": "test_query_cost_ignores_non_numeric_spend",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "lineRange": [
+        103,
+        115
+      ],
+      "summary": "Kiểm thử query với kịch bản cost ignores non numeric spend.",
+      "tags": [
+        "test",
+        "pytest",
+        "query"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_StubProvider",
+      "type": "class",
+      "name": "_StubProvider",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "lineRange": [
+        21,
+        39
+      ],
+      "summary": "Nhóm kiểm thử _ stub provider cho harness.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "_-stub-provider"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "type": "file",
+      "name": "test_mhbench_provider.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "summary": "Kiểm thử provider MHBench: flag, SSH key, topology ngoài và registry.",
+      "tags": [
+        "test",
+        "pytest",
+        "mhbench"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_write_config",
+      "type": "function",
+      "name": "_write_config",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        51,
+        74
+      ],
+      "summary": "Kiểm thử  với kịch bản write config.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_mock_state",
+      "type": "function",
+      "name": "_mock_state",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        77,
+        89
+      ],
+      "summary": "Kiểm thử  với kịch bản mock state.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_valid_external_section",
+      "type": "function",
+      "name": "_valid_external_section",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        154,
+        161
+      ],
+      "summary": "Kiểm thử  với kịch bản valid external section.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_hosts",
+      "type": "function",
+      "name": "_hosts",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        213,
+        215
+      ],
+      "summary": "Kiểm thử  với kịch bản hosts.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_write_generated_spec",
+      "type": "function",
+      "name": "_write_generated_spec",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        276,
+        308
+      ],
+      "summary": "Kiểm thử  với kịch bản write generated spec.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_challenge",
+      "type": "function",
+      "name": "_challenge",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        438,
+        446
+      ],
+      "summary": "Kiểm thử  với kịch bản challenge.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestExpectedFlag",
+      "type": "class",
+      "name": "TestExpectedFlag",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        92,
+        109
+      ],
+      "summary": "Nhóm kiểm thử expected flag cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "expected-flag"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestResolveSshKeyPath",
+      "type": "class",
+      "name": "TestResolveSshKeyPath",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        112,
+        151
+      ],
+      "summary": "Nhóm kiểm thử resolve ssh key path cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "resolve-ssh-key-path"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestResolveExternalTopology",
+      "type": "class",
+      "name": "TestResolveExternalTopology",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        164,
+        210
+      ],
+      "summary": "Nhóm kiểm thử resolve external topology cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "resolve-external-topology"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestSelectFlagTarget",
+      "type": "class",
+      "name": "TestSelectFlagTarget",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        218,
+        273
+      ],
+      "summary": "Nhóm kiểm thử select flag target cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "select-flag-target"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestLoadGeneratedTopologies",
+      "type": "class",
+      "name": "TestLoadGeneratedTopologies",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        311,
+        363
+      ],
+      "summary": "Nhóm kiểm thử load generated topologies cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "load-generated-topologies"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestTopologiesRegistry",
+      "type": "class",
+      "name": "TestTopologiesRegistry",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        366,
+        392
+      ],
+      "summary": "Nhóm kiểm thử topologies registry cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "topologies-registry"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestLoadChallenges",
+      "type": "class",
+      "name": "TestLoadChallenges",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        395,
+        435
+      ],
+      "summary": "Nhóm kiểm thử load challenges cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "load-challenges"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestSetupErrorPaths",
+      "type": "class",
+      "name": "TestSetupErrorPaths",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        449,
+        491
+      ],
+      "summary": "Nhóm kiểm thử setup error paths cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "setup-error-paths"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestExternalModeSetup",
+      "type": "class",
+      "name": "TestExternalModeSetup",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        494,
+        636
+      ],
+      "summary": "Nhóm kiểm thử external mode setup cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "external-mode-setup"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestEvaluate",
+      "type": "class",
+      "name": "TestEvaluate",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        639,
+        676
+      ],
+      "summary": "Nhóm kiểm thử evaluate cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "evaluate"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestTeardown",
+      "type": "class",
+      "name": "TestTeardown",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "lineRange": [
+        679,
+        714
+      ],
+      "summary": "Nhóm kiểm thử teardown cho mhbench.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "teardown"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "type": "file",
+      "name": "test_provenance.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "summary": "Kiểm thử provenance: ghi source artifact, model assignments, image container và nối vào reporter/runner.",
+      "tags": [
+        "test",
+        "pytest",
+        "provenance"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:_git",
+      "type": "function",
+      "name": "_git",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        22,
+        30
+      ],
+      "summary": "Kiểm thử  với kịch bản git.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_records_source_artifacts_and_sanitized_config",
+      "type": "function",
+      "name": "test_capture_run_provenance_records_source_artifacts_and_sanitized_config",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        33,
+        96
+      ],
+      "summary": "Kiểm thử capture với kịch bản run provenance records source artifacts and sanitized config.",
+      "tags": [
+        "test",
+        "pytest",
+        "capture"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_marks_uncommitted_source",
+      "type": "function",
+      "name": "test_capture_run_provenance_marks_uncommitted_source",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        99,
+        120
+      ],
+      "summary": "Kiểm thử capture với kịch bản run provenance marks uncommitted source.",
+      "tags": [
+        "test",
+        "pytest",
+        "capture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_declared_model_assignments_uses_explicit_priority_and_role_override",
+      "type": "function",
+      "name": "test_capture_declared_model_assignments_uses_explicit_priority_and_role_override",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        123,
+        149
+      ],
+      "summary": "Kiểm thử capture với kịch bản declared model assignments uses explicit priority and role override.",
+      "tags": [
+        "test",
+        "pytest",
+        "capture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_declared_models_rejects_container_priority_mismatch",
+      "type": "function",
+      "name": "test_capture_declared_models_rejects_container_priority_mismatch",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        152,
+        170
+      ],
+      "summary": "Kiểm thử capture với kịch bản declared models rejects container priority mismatch.",
+      "tags": [
+        "test",
+        "pytest",
+        "capture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_artifact_hash_ignores_generated_python_cache",
+      "type": "function",
+      "name": "test_artifact_hash_ignores_generated_python_cache",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        173,
+        198
+      ],
+      "summary": "Kiểm thử artifact với kịch bản hash ignores generated python cache.",
+      "tags": [
+        "test",
+        "pytest",
+        "artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_container_images_prefers_registry_digest_and_keeps_local_image_id",
+      "type": "function",
+      "name": "test_capture_container_images_prefers_registry_digest_and_keeps_local_image_id",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        201,
+        234
+      ],
+      "summary": "Kiểm thử capture với kịch bản container images prefers registry digest and keeps local image id.",
+      "tags": [
+        "test",
+        "pytest",
+        "capture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_container_images_excludes_unrelated_running_projects",
+      "type": "function",
+      "name": "test_capture_container_images_excludes_unrelated_running_projects",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        237,
+        258
+      ],
+      "summary": "Kiểm thử capture với kịch bản container images excludes unrelated running projects.",
+      "tags": [
+        "test",
+        "pytest",
+        "capture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_reporter_exposes_provenance_in_batch_index_and_markdown",
+      "type": "function",
+      "name": "test_reporter_exposes_provenance_in_batch_index_and_markdown",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        261,
+        302
+      ],
+      "summary": "Kiểm thử reporter với kịch bản exposes provenance in batch index and markdown.",
+      "tags": [
+        "test",
+        "pytest",
+        "reporter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "type": "function",
+      "name": "test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "lineRange": [
+        305,
+        366
+      ],
+      "summary": "Kiểm thử build với kịch bản run provenance wires runtime inputs into reproducibility record.",
+      "tags": [
+        "test",
+        "pytest",
+        "build"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "type": "file",
+      "name": "test_schemas.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "summary": "Kiểm thử schema benchmark: tạo Challenge/Result/Report/Filter và flag pattern.",
+      "tags": [
+        "test",
+        "pytest",
+        "schema"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestChallenge",
+      "type": "class",
+      "name": "TestChallenge",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "lineRange": [
+        22,
+        65
+      ],
+      "summary": "Nhóm kiểm thử challenge cho schemas.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "challenge"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestChallengeResult",
+      "type": "class",
+      "name": "TestChallengeResult",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "lineRange": [
+        68,
+        82
+      ],
+      "summary": "Nhóm kiểm thử challenge result cho schemas.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "challenge-result"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestBenchmarkReport",
+      "type": "class",
+      "name": "TestBenchmarkReport",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "lineRange": [
+        85,
+        177
+      ],
+      "summary": "Nhóm kiểm thử benchmark report cho schemas.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "benchmark-report"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestFilterConfig",
+      "type": "class",
+      "name": "TestFilterConfig",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "lineRange": [
+        180,
+        188
+      ],
+      "summary": "Nhóm kiểm thử filter config cho schemas.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "filter-config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestSetupResult",
+      "type": "class",
+      "name": "TestSetupResult",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "lineRange": [
+        191,
+        207
+      ],
+      "summary": "Nhóm kiểm thử setup result cho schemas.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "setup-result"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "type": "file",
+      "name": "test_scorer.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "summary": "Kiểm thử Scorer với kết quả pha trộn.",
+      "tags": [
+        "test",
+        "pytest",
+        "scorer"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_scorer.py:_make_result",
+      "type": "function",
+      "name": "_make_result",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "lineRange": [
+        11,
+        23
+      ],
+      "summary": "Kiểm thử  với kịch bản make result.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_scorer.py:_provenance",
+      "type": "function",
+      "name": "_provenance",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "lineRange": [
+        26,
+        41
+      ],
+      "summary": "Kiểm thử  với kịch bản provenance.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_scorer.py:TestScorer",
+      "type": "class",
+      "name": "TestScorer",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "lineRange": [
+        44,
+        175
+      ],
+      "summary": "Nhóm kiểm thử scorer cho scorer.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "scorer"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "type": "file",
+      "name": "test_xbow_provider.py",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "summary": "Kiểm thử provider XBOW: nạp challenge, hash flag và đánh giá.",
+      "tags": [
+        "test",
+        "pytest",
+        "xbow"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:_create_mock_benchmarks",
+      "type": "function",
+      "name": "_create_mock_benchmarks",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "lineRange": [
+        14,
+        38
+      ],
+      "summary": "Kiểm thử  với kịch bản create mock benchmarks.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:_mock_state",
+      "type": "function",
+      "name": "_mock_state",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "lineRange": [
+        41,
+        53
+      ],
+      "summary": "Kiểm thử  với kịch bản mock state.",
+      "tags": [
+        "test",
+        "pytest",
+        "case"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestLoadChallenges",
+      "type": "class",
+      "name": "TestLoadChallenges",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "lineRange": [
+        56,
+        106
+      ],
+      "summary": "Nhóm kiểm thử load challenges cho xbow.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "load-challenges"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestFlagHash",
+      "type": "class",
+      "name": "TestFlagHash",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "lineRange": [
+        109,
+        121
+      ],
+      "summary": "Nhóm kiểm thử flag hash cho xbow.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "flag-hash"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestEvaluate",
+      "type": "class",
+      "name": "TestEvaluate",
+      "filePath": "packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "lineRange": [
+        124,
+        172
+      ],
+      "summary": "Nhóm kiểm thử evaluate cho xbow.py.",
+      "tags": [
+        "test",
+        "pytest",
+        "evaluate"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:benchmark/config.py",
+      "target": "function:benchmark/config.py:_default_langgraph_url",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/config.py",
+      "target": "function:benchmark/config.py:_default_langgraph_url",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/config.py",
+      "target": "function:benchmark/config.py:_default_litellm_url",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/config.py",
+      "target": "function:benchmark/config.py:_default_litellm_url",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/config.py",
+      "target": "class:benchmark/config.py:BenchmarkConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/config.py",
+      "target": "class:benchmark/config.py:BenchmarkConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "function:benchmark/harness.py:_run_docker",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "function:benchmark/harness.py:_run_docker",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "function:benchmark/harness.py:_sum_token_usage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "function:benchmark/harness.py:_sum_token_usage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "function:benchmark/harness.py:_build_kickoff_prompt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "function:benchmark/harness.py:_build_kickoff_prompt",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "class:benchmark/harness.py:AgentResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "class:benchmark/harness.py:AgentResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "class:benchmark/harness.py:_ActiveRun",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "class:benchmark/harness.py:_ActiveRun",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "class:benchmark/harness.py:Harness",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "class:benchmark/harness.py:Harness",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:capture_declared_model_assignments",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:capture_declared_model_assignments",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:capture_container_images",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:capture_container_images",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:_git",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:_git",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:_artifact_hash",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:_artifact_hash",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:_sanitize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:_sanitize",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:_benchmark_revisions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:_benchmark_revisions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:capture_run_provenance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "function:benchmark/provenance.py:capture_run_provenance",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "class:benchmark/provenance.py:ProvenanceCaptureError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "class:benchmark/provenance.py:ProvenanceCaptureError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/base.py",
+      "target": "class:benchmark/providers/base.py:BaseBenchmarkProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/base.py",
+      "target": "class:benchmark/providers/base.py:BaseBenchmarkProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "function:benchmark/providers/buttercup.py:_challenges_root",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "function:benchmark/providers/buttercup.py:_challenges_root",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "function:benchmark/providers/buttercup.py:_ensure_upstream",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "function:benchmark/providers/buttercup.py:_ensure_upstream",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "function:benchmark/providers/buttercup.py:_read_challenge_metadata",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "function:benchmark/providers/buttercup.py:_read_challenge_metadata",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "class:benchmark/providers/buttercup.py:ButtercupProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "class:benchmark/providers/buttercup.py:ButtercupProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/cybench.py",
+      "target": "class:benchmark/providers/cybench.py:CybenchProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/cybench.py",
+      "target": "class:benchmark/providers/cybench.py:CybenchProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "function:benchmark/providers/cybergym.py:_is_crash",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "function:benchmark/providers/cybergym.py:_is_crash",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "function:benchmark/providers/cybergym.py:_fix_survives",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "function:benchmark/providers/cybergym.py:_fix_survives",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "class:benchmark/providers/cybergym.py:CyberGymProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "class:benchmark/providers/cybergym.py:CyberGymProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "function:benchmark/providers/exploitbench.py:_parse_year_from_bug_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "function:benchmark/providers/exploitbench.py:_parse_year_from_bug_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "function:benchmark/providers/exploitbench.py:_classify_subsystem",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "function:benchmark/providers/exploitbench.py:_classify_subsystem",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "function:benchmark/providers/exploitbench.py:_iter_balanced_json_objects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "function:benchmark/providers/exploitbench.py:_iter_balanced_json_objects",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "class:benchmark/providers/exploitbench.py:ExploitBenchProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "class:benchmark/providers/exploitbench.py:ExploitBenchProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:best_tier_for_caps",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:best_tier_for_caps",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:capability_score",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:capability_score",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:capability_mean",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:capability_mean",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:merge_capabilities",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:merge_capabilities",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_load_generated_topologies",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_load_generated_topologies",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_workspace_root",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_workspace_root",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_expected_flag",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_expected_flag",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_resolve_ssh_key_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_resolve_ssh_key_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_resolve_external_topology",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_resolve_external_topology",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_select_flag_target",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "function:benchmark/providers/mhbench.py:_select_flag_target",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:HostInfo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:HostInfo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:TopologySnapshot",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:TopologySnapshot",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:TopologySpec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:TopologySpec",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:MHBenchProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:MHBenchProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:_OpenStackQueryError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:_OpenStackQueryError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:_SshKeyStageError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:_SshKeyStageError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:_PostSetupError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:_PostSetupError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:ExternalTopology",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "class:benchmark/providers/mhbench.py:ExternalTopology",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/xbow.py",
+      "target": "class:benchmark/providers/xbow.py:XBOWProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/providers/xbow.py",
+      "target": "class:benchmark/providers/xbow.py:XBOWProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/reporter.py",
+      "target": "class:benchmark/reporter.py:Reporter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/reporter.py",
+      "target": "class:benchmark/reporter.py:Reporter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_build_run_provenance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_build_run_provenance",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_build_provider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_build_provider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:run",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_run_sequential",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_run_sequential",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_run_sequential_async",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_run_sequential_async",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_run_parallel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "function:benchmark/runner.py:_run_parallel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:Challenge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:Challenge",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:SetupResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:SetupResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:ChallengeResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:ChallengeResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:RunProvenance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:RunProvenance",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:BenchmarkReport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:BenchmarkReport",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:FilterConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:FilterConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:ExploitBenchEnv",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:ExploitBenchEnv",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:ExploitBenchSpec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:ExploitBenchSpec",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:CyberGymSpec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "class:benchmark/schemas.py:CyberGymSpec",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/scorer.py",
+      "target": "class:benchmark/scorer.py:Scorer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/scorer.py",
+      "target": "class:benchmark/scorer.py:Scorer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/state.py",
+      "target": "class:benchmark/state.py:BenchmarkStepResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/state.py",
+      "target": "class:benchmark/state.py:BenchmarkStepResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/state.py",
+      "target": "class:benchmark/state.py:BenchmarkRunState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:benchmark/state.py",
+      "target": "class:benchmark/state.py:BenchmarkRunState",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:_write_task",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:_write_task",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:_state",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:_state",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:TestLoadChallenges",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:TestLoadChallenges",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:TestEvaluate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:TestEvaluate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_write_spec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_write_spec",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_install_routes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_install_routes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:test_poc_kickoff_uses_submission_workflow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:test_poc_kickoff_uses_submission_workflow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_FakeResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_FakeResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_FakeClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_FakeClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:TestLoadChallenges",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:TestLoadChallenges",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:TestEvaluate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:TestEvaluate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_isolate_home",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_isolate_home",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_challenge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_challenge",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_provider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_provider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_harness.py:TestHarness",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_harness.py:TestHarness",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_sums_spend_rows",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_sums_spend_rows",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_returns_none_on_non_200",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_returns_none_on_non_200",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_zero_when_no_rows",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_zero_when_no_rows",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_ignores_non_numeric_spend",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_ignores_non_numeric_spend",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_StubProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_StubProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_write_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_write_config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_mock_state",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_mock_state",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_valid_external_section",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_valid_external_section",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_hosts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_hosts",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_write_generated_spec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_write_generated_spec",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_challenge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_challenge",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestExpectedFlag",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestExpectedFlag",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestResolveSshKeyPath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestResolveSshKeyPath",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestResolveExternalTopology",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestResolveExternalTopology",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestSelectFlagTarget",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestSelectFlagTarget",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestLoadGeneratedTopologies",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestLoadGeneratedTopologies",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestTopologiesRegistry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestTopologiesRegistry",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestLoadChallenges",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestLoadChallenges",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestSetupErrorPaths",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestSetupErrorPaths",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestExternalModeSetup",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestExternalModeSetup",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestEvaluate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestEvaluate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestTeardown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:TestTeardown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:_git",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:_git",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_records_source_artifacts_and_sanitized_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_records_source_artifacts_and_sanitized_config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_marks_uncommitted_source",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_marks_uncommitted_source",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_declared_model_assignments_uses_explicit_priority_and_role_override",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_declared_model_assignments_uses_explicit_priority_and_role_override",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_declared_models_rejects_container_priority_mismatch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_declared_models_rejects_container_priority_mismatch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_artifact_hash_ignores_generated_python_cache",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_artifact_hash_ignores_generated_python_cache",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_container_images_prefers_registry_digest_and_keeps_local_image_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_container_images_prefers_registry_digest_and_keeps_local_image_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_container_images_excludes_unrelated_running_projects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_container_images_excludes_unrelated_running_projects",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_reporter_exposes_provenance_in_batch_index_and_markdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_reporter_exposes_provenance_in_batch_index_and_markdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestChallenge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestChallenge",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestChallengeResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestChallengeResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestBenchmarkReport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestBenchmarkReport",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestFilterConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestFilterConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestSetupResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_schemas.py:TestSetupResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_scorer.py:_make_result",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_scorer.py:_make_result",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_scorer.py:_provenance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_scorer.py:_provenance",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_scorer.py:TestScorer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_scorer.py:TestScorer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:_create_mock_benchmarks",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:_create_mock_benchmarks",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:_mock_state",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:_mock_state",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestLoadChallenges",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestLoadChallenges",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestFlagHash",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestFlagHash",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestEvaluate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:TestEvaluate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/__init__.py",
+      "target": "file:benchmark/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/__init__.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/__main__.py",
+      "target": "file:benchmark/runner.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "file:benchmark/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "file:benchmark/provenance.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/__init__.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/__init__.py",
+      "target": "file:benchmark/providers/buttercup.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/__init__.py",
+      "target": "file:benchmark/providers/cybench.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/__init__.py",
+      "target": "file:benchmark/providers/cybergym.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/buttercup.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/cybench.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/cybench.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/cybench.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "file:benchmark/providers/exploitbench_capabilities.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/exploitbench_capabilities.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/xbow.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/xbow.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/providers/xbow.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/reporter.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/harness.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/provenance.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/providers/cybench.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/providers/cybergym.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/providers/exploitbench.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/providers/mhbench.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/providers/xbow.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/reporter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:benchmark/scorer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/scorer.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "file:benchmark/providers/cybench.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "file:benchmark/harness.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "file:benchmark/providers/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "file:benchmark/providers/cybergym.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "file:benchmark/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "file:benchmark/harness.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "file:benchmark/provenance.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "file:benchmark/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "file:benchmark/harness.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "file:benchmark/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "file:benchmark/providers/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "file:benchmark/providers/mhbench.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "file:benchmark/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "file:benchmark/provenance.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "file:benchmark/reporter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "file:benchmark/runner.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "target": "file:benchmark/scorer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "file:benchmark/providers/xbow.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "file:benchmark/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "target": "file:benchmark/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:benchmark/provenance.py:capture_declared_model_assignments",
+      "target": "class:benchmark/provenance.py:ProvenanceCaptureError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:capture_container_images",
+      "target": "class:benchmark/provenance.py:ProvenanceCaptureError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:_git",
+      "target": "class:benchmark/provenance.py:ProvenanceCaptureError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:_artifact_hash",
+      "target": "class:benchmark/provenance.py:ProvenanceCaptureError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:_benchmark_revisions",
+      "target": "function:benchmark/provenance.py:_git",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:capture_run_provenance",
+      "target": "function:benchmark/provenance.py:_git",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:capture_run_provenance",
+      "target": "function:benchmark/provenance.py:_artifact_hash",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:capture_run_provenance",
+      "target": "function:benchmark/provenance.py:_sanitize",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:capture_run_provenance",
+      "target": "class:benchmark/provenance.py:ProvenanceCaptureError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:capture_run_provenance",
+      "target": "class:benchmark/schemas.py:RunProvenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/provenance.py:capture_run_provenance",
+      "target": "function:benchmark/provenance.py:_benchmark_revisions",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/providers/exploitbench_capabilities.py:capability_mean",
+      "target": "function:benchmark/providers/exploitbench_capabilities.py:capability_score",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/providers/mhbench.py:_load_generated_topologies",
+      "target": "class:benchmark/providers/mhbench.py:TopologySpec",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/providers/mhbench.py:_resolve_external_topology",
+      "target": "class:benchmark/providers/mhbench.py:ExternalTopology",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_build_run_provenance",
+      "target": "function:benchmark/provenance.py:capture_declared_model_assignments",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_build_run_provenance",
+      "target": "function:benchmark/provenance.py:capture_run_provenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_build_run_provenance",
+      "target": "function:benchmark/provenance.py:capture_container_images",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_build_provider",
+      "target": "class:benchmark/providers/xbow.py:XBOWProvider",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_build_provider",
+      "target": "class:benchmark/providers/exploitbench.py:ExploitBenchProvider",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_build_provider",
+      "target": "class:benchmark/providers/mhbench.py:MHBenchProvider",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_build_provider",
+      "target": "class:benchmark/providers/cybench.py:CybenchProvider",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_build_provider",
+      "target": "class:benchmark/providers/cybergym.py:CyberGymProvider",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:run",
+      "target": "class:benchmark/schemas.py:FilterConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:run",
+      "target": "class:benchmark/config.py:BenchmarkConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:run",
+      "target": "function:benchmark/runner.py:_build_provider",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:run",
+      "target": "function:benchmark/runner.py:_build_run_provenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:run",
+      "target": "class:benchmark/harness.py:Harness",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:run",
+      "target": "function:benchmark/runner.py:_run_parallel",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:run",
+      "target": "function:benchmark/runner.py:_run_sequential",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:run",
+      "target": "class:benchmark/reporter.py:Reporter",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/runner.py:_run_sequential",
+      "target": "function:benchmark/runner.py:_run_sequential_async",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:_state",
+      "target": "class:benchmark/state.py:BenchmarkRunState",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_cybench_provider.py:_state",
+      "target": "class:benchmark/state.py:BenchmarkStepResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_install_routes",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:_FakeClient",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:test_poc_kickoff_uses_submission_workflow",
+      "target": "function:benchmark/harness.py:_build_kickoff_prompt",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py:test_poc_kickoff_uses_submission_workflow",
+      "target": "class:benchmark/schemas.py:Challenge",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_challenge",
+      "target": "class:benchmark/schemas.py:Challenge",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_provider",
+      "target": "class:benchmark/schemas.py:SetupResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness.py:_make_provider",
+      "target": "class:benchmark/schemas.py:ChallengeResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "target": "class:benchmark/config.py:BenchmarkConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "target": "class:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_StubProvider",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "target": "class:benchmark/harness.py:Harness",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_sums_spend_rows",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_returns_none_on_non_200",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_zero_when_no_rows",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:test_query_cost_ignores_non_numeric_spend",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_harness_cost.py:_harness_with_mock",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_mock_state",
+      "target": "class:benchmark/state.py:BenchmarkRunState",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_mock_state",
+      "target": "class:benchmark/state.py:BenchmarkStepResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_hosts",
+      "target": "class:benchmark/providers/mhbench.py:HostInfo",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py:_challenge",
+      "target": "class:benchmark/schemas.py:Challenge",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_records_source_artifacts_and_sanitized_config",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:_git",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_records_source_artifacts_and_sanitized_config",
+      "target": "function:benchmark/provenance.py:capture_run_provenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_marks_uncommitted_source",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:_git",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_run_provenance_marks_uncommitted_source",
+      "target": "function:benchmark/provenance.py:capture_run_provenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_declared_model_assignments_uses_explicit_priority_and_role_override",
+      "target": "function:benchmark/provenance.py:capture_declared_model_assignments",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_declared_models_rejects_container_priority_mismatch",
+      "target": "function:benchmark/provenance.py:capture_declared_model_assignments",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_artifact_hash_ignores_generated_python_cache",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:_git",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_artifact_hash_ignores_generated_python_cache",
+      "target": "function:benchmark/provenance.py:capture_run_provenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_container_images_prefers_registry_digest_and_keeps_local_image_id",
+      "target": "function:benchmark/provenance.py:capture_container_images",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_capture_container_images_excludes_unrelated_running_projects",
+      "target": "function:benchmark/provenance.py:capture_container_images",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_reporter_exposes_provenance_in_batch_index_and_markdown",
+      "target": "class:benchmark/schemas.py:BenchmarkReport",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_reporter_exposes_provenance_in_batch_index_and_markdown",
+      "target": "class:benchmark/schemas.py:RunProvenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_reporter_exposes_provenance_in_batch_index_and_markdown",
+      "target": "class:benchmark/reporter.py:Reporter",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "target": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:_git",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "target": "function:benchmark/runner.py:_build_run_provenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "target": "class:benchmark/config.py:BenchmarkConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "target": "class:benchmark/schemas.py:FilterConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_provenance.py:test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record",
+      "target": "class:benchmark/schemas.py:Challenge",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_scorer.py:_make_result",
+      "target": "class:benchmark/schemas.py:ChallengeResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_scorer.py:_provenance",
+      "target": "class:benchmark/schemas.py:RunProvenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:_mock_state",
+      "target": "class:benchmark/state.py:BenchmarkRunState",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/benchmark/test_xbow_provider.py:_mock_state",
+      "target": "class:benchmark/state.py:BenchmarkStepResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/providers/cybench.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/providers/cybergym.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_harness.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/harness.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/providers/mhbench.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/provenance.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/reporter.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/runner.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/schemas.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/scorer.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:benchmark/providers/xbow.py",
+      "target": "file:packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

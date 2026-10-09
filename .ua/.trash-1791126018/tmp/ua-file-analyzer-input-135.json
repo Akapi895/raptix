@@ -1,0 +1,182 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 141,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/ato-methodology/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 104,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/bfla/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 251,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/blind-sqli/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 213,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/business-logic/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 144,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/cache-deception/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 123,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/clickjacking/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 115,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/command-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 118,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/cors/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 99,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/crypto/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 328,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/csrf/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 123,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/cve/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 194,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/deserialization/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 305,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/dns-rebinding/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 223,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/dom-clobbering/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 127,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/graphql/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 111,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/header-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 229,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/hpp/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 189,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/idor/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 304,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/jwt/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 140,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/ldapi/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 85,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/lfi/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 334,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/mass-assignment/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 153,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/mfa-bypass/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 137,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/nosqli/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 116,
+   "fileCategory": "docs"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/ato-methodology/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/bfla/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/blind-sqli/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/business-logic/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/cache-deception/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/clickjacking/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/command-injection/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/cors/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/crypto/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/csrf/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/cve/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/deserialization/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/dns-rebinding/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/dom-clobbering/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/graphql/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/header-injection/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/hpp/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/idor/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/jwt/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/ldapi/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/lfi/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/mass-assignment/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/mfa-bypass/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/exploit/web/nosqli/SKILL.md": []
+ }
+}

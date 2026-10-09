@@ -1,0 +1,1813 @@
+{
+  "batchIndex": 20,
+  "batchFiles": [
+    {
+      "path": "raptix/skills/engine/__init__.py",
+      "language": "python",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/skills/engine/__main__.py",
+      "language": "python",
+      "sizeLines": 179,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/skills/engine/embed_ingest.py",
+      "language": "python",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/skills/engine/embeddings.py",
+      "language": "python",
+      "sizeLines": 259,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/skills/engine/proto/__init__.py",
+      "language": "python",
+      "sizeLines": 111,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/skills/engine/server/__init__.py",
+      "language": "python",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/skills/engine/server/app.py",
+      "language": "python",
+      "sizeLines": 207,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/skills/engine/server/neo4j_backend.py",
+      "language": "python",
+      "sizeLines": 583,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/skillogy/test_app.py",
+      "language": "python",
+      "sizeLines": 372,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/skillogy/test_embed_ingest.py",
+      "language": "python",
+      "sizeLines": 149,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/skillogy/test_embeddings.py",
+      "language": "python",
+      "sizeLines": 276,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/skillogy/test_find_skill_fusion.py",
+      "language": "python",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/skillogy/test_seed.py",
+      "language": "python",
+      "sizeLines": 44,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:raptix/skills/engine/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "raptix/skills/engine/__init__.py",
+      "summary": "Façade công khai của skills engine (Skillogy): re-export SkillEnvelope, proto dataclass và helper làm việc với backend Neo4j.",
+      "tags": [
+        "barrel",
+        "entry-point",
+        "skills-engine",
+        "facade"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/skills/engine/__main__.py",
+      "type": "file",
+      "name": "__main__.py",
+      "filePath": "raptix/skills/engine/__main__.py",
+      "summary": "Entry point tiến trình skills engine: dựng Neo4jBackend chờ Bolt sẵn sàng, seed graph nếu rỗng, khởi động REST và ingest embeddings nền.",
+      "tags": [
+        "entry-point",
+        "server",
+        "neo4j",
+        "skills-engine"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/skills/engine/__main__.py:_setup_logging",
+      "type": "function",
+      "name": "_setup_logging",
+      "filePath": "raptix/skills/engine/__main__.py",
+      "lineRange": [
+        43,
+        53
+      ],
+      "summary": "Cấu hình logging cho tiến trình engine theo mức cài đặt.",
+      "tags": [
+        "logging",
+        "utility",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/__main__.py:_build_backend",
+      "type": "function",
+      "name": "_build_backend",
+      "filePath": "raptix/skills/engine/__main__.py",
+      "lineRange": [
+        56,
+        62
+      ],
+      "summary": "Dựng Neo4jBackend từ cấu hình Bolt URI và thông tin xác thực.",
+      "tags": [
+        "neo4j",
+        "backend",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/__main__.py:_seed_if_empty",
+      "type": "function",
+      "name": "_seed_if_empty",
+      "filePath": "raptix/skills/engine/__main__.py",
+      "lineRange": [
+        65,
+        102
+      ],
+      "summary": "Seed phase/asset-type/MOC vào graph nếu chưa có dữ liệu; bỏ qua khi graph đã populated.",
+      "tags": [
+        "seed",
+        "neo4j",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/skills/engine/__main__.py:_start_rest",
+      "type": "function",
+      "name": "_start_rest",
+      "filePath": "raptix/skills/engine/__main__.py",
+      "lineRange": [
+        105,
+        118
+      ],
+      "summary": "Khởi chạy server REST (uvicorn) cho skills engine trên host/port cấu hình.",
+      "tags": [
+        "rest-api",
+        "server",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/__main__.py:_ingest_in_background",
+      "type": "function",
+      "name": "_ingest_in_background",
+      "filePath": "raptix/skills/engine/__main__.py",
+      "lineRange": [
+        121,
+        142
+      ],
+      "summary": "Chạy ingest embedding trong thread nền để không chặn khởi động REST.",
+      "tags": [
+        "embeddings",
+        "background",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/__main__.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "raptix/skills/engine/__main__.py",
+      "lineRange": [
+        145,
+        175
+      ],
+      "summary": "Orchestration khởi động engine: logging, backend, seed, REST rồi ingest embedding nền.",
+      "tags": [
+        "entry-point",
+        "orchestration",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:raptix/skills/engine/embed_ingest.py",
+      "type": "file",
+      "name": "embed_ingest.py",
+      "filePath": "raptix/skills/engine/embed_ingest.py",
+      "summary": "Ingest embedding kỹ năng: dựng văn bản embed từ metadata, bỏ qua bản ghi chưa đổi (input sha) và ghi vector vào Neo4j theo lô.",
+      "tags": [
+        "embeddings",
+        "ingest",
+        "neo4j",
+        "skills-engine"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/embed_ingest.py:build_embed_text",
+      "type": "function",
+      "name": "build_embed_text",
+      "filePath": "raptix/skills/engine/embed_ingest.py",
+      "lineRange": [
+        28,
+        38
+      ],
+      "summary": "Dựng văn bản embedding từ tên, mô tả và when_to_use, bỏ qua trường rỗng.",
+      "tags": [
+        "embeddings",
+        "utility",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/embed_ingest.py:ingest_embeddings",
+      "type": "function",
+      "name": "ingest_embeddings",
+      "filePath": "raptix/skills/engine/embed_ingest.py",
+      "lineRange": [
+        52,
+        100
+      ],
+      "summary": "Embed kỹ năng chưa có vector (so khớp input sha + model), ghi vector vào Neo4j theo lô và trả thống kê.",
+      "tags": [
+        "embeddings",
+        "ingest",
+        "neo4j"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:raptix/skills/engine/embeddings.py",
+      "type": "file",
+      "name": "embeddings.py",
+      "filePath": "raptix/skills/engine/embeddings.py",
+      "summary": "Client embedding tương thích OpenAI qua proxy nội bộ: cache đĩa theo sha, retry/backoff có Retry-After, batch giữ thứ tự và degrade an toàn.",
+      "tags": [
+        "embeddings",
+        "http-client",
+        "cache",
+        "skills-engine"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/skills/engine/embeddings.py:embed_model",
+      "type": "function",
+      "name": "embed_model",
+      "filePath": "raptix/skills/engine/embeddings.py",
+      "lineRange": [
+        71,
+        72
+      ],
+      "summary": "Trả tên model embedding từ cấu hình proxy.",
+      "tags": [
+        "embeddings",
+        "configuration",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/embeddings.py:embed_dim",
+      "type": "function",
+      "name": "embed_dim",
+      "filePath": "raptix/skills/engine/embeddings.py",
+      "lineRange": [
+        75,
+        89
+      ],
+      "summary": "Xác định số chiều vector embedding từ env override hoặc mặc định của model.",
+      "tags": [
+        "embeddings",
+        "configuration",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/embeddings.py:available",
+      "type": "function",
+      "name": "available",
+      "filePath": "raptix/skills/engine/embeddings.py",
+      "lineRange": [
+        101,
+        103
+      ],
+      "summary": "Kiểm tra proxy embedding đã được cấu hình hay chưa.",
+      "tags": [
+        "embeddings",
+        "availability",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/embeddings.py:_request_embeddings",
+      "type": "function",
+      "name": "_request_embeddings",
+      "filePath": "raptix/skills/engine/embeddings.py",
+      "lineRange": [
+        133,
+        179
+      ],
+      "summary": "Gọi API embeddings OpenAI-compatible, parse shape chuẩn và trả vector theo thứ tự.",
+      "tags": [
+        "embeddings",
+        "http",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:raptix/skills/engine/embeddings.py:_retry_after",
+      "type": "function",
+      "name": "_retry_after",
+      "filePath": "raptix/skills/engine/embeddings.py",
+      "lineRange": [
+        182,
+        192
+      ],
+      "summary": "Tính thời gian chờ backoff từ header Retry-After, có trần tối đa.",
+      "tags": [
+        "retry",
+        "backoff",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/embeddings.py:embed_batch",
+      "type": "function",
+      "name": "embed_batch",
+      "filePath": "raptix/skills/engine/embeddings.py",
+      "lineRange": [
+        195,
+        249
+      ],
+      "summary": "Embed một lô văn bản: cache hit trước, gọi proxy cho phần miss, giữ nguyên thứ tự và degrade trả None khi lỗi.",
+      "tags": [
+        "embeddings",
+        "batch",
+        "cache"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/skills/engine/embeddings.py:embed_text",
+      "type": "function",
+      "name": "embed_text",
+      "filePath": "raptix/skills/engine/embeddings.py",
+      "lineRange": [
+        252,
+        259
+      ],
+      "summary": "Embed một văn bản đơn với cache; lỗi fail-fast cho truy vấn thời gian thực.",
+      "tags": [
+        "embeddings",
+        "query",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/skills/engine/proto/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "raptix/skills/engine/proto/__init__.py",
+      "summary": "Giao thức dữ liệu skills engine: các dataclass SkillMeta/SkillEnvelope và request/response cho list, load, ingest skill.",
+      "tags": [
+        "protocol",
+        "data-model",
+        "skills-engine",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/skills/engine/proto/__init__.py:SkillMeta",
+      "type": "class",
+      "name": "SkillMeta",
+      "filePath": "raptix/skills/engine/proto/__init__.py",
+      "lineRange": [
+        19,
+        32
+      ],
+      "summary": "Metadata kỹ năng: tên, mô tả, when_to_use, path và tags.",
+      "tags": [
+        "protocol",
+        "data-model",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/skills/engine/proto/__init__.py:SkillEnvelope",
+      "type": "class",
+      "name": "SkillEnvelope",
+      "filePath": "raptix/skills/engine/proto/__init__.py",
+      "lineRange": [
+        36,
+        50
+      ],
+      "summary": "Phong bì kỹ năng đầy đủ: metadata + nội dung hướng dẫn, dùng cho load/ingest.",
+      "tags": [
+        "protocol",
+        "data-model",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/skills/engine/proto/__init__.py:SkillListRequest",
+      "type": "class",
+      "name": "SkillListRequest",
+      "filePath": "raptix/skills/engine/proto/__init__.py",
+      "lineRange": [
+        54,
+        61
+      ],
+      "summary": "Yêu cầu liệt kê kỹ năng: query, limit và filter.",
+      "tags": [
+        "protocol",
+        "data-model",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/skills/engine/proto/__init__.py:SkillListResponse",
+      "type": "class",
+      "name": "SkillListResponse",
+      "filePath": "raptix/skills/engine/proto/__init__.py",
+      "lineRange": [
+        65,
+        75
+      ],
+      "summary": "Phản hồi liệt kê: danh sách SkillMeta kèm thông tin truy vấn.",
+      "tags": [
+        "protocol",
+        "data-model",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/skills/engine/proto/__init__.py:SkillLoadRequest",
+      "type": "class",
+      "name": "SkillLoadRequest",
+      "filePath": "raptix/skills/engine/proto/__init__.py",
+      "lineRange": [
+        79,
+        82
+      ],
+      "summary": "Yêu cầu tải nội dung đầy đủ của một kỹ năng theo path.",
+      "tags": [
+        "protocol",
+        "data-model",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/skills/engine/proto/__init__.py:SkillIngestRequest",
+      "type": "class",
+      "name": "SkillIngestRequest",
+      "filePath": "raptix/skills/engine/proto/__init__.py",
+      "lineRange": [
+        86,
+        90
+      ],
+      "summary": "Yêu cầu ingest kỹ năng mới vào graph.",
+      "tags": [
+        "protocol",
+        "data-model",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/skills/engine/proto/__init__.py:SkillIngestResponse",
+      "type": "class",
+      "name": "SkillIngestResponse",
+      "filePath": "raptix/skills/engine/proto/__init__.py",
+      "lineRange": [
+        94,
+        100
+      ],
+      "summary": "Phản hồi ingest: trạng thái và số node/edge đã ghi.",
+      "tags": [
+        "protocol",
+        "data-model",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/skills/engine/server/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "raptix/skills/engine/server/__init__.py",
+      "summary": "Barrel package server của skills engine: re-export build_app và Neo4jBackend.",
+      "tags": [
+        "barrel",
+        "server",
+        "skills-engine"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:raptix/skills/engine/server/app.py",
+      "type": "file",
+      "name": "app.py",
+      "filePath": "raptix/skills/engine/server/app.py",
+      "summary": "build_app: REST API cho skills engine (health, find, load, traverse, moc) trên backend Neo4j, kèm bearer auth tùy chọn.",
+      "tags": [
+        "rest-api",
+        "server",
+        "skills-engine",
+        "fastapi"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/skills/engine/server/app.py:build_app",
+      "type": "function",
+      "name": "build_app",
+      "filePath": "raptix/skills/engine/server/app.py",
+      "lineRange": [
+        80,
+        207
+      ],
+      "summary": "Dựng FastAPI app cho skills engine: các endpoint health/find/load/traverse/moc, gắn backend và bearer auth tùy chọn.",
+      "tags": [
+        "rest-api",
+        "fastapi",
+        "skills-engine"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "type": "file",
+      "name": "neo4j_backend.py",
+      "filePath": "raptix/skills/engine/server/neo4j_backend.py",
+      "summary": "Neo4jBackend: truy vấn đồ thị kỹ năng (find fusion keyword+vector, load envelope, traverse, MOC) với guard read-only chặn Cypher ghi.",
+      "tags": [
+        "neo4j",
+        "cypher",
+        "skills-engine",
+        "security"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:raptix/skills/engine/server/neo4j_backend.py:_path_under_any_prefix",
+      "type": "function",
+      "name": "_path_under_any_prefix",
+      "filePath": "raptix/skills/engine/server/neo4j_backend.py",
+      "lineRange": [
+        48,
+        59
+      ],
+      "summary": "Kiểm tra đường dẫn kỹ năng nằm trong một trong các prefix được phép.",
+      "tags": [
+        "security",
+        "validation",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:raptix/skills/engine/server/neo4j_backend.py:assert_read_only",
+      "type": "function",
+      "name": "assert_read_only",
+      "filePath": "raptix/skills/engine/server/neo4j_backend.py",
+      "lineRange": [
+        77,
+        85
+      ],
+      "summary": "Chặn câu Cypher ghi (CREATE/MERGE/DELETE/SET/CALL ghi) — chỉ cho phép đọc.",
+      "tags": [
+        "security",
+        "cypher",
+        "guard"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:raptix/skills/engine/server/neo4j_backend.py:Neo4jBackend",
+      "type": "class",
+      "name": "Neo4jBackend",
+      "filePath": "raptix/skills/engine/server/neo4j_backend.py",
+      "lineRange": [
+        88,
+        583
+      ],
+      "summary": "Backend Neo4j cho skills engine: find fusion (keyword + vector), load envelope, traverse đồ thị, đọc MOC và seed; mọi truy vấn đi qua guard read-only.",
+      "tags": [
+        "neo4j",
+        "cypher",
+        "skills-engine"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/unit/skillogy/test_app.py",
+      "type": "file",
+      "name": "test_app.py",
+      "filePath": "tests/unit/skillogy/test_app.py",
+      "summary": "Kiểm thử REST API skills engine với backend giả: health, find, load, traverse, moc và bearer auth.",
+      "tags": [
+        "test",
+        "rest-api",
+        "skills-engine"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_app.py:_FakeBackend",
+      "type": "class",
+      "name": "_FakeBackend",
+      "filePath": "tests/unit/skillogy/test_app.py",
+      "lineRange": [
+        20,
+        109
+      ],
+      "summary": "Backend giả trả dữ liệu kỹ năng cố định cho test REST API.",
+      "tags": [
+        "test-double",
+        "fixture",
+        "backend"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_app.py:TestHealth",
+      "type": "class",
+      "name": "TestHealth",
+      "filePath": "tests/unit/skillogy/test_app.py",
+      "lineRange": [
+        115,
+        134
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho Health.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_app"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_app.py:TestFind",
+      "type": "class",
+      "name": "TestFind",
+      "filePath": "tests/unit/skillogy/test_app.py",
+      "lineRange": [
+        140,
+        187
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho Find.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_app"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_app.py:TestLoad",
+      "type": "class",
+      "name": "TestLoad",
+      "filePath": "tests/unit/skillogy/test_app.py",
+      "lineRange": [
+        193,
+        245
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho Load.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_app"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_app.py:TestTraverse",
+      "type": "class",
+      "name": "TestTraverse",
+      "filePath": "tests/unit/skillogy/test_app.py",
+      "lineRange": [
+        251,
+        284
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho Traverse.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_app"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_app.py:TestMoc",
+      "type": "class",
+      "name": "TestMoc",
+      "filePath": "tests/unit/skillogy/test_app.py",
+      "lineRange": [
+        290,
+        316
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho Moc.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_app"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_app.py:TestAuth",
+      "type": "class",
+      "name": "TestAuth",
+      "filePath": "tests/unit/skillogy/test_app.py",
+      "lineRange": [
+        322,
+        359
+      ],
+      "summary": "Bộ kiểm thử đơn vị cho Auth.",
+      "tags": [
+        "test",
+        "fixture",
+        "test_app"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "type": "file",
+      "name": "test_embed_ingest.py",
+      "filePath": "tests/unit/skillogy/test_embed_ingest.py",
+      "summary": "Kiểm thử ingest embedding: bỏ qua khi thiếu proxy, tái embed khi nội dung/model đổi và đếm bản ghi lỗi.",
+      "tags": [
+        "test",
+        "embeddings",
+        "skills-engine"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embed_ingest.py:test_embeds_all_missing",
+      "type": "function",
+      "name": "test_embeds_all_missing",
+      "filePath": "tests/unit/skillogy/test_embed_ingest.py",
+      "lineRange": [
+        53,
+        64
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra embeds all missing.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embed_ingest"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embed_ingest.py:test_skips_unchanged_by_sha",
+      "type": "function",
+      "name": "test_skips_unchanged_by_sha",
+      "filePath": "tests/unit/skillogy/test_embed_ingest.py",
+      "lineRange": [
+        67,
+        84
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra skips unchanged by sha.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embed_ingest"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embed_ingest.py:test_changed_content_reembeds",
+      "type": "function",
+      "name": "test_changed_content_reembeds",
+      "filePath": "tests/unit/skillogy/test_embed_ingest.py",
+      "lineRange": [
+        87,
+        101
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra changed content reembeds.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embed_ingest"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embed_ingest.py:test_model_change_reembeds",
+      "type": "function",
+      "name": "test_model_change_reembeds",
+      "filePath": "tests/unit/skillogy/test_embed_ingest.py",
+      "lineRange": [
+        104,
+        121
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra model change reembeds.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embed_ingest"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embed_ingest.py:test_failed_embedding_counted",
+      "type": "function",
+      "name": "test_failed_embedding_counted",
+      "filePath": "tests/unit/skillogy/test_embed_ingest.py",
+      "lineRange": [
+        131,
+        144
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra failed embedding counted.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embed_ingest"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_embed_ingest.py:_FakeBackend",
+      "type": "class",
+      "name": "_FakeBackend",
+      "filePath": "tests/unit/skillogy/test_embed_ingest.py",
+      "lineRange": [
+        18,
+        32
+      ],
+      "summary": "Backend giả ghi nhận vector được ghi và trạng thái embedding.",
+      "tags": [
+        "test-double",
+        "fixture",
+        "backend"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/skillogy/test_embeddings.py",
+      "type": "file",
+      "name": "test_embeddings.py",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "summary": "Kiểm thử client embeddings: availability, cache hit/miss, parse response OpenAI, retry/backoff và degrade khi retry cạn.",
+      "tags": [
+        "test",
+        "embeddings",
+        "retry"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embeddings.py:test_embed_dim_defaults_and_overrides",
+      "type": "function",
+      "name": "test_embed_dim_defaults_and_overrides",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "lineRange": [
+        47,
+        58
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra embed dim defaults and overrides.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embeddings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embeddings.py:_fake_response",
+      "type": "function",
+      "name": "_fake_response",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "lineRange": [
+        64,
+        79
+      ],
+      "summary": "Hàm _fake_response của test_embeddings.py.",
+      "tags": [
+        "test",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embeddings.py:test_count_mismatch_returns_none",
+      "type": "function",
+      "name": "test_count_mismatch_returns_none",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "lineRange": [
+        134,
+        143
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra count mismatch returns none.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embeddings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embeddings.py:test_request_parses_openai_shape",
+      "type": "function",
+      "name": "test_request_parses_openai_shape",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "lineRange": [
+        154,
+        183
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra request parses openai shape.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embeddings"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embeddings.py:test_backoff_is_capped_and_rides_full_window",
+      "type": "function",
+      "name": "test_backoff_is_capped_and_rides_full_window",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "lineRange": [
+        232,
+        243
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra backoff is capped and rides full window.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embeddings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embeddings.py:test_non_retryable_4xx_raises_immediately",
+      "type": "function",
+      "name": "test_non_retryable_4xx_raises_immediately",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "lineRange": [
+        246,
+        256
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra non retryable 4xx raises immediately.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embeddings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_embeddings.py:test_query_embed_text_fails_fast",
+      "type": "function",
+      "name": "test_query_embed_text_fails_fast",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "lineRange": [
+        266,
+        276
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra query embed text fails fast.",
+      "tags": [
+        "test",
+        "unit",
+        "test_embeddings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_embeddings.py:_FakeResp",
+      "type": "class",
+      "name": "_FakeResp",
+      "filePath": "tests/unit/skillogy/test_embeddings.py",
+      "lineRange": [
+        189,
+        203
+      ],
+      "summary": "HTTP response giả lập cho test client embeddings.",
+      "tags": [
+        "test-double",
+        "fixture",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/skillogy/test_find_skill_fusion.py",
+      "type": "file",
+      "name": "test_find_skill_fusion.py",
+      "filePath": "tests/unit/skillogy/test_find_skill_fusion.py",
+      "summary": "Kiểm thử find skill fusion: xếp hạng khi khớp cả hai leg, tôn trọng limit, tiebreak theo tên và dedupe.",
+      "tags": [
+        "test",
+        "search",
+        "skills-engine"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_find_skill_fusion.py:_rec",
+      "type": "function",
+      "name": "_rec",
+      "filePath": "tests/unit/skillogy/test_find_skill_fusion.py",
+      "lineRange": [
+        16,
+        25
+      ],
+      "summary": "Hàm _rec của test_find_skill_fusion.py.",
+      "tags": [
+        "test",
+        "search",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/skillogy/test_seed.py",
+      "type": "file",
+      "name": "test_seed.py",
+      "filePath": "tests/unit/skillogy/test_seed.py",
+      "summary": "Kiểm thử seed: chỉ chạy khi graph rỗng và bỏ qua nếu đã có dữ liệu.",
+      "tags": [
+        "test",
+        "seed",
+        "skills-engine"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/skillogy/test_seed.py:test_seed_runs_once_when_graph_empty",
+      "type": "function",
+      "name": "test_seed_runs_once_when_graph_empty",
+      "filePath": "tests/unit/skillogy/test_seed.py",
+      "lineRange": [
+        32,
+        44
+      ],
+      "summary": "Trường hợp kiểm thử: kiểm tra seed runs once when graph empty.",
+      "tags": [
+        "test",
+        "unit",
+        "test_seed"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/unit/skillogy/test_seed.py:_FakeBackend",
+      "type": "class",
+      "name": "_FakeBackend",
+      "filePath": "tests/unit/skillogy/test_seed.py",
+      "lineRange": [
+        13,
+        23
+      ],
+      "summary": "Backend giả đếm node hiện có để test logic seed-if-empty.",
+      "tags": [
+        "test-double",
+        "fixture",
+        "backend"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "function:raptix/skills/engine/__main__.py:_setup_logging",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "function:raptix/skills/engine/__main__.py:_build_backend",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "function:raptix/skills/engine/__main__.py:_seed_if_empty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "function:raptix/skills/engine/__main__.py:_start_rest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "function:raptix/skills/engine/__main__.py:_ingest_in_background",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "function:raptix/skills/engine/__main__.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "function:raptix/skills/engine/__main__.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/embed_ingest.py",
+      "target": "function:raptix/skills/engine/embed_ingest.py:build_embed_text",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embed_ingest.py",
+      "target": "function:raptix/skills/engine/embed_ingest.py:build_embed_text",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/embed_ingest.py",
+      "target": "function:raptix/skills/engine/embed_ingest.py:ingest_embeddings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embed_ingest.py",
+      "target": "function:raptix/skills/engine/embed_ingest.py:ingest_embeddings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_model",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_dim",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_dim",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:available",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:available",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:_request_embeddings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:_retry_after",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_batch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_batch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_text",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_text",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillMeta",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillMeta",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillEnvelope",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillEnvelope",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillListRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillListRequest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillListResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillListResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillLoadRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillLoadRequest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillIngestRequest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillIngestRequest",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillIngestResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/proto/__init__.py",
+      "target": "class:raptix/skills/engine/proto/__init__.py:SkillIngestResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/server/app.py",
+      "target": "function:raptix/skills/engine/server/app.py:build_app",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/server/app.py",
+      "target": "function:raptix/skills/engine/server/app.py:build_app",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "target": "function:raptix/skills/engine/server/neo4j_backend.py:_path_under_any_prefix",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "target": "function:raptix/skills/engine/server/neo4j_backend.py:assert_read_only",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "target": "function:raptix/skills/engine/server/neo4j_backend.py:assert_read_only",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "target": "class:raptix/skills/engine/server/neo4j_backend.py:Neo4jBackend",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "target": "class:raptix/skills/engine/server/neo4j_backend.py:Neo4jBackend",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_app.py",
+      "target": "class:tests/unit/skillogy/test_app.py:_FakeBackend",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_app.py",
+      "target": "class:tests/unit/skillogy/test_app.py:TestHealth",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_app.py",
+      "target": "class:tests/unit/skillogy/test_app.py:TestFind",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_app.py",
+      "target": "class:tests/unit/skillogy/test_app.py:TestLoad",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_app.py",
+      "target": "class:tests/unit/skillogy/test_app.py:TestTraverse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_app.py",
+      "target": "class:tests/unit/skillogy/test_app.py:TestMoc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_app.py",
+      "target": "class:tests/unit/skillogy/test_app.py:TestAuth",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "function:tests/unit/skillogy/test_embed_ingest.py:test_embeds_all_missing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "function:tests/unit/skillogy/test_embed_ingest.py:test_skips_unchanged_by_sha",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "function:tests/unit/skillogy/test_embed_ingest.py:test_changed_content_reembeds",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "function:tests/unit/skillogy/test_embed_ingest.py:test_model_change_reembeds",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "function:tests/unit/skillogy/test_embed_ingest.py:test_failed_embedding_counted",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "class:tests/unit/skillogy/test_embed_ingest.py:_FakeBackend",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "function:tests/unit/skillogy/test_embeddings.py:test_embed_dim_defaults_and_overrides",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "function:tests/unit/skillogy/test_embeddings.py:_fake_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "function:tests/unit/skillogy/test_embeddings.py:test_count_mismatch_returns_none",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "function:tests/unit/skillogy/test_embeddings.py:test_request_parses_openai_shape",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "function:tests/unit/skillogy/test_embeddings.py:test_backoff_is_capped_and_rides_full_window",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "function:tests/unit/skillogy/test_embeddings.py:test_non_retryable_4xx_raises_immediately",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "function:tests/unit/skillogy/test_embeddings.py:test_query_embed_text_fails_fast",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "class:tests/unit/skillogy/test_embeddings.py:_FakeResp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_find_skill_fusion.py",
+      "target": "function:tests/unit/skillogy/test_find_skill_fusion.py:_rec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_seed.py",
+      "target": "function:tests/unit/skillogy/test_seed.py:test_seed_runs_once_when_graph_empty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_seed.py",
+      "target": "class:tests/unit/skillogy/test_seed.py:_FakeBackend",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:raptix/skills/engine/__init__.py",
+      "target": "file:raptix/skills/engine/proto/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "file:raptix/skills/engine/server/app.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/__main__.py",
+      "target": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/embed_ingest.py",
+      "target": "file:raptix/skills/engine/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/embed_ingest.py",
+      "target": "file:raptix/skills/engine/embeddings.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/embed_ingest.py",
+      "target": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/server/__init__.py",
+      "target": "file:raptix/skills/engine/server/app.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/server/__init__.py",
+      "target": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/server/app.py",
+      "target": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_app.py",
+      "target": "file:raptix/skills/engine/server/app.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "file:raptix/skills/engine/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "file:raptix/skills/engine/embed_ingest.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "target": "file:raptix/skills/engine/embeddings.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "file:raptix/skills/engine/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_embeddings.py",
+      "target": "file:raptix/skills/engine/embeddings.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_find_skill_fusion.py",
+      "target": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/unit/skillogy/test_seed.py",
+      "target": "file:raptix/skills/engine/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:raptix/skills/engine/server/app.py",
+      "target": "file:tests/unit/skillogy/test_app.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/skills/engine/__init__.py",
+      "target": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/skills/engine/embed_ingest.py",
+      "target": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "file:tests/unit/skillogy/test_embed_ingest.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/skills/engine/__init__.py",
+      "target": "file:tests/unit/skillogy/test_embeddings.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/skills/engine/embeddings.py",
+      "target": "file:tests/unit/skillogy/test_embeddings.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/skills/engine/server/neo4j_backend.py",
+      "target": "file:tests/unit/skillogy/test_find_skill_fusion.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:raptix/skills/engine/__init__.py",
+      "target": "file:tests/unit/skillogy/test_seed.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "function:raptix/skills/engine/__main__.py:_start_rest",
+      "target": "function:raptix/skills/engine/server/app.py:build_app",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/skills/engine/__main__.py:_build_backend",
+      "target": "class:raptix/skills/engine/server/neo4j_backend.py:Neo4jBackend",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/skills/engine/__main__.py:_seed_if_empty",
+      "target": "class:raptix/skills/engine/server/neo4j_backend.py:Neo4jBackend",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/skills/engine/__main__.py:_ingest_in_background",
+      "target": "function:raptix/skills/engine/embed_ingest.py:ingest_embeddings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/skills/engine/embed_ingest.py:ingest_embeddings",
+      "target": "function:raptix/skills/engine/embeddings.py:embed_batch",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/skills/engine/embeddings.py:embed_batch",
+      "target": "function:raptix/skills/engine/embeddings.py:_request_embeddings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:raptix/skills/engine/server/app.py:build_app",
+      "target": "class:raptix/skills/engine/server/neo4j_backend.py:Neo4jBackend",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

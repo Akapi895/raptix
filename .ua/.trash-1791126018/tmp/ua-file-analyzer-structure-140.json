@@ -1,0 +1,1619 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 25,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 25
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/rop-chain/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 213,
+      "nonEmptyLines": 178,
+      "sections": [
+        {
+          "heading": "ROP Chain Construction Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Inventory mitigations",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "2. Gadget discovery",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "3. Common chain patterns",
+          "level": 2,
+          "line": 53
+        },
+        {
+          "heading": "Direct execve(\"/bin/sh\") via syscall (x86_64)",
+          "level": 3,
+          "line": 55
+        },
+        {
+          "heading": "Via libc (if libc address leaked)",
+          "level": 3,
+          "line": 84
+        },
+        {
+          "heading": "`one_gadget` (if conditions met)",
+          "level": 3,
+          "line": 96
+        },
+        {
+          "heading": "4. Write-what-where (when no leak available initially)",
+          "level": 2,
+          "line": 106
+        },
+        {
+          "heading": "5. Modern bypass techniques",
+          "level": 2,
+          "line": 124
+        },
+        {
+          "heading": "Stack pivoting",
+          "level": 3,
+          "line": 126
+        },
+        {
+          "heading": "Sigreturn-Oriented Programming (SROP)",
+          "level": 3,
+          "line": 137
+        },
+        {
+          "heading": "JOP (Jump-Oriented)",
+          "level": 3,
+          "line": 150
+        },
+        {
+          "heading": "6. Mitigation specifics",
+          "level": 2,
+          "line": 158
+        },
+        {
+          "heading": "Stack canary",
+          "level": 3,
+          "line": 160
+        },
+        {
+          "heading": "PIE",
+          "level": 3,
+          "line": 166
+        },
+        {
+          "heading": "Full RELRO",
+          "level": 3,
+          "line": 170
+        },
+        {
+          "heading": "CET / shadow stack",
+          "level": 3,
+          "line": 174
+        },
+        {
+          "heading": "7. Promote (knowledge graph)",
+          "level": 2,
+          "line": 180
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 188
+        },
+        {
+          "heading": "Tooling cheat sheet",
+          "level": 2,
+          "line": 194
+        },
+        {
+          "heading": "Known exemplars (CTF + real)",
+          "level": 2,
+          "line": 208
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 21
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/triage/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 51,
+      "nonEmptyLines": 44,
+      "sections": [
+        {
+          "heading": "Binary Triage (fast path)",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "1. Identify",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "2. Mitigation check",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "3. String harvest (categorized)",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "4. Imports risk",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "5. Version → CVE",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "6. Handoff",
+          "level": 2,
+          "line": 49
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/virtualized-protectors/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 50,
+      "nonEmptyLines": 42,
+      "sections": [
+        {
+          "heading": "VMProtect / VMP2 / Themida Workflow",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "Source Guidance",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Loop",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Report Shape",
+          "level": 2,
+          "line": 43
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/windows-internals/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 55,
+      "nonEmptyLines": 48,
+      "sections": [
+        {
+          "heading": "Windows Driver Exposure Assessment",
+          "level": 1,
+          "line": 21
+        },
+        {
+          "heading": "Scope",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "Evidence-first workflow",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Promotion rule",
+          "level": 2,
+          "line": 50
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/yara-hunting/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 170,
+      "nonEmptyLines": 140,
+      "sections": [
+        {
+          "heading": "YARA Rule Authoring + Hunting",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Anatomy of a good rule",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "The condition tools you need",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "High-leverage patterns",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Family-stable byte patterns",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "Capability rules",
+          "level": 3,
+          "line": 82
+        },
+        {
+          "heading": "Anti-analysis fingerprinting",
+          "level": 3,
+          "line": 97
+        },
+        {
+          "heading": "Hunting at scale",
+          "level": 2,
+          "line": 109
+        },
+        {
+          "heading": "VirusTotal Retrohunt (paid)",
+          "level": 3,
+          "line": 111
+        },
+        {
+          "heading": "MalwareBazaar (free)",
+          "level": 3,
+          "line": 117
+        },
+        {
+          "heading": "Local corpus scan",
+          "level": 3,
+          "line": 123
+        },
+        {
+          "heading": "Common pitfalls",
+          "level": 2,
+          "line": 134
+        },
+        {
+          "heading": "Mass-hunt workflow",
+          "level": 2,
+          "line": 145
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 157
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 165
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/abort-template/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 74,
+      "nonEmptyLines": 51,
+      "sections": [
+        {
+          "heading": "Abort / Crisis Plan Generator",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to Use",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "Step 1: Keep the Three Default Triggers",
+          "level": 3,
+          "line": 25
+        },
+        {
+          "heading": "Step 2: Add Engagement-Specific Triggers",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "Step 3: Set AI Safety Gates",
+          "level": 3,
+          "line": 45
+        },
+        {
+          "heading": "Step 4: Set Abort Signal Channel + Recovery Procedure",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Validation Checklist",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "Anti-patterns",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "Output",
+          "level": 2,
+          "line": 72
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/cleanup-template/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 72,
+      "nonEmptyLines": 51,
+      "sections": [
+        {
+          "heading": "Cleanup & Restoration Plan Generator",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to Use",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "Step 1: Map Kill Chain Phases → Expected Artifact Types",
+          "level": 3,
+          "line": 23
+        },
+        {
+          "heading": "Step 2: Seed CleanupArtifact entries",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "Step 3: Pre-engagement Baseline",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "Step 4: Completion Criteria",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Validation Checklist",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "Anti-patterns",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "Output",
+          "level": 2,
+          "line": 70
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/conops-template/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 76,
+      "nonEmptyLines": 53,
+      "sections": [
+        {
+          "heading": "Concept of Operations (CONOPS) Generator",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to Use",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Step 1: Interview the User",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "Step 2: Design Kill Chain",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Step 3: Generate Documents",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Step 4: Validate",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "Generation Rules",
+          "level": 2,
+          "line": 70
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/conops-template/references/kill-chain-templates.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 66,
+      "nonEmptyLines": 51,
+      "sections": [
+        {
+          "heading": "Kill Chain Phase Templates",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Kill Chain Phases (5-Phase Model)",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Engagement Type → Phase Selection",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "External Recon-Only",
+          "level": 3,
+          "line": 17
+        },
+        {
+          "heading": "External Penetration Test",
+          "level": 3,
+          "line": 21
+        },
+        {
+          "heading": "Full Red Team",
+          "level": 3,
+          "line": 25
+        },
+        {
+          "heading": "Assumed Breach",
+          "level": 3,
+          "line": 29
+        },
+        {
+          "heading": "Internal Assessment",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "MITRE ATT&CK Tactic Mapping",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "Phase → Sub-Agent Routing",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Phase → OPSEC Level Guidance",
+          "level": 2,
+          "line": 57
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/contact-template/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 82,
+      "nonEmptyLines": 53,
+      "sections": [
+        {
+          "heading": "Contact / Communications Plan Generator",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to Use",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "Step 1: Identify Primary Operator",
+          "level": 3,
+          "line": 23
+        },
+        {
+          "heading": "Step 2: Build Escalation Chain",
+          "level": 3,
+          "line": 32
+        },
+        {
+          "heading": "Step 3: Abort Signal Recipient",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "Step 4: External SOC Endpoint (Optional)",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "Step 5: Blackout Windows",
+          "level": 3,
+          "line": 53
+        },
+        {
+          "heading": "Validation Checklist",
+          "level": 2,
+          "line": 65
+        },
+        {
+          "heading": "Anti-patterns",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "Output",
+          "level": 2,
+          "line": 80
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/data-handling-template/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 72,
+      "nonEmptyLines": 48,
+      "sections": [
+        {
+          "heading": "Data Handling Plan Generator",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to Use",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "Step 1: Start From the Schema Defaults",
+          "level": 3,
+          "line": 23
+        },
+        {
+          "heading": "Step 2: Add Engagement-Specific Classes",
+          "level": 3,
+          "line": 27
+        },
+        {
+          "heading": "Step 3: Set Evidence Storage Path",
+          "level": 3,
+          "line": 38
+        },
+        {
+          "heading": "Step 4: Compliance Frameworks",
+          "level": 3,
+          "line": 44
+        },
+        {
+          "heading": "Step 5: Purge Hard Cap",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "Validation Checklist",
+          "level": 2,
+          "line": 54
+        },
+        {
+          "heading": "Anti-patterns",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "Output",
+          "level": 2,
+          "line": 70
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 83,
+      "nonEmptyLines": 55,
+      "sections": [
+        {
+          "heading": "OPPLAN Converter — CONOPS to Ralph Loop Format",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to Use",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Step 1: Extract Kill Chain from CONOPS",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "Step 2: Decompose into Objectives",
+          "level": 3,
+          "line": 34
+        },
+        {
+          "heading": "Step 3: Write Acceptance Criteria",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "Step 4: Assign Metadata",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "Step 5: Generate OPPLAN",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Step 6: Validate",
+          "level": 3,
+          "line": 77
+        },
+        {
+          "heading": "Output",
+          "level": 2,
+          "line": 81
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-rules.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 107,
+      "nonEmptyLines": 81,
+      "sections": [
+        {
+          "heading": "Objective Decomposition Rules",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Rule 1: One Objective = One Context Window",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Rule 2: Kill Chain Phase Ordering",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Rule 3: Mandatory Acceptance Criteria",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "Rule 4: Verifiable Criteria Only",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "Rule 5: MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "Rule 6: OPSEC Level Assignment",
+          "level": 2,
+          "line": 69
+        },
+        {
+          "heading": "Rule 7: Concessions (TIBER/CORIE)",
+          "level": 2,
+          "line": 81
+        },
+        {
+          "heading": "Validation Checklist",
+          "level": 2,
+          "line": 92
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-templates.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 240,
+      "nonEmptyLines": 217,
+      "sections": [
+        {
+          "heading": "Objective Templates — Recon Phase",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Passive Recon Objectives (priority 1-5)",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "OBJ-001: Passive Subdomain Enumeration",
+          "level": 3,
+          "line": 7
+        },
+        {
+          "heading": "OBJ-002: DNS Record Mapping",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "OBJ-003: WHOIS & ASN Intelligence",
+          "level": 3,
+          "line": 54
+        },
+        {
+          "heading": "OBJ-004: Web Fingerprinting (httpx)",
+          "level": 3,
+          "line": 77
+        },
+        {
+          "heading": "OBJ-005: OSINT Gathering",
+          "level": 3,
+          "line": 100
+        },
+        {
+          "heading": "Active Recon Objectives (priority 6-10)",
+          "level": 2,
+          "line": 124
+        },
+        {
+          "heading": "OBJ-006: TCP Port Scan",
+          "level": 3,
+          "line": 126
+        },
+        {
+          "heading": "OBJ-007: Service Version Detection",
+          "level": 3,
+          "line": 149
+        },
+        {
+          "heading": "OBJ-008: Web Directory Fuzzing",
+          "level": 3,
+          "line": 172
+        },
+        {
+          "heading": "OBJ-009: Vulnerability Scan (nuclei)",
+          "level": 3,
+          "line": 195
+        },
+        {
+          "heading": "OBJ-010: Synthesis Report",
+          "level": 3,
+          "line": 218
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/references/schema-quick-reference.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 146,
+      "nonEmptyLines": 128,
+      "sections": [
+        {
+          "heading": "Schema Quick Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "RoE (Rules of Engagement)",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "CONOPS (Concept of Operations)",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "DeconflictionPlan",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "OPPLAN (Operations Plan)",
+          "level": 2,
+          "line": 81
+        },
+        {
+          "heading": "OPSEC Levels",
+          "level": 3,
+          "line": 110
+        },
+        {
+          "heading": "C2 Tiers",
+          "level": 3,
+          "line": 120
+        },
+        {
+          "heading": "EngagementBundle",
+          "level": 2,
+          "line": 128
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 60,
+      "nonEmptyLines": 41,
+      "sections": [
+        {
+          "heading": "Rules of Engagement (RoE) Generator",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to Use",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Step 1: Interview the User",
+          "level": 3,
+          "line": 24
+        },
+        {
+          "heading": "Step 2: Generate plan/roe.json",
+          "level": 3,
+          "line": 40
+        },
+        {
+          "heading": "Step 3: Validate",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "Generation Rules",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "Output",
+          "level": 2,
+          "line": 58
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/references/roe-example.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 47,
+      "nonEmptyLines": 47,
+      "sections": [
+        {
+          "heading": "engagement_name",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "client",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "start_date",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "end_date",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "engagement_type",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "testing_window",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "in_scope",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "out_of_scope",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "prohibited_actions",
+          "level": 1,
+          "line": 18
+        },
+        {
+          "heading": "permitted_actions",
+          "level": 1,
+          "line": 25
+        },
+        {
+          "heading": "escalation_contacts",
+          "level": 1,
+          "line": 29
+        },
+        {
+          "heading": "incident_procedure",
+          "level": 1,
+          "line": 43
+        },
+        {
+          "heading": "authorization_reference",
+          "level": 1,
+          "line": 44
+        },
+        {
+          "heading": "version",
+          "level": 1,
+          "line": 45
+        },
+        {
+          "heading": "last_updated",
+          "level": 1,
+          "line": 46
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/references/validation-checklist.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 32,
+      "nonEmptyLines": 26,
+      "sections": [
+        {
+          "heading": "RoE Validation Checklist",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Required Fields",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Scope",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "Boundaries",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Escalation",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Final",
+          "level": 2,
+          "line": 30
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/structured-questions/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 113,
+      "nonEmptyLines": 97,
+      "sections": [
+        {
+          "heading": "Structured Operator Questions (`ask_user_question`)",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to call `ask_user_question`",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Habits (the typed tool signature already encodes the schema)",
+          "level": 2,
+          "line": 46
+        },
+        {
+          "heading": "Examples",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "Single-select, with recommendation",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Confirmation with `allow_other` for custom note",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "Multi-select for kill-chain phases",
+          "level": 3,
+          "line": 83
+        },
+        {
+          "heading": "Anti-patterns",
+          "level": 2,
+          "line": 98
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 99,
+      "nonEmptyLines": 75,
+      "sections": [
+        {
+          "heading": "Threat Profile Builder",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to Use",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Step 1: Determine Tier",
+          "level": 3,
+          "line": 24
+        },
+        {
+          "heading": "Step 2: Build the Profile",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "Step 3: Validate Against RoE",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "Step 4: Output",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Step 5: Named-actor kill chain (optional but recommended)",
+          "level": 3,
+          "line": 85
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 78,
+      "nonEmptyLines": 66,
+      "sections": [
+        {
+          "heading": "Adversary Emulation Playbook Catalog",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Playbooks",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "How to use a playbook (Soundwave Phase 2)",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "Playbook anatomy (every leaf has these)",
+          "level": 2,
+          "line": 58
+        },
+        {
+          "heading": "Discipline",
+          "level": 2,
+          "line": 70
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/apt29/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 120,
+      "nonEmptyLines": 98,
+      "sections": [
+        {
+          "heading": "APT29 — Adversary Emulation Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to emulate APT29",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "ThreatProfile seed (`plan/threat-profile.json`)",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Kill-chain emulation",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "CONOPS kill_chain (copy into `conops.json`)",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "OPSEC & signature fidelity",
+          "level": 2,
+          "line": 83
+        },
+        {
+          "heading": "RoE / safety gates",
+          "level": 2,
+          "line": 95
+        },
+        {
+          "heading": "Deconfliction",
+          "level": 2,
+          "line": 105
+        },
+        {
+          "heading": "Fidelity notes (deviations)",
+          "level": 2,
+          "line": 113
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/fin7/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 99,
+      "nonEmptyLines": 81,
+      "sections": [
+        {
+          "heading": "FIN7 — Adversary Emulation Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to emulate FIN7",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "ThreatProfile seed (`plan/threat-profile.json`)",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "Kill-chain emulation",
+          "level": 2,
+          "line": 46
+        },
+        {
+          "heading": "CONOPS kill_chain (copy into `conops.json`)",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "OPSEC & signature fidelity",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "RoE / safety gates",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "Deconfliction",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "Fidelity notes (deviations)",
+          "level": 2,
+          "line": 94
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/lazarus/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 104,
+      "nonEmptyLines": 86,
+      "sections": [
+        {
+          "heading": "Lazarus Group — Adversary Emulation Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to emulate Lazarus",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "ThreatProfile seed (`plan/threat-profile.json`)",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Kill-chain emulation",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "CONOPS kill_chain (copy into `conops.json`)",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "OPSEC & signature fidelity",
+          "level": 2,
+          "line": 72
+        },
+        {
+          "heading": "RoE / safety gates",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "Deconfliction",
+          "level": 2,
+          "line": 89
+        },
+        {
+          "heading": "Fidelity notes (deviations)",
+          "level": 2,
+          "line": 96
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/lockbit/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 101,
+      "nonEmptyLines": 83,
+      "sections": [
+        {
+          "heading": "LockBit / RaaS Affiliate — Adversary Emulation Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "When to emulate a RaaS affiliate",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "ThreatProfile seed (`plan/threat-profile.json`)",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Kill-chain emulation",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "CONOPS kill_chain (copy into `conops.json`)",
+          "level": 2,
+          "line": 63
+        },
+        {
+          "heading": "OPSEC & signature fidelity",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "RoE / safety gates",
+          "level": 2,
+          "line": 79
+        },
+        {
+          "heading": "Deconfliction",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "Fidelity notes (deviations)",
+          "level": 2,
+          "line": 94
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    }
+  ]
+}

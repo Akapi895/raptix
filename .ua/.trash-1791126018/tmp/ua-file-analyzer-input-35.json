@@ -1,0 +1,131 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  48,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/__main__.py",
+                           "language":  "python",
+                           "sizeLines":  179,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/embed_ingest.py",
+                           "language":  "python",
+                           "sizeLines":  100,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/embeddings.py",
+                           "language":  "python",
+                           "sizeLines":  259,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/proto/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  111,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/server/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  18,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/server/app.py",
+                           "language":  "python",
+                           "sizeLines":  207,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/server/neo4j_backend.py",
+                           "language":  "python",
+                           "sizeLines":  583,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/skillogy/test_app.py",
+                           "language":  "python",
+                           "sizeLines":  372,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/skillogy/test_embed_ingest.py",
+                           "language":  "python",
+                           "sizeLines":  149,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/skillogy/test_embeddings.py",
+                           "language":  "python",
+                           "sizeLines":  276,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py",
+                           "language":  "python",
+                           "sizeLines":  72,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/skillogy/test_seed.py",
+                           "language":  "python",
+                           "sizeLines":  44,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "packages/raptix/raptix/skills/engine/__init__.py":  [
+                                                                                     "packages/raptix/raptix/skills/engine/proto/__init__.py"
+                                                                                 ],
+                            "packages/raptix/raptix/skills/engine/__main__.py":  [
+                                                                                     "packages/raptix/raptix/skills/engine/server/app.py",
+                                                                                     "packages/raptix/raptix/skills/engine/server/neo4j_backend.py"
+                                                                                 ],
+                            "packages/raptix/raptix/skills/engine/embed_ingest.py":  [
+                                                                                         "packages/raptix/raptix/skills/engine/__init__.py",
+                                                                                         "packages/raptix/raptix/skills/engine/embeddings.py",
+                                                                                         "packages/raptix/raptix/skills/engine/server/neo4j_backend.py"
+                                                                                     ],
+                            "packages/raptix/raptix/skills/engine/embeddings.py":  [
+
+                                                                                   ],
+                            "packages/raptix/raptix/skills/engine/proto/__init__.py":  [
+
+                                                                                       ],
+                            "packages/raptix/raptix/skills/engine/server/__init__.py":  [
+                                                                                            "packages/raptix/raptix/skills/engine/server/app.py",
+                                                                                            "packages/raptix/raptix/skills/engine/server/neo4j_backend.py"
+                                                                                        ],
+                            "packages/raptix/raptix/skills/engine/server/app.py":  [
+                                                                                       "packages/raptix/raptix/skills/engine/server/neo4j_backend.py"
+                                                                                   ],
+                            "packages/raptix/raptix/skills/engine/server/neo4j_backend.py":  [
+
+                                                                                             ],
+                            "packages/raptix/tests/unit/skillogy/test_app.py":  [
+                                                                                    "packages/raptix/raptix/skills/engine/server/app.py"
+                                                                                ],
+                            "packages/raptix/tests/unit/skillogy/test_embed_ingest.py":  [
+                                                                                             "packages/raptix/raptix/skills/engine/__init__.py",
+                                                                                             "packages/raptix/raptix/skills/engine/embed_ingest.py",
+                                                                                             "packages/raptix/raptix/skills/engine/embeddings.py"
+                                                                                         ],
+                            "packages/raptix/tests/unit/skillogy/test_embeddings.py":  [
+                                                                                           "packages/raptix/raptix/skills/engine/__init__.py",
+                                                                                           "packages/raptix/raptix/skills/engine/embeddings.py"
+                                                                                       ],
+                            "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py":  [
+                                                                                                  "packages/raptix/raptix/skills/engine/server/neo4j_backend.py"
+                                                                                              ],
+                            "packages/raptix/tests/unit/skillogy/test_seed.py":  [
+                                                                                     "packages/raptix/raptix/skills/engine/__init__.py"
+                                                                                 ]
+                        }
+}

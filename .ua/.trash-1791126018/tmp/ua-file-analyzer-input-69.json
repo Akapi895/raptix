@@ -1,0 +1,13 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix",
+  "batchFiles": [
+    { "path": "clients/launcher/.goreleaser.yml", "language": "yaml", "sizeLines": 57, "fileCategory": "config" },
+    { "path": "clients/launcher/go.mod", "language": "mod", "sizeLines": 39, "fileCategory": "config" },
+    { "path": "clients/launcher/go.sum", "language": "sum", "sizeLines": 82, "fileCategory": "config" }
+  ],
+  "batchImportData": {
+    "clients/launcher/.goreleaser.yml": [],
+    "clients/launcher/go.mod": [],
+    "clients/launcher/go.sum": []
+  }
+}

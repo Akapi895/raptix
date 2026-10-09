@@ -1,0 +1,128 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "config/auth_handler.py",
+                           "language":  "python",
+                           "sizeLines":  107,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/claude_code_handler.py",
+                           "language":  "python",
+                           "sizeLines":  1260,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/codex_chatgpt_handler.py",
+                           "language":  "python",
+                           "sizeLines":  927,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/copilot_handler.py",
+                           "language":  "python",
+                           "sizeLines":  522,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/gemini_handler.py",
+                           "language":  "python",
+                           "sizeLines":  356,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/grok_handler.py",
+                           "language":  "python",
+                           "sizeLines":  384,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/http_client.py",
+                           "language":  "python",
+                           "sizeLines":  69,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/litellm_dynamic_config.py",
+                           "language":  "python",
+                           "sizeLines":  1089,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/litellm_startup.py",
+                           "language":  "python",
+                           "sizeLines":  200,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/oauth_token_store.py",
+                           "language":  "python",
+                           "sizeLines":  358,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/ollama_probe.py",
+                           "language":  "python",
+                           "sizeLines":  448,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "config/perplexity_handler.py",
+                           "language":  "python",
+                           "sizeLines":  306,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "config/auth_handler.py":  [
+                                                           "config/claude_code_handler.py"
+                                                       ],
+                            "config/claude_code_handler.py":  [
+                                                                  "config/http_client.py",
+                                                                  "config/oauth_token_store.py"
+                                                              ],
+                            "config/codex_chatgpt_handler.py":  [
+                                                                    "config/http_client.py",
+                                                                    "config/oauth_token_store.py"
+                                                                ],
+                            "config/copilot_handler.py":  [
+                                                              "config/http_client.py",
+                                                              "config/oauth_token_store.py"
+                                                          ],
+                            "config/gemini_handler.py":  [
+                                                             "config/http_client.py",
+                                                             "config/oauth_token_store.py"
+                                                         ],
+                            "config/grok_handler.py":  [
+                                                           "config/http_client.py",
+                                                           "config/oauth_token_store.py"
+                                                       ],
+                            "config/http_client.py":  [
+
+                                                      ],
+                            "config/litellm_dynamic_config.py":  [
+
+                                                                 ],
+                            "config/litellm_startup.py":  [
+                                                              "config/auth_handler.py",
+                                                              "config/codex_chatgpt_handler.py",
+                                                              "config/copilot_handler.py",
+                                                              "config/gemini_handler.py",
+                                                              "config/grok_handler.py",
+                                                              "config/litellm_dynamic_config.py",
+                                                              "config/ollama_probe.py",
+                                                              "config/perplexity_handler.py"
+                                                          ],
+                            "config/oauth_token_store.py":  [
+                                                                "config/http_client.py"
+                                                            ],
+                            "config/ollama_probe.py":  [
+
+                                                       ],
+                            "config/perplexity_handler.py":  [
+                                                                 "config/http_client.py",
+                                                                 "config/oauth_token_store.py"
+                                                             ]
+                        }
+}

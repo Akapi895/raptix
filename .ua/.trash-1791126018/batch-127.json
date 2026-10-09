@@ -1,0 +1,3201 @@
+{
+  "batchIndex": 127,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/agents/task_spec.py",
+      "language": "python",
+      "sizeLines": 152,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/blue_cell/sample_rules.jsonl",
+      "language": "jsonl",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/compat/__init__.py",
+      "language": "python",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/core/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/core/config.py",
+      "language": "python",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/core/schemas.py",
+      "language": "python",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/llm/models.py",
+      "language": "python",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/kg_internal/__init__.py",
+      "language": "python",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/kg_internal/migrations/V001__initial_schema.cypher",
+      "language": "cypher",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes_and_provenance.cypher",
+      "language": "cypher",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher",
+      "language": "cypher",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/kg_internal/migrations/V004__technology_node.cypher",
+      "language": "cypher",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher",
+      "language": "cypher",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/kg_internal/migrations/V006__engagement_revision_counter.cypher",
+      "language": "cypher",
+      "sizeLines": 2,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/kg_internal/migrations/__init__.py",
+      "language": "python",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/plugin_loader.py",
+      "language": "python",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/py.typed",
+      "language": "typed",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/runtime/shutdown.py",
+      "language": "python",
+      "sizeLines": 495,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/sandbox_web/INSANE_SEARCH_LICENSE",
+      "language": "unknown",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/sandbox_web/NOTICE.md",
+      "language": "markdown",
+      "sizeLines": 14,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/sandbox_web/learning.py",
+      "language": "python",
+      "sizeLines": 175,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "language": "python",
+      "sizeLines": 564,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/sandbox_web/templates/package.json",
+      "language": "json",
+      "sizeLines": 13,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "language": "javascript",
+      "sizeLines": 177,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "language": "javascript",
+      "sizeLines": 234,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:packages/raptix/raptix/agents/task_spec.py",
+      "type": "file",
+      "name": "task_spec.py",
+      "filePath": "packages/raptix/raptix/agents/task_spec.py",
+      "summary": "Hợp đồng dữ liệu dispatch scoped cho sub-agent: SubAgentTaskSpec (frozen slots dataclass) gói objective/scope/inputs/expected_outputs/parent_artifacts (Path refs, không inline nội dung) và render() thành markdown handoff deterministic (dict keys sorted để prompt cache hiệu quả); scoped_dispatch_payload thay lịch sử cha bằng 2-message payload — tiết kiệm token và không leak reasoning của cha; module chỉ đổ data contract trước, tích hợp LangGraph để sau.",
+      "tags": [
+        "agent",
+        "subagent",
+        "dispatch",
+        "token"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        152
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/blue_cell/sample_rules.jsonl",
+      "type": "file",
+      "name": "sample_rules.jsonl",
+      "filePath": "packages/raptix/raptix/blue_cell/sample_rules.jsonl",
+      "summary": "10 rule detection mẫu JSONL cho blue-cell: mỗi rule có id/title/level (high/critical/medium/low), mitre ATT&CK ID và selections/condition khớp actor.command_line — kerberoast (GetUserSPNs), AS-REP roast, DCSync secretsdump, pass-the-hash psexec/wmiexec, web shell PHP, PowerShell IEX cradle, password spray crackmapexec, nmap -T4/5, mimikatz LSASS, curl|bash.",
+      "tags": [
+        "detection",
+        "jsonl",
+        "mitre",
+        "blue-team"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        10
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/compat/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/compat/__init__.py",
+      "summary": "Shim tương thích một-release cho split core/framework/sdk (spec §7.3): giữ legacy import paths (raptix.core.schemas, raptix.llm.models, raptix.tools.research.graph, raptix.plugin_loader, raptix.core.config/logging, raptix.agents.middleware_slots) hoạt động đến 2.0.0; register_legacy_imports() default-on, opt-out RAPTIX_NO_COMPAT=1, phát một DeprecationWarning per-process liệt kê mapping legacy→canonical để test logs lộ migration list.",
+      "tags": [
+        "compat",
+        "deprecation",
+        "migration",
+        "shim"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        73
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/core/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/core/__init__.py",
+      "summary": "Docstring package raptix.core — tập hợp config, logging, schemas và streaming helpers; sau split Phase 1 nội dung thật đã chuyển sang contract layer raptix_core, các module còn lại là shim.",
+      "tags": [
+        "package",
+        "docstring",
+        "core"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/core/config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "packages/raptix/raptix/core/config.py",
+      "summary": "Compat shim PEP 562: mọi attribute access trên raptix.core.config ủy thác sang raptix_core.utils.config, phát DeprecationWarning một lần mỗi tên (legacy path bị xoá ở 2.0.0); lookup dunder/private raise AttributeError im lặng.",
+      "tags": [
+        "compat",
+        "pep562",
+        "deprecation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        36
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/core/schemas.py",
+      "type": "file",
+      "name": "schemas.py",
+      "filePath": "packages/raptix/raptix/core/schemas.py",
+      "summary": "Compat shim PEP 562: raptix.core.schemas ủy thác sang raptix_core.types.engagement — giữ RoE và các pydantic type engagement hoạt động trên legacy path đến 2.0.0 với DeprecationWarning per-attribute (spec §7.3).",
+      "tags": [
+        "compat",
+        "pep562",
+        "engagement",
+        "deprecation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        39
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/llm/models.py",
+      "type": "file",
+      "name": "models.py",
+      "filePath": "packages/raptix/raptix/llm/models.py",
+      "summary": "Compat shim PEP 562: raptix.llm.models ủy thác sang raptix_core.types.llm với DeprecationWarning một lần mỗi attribute trên legacy path.",
+      "tags": [
+        "compat",
+        "pep562",
+        "llm",
+        "deprecation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        36
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/middleware/kg_internal/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/middleware/kg_internal/__init__.py",
+      "summary": "Package nội bộ của KG middleware — không phải public plugin surface: plugin author lấy engagement-graph contract qua raptix_core.contracts và agent-facing tools qua raptix.middleware.KGMiddleware; đụng trực tiếp vào kg_internal là unsupported và có thể vỡ giữa các minor release.",
+      "tags": [
+        "kg",
+        "internal",
+        "middleware"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        11
+      ]
+    },
+    {
+      "id": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V001__initial_schema.cypher",
+      "type": "schema",
+      "name": "V001__initial_schema.cypher",
+      "filePath": "packages/raptix/raptix/middleware/kg_internal/migrations/V001__initial_schema.cypher",
+      "summary": "Migration KG v001: constraint unique composite (key, engagement) cho ~27 label canonical (Host, Network, Domain, Service, URL, CloudResource, Container, User, Group, Credential, Secret, Session, Vulnerability, CVE, Misconfiguration, Weakness, Repository, SourceFile, Contract, Technique, Entrypoint, CrownJewel, AttackPath, Finding, Candidate, Hypothesis, Patch, DetectionFired, DefenseAction) — bất biến multi-tenant (cùng key ở 2 engagement là 2 node) và MERGE idempotent trong cùng engagement; + MigrationLog.name unique để container re-run skip migration đã áp.",
+      "tags": [
+        "kg",
+        "cypher",
+        "migration",
+        "neo4j"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        82
+      ]
+    },
+    {
+      "id": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes_and_provenance.cypher",
+      "type": "schema",
+      "name": "V002__engagement_composite_indexes_and_provenance.cypher",
+      "filePath": "packages/raptix/raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes_and_provenance.cypher",
+      "summary": "Migration KG v002: composite range index theo engagement cho read path tần suất cao (Host.explored, Vulnerability.severity, Finding.status, Entrypoint, CrownJewel), index provenance (Vulnerability.lastupdated/created_by) cho stale-cleanup kiểu Cartography và forensics \"agent nào tạo finding này\"; + vector index vuln_embedding 1536-dim cosine (Neo4j 5.13+, text-embedding-3-small) cho semantic recall opt-in.",
+      "tags": [
+        "kg",
+        "cypher",
+        "migration",
+        "index",
+        "vector"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        36
+      ]
+    },
+    {
+      "id": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher",
+      "type": "schema",
+      "name": "V003__bloodhound_and_slither_schema.cypher",
+      "filePath": "packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher",
+      "summary": "Migration KG v003: composite uniqueness (key, engagement) cho các AD kind BloodHound 5.x (ADUser/ADComputer/ADGroup/ADDomain/ADGPO/ADOU/ADContainer + ADCS CertTemplate/EnterpriseCA/RootCA…) phát ra từ tools/ad/bloodhound.py, và các element Solidity Slither (Function/StateVar/Event/CustomError/Enum/Struct/Pragma) từ tools/contracts/slither.py — cùng bất biến V001.",
+      "tags": [
+        "kg",
+        "cypher",
+        "migration",
+        "bloodhound",
+        "slither"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        68
+      ]
+    },
+    {
+      "id": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V004__technology_node.cypher",
+      "type": "schema",
+      "name": "V004__technology_node.cypher",
+      "filePath": "packages/raptix/raptix/middleware/kg_internal/migrations/V004__technology_node.cypher",
+      "summary": "Migration KG v004 (ADR-0007): label Technology cho product/runtime phát hiện sau một Service — AI runtime (Ollama, vLLM), AI proxy, web framework; constraint (key, engagement) + index (engagement, category) là read path chính của llm-redteam plugin; classifier recon MERGE và link (Service)-[:RUNS]->(Technology) thay vì property phẳng.",
+      "tags": [
+        "kg",
+        "cypher",
+        "migration",
+        "technology"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        22
+      ]
+    },
+    {
+      "id": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher",
+      "type": "schema",
+      "name": "V005__surface_inventory_schema.cypher",
+      "filePath": "packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher",
+      "summary": "Migration KG v005: surface inventory contract cho recon Initial Foothold — constraint unique (key, engagement) cho Endpoint, Parameter, Form, AuthModel.",
+      "tags": [
+        "kg",
+        "cypher",
+        "migration",
+        "recon"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        9
+      ]
+    },
+    {
+      "id": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V006__engagement_revision_counter.cypher",
+      "type": "schema",
+      "name": "V006__engagement_revision_counter.cypher",
+      "filePath": "packages/raptix/raptix/middleware/kg_internal/migrations/V006__engagement_revision_counter.cypher",
+      "summary": "Migration KG v006: constraint KGRevision.scope unique để giữ write-version marker ngoài các graph projection của engagement.",
+      "tags": [
+        "kg",
+        "cypher",
+        "migration",
+        "revision"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/middleware/kg_internal/migrations/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/middleware/kg_internal/migrations/__init__.py",
+      "summary": "Docstring quy ước migration Cypher: file V###__description.cypher áp theo thứ tự tên bởi migration_runner.apply_migrations, idempotent (mọi statement IF NOT EXISTS), tiến độ ghi vào node :MigrationLog để container mới chạy tiếp nơi cũ dừng.",
+      "tags": [
+        "kg",
+        "migration",
+        "docstring"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        12
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/plugin_loader.py",
+      "type": "file",
+      "name": "plugin_loader.py",
+      "filePath": "packages/raptix/raptix/plugin_loader.py",
+      "summary": "Compat shim PEP 562: raptix.plugin_loader ủy thác sang raptix_core.plugin_loader với DeprecationWarning một lần mỗi attribute — nội dung loader đã chuyển sang contract layer.",
+      "tags": [
+        "compat",
+        "pep562",
+        "plugin",
+        "deprecation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        36
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/py.typed",
+      "type": "file",
+      "name": "py.typed",
+      "filePath": "packages/raptix/raptix/py.typed",
+      "summary": "Marker PEP 561 rỗng khai báo package raptix có type hints.",
+      "tags": [
+        "pep561",
+        "typing",
+        "marker"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "type": "file",
+      "name": "shutdown.py",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "summary": "Graceful shutdown bounded trên SIGINT/SIGTERM (Windows: console event): signal đầu tiên best-effort persist state operator-visible vào engagement workspace (findings in-flight → markdown FIND-*.md, opplan checkpoint, partial executive summary, checkpoint event) trong budget MAX_FLUSH_SECONDS=5s (2s/component), exit 128+signum; signal thứ hai trong cửa sổ 2s force-exit. Handler tách khỏi LangGraph qua state_provider callback — zero import-time side effect, idempotent, chạy trên cả POSIX và Windows (SetConsoleCtrlHandler).",
+      "tags": [
+        "runtime",
+        "shutdown",
+        "signal",
+        "checkpoint"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        1,
+        495
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/sandbox_web/INSANE_SEARCH_LICENSE",
+      "type": "file",
+      "name": "INSANE_SEARCH_LICENSE",
+      "filePath": "packages/raptix/raptix/sandbox_web/INSANE_SEARCH_LICENSE",
+      "summary": "Văn bản MIT license của engine insane-search vendored (Copyright 2026 fivetaku) — gốc pháp lý cho việc adapt raptix/sandbox_web, được NOTICE.md tham chiếu.",
+      "tags": [
+        "license",
+        "mit",
+        "vendored"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        21
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/sandbox_web/NOTICE.md",
+      "type": "document",
+      "name": "NOTICE.md",
+      "filePath": "packages/raptix/raptix/sandbox_web/NOTICE.md",
+      "summary": "Thông báo vendored: raptix/sandbox_web adapt từ insane-search (fivetaku, MIT — xem INSANE_SEARCH_LICENSE); liệt kê adaptation của Raptix: per-hop RoE scope_check qua probe/grid/phase0/browser fallback, provider layer web_search cho OSINT allowlist, chỉ local-Playwright trong sandbox, SSRF fail-closed cho ranh giới sandbox, workspace-scoped offload + CLI envelope.",
+      "tags": [
+        "notice",
+        "vendored",
+        "license",
+        "sandbox-web"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        14
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "type": "file",
+      "name": "learning.py",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "summary": "Store tự học per-host (U5) tại observations/learned.json: ghi route fetch (impersonate × referer × url-transform × phase) thành công gần nhất để lần sau ưu tiên thay vì dò lại từ đầu; bounded: eviction sau 2 real failure liên tiếp (stop_reason exhausted/challenge/blocked — outcome transient 429/404/budget không strike), TTL 30 ngày, cap 500 entries LRU; là DATA file nên No-Site-Name Rule giữ nguyên.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "cache",
+        "opsec"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        175
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "type": "file",
+      "name": "phase0.py",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "summary": "Phase 0 — router public API chính thức (nơi duy nhất trong engine được phép nêu tên platform, miễn trừ No-Site-Name): với Reddit (.rss/.json), X, YouTube, GitHub, npm, PyPI thử endpoint no-auth deterministically TRƯỚC grid WAF generic; mọi fetch gate kép RoE scope_check + SSRF classify fail-closed, attempt dict ghi route/status/bytes/note để failure không bao giờ im lặng; detector khớp host chính xác/suffix subdomain thật (không substring, chống spoof reddit.com.evil.tld).",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "osint",
+        "ssrf"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        1,
+        564
+      ]
+    },
+    {
+      "id": "config:packages/raptix/raptix/sandbox_web/templates/package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/package.json",
+      "summary": "package.json cho local deps của Playwright real-Chrome templates trong sandbox (insane-search-templates): playwright 1.58, playwright-extra + stealth plugins, ipaddr.js cho SSRF check; cài bằng npm install && npx playwright install chrome.",
+      "tags": [
+        "package-json",
+        "playwright",
+        "sandbox-web",
+        "template"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        13
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "type": "file",
+      "name": "playwright_mobile_chrome.js",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "summary": "Fetcher Playwright generic với device emulation (mặc định iPhone 13 Pro, nhận device từ stdin JSON): đọc request qua stdin, SSRF-check URL + IP (unwrap IPv4-mapped/NAT64) trước launch, installSafetyGuard chặn navigation out-of-scope, ghi envelope JSON (html, finalUrl, status, cookies, userAgent) ra stdout cho engine Python bridge cookie vào curl_cffi; No-Site-Name — không branch theo hostname.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch",
+        "stealth"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        177
+      ]
+    },
+    {
+      "id": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "type": "file",
+      "name": "playwright_real_chrome.js",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "summary": "Fetcher Playwright Chrome thật (không device emulation), cùng khung an toàn với biến thể mobile: isBlockedIp chống private/loopback/metadata + NAT64, classifyUrl kiểm scheme/DNS/IP, installSafetyGuard route-abort mọi request con, retry/reload hợp lý rồi xuất envelope cookies+UA — biến 1 pass browser đắt thành throughput curl_cffi rẻ (mẫu FlareSolverr).",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch",
+        "stealth"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        234
+      ]
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/task_spec.py:scoped_dispatch_payload",
+      "type": "function",
+      "name": "scoped_dispatch_payload",
+      "filePath": "packages/raptix/raptix/agents/task_spec.py",
+      "lineRange": [
+        111,
+        123
+      ],
+      "summary": "Xây list messages LangGraph 2 phần tử (system SUBAGENT_TASK_SYSTEM_PROMPT + user task_spec.render()) cho dispatch wrapper thay message history của cha; dict mirror shape converter LangChain để deserialize BaseMessage không cần import modul…",
+      "tags": [
+        "subagent",
+        "dispatch",
+        "handoff"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/task_spec.py:estimate_token_savings",
+      "type": "function",
+      "name": "estimate_token_savings",
+      "filePath": "packages/raptix/raptix/agents/task_spec.py",
+      "lineRange": [
+        126,
+        135
+      ],
+      "summary": "Ước lượng delta ký tự giữa full-history dispatch và scoped dispatch (char count làm proxy thô cho token) — dùng bởi test để assert scoped dispatch nhỏ hơn vật chất.",
+      "tags": [
+        "subagent",
+        "dispatch",
+        "handoff"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/agents/task_spec.py:_coerce_paths",
+      "type": "function",
+      "name": "_coerce_paths",
+      "filePath": "packages/raptix/raptix/agents/task_spec.py",
+      "lineRange": [
+        146,
+        152
+      ],
+      "summary": "Chuyển iterable heterogeneous (string/Path từ LangGraph state) thành tuple Path — helper cho test và integration code dựng task spec.",
+      "tags": [
+        "subagent",
+        "dispatch",
+        "handoff"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/agents/task_spec.py:SubAgentTaskSpec",
+      "type": "class",
+      "name": "SubAgentTaskSpec",
+      "filePath": "packages/raptix/raptix/agents/task_spec.py",
+      "lineRange": [
+        40,
+        108
+      ],
+      "summary": "Frozen slots dataclass payload handoff: objective, scope, inputs (tool-arg bundle), expected_outputs (tên artifact để child tự kiểm tra), parent_artifacts (Path trên workspace, đọc theo demand), engagement_id, parent_agent; render() xuất m…",
+      "tags": [
+        "subagent",
+        "dispatch",
+        "handoff"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/compat/__init__.py:register_legacy_imports",
+      "type": "function",
+      "name": "register_legacy_imports",
+      "filePath": "packages/raptix/raptix/compat/__init__.py",
+      "lineRange": [
+        43,
+        70
+      ],
+      "summary": "Bật compat shim Phase 1: idempotent (cờ _REGISTERED), opt-out RAPTIX_NO_COMPAT=1; phát một DeprecationWarning per-process liệt kê 7 mapping legacy→canonical để migration surface trong test logs — informational, không blocking đến 2.0.0.",
+      "tags": [
+        "compat",
+        "deprecation",
+        "shim"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/core/config.py:__getattr__",
+      "type": "function",
+      "name": "__getattr__",
+      "filePath": "packages/raptix/raptix/core/config.py",
+      "lineRange": [
+        19,
+        32
+      ],
+      "summary": "Hook PEP 562: ủy thác attribute sang raptix_core.utils.config, DeprecationWarning một lần mỗi tên qua tập _seen; name bắt đầu \"_\" raise AttributeError để probe dunder của Python không sinh nhiễu.",
+      "tags": [
+        "compat",
+        "pep562",
+        "shim"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/core/config.py:__dir__",
+      "type": "function",
+      "name": "__dir__",
+      "filePath": "packages/raptix/raptix/core/config.py",
+      "lineRange": [
+        35,
+        36
+      ],
+      "summary": "Hook PEP 562 __dir__: trả dir(module đích) để autocomplete/dir() trên legacy path liệt kê đúng symbol canonical.",
+      "tags": [
+        "compat",
+        "pep562",
+        "shim"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/core/schemas.py:__getattr__",
+      "type": "function",
+      "name": "__getattr__",
+      "filePath": "packages/raptix/raptix/core/schemas.py",
+      "lineRange": [
+        22,
+        35
+      ],
+      "summary": "Hook PEP 562: ủy thác attribute (RoE và các type engagement) sang raptix_core.types.engagement, DeprecationWarning một lần mỗi tên; dunder/private raise AttributeError im lặng.",
+      "tags": [
+        "compat",
+        "pep562",
+        "shim"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/core/schemas.py:__dir__",
+      "type": "function",
+      "name": "__dir__",
+      "filePath": "packages/raptix/raptix/core/schemas.py",
+      "lineRange": [
+        38,
+        39
+      ],
+      "summary": "Hook PEP 562 __dir__: trả dir(module đích) để autocomplete/dir() trên legacy path liệt kê đúng symbol canonical.",
+      "tags": [
+        "compat",
+        "pep562",
+        "shim"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/llm/models.py:__getattr__",
+      "type": "function",
+      "name": "__getattr__",
+      "filePath": "packages/raptix/raptix/llm/models.py",
+      "lineRange": [
+        19,
+        32
+      ],
+      "summary": "Hook PEP 562: ủy thác attribute sang raptix_core.types.llm với DeprecationWarning một lần mỗi tên; dunder/private không cảnh báo.",
+      "tags": [
+        "compat",
+        "pep562",
+        "shim"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/llm/models.py:__dir__",
+      "type": "function",
+      "name": "__dir__",
+      "filePath": "packages/raptix/raptix/llm/models.py",
+      "lineRange": [
+        35,
+        36
+      ],
+      "summary": "Hook PEP 562 __dir__: trả dir(module đích) để autocomplete/dir() trên legacy path liệt kê đúng symbol canonical.",
+      "tags": [
+        "compat",
+        "pep562",
+        "shim"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/plugin_loader.py:__getattr__",
+      "type": "function",
+      "name": "__getattr__",
+      "filePath": "packages/raptix/raptix/plugin_loader.py",
+      "lineRange": [
+        19,
+        32
+      ],
+      "summary": "Hook PEP 562: ủy thác attribute sang raptix_core.plugin_loader với DeprecationWarning một lần mỗi tên (legacy path removed tại 2.0.0).",
+      "tags": [
+        "compat",
+        "pep562",
+        "shim"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/plugin_loader.py:__dir__",
+      "type": "function",
+      "name": "__dir__",
+      "filePath": "packages/raptix/raptix/plugin_loader.py",
+      "lineRange": [
+        35,
+        36
+      ],
+      "summary": "Hook PEP 562 __dir__: trả dir(module đích) để autocomplete/dir() trên legacy path liệt kê đúng symbol canonical.",
+      "tags": [
+        "compat",
+        "pep562",
+        "shim"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:install_shutdown_handlers",
+      "type": "function",
+      "name": "install_shutdown_handlers",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        85,
+        102
+      ],
+      "summary": "Cài handler shutdown idempotent: lưu state_provider (replace nếu gọi lại), lần đầu stack OS-level handlers qua _register_posix_handlers và (Windows) _register_windows_handler.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_register_posix_handlers",
+      "type": "function",
+      "name": "_register_posix_handlers",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        105,
+        116
+      ],
+      "summary": "Đăng ký signal.signal cho SIGINT/SIGTERM POSIX, lưu previous handlers, warning khi đăng ký thất bại.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_register_windows_handler",
+      "type": "function",
+      "name": "_register_windows_handler",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        119,
+        143
+      ],
+      "summary": "Windows: SetConsoleCtrlHandler (kernel32 qua ctypes WINFUNCTYPE) cho CTRL_C/CTRL_BREAK/close; giữ reference routine toàn cục tránh GC.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_on_signal",
+      "type": "function",
+      "name": "_on_signal",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        146,
+        191
+      ],
+      "summary": "Nhận signal: tính exit code 128+signum, signal lặp trong cửa sổ 2s → _force_exit; lần đầu spawn worker thread chạy _run_flush bounded, join MAX_FLUSH_SECONDS rồi log summary_line + sys.exit.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_signal_name",
+      "type": "function",
+      "name": "_signal_name",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        194,
+        200
+      ],
+      "summary": "Chuyển signal number thành tên đọc được (SIGINT/SIGTERM…) qua signal.Signals.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_exit_code_for",
+      "type": "function",
+      "name": "_exit_code_for",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        203,
+        209
+      ],
+      "summary": "Exit code quy ước 128+signum: 130 cho SIGINT, 143 cho SIGTERM.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_force_exit",
+      "type": "function",
+      "name": "_force_exit",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        212,
+        218
+      ],
+      "summary": "Flush stdout rồi os._exit(code) — thoát ngay không chạy cleanup nữa.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "type": "function",
+      "name": "_run_flush",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        221,
+        265
+      ],
+      "summary": "Orchestrate flush: resolve workspace từ state, tuần tự _run_step các writer (findings in-flight, opplan checkpoint, partial executive, checkpoint event) với per-component timeout 2s, gom _FlushResult và errors — tổng budget MAX_FLUSH_SECON…",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_run_step",
+      "type": "function",
+      "name": "_run_step",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        268,
+        302
+      ],
+      "summary": "Chạy một writer trong thread riêng với deadline per-component 2s; timeout/exception ghi vào errors, không bao giờ cản exit.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_time_left",
+      "type": "function",
+      "name": "_time_left",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        305,
+        306
+      ],
+      "summary": "Số giây còn lại của deadline per-component, tối thiểu 0.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_resolve_workspace",
+      "type": "function",
+      "name": "_resolve_workspace",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        309,
+        319
+      ],
+      "summary": "Trích workspace path từ LangGraph state (workspace_path/workspace keys), mkdir khi cần, trả None khi không có — flush skip checkpoint khi thiếu workspace.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_write_atomic",
+      "type": "function",
+      "name": "_write_atomic",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        322,
+        329
+      ],
+      "summary": "Ghi file atomic: tmp cùng thư mục + os.replace — tránh file nửa vời khi crash giữa ghi.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_next_finding_id",
+      "type": "function",
+      "name": "_next_finding_id",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        332,
+        345
+      ],
+      "summary": "Sinh FIND-xxxx tuần tự bằng cách scan findings/*.md hiện có lấy max+1 — tránh đụng độ ID khi viết lại sau signal.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_write_inflight_findings",
+      "type": "function",
+      "name": "_write_inflight_findings",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        348,
+        366
+      ],
+      "summary": "Serialize findings in-flight từ state thành FIND-*.md atomic (qua _write_atomic): render bằng _finding_markdown, fallback _finding_fallback_body khi thiếu cấu trúc; trả số file viết được.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_finding_markdown",
+      "type": "function",
+      "name": "_finding_markdown",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        369,
+        392
+      ],
+      "summary": "Render một finding thành markdown đầy đủ (title, severity upper, target, evidence JSON, detail) từ mapping state.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_finding_fallback_body",
+      "type": "function",
+      "name": "_finding_fallback_body",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        395,
+        403
+      ],
+      "summary": "Body markdown tối thiểu khi finding thiếu cấu trúc để render đầy đủ.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_write_opplan_checkpoint",
+      "type": "function",
+      "name": "_write_opplan_checkpoint",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        406,
+        422
+      ],
+      "summary": "Ghi checkpoint opplan hiện tại (objectives/steps status, JSON _jsonable) ra file atomic trong workspace khi state có.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_write_partial_executive",
+      "type": "function",
+      "name": "_write_partial_executive",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        425,
+        442
+      ],
+      "summary": "Dựng executive summary thô từ state (dùng render_executive_summary nếu có) và ghi atomic; thiếu dữ liệu → _fallback_executive.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_fallback_executive",
+      "type": "function",
+      "name": "_fallback_executive",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        445,
+        462
+      ],
+      "summary": "Executive fallback tối thiểu từ những gì state còn (engagement, objectives, findings count, exit reason) — join markdown đơn giản, không raise.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_write_checkpoint_event_if_available",
+      "type": "function",
+      "name": "_write_checkpoint_event_if_available",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        465,
+        487
+      ],
+      "summary": "Append checkpoint event JSON (timestamp + state tóm tắt) vào events file workspace nếu events_path tồn tại — best-effort, bắt mọi exception.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/runtime/shutdown.py:_jsonable",
+      "type": "function",
+      "name": "_jsonable",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        490,
+        495
+      ],
+      "summary": "Chuẩn hoá object thành JSON-safe: dumps + loads round-trip, fallback repr cho kiểu lạ.",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/runtime/shutdown.py:_FlushResult",
+      "type": "class",
+      "name": "_FlushResult",
+      "filePath": "packages/raptix/raptix/runtime/shutdown.py",
+      "lineRange": [
+        62,
+        82
+      ],
+      "summary": "Dataclass tổng kết kết quả flush: workspace, findings_written, cờ opplan/partial-executive/event, errors; summary_line(signal) dựng dòng log \"[shutdown] SIG…: findings=N opplan=ok executive=skip -> workspace\".",
+      "tags": [
+        "shutdown",
+        "signal",
+        "flush"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:enabled",
+      "type": "function",
+      "name": "enabled",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        41,
+        42
+      ],
+      "summary": "Đọc env INSANE_LEARN: tắt store khi 0/false/no — mặc định bật.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:default_path",
+      "type": "function",
+      "name": "default_path",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        45,
+        49
+      ],
+      "summary": "Đường dẫn store: INSANE_LEARNED_PATH env nếu có, mặc định ~/.insane_search/learned.json.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:is_real_failure",
+      "type": "function",
+      "name": "is_real_failure",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        52,
+        54
+      ],
+      "summary": "True khi stop_reason thuộc PENALIZE_REASONS (exhausted/challenge/blocked) — route thật sự bị chặn, đáng strike.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:key_for",
+      "type": "function",
+      "name": "key_for",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        57,
+        60
+      ],
+      "summary": "Dựng lookup key host::device từ URL + device_class (mobile/desktop), host lowercase.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:_now",
+      "type": "function",
+      "name": "_now",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        63,
+        64
+      ],
+      "summary": "datetime.now(timezone.utc) — timestamp UTC thống nhất cho store.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:_parse",
+      "type": "function",
+      "name": "_parse",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        67,
+        72
+      ],
+      "summary": "Parse ISO timestamp an toàn, normalize naive → UTC; lỗi trả None.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:_prune",
+      "type": "function",
+      "name": "_prune",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        75,
+        92
+      ],
+      "summary": "Dọn store: bỏ entry quá TTL_DAYS (30 ngày mặc định) theo last_used, rồi giữ cap MAX_ENTRIES (500) bằng cách drop ít-dùng-gần-đây-trước; chạy mỗi lần load/ghi.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:load",
+      "type": "function",
+      "name": "load",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        95,
+        108
+      ],
+      "summary": "Đọc learned.json (parse an toàn, file hỏng/thiếu → rỗng không raise), áp _prune rồi trả dict lookup.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:save",
+      "type": "function",
+      "name": "save",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        111,
+        120
+      ],
+      "summary": "Ghi atomic learned.json (os.replace) với metadata version/timestamp, tự mkdir thư mục cha.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:lookup",
+      "type": "function",
+      "name": "lookup",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        123,
+        133
+      ],
+      "summary": "Tra route đã học cho key host::device (qua key_for + load); trả entry (route + meta) hoặc None.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:record_success",
+      "type": "function",
+      "name": "record_success",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        136,
+        152
+      ],
+      "summary": "Ghi nhận route thành công: cập nhật entry (last_route, last_ok timestamp, uses+1), _prune rồi save.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/learning.py:record_failure",
+      "type": "function",
+      "name": "record_failure",
+      "filePath": "packages/raptix/raptix/sandbox_web/learning.py",
+      "lineRange": [
+        155,
+        175
+      ],
+      "summary": "Strike route khi stop_reason thuộc PENALIZE_REASONS (exhausted/challenge/blocked): fails+1, quá EVICT_AFTER_FAILS=2 → xoá entry; outcome transient (rate-limit/unknown/budget/404) chỉ cập nhật last_seen không strike.",
+      "tags": [
+        "sandbox-web",
+        "learning",
+        "store"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "function",
+      "name": "_cffi_get",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        41,
+        70
+      ],
+      "summary": "Fetch curl_cffi impersonate với gate kép: RoE scope_check (nếu cung cấp) → raise _PhaseBlocked roe_out_of_scope, và safety.classify_url SSRF fail-closed → ssrf_blocked; curl_cffi import lười nên engine vẫn chạy khi thiếu.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_host",
+      "type": "function",
+      "name": "_host",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        73,
+        75
+      ],
+      "summary": "Hostname lowercase từ URL, chỉ strip literal \"www.\" prefix.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_attempt",
+      "type": "function",
+      "name": "_attempt",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        78,
+        86
+      ],
+      "summary": "Dựng attempt dict {platform, route, ok, status, bytes, note} — record chuẩn cho mọi nỗ lực fetch Phase-0.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_detect",
+      "type": "function",
+      "name": "_detect",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        90,
+        109
+      ],
+      "summary": "Nhận diện platform từ host chính xác hoặc suffix subdomain thật (không substring — chống spoof reddit.com.evil.tld, CWE-020): reddit/redd.it, x/twitter, youtube/youtu.be, github, npmjs, pypi; None nếu không khớp.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_reddit",
+      "type": "function",
+      "name": "_reddit",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        113,
+        174
+      ],
+      "summary": "Router Reddit: dựng .rss/.json từ path (dành cho /r/<sub> và post URL), thử RSS trước — route sống sót thật khi JSON API bị gate — rồi JSON; trả attempt dicts đầy đủ kể cả khi toàn bộ fail.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_x",
+      "type": "function",
+      "name": "_x",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        181,
+        298
+      ],
+      "summary": "Router X/Twitter: extract handle/tweet-id từ path rồi thử syndication CDN + oEmbed endpoints chính thức; mỗi attempt gate scope/SSRF qua _cffi_get và parse JSON lọc nội dung.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_youtube",
+      "type": "function",
+      "name": "_youtube",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        302,
+        359
+      ],
+      "summary": "Router YouTube: oEmbed cho video metadata + RSS channel feed (ytInitialData fallback qua subprocess curl khi cần); gate SSRF riêng trước subprocess.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_github",
+      "type": "function",
+      "name": "_github",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        386,
+        434
+      ],
+      "summary": "Router GitHub: REST API công khai không auth cho repo/user (parse owner/repo từ path, removesuffix .git); trả JSON metadata khi 200.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_npm",
+      "type": "function",
+      "name": "_npm",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        438,
+        495
+      ],
+      "summary": "Router npm: registry JSON API cho package metadata (parse name/scope từ path, bỏ marker), attempt dict cho từng route.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:_pypi",
+      "type": "function",
+      "name": "_pypi",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        499,
+        546
+      ],
+      "summary": "Router PyPI: JSON API cho package info; ok khi status 200 và có field info.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/phase0.py:route",
+      "type": "function",
+      "name": "route",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        560,
+        564
+      ],
+      "summary": "Entry public: _detect(url) → None nếu không phải platform Phase-0 (caller chạy grid generic như thường), ngược lại dispatch router tương ứng với timeout/scope_check.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/sandbox_web/phase0.py:_PhaseBlocked",
+      "type": "class",
+      "name": "_PhaseBlocked",
+      "filePath": "packages/raptix/raptix/sandbox_web/phase0.py",
+      "lineRange": [
+        34,
+        37
+      ],
+      "summary": "Exception nội bộ khi fetch Phase-0 bị chặn bởi SSRF safety hoặc scope_check — routers bắt Exception và ghi note, block thành failed attempt thay vì crash.",
+      "tags": [
+        "sandbox-web",
+        "phase0",
+        "router"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:buildEnvelope",
+      "type": "function",
+      "name": "buildEnvelope",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "lineRange": [
+        23,
+        33
+      ],
+      "summary": "Dựng envelope JSON đầu ra: html, finalUrl, status, cookies (từ context, name/value/domain), userAgent, automation flag — hợp đồng stdout engine Python đọc.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:readStdinJson",
+      "type": "function",
+      "name": "readStdinJson",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "lineRange": [
+        35,
+        45
+      ],
+      "summary": "Đọc toàn bộ stdin rồi JSON.parse ({url, device…}); lỗi parse reject để caller exit non-zero.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:isBlockedIp",
+      "type": "function",
+      "name": "isBlockedIp",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "lineRange": [
+        47,
+        59
+      ],
+      "summary": "Chặn IP không unicast qua ipaddr.js: unwrap IPv4-mapped IPv6 và NAT64 64:ff9b::/96 trước khi check range — chống SSRF qua literal IP.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:classifyUrl",
+      "type": "function",
+      "name": "classifyUrl",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "lineRange": [
+        61,
+        89
+      ],
+      "summary": "Phân loại URL: chỉ cho phép http/https, chặn credentials trong URL và IP private qua DNS lookup + isBlockedIp.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:installSafetyGuard",
+      "type": "function",
+      "name": "installSafetyGuard",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "lineRange": [
+        91,
+        100
+      ],
+      "summary": "Gắn page.route intercept mọi request con qua classifyUrl — ngoài scope thì abort, hợp lệ thì continue.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "lineRange": [
+        102,
+        175
+      ],
+      "summary": "Luồng chính: readStdinJson → classifyUrl (SSRF gate) → launchPersistentContext Chrome với device emulation + stealth plugin → installSafetyGuard → goto/wait → buildEnvelope → writeStdoutAsync; mọi lỗi thành envelope lỗi + process.exit.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:buildEnvelope",
+      "type": "function",
+      "name": "buildEnvelope",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "lineRange": [
+        32,
+        42
+      ],
+      "summary": "Dựng envelope JSON (html, finalUrl, status, cookies, userAgent, automation) — hợp đồng stdout cho engine Python.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:readStdinJson",
+      "type": "function",
+      "name": "readStdinJson",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "lineRange": [
+        44,
+        54
+      ],
+      "summary": "Đọc stdin, JSON.parse request {url, timeout…}; lỗi parse reject.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:isBlockedIp",
+      "type": "function",
+      "name": "isBlockedIp",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "lineRange": [
+        56,
+        68
+      ],
+      "summary": "Chặn IP không unicast (unwrap IPv4-mapped + NAT64 WKP) — cùng logic với biến thể mobile.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:classifyUrl",
+      "type": "function",
+      "name": "classifyUrl",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "lineRange": [
+        70,
+        98
+      ],
+      "summary": "Phân loại URL: scheme http/https, cấm credentials, DNS resolve rồi isBlockedIp — fail-closed.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:installSafetyGuard",
+      "type": "function",
+      "name": "installSafetyGuard",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "lineRange": [
+        100,
+        109
+      ],
+      "summary": "page.route intercept mọi request con qua classifyUrl; bị chặn → abort.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "lineRange": [
+        111,
+        232
+      ],
+      "summary": "Luồng chính Chrome thật (persistent context + stealth): readStdinJson → classifyUrl → launch → installSafetyGuard → goto (reload/retry hợp lý, waitForSelector) → buildEnvelope → writeStdoutAsync; lỗi ghi stderr và exit.",
+      "tags": [
+        "playwright",
+        "sandbox-web",
+        "fetch"
+      ],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "function:packages/raptix/raptix/agents/task_spec.py:scoped_dispatch_payload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "function:packages/raptix/raptix/agents/task_spec.py:scoped_dispatch_payload",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "function:packages/raptix/raptix/agents/task_spec.py:estimate_token_savings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "function:packages/raptix/raptix/agents/task_spec.py:estimate_token_savings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "function:packages/raptix/raptix/agents/task_spec.py:_coerce_paths",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "function:packages/raptix/raptix/agents/task_spec.py:_coerce_paths",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "class:packages/raptix/raptix/agents/task_spec.py:SubAgentTaskSpec",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "class:packages/raptix/raptix/agents/task_spec.py:SubAgentTaskSpec",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/compat/__init__.py",
+      "target": "function:packages/raptix/raptix/compat/__init__.py:register_legacy_imports",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/compat/__init__.py",
+      "target": "function:packages/raptix/raptix/compat/__init__.py:register_legacy_imports",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/core/config.py",
+      "target": "function:packages/raptix/raptix/core/config.py:__getattr__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/core/config.py",
+      "target": "function:packages/raptix/raptix/core/config.py:__getattr__",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/core/config.py",
+      "target": "function:packages/raptix/raptix/core/config.py:__dir__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/core/config.py",
+      "target": "function:packages/raptix/raptix/core/config.py:__dir__",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/core/schemas.py",
+      "target": "function:packages/raptix/raptix/core/schemas.py:__getattr__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/core/schemas.py",
+      "target": "function:packages/raptix/raptix/core/schemas.py:__getattr__",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/core/schemas.py",
+      "target": "function:packages/raptix/raptix/core/schemas.py:__dir__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/core/schemas.py",
+      "target": "function:packages/raptix/raptix/core/schemas.py:__dir__",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/llm/models.py",
+      "target": "function:packages/raptix/raptix/llm/models.py:__getattr__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/llm/models.py",
+      "target": "function:packages/raptix/raptix/llm/models.py:__getattr__",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/llm/models.py",
+      "target": "function:packages/raptix/raptix/llm/models.py:__dir__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/llm/models.py",
+      "target": "function:packages/raptix/raptix/llm/models.py:__dir__",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/plugin_loader.py",
+      "target": "function:packages/raptix/raptix/plugin_loader.py:__getattr__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/plugin_loader.py",
+      "target": "function:packages/raptix/raptix/plugin_loader.py:__getattr__",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/plugin_loader.py",
+      "target": "function:packages/raptix/raptix/plugin_loader.py:__dir__",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/plugin_loader.py",
+      "target": "function:packages/raptix/raptix/plugin_loader.py:__dir__",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:install_shutdown_handlers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:install_shutdown_handlers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_register_posix_handlers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_register_posix_handlers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_register_windows_handler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_register_windows_handler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_on_signal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_on_signal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_signal_name",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_signal_name",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_exit_code_for",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_exit_code_for",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_force_exit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_force_exit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_run_step",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_run_step",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_time_left",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_time_left",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_resolve_workspace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_resolve_workspace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_atomic",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_atomic",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_next_finding_id",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_next_finding_id",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_inflight_findings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_inflight_findings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_finding_markdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_finding_markdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_finding_fallback_body",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_finding_fallback_body",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_opplan_checkpoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_opplan_checkpoint",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_partial_executive",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_partial_executive",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_fallback_executive",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_fallback_executive",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_checkpoint_event_if_available",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_checkpoint_event_if_available",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_jsonable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_jsonable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "class:packages/raptix/raptix/runtime/shutdown.py:_FlushResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/runtime/shutdown.py",
+      "target": "class:packages/raptix/raptix/runtime/shutdown.py:_FlushResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:enabled",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:enabled",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:default_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:default_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:is_real_failure",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:is_real_failure",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:key_for",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:key_for",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:_now",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:_now",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:_parse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:_parse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:_prune",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:_prune",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:load",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:load",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:save",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:save",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:lookup",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:lookup",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:record_success",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:record_success",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:record_failure",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:record_failure",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_host",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_host",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_attempt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_attempt",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_detect",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_detect",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_reddit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_reddit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_x",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_x",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_youtube",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_youtube",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_github",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_github",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_npm",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_npm",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_pypi",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_pypi",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:route",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:route",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "class:packages/raptix/raptix/sandbox_web/phase0.py:_PhaseBlocked",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "target": "class:packages/raptix/raptix/sandbox_web/phase0.py:_PhaseBlocked",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:buildEnvelope",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:buildEnvelope",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:readStdinJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:readStdinJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:isBlockedIp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:isBlockedIp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:classifyUrl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:classifyUrl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:installSafetyGuard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:installSafetyGuard",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:buildEnvelope",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:buildEnvelope",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:readStdinJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:readStdinJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:isBlockedIp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:isBlockedIp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:classifyUrl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:classifyUrl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:installSafetyGuard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:installSafetyGuard",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/agents/task_spec.py:scoped_dispatch_payload",
+      "target": "class:packages/raptix/raptix/agents/task_spec.py:SubAgentTaskSpec",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/agents/task_spec.py:estimate_token_savings",
+      "target": "class:packages/raptix/raptix/agents/task_spec.py:SubAgentTaskSpec",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:install_shutdown_handlers",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_register_posix_handlers",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:install_shutdown_handlers",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_register_windows_handler",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_on_signal",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_signal_name",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_on_signal",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_exit_code_for",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_on_signal",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_force_exit",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_on_signal",
+      "target": "class:packages/raptix/raptix/runtime/shutdown.py:_FlushResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "target": "class:packages/raptix/raptix/runtime/shutdown.py:_FlushResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_resolve_workspace",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_run_step",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_checkpoint_event_if_available",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_inflight_findings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_opplan_checkpoint",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_run_flush",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_write_partial_executive",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_write_inflight_findings",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_finding_markdown",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_write_inflight_findings",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_next_finding_id",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/runtime/shutdown.py:_write_partial_executive",
+      "target": "function:packages/raptix/raptix/runtime/shutdown.py:_fallback_executive",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:load",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:_prune",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:lookup",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:key_for",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:lookup",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:load",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:record_success",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:key_for",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:record_success",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:load",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:record_success",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:save",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:record_failure",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:key_for",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:record_failure",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:load",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/learning.py:record_failure",
+      "target": "function:packages/raptix/raptix/sandbox_web/learning.py:save",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/phase0.py:route",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_detect",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "target": "class:packages/raptix/raptix/sandbox_web/phase0.py:_PhaseBlocked",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/phase0.py:_reddit",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/phase0.py:_x",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/phase0.py:_youtube",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/phase0.py:_github",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/phase0.py:_npm",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/phase0.py:_pypi",
+      "target": "function:packages/raptix/raptix/sandbox_web/phase0.py:_cffi_get",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:main",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:readStdinJson",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:main",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:installSafetyGuard",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:main",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:buildEnvelope",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:classifyUrl",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:isBlockedIp",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:installSafetyGuard",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js:classifyUrl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:main",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:readStdinJson",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:main",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:installSafetyGuard",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:main",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:buildEnvelope",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:classifyUrl",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:isBlockedIp",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:installSafetyGuard",
+      "target": "function:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js:classifyUrl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/task_spec.py",
+      "target": "file:packages/raptix/tests/unit/agents/test_task_spec.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V001__initial_schema.cypher",
+      "target": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes_and_provenance.cypher",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes_and_provenance.cypher",
+      "target": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher",
+      "target": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V004__technology_node.cypher",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V004__technology_node.cypher",
+      "target": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher",
+      "target": "schema:packages/raptix/raptix/middleware/kg_internal/migrations/V006__engagement_revision_counter.cypher",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/sandbox_web/INSANE_SEARCH_LICENSE",
+      "target": "document:packages/raptix/raptix/sandbox_web/NOTICE.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/sandbox_web/NOTICE.md",
+      "target": "file:packages/raptix/raptix/sandbox_web/learning.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/sandbox_web/NOTICE.md",
+      "target": "file:packages/raptix/raptix/sandbox_web/phase0.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/sandbox_web/NOTICE.md",
+      "target": "file:packages/raptix/raptix/sandbox_web/transport.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:packages/raptix/raptix/sandbox_web/templates/package.json",
+      "target": "file:packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:packages/raptix/raptix/sandbox_web/templates/package.json",
+      "target": "file:packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

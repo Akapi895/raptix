@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "containers/web.Dockerfile",
+      "language": "dockerfile",
+      "sizeLines": 130,
+      "fileCategory": "code"
+    },
+    {
+      "path": "docs/architecture/context-engineering.md",
+      "language": "markdown",
+      "sizeLines": 307,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/architecture/red-team-infrastructure.md",
+      "language": "markdown",
+      "sizeLines": 650,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/decisions/0003-independent-api-owner.md",
+      "language": "markdown",
+      "sizeLines": 103,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/engineering/ci-arsenal.md",
+      "language": "markdown",
+      "sizeLines": 95,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/features/blue-cell.md",
+      "language": "markdown",
+      "sizeLines": 255,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/migration/from-0.0.x.md",
+      "language": "markdown",
+      "sizeLines": 206,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/migration/raptix-rename-and-redesign.md",
+      "language": "markdown",
+      "sizeLines": 617,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/tools/open-web.md",
+      "language": "markdown",
+      "sizeLines": 71,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-core/README.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-core/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 51,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix-core/raptix_core/py.typed",
+      "language": "typed",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-core/raptix_core/types/dispatch_outcome.py",
+      "language": "python",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-core/raptix_core/types/foothold.py",
+      "language": "python",
+      "sizeLines": 79,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-core/raptix_core/utils/engagement_scope.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-core/tests/test_no_runtime_deps.py",
+      "language": "python",
+      "sizeLines": 74,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-core/tests/test_public_api_stability.py",
+      "language": "python",
+      "sizeLines": 144,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/README.md",
+      "language": "markdown",
+      "sizeLines": 24,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/README.md",
+      "language": "markdown",
+      "sizeLines": 41,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/agent/README.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/agent/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/agent/src/raptix_example_agent/__init__.py",
+      "language": "python",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/callback/README.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/callback/pyproject.toml",
+      "language": "toml",
+      "sizeLines": 21,
+      "fileCategory": "config"
+    },
+    {
+      "path": "packages/raptix-sdk/examples/callback/src/raptix_example_callback/__init__.py",
+      "language": "python",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "containers/web.Dockerfile": [],
+    "docs/architecture/context-engineering.md": [],
+    "docs/architecture/red-team-infrastructure.md": [],
+    "docs/decisions/0003-independent-api-owner.md": [],
+    "docs/engineering/ci-arsenal.md": [],
+    "docs/features/blue-cell.md": [],
+    "docs/migration/from-0.0.x.md": [],
+    "docs/migration/raptix-rename-and-redesign.md": [],
+    "docs/tools/open-web.md": [],
+    "packages/raptix-core/README.md": [],
+    "packages/raptix-core/pyproject.toml": [],
+    "packages/raptix-core/raptix_core/py.typed": [],
+    "packages/raptix-core/raptix_core/types/dispatch_outcome.py": [],
+    "packages/raptix-core/raptix_core/types/foothold.py": [],
+    "packages/raptix-core/raptix_core/utils/engagement_scope.py": [],
+    "packages/raptix-core/tests/test_no_runtime_deps.py": [],
+    "packages/raptix-core/tests/test_public_api_stability.py": [],
+    "packages/raptix-sdk/README.md": [],
+    "packages/raptix-sdk/examples/README.md": [],
+    "packages/raptix-sdk/examples/agent/README.md": [],
+    "packages/raptix-sdk/examples/agent/pyproject.toml": [],
+    "packages/raptix-sdk/examples/agent/src/raptix_example_agent/__init__.py": [],
+    "packages/raptix-sdk/examples/callback/README.md": [],
+    "packages/raptix-sdk/examples/callback/pyproject.toml": [],
+    "packages/raptix-sdk/examples/callback/src/raptix_example_callback/__init__.py": []
+  }
+}

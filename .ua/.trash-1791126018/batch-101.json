@@ -1,0 +1,669 @@
+{
+ "batchIndex": 101,
+ "batchFiles": [
+  {
+   "path": "scripts/init-web-db.sql",
+   "language": "sql",
+   "sizeLines": 4,
+   "fileCategory": "data"
+  },
+  {
+   "path": "scripts/install.ps1",
+   "language": "powershell",
+   "sizeLines": 224,
+   "fileCategory": "script"
+  },
+  {
+   "path": "scripts/install.sh",
+   "language": "shell",
+   "sizeLines": 584,
+   "fileCategory": "script"
+  },
+  {
+   "path": "scripts/web-hotswap.sh",
+   "language": "shell",
+   "sizeLines": 139,
+   "fileCategory": "script"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "table:scripts/init-web-db.sql:raptix_web",
+   "type": "table",
+   "name": "raptix_web",
+   "filePath": "scripts/init-web-db.sql",
+   "lineRange": [
+    1,
+    4
+   ],
+   "summary": "Script SQL bootstrap tạo database raptix_web cho Web dashboard, chạy tự động qua /docker-entrypoint-initdb.d ở lần khởi động Postgres đầu tiên: SELECT ... WHERE NOT EXISTS ... \\gexec để idempotent (chỉ tạo khi chưa có), OWNER là role raptix — bản standalone trong scripts/ song song với containers/postgres-init/01-create-web-db.sql.",
+   "tags": [
+    "database",
+    "postgres",
+    "bootstrap",
+    "web",
+    "idempotent"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/install.ps1",
+   "type": "file",
+   "name": "install.ps1",
+   "filePath": "scripts/install.ps1",
+   "lineRange": [
+    1,
+    224
+   ],
+   "summary": "Installer Windows (PowerShell 5.1+, chạy cả PS7) là bản đối ứng của scripts/install.sh, chạy qua irm https://decepticon.red/install.ps1 | iex: preflight kiểm tra Docker + Compose v2, dò kiến trúc AMD64/ARM64 qua PROCESSOR_ARCHITECTURE, resolve version từ GitHub releases (env RAPTIX_VERSION), tải về install dir %USERPROFILE%\\.raptix 4 file config (docker-compose.yml, docker-compose.web-raptix.yml, .env.example, config/litellm.yaml) pin theo release tag, verify SHA-256 từng file chống manifest config-checksums.txt của release, tải launcher binary raptix-windows-<arch>.exe + verify chống checksums.txt GoReleaser, thêm bin dir vào PATH user scope (SetEnvironmentVariable), và docker compose --profile cli pull (SKIP_PULL=true để bỏ qua; RAPTIX_SKIP_VERIFY=1 là opt-out verify duy nhất).",
+   "tags": [
+    "installer",
+    "windows",
+    "powershell",
+    "supply-chain",
+    "checksum-verification"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Set-StrictMode -Version Latest + $ErrorActionPreference=Stop; usage: irm https://decepticon.red/install.ps1 | iex; env: RAPTIX_VERSION, RAPTIX_HOME, SKIP_PULL, RAPTIX_SKIP_VERIFY."
+  },
+  {
+   "id": "function:scripts/install.ps1:Invoke-Preflight",
+   "type": "function",
+   "name": "Invoke-Preflight",
+   "filePath": "scripts/install.ps1",
+   "lineRange": [
+    33,
+    52
+   ],
+   "summary": "Preflight Windows: chặn cài đặt khi thiếu Docker, daemon chưa chạy, hoặc thiếu Compose v2 (bundle cùng Docker Desktop) — exit 1 kèm link hướng dẫn cài Docker Desktop.",
+   "tags": [
+    "preflight",
+    "docker",
+    "validation"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/install.ps1:Resolve-Version",
+   "type": "function",
+   "name": "Resolve-Version",
+   "filePath": "scripts/install.ps1",
+   "lineRange": [
+    66,
+    78
+   ],
+   "summary": "Resolve version cài đặt: trả env RAPTIX_VERSION nếu set, ngược lại gọi GitHub API releases/latest (User-Agent raptix-installer) và strip tiền tố v; khi API lỗi thì exit 1 yêu cầu set RAPTIX_VERSION tay.",
+   "tags": [
+    "versioning",
+    "github-api",
+    "release"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/install.ps1:Assert-Sha256",
+   "type": "function",
+   "name": "Assert-Sha256",
+   "filePath": "scripts/install.ps1",
+   "lineRange": [
+    83,
+    100
+   ],
+   "summary": "Kiểm tra tính toàn vẹn SHA-256 một file đã tải: thiếu checksum trong manifest thì exit 1 (trừ khi RAPTIX_SKIP_VERIFY=1), mismatch được coi là tampering hoặc download dở — so Get-FileHash thực tế với expected rồi abort.",
+   "tags": [
+    "checksum",
+    "sha256",
+    "supply-chain",
+    "integrity"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/install.ps1:Main",
+   "type": "function",
+   "name": "Main",
+   "filePath": "scripts/install.ps1",
+   "lineRange": [
+    103,
+    222
+   ],
+   "summary": "Luồng chính installer Windows: preflight → resolve version/arch → tạo install dir + config/ + workspace/ → stage 4 config file pin theo tag v<version> → verify từng dòng manifest config-checksums.txt (bắt buộc có docker-compose.web-raptix.yml) → move vào chỗ + ghi .version → tải launcher raptix-windows-<arch>.exe + verify chống checksums.txt → set PATH user scope (nếu chưa có) → docker compose --profile cli pull với RAPTIX_VERSION/HOME inject, rồi in next steps (raptix onboard, raptix).",
+   "tags": [
+    "installer",
+    "main-flow",
+    "supply-chain"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:scripts/install.sh",
+   "type": "file",
+   "name": "install.sh",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    1,
+    584
+   ],
+   "summary": "One-line installer POSIX (curl -fsSL https://decepticon.red/install | bash) cho Linux/macOS, mô hình soak kiểu Claude-Code: channel stable (mặc định, chỉ nhận final release đã \"soak\" >= RAPTIX_STABLE_SOAK_DAYS=7 ngày) hoặc latest, mọi giá trị lạ fail về stable; preflight kiểm tra curl + runtime Docker/Podman 4.4+ (override RAPTIX_CONTAINER_RUNTIME) + Compose v2 + sha256sum/shasum; tải 4 config file pin theo release tag và verify chống config-checksums.txt (chặn vector hoán đổi docker-compose.yml qua raw CDN), tải launcher Go binary raptix-<os>-<arch> + verify chống checksums.txt GoReleaser (check giá trị nhất cho entry-point của user), setup PATH cho bash/zsh/fish + GitHub Actions GITHUB_PATH, cảnh báo launcher raptix stale (npm link cũ) shadow PATH, pull Docker images (SKIP_PULL=true bỏ qua), và nhắc exec $SHELL / hash -r sau cài; .env hiện có được giữ nguyên chỉ bổ sung RAPTIX_HOME + RAPTIX_CHANNEL, không tự sinh .env để wizard onboard vẫn chạy.",
+   "tags": [
+    "installer",
+    "supply-chain",
+    "checksum-verification",
+    "docker",
+    "release-channel"
+   ],
+   "complexity": "complex",
+   "languageNotes": "set -euo pipefail; usage: VERSION=<x.y.z> curl -fsSL https://decepticon.red/install | bash; env: CHANNEL, RAPTIX_STABLE_SOAK_DAYS, VERSION, RAPTIX_HOME, SKIP_PULL, RAPTIX_SKIP_VERIFY."
+  },
+  {
+   "id": "function:scripts/install.sh:preflight",
+   "type": "function",
+   "name": "preflight",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    59,
+    116
+   ],
+   "summary": "Preflight POSIX: bắt buộc curl; auto-detect runtime docker/podman (hoặc RAPTIX_CONTAINER_RUNTIME tường minh, ví dụ nerdctl) phải chạy được docker/podman info; với docker yêu cầu Compose v2, với podman yêu cầu \"podman compose\" (4.4+) hoặc podman-compose; và phải có sha256sum (Linux) hoặc shasum -a 256 (macOS) cho verify.",
+   "tags": [
+    "preflight",
+    "docker",
+    "podman",
+    "validation"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/install.sh:assert_sha256",
+   "type": "function",
+   "name": "assert_sha256",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    129,
+    148
+   ],
+   "summary": "Verify một file chống expected hash: thiếu record trong manifest → exit 1 trừ khi RAPTIX_SKIP_VERIFY=1 (in cảnh báo opt-out), mismatch → error \"possible tampering or partial download\" kèm expected/got rồi abort; dùng sha256_of tùy sha256sum/shasum.",
+   "tags": [
+    "checksum",
+    "sha256",
+    "integrity"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/install.sh:resolve_stable_soaked",
+   "type": "function",
+   "name": "resolve_stable_soaked",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    154,
+    191
+   ],
+   "summary": "Chọn stable version: gọi GitHub API releases?per_page=30, nhúng script python3 lọc bỏ draft/prerelease, bỏ release published chưa đủ soak*86400 giây, trả tag mới nhất theo numeric tuple; thiếu python3 hoặc không release nào qualify thì in rỗng để caller fallback /releases/latest.",
+   "tags": [
+    "versioning",
+    "release-channel",
+    "github-api"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/install.sh:resolve_version",
+   "type": "function",
+   "name": "resolve_version",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    193,
+    222
+   ],
+   "summary": "Phân giải version cài: VERSION env thắng tất cả; channel stable đi qua resolve_stable_soaked, rỗng (hoặc channel latest) thì fallback releases/latest; hoàn toàn không có release thì dùng image tag :<channel>; có tag thật thì pin RAW_BASE về raw.githubusercontent.com/<repo>/v<version> để config không trôi theo main.",
+   "tags": [
+    "versioning",
+    "release-channel",
+    "github-api",
+    "fallback"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/install.sh:download_files",
+   "type": "function",
+   "name": "download_files",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    225,
+    282
+   ],
+   "summary": "Tải 4 file config vào .config-stage: docker-compose.yml + docker-compose.web-raptix.yml (luôn overwrite), .env.example (chỉ template — không tự sinh .env vì wizard onboard dò sự tồn tại của file để quyết định chạy), config/litellm.yaml; với .env sẵn có chỉ bổ sung RAPTIX_HOME + ghi RAPTIX_CHANNEL nếu chưa có (lựa chọn cũ của user thắng); tạo workspace/ bind-mount, verify_config_manifest rồi mới move các file vào install dir và ghi marker .version.",
+   "tags": [
+    "installer",
+    "config",
+    "supply-chain"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/install.sh:verify_config_manifest",
+   "type": "function",
+   "name": "verify_config_manifest",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    288,
+    329
+   ],
+   "summary": "Verify toàn bộ config đã ghi chống config-checksums.txt tải từ release v<version> (sha256sum format \"<hex>  <path>\"): không có release tag → bỏ qua có cảnh báo; tải manifest thất bại → từ chối cài (release <1.0.27) trừ khi RAPTIX_SKIP_VERIFY=1; bắt buộc manifest phải cover docker-compose.web-raptix.yml; thiếu file được manifest liệt kê là hard error — chặn vector hoán đổi raw download bằng cross-check qua GitHub Releases.",
+   "tags": [
+    "checksum",
+    "supply-chain",
+    "manifest"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/install.sh:create_launcher",
+   "type": "function",
+   "name": "create_launcher",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    332,
+    377
+   ],
+   "summary": "Tải launcher Go binary raptix-<os>-<arch> (uname -s/-m, chuẩn hoá x86_64→amd64, aarch64/arm64→arm64) từ release tag vào ~/.local/bin/raptix, từ chối cài khi version chưa resolve được (latest/stable), và chmod 755; verify_launcher_binary chạy ngay sau tải — integrity của launcher là check giá trị nhất vì nó là entry-point session của user.",
+   "tags": [
+    "installer",
+    "launcher",
+    "binary"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/install.sh:verify_launcher_binary",
+   "type": "function",
+   "name": "verify_launcher_binary",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    381,
+    399
+   ],
+   "summary": "Tải checksums.txt GoReleaser của release, awk tách dòng của binary_name để lấy expected hash rồi assert_sha256; thiếu checksums.txt (release <1.0.27) → từ chối trừ khi RAPTIX_SKIP_VERIFY=1.",
+   "tags": [
+    "checksum",
+    "goreleaser",
+    "supply-chain"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/install.sh:detect_stale_launcher",
+   "type": "function",
+   "name": "detect_stale_launcher",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    406,
+    430
+   ],
+   "summary": "Quét PATH (dedupe) tìm executable \"raptix\" ngoài bin_dir vừa cài — tàn dư npm link/symlink/package manager khác sẽ shadow launcher mới và sinh lỗi khó hiểu (node MODULE_NOT_FOUND); cảnh báo kèm hướng dẫn remove + hash -r.",
+   "tags": [
+    "path",
+    "diagnostics",
+    "conflict-detection"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/install.sh:setup_path",
+   "type": "function",
+   "name": "setup_path",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    433,
+    490
+   ],
+   "summary": "Thêm bin_dir vào PATH theo shell: đã có thì bỏ qua; GitHub Actions ghi vào $GITHUB_PATH; fish thêm fish_add_path vào config.fish, zsh thêm export vào ~/.zshrc (honor ZDOTDIR), bash/khác thêm vào ~/.bashrc (fallback ~/.profile) — idempotent nhờ grep -q trước khi append.",
+   "tags": [
+    "path",
+    "shell",
+    "fish",
+    "zsh",
+    "bash"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/install.sh:pull_images",
+   "type": "function",
+   "name": "pull_images",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    493,
+    513
+   ],
+   "summary": "docker compose --profile cli pull trong install dir với RAPTIX_VERSION + RAPTIX_HOME inject tường minh (chưa --env-file vì .env chưa tồn tại, mọi ${VAR} trong compose có :-defaults); SKIP_PULL=true bỏ qua; pull hỏng chỉ warn và chỉ dẫn \"raptix update\" sau.",
+   "tags": [
+    "docker",
+    "compose",
+    "images"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/install.sh:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/install.sh",
+   "lineRange": [
+    516,
+    582
+   ],
+   "summary": "Điều phối installer: RAPTIX_HOME mặc định ~/.raptix + bin_dir ~/.local/bin → preflight → resolve_version → mkdir → download_files → create_launcher → setup_path → detect_stale_launcher (chạy sau PATH setup để bin_dir là chuẩn \"launcher mới\") → pull_images → banner hoàn tất kèm 2 bước next (raptix onboard, raptix) và hint exec $SHELL + hash -r giải cả hai failure-mode của shell mới/cũ.",
+   "tags": [
+    "main-flow",
+    "installer",
+    "orchestration"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/web-hotswap.sh",
+   "type": "file",
+   "name": "web-hotswap.sh",
+   "filePath": "scripts/web-hotswap.sh",
+   "lineRange": [
+    1,
+    139
+   ],
+   "summary": "Hot-swap web dashboard vào container raptix-web đang chạy mà không ngắt WebSocket operator (~25s có build, ~5s inject-only): build Next.js trên host (prisma generate với DATABASE_URL mặc định postgresql://raptix:raptix@localhost:5432/raptix_web + npm run build), rm .next cũ trong container (docker exec -u 0), bơm standalone .next + .next/static qua tar pipe và docker cp terminal-server.ts + server.js, chown nextjs:nodejs, rồi reload — mặc định gửi SIGUSR1 cho PID 1 (entrypoint supervisor restart riêng Next.js, terminal server sống) với fallback docker restart, --full thì restart container + chờ health; --skip-build chỉ inject build cuối; kết thúc bằng curl kiểm tra HTTP 200 trên :3000, exit 1 kèm chỉ dẫn docker logs nếu khác.",
+   "tags": [
+    "hotswap",
+    "nextjs",
+    "docker",
+    "developer-experience",
+    "zero-downtime"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "set -euo pipefail; usage: ./scripts/web-hotswap.sh [--skip-build|--full]; ghép cặp với SIGUSR1 handler restart_next trong containers/web-entrypoint.sh."
+  }
+ ],
+ "edges": [
+  {
+   "source": "table:scripts/init-web-db.sql:raptix_web",
+   "target": "table:containers/postgres-init/01-create-web-db.sql:raptix_web",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "file:scripts/install.ps1",
+   "target": "function:scripts/install.ps1:Invoke-Preflight",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.ps1",
+   "target": "function:scripts/install.ps1:Resolve-Version",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.ps1",
+   "target": "function:scripts/install.ps1:Assert-Sha256",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.ps1",
+   "target": "function:scripts/install.ps1:Main",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "function:scripts/install.ps1:Main",
+   "target": "function:scripts/install.ps1:Invoke-Preflight",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.ps1:Main",
+   "target": "function:scripts/install.ps1:Resolve-Version",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.ps1:Main",
+   "target": "function:scripts/install.ps1:Assert-Sha256",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/install.ps1",
+   "target": "file:scripts/install.sh",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "file:scripts/install.ps1",
+   "target": "service:docker-compose.yml",
+   "type": "depends_on",
+   "direction": "forward",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/install.ps1",
+   "target": "config:.env.example",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:preflight",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:assert_sha256",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:resolve_stable_soaked",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:resolve_version",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:download_files",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:verify_config_manifest",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:create_launcher",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:verify_launcher_binary",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:detect_stale_launcher",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:setup_path",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:pull_images",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "function:scripts/install.sh:main",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1
+  },
+  {
+   "source": "function:scripts/install.sh:main",
+   "target": "function:scripts/install.sh:preflight",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:main",
+   "target": "function:scripts/install.sh:resolve_version",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:main",
+   "target": "function:scripts/install.sh:download_files",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:main",
+   "target": "function:scripts/install.sh:create_launcher",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:main",
+   "target": "function:scripts/install.sh:setup_path",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:main",
+   "target": "function:scripts/install.sh:detect_stale_launcher",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:main",
+   "target": "function:scripts/install.sh:pull_images",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:resolve_version",
+   "target": "function:scripts/install.sh:resolve_stable_soaked",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:download_files",
+   "target": "function:scripts/install.sh:verify_config_manifest",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:verify_config_manifest",
+   "target": "function:scripts/install.sh:assert_sha256",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:create_launcher",
+   "target": "function:scripts/install.sh:verify_launcher_binary",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:scripts/install.sh:verify_launcher_binary",
+   "target": "function:scripts/install.sh:assert_sha256",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "service:docker-compose.yml",
+   "type": "depends_on",
+   "direction": "forward",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/install.sh",
+   "target": "config:.env.example",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "file:scripts/web-hotswap.sh",
+   "target": "service:docker-compose.yml",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "file:scripts/web-hotswap.sh",
+   "target": "config:clients/web/package.json",
+   "type": "depends_on",
+   "direction": "forward",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/web-hotswap.sh",
+   "target": "file:clients/web/server/terminal-server.ts",
+   "type": "depends_on",
+   "direction": "forward",
+   "weight": 0.6
+  }
+ ]
+}

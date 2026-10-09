@@ -1,0 +1,920 @@
+{
+  "files": {
+    "packages/raptix/raptix/skills/engine/__init__.py": {
+      "summary": "Package init Skillogy — skill-as-a-service: externalize skill catalog ra service riêng nói gRPC + REST thay vì đọc SKILL.md từ filesystem; ghép protocol + server Neo4j-backed.",
+      "tags": [
+        "barrel",
+        "skillogy",
+        "skills",
+        "service"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/__main__.py": {
+      "summary": "Boot sequence `python -m raptix.skills.engine`: dựng Neo4jBackend, seed skills.cypher chỉ khi graph rỗng, backfill embedding nền và start FastAPI REST app trên SKILLOGY_REST_PORT.",
+      "tags": [
+        "entry-point",
+        "boot",
+        "skillogy",
+        "neo4j"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/skills/engine/embed_ingest.py": {
+      "summary": "Backfill embedding lúc boot (ADR-0011): tạo vector index, embed mọi skill whose input text/đổi model so với lần trước qua litellm proxy; proxy chưa cấu hình thì bỏ qua êm — substring search vẫn hoạt động.",
+      "tags": [
+        "embeddings",
+        "ingest",
+        "skillogy",
+        "degradation"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py": {
+      "summary": "Embedding helper hybrid retrieval: gọi litellm proxy (OpenAI-compatible), cache đĩa theo model+text, retry với Retry-After/backoff capped; hợp đồng degradation — không bao giờ raise, trả None cho caller fallback.",
+      "tags": [
+        "embeddings",
+        "litellm-proxy",
+        "cache",
+        "retry",
+        "skillogy"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/raptix/skills/engine/proto/__init__.py": {
+      "summary": "Message dataclass thủ công mirror skillogy.proto: SkillMeta, SkillEnvelope, SkillList/Load/Ingest Request/Response — wire format REST là JSON serialize của các dataclass này, chờ codegen khớp field.",
+      "tags": [
+        "proto",
+        "data-model",
+        "wire-format",
+        "skillogy"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/skills/engine/server/__init__.py": {
+      "summary": "Package init server Skillogy: expose build_app + Neo4jBackend/assert_read_only/CypherWriteRejected; legacy SkillRegistry đã bị xóa sạch (Amendment v0.2.2).",
+      "tags": [
+        "barrel",
+        "skillogy",
+        "server",
+        "neo4j"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/server/app.py": {
+      "summary": "FastAPI REST app Skillogy Phase 1a: GET /v1/health, POST skills:find/load/traverse/moc — app là chủ sở hữu duy nhất kết nối Neo4j Bolt, endpoint bảo vệ bằng Bearer key tùy chọn, health luôn mở.",
+      "tags": [
+        "fastapi",
+        "rest",
+        "skillogy",
+        "api-handler"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/skills/engine/server/neo4j_backend.py": {
+      "summary": "Neo4jBackend: storage read-only cho skillogy — find_skill hybrid (lexical + semantic RRF fusion), load_skill, traverse BFS, query_moc_summary, bulk_ingest_cypher seed và write_embeddings; enforce read-only 3 lớp cho Cypher server-driven.",
+      "tags": [
+        "neo4j",
+        "storage",
+        "read-only",
+        "hybrid-search",
+        "skillogy"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Phòng thủ Cypher nhiều lớp: session READ-only ở driver, denylist từ khóa kiểu AST trên query string, cap tham số + số row mỗi query."
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py": {
+      "summary": "Test FastAPI app qua TestClient + _FakeBackend: health/find/load/traverse/moc happy path, backend exception trả degraded thay vì 500, filter 400 khi thiếu, auth Bearer trên endpoint protected và legacy endpoints 404.",
+      "tags": [
+        "test",
+        "fastapi",
+        "skillogy",
+        "unit-test"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py": {
+      "summary": "Test ingest_embeddings: skip khi proxy unavailable, embed đủ skill thiếu, bỏ qua skill chưa đổi theo sha, re-embed khi content/model đổi, đếm embedding fail và build_embed_text bỏ field rỗng.",
+      "tags": [
+        "test",
+        "embeddings",
+        "ingest",
+        "unit-test"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py": {
+      "summary": "Test embeddings module: available theo proxy, embed_dim defaults/overrides, cache hit/miss, parse response OpenAI, retry với Retry-After + backoff capped, 4xx raise ngay, batch degrade về None và query-time fail-fast.",
+      "tags": [
+        "test",
+        "embeddings",
+        "retry",
+        "unit-test"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py": {
+      "summary": "Test _rrf_fuse: kết quả trúng cả hai legs xếp trên single-leg, strip score field, tôn trọng limit, tiebreak tên deterministic, dedup giữ bản đầu tiên và hai legs rỗng.",
+      "tags": [
+        "test",
+        "fusion",
+        "search",
+        "unit-test"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_seed.py": {
+      "summary": "Test _seed_if_empty: bỏ seed khi graph đã có dữ liệu, seed đúng một lần từ skills.cypher khi graph rỗng (env trỏ tới file tmp).",
+      "tags": [
+        "test",
+        "seed",
+        "neo4j",
+        "unit-test"
+      ],
+      "complexity": "simple"
+    }
+  },
+  "symbols": {
+    "packages/raptix/raptix/skills/engine/__main__.py::_setup_logging": {
+      "summary": "Cấu hình logging gốc và hạ log_level của neo4j.notifications để tránh nhiễu.",
+      "tags": [
+        "logging",
+        "utility",
+        "boot"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/__main__.py::_build_backend": {
+      "summary": "Dựng Neo4jBackend từ env SKILLOGY_NEO4J_* (uri/user/password/database).",
+      "tags": [
+        "factory",
+        "neo4j",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/__main__.py::_seed_if_empty": {
+      "summary": "Seed skills.cypher vào Neo4j chỉ khi health báo graph rỗng; đọc dump từ env, bulk_ingest rồi chạy ingest_embeddings nền — graph có dữ liệu được bỏ qua an toàn.",
+      "tags": [
+        "seed",
+        "neo4j",
+        "boot"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/skills/engine/__main__.py::_start_rest": {
+      "summary": "Khởi chạy FastAPI app qua uvicorn.Server trên SKILLOGY_REST_PORT (block đầu tiên).",
+      "tags": [
+        "uvicorn",
+        "rest",
+        "boot"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/__main__.py::_ingest_in_background": {
+      "summary": "Wrapper thread chạy _seed_if_empty + backfill embedding, log lỗi thay vì làm crash tiến trình.",
+      "tags": [
+        "threading",
+        "ingest",
+        "resilience"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/skills/engine/__main__.py::main": {
+      "summary": "Boot sequence chính: dựng backend, bắt signal TERM để close backend sạch, spawn thread ingest nền rồi block trong REST server.",
+      "tags": [
+        "main",
+        "boot",
+        "entry-point"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/skills/engine/embed_ingest.py::build_embed_text": {
+      "summary": "Ghép các field frontmatter skill (tên, mô tả, khi dùng…) thành văn bản embed, bỏ field rỗng.",
+      "tags": [
+        "embeddings",
+        "utility",
+        "normalization"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embed_ingest.py::_input_sha": {
+      "summary": "SHA-256 của model + embed text — khóa re-embed: chỉ embed lại khi nội dung hoặc model đổi.",
+      "tags": [
+        "hash",
+        "cache-key",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embed_ingest.py::ingest_embeddings": {
+      "summary": "Backfill embedding: ensure vector index, fetch skill thiếu/đổi sha, embed theo batch qua proxy, writeback vào Neo4j và log tổng kết; skip toàn bộ khi proxy chưa cấu hình.",
+      "tags": [
+        "embeddings",
+        "ingest",
+        "neo4j",
+        "batching"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::embed_model": {
+      "summary": "Tên model embedding hiện hành, default hằng số, honor env RAPTIX_SKILLOGY_EMBED_MODEL.",
+      "tags": [
+        "config",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::embed_dim": {
+      "summary": "Kích thước vector: env override hoặc lookup bảng _KNOWN_DIMS theo model; model lạ không có override trả None.",
+      "tags": [
+        "config",
+        "embeddings",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::_proxy": {
+      "summary": "Đọc URL + API key của litellm proxy từ env RAPTIX_LLM__PROXY_*; thiếu URL là unavailable.",
+      "tags": [
+        "config",
+        "litellm",
+        "env"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::available": {
+      "summary": "True khi proxy đã cấu hình — cổng quyết định semantic search có bật hay không.",
+      "tags": [
+        "config",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::_cache_dir": {
+      "summary": "Thư mục cache embedding trên đĩa, honor env, mặc định tempdir.",
+      "tags": [
+        "cache",
+        "filesystem",
+        "embeddings"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::_cache_key": {
+      "summary": "Khóa cache SHA-256 của model + text.",
+      "tags": [
+        "cache",
+        "hash",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::_cache_get": {
+      "summary": "Đọc vector từ cache đĩa; file lỗi/thiếu trả None.",
+      "tags": [
+        "cache",
+        "utility",
+        "embeddings"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::_cache_put": {
+      "summary": "Ghi vector vào cache đĩa (mkdir cha, JSON); lỗi ghi bị nuốt.",
+      "tags": [
+        "cache",
+        "utility",
+        "embeddings"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::_request_embeddings": {
+      "summary": "POST /embeddings tới litellm proxy: retry các lỗi Retry-able theo Retry-After/backoff capped (toàn cửa sổ), parse shape OpenAI, trả list vector hoặc None khi count mismatch.",
+      "tags": [
+        "http",
+        "embeddings",
+        "retry",
+        "litellm"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::_retry_after": {
+      "summary": "Đọc header Retry-After thành giây (float), fallback an toàn khi thiếu/sai.",
+      "tags": [
+        "http",
+        "retry",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::embed_batch": {
+      "summary": "Embed danh sách text: cache hit trước, gọi proxy cho miss theo batch, lỗi toàn batch degrade về list None theo vị trí, cache_put cho kết quả mới; query text batch=1 fail-fast.",
+      "tags": [
+        "embeddings",
+        "batching",
+        "cache",
+        "degradation"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/raptix/skills/engine/embeddings.py::embed_text": {
+      "summary": "Embed một text qua embed_batch (batch=1, fail-fast), trả vector hoặc None.",
+      "tags": [
+        "embeddings",
+        "utility",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/proto/__init__.py::SkillMeta": {
+      "summary": "Metadata của một skill: name, description, subdomain, tags, phases, mitre ids… với to_dict phục vụ wire JSON.",
+      "tags": [
+        "data-model",
+        "proto",
+        "skill"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/proto/__init__.py::SkillEnvelope": {
+      "summary": "Phản hồi load_skill: SkillMeta + nội dung body (bytes decode UTF-8) + references/scripts với to_dict chuyển bytes thành string an toàn.",
+      "tags": [
+        "data-model",
+        "proto",
+        "wire-format"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/proto/__init__.py::SkillListRequest": {
+      "summary": "Request liệt kê skill: subdomain, tags, query, limit, offset.",
+      "tags": [
+        "data-model",
+        "proto",
+        "wire-format"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/proto/__init__.py::SkillListResponse": {
+      "summary": "Phản hồi list: SkillMeta + tổng số với to_dict.",
+      "tags": [
+        "data-model",
+        "proto",
+        "wire-format"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/proto/__init__.py::SkillLoadRequest": {
+      "summary": "Request load một skill theo path/name.",
+      "tags": [
+        "data-model",
+        "proto",
+        "wire-format"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/proto/__init__.py::SkillIngestRequest": {
+      "summary": "Request ingest skill mới (name/body/…) cho kênh gRPC legacy.",
+      "tags": [
+        "data-model",
+        "proto",
+        "wire-format"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/proto/__init__.py::SkillIngestResponse": {
+      "summary": "Phản hồi ingest: path, version, ok.",
+      "tags": [
+        "data-model",
+        "proto",
+        "wire-format"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/server/app.py::build_app": {
+      "summary": "Lắp FastAPI app Neo4j-backed: health (liveness + skill_count + uptime), find/load/traverse/moc map thẳng vào Neo4jBackend, Bearer key tùy chọn trên các endpoint POST (health luôn mở), lỗi ValueError → 400 và backend exception → degraded JSON.",
+      "tags": [
+        "fastapi",
+        "factory",
+        "rest",
+        "skillogy"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/raptix/skills/engine/server/neo4j_backend.py::_path_under_any_prefix": {
+      "summary": "Kiểm tra path nằm trong một trong các prefix cho phép — chặn traversal trong load_skill/traverse.",
+      "tags": [
+        "security",
+        "validation",
+        "path"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/server/neo4j_backend.py::CypherWriteRejected": {
+      "summary": "Ngoại lệ khi query Cypher server-driven bị denylist từ chối.",
+      "tags": [
+        "exception",
+        "security",
+        "cypher"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/server/neo4j_backend.py::_strip_noise": {
+      "summary": "Loại bỏ comment dòng và string literal khỏi query trước khi quét denylist — chống giấu từ khóa trong string/comment.",
+      "tags": [
+        "security",
+        "parser",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/server/neo4j_backend.py::assert_read_only": {
+      "summary": "Kiểm duyệt query read-only: sau strip noise, tìm từ khóa ghi (CREATE/MERGE/DELETE/SET/CALL…) theo word-boundary; vi phạm raise CypherWriteRejected.",
+      "tags": [
+        "security",
+        "read-only",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/skills/engine/server/neo4j_backend.py::Neo4jBackend": {
+      "summary": "Backend Neo4j read-only: bulk_ingest_cypher seed, ensure_vector_index, fetch/write embeddings, load_skill, find_skill hybrid (lexical + semantic + RRF), traverse BFS, query_moc_summary và run_cypher_read có cap; session mặc định access mode READ.",
+      "tags": [
+        "neo4j",
+        "storage",
+        "hybrid-search",
+        "read-only",
+        "facade"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py::_FakeBackend": {
+      "summary": "Backend giả implement đúng surface Neo4jBackend (health/find_skill/load_skill/traverse/query_moc_summary) ghi lại cuộc gọi cho assert.",
+      "tags": [
+        "test",
+        "mock",
+        "fixture"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py::TestHealth": {
+      "summary": "Suite /v1/health: 200 với skill_count/uptime và backend exception trả degraded thay vì 500.",
+      "tags": [
+        "test",
+        "fastapi",
+        "health"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py::TestFind": {
+      "summary": "Suite skills:find: filter được truyền qua backend, thiếu filter trả 400 (không 500).",
+      "tags": [
+        "test",
+        "fastapi",
+        "search"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py::TestLoad": {
+      "summary": "Suite skills:load: theo path, theo name (load trực tiếp không qua find), 404 khi không khớp và payload được truyền nguyên vẹn.",
+      "tags": [
+        "test",
+        "fastapi",
+        "test-app"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py::TestTraverse": {
+      "summary": "Suite skills:traverse gọi backend với tham số route đúng.",
+      "tags": [
+        "test",
+        "fastapi",
+        "test-app"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py::TestMoc": {
+      "summary": "Suite skills:moc: phase trả bullets, phase rỗng trả list rỗng.",
+      "tags": [
+        "test",
+        "fastapi",
+        "test-app"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py::TestAuth": {
+      "summary": "Suite auth: endpoint protected đòi Bearer khi đặt key, health luôn mở, không có key thì mọi endpoint mở.",
+      "tags": [
+        "test",
+        "security",
+        "fastapi"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_app.py::test_legacy_endpoints_404": {
+      "summary": "Các endpoint legacy /v1/skills:list và :ingest đã xóa trả 404.",
+      "tags": [
+        "test",
+        "legacy",
+        "fastapi"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::_FakeBackend": {
+      "summary": "Backend giả lưu embeddings/đếm fetch để test vòng đời ingest không cần Neo4j.",
+      "tags": [
+        "test",
+        "mock",
+        "fixture"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::_fake_embeddings": {
+      "summary": "Helper monkeypatch module embeddings với vector giả theo chiều cấu hình.",
+      "tags": [
+        "test",
+        "fixture",
+        "embeddings"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::test_skips_when_proxy_unavailable": {
+      "summary": "Proxy unavailable → ingest_embeddings return sớm, backend không bị đụng đến.",
+      "tags": [
+        "test",
+        "degradation",
+        "embeddings"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::test_embeds_all_missing": {
+      "summary": "Mọi skill thiếu embedding được embed và writeback đủ.",
+      "tags": [
+        "test",
+        "embeddings",
+        "ingest"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::test_skips_unchanged_by_sha": {
+      "summary": "Skill chưa đổi (sha khớp) bị bỏ qua — không tốn proxy call.",
+      "tags": [
+        "test",
+        "embeddings",
+        "cache"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::test_changed_content_reembeds": {
+      "summary": "Đổi nội dung skill (sha khác) kích hoạt re-embed.",
+      "tags": [
+        "test",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::test_model_change_reembeds": {
+      "summary": "Đổi model embedding khiến mọi skill được embed lại dù nội dung giữ nguyên.",
+      "tags": [
+        "test",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::test_empty_text_skipped": {
+      "summary": "Skill với embed text rỗng bị bỏ qua.",
+      "tags": [
+        "test",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::test_failed_embedding_counted": {
+      "summary": "Embedding trả None được đếm là failed và vẫn được ghi log tổng kết.",
+      "tags": [
+        "test",
+        "embeddings",
+        "resilience"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embed_ingest.py::test_build_embed_text_excludes_blank_fields": {
+      "summary": "build_embed_text bỏ field rỗng/blank khỏi văn bản.",
+      "tags": [
+        "test",
+        "embeddings",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::_isolated_env": {
+      "summary": "Fixture xóa mọi env embedding/proxy và set home tạm để test cô lập.",
+      "tags": [
+        "test",
+        "fixture",
+        "env"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::_set_proxy": {
+      "summary": "Helper bật proxy env cho test.",
+      "tags": [
+        "test",
+        "fixture",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_unavailable_without_proxy": {
+      "summary": "Không proxy → available() False và embed_text trả None.",
+      "tags": [
+        "test",
+        "embeddings",
+        "degradation"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_available_with_proxy": {
+      "summary": "Có proxy cấu hình thì available() trả về True.",
+      "tags": [
+        "test",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_embed_dim_defaults_and_overrides": {
+      "summary": "embed_dim: default theo model, env override, model lạ không override → None.",
+      "tags": [
+        "test",
+        "config",
+        "embeddings"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::_fake_response": {
+      "summary": "Helper monkeypatch _request_embeddings trả vector giả theo thứ tự.",
+      "tags": [
+        "test",
+        "fixture",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_embed_text_happy_path": {
+      "summary": "embed_text trả vector đúng chiều khi proxy OK.",
+      "tags": [
+        "test",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_embed_batch_preserves_order": {
+      "summary": "embed_batch giữ đúng thứ tự vector theo input.",
+      "tags": [
+        "test",
+        "embeddings",
+        "batching"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_embed_batch_empty": {
+      "summary": "embed_batch với input rỗng trả list rỗng (không gọi proxy).",
+      "tags": [
+        "test",
+        "embeddings",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_cache_avoids_second_request": {
+      "summary": "Cache đĩa giúp text lặp lại không gọi proxy lần hai.",
+      "tags": [
+        "test",
+        "cache",
+        "embeddings"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_cache_only_misses_hit_proxy": {
+      "summary": "Batch lẫn cache hit/miss chỉ gửi miss lên proxy, giữ đúng thứ tự trả về.",
+      "tags": [
+        "test",
+        "cache",
+        "batching"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_request_failure_returns_none": {
+      "summary": "Request raise (boom patched) → embed_batch degrade về None thay vì crash.",
+      "tags": [
+        "test",
+        "resilience",
+        "embeddings"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_count_mismatch_returns_none": {
+      "summary": "Proxy trả sai số lượng vector → coi là thất bại trả None.",
+      "tags": [
+        "test",
+        "embeddings",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_no_proxy_batch_all_none": {
+      "summary": "Không proxy → embed_batch trả list None đủ chiều.",
+      "tags": [
+        "test",
+        "embeddings",
+        "degradation"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_request_parses_openai_shape": {
+      "summary": "_request_embeddings parse đúng shape OpenAI (data[].embedding), map theo index.",
+      "tags": [
+        "test",
+        "http",
+        "embeddings"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::_FakeResp": {
+      "summary": "Response giả httpx với raise_for_status/headers/json cấu hình được cho test retry.",
+      "tags": [
+        "test",
+        "mock",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_retry_then_success": {
+      "summary": "Lỗi retry-able lần đầu → gọi lại và thành công; sleep monkeypatched ghi lại chuỗi backoff.",
+      "tags": [
+        "test",
+        "retry",
+        "skillogy"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_retry_honours_retry_after": {
+      "summary": "Header Retry-After được tôn trọng thay vì backoff mặc định.",
+      "tags": [
+        "test",
+        "retry",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_retry_exhausted_raises": {
+      "summary": "Hết retry window → raise lỗi cuối cùng.",
+      "tags": [
+        "test",
+        "retry",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_backoff_is_capped_and_rides_full_window": {
+      "summary": "Backoff capped ở trần và trượt theo toàn bộ cửa sổ retry (tổng sleep đúng).",
+      "tags": [
+        "test",
+        "retry",
+        "skillogy"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_non_retryable_4xx_raises_immediately": {
+      "summary": "4xx non-retryable raise ngay không retry.",
+      "tags": [
+        "test",
+        "retry",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_batch_degrades_on_retry_exhaustion": {
+      "summary": "Retry cạn trong embed_batch → cả batch degrade về None, không lan raise.",
+      "tags": [
+        "test",
+        "embeddings",
+        "resilience"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_embeddings.py::test_query_embed_text_fails_fast": {
+      "summary": "Query-time embed_text fail-fast: không retry dài, trả None cho fallback lexical.",
+      "tags": [
+        "test",
+        "embeddings",
+        "performance"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py::_rec": {
+      "summary": "Helper dựng record (path/name/score) cho test RRF fusion.",
+      "tags": [
+        "test",
+        "fixture",
+        "search"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py::test_found_by_both_legs_outranks_single_leg": {
+      "summary": "Skill trúng cả lexical + semantic được RRF xếp trên skill chỉ trúng một leg.",
+      "tags": [
+        "test",
+        "fusion",
+        "search"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py::test_score_field_stripped": {
+      "summary": "Field score trung gian bị strip khỏi record trả ra.",
+      "tags": [
+        "test",
+        "fusion",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py::test_respects_limit": {
+      "summary": "limit được tôn trọng đúng số kết quả.",
+      "tags": [
+        "test",
+        "fusion",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py::test_deterministic_tiebreak_by_name": {
+      "summary": "Điểm hòa được phá hòa theo tên — deterministic.",
+      "tags": [
+        "test",
+        "fusion",
+        "deterministic"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py::test_empty_both_legs": {
+      "summary": "Cả hai legs rỗng → kết quả rỗng, không lỗi.",
+      "tags": [
+        "test",
+        "fusion",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_find_skill_fusion.py::test_dedup_keeps_first_seen_record": {
+      "summary": "Dedup theo path giữ record xuất hiện đầu tiên.",
+      "tags": [
+        "test",
+        "fusion",
+        "skillogy"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_seed.py::_FakeBackend": {
+      "summary": "Backend giả với health() cấu hình được và bulk_ingest_cypher ghi lại cypher đã nạp.",
+      "tags": [
+        "test",
+        "mock",
+        "fixture"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_seed.py::test_seed_skipped_when_graph_already_populated": {
+      "summary": "Graph đã có dữ liệu → _seed_if_empty không nạp gì.",
+      "tags": [
+        "test",
+        "seed",
+        "neo4j"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/skillogy/test_seed.py::test_seed_runs_once_when_graph_empty": {
+      "summary": "Graph rỗng + env trỏ dump tmp → seed chạy đúng một lần với nội dung cypher file.",
+      "tags": [
+        "test",
+        "seed",
+        "neo4j"
+      ],
+      "complexity": "simple"
+    }
+  },
+  "aliases": {
+    "skillogy_main": "packages/raptix/raptix/skills/engine/__main__.py",
+    "embeddings": "packages/raptix/raptix/skills/engine/embeddings.py"
+  },
+  "extraImports": {
+    "packages/raptix/raptix/skills/engine/__main__.py": [
+      "packages/raptix/raptix/skills/engine/embed_ingest.py"
+    ]
+  },
+  "extraEdges": []
+}

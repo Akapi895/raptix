@@ -1,0 +1,776 @@
+{
+ "batchIndex": 131,
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/ad/ntlm-relay/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 121,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 56,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/adversarial-ml-evasion/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 260,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/auth-bypass/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 26,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/bounty-hunting/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 134,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/chains/cred-reuse/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 19,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/chains/idor-to-priv-esc/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 18,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/chains/ssrf-to-rce/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 21,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/chains/xss-to-takeover/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 19,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/command-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 103,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/data-and-model-poisoning/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 141,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/deserialization/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 149,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/excessive-agency/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 144,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/idor/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 137,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/improper-output-handling/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 155,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/misinformation/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 151,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/ml-model-extraction/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 288,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/patch-diff/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 55,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/path-traversal/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 26,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/pattern-exhaustion/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 111,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/prompt-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 141,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/prototype-pollution/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 107,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/redos/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 228,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/sensitive-information-disclosure/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 136,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/analyst/sql-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 118,
+   "fileCategory": "docs"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/ad/ntlm-relay/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/ad/ntlm-relay/SKILL.md",
+   "lineRange": [
+    1,
+    121
+   ],
+   "summary": "Sách châm ngôn NTLM relay chuyên sâu: ma trận cấu hình ntlmrelayx qua SMB, LDAP, LDAPS, HTTP, RPC, IMAP, MSSQL; bypass SMB signing, chọn mục tiêu relay (DC cho DCSync, ADCS lấy cert, LAPS reader lấy cleartext); đánh đổi relay session vs crack hash và kỹ thuật multi-relay chuyển tiếp xác thực từ một nạn nhân tới nhiều dịch vụ.",
+   "tags": [
+    "ntlm-relay",
+    "ntlmrelayx",
+    "lateral-movement",
+    "active-directory"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "lineRange": [
+    1,
+    56
+   ],
+   "summary": "Node gốc điều hướng cho bộ playbook nghiên cứu lỗ hổng của agent analyst: liệt kê danh mục skill theo lớp lỗ hổng (web, AI security, chain building) để load đúng kỹ năng ở đầu mỗi vòng phân tích.",
+   "tags": [
+    "analyst",
+    "catalog",
+    "playbook",
+    "routing"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/adversarial-ml-evasion/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/adversarial-ml-evasion/SKILL.md",
+   "lineRange": [
+    1,
+    260
+   ],
+   "summary": "Skill chế tạo adversarial examples khiến mô hình ML đã huấn luyện phân loại sai lúc inference: nhận diện ảnh, malware detector, IDS, spam filter; kèm quy trình đo độ nhạy và tạo perturbation tối thiểu.",
+   "tags": [
+    "adversarial-ml",
+    "evasion",
+    "machine-learning",
+    "ai-security"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/auth-bypass/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/auth-bypass/SKILL.md",
+   "lineRange": [
+    1,
+    26
+   ],
+   "summary": "Skill săn authentication/authorization bypass trong route guard, kiểm tra vai trò, ranh giới tenant và chuyển trạng thái state machine của ứng dụng web.",
+   "tags": [
+    "auth-bypass",
+    "access-control",
+    "web"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/bounty-hunting/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/bounty-hunting/SKILL.md",
+   "lineRange": [
+    1,
+    134
+   ],
+   "summary": "Phương pháp bug bounty white-box: quy trình đọc mã nguồn dự án open-source có chương trình security advisory/bounty, xếp hạng bề mặt tấn công, tìm biến thể lỗ hổng và viết báo cáo disclosure có trách nhiệm.",
+   "tags": [
+    "bug-bounty",
+    "methodology",
+    "vulnerability-research",
+    "analyst"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/chains/cred-reuse/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/chains/cred-reuse/SKILL.md",
+   "lineRange": [
+    1,
+    19
+   ],
+   "summary": "Mẫu chain tái sử dụng credential: từ credential rò rỉ hoặc yếu, pivot qua nhiều dịch vụ tới quyền truy cập đặc quyền; định nghĩa cách ghép node vuln thành chuỗi có impact.",
+   "tags": [
+    "credential-reuse",
+    "chains",
+    "privilege-escalation"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/chains/idor-to-priv-esc/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/chains/idor-to-priv-esc/SKILL.md",
+   "lineRange": [
+    1,
+    18
+   ],
+   "summary": "Mẫu chain biến IDOR thành privilege escalation và thao tác control-plane có impact cao; mô tả điều kiện ghép và cách validate chuỗi.",
+   "tags": [
+    "idor",
+    "chains",
+    "privilege-escalation",
+    "web"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/chains/ssrf-to-rce/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/chains/ssrf-to-rce/SKILL.md",
+   "lineRange": [
+    1,
+    21
+   ],
+   "summary": "Mẫu chain pivot từ SSRF tới metadata/hạ tầng cloud rồi tới code execution; hướng dẫn dựng và xác thực chuỗi với impact cuối là RCE.",
+   "tags": [
+    "ssrf",
+    "chains",
+    "rce",
+    "cloud-metadata"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/chains/xss-to-takeover/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/chains/xss-to-takeover/SKILL.md",
+   "lineRange": [
+    1,
+    19
+   ],
+   "summary": "Mẫu chain từ XSS sang account takeover hoặc thực thi hành động đặc quyền trong phiên người dùng; mô tả payload và điều kiện xác nhận chuỗi.",
+   "tags": [
+    "xss",
+    "chains",
+    "account-takeover",
+    "web"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/command-injection/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/command-injection/SKILL.md",
+   "lineRange": [
+    1,
+    103
+   ],
+   "summary": "Skill săn OS command injection (CWE-78): input người dùng chạm tới shell/exec/system call; bao gồm bypass bằng argument-array, path confusion và template-string injection trong framework hiện đại.",
+   "tags": [
+    "command-injection",
+    "cwe-78",
+    "rce",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/data-and-model-poisoning/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/data-and-model-poisoning/SKILL.md",
+   "lineRange": [
+    1,
+    141
+   ],
+   "summary": "Skill săn poisoning dữ liệu huấn luyện và mô hình LLM (OWASP LLM04:2025): input đối kháng làm lệch hành vi tương lai của model qua fine-tuning, RLHF hoặc vòng học liên tục.",
+   "tags": [
+    "data-poisoning",
+    "model-poisoning",
+    "owasp-llm",
+    "ai-security"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/deserialization/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/deserialization/SKILL.md",
+   "lineRange": [
+    1,
+    149
+   ],
+   "summary": "Skill săn insecure deserialization (CWE-502) đa ngôn ngữ: Python pickle, Java ObjectInputStream/Jackson/SnakeYAML, .NET BinaryFormatter/DataContractJson, PHP unserialize, Ruby Marshal/YAML.load; kèm hướng dẫn dựng gadget chain và PoC.",
+   "tags": [
+    "deserialization",
+    "gadget-chain",
+    "rce",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/excessive-agency/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/excessive-agency/SKILL.md",
+   "lineRange": [
+    1,
+    144
+   ],
+   "summary": "Skill săn excessive agency (OWASP LLM06:2025): hệ agentic được cấp quá nhiều tool, quyền mỗi tool quá rộng hoặc quyền tự chủ không giám sát, sinh tác động ngoài ý muốn thay mặt người dùng/doanh nghiệp.",
+   "tags": [
+    "excessive-agency",
+    "owasp-llm",
+    "agentic",
+    "ai-security"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/idor/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/idor/SKILL.md",
+   "lineRange": [
+    1,
+    137
+   ],
+   "summary": "Skill săn IDOR (CWE-639): thiếu kiểm tra phân quyền trên object ID; phân biệt leo thang ngang/dọc, so sánh UUID vs integer đoán được và biến thể khai thác qua GraphQL introspection.",
+   "tags": [
+    "idor",
+    "access-control",
+    "cwe-639",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/improper-output-handling/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/improper-output-handling/SKILL.md",
+   "lineRange": [
+    1,
+    155
+   ],
+   "summary": "Skill săn improper output handling (OWASP LLM05:2025): code phía sau tin output phi cấu trúc của model rồi render/thực thi/chạy shell không sanitize, sinh XSS, SSRF, SQLi và các biến thể phái sinh.",
+   "tags": [
+    "output-handling",
+    "owasp-llm",
+    "xss",
+    "ai-security"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/misinformation/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/misinformation/SKILL.md",
+   "lineRange": [
+    1,
+    151
+   ],
+   "summary": "Skill săn misinformation/overreliance (OWASP LLM09:2025): output tự tin nhưng sai chảy vào quyết định tự động, báo cáo compliance, thông điệp khách hàng hoặc luồng tự chủ; kèm tiêu chí validate và CVSS mặc định.",
+   "tags": [
+    "misinformation",
+    "overreliance",
+    "owasp-llm",
+    "ai-security"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/ml-model-extraction/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/ml-model-extraction/SKILL.md",
+   "lineRange": [
+    1,
+    288
+   ],
+   "summary": "Skill chiết xuất bản sao chức năng của mô hình ML black-box qua API prediction và suy luận membership inference — xác định một bản ghi cụ thể có nằm trong tập huấn luyện hay không.",
+   "tags": [
+    "model-extraction",
+    "membership-inference",
+    "machine-learning",
+    "ai-security"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/patch-diff/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/patch-diff/SKILL.md",
+   "lineRange": [
+    1,
+    55
+   ],
+   "summary": "Quy trình patch-diff được ủy quyền: từ diff nguồn vulnerable-to-fixed, suy ra gốc rễ lỗ hổng và tìm/xác thực các biến thể cùng pattern trong codebase.",
+   "tags": [
+    "patch-diff",
+    "variant-analysis",
+    "vulnerability-research",
+    "analyst"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/path-traversal/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/path-traversal/SKILL.md",
+   "lineRange": [
+    1,
+    26
+   ],
+   "summary": "Skill săn directory traversal và archive traversal (ZipSlip/TarSlip) từ input người dùng tới thao tác filesystem.",
+   "tags": [
+    "path-traversal",
+    "zipslip",
+    "filesystem",
+    "web"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/pattern-exhaustion/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/pattern-exhaustion/SKILL.md",
+   "lineRange": [
+    1,
+    111
+   ],
+   "summary": "Phương pháp pattern exhaustion hệ thống: sau khi xác nhận một lỗ hổng, quét toàn bộ codebase tìm mọi instance cùng root-cause pattern để không bỏ sót biến thể.",
+   "tags": [
+    "pattern-exhaustion",
+    "methodology",
+    "variant-analysis",
+    "analyst"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/prompt-injection/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/prompt-injection/SKILL.md",
+   "lineRange": [
+    1,
+    141
+   ],
+   "summary": "Skill săn prompt injection LLM và tool-call hijacking (CWE-1427): injection trực tiếp/gián tiếp qua RAG, PDF, email, lạm dụng tool, chuỗi exfiltration và pivot jailbreak-to-RCE trên hệ agentic; kèm payload PoC, hợp đồng validate_finding và bảng CVSS.",
+   "tags": [
+    "prompt-injection",
+    "cwe-1427",
+    "owasp-llm",
+    "rag",
+    "ai-security"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/prototype-pollution/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/prototype-pollution/SKILL.md",
+   "lineRange": [
+    1,
+    107
+   ],
+   "summary": "Skill săn prototype pollution JavaScript (CWE-1321) — lỗ hổng meta 2023-2026 chain thành RCE, auth bypass và SSRF trên đa số stack Node.js.",
+   "tags": [
+    "prototype-pollution",
+    "cwe-1321",
+    "nodejs",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/redos/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/redos/SKILL.md",
+   "lineRange": [
+    1,
+    228
+   ],
+   "summary": "Skill săn ReDoS (CWE-1333, catastrophic backtracking): nhận diện regex có nested quantifier hoặc alternation chồng lấn gây thời gian match siêu tuyến tính, truy vết tainted input tới regex sink và đánh giá impact.",
+   "tags": [
+    "redos",
+    "regex",
+    "dos",
+    "cwe-1333"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/sensitive-information-disclosure/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/sensitive-information-disclosure/SKILL.md",
+   "lineRange": [
+    1,
+    136
+   ],
+   "summary": "Skill săn rò rỉ thông tin nhạy cảm qua LLM (OWASP LLM02:2025): PII, secret, source nội bộ, chi tiết mô hình và dữ liệu tenant khác lộ qua output, extraction từ training-data và prompt.",
+   "tags": [
+    "information-disclosure",
+    "owasp-llm",
+    "pii",
+    "ai-security"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/analyst/sql-injection/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/analyst/sql-injection/SKILL.md",
+   "lineRange": [
+    1,
+    118
+   ],
+   "summary": "Skill săn SQL injection (CWE-89) bằng taint tracking từ nguồn tới sink: string concat, format-string, raw query ORM, second-order injection và NoSQL injection trên MongoDB/DynamoDB.",
+   "tags": [
+    "sql-injection",
+    "cwe-89",
+    "taint-analysis",
+    "nosql"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": [
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/ad/ntlm-relay/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/adversarial-ml-evasion/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/auth-bypass/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/bounty-hunting/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/chains/cred-reuse/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/chains/idor-to-priv-esc/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/chains/ssrf-to-rce/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/chains/xss-to-takeover/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/command-injection/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/data-and-model-poisoning/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/deserialization/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/excessive-agency/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/idor/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/improper-output-handling/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/misinformation/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/ml-model-extraction/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/patch-diff/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/path-traversal/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/pattern-exhaustion/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/prompt-injection/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/prototype-pollution/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/redos/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/sensitive-information-disclosure/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/analyst/sql-injection/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/analyst/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  }
+ ]
+}

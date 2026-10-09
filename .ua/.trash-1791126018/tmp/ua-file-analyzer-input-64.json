@@ -1,0 +1,28 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix",
+  "batchFiles": [
+    {
+      "path": "benchmark/results/XBEN-057-24/README.md",
+      "language": "markdown",
+      "sizeLines": 27,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-057-24/report.json",
+      "language": "json",
+      "sizeLines": 40,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-057-24/report.md",
+      "language": "markdown",
+      "sizeLines": 29,
+      "fileCategory": "docs"
+    }
+  ],
+  "batchImportData": {
+    "benchmark/results/XBEN-057-24/README.md": [],
+    "benchmark/results/XBEN-057-24/report.json": [],
+    "benchmark/results/XBEN-057-24/report.md": []
+  }
+}

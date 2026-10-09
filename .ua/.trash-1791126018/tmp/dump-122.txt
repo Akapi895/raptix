@@ -1,0 +1,1828 @@
+
+########## clients/web-raptix/tests/e2e/real-controls-live.spec.ts (code, 85L) ##########
+import { appendFile, mkdir, readFile, rm } from 'node:fs/promises'
+import * as path from 'node:path'
+import { test, expect } from '@playwright/test'
+
+/**
+ * W11 real Console controls live gate: interrupt (pause) a real acknowledged
+ * run through the server, exercise the file-backed HITL approvals round trip
+ * against the real engagement workspace files, and prove demo approvals never
+ * render. Uses API 5286 + Vite 5279 against actual PostgreSQL + LangGraph 2400.
+ * The submitted intent stays context-only: no tools, delegation, target access
+ * or file writes by the agent.
+ */
+
+test('console interrupts a real run, records a file-backed approval decision and stays demo-free', async ({ page, request }) => {
+  test.setTimeout(420000)
+  const api = 'http://127.0.0.1:5286/api'
+  const capabilities = await (await request.get(`${api}/capabilities`)).json()
+  expect(capabilities.capabilities.runs).toEqual({ supported: true, available: true })
+  expect(capabilities.capabilities.approvals).toEqual({ supported: true, available: true })
+
+  const slug = `w11-controls-${Date.now()}`
+  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true } })
+  expect(create.status()).toBe(201)
+  const project = await create.json()
+
+  await page.goto(`/projects/${project.id}/console`)
+  await expect(page.getByText('HITL approvals')).toBeVisible()
+  await expect(page.getByText('ReconBot-01')).toHaveCount(0)
+  await expect(page.getByText('OPSEC', { exact: false })).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'New planning chat' }).click()
+  const selector = page.getByRole('combobox', { name: 'Bound thread' })
+  await expect(selector).not.toHaveValue('', { timeout: 60000 })
+  const listed = await (await request.get(`${api}/engagements/${project.id}/threads`)).json()
+  const threadId = listed.threads[0].threadId as string
+  await expect(selector).toHaveValue(threadId)
+
+  // Real cancel: submit a context-only run, then interrupt it while executing.
+  const intent = `W11 controls check ${slug}: acknowledge receiving this message only. Do not invoke tools, delegate, access targets or write files.`
+  const composer = page.getByPlaceholder('Send a root message to the bound assistant…')
+  await composer.fill(intent)
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
+  const interruptButton = page.getByRole('button', { name: 'Interrupt run' })
+  await expect(interruptButton).toBeVisible({ timeout: 60000 })
+  await interruptButton.click()
+  await expect(page.getByText('RUN INTERRUPTED', { exact: true }).or(page.getByText('RUN SUCCESS', { exact: true }))).toBeVisible({ timeout: 120000 })
+
+  const page0 = await (await request.get(`${api}/engagements/${project.id}/threads/${threadId}/runs?limit=1`)).json()
+  const runId = page0.runs[0].runId as string
+  const cancelView = await (await request.get(`${api}/engagements/${project.id}/threads/${threadId}/runs/${runId}`)).json()
+  expect(['interrupted', 'success']).toContain(cancelView.rawStatus)
+
+  // Resume without a pending graph interrupt is a truthful conflict.
+  const rejected = await request.post(`${api}/engagements/${project.id}/threads/${threadId}/resume`, { data: { requestId: `ui-w11-live-${Date.now()}`, value: 'Yes' } })
+  expect(rejected.status()).toBe(409)
+
+  // File-backed HITL: the producer writes approval_request records into the
+  // engagement workspace; the Console lists them and records the decision file.
+  const approvalsDir = path.join(process.env.W11_TEST_WORKSPACE!, slug, 'approvals')
+  await mkdir(approvalsDir, { recursive: true })
+  const created = Date.now() / 1000
+  await appendFile(path.join(approvalsDir, 'requests.jsonl'), `${JSON.stringify({ kind: 'approval_request', request_id: 'w11-live-approval', engagement_name: slug, agent_name: 'decepticon', tool_name: 'impacket-secretsdump', tool_args_redacted: { user: 'CORP/svc_backup', password: '***REDACTED***' }, matched_rule: { technique_tag: 'T1003', tool_pattern: null, timeout_seconds: 300, default_on_timeout: 'deny' }, reason: 'OS Credential Dumping (T1003) requires operator approval.', created_at: created, metadata: {} })}\n`, 'utf8')
+  await page.getByRole('button', { name: 'Refresh approvals' }).click()
+  await expect(page.getByText('impacket-secretsdump')).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('OS Credential Dumping (T1003) requires operator approval.')).toBeVisible()
+  await expect(page.getByText('***REDACTED***')).toBeVisible()
+  await expect(page.getByText(/requested .*timeout 300s → deny/)).toBeVisible()
+  await page.screenshot({ path: test.info().outputPath('w11-real-controls-live.png'), fullPage: true })
+
+  await page.getByRole('button', { name: 'Approve' }).click()
+  await expect(page.getByText('No pending file-backed approval requests for this engagement.')).toBeVisible({ timeout: 30000 })
+  const decisionLine = JSON.parse((await readFile(path.join(approvalsDir, 'decisions.jsonl'), 'utf8')).trim())
+  expect(decisionLine).toMatchObject({ kind: 'approval_decision', request_id: 'w11-live-approval', action: 'allow', redirect_args: null })
+  expect(typeof decisionLine.decided_at).toBe('number')
+
+  await page.reload()
+  await expect(page.getByRole('combobox', { name: 'Bound thread' })).toHaveValue(threadId, { timeout: 60000 })
+  await expect(page.getByText('HITL approvals')).toBeVisible()
+  await expect(page.getByText('No pending file-backed approval requests for this engagement.')).toBeVisible()
+  await expect(page.getByText('ReconBot-01')).toHaveCount(0)
+  await expect(page.getByText('OPSEC', { exact: false })).toHaveCount(0)
+  await page.screenshot({ path: test.info().outputPath('w11-real-controls-reload.png'), fullPage: true })
+
+  await rm(approvalsDir, { recursive: true, force: true })
+})
+
+
+########## clients/web-raptix/tests/e2e/real-core-flow-live.spec.ts (code, 66L) ##########
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import * as path from 'node:path'
+import { test, expect } from '@playwright/test'
+
+/**
+ * W15 core E2E: the web-native loop create → planning → run execution →
+ * report — entirely through the real UI against the real new API, PostgreSQL
+ * and LangGraph runtime, then settings save/reload and the danger delete as
+ * the exit. "Execution" is the acknowledged planning run executing in the
+ * console (context-only, no tool execution against targets happens in a gate).
+ */
+
+const slug = `w15-core-${Date.now()}`
+
+test('web-native create, planning run, report export, settings save and delete', async ({ page }) => {
+  test.setTimeout(420000)
+  const workspaceRoot = process.env.W15_TEST_WORKSPACE!
+  try {
+    // 1. Create: real New Project form.
+    await page.goto('/projects')
+    await page.getByRole('button', { name: 'New Project' }).first().click()
+    await page.locator('#real-new-project-display-name').fill('W15 Core Flow')
+    await page.locator('#real-new-project-slug').fill(slug)
+    await page.locator('#real-new-project-target').fill('https://authorized.invalid')
+    await page.locator('#real-new-project-auth').check()
+    await page.getByRole('button', { name: /Create/i }).click()
+    await page.waitForURL(/\/projects\/[^/]+\/charter$/, { timeout: 30000 })
+    await expect(page.getByText(slug).first()).toBeVisible()
+
+    // 2+3. Planning: create a bound planning thread and execute one real run.
+    await page.getByRole('button', { name: 'Operator Console' }).click()
+    await page.getByRole('button', { name: 'New planning chat' }).click()
+    const composer = page.getByPlaceholder('Send a root message to the bound assistant…')
+    await expect(composer).toBeEnabled({ timeout: 120000 })
+    await composer.fill('This is an authorized context-only integration check, not an assessment. Do not invoke tools, delegate, access targets, or write files. Reply with one short acknowledgement of receiving this message only.')
+    await composer.press('Enter')
+    await expect(page.getByText('RUN SUCCESS')).toBeVisible({ timeout: 300000 })
+
+    // The acknowledged run is part of the merged operations log.
+    await page.getByRole('button', { name: 'Operations Log' }).click()
+    await expect(page.getByRole('cell', { name: /Planning run success/ })).toBeVisible({ timeout: 30000 })
+
+    // 4. Report: workspace findings flow into the preview and export.
+    const dir = path.join(workspaceRoot, slug)
+    await mkdir(path.join(dir, 'findings'), { recursive: true })
+    await writeFile(path.join(dir, 'findings', 'FIND-2026-CORE.md'), '# Core Flow Finding (W15)\n\nSeverity: high\n\n## Description\nWritten by the W15 core gate into the engagement workspace.\n', 'utf8')
+    await page.getByRole('button', { name: 'Reports' }).click()
+    await expect(page.getByText('Core Flow Finding (W15)')).toBeVisible({ timeout: 30000 })
+    await page.getByRole('button', { name: 'Export JSON' }).click()
+    await expect(page.getByText(new RegExp(`Download ready: .*${slug}-export\\.json`))).toBeVisible({ timeout: 30000 })
+
+    // 5. Settings: save is acknowledged and reloaded from the server.
+    await page.getByRole('button', { name: 'Settings' }).click()
+    await page.getByLabel('Display name').fill('W15 Core Flow Renamed')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await expect(page.getByRole('status')).toHaveText('Saved — reloaded from the server.', { timeout: 30000 })
+
+    // 6. Danger delete through the real UI returns to the empty home state.
+    await page.getByRole('button', { name: 'Delete engagement' }).click()
+    await page.getByRole('button', { name: 'Confirm delete' }).click()
+    await page.waitForURL(/\/projects$/, { timeout: 30000 })
+    await expect(page.locator('#main-content').getByText(slug)).toHaveCount(0, { timeout: 30000 })
+  } finally {
+    await rm(path.join(workspaceRoot, slug), { recursive: true, force: true })
+  }
+})
+
+
+########## clients/web-raptix/tests/e2e/real-findings-live.spec.ts (code, 74L) ##########
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import * as path from 'node:path'
+import { test, expect } from '@playwright/test'
+
+/**
+ * W12 live findings gate against the real server and the real test workspace:
+ * parsed workspace findings appear in the UI with parser-quality provenance,
+ * the artifact browser previews real allowlisted files only, other engagements
+ * stay invisible and demo data never appears.
+ */
+
+const api = 'http://127.0.0.1:5291/api'
+const slug = `w12-findings-${Date.now()}`
+const findingBody = [
+  '# Exposed .env File (Live Gate)',
+  '',
+  'Severity: critical',
+  'CVSS score: 9.1',
+  '',
+  '## Description',
+  'The live gate exposes a `.env` file via HTTP.',
+  '',
+  '## Evidence',
+  '- GET /.env returned 200',
+  '',
+  '## Affected Assets',
+  '- api.acme.invalid/.env',
+  '',
+].join('\n')
+
+test('live findings parse workspace files, preview real artifacts and stay engagement-scoped without demo data', async ({ page, request }) => {
+  test.setTimeout(120000)
+  expect((await (await request.get(`${api}/capabilities`)).json()).capabilities.findings).toEqual({ supported: true, available: true })
+  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true } })
+  expect(create.status()).toBe(201)
+  const project = await create.json()
+
+  const dir = path.join(process.env.W12_TEST_WORKSPACE!, slug)
+  await mkdir(path.join(dir, 'findings'), { recursive: true })
+  await mkdir(path.join(dir, 'recon'), { recursive: true })
+  await writeFile(path.join(dir, 'findings', 'FIND-2026-LIVE.md'), findingBody, 'utf8')
+  await writeFile(path.join(dir, 'recon', 'probe.txt'), 'open 80,443', 'utf8')
+
+  try {
+    await page.goto(`/projects/${project.id}/findings`)
+    await expect(page.getByText('Exposed .env File (Live Gate)')).toBeVisible()
+    await expect(page.getByText('FIND-2026-LIVE')).toBeVisible()
+    await expect(page.getByText('parsed from file')).toBeVisible()
+    await expect(page.getByText('parsed defaults')).toHaveCount(0)
+    await expect(page.getByText('Unauthenticated RCE via PHP Deserialization')).toHaveCount(0)
+
+    await page.getByText('Exposed .env File (Live Gate)').click()
+    await expect(page.getByText('parser defaults — not analyst-confirmed')).toHaveCount(0)
+    await expect(page.getByText('The live gate exposes a `.env` file via HTTP.').first()).toBeVisible()
+    await expect(page.getByText('# Exposed .env File (Live Gate)')).toBeVisible()
+    await page.getByRole('button', { name: /probe\.txt/ }).first().click()
+    await expect(page.getByText('recon/probe.txt • TEXT • 11 B')).toBeVisible()
+    await expect(page.getByText('open 80,443')).toBeVisible()
+    await page.getByRole('button', { name: 'Close' }).click()
+
+    const foreign = await request.get(`${api}/engagements/not-a-real-engagement/findings`)
+    expect(foreign.status()).toBe(404)
+    const view = await request.get(`${api}/engagements/${project.id}/findings`)
+    const body = await view.json()
+    expect(body.findings).toHaveLength(1)
+    expect(body.findings[0].severity).toBe('critical')
+    expect(body.findings[0].cvssScore).toBe(9.1)
+    expect(body.findings[0].affectedAssets).toEqual(['api.acme.invalid/.env'])
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+  await page.getByRole('button', { name: '↻ Refresh' }).click()
+  await expect(page.getByText('No parsed FIND-*.md files in this engagement workspace yet.')).toBeVisible({ timeout: 15000 })
+})
+
+
+########## clients/web-raptix/tests/e2e/real-findings.spec.ts (code, 81L) ##########
+import { test, expect, type Page, type Route } from '@playwright/test'
+
+/**
+ * W12 real Findings & Evidence specs: src/features/findings-evidence/RealFindings.tsx.
+ * Deterministic route interception of the new API; no demo findings, no fake
+ * workflow states, no local PoC execution.
+ */
+
+const TIME = '2026-10-02T00:00:00.000Z'
+const PROJECT_ID = 'w12-findings-project'
+
+const project = {
+  id: PROJECT_ID, workspaceSlug: 'w12-findings-fixture', displayName: 'W12 Findings Fixture',
+  targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true,
+  metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null,
+  activeAgentCount: null, createdAt: TIME, updatedAt: TIME, source: 'api',
+}
+
+const finding = {
+  engagementId: PROJECT_ID, id: 'FIND-2026-001', title: 'Exposed .env File with Plaintext Credentials',
+  severity: 'critical', description: 'The application root exposes a `.env` file via HTTP.',
+  evidence: 'GET /.env returned 200 with DB_PASSWORD', attackVector: 'Unauthenticated HTTP GET.',
+  affectedAssets: ['api.acme.com/.env'], cvssScore: 9.1, cwe: ['CWE-312'], mitre: ['T1552.001'],
+  remediation: 'Rotate credentials; block .env access.',
+  quality: { defaultSeverity: false, placeholderDescription: false, placeholderEvidence: false, unreadable: false },
+  rawSource: '# FIND-2026-001\n\nSeverity: critical', sizeBytes: 512, source: 'workspace',
+}
+
+const defaultedFinding = {
+  ...finding, id: 'FIND-2026-002', title: 'Untitled finding', severity: 'medium', cvssScore: undefined,
+  cwe: undefined, mitre: undefined, remediation: undefined, affectedAssets: [],
+  description: 'No description available.', evidence: 'No evidence recorded.',
+  quality: { defaultSeverity: true, placeholderDescription: true, placeholderEvidence: true, unreadable: false },
+}
+
+const findingsView = { engagementId: PROJECT_ID, findings: [finding, defaultedFinding], truncated: false, source: 'workspace' }
+const artifactsView = {
+  engagementId: PROJECT_ID, source: 'workspace',
+  folders: [{ folder: 'recon', files: [{ name: 'nmap.txt', path: 'recon/nmap.txt', sizeBytes: 5 }] }],
+}
+const contentView = { engagementId: PROJECT_ID, path: 'recon/nmap.txt', content: 'ports', mediaType: 'text', sizeBytes: 5, truncated: false, source: 'workspace' }
+
+async function interceptFindings(page: Page): Promise<void> {
+  const json = (route: Route, body: unknown, status = 200): Promise<void> => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route(`**/api/engagements/${PROJECT_ID}`, route => json(route, project))
+  await page.route(`**/api/engagements/${PROJECT_ID}/findings`, route => json(route, findingsView))
+  await page.route(`**/api/engagements/${PROJECT_ID}/artifacts/content*`, route => json(route, contentView))
+  await page.route(`**/api/engagements/${PROJECT_ID}/artifacts`, route => json(route, artifactsView))
+}
+
+test('findings page renders parsed workspace findings with quality flags and no demo data', async ({ page }) => {
+  await interceptFindings(page)
+  await page.goto(`/projects/${PROJECT_ID}/findings`)
+  await expect(page.getByRole('heading', { name: 'Findings' })).toBeVisible()
+  await expect(page.getByText('Exposed .env File with Plaintext Credentials')).toBeVisible()
+  await expect(page.getByText('FIND-2026-001')).toBeVisible()
+  await expect(page.getByText('parsed from file')).toBeVisible()
+  await expect(page.getByText('parsed defaults')).toBeVisible()
+  await expect(page.getByText('Unauthenticated RCE via PHP Deserialization')).toHaveCount(0)
+  await expect(page.getByText('Alex Kim')).toHaveCount(0)
+  await expect(page.getByText('Run PoC')).toHaveCount(0)
+  await expect(page.getByText('Mark as Verified')).toHaveCount(0)
+  await expect(page.getByText('recon (1)')).toBeVisible()
+})
+
+test('severity bar filters real rows and the detail modal shows raw source plus artifact preview', async ({ page }) => {
+  await interceptFindings(page)
+  await page.goto(`/projects/${PROJECT_ID}/findings`)
+  await page.getByText('Critical', { exact: true }).first().click()
+  await expect(page.getByText('Exposed .env File with Plaintext Credentials')).toBeVisible()
+  await expect(page.getByText('Untitled finding')).toHaveCount(0)
+  await page.getByText('Critical', { exact: true }).first().click()
+  await page.getByText('Exposed .env File with Plaintext Credentials').click()
+  await expect(page.getByText('parser defaults — not analyst-confirmed')).toHaveCount(0)
+  await expect(page.getByText('Raw source (512 B)')).toBeVisible()
+  await expect(page.getByText('# FIND-2026-001')).toBeVisible()
+  await expect(page.getByText('recon', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: /nmap\.txt/ }).first().click()
+  await expect(page.getByText('recon/nmap.txt • TEXT • 5 B')).toBeVisible()
+  await expect(page.getByText('Review workflows (verified/assign/report export) need persistence services and are not rendered.')).toBeVisible()
+})
+
+
+########## clients/web-raptix/tests/e2e/real-graph-live.spec.ts (code, 69L) ##########
+﻿import { test, expect } from '@playwright/test'
+
+/**
+ * W13 live gate against the real server and the real Neo4j store: seeded
+ * engagement-scoped nodes appear through the public projection with redaction,
+ * counters derive from the projection, foreign engagement stays 404 and the
+ * empty-vs-unavailable distinction survives end to end.
+ */
+
+const api = 'http://127.0.0.1:5293/api'
+const slug = `w13-graph-${Date.now()}`
+
+async function cypher(statement: string, parameters: Record<string, unknown>): Promise<{ status: number; rows: unknown[] }> {
+  const response = await fetch('http://127.0.0.1:7475/db/neo4j/tx/commit', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Basic ${Buffer.from(`neo4j:${process.env.W13_NEO4J_PASSWORD}`).toString('base64')}` },
+    body: JSON.stringify({ statements: [{ statement, parameters }] }),
+    signal: AbortSignal.timeout(10000),
+  })
+  const body = await response.json().catch(() => null) as { results?: Array<{ data?: Array<{ row?: unknown[] }> }> } | null
+  return { status: response.status, rows: body?.results?.[0]?.data?.[0]?.row ?? [] }
+}
+
+test('live graph projection serves seeded scoped nodes with redaction and derived counters', async ({ page, request }) => {
+  test.setTimeout(180000)
+  expect((await (await request.get(`${api}/capabilities`)).json()).capabilities.graphs).toEqual({ supported: true, available: true })
+  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true } })
+  expect(create.status()).toBe(201)
+  const project = await create.json()
+
+  const seed = await cypher(
+    'UNWIND $nodes AS node CREATE (n:Host:LiveGate) SET n = node',
+    { nodes: [
+      { engagement: slug, hostname: 'dc01.livegate', ip: '10.99.0.5', os: 'Windows Server 2022', password: 'livegate-secret-DO-NOT-LEAK' },
+      { engagement: slug, hostname: 'dc01.livegate', ip: '10.99.0.5', port: 445 },
+      { engagement: 'w13-foreign-engagement', hostname: 'foreign.host', ip: '10.99.9.9' },
+    ] },
+  )
+  expect(seed.status).toBe(200)
+
+  try {
+    await page.goto(`/projects/${project.id}/infrastructure`)
+    await expect(page.getByText('2 nodes • 0 edges')).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'dc01.livegate' }).first()).toBeVisible()
+    await expect(page.getByText('foreign.host')).toHaveCount(0)
+    await expect(page.getByText('livegate-secret')).toHaveCount(0)
+    const raw = await (await request.get(`${api}/engagements/${project.id}/graph`)).text()
+    expect(raw).not.toContain('livegate-secret')
+
+    await page.goto(`/projects/${project.id}/assets`)
+    await expect(page.getByText('1 assets')).toBeVisible()
+    await expect(page.getByText('Total Assets')).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'dc01.livegate' }).first()).toBeVisible()
+    await page.getByRole('button', { name: 'Inspect' }).first().click()
+    await expect(page.getByText('Derived from the engagement-scoped graph with server-side redaction.')).toBeVisible()
+    await page.getByRole('button', { name: 'Close asset detail' }).click()
+
+    const graph = await (await request.get(`${api}/engagements/${project.id}/graph`)).json()
+    expect(graph.nodes).toHaveLength(2)
+    expect(graph.nodes[0].properties.hostname).toBe('dc01.livegate')
+    for (const node of graph.nodes) expect(JSON.stringify(node)).not.toContain('livegate-secret')
+    const foreign = await request.get(`${api}/engagements/not-a-real-engagement/graph`)
+    expect(foreign.status()).toBe(404)
+  } finally {
+    await cypher('MATCH (n:LiveGate) WHERE n.engagement STARTS WITH "w13-graph-" DETACH DELETE n', {})
+  }
+  await page.getByRole('button', { name: '↻ Refresh' }).click()
+  await expect(page.getByText('No scoped assets derived from the engagement graph yet.')).toBeVisible({ timeout: 15000 })
+})
+
+
+########## clients/web-raptix/tests/e2e/real-graph.spec.ts (code, 78L) ##########
+import { test, expect, type Page, type Route } from '@playwright/test'
+
+/**
+ * W13 real Infrastructure & Assets specs: scoped public graph projection and
+ * derived assets, served by controlled route interception. Redaction already
+ * happened server-side; these specs assert the browser renders only public
+ * data and never fabricates compromise claims or source counter constants.
+ */
+
+const TIME = '2026-10-02T00:00:00.000Z'
+const PROJECT_ID = 'w13-graph-project'
+
+const project = {
+  id: PROJECT_ID, workspaceSlug: 'w13-graph-fixture', displayName: 'W13 Graph Fixture',
+  targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true,
+  metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null,
+  activeAgentCount: null, createdAt: TIME, updatedAt: TIME, source: 'api',
+}
+
+const graphView = {
+  engagementId: PROJECT_ID, source: 'graph', truncated: false,
+  nodes: [
+    { id: '4:a:1', labels: ['Host'], properties: { hostname: 'dc01.corp', ip: '10.0.1.5', os: 'Windows Server 2022', engagement: 'w13-graph-fixture' } },
+    { id: '4:a:2', labels: ['WebUrl'], properties: { url: 'https://api.corp/v1', title: 'API v1' } },
+    { id: '4:a:3', labels: ['Identity'], properties: { username: 'CORP\\svc_backup' } },
+  ],
+  edges: [
+    { id: '5:a:1', source: '4:a:1', target: '4:a:2', type: 'OPEN_PORT', properties: { port: 443 } },
+  ],
+}
+
+const assetsView = {
+  engagementId: PROJECT_ID, source: 'graph', truncated: false,
+  assets: [
+    { id: '4:a:1', type: 'Host', label: 'dc01.corp', hostname: 'dc01.corp', ip: '10.0.1.5', os: 'Windows Server 2022', ports: ['445'], services: [], relatedFindingIds: [], source: 'graph' },
+    { id: '4:a:2', type: 'Web', label: 'https://api.corp/v1', url: 'https://api.corp/v1', ports: [], services: [], relatedFindingIds: ['FIND-2026-001'], source: 'graph' },
+    { id: '4:a:3', type: 'Identity', label: 'CORP\\svc_backup', ports: [], services: [], relatedFindingIds: [], source: 'graph' },
+  ],
+}
+
+async function interceptGraph(page: Page): Promise<void> {
+  const json = (route: Route, body: unknown, status = 200): Promise<void> => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route(`**/api/engagements/${PROJECT_ID}`, route => json(route, project))
+  await page.route(`**/api/engagements/${PROJECT_ID}/graph`, route => json(route, graphView))
+  await page.route(`**/api/engagements/${PROJECT_ID}/assets`, route => json(route, assetsView))
+}
+
+test('infrastructure renders the scoped public projection with node detail and no raw secrets or fabricated compromise', async ({ page }) => {
+  await interceptGraph(page)
+  await page.goto(`/projects/${PROJECT_ID}/infrastructure`)
+  await expect(page.getByRole('heading', { name: 'Infrastructure & Data' })).toBeVisible()
+  await expect(page.getByText('3 nodes • 1 edges')).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'dc01.corp' })).toBeVisible()
+  await expect(page.getByText('Knowledge graph unavailable (503)')).toHaveCount(0)
+  await expect(page.getByText('Compromised')).toHaveCount(0)
+  await page.getByRole('cell', { name: 'dc01.corp' }).click()
+  await expect(page.getByText('Public properties (server-redacted)')).toBeVisible()
+  await expect(page.getByText('Credential-like fields are removed server-side before this response.')).toBeVisible()
+})
+
+test('assets derives counters from the projection and never shows source constants or mutation docks', async ({ page }) => {
+  await interceptGraph(page)
+  await page.goto(`/projects/${PROJECT_ID}/assets`)
+  await expect(page.getByRole('heading', { name: 'Assets & Inventory' })).toBeVisible()
+  await expect(page.getByText('Total Assets')).toBeVisible()
+  await expect(page.getByText('134')).toHaveCount(0)
+  await expect(page.getByText('Tag Selected')).toHaveCount(0)
+  await expect(page.getByText('Update Scope')).toHaveCount(0)
+  await expect(page.getByText('Export CSV')).toHaveCount(0)
+  await expect(page.getByText('1 linked')).toBeVisible()
+  await page.getByRole('button', { name: 'Web & API' }).click()
+  await expect(page.getByRole('cell', { name: 'https://api.corp/v1' }).first()).toBeVisible()
+  await expect(page.getByText('CORP\\svc_backup')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Inspect' }).click()
+  await expect(page.getByText('Related findings')).toBeVisible()
+  await expect(page.getByText('FIND-2026-001')).toBeVisible()
+  await expect(page.getByText('Compromise or pivot claims are never fabricated from presence alone.')).toBeVisible()
+})
+
+
+########## clients/web-raptix/tests/e2e/real-logs-reports-live.spec.ts (code, 74L) ##########
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import * as path from 'node:path'
+import { test, expect } from '@playwright/test'
+
+/**
+ * W14 live gate: the operations timeline merges labeled workspace markers into
+ * the real UI, the export attachments return the actual engagement payload with
+ * correct headers, unsupported formats are rejected server-side and demo data
+ * never appears. The runtime is intentionally not seeded with runs, so the
+ * timeline is empty-and-truthful for run/checkpoint sources while workspace
+ * markers appear.
+ */
+
+const api = 'http://127.0.0.1:5295/api'
+const slug = `w14-logs-${Date.now()}`
+
+test('live timeline shows workspace markers, exports real attachments and rejects unsupported formats', async ({ page, request }) => {
+  test.setTimeout(120000)
+  const capabilities = (await (await request.get(`${api}/capabilities`)).json()).capabilities
+  expect(capabilities.timeline).toEqual({ supported: true, available: true })
+  expect(capabilities.reports).toEqual({ supported: true, available: true })
+  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true } })
+  expect(create.status()).toBe(201)
+  const project = await create.json()
+
+  const dir = path.join(process.env.W14_TEST_WORKSPACE!, slug)
+  await mkdir(path.join(dir, 'recon'), { recursive: true })
+  await mkdir(path.join(dir, 'findings'), { recursive: true })
+  await writeFile(path.join(dir, 'recon', 'probe.txt'), 'open 80,443', 'utf8')
+  await writeFile(path.join(dir, 'findings', 'FIND-2026-LIVE.md'), '# Exposed .env (W14 live)\n\nSeverity: high\n', 'utf8')
+
+  try {
+    const timelineResponse = await request.get(`${api}/engagements/${project.id}/timeline`)
+    expect(timelineResponse.status()).toBe(200)
+    const timeline = await timelineResponse.json()
+    expect(timeline.source).toBe('mixed')
+    const workspaceEntries = timeline.entries.filter((entry: { source: string }) => entry.source === 'workspace')
+    expect(workspaceEntries.map((entry: { id: string }) => entry.id).sort()).toEqual(['workspace:findings/FIND-2026-LIVE.md', 'workspace:recon/probe.txt'])
+
+    const badFormat = await request.get(`${api}/engagements/${project.id}/export?format=pdf`)
+    expect(badFormat.status()).toBe(400)
+    expect((await badFormat.json()).error.message).toContain('json, markdown')
+
+    const jsonExport = await request.get(`${api}/engagements/${project.id}/export?format=json`)
+    expect(jsonExport.status()).toBe(200)
+    expect(jsonExport.headers()['content-disposition']).toBe(`attachment; filename="${slug}-export.json"`)
+    const payload = await jsonExport.json()
+    expect(payload.engagement.id).toBe(project.id)
+    expect(payload.findings.map((finding: { id: string }) => finding.id)).toEqual(['FIND-2026-LIVE'])
+
+    const foreign = await request.get(`${api}/engagements/not-a-real-engagement/timeline`)
+    expect(foreign.status()).toBe(404)
+
+    await page.goto(`/projects/${project.id}/logs`)
+    await expect(page.getByRole('heading', { name: 'Operations Log' })).toBeVisible()
+    await expect(page.getByText('2 entries', { exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Artifact updated: recon/probe.txt' })).toBeVisible()
+    await expect(page.getByText('● Live')).toHaveCount(0)
+    await page.getByRole('cell', { name: 'Artifact updated: recon/probe.txt' }).click()
+    await expect(page.getByText('it is not an exact tool execution time')).toBeVisible()
+    await page.getByRole('button', { name: 'Close log entry detail' }).click()
+
+    await page.goto(`/projects/${project.id}/reports`)
+    await expect(page.getByRole('heading', { name: 'Reports' })).toBeVisible()
+    await expect(page.getByText('1 high').first()).toBeVisible()
+    await page.getByRole('button', { name: 'Export JSON' }).click()
+    await expect(page.getByText(new RegExp(`Download ready: .*${slug}-export\\.json`))).toBeVisible({ timeout: 15000 })
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+
+  await page.goto(`/projects/${project.id}/logs`)
+  await expect(page.getByText('No log entries match. An empty log is a truthful state')).toBeVisible({ timeout: 15000 })
+})
+
+
+########## clients/web-raptix/tests/e2e/real-logs.spec.ts (code, 71L) ##########
+import { test, expect, type Page, type Route } from '@playwright/test'
+
+/**
+ * W14 real Operations Log specs: the merged server timeline rendered with
+ * distinct source labels, payload-derived filters and truthful bounded/empty
+ * states. No "Live" indicator and no synthetic telemetry may appear.
+ */
+
+const TIME = '2026-10-02T00:00:00.000Z'
+const PROJECT_ID = 'w14-logs-project'
+
+const project = {
+  id: PROJECT_ID, workspaceSlug: 'w14-logs-fixture', displayName: 'W14 Logs Fixture',
+  targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true,
+  metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null,
+  activeAgentCount: null, createdAt: TIME, updatedAt: TIME, source: 'api',
+}
+
+const timeline = {
+  engagementId: PROJECT_ID, source: 'mixed', truncated: false,
+  entries: [
+    { id: 'run:run-9', at: '2026-10-01T08:00:00.000Z', source: 'runtime', kind: 'run', label: 'Planning run success', runId: 'run-9', status: 'success' },
+    { id: 'checkpoint:0', at: '2026-10-01T09:30:00.000Z', source: 'checkpoint', kind: 'tool_call', label: 'tool call', agent: 'soundwave' },
+    { id: 'workspace:recon/nmap.txt', at: '2026-10-01T10:00:00.000Z', source: 'workspace', kind: 'artifact', label: 'Artifact updated: recon/nmap.txt', tool: 'recon' },
+  ],
+}
+
+async function intercept(page: Page, entries: typeof timeline.entries = timeline.entries, truncated = false): Promise<void> {
+  const json = (route: Route, body: unknown, status = 200): Promise<void> => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route(`**/api/engagements/${PROJECT_ID}`, route => json(route, project))
+  await page.route(`**/api/engagements/${PROJECT_ID}/timeline`, route => json(route, { ...timeline, entries, truncated }))
+}
+
+test('operations log renders merged entries with distinct source labels and payload-derived filters', async ({ page }) => {
+  await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/logs`)
+  await expect(page.getByRole('heading', { name: 'Operations Log' })).toBeVisible()
+  await expect(page.getByText('3 entries', { exact: true })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'Planning run success' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'Artifact updated: recon/nmap.txt' })).toBeVisible()
+  await expect(page.getByText('● Live')).toHaveCount(0)
+  await page.getByLabel('Filter by agent').selectOption('soundwave')
+  await expect(page.getByRole('cell', { name: 'Planning run success' })).toHaveCount(0)
+  await expect(page.getByRole('cell', { name: 'tool call' })).toBeVisible()
+  await page.getByLabel('Filter by agent').selectOption('all')
+  await page.getByLabel('Filter by source').selectOption('workspace')
+  await expect(page.getByRole('cell', { name: 'tool call' })).toHaveCount(0)
+})
+
+test('entry detail keeps provenance: artifact mtime is not a tool execution time', async ({ page }) => {
+  await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/logs`)
+  await page.getByRole('cell', { name: 'Artifact updated: recon/nmap.txt' }).click()
+  await expect(page.getByText('Workspace marker: the file timestamp records when the artifact was last written; it is not an exact tool execution time.')).toBeVisible()
+  await page.getByRole('button', { name: 'Close log entry detail' }).click()
+  await page.getByRole('cell', { name: 'tool call' }).click()
+  await expect(page.getByText('Checkpoint transcript: durable thread-level history.')).toBeVisible()
+})
+
+test('bounded history is stated, empty log stays truthful', async ({ page }) => {
+  await intercept(page, timeline.entries.slice(0, 1), true)
+  await page.goto(`/projects/${PROJECT_ID}/logs`)
+  await expect(page.getByText(/bounded — older entries hidden by the server/)).toBeVisible()
+  await expect(page.getByText('Trace completeness is limited, not lost silently.')).toBeVisible()
+})
+
+test('an empty timeline renders as a truthful empty state, not fabricated activity', async ({ page }) => {
+  await intercept(page, [])
+  await page.goto(`/projects/${PROJECT_ID}/logs`)
+  await expect(page.getByText('No log entries match. An empty log is a truthful state')).toBeVisible()
+})
+
+
+########## clients/web-raptix/tests/e2e/real-members.spec.ts (code, 56L) ##########
+import { test, expect, type Page, type Route } from '@playwright/test'
+
+/**
+ * W19 real Members specs: the truthful local single-user topology with the
+ * stated-absent invite/RBAC reason. No imported demo people, no role
+ * dropdown, no fake Owner/Viewer hierarchy.
+ */
+
+const TIME = '2026-10-02T00:00:00.000Z'
+const PROJECT_ID = 'w19-members-project'
+
+const project = {
+  id: PROJECT_ID, workspaceSlug: 'w19-members-fixture', displayName: 'W19 Members Fixture',
+  targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true,
+  metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null,
+  activeAgentCount: null, createdAt: TIME, updatedAt: TIME, source: 'api',
+}
+
+const membersView = {
+  engagementId: PROJECT_ID, mode: 'local-single-user',
+  members: [{ id: 'local', label: 'Local Operator', role: 'operator', source: 'local' }],
+  inviteSupported: false,
+  reason: 'Memberships require an authentication strategy (hosted multi-user auth with sessions, CSRF and origin policy, enforced on every scoped API) that this build does not have. The deployment stays a localhost-only single-user topology.',
+  source: 'db',
+}
+
+async function intercept(page: Page): Promise<{ invited: number }> {
+  const state = { invited: 0 }
+  const json = (route: Route, body: unknown, status = 200): Promise<void> => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route(`**/api/engagements/${PROJECT_ID}`, route => json(route, project))
+  await page.route(`**/api/engagements/${PROJECT_ID}/members`, route => {
+    if (route.request().method() !== 'GET') { state.invited += 1; return json(route, { statusCode: 503, error: { code: 'unavailable', message: 'Inviting members is not supported. Memberships require an authentication strategy that this build does not have.' } }, 503) }
+    return json(route, membersView)
+  })
+  return state
+}
+
+test('renders the local single-user members view from the real API', async ({ page }) => {
+  await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/members`)
+  await expect(page.getByRole('heading', { name: 'Members' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'Local Operator' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'operator', exact: true })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'Alex Kim' })).toHaveCount(0)
+  await expect(page.getByRole('cell', { name: 'Sarah Rowe' })).toHaveCount(0)
+})
+
+test('states the invite/RBAC absence with the server reason and never fakes a role dropdown', async ({ page }) => {
+  const state = await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/members`)
+  await expect(page.getByText('Not available in this build')).toBeVisible()
+  await expect(page.getByText('Memberships require an authentication strategy', { exact: false })).toBeVisible()
+  await expect(page.getByLabel(/role/i)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /invite|add member/i })).toHaveCount(0)
+  expect(state.invited).toBe(0)
+})
+
+
+########## clients/web-raptix/tests/e2e/real-mode.spec.ts (code, 19L) ##########
+import { test, expect } from '@playwright/test'
+
+// W03 real guard: the real branch now renders the real workspace composition
+// (src/app/RealApp.tsx) instead of the old "backend unavailable" placeholder.
+// Demo fixture data must never appear in real mode, before or after reload.
+test('real mode renders the real workspace chrome and never silently renders demo project data', async ({ page }) => {
+  await page.goto('/projects/1/overview')
+  // 'overview' is not one of the 13 pages: real mode shows a truthful
+  // not-found state with a root read, never demo content.
+  await expect(page.getByRole('button', { name: 'All projects' })).toBeVisible()
+  await expect(page.getByText('Acme Corp External Assessment', { exact: true })).toHaveCount(0)
+  await page.goto('/projects')
+  await expect(page.getByRole('heading', { name: 'Projects Management' })).toBeVisible()
+  await expect(page.getByText('Acme Corp External Assessment', { exact: true })).toHaveCount(0)
+  // No fake source owner identity anywhere in the real chrome.
+  await expect(page.getByText('Alex Kim', { exact: true })).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Projects Management' })).toBeVisible()
+})
+
+
+########## clients/web-raptix/tests/e2e/real-planning-live.spec.ts (code, 81L) ##########
+import { test, expect } from '@playwright/test'
+import { mkdir, writeFile, rm, symlink } from 'node:fs/promises'
+import * as path from 'node:path'
+
+test('new API planning missing/partial/valid/invalid/unavailable states, reload, scope and no fallback', async ({ page, request }) => {
+  test.setTimeout(90000)
+  const root = process.env.W04_TEST_WORKSPACE!
+  const api = 'http://127.0.0.1:5281/api'
+  expect((await (await request.get(`${api}/capabilities`)).json()).capabilities.planning).toEqual({ supported: true, available: true })
+  const suffix = Date.now()
+  const slug = `w04-browser-${suffix}`
+  const target = 'http://authorized-planning-test.invalid'
+  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: target, authorizationConfirmed: true } })
+  expect(create.status()).toBe(201)
+  const project = await create.json()
+  const plan = path.join(root, slug, 'plan')
+  const heading = page.getByRole('heading', { name: 'Planning handoff blocked', exact: true })
+  await page.goto(`/projects/${project.id}/charter`)
+  await expect(heading).toBeVisible()
+  await expect(page.getByText('roe: missing', { exact: true })).toBeVisible()
+  const roe = { engagement_name: 'W04 Verified', client: 'Controlled client', start_date: '2026-10-02', end_date: '2026-10-31', engagement_type: 'external', testing_window: 'Mon-Fri 09:00-17:00 UTC', authorization_reference: 'W04 local test approval', in_scope: [{ target, type: 'web-url', notes: 'Controlled target' }], out_of_scope: [{ target: 'http://excluded.invalid', type: 'web-url', notes: 'Excluded system' }], prohibited_actions: ['No production changes'], permitted_actions: ['Read-only assessment'] }
+  await writeFile(path.join(plan, 'roe.json'), JSON.stringify(roe))
+  await page.getByRole('button', { name: 'Refresh planning' }).click()
+  await expect(page.getByText('Controlled client', { exact: false })).toBeVisible()
+  await expect(heading).toBeVisible()
+  await page.getByRole('button', { name: 'Scope & Boundary', exact: true }).click()
+  await expect(page.getByRole('cell', { name: target, exact: true })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'http://excluded.invalid', exact: true })).toBeVisible()
+  await expect(page.getByText('No production changes', { exact: true })).toBeVisible()
+  const rest = { conops: { engagement_name: 'W04 Verified', executive_summary: 'W04 source-backed operational concept' }, deconfliction: { engagement_name: 'W04 Verified', deconfliction_code: 'PRIVATE-CODE', identifiers: [{ type: 'source-ip', value: '192.0.2.55' }] }, 'threat-profile': { engagement_name: 'W04 Verified', actor_name: 'Test', tier: 'tier-1', sophistication: 'low', motivation: 'testing' }, contact: { engagement_name: 'W04 Verified', primary_operator: { name: 'Operator', role: 'Owner', channel: 'local' } }, 'data-handling': { engagement_name: 'W04 Verified' }, abort: { engagement_name: 'W04 Verified' }, cleanup: { engagement_name: 'W04 Verified' } }
+  for (const [name, doc] of Object.entries(rest)) await writeFile(path.join(plan, `${name}.json`), JSON.stringify(doc))
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Planning bundle validated', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Charter & ROE', exact: true }).click()
+  await expect(page.getByText('W04 source-backed operational concept', { exact: true })).toBeVisible()
+  await expect(page.getByText('opplan: missing', { exact: true })).toBeVisible()
+  const docs = await request.get(`${api}/engagements/${project.id}/plan-docs`)
+  expect((await docs.text())).not.toContain('PRIVATE-CODE')
+  expect((await request.post(`${api}/engagements/${project.id}/plan-docs`, { data: { roe: { in_scope: [] } } })).status()).toBe(404)
+  await writeFile(path.join(plan, 'opplan.json'), JSON.stringify({ engagement_name: 'W04 Verified', threat_profile: 'Controlled test', objectives: [{ id: 'OBJ-W04', title: 'Verify read-only projection', description: 'Do not submit a runtime run', phase: 'recon', acceptance_criteria: ['Visible'], priority: 1, blocked_by: ['OBJ-PRIOR'], status: 'blocked' }] }))
+  await page.getByRole('button', { name: 'Refresh planning' }).click()
+  await expect(page.getByText('OBJ-W04 — Verify read-only projection', { exact: true })).toBeVisible()
+  expect((await request.get(`${api}/engagements/${project.id}/opplan`)).status()).toBe(200)
+  await writeFile(path.join(plan, 'roe.json'), '{broken')
+  await page.reload()
+  await expect(page.getByText('roe: invalid', { exact: true })).toBeVisible()
+  await expect(page.getByRole('cell', { name: target, exact: true })).toHaveCount(0)
+  await writeFile(path.join(plan, 'roe.json'), JSON.stringify(roe))
+  await rm(path.join(plan, 'cleanup.json')); await mkdir(path.join(plan, 'cleanup.json'))
+  await page.getByRole('button', { name: 'Refresh planning' }).click()
+  await expect(page.getByText('cleanup: unavailable', { exact: true })).toBeVisible()
+  await rm(path.join(plan, 'cleanup.json'), { recursive: true }); await writeFile(path.join(plan, 'cleanup.json'), JSON.stringify(rest.cleanup))
+  const otherResponse = await request.post(`${api}/engagements`, { data: { name: `${slug}-other`, targetType: 'ip_range', targetValue: '192.0.2.0/24', authorizationConfirmed: true } })
+  expect(otherResponse.status()).toBe(201)
+  const other = await otherResponse.json()
+  await page.goto(`/projects/${other.id}/charter`)
+  await expect(page.getByText('roe: missing', { exact: true })).toBeVisible()
+  await expect(page.getByText('W04 source-backed operational concept', { exact: true })).toHaveCount(0)
+  const otherPlan = path.join(root, other.workspaceSlug, 'plan')
+  await rm(otherPlan, { recursive: true }); await symlink(plan, otherPlan, 'junction')
+  const rejected = await request.get(`${api}/engagements/${other.id}/plan-docs`)
+  expect((await rejected.json()).bundle.roe).toBe('unavailable')
+  await page.route(`**/api/engagements/${project.id}/plan-docs`, route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ statusCode: 503, error: { code: 'unavailable', message: 'W04 controlled planning outage' } }) }))
+  await page.goto(`/projects/${project.id}/charter`)
+  await expect(page.getByText('W04 controlled planning outage', { exact: true })).toBeVisible()
+  await expect(page.getByText('W04 source-backed operational concept', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Alex Kim', { exact: true })).toHaveCount(0)
+  await expect(page.locator('aside nav').getByRole('button')).toHaveCount(13)
+  await page.unroute(`**/api/engagements/${project.id}/plan-docs`)
+  const validView = await (await request.get(`${api}/engagements/${project.id}/plan-docs`)).json()
+  await page.route(`**/api/engagements/${project.id}/plan-docs`, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...validView, engagementId: other.id }) }))
+  await page.getByRole('button', { name: 'Refresh planning' }).click()
+  await expect(page.getByText('Planning response did not match this engagement', { exact: true })).toBeVisible()
+  await expect(page.getByText('W04 source-backed operational concept', { exact: true })).toHaveCount(0)
+  await page.unroute(`**/api/engagements/${project.id}/plan-docs`)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Planning bundle validated', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.screenshot({ path: test.info().outputPath('w04-real-planning-mobile.png'), fullPage: true })
+})
+
+
+########## clients/web-raptix/tests/e2e/real-projects-live.spec.ts (code, 58L) ##########
+import { test, expect } from '@playwright/test'
+
+test('live new-API create, reload, conflict and project switching use server data only', async ({ page, request }) => {
+  test.setTimeout(60000)
+  const health = await request.get('http://127.0.0.1:5280/api/capabilities')
+  expect(health.ok(), 'HEAD live gate requires the dedicated PostgreSQL-backed new API').toBe(true)
+  const sourceRequests: string[] = []
+  page.on('request', request => { if (request.url().includes('/api/')) sourceRequests.push(request.url()) })
+  const suffix = Date.now().toString()
+  const slug = `w03-browser-${suffix}`
+  await page.goto('/projects')
+  await expect(page.getByRole('heading', { name: 'Projects Management' })).toBeVisible()
+  await page.getByRole('button', { name: 'New Project', exact: true }).click()
+  await page.getByLabel('Display Name', { exact: false }).fill(`W03 Browser ${suffix}`)
+  await page.getByLabel('Workspace Slug', { exact: false }).fill(slug)
+  await page.locator('#real-new-project-target').fill('http://authorized-ui-test.invalid')
+  await page.getByRole('checkbox').check()
+  const createdResponse = page.waitForResponse(response => response.url().endsWith('/api/engagements') && response.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Create Project', exact: true }).click()
+  const response = await createdResponse
+  expect(response.status()).toBe(201)
+  const created = await response.json()
+  await expect(page).toHaveURL(`/projects/${created.id}/charter`)
+  await expect(page.getByRole('heading', { name: `W03 Browser ${suffix} — Charter & Rules of Engagement` })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Planning handoff blocked', exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: `W03 Browser ${suffix} — Charter & Rules of Engagement` })).toBeVisible()
+  await expect(page.locator('aside nav').getByRole('button')).toHaveCount(13)
+  await expect(page.getByText('Alex Kim', { exact: true })).toHaveCount(0)
+  await page.goto('/projects')
+  await page.getByRole('button', { name: 'New Project', exact: true }).click()
+  await page.getByLabel('Workspace Slug', { exact: false }).fill(slug)
+  await page.locator('#real-new-project-target').fill('http://authorized-ui-test.invalid')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Create Project', exact: true }).click()
+  await expect(page.getByText(/already exists/).first()).toBeVisible()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.keyboard.press('Escape')
+  const second = await request.post('http://127.0.0.1:5280/api/engagements', { data: { name: `${slug}-second`, targetType: 'ip_range', targetValue: '192.0.2.0/24', authorizationConfirmed: true } })
+  expect(second.status()).toBe(201)
+  const other = await second.json()
+  await page.goto(`/projects/${other.id}/charter`)
+  await expect(page.locator('#main-content')).toContainText(other.workspaceSlug)
+  await page.goto(`/projects/${created.id}/charter`)
+  await expect(page.locator('#main-content')).toContainText(slug)
+  await expect(page.locator('#main-content')).not.toContainText(other.workspaceSlug)
+  expect(sourceRequests.some(url => url.includes('3000'))).toBe(false)
+  await page.screenshot({ path: test.info().outputPath('w03-real-project.png'), fullPage: true })
+})
+
+test('real-mode backend unavailable response stays an error without demo fallback', async ({ page }) => {
+  await page.route('**/api/engagements', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ statusCode: 503, error: { code: 'unavailable', message: 'Controlled backend unavailable' } }) }))
+  await page.goto('/projects')
+  await expect(page.getByText('Controlled backend unavailable', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Retry|Refresh/ }).first()).toBeVisible()
+  await expect(page.getByText('Acme Corp External Assessment', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Alex Kim', { exact: true })).toHaveCount(0)
+})
+
+
+########## clients/web-raptix/tests/e2e/real-projects.spec.ts (code, 60L) ##########
+import { test, expect, type Page } from '@playwright/test'
+
+/**
+ * Real-mode workspace composition specs (W03): src/app/RealApp.tsx behavior.
+ *
+ * These specs run against the Vite dev server in real mode. The new API may
+ * (HEAD gate: controlled server) or may not (standalone) be reachable, so
+ * every data-dependent assertion is written to hold in BOTH cases: with the
+ * API up, real data may render; with it down, the truthful error state must
+ * show. Demo fixtures are unacceptable either way.
+ */
+
+async function apiUp(page: Page): Promise<boolean> {
+  return page.request.get('/api/health').then(response => response.ok()).catch(() => false)
+}
+
+async function gotoHome(page: Page): Promise<void> {
+  await page.goto('/projects')
+  await expect(page.getByRole('heading', { name: 'Projects Management' })).toBeVisible()
+}
+
+test('home renders the real projects chrome with truthful states and zero demo data', async ({ page }) => {
+  await gotoHome(page)
+  await expect(page.getByText('Acme Corp External Assessment', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Alex Kim', { exact: true })).toHaveCount(0)
+  if (await apiUp(page)) {
+    await expect(page.getByRole('button', { name: 'New Project' })).toBeVisible()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  } else {
+    const alert = page.getByRole('alert')
+    await expect(alert).toBeVisible()
+    await expect(alert.getByText('Projects unavailable')).toBeVisible()
+    await expect(alert.getByRole('button', { name: 'Retry' })).toBeVisible()
+  }
+})
+
+test('deep links to unknown projects show truthful states and retry the root read', async ({ page }) => {
+  await page.goto('/projects/no-such-engagement/charter')
+  await expect(page.getByRole('button', { name: 'All projects' })).toBeVisible()
+  await expect(page.getByText('Acme Corp External Assessment', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'All projects' }).click()
+  await expect(page.getByRole('heading', { name: 'Projects Management' })).toBeVisible()
+})
+
+test('new project form validates locally and makes no server call until valid', async ({ page }) => {
+  const posts: string[] = []
+  page.on('request', request => {
+    if (request.method() === 'POST' && request.url().includes('/api/engagements')) posts.push(request.url())
+  })
+  await gotoHome(page)
+  await page.getByRole('button', { name: 'New Project' }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole('button', { name: 'Create Project' }).click()
+  await expect(dialog.getByText('Explicit authorization confirmation is required')).toBeVisible()
+  await expect(dialog.getByText(/Invalid project name/)).toBeVisible()
+  expect(posts).toHaveLength(0)
+  await dialog.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+
+########## clients/web-raptix/tests/e2e/real-reports.spec.ts (code, 87L) ##########
+import { test, expect, type Page, type Route } from '@playwright/test'
+
+/**
+ * W14 real Reports specs: preview from actual engagement/findings DTOs and the
+ * validated JSON/Markdown export attachments. Success is asserted only after
+ * the response arrived with the correct Content-Disposition; unsupported
+ * formats are never offered, and no dummy deliverable rows exist.
+ */
+
+const TIME = '2026-10-02T00:00:00.000Z'
+const PROJECT_ID = 'w14-reports-project'
+
+const project = {
+  id: PROJECT_ID, workspaceSlug: 'w14-reports-fixture', displayName: 'W14 Reports Fixture',
+  targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true,
+  metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null,
+  activeAgentCount: null, createdAt: TIME, updatedAt: TIME, source: 'api',
+}
+
+const findingsView = {
+  engagementId: PROJECT_ID, source: 'workspace', truncated: false,
+  findings: [
+    { engagementId: PROJECT_ID, id: 'FIND-2026-001', title: 'Exposed .env File with Plaintext Credentials', severity: 'critical', cvssScore: 9.1, cvssVector: 'AV:N/AC:L/PR:N/UI:N', description: 'The application root exposes a .env file.', evidence: 'GET /.env returned 200', attackVector: 'Unauthenticated HTTP GET', affectedAssets: ['api.acme.com/.env'], cwe: ['CWE-312'], mitre: ['T1552.001'], remediation: 'Rotate credentials.', rawSource: '# Exposed .env File with Plaintext Credentials', sizeBytes: 512, quality: { defaultSeverity: false, placeholderDescription: false, placeholderEvidence: false, unreadable: false }, source: 'workspace' },
+    { engagementId: PROJECT_ID, id: 'FIND-2026-002', title: 'Directory listing on /backup', severity: 'medium', description: 'Backup directory is listable.', evidence: 'GET /backup returned index', attackVector: 'Unauthenticated HTTP GET', affectedAssets: [], remediation: 'Disable listing.', rawSource: '# Directory listing', sizeBytes: 256, quality: { defaultSeverity: false, placeholderDescription: false, placeholderEvidence: false, unreadable: false }, source: 'workspace' },
+  ],
+}
+
+const artifactsView = {
+  engagementId: PROJECT_ID, source: 'workspace',
+  folders: [{ folder: 'recon', files: [{ name: 'nmap.txt', path: 'recon/nmap.txt', sizeBytes: 12 }] }],
+}
+
+const exportJson = JSON.stringify({ engagement: { id: PROJECT_ID }, planDocs: { roe: { rules: [] } }, findings: [{ id: 'FIND-2026-001', content: '# Exposed' }], findingsUnreadable: 0, formatValidated: true })
+
+async function intercept(page: Page): Promise<void> {
+  const json = (route: Route, body: unknown, status = 200, headers: Record<string, string> = {}): Promise<void> => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body), headers })
+  await page.route(`**/api/engagements/${PROJECT_ID}`, route => json(route, project))
+  await page.route(`**/api/engagements/${PROJECT_ID}/findings`, route => json(route, findingsView))
+  await page.route(`**/api/engagements/${PROJECT_ID}/artifacts`, route => json(route, artifactsView))
+  await page.route(`**/api/engagements/${PROJECT_ID}/export?format=json`, route => route.fulfill({
+    status: 200, contentType: 'application/json', body: exportJson,
+    headers: { 'Content-Disposition': `attachment; filename="${project.workspaceSlug}-export.json"` },
+  }))
+  await page.route(`**/api/engagements/${PROJECT_ID}/export?format=markdown`, route => route.fulfill({
+    status: 200, contentType: 'text/markdown; charset=utf-8', body: `# ${project.workspaceSlug} — Engagement Export\n`,
+    headers: { 'Content-Disposition': `attachment; filename="${project.workspaceSlug}-export.md"` },
+  }))
+}
+
+test('report preview derives from actual DTOs with no dummy deliverables or authors', async ({ page }) => {
+  await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/reports`)
+  await expect(page.getByRole('heading', { name: 'Reports' })).toBeVisible()
+  await expect(page.locator('#main-content').getByText('W14 Reports Fixture')).toBeVisible()
+  await expect(page.getByText('1 critical')).toBeVisible()
+  await expect(page.getByText('1 medium').first()).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'FIND-2026-001' })).toBeVisible()
+  await expect(page.getByText('Alex Kim')).toHaveCount(0)
+  await expect(page.getByText('Attestation Certificate')).toHaveCount(0)
+  await expect(page.getByText('AI Compile')).toHaveCount(0)
+  await expect(page.getByText('pages')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Export PDF' })).toHaveCount(0)
+})
+
+test('JSON export succeeds only after the validated response with correct filename', async ({ page }) => {
+  await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/reports`)
+  let exportRequests = 0
+  page.on('request', request => { if (request.url().includes('/export?format=json')) exportRequests += 1 })
+  await page.getByRole('button', { name: 'Export JSON' }).click()
+  await expect(page.getByText(/Download ready: /)).toBeVisible()
+  await expect(page.getByText(`${project.workspaceSlug}-export.json`)).toBeVisible()
+  expect(exportRequests).toBe(1)
+  await expect(page.getByText('formatValidated')).toHaveCount(0)
+})
+
+test('markdown export reports the real attachment and a failed export never claims success', async ({ page }) => {
+  await intercept(page)
+  await page.route(`**/api/engagements/${PROJECT_ID}/export?format=markdown`, route => route.fulfill({
+    status: 400, contentType: 'application/json',
+    body: JSON.stringify({ statusCode: 400, error: { code: 'bad_request', message: 'Unsupported export format. Supported formats: json, markdown.' } }),
+  }))
+  await page.goto(`/projects/${PROJECT_ID}/reports`)
+  await page.getByRole('button', { name: 'Export Markdown' }).click()
+  await expect(page.getByText('Unsupported export format. Supported formats: json, markdown.')).toBeVisible()
+  await expect(page.getByText(/Download ready: /)).toHaveCount(0)
+})
+
+
+########## clients/web-raptix/tests/e2e/real-settings.spec.ts (code, 93L) ##########
+import { test, expect, type Page, type Route } from '@playwright/test'
+
+/**
+ * W15 real Settings specs: persisted general fields with save/reload
+ * acknowledgement, the up-front target-change policy, stated-absent unsupported
+ * feature areas, and the danger delete with truthful scope. No "Test
+ * Connected" or unacknowledged "Saved" toasts may appear.
+ */
+
+const TIME = '2026-10-02T00:00:00.000Z'
+const PROJECT_ID = 'w15-settings-project'
+
+const project = {
+  id: PROJECT_ID, workspaceSlug: 'w15-settings-fixture', displayName: 'W15 Settings Fixture',
+  targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true,
+  metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null,
+  activeAgentCount: null, createdAt: TIME, updatedAt: TIME, source: 'api',
+}
+
+function settingsView(lifecycleStatus: string): Record<string, unknown> {
+  const locked = lifecycleStatus !== 'draft'
+  return {
+    engagementId: PROJECT_ID, displayName: project.displayName, name: project.workspaceSlug,
+    targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true,
+    lifecycleStatus, targetChange: locked
+      ? { allowed: false, reason: 'Target changes are only allowed while the project is in draft' }
+      : { allowed: true, reason: null },
+    source: 'db',
+  }
+}
+
+async function intercept(page: Page, lifecycleStatus = 'planning', patchStatus = 200): Promise<{ patches: unknown[]; deleted: boolean }> {
+  const state = { patches: [] as unknown[], deleted: false }
+  const json = (route: Route, body: unknown, status = 200): Promise<void> => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route(`**/api/engagements/${PROJECT_ID}`, route => {
+    if (route.request().method() === 'DELETE') { state.deleted = true; return json(route, { ok: true, workspaceRetained: true }) }
+    if (route.request().method() === 'PATCH') {
+      state.patches.push(route.request().postDataJSON())
+      return json(route, { ...project, displayName: (route.request().postDataJSON() as { displayName?: string }).displayName })
+    }
+    return json(route, project)
+  })
+  await page.route(`**/api/engagements/${PROJECT_ID}/settings`, route => json(route, settingsView(lifecycleStatus), patchStatus === 0 ? 200 : 200))
+  return state
+}
+
+test('settings edits persisted fields with server-acknowledged save and reload', async ({ page }) => {
+  const state = await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/settings`)
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
+  await expect(page.getByText('Project name (workspace slug, immutable)')).toBeVisible()
+  const slugInput = page.locator('input[disabled], input[readonly]').first()
+  await expect(slugInput).toHaveValue('w15-settings-fixture')
+  await page.getByLabel('Display name').fill('Renamed Engagement')
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Save changes' }).click()
+  await expect(page.getByRole('status')).toHaveText('Saved — reloaded from the server.')
+  expect(state.patches).toHaveLength(1)
+  expect(state.patches[0]).toMatchObject({ displayName: 'Renamed Engagement' })
+  await expect(page.getByText('Test Connected')).toHaveCount(0)
+})
+
+test('the target-change policy is stated up front when the lifecycle locks targets', async ({ page }) => {
+  await intercept(page, 'planning')
+  await page.goto(`/projects/${PROJECT_ID}/settings`)
+  await expect(page.getByText('Target locked: Target changes are only allowed while the project is in draft.')).toBeVisible()
+  await expect(page.getByLabel('Target value')).toBeDisabled()
+  await expect(page.getByLabel('Target type')).toBeDisabled()
+  await expect(page.getByLabel('Display name')).toBeEnabled()
+})
+
+test('unsupported feature areas are stated with reasons, never faked as connectable', async ({ page }) => {
+  await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/settings`)
+  await expect(page.getByText('AI provider / model / runtime')).toBeVisible()
+  await expect(page.getByText('Integrations & keys')).toBeVisible()
+  await expect(page.getByText(/Credentials Vault provides encrypted secret storage/)).toBeVisible()
+  await expect(page.getByText(/No integration registry or secret storage service exists/)).toHaveCount(0)
+  await expect(page.getByText('Notification delivery')).toBeVisible()
+  await expect(page.getByText('Report templates')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Connect|Test|Save key/i })).toHaveCount(0)
+})
+
+test('danger delete names its scope and navigates home after acknowledgement', async ({ page }) => {
+  const state = await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/settings`)
+  await expect(page.getByText(/retained/).first()).toBeVisible()
+  await expect(page.getByText(/Workspace artifacts on disk are/)).toBeVisible()
+  await page.getByRole('button', { name: 'Delete engagement' }).click()
+  await page.getByRole('button', { name: 'Confirm delete' }).click()
+  await expect(page).toHaveURL(/\/projects$/)
+  expect(state.deleted).toBe(true)
+})
+
+
+########## clients/web-raptix/tests/e2e/real-vault.spec.ts (code, 113L) ##########
+import { test, expect, type Page, type Route } from '@playwright/test'
+
+/**
+ * W18 real Credentials Vault specs: redacted metadata by default (no
+ * plaintext anywhere in the DOM), explicit audited reveal, and audited
+ * revocation. No fixture eye-toggle may exist.
+ */
+
+const TIME = '2026-10-02T00:00:00.000Z'
+const PROJECT_ID = 'w18-vault-project'
+
+const project = {
+  id: PROJECT_ID, workspaceSlug: 'w18-vault-fixture', displayName: 'W18 Vault Fixture',
+  targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true,
+  metadataState: 'verified', lifecycleStatus: 'planning', findingCount: null, assetCount: null,
+  activeAgentCount: null, createdAt: TIME, updatedAt: TIME, source: 'api',
+}
+
+interface SecretRow {
+  id: string
+  engagementId: string
+  kind: string
+  label: string
+  createdBy: string
+  revealCount: number
+  lastRevealedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+function secretFixture(id: string, label: string): SecretRow {
+  return { id, engagementId: PROJECT_ID, kind: 'api-key', label, createdBy: 'local', revealCount: 0, lastRevealedAt: null, createdAt: TIME, updatedAt: TIME }
+}
+
+async function intercept(page: Page): Promise<{ stored: unknown[]; revealed: string[]; revoked: string[] }> {
+  const state = { stored: [] as unknown[], revealed: [] as string[], revoked: [] as string[] }
+  const secrets: SecretRow[] = []
+  let seq = 0
+  const json = (route: Route, body: unknown, status = 200): Promise<void> => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route(`**/api/engagements/${PROJECT_ID}`, route => json(route, project))
+  await page.route(`**/api/engagements/${PROJECT_ID}/vault/secrets`, route => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON() as { kind?: string; label?: string; plaintext?: string }
+      state.stored.push(body)
+      seq += 1
+      const row = secretFixture(`sec-${seq}`, body.label ?? '')
+      row.kind = body.kind ?? 'note'
+      secrets.push(row)
+      return json(route, row, 201)
+    }
+    return json(route, { engagementId: PROJECT_ID, secrets, truncated: false, source: 'db' })
+  })
+  await page.route(`**/api/engagements/${PROJECT_ID}/vault/secrets/*/reveal`, route => {
+    const secretId = route.request().url().split('/vault/secrets/')[1]?.split('/reveal')[0] ?? ''
+    state.revealed.push(secretId)
+    const row = secrets.find(entry => entry.id === secretId)
+    if (row) { row.revealCount += 1; row.lastRevealedAt = TIME }
+    return json(route, { secretId, engagementId: PROJECT_ID, plaintext: 'the-revealed-value', revealedAt: TIME })
+  })
+  await page.route(`**/api/engagements/${PROJECT_ID}/vault/secrets/*`, route => {
+    if (route.request().method() !== 'DELETE') return json(route, { error: { message: 'method not handled' } }, 405)
+    const secretId = route.request().url().split('/vault/secrets/')[1] ?? ''
+    state.revoked.push(secretId)
+    const index = secrets.findIndex(entry => entry.id === secretId)
+    if (index !== -1) secrets.splice(index, 1)
+    return json(route, { ok: true })
+  })
+  return state
+}
+
+test('stores a secret and shows only redacted metadata, never the plaintext', async ({ page }) => {
+  const state = await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/credentials`)
+  await expect(page.getByRole('heading', { name: 'Credentials Vault' })).toBeVisible()
+  await expect(page.getByText('No secrets stored for this engagement.')).toBeVisible()
+  await page.getByLabel('Secret label').fill('Grafana admin')
+  await page.getByLabel('Secret value').fill('the-stored-value')
+  await page.getByRole('button', { name: 'Store secret' }).click()
+  await expect(page.getByText('Grafana admin')).toBeVisible()
+  await expect(page.getByText('Reveals: 0')).toBeVisible()
+  expect(state.stored[0]).toMatchObject({ kind: 'password', label: 'Grafana admin', plaintext: 'the-stored-value' })
+  const bodyText = await page.locator('body').textContent()
+  expect(bodyText).not.toContain('the-stored-value')
+})
+
+test('reveal shows plaintext only after the explicit action and updates the audit metadata', async ({ page }) => {
+  const state = await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/credentials`)
+  await page.getByLabel('Secret label').fill('Router')
+  await page.getByLabel('Secret value').fill('router-value')
+  await page.getByRole('button', { name: 'Store secret' }).click()
+  await expect(page.getByText('Router')).toBeVisible()
+  await expect(page.getByText('Reveals: 0')).toBeVisible()
+  await page.getByRole('button', { name: 'Reveal', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('written to the engagement audit log')
+  await expect(page.getByRole('status')).toContainText('the-revealed-value')
+  await expect(page.getByText('Reveals: 1')).toBeVisible()
+  expect(state.revealed).toHaveLength(1)
+})
+
+test('revocation removes the secret and keeps the flow truthful', async ({ page }) => {
+  const state = await intercept(page)
+  await page.goto(`/projects/${PROJECT_ID}/credentials`)
+  await page.getByLabel('Secret label').fill('Rotate me')
+  await page.getByLabel('Secret value').fill('rotate-value')
+  await page.getByRole('button', { name: 'Store secret' }).click()
+  await expect(page.getByText('Rotate me')).toBeVisible()
+  await page.getByRole('button', { name: 'Revoke' }).click()
+  await expect(page.getByText('No secrets stored for this engagement.')).toBeVisible()
+  expect(state.revoked).toHaveLength(1)
+...[TRUNCATED 114 total lines]
+
+########## clients/web-raptix/tests/e2e/single-user.spec.ts (code, 131L) ##########
+import { test, expect } from '@playwright/test'
+
+const pages = [
+  ['Charter & ROE', 'charter'], ['Scope & Boundary', 'scope'],
+  ['Operator Console', 'console'], ['Vector Campaigns', 'campaigns'], ['C2 & Sessions', 'sessions'],
+  ['Infrastructure & Data', 'infrastructure'], ['Assets & Inventory', 'assets'], ['Credentials Vault', 'credentials'],
+  ['Findings & Evidence', 'findings'], ['Operations Log', 'logs'], ['Reports', 'reports'],
+  ['Members', 'members'], ['Settings', 'settings'],
+] as const
+
+test('sidebar has exactly the requested 13 tabs and every source page renders without backend requests', async ({ page }) => {
+  test.setTimeout(120000)
+  const errors: string[] = []
+  const apiRequests: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  page.on('request', request => { if (/\/api\//.test(request.url())) apiRequests.push(request.url()) })
+  await page.goto('/projects/1/charter')
+  const nav = page.locator('aside nav')
+  await expect(nav.getByRole('button')).toHaveCount(13)
+  const labels = await nav.getByRole('button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label')))
+  expect(labels).toEqual(pages.map(([label]) => label))
+  for (const [label, path] of pages) {
+    await nav.getByRole('button', { name: label, exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`/projects/1/${path}$`))
+    await expect(page.locator('.visual-page')).toBeVisible()
+    await expect(page.getByText('Loading view…', { exact: true })).toHaveCount(0)
+    expect((await page.locator('.visual-page').innerText()).length).toBeGreaterThan(100)
+    await page.screenshot({ path: test.info().outputPath(`${path}-desktop.png`), fullPage: true })
+  }
+  expect(errors).toEqual([])
+  expect(apiRequests).toEqual([])
+})
+
+test('source new-project form creates a local visual project, opens Charter and survives reload', async ({ page }) => {
+  await page.goto('/projects')
+  await page.getByRole('button', { name: 'New Project', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByLabel('Project Name', { exact: false }).fill('Correct visual acceptance')
+  await page.getByLabel('Client', { exact: false }).fill('Demo Client')
+  await page.getByRole('button', { name: 'Web Application', exact: true }).click()
+  await page.getByRole('button', { name: 'Create Project', exact: true }).click()
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/charter$/)
+  await expect(page.locator('header').getByText('Correct visual acceptance', { exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.locator('header').getByText('Correct visual acceptance', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Members', exact: true }).click()
+  await expect(page.getByText('alex.kim@raptix.io', { exact: true })).toBeVisible()
+})
+
+test('source Home console CTA opens Operator Console and breadcrumb returns to Charter', async ({ page }) => {
+  await page.goto('/projects')
+  await page.getByRole('button', { name: 'Enter Operator Console', exact: true }).first().click()
+  await expect(page).toHaveURL(/\/console$/)
+  await page.locator('header').getByRole('button', { name: 'Acme Corp External Assessment', exact: true }).click()
+  await expect(page).toHaveURL(/\/charter$/)
+  await page.goBack()
+  await expect(page).toHaveURL(/\/console$/)
+})
+
+test('retired extra pages are not mounted while Members and Vault are active visual pages', async ({ page }) => {
+  for (const path of ['overview', 'runs', 'graphs', 'attack-graph', 'evidence']) {
+    await page.goto(`/projects/1/${path}`)
+    await expect(page.getByRole('heading', { name: 'Project or page not found' })).toBeVisible()
+  }
+  await page.goto('/projects/1/credentials')
+  await expect(page.locator('.visual-page')).toContainText('NTLM')
+  await page.goto('/projects/1/members')
+  await expect(page.getByRole('button', { name: 'Add Member', exact: true })).toBeVisible()
+})
+
+test('source Members invite form changes the local demo table', async ({ page }) => {
+  await page.goto('/projects/1/members')
+  await page.getByRole('button', { name: 'Add Member', exact: true }).click()
+  await page.getByPlaceholder('Enter full name…').fill('Demo Reviewer')
+  await page.getByPlaceholder('user@example.com').fill('reviewer@example.com')
+  await page.getByRole('button', { name: 'Send Invite', exact: true }).click()
+  await expect(page.getByText('reviewer@example.com', { exact: true })).toBeVisible()
+})
+
+test('HITL dismissal does not resolve the demo request', async ({ page }) => {
+  await page.goto('/projects/1/charter')
+  await page.getByRole('button', { name: 'HITL Pending', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'HITL Pending', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'HITL Pending', exact: true }).click()
+  await page.getByRole('button', { name: 'Reject', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'HITL Pending', exact: true })).toHaveCount(0)
+})
+
+test('mobile navigation exposes all 13 source pages and records visual preview', async ({ page }) => {
+  test.setTimeout(120000)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/projects/1/charter')
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+  await expect(page.locator('aside nav').getByRole('button')).toHaveCount(13)
+  await page.locator('aside nav').getByRole('button', { name: 'Credentials Vault', exact: true }).click()
+  await expect(page).toHaveURL(/\/credentials$/)
+  await expect(page.getByRole('button', { name: 'Open navigation', exact: true })).toBeVisible()
+  for (const path of ['charter', 'console', 'sessions', 'credentials', 'reports', 'members']) {
+    await page.goto(`/projects/1/${path}`)
+    await expect(page.locator('.visual-page')).toBeVisible()
+    await expect(page.getByText('Loading view…', { exact: true })).toHaveCount(0)
+    await page.screenshot({ path: test.info().outputPath(`${path}-mobile.png`), fullPage: true })
+  }
+})
+
+test('campaign generation, C2 terminal and credential reveal remain local frontend interactions', async ({ page }) => {
+  const apiRequests: string[] = []
+...[TRUNCATED 132 total lines]
+
+########## clients/web-raptix/tests/fixtures/w06/cli-context.json (config, 30L) ##########
+{
+  "provenance": "CLI submit block executed from repository source; installed runtime hydration helper executed without graph runs",
+  "sourceHash": "b05f10a981d1ddc01e2af49eaadf6d46831500969c9b2b8782c0345514b7abd2",
+  "env": {
+    "RAPTIX_ENGAGEMENT": "parity-project",
+    "RAPTIX_WORKSPACE_PATH": "/workspace/parity-project",
+    "RAPTIX_TARGET": "https://authorized.invalid",
+    "RAPTIX_TARGET_TYPE": "web_url",
+    "RAPTIX_AUTHORIZATION_CONFIRMED": "true"
+  },
+  "configurable": {
+    "engagement_name": "parity-project",
+    "workspace_path": "/workspace/parity-project",
+    "target_value": "https://authorized.invalid",
+    "target_type": "web_url",
+    "authorization_confirmed": true
+  },
+  "hydration": {
+    "module": "/app/packages/raptix/raptix/middleware/engagement.py",
+    "hydrateSourceHash": "dce6be9657fbf309f67371974b7f83c016cd3903bb92f871069adc46f58fe9c4",
+    "fresh": {
+      "engagement_name": "parity-project",
+      "workspace_path": "/workspace/parity-project",
+      "target_type": "web_url",
+      "target_value": "https://authorized.invalid",
+      "authorization_confirmed": true
+    },
+    "existingUpdates": null
+  }
+}
+
+
+########## clients/web-raptix/tests/fixtures/w06/runtime-thread.json (config, 95L) ##########
+{
+  "provenance": "owned live W06 context-only thread/checkpoint fixture",
+  "thread": {
+    "thread_id": "01a0fabd-78b3-7b23-8899-65b9de146d83",
+    "created_at": "2026-10-02T03:51:56.343543+00:00",
+    "updated_at": "2026-10-02T03:51:56.479247+00:00",
+    "state_updated_at": "2026-10-02T03:51:56.479247+00:00",
+    "metadata": {
+      "engagement_id": "cmuqff7gb0000icfimwgpbyfx",
+      "workspace_slug": "w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "ui_assistant_id": "soundwave",
+      "graph_id": "soundwave",
+      "ui_flow": "planning",
+      "runtime_context_hash": "1d9d05d61a739c3cb1b82e9619f693756e7bee6dd412fbddcb7e7c3ff051878f",
+      "w06_fixture_token": "3f92027c-eaf6-4043-8bfd-5aa4f055b359"
+    },
+    "status": "interrupted",
+    "config": {},
+    "values": {
+      "messages": [],
+      "engagement_name": "w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "workspace_path": "/workspace/w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "kg_engagement": "",
+      "language": "",
+      "target_type": "web_url",
+      "target_value": "https://authorized.invalid",
+      "authorization_confirmed": true,
+      "target_url": "",
+      "target_extra_ports": {},
+      "vulnerability_tags": [],
+      "flag_format": "",
+      "mission_brief": "",
+      "files": {},
+      "proxy_api_key": ""
+    },
+    "interrupts": {},
+    "error": null
+  },
+  "state": {
+    "values": {
+      "messages": [],
+      "engagement_name": "w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "workspace_path": "/workspace/w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "kg_engagement": "",
+      "language": "",
+      "target_type": "web_url",
+      "target_value": "https://authorized.invalid",
+      "authorization_confirmed": true,
+      "target_url": "",
+      "target_extra_ports": {},
+      "vulnerability_tags": [],
+      "flag_format": "",
+      "mission_brief": "",
+      "files": {},
+      "proxy_api_key": ""
+    },
+    "next": [
+      "EngagementContextMiddleware.before_agent"
+    ],
+    "tasks": [
+      {
+        "id": "dcc1c4fa-407a-bb68-e351-3054f8724081",
+        "name": "EngagementContextMiddleware.before_agent",
+        "path": [
+          "__pregel_pull",
+          "EngagementContextMiddleware.before_agent"
+        ],
+        "error": null,
+        "interrupts": [],
+        "checkpoint": null,
+        "state": null,
+        "result": null
+      }
+    ],
+    "metadata": {
+      "graph_id": "soundwave",
+      "ls_integration": "langchain_create_agent",
+      "lc_agent_name": "soundwave",
+      "thread_id": "01a0fabd-78b3-7b23-8899-65b9de146d83",
+      "source": "update",
+      "step": 0,
+      "parents": {}
+    },
+    "created_at": "2026-10-02T03:51:56.456289+00:00",
+    "checkpoint": {
+      "checkpoint_id": "1f1be149-ccdf-66f8-8000-d7a87bd22ad9",
+      "thread_id": "01a0fabd-78b3-7b23-8899-65b9de146d83",
+      "checkpoint_ns": ""
+    },
+    "parent_checkpoint": null,
+    "interrupts": [],
+    "checkpoint_id": "1f1be149-ccdf-66f8-8000-d7a87bd22ad9",
+    "parent_checkpoint_id": null
+  }
+}
+
+
+########## clients/web-raptix/tools/capture-legacy.ts (code, 357L) ##########
+import { mkdirSync, rmSync, statSync, writeFileSync, realpathSync } from 'node:fs'
+import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const ALLOWED_BASE_URL = 'http://127.0.0.1:5290'
+const ALLOWED_WORKSPACE_ROOT = 'c:\\users\\tuanp\\appdata\\local\\temp\\opencode'
+const CAPTURE_MARKER = '.w00-isolated-capture'
+const ENGAGEMENT_NAME = 'w00-capture-assessment'
+const TARGET_TYPE = 'web_url'
+const TARGET_VALUE = 'http://authorized-test.invalid'
+const APPROVAL_REQUEST_ID = 'w00-req-0001'
+const FIXTURE_EPOCH_SECONDS = 1767225600
+const REQUEST_TIMEOUT_MS = 30_000
+const MAX_BODY_CHARS = 2_000_000
+const ALLOWED_FLAGS = new Set(['base-url', 'workspace', 'output', 'server-source'])
+const SERVER_SOURCES = new Set(['image-container', 'source-head'])
+
+interface Capture {
+  provenance: 'legacy-http-controlled'
+  method: string
+  path: string
+  status: number
+  contentType: string | null
+  contentDisposition?: string
+  body: unknown
+}
+
+interface Ctx {
+  engagementId: string
+}
+
+interface StepSpec {
+  label: string
+  method: string
+  path: (ctx: Ctx) => string
+  body?: (ctx: Ctx) => unknown
+  expected: number[]
+}
+
+interface StepResult {
+  file: string
+  label: string
+  method: string
+  path: string
+  status: number
+  expected: number[]
+  ok: boolean
+}
+
+const ROE = { version: 'w00-fixture-1', provenance: 'synthetic-capture-fixture', approvedBy: 'w00-capture-operator', authorizedTargets: [TARGET_VALUE], prohibitedActions: ['denial-of-service', 'data-destruction', 'social-engineering'], rulesOfEngagement: 'Synthetic rules of engagement for the isolated W00 capture workspace.' }
+const CONOPS = { version: 'w00-fixture-1', provenance: 'synthetic-capture-fixture', phases: [{ id: 'PHASE-1', name: 'recon', objectiveRefs: ['OBJ-001'] }, { id: 'PHASE-2', name: 'assessment', objectiveRefs: ['OBJ-001'] }] }
+const DECONFLICTION = { version: 'w00-fixture-1', provenance: 'synthetic-capture-fixture', windows: [{ id: 'WIN-001', start: '2026-01-01T00:00:00Z', end: '2026-12-31T23:59:59Z', timezone: 'UTC' }], contacts: [{ role: 'capture-operator', channel: 'local-w00' }] }
+const OPPLAN = { version: 'w00-fixture-1', provenance: 'synthetic-capture-fixture', objectives: [{ id: 'OBJ-001', title: 'Passive recon of authorized target', status: 'planned', phases: ['PHASE-1'] }] }
+
+const FIND_001 = `# Synthetic exposed service header
+severity: high
+## Description
+Synthetic finding used by the isolated W00 capture run; controlled response header leak on the authorized test target.
+## Evidence
+GET http://authorized-test.invalid/ returned a controlled synthetic header.
+## Attack Vector
+Unauthenticated HTTP request to the authorized test target.
+## Affected Assets
+- http://authorized-test.invalid
+## Remediation
+Remove the synthetic header from the controlled fixture response.
+## CWE
+- CWE-200
+## MITRE
+- T1592
+`
+
+const FIND_002 = `this file intentionally has no markdown finding structure
+severity: absolutely-bogus
+random tokens: #### ??? :: //
+`
+
+const SAMPLE_TXT = 'w00 controlled capture fixture — synthetic recon sample.\nTarget: http://authorized-test.invalid (reserved test host, never contacted).\nGenerated by clients/web-raptix/tools/capture-legacy.ts.\n'
+
+const REQUESTS_JSONL =
+  JSON.stringify({ kind: 'approval_request', request_id: APPROVAL_REQUEST_ID, engagement_name: ENGAGEMENT_NAME, agent_name: 'recon-agent', tool_name: 'http_get', tool_args_redacted: { url: `${TARGET_VALUE}/` }, matched_rule: { technique_tag: 'recon', tool_pattern: 'http_*', timeout_seconds: 300, default_on_timeout: 'deny' }, reason: 'w00 controlled capture fixture', created_at: FIXTURE_EPOCH_SECONDS, metadata: { source: 'w00-capture', synthetic: true } }) + '\n'
+
+const STEPS: StepSpec[] = [
+  { label: '001-health', method: 'GET', path: () => '/api/health', expected: [200] },
+  { label: '002-catalog', method: 'GET', path: () => '/api/agents', expected: [200] },
+  { label: '003-create-invalid-400', method: 'POST', path: () => '/api/engagements', body: () => ({ name: ENGAGEMENT_NAME, targetType: TARGET_TYPE, targetValue: TARGET_VALUE }), expected: [400] },
+  { label: '004-create-201', method: 'POST', path: () => '/api/engagements', body: () => ({ name: ENGAGEMENT_NAME, targetType: TARGET_TYPE, targetValue: TARGET_VALUE, authorizationConfirmed: true }), expected: [201] },
+  { label: '005-create-duplicate-409', method: 'POST', path: () => '/api/engagements', body: () => ({ name: ENGAGEMENT_NAME, targetType: TARGET_TYPE, targetValue: TARGET_VALUE, authorizationConfirmed: true }), expected: [409] },
+  { label: '006-list', method: 'GET', path: () => '/api/engagements', expected: [200] },
+  { label: '007-detail', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}`, expected: [200] },
+  { label: '008-patch-status', method: 'PATCH', path: (c) => `/api/engagements/${c.engagementId}`, body: () => ({ status: 'planning' }), expected: [200] },
+  { label: '009-plan-docs', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/plan-docs`, expected: [200] },
+  { label: '010-opplan', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/opplan`, expected: [200] },
+  { label: '011-findings', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/findings`, expected: [200] },
+  { label: '012-timeline', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/timeline`, expected: [200] },
+  { label: '013-files', method: 'GET', path: () => `/api/workspace/${ENGAGEMENT_NAME}/files`, expected: [200] },
+  { label: '014-file-content', method: 'GET', path: () => `/api/workspace/${ENGAGEMENT_NAME}/files/recon/sample.txt`, expected: [200] },
+  { label: '015-approvals-pending', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/approvals`, expected: [200] },
+  { label: '016-approval-allow', method: 'POST', path: (c) => `/api/engagements/${c.engagementId}/approvals`, body: () => ({ request_id: APPROVAL_REQUEST_ID, action: 'allow', operator_note: 'w00 controlled capture approval' }), expected: [200] },
+  { label: '017-approval-duplicate-409', method: 'POST', path: (c) => `/api/engagements/${c.engagementId}/approvals`, body: () => ({ request_id: APPROVAL_REQUEST_ID, action: 'allow', operator_note: 'w00 controlled capture duplicate decision' }), expected: [409] },
+  { label: '018-export-json', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/export?format=json`, expected: [200] },
+  { label: '019-export-markdown', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/export?format=markdown`, expected: [200] },
+  { label: '020-export-invalid-format', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/export?format=xlsx`, expected: [200] },
+  { label: '021-graph', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/graph`, expected: [503] },
+  { label: '022-threads', method: 'GET', path: (c) => `/api/engagements/${c.engagementId}/threads`, expected: [200] },
+]
+
+function fail(message: string): never {
+  console.error(`capture-legacy: REFUSED: ${message}`)
+  process.exit(2)
+...[TRUNCATED 358 total lines]
+
+########## clients/web-raptix/tools/capture-runtime-metadata.ts (code, 19L) ##########
+import { writeFileSync } from 'node:fs'
+
+const baseUrl = 'http://127.0.0.1:2400'
+const infoResponse = await fetch(`${baseUrl}/info`, { signal: AbortSignal.timeout(10000) })
+const registryResponse = await fetch(`${baseUrl}/assistants/search`, {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ limit: 100 }), signal: AbortSignal.timeout(10000),
+})
+if (!infoResponse.ok || !registryResponse.ok) throw new Error('Read-only runtime metadata capture failed')
+const info = await infoResponse.json() as Record<string, unknown>
+const registry = await registryResponse.json() as Array<{ graph_id: string }>
+const capture = {
+  provenance: 'runtime-catalog-read-only', baseUrl, capturedAt: new Date().toISOString(),
+  apiVersion: info.version, langgraphPythonVersion: info.langgraph_py_version,
+  flags: info.flags, registeredGraphs: [...new Set(registry.map(assistant => assistant.graph_id))].sort(),
+  note: 'Only info and assistant discovery were called. No threads, runs or tools were created/executed.',
+}
+writeFileSync(new URL('../tests/fixtures/w00/runtime/runtime-catalog.json', import.meta.url), JSON.stringify(capture, null, 2) + '\n')
+console.log('Read-only runtime catalog fixture captured')
+
+
+########## clients/web-raptix/tools/capture-runtime.py (code, 250L) ##########
+"""Controlled W00 capture of the production subagent_streaming emitter shape.
+
+Loads a copied source module via importlib (no network, no graph runs) and
+drives StreamingRunnable's private emitters directly: writer=live_list.append
+captures the live channel, a transcript list the persisted checkpoint copy.
+No invoke/ainvoke/stream. Usage: python capture-runtime.py --source <f> --output <dir>
+Exit: 0 assertions passed; 3 assertion failure; 2 usage/load error.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import sys
+from datetime import datetime
+from pathlib import Path
+
+from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.runnables import RunnableLambda
+
+PROVENANCE = "source-emitter-controlled"
+AGENT_NAME = "recon"
+TOOL_NAME = "inspect_fixture"
+TOOL_CALL_ID = "call-w00-1"
+ORPHAN_RESULT_ID = "call-w00-orphan"
+TOOL_ARGS = {"subject": "example.test.local", "mode": "passive"}
+ELAPSED_S = 85.125
+PROMPT = "Passive recon of the public example lab range (harmless fixture data only)."
+AI_TEXT = "Scope confirmed: passive collection on the example lab range only."
+TOOL_RESULT = "x" * 8001
+SID_A, SID_B, SID_ERR = "aaaa1111aaaa", "bbbb2222bbbb", "cccc3333cccc"
+SID_CANCEL, SID_NOID = "dddd4444dddd", "eeee5555eeee"
+OUTPUT_NAME = "runtime-emitter-capture.json"
+EVENT_TYPES = [
+    "subagent_start",
+    "subagent_message",
+    "subagent_tool_call",
+    "subagent_tool_result",
+    "subagent_end",
+]
+
+
+def load_source_module(source: Path):
+    spec = importlib.util.spec_from_file_location("w00_captured_subagent_streaming", source)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot build import spec from {source}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def ai_message(tool_calls=None, content=AI_TEXT):
+    try:
+        return AIMessage(content=content, tool_calls=tool_calls)
+    except Exception:
+        return AIMessage.model_construct(content=content, tool_calls=tool_calls)
+
+
+def emit_session(run, session_id, batches, *, error=False, cancelled=False):
+    live: list = []
+    transcript: list = []
+    run._emit_start(None, False, live.append, PROMPT, session_id, transcript)
+    active: dict = {}
+    for batch in batches:
+        run._process_messages(batch, active, None, False, live.append, session_id, transcript)
+    run._emit_end(
+        None,
+        False,
+        live.append,
+        ELAPSED_S,
+        session_id,
+        cancelled=cancelled,
+        error=error,
+        transcript=transcript,
+    )
+    return {"sessionId": session_id, "live": live, "persisted": transcript}
+
+
+def build_sessions(run):
+    paired = [{"name": TOOL_NAME, "args": dict(TOOL_ARGS), "id": TOOL_CALL_ID, "type": "tool_call"}]
+    idless = [{"name": TOOL_NAME, "args": dict(TOOL_ARGS), "id": None, "type": "tool_call"}]
+    full = ToolMessage(content=TOOL_RESULT, tool_call_id=TOOL_CALL_ID)
+    orphan = ToolMessage(
+        content="fixture orphan tool result (harmless).", tool_call_id=ORPHAN_RESULT_ID
+    )
+    return {
+        "parallel-a": emit_session(run, SID_A, [[ai_message(tool_calls=paired)], [full]]),
+        "parallel-b": emit_session(run, SID_B, []),
+        "error": emit_session(run, SID_ERR, [], error=True),
+        "cancelled": emit_session(run, SID_CANCEL, [], cancelled=True),
+        "no-tool-id": emit_session(
+            run, SID_NOID, [[ai_message(tool_calls=idless, content="")], [orphan]]
+        ),
+    }
+
+
+def events_of(events, etype):
+    return [event for event in events if event.get("type") == etype]
+
+
+def channel_events(sessions):
+    return [ev for s in sessions.values() for ch in ("live", "persisted") for ev in s[ch]]
+
+
+def iso_utc_ok(value):
+    try:
+        return datetime.fromisoformat(value).utcoffset().total_seconds() == 0
+...[TRUNCATED 251 total lines]
+
+########## clients/web-raptix/tools/capture-w06-parity.mjs (code, 29L) ##########
+import assert from 'node:assert/strict'
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { spawnSync } from 'node:child_process'
+import vm from 'node:vm'
+import ts from 'typescript'
+
+const source = readFileSync(new URL('../../cli/src/hooks/useAgent.ts', import.meta.url), 'utf8')
+const start = source.indexOf('const configurable: Record<string, unknown> = {};')
+const end = source.indexOf('const hasConfigurable', start)
+assert.ok(start >= 0 && end > start, 'CLI submit context block changed; review capture anchors')
+const block = source.slice(start, end)
+const sourceHash = createHash('sha256').update(block).digest('hex')
+const env = { RAPTIX_ENGAGEMENT: 'parity-project', RAPTIX_WORKSPACE_PATH: '/workspace/parity-project', RAPTIX_TARGET: 'https://authorized.invalid', RAPTIX_TARGET_TYPE: 'web_url', RAPTIX_AUTHORIZATION_CONFIRMED: 'true' }
+const sandbox = { process: { env }, getModelOverride: () => '', captured: undefined }
+vm.runInNewContext(ts.transpileModule(`${block}\nglobalThis.captured = configurable;`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, sandbox, { timeout: 1000 })
+const configurable = JSON.parse(JSON.stringify(sandbox.captured))
+const program = "import sys,json,hashlib,inspect; import raptix.middleware.engagement as m; cfg=json.loads(sys.argv[1]); m._configurable_from_runnable_config=lambda:cfg; old={'engagement_name':'foreign','workspace_path':'/workspace/foreign','target_type':'web_url','target_value':'https://foreign.invalid','authorization_confirmed':False}; print('W06_CAPTURE='+json.dumps({'module':m.__file__,'hydrateSourceHash':hashlib.sha256(inspect.getsource(m._hydrate_engagement_state).encode()).hexdigest(),'fresh':m._hydrate_engagement_state({}),'existingUpdates':m._hydrate_engagement_state(old)}))"
+const capture = spawnSync('docker', ['exec', 'raptix-langgraph', 'python', '-c', program, JSON.stringify(configurable)], { encoding: 'utf8', timeout: 60000 })
+assert.equal(capture.status, 0, 'Installed-runtime hydration capture failed')
+const line = capture.stdout.split('\n').find(line => line.startsWith('W06_CAPTURE='))
+assert.ok(line)
+const hydration = JSON.parse(line.slice('W06_CAPTURE='.length))
+assert.deepEqual(hydration.fresh, configurable)
+assert.equal(hydration.existingUpdates, null, 'Runtime now overwrites existing thread context; revisit W06 policy')
+const directory = new URL('../tests/fixtures/w06/', import.meta.url)
+mkdirSync(directory, { recursive: true })
+writeFileSync(new URL('cli-context.json', directory), JSON.stringify({ provenance: 'CLI submit block executed from repository source; installed runtime hydration helper executed without graph runs', sourceHash, env, configurable, hydration }, null, 2) + '\n')
+console.log('W06 actual CLI-source configurable and installed-runtime hydration parity captured')
+
+
+########## clients/web-raptix/tools/configure-local-vault-key.mjs (code, 24L) ##########
+import { randomBytes } from 'node:crypto'
+import { readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
+// Explicit, one-time bootstrap. The key stays in the operator's ignored .env,
+// is never printed, and an existing valid key is never rotated implicitly.
+const path = resolve(process.argv[2] ?? '.env')
+const original = readFileSync(path, 'utf8')
+const entries = original.match(/^VAULT_ENCRYPTION_KEY=.*$/gm) ?? []
+if (entries.length > 1) throw Error('Duplicate VAULT_ENCRYPTION_KEY entries; resolve them before configuring the vault')
+const raw = entries[0]?.slice('VAULT_ENCRYPTION_KEY='.length).trim().replace(/^(['"])(.*)\1$/, '$2') ?? ''
+if (raw) {
+  const key = Buffer.from(raw, 'base64')
+  if (key.length !== 32 || key.toString('base64') !== raw) throw Error('Existing VAULT_ENCRYPTION_KEY is invalid; it has not been changed')
+  console.log('Existing valid vault key retained; no rotation performed')
+} else {
+  const entry = `VAULT_ENCRYPTION_KEY=${randomBytes(32).toString('base64')}`
+  const newline = original.includes('\r\n') ? '\r\n' : '\n'
+  const updated = entries.length ? original.replace(/^VAULT_ENCRYPTION_KEY=.*$/m, entry) : `${original}${original.endsWith('\n') ? '' : newline}${entry}${newline}`
+  const temporary = `${path}.vault-init.tmp`
+  writeFileSync(temporary, updated, { mode: statSync(path).mode, flag: 'wx' })
+  renameSync(temporary, path)
+  console.log('Persistent 32-byte vault key configured; value withheld')
+}
+
+
+########## clients/web-raptix/tools/generate-planning-schemas.py (code, 64L) ##########
+"""Export the runtime-owned planning schemas for the independent API validator."""
+
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+from raptix_core.types import engagement
+from raptix_core.types.engagement import (
+    CONOPS,
+    OPPLAN,
+    AbortPlan,
+    CleanupPlan,
+    ContactPlan,
+    DataHandlingPlan,
+    DeconflictionPlan,
+    RoE,
+    ThreatProfile,
+)
+
+MODELS = {
+    "roe": RoE,
+    "conops": CONOPS,
+    "deconfliction": DeconflictionPlan,
+    "opplan": OPPLAN,
+    "threat-profile": ThreatProfile,
+    "contact": ContactPlan,
+    "data-handling": DataHandlingPlan,
+    "abort": AbortPlan,
+    "cleanup": CleanupPlan,
+}
+
+
+def schema_with_factory_defaults(model: Any) -> dict[str, Any]:
+    schema = model.model_json_schema()
+    sections = [(model, schema)] + [
+        (getattr(engagement, name, None), definition)
+        for name, definition in schema.get("$defs", {}).items()
+    ]
+    for owner, section in sections:
+        for name, field in getattr(owner, "model_fields", {}).items():
+            if field.default_factory is None:
+                continue
+            default = field.default_factory()
+            if isinstance(default, (list, dict)):
+                section["properties"][name]["default"] = json.loads(
+                    json.dumps(default, default=lambda value: value.model_dump(mode="json"))
+                )
+    return schema
+
+
+if __name__ == "__main__":
+    destination = Path(__file__).resolve().parents[1] / "server/src/services/planning-schemas.json"
+    exported = (
+        json.dumps(
+            {name: schema_with_factory_defaults(model) for name, model in MODELS.items()}, indent=2
+        )
+        + "\n"
+    )
+    if "--check" in sys.argv:
+        if destination.read_text(encoding="utf-8") != exported:
+            raise SystemExit("Planning schemas differ from the runtime models")
+    else:
+        destination.write_text(exported, encoding="utf-8")
+

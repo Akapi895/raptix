@@ -1,0 +1,80 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 3
+    }
+  },
+  "results": [
+    {
+      "path": "containers/c2-sliver-entrypoint.sh",
+      "language": "shell",
+      "fileCategory": "script",
+      "totalLines": 49,
+      "nonEmptyLines": 42,
+      "functions": [
+        {
+          "name": "run_as_sliver",
+          "startLine": 19,
+          "endLine": 21,
+          "params": []
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "containers/sandbox-entrypoint.sh",
+      "language": "shell",
+      "fileCategory": "script",
+      "totalLines": 20,
+      "nonEmptyLines": 18,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "containers/web-entrypoint.sh",
+      "language": "shell",
+      "fileCategory": "script",
+      "totalLines": 80,
+      "nonEmptyLines": 68,
+      "functions": [
+        {
+          "name": "restart_next",
+          "startLine": 24,
+          "endLine": 34,
+          "params": []
+        },
+        {
+          "name": "shutdown",
+          "startLine": 36,
+          "endLine": 42,
+          "params": []
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,510 @@
+{
+  "batchIndex": 94,
+  "batchFiles": [
+    {
+      "path": "docs/security/audit-ledger.md",
+      "language": "markdown",
+      "sizeLines": 115,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/security/decepticon-threat-model.md",
+      "language": "markdown",
+      "sizeLines": 188,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/security/hitl-approval.md",
+      "language": "markdown",
+      "sizeLines": 126,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/security/neo4j-hardening.md",
+      "language": "markdown",
+      "sizeLines": 224,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/security/prompt-injection-defense.md",
+      "language": "markdown",
+      "sizeLines": 213,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/security/roe-machine-enforcement.md",
+      "language": "markdown",
+      "sizeLines": 237,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/security/sandbox-isolation.md",
+      "language": "markdown",
+      "sizeLines": 246,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/security/security-controls.md",
+      "language": "markdown",
+      "sizeLines": 89,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/security/sisyphus-pr.md",
+      "language": "markdown",
+      "sizeLines": 251,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:docs/security/audit-ledger.md",
+      "type": "document",
+      "name": "audit-ledger.md",
+      "filePath": "docs/security/audit-ledger.md",
+      "lineRange": [1, 115],
+      "summary": "Audit ledger HMAC-chained append-only tại <workspace>/audit/roe-decisions.jsonl — artifact pháp lý cho out-brief engagement trả phí: mọi đánh giá RoE (kể cả PASS) phát 1 record; decision fields do middleware ghi (ts, engagement, objective_id, tool, decision allow/refuse, reason_code OK/OUT_OF_SCOPE/FORBIDDEN_*, risk, matched_targets, mode, command_excerpt ≤512 ký tự); chain fields do sink stamp khi append (seq monotonic, prev_hash SHA-256 của record trước, hash canonical sort_keys=True, hmac HMAC-SHA-256 dưới secret operator qua RAPTIX_AUDIT_HMAC_KEY); verify_ledger trả VerifyResult (ok, records_checked, first_bad_seq, reason) kiểm seq liên tục + hash + hmac constant-time; iter_records cho reporting; knob RAPTIX_ROE_AUDIT_PATH; giới hạn: local file only, single writer, CLI verify là TODO.",
+      "tags": ["audit", "roe", "hmac", "tamper-evident", "documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/security/decepticon-threat-model.md",
+      "type": "document",
+      "name": "decepticon-threat-model.md",
+      "filePath": "docs/security/decepticon-threat-model.md",
+      "lineRange": [1, 188],
+      "summary": "STRIDE threat model xem chính Raptix là mục tiêu (autonomous offensive tool = high-value target): 3 trust plane — Operator (workstation, OAuth tokens, .env), Management raptix-net (LangGraph, LiteLLM, PostgreSQL, Neo4j, web dashboard), Operational sandbox-net (Kali sandbox, Sliver C2, targets); 4 bridge blast radius cao nhất — Neo4j dual-homing (sandbox → mgmt RCE nếu APOC unrestricted), LiteLLM (giữ mọi API key + OAuth file), plugin entry-points (pip install malicious → startup RCE), web dashboard; bảng STRIDE per-asset cho Neo4j/LiteLLM/Sandbox/LangGraph orchestrator/web Next.js/plugin surface với trạng thái Done/Partial/Open; 5 compromise chain xếp theo damage — hostile banner → APOC runFile exfil env (đã đóng), cross-engagement leak qua web graph route (đã đóng), OAuth file read trên operator host (partial), plugin typosquat (closed bởi RAPTIX_PLUGINS allowlist, thiếu signed bundle), docker.sock RCE (đã đóng bằng HTTP-only sandbox transport); roadmap hardening: per-engagement Cypher user, per-engagement sandbox container, Ed25519 bundle signature, Firecracker microVM, Rekor transparency log.",
+      "tags": ["threat-model", "stride", "neo4j", "litellm", "hardening-roadmap"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/security/hitl-approval.md",
+      "type": "document",
+      "name": "hitl-approval.md",
+      "filePath": "docs/security/hitl-approval.md",
+      "lineRange": [1, 126],
+      "summary": "HITLApprovalMiddleware — checkpoint human-in-the-loop chặn tool call rủi ro cao cho tới khi operator approve/deny/redirect: opt-in, off mặc định qua RAPTIX_HITL__ENABLED (falsy set gồm 0/false/no/off) nên engagement mặc định không bao giờ freeze; policy là danh sách ApprovalPolicyRule (technique_tag ATT&CK và/hoặc tool_pattern regex, timeout_seconds mặc định 300, default_on_timeout deny, reason); DEFAULT_HIGH_IMPACT_POLICY gồm T1003 credential dumping, T1485/T1486 destructive, C2 implant tools (sliver_implant|sliver_generate|c2_deploy), push SIEM rule (sigma_to_|yara_to_), và rule bash → allow on timeout (informational); flow 4 bước build→submit→wait→apply (allow/deny/redirect) với redaction secret key thành ***REDACTED***; transport per-request resolve từ workspace_path — FileBackedApprovalTransport ghi requests.jsonl và tail decisions.jsonl (contract dùng chung với web bridge), InProcessApprovalTransport cho test; stack ordering: HITL nằm trên RoE — phê duyệt operator không override RoE refusal.",
+      "tags": ["hitl", "approval", "middleware", "operator-gate", "documentation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/security/neo4j-hardening.md",
+      "type": "document",
+      "name": "neo4j-hardening.md",
+      "filePath": "docs/security/neo4j-hardening.md",
+      "lineRange": [1, 224],
+      "summary": "Hardening Neo4j dual-homed giữa sandbox-net và raptix-net — đường ngắn nhất từ sandbox bị compromise vào management plane: server-level controls trong docker-compose.yml — allowlist-only APOC procedure thay 3 settings đã loại (procedures_unrestricted: apoc.*, apoc_export_file_enabled, apoc_import_file_enabled mở runFile/load.json/export.csv/systemdb.execute/trigger.add), strict validation chống typo config, CORS rỗng; bảng lý do giữ từng procedure family (coll/text/path/create/merge/refactor/periodic.iterate cho nmap mass ingest, lock cho parallel sub-agent writes); quy trình 5 bước thêm procedure mới — PR, chứng minh tool cần nó, không thuộc 8 family cấm (cypher.run*, load.*, import/export, systemdb, trigger, dbms.exec, spatial.geocode, metrics), đồng bộ client allowlist, mở rộng test; client-side defense-in-depth _apoc_safety (find_violations/ensure_safe/CypherSafetyError) với regex bảo thủ bắt cả string literal; future: per-engagement Cypher user, per-engagement database Enterprise, per-engagement label scoping Community; hướng dẫn verify bằng cypher-shell; tham chiếu CVE-2021-34371.",
+      "tags": ["neo4j", "apoc", "hardening", "cypher-injection", "defense-in-depth"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/security/prompt-injection-defense.md",
+      "type": "document",
+      "name": "prompt-injection-defense.md",
+      "filePath": "docs/security/prompt-injection-defense.md",
+      "lineRange": [1, 213],
+      "summary": "3 lớp phòng indirect prompt injection cho các byte attacker-influenceable agent đọc mỗi iteration (HTTP body, banner, file dump): (1) UntrustedOutputMiddleware bọc <UNTRUSTED_TOOL_OUTPUT origin/tool_call_id/risk/categories> envelope cho bash*, read_file, kg_* tools — provenance machine-readable; (2) detect_injection heuristic 8 category — instruction-override, role-hijack, tool-call-hijack, exfil-markdown, system-prompt-leak, cypher-injection, shell-injection-hint, invisible-text — với mapping verdict→risk (tool-call-hijack/cypher-injection/exfil-markdown đơn lẻ → high; 2+ override/role-hijack → high); (3) khối policy tĩnh <UNTRUSTED_OUTPUT_POLICY> trong system prompt (Anthropic prompt-cached) với 5 rule — envelope content là DATA không phải COMMANDS, chỉ system prompt/operator/instruction ngoài envelope là authoritative, risk=high phải có out-of-envelope reason cho state-mutating call, quote không paraphrase, envelope tampering (tag đóng sớm/nested) là suspicious phải escalate; JSONL quarantine ledger qua RAPTIX_QUARANTINE_LEDGER — forensic không blocking (blocking là việc của RoE middleware); phạm vi và cách verify bằng pytest + slot wiring + e2e.",
+      "tags": ["prompt-injection", "quarantine", "middleware", "untrusted-output", "documentation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/security/roe-machine-enforcement.md",
+      "type": "document",
+      "name": "roe-machine-enforcement.md",
+      "filePath": "docs/security/roe-machine-enforcement.md",
+      "lineRange": [1, 237],
+      "summary": "Thực thi RoE machine-readable: khối machine_enforcement trong <workspace>/plan/roe.json (riêng với RoE human-readable Soundwave viết) drive middleware evaluate mọi gated tool call; 3 mode — audit (mặc định, chỉ log), warn (prepend [ROE_WARN] nhưng vẫn chạy), enforce (short-circuit [ROE_REFUSED], không byte nào rời sandbox); schema MachineEnforcement — in_scope allowlist, out_of_scope denylist (precedence cao hơn), forbidden_destinations gộp IMDS denylist mặc định 5 endpoint (169.254.169.254, fd00:ec2::254, metadata.google.internal, metadata.azure.com, 100.100.100.200), forbidden_command_patterns regex; ScopeRule resolved_kind tự infer (cidr/domain-glob/ip/host) và chuẩn hóa trailing-dot (sửa verified scope bypass cho phép cloud-credential exfil); 6 GATED_TOOL_NAMES (bash*, http_request, proxy_send_request, browser_action); đọc roe.json per iteration cho hot-edit; 2 enforcement points cùng một scope definition — RoE Guardrail parser (fast-fail UX, best-effort fail-closed) và RoE Egress Guardrail (nftables connect-allowlist + DNS allowlist — authoritative, on mặc định cho enforce, opt-out RAPTIX_EGRESS_DISABLE=1).",
+      "tags": ["roe", "enforcement", "egress", "middleware", "scope-control"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/security/sandbox-isolation.md",
+      "type": "document",
+      "name": "sandbox-isolation.md",
+      "filePath": "docs/security/sandbox-isolation.md",
+      "lineRange": [1, 246],
+      "summary": "Cô lập Kali sandbox — thành phần trực tiếp chạm targets, chạy root vì raw sockets: trạng thái hiện tại trong docker-compose.yml — cap_drop ALL + cap_add 10 caps tối thiểu (NET_RAW/NET_ADMIN/NET_BIND_SERVICE/SYS_PTRACE/SETUID/SETGID/CHOWN/DAC_OVERRIDE/FOWNER/KILL), no-new-privileges, mem_limit 4g, pids_limit 1024, workspace bind-mount per-engagement; 4 lỗ hổng còn lại của shared sandbox — một process namespace (ps/tmux thấy job chéo engagement), một filesystem (/tmp, /var/log, /root dùng chung — hash dump của engagement A đọc được bởi B), một tmux universe, OPSEC posture transition leak; thiết kế per-engagement container — launcher.sandbox_lifecycle.Acquire/Release với Go skeleton (network sandbox-net-<slug>, SANDBOX_TOKEN urandom per acquire, archive .sessions/.scratch vào .archive/ khi release, opt-in RAPTIX_PER_ENGAGEMENT_SANDBOX=1); so sánh Firecracker (microVM cho multi-tenant, ~125ms boot) vs gVisor (runsc opt-in, ~20-30% perf cost); lệnh verify CapEff/NoNewPrivs/mem/pids; roadmap: per-engagement Sliver C2.",
+      "tags": ["sandbox", "docker", "isolation", "capabilities", "per-engagement"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/security/security-controls.md",
+      "type": "document",
+      "name": "security-controls.md",
+      "filePath": "docs/security/security-controls.md",
+      "lineRange": [1, 89],
+      "summary": "Tham chiếu một trang cho runtime guards trong middleware stack: bảng 6 control với default posture/knob/cách verify — RoE guardrail (audit-only, safety-critical, mode trong plan/roe.json), RoE egress guardrail (nftables + DNS allowlist, on mặc định cho enforce, opt-out RAPTIX_EGRESS_DISABLE), Untrusted-output quarantine (always-on mọi role, safety-critical), Prompt-injection shield (always-on, safety-critical), HITL approval (off mặc định, RAPTIX_HITL__ENABLED), Budget enforcement (no-op trừ khi set cap, budget_warning ở ngưỡng mềm và BudgetExceeded ở 100%); định nghĩa SAFETY_CRITICAL_SLOTS — 6 slot chỉ plugin có RAPTIX_ALLOW_SAFETY_OVERRIDES=1 mới thay/disable được; bảng env vars: Budget (RAPTIX_BUDGET__ENGAGEMENT_USD/PER_AGENT_USD/SOFT_WARN_AT_PCT 0.7/POLL_SECONDS 5.0, spend từ LiteLLM spend_logs), Audit (RAPTIX_AUDIT_HMAC_KEY, RAPTIX_ROE_AUDIT_PATH), HITL; budget chỉ chặn LLM calls, không chặn tool calls.",
+      "tags": ["security-controls", "env-vars", "middleware-slots", "budget", "documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/security/sisyphus-pr.md",
+      "type": "document",
+      "name": "sisyphus-pr.md",
+      "filePath": "docs/security/sisyphus-pr.md",
+      "lineRange": [1, 251],
+      "summary": "Changelog PR Sisyphus — 9 commit, +6022 dòng, 53 files, +154 test: Tier 4a APOC allowlist + client _apoc_safety guard + fix Cypher injection trong query_by_kind; Tier 1 UntrustedOutputMiddleware (21 pattern/8 category, quarantine ledger, prompt-cached policy block); Tier 2 RoE enforcement — MachineEnforcement schema, _command_targets.extract_targets (~30 kill-chain tool), RoEAuditSink HMAC chain + verify_ledger; commit 5 fix 3 bug từ gap-audit — cross-tenant Neo4j leak qua web graph route, hardcoded creds sk-raptix-master, verify=False trong web tools; Tier 4b per-engagement Neo4j scoping (contextvar + auto-inject n.engagement) + self threat model; Tier 3 sandbox cap hardening + design per-engagement container; Tier 5 ba agent mới Phisher (priority 15, bắt buộc lure-deconfliction handshake với blue team), MobileOperator, WirelessOperator; Tier 6 blue_cell runtime — BlueCellTap tail .sessions logs, RuleMatcher Sigma-flavored, score_mttd, 10 baseline rule (Kerberoast, DCSync, PtH, web shell...); risk/roll-back per tier qua env var, test breakdown, reviewer checklist 7 mục.",
+      "tags": ["changelog", "security-hardening", "blue-cell", "specialist-agents", "pr"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:docs/security/audit-ledger.md",
+      "target": "file:packages/raptix/raptix/middleware/_audit_sink.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/audit-ledger.md",
+      "target": "file:packages/raptix/raptix/middleware/roe.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/audit-ledger.md",
+      "target": "document:docs/security/roe-machine-enforcement.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/audit-ledger.md",
+      "target": "document:docs/security/security-controls.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/audit-ledger.md",
+      "target": "document:docs/security/decepticon-threat-model.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/decepticon-threat-model.md",
+      "target": "file:packages/raptix/raptix/tools/research/_apoc_safety.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/decepticon-threat-model.md",
+      "target": "file:packages/raptix/raptix/backends/factory.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/decepticon-threat-model.md",
+      "target": "document:docs/security/neo4j-hardening.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/decepticon-threat-model.md",
+      "target": "document:docs/security/security-controls.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/decepticon-threat-model.md",
+      "target": "document:docs/security/roe-machine-enforcement.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/decepticon-threat-model.md",
+      "target": "document:docs/security/audit-ledger.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/decepticon-threat-model.md",
+      "target": "document:docs/security/hitl-approval.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/decepticon-threat-model.md",
+      "target": "document:docs/security/prompt-injection-defense.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/hitl-approval.md",
+      "target": "file:packages/raptix/raptix/middleware/hitl.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/hitl-approval.md",
+      "target": "file:packages/raptix/raptix/agents/middleware_slots.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/hitl-approval.md",
+      "target": "document:docs/security/roe-machine-enforcement.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/hitl-approval.md",
+      "target": "document:docs/security/security-controls.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/hitl-approval.md",
+      "target": "document:docs/security/audit-ledger.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/neo4j-hardening.md",
+      "target": "file:packages/raptix/raptix/tools/research/_apoc_safety.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/neo4j-hardening.md",
+      "target": "file:packages/raptix/tests/unit/research/test_apoc_safety.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/neo4j-hardening.md",
+      "target": "service:docker-compose.yml:neo4j",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/neo4j-hardening.md",
+      "target": "document:docs/security/prompt-injection-defense.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/neo4j-hardening.md",
+      "target": "document:docs/security/sandbox-isolation.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/prompt-injection-defense.md",
+      "target": "file:packages/raptix/raptix/middleware/untrusted_output.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/prompt-injection-defense.md",
+      "target": "file:packages/raptix/raptix/middleware/_injection_detector.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/prompt-injection-defense.md",
+      "target": "document:docs/security/neo4j-hardening.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/prompt-injection-defense.md",
+      "target": "document:docs/security/roe-machine-enforcement.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/roe-machine-enforcement.md",
+      "target": "file:packages/raptix-core/raptix_core/types/roe.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/roe-machine-enforcement.md",
+      "target": "file:packages/raptix/raptix/middleware/roe.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/roe-machine-enforcement.md",
+      "target": "document:docs/security/audit-ledger.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/roe-machine-enforcement.md",
+      "target": "document:docs/security/security-controls.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/roe-machine-enforcement.md",
+      "target": "document:docs/security/hitl-approval.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sandbox-isolation.md",
+      "target": "service:docker-compose.yml:sandbox",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sandbox-isolation.md",
+      "target": "file:clients/launcher/cmd/start.go",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sandbox-isolation.md",
+      "target": "document:docs/security/neo4j-hardening.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sandbox-isolation.md",
+      "target": "document:docs/security/decepticon-threat-model.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/security-controls.md",
+      "target": "file:packages/raptix-core/raptix_core/contracts/slots.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/security-controls.md",
+      "target": "file:packages/raptix/raptix/middleware/hitl.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/security-controls.md",
+      "target": "file:packages/raptix/raptix/middleware/budget.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/security-controls.md",
+      "target": "document:docs/security/prompt-injection-defense.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/security-controls.md",
+      "target": "document:docs/security/hitl-approval.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "document:docs/security/neo4j-hardening.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "document:docs/security/prompt-injection-defense.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "document:docs/security/sandbox-isolation.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "document:docs/security/decepticon-threat-model.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "document:docs/features/blue-cell.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "file:packages/raptix/raptix/blue_cell/tap.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "file:packages/raptix/raptix/blue_cell/rule_match.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "file:packages/raptix/raptix/agents/standard/phisher.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/security/sisyphus-pr.md",
+      "target": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "batchIndex": 85,
+  "batchFiles": [
+    {
+      "path": "containers/postgres-init/01-create-web-db.sql",
+      "language": "sql",
+      "sizeLines": 11,
+      "fileCategory": "data"
+    },
+    {
+      "path": "containers/postgres-init/02-bloodhound-db.sh",
+      "language": "shell",
+      "sizeLines": 67,
+      "fileCategory": "script"
+    },
+    {
+      "path": "containers/postgres-init/03-create-t2bench-db.sql",
+      "language": "sql",
+      "sizeLines": 14,
+      "fileCategory": "data"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "table:containers/postgres-init/01-create-web-db.sql:raptix_web",
+      "type": "table",
+      "name": "raptix_web",
+      "filePath": "containers/postgres-init/01-create-web-db.sql",
+      "summary": "Init script Postgres tạo database raptix_web cho Web dashboard (chạy tự động trong /docker-entrypoint-initdb.d khi data volume còn trống) và GRANT ALL PRIVILEGES cho role raptix; kèm chú thích lệnh tạo thủ công không mất dữ liệu cho deployment hiện hữu.",
+      "tags": [
+        "database",
+        "postgres",
+        "bootstrap",
+        "web"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Postgres chỉ chạy initdb khi volume trống — deployment cũ phải CREATE DATABASE thủ công, nên script ghi rõ hướng dẫn idempotent."
+    },
+    {
+      "id": "file:containers/postgres-init/02-bloodhound-db.sh",
+      "type": "file",
+      "name": "02-bloodhound-db.sh",
+      "filePath": "containers/postgres-init/02-bloodhound-db.sh",
+      "summary": "Bash bootstrap state Postgres cho BloodHound Community Edition: idempotent tạo/alter role bloodhound và database bloodhound (tham số hóa qua biến BHCE_POSTGRES_* bằng psql \\gexec), GRANT toàn quyền, rồi CREATE EXTENSION pg_trgm với quyền superuser trước để migration goose của BHCE chạy được với user phạm vi hẹp; chạy từ initdb lẫn sidecar bhce-postgres-init cho bản nâng cấp giữ nguyên dữ liệu.",
+      "tags": [
+        "database",
+        "postgres",
+        "bloodhound",
+        "bootstrap",
+        "idempotent"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Dùng SELECT format(...) ... \\gexec để sinh DDL có điều kiện (WHERE NOT EXISTS) — mẫu idempotency chuẩn của psql thay vì IF NOT EXISTS không có sẵn cho ROLE/DATABASE."
+    },
+    {
+      "id": "table:containers/postgres-init/03-create-t2bench-db.sql:t2bench",
+      "type": "table",
+      "name": "t2bench",
+      "filePath": "containers/postgres-init/03-create-t2bench-db.sql",
+      "summary": "Init script Postgres tạo database t2bench làm checkpoint store bền, không license, cho harness benchmark T2 Juice Shop (runner quản lý; xem tests/local/harnesses/juice_shop_t2.py) — giữ một snapshot thread-state mới nhất mỗi run để run sống qua restart LangGraph/tắt máy và resume được; GRANT ALL PRIVILEGES cho role raptix.",
+      "tags": [
+        "database",
+        "postgres",
+        "benchmark",
+        "checkpoint",
+        "bootstrap"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "table:containers/postgres-init/01-create-web-db.sql:raptix_web",
+      "target": "service:docker-compose.yml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "table:containers/postgres-init/01-create-web-db.sql:raptix_web",
+      "target": "config:clients/web/package.json",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:containers/postgres-init/02-bloodhound-db.sh",
+      "target": "service:docker-compose.yml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:containers/postgres-init/02-bloodhound-db.sh",
+      "target": "document:docs/adr/0005-bloodhound-via-bhce-rest-client.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "table:containers/postgres-init/03-create-t2bench-db.sql:t2bench",
+      "target": "file:tests/local/harnesses/juice_shop_t2.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

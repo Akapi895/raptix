@@ -1,0 +1,74 @@
+% =====================================================================
+%  File: sections/4_trien_khai_thuc_nghiem.tex
+%  Mục đích: Phần IV - Mô tả phần mềm cài đặt
+% =====================================================================
+
+\section{Mô tả phần mềm cài đặt}
+\label{sec:mo-ta-phan-mem}
+
+
+% ---------------------------------------------------------------
+\subsection{Môi trường phát triển và tổ chức mã nguồn}
+\label{sec:moi-truong-phat-trien}
+
+\subsubsection*{Môi trường nền tảng}
+
+Prototype Raptix kế thừa Decepticon, do đó yêu cầu Docker Compose v2 (để chạy sandbox Kali Linux, Neo4j và orchestrator runtime), ít nhất 16 GB RAM, và hỗ trợ macOS/Linux/Windows WSL2. Hai mạng Docker biệt lập (\texttt{sandbox-net} và \texttt{decepticon-net}) được tạo tự động để ngăn cách mặt phẳng thực thi và mặt phẳng quản lý.
+
+\subsubsection*{Tổ chức mã nguồn}
+
+Mã nguồn Raptix được quản lý bằng Git và tổ chức theo các nhóm module tương ứng với năm lớp chức năng đã mô tả ở phần~\ref{sec:kien-truc-tong-the}:
+
+\begin{table}[H]
+\centering
+\caption{Cấu trúc mã nguồn mục tiêu của Raptix theo nhóm module}
+\label{tab:to-chuc-ma-nguon}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{2.8cm}|p{4cm}|p{5.8cm}|p{2.8cm}|}
+\hline
+\textbf{Nhóm module} & \textbf{Thư mục mục tiêu} & \textbf{Trách nhiệm} & \textbf{Trạng thái} \\
+\hline
+Mission \& Policy & \texttt{mission/}, \texttt{policy/} & Nhận mission, kiểm tra scope và policy, nạp thông tin ban đầu vào AKG. & Thiết kế \\
+\hline
+Planner \& Orchestrator & \texttt{planner/}, \texttt{orchestrator/} & Phân rã nhiệm vụ, chọn chiến lược khai thác theo pha, điều phối sub-agent. & Đang điều chỉnh \\
+\hline
+Specialist Agent & \texttt{agents/} & Các sub-agent chuyên biệt theo domain (recon, exploit, post-exploit, AD, cloud). & Kế thừa Decepticon \\
+\hline
+Tool Executor \& Sandbox & \texttt{executor/}, \texttt{sandbox/} & Thực thi lệnh trong sandbox, quản lý tmux session, enforce scope guard. & Kế thừa Decepticon \\
+\hline
+Knowledge \& Verification & \texttt{akg/}, \texttt{verifier/}, \texttt{reporting/} & AKG, event stream, verifier độc lập và reporting engine. & Prototype / Chưa hoàn thiện \\
+\hline
+Benchmark Harness & \texttt{benchmark/} & Chạy benchmark, thu metric, so sánh baseline và thay đổi. & Harness đang phát triển \\
+\hline
+\end{tabular}
+\end{table}
+
+Mã nguồn được phát triển theo nhánh làm việc riêng (\texttt{feature/akg}, \texttt{feature/two-phase}, v.v.), mỗi nhánh tương ứng với một thay đổi kiến trúc cụ thể. Trước khi thực hiện vòng tối ưu, baseline được pin theo commit đã được kiểm tra, đảm bảo mọi so sánh về sau đều dựa trên cùng một điểm xuất phát.
+
+
+
+% ---------------------------------------------------------------
+\subsection{Các artifact phục vụ phát triển}
+\label{sec:cac-artifact}
+
+Ngoài mã nguồn, Raptix duy trì một tập artifact đóng vai trò contract cho cả con người và coding agent: \texttt{agent/comparative.md} (ghi lại quyết định thiết kế), \texttt{agent/akg-schema.json} (schema machine-readable cho AKG), \texttt{agent/two-phase-policy.md} (điều kiện chuyển pha), \texttt{agent/workspace.dsl} (mô hình kiến trúc C4), và benchmark config + raw artifacts (pin môi trường cho non-regression). Nguyên tắc là mọi artifact phải đủ ngắn để luôn được đọc, đủ chính xác để phát hiện drift khi implementation thay đổi.
+
+
+% ---------------------------------------------------------------
+\subsection{Quy trình thử nghiệm thiết kế cho Raptix}
+\label{sec:quy-trinh-thu-nghiem}
+
+Quy trình thử nghiệm được thiết kế cho Raptix theo sáu bước, nhằm tách biệt việc ``code chạy được'' khỏi việc ``thay đổi làm hệ thống tốt hơn''. Một commit chỉ được coi là cải tiến khi có bằng chứng trên benchmark hoặc giải quyết được failure mode đã quan sát mà không tạo regression đáng kể ở nhóm capability khác.
+
+\subsubsection*{Sáu bước của một vòng thử nghiệm}
+
+\begin{enumerate}
+    \item Chọn commit và kiểm tra môi trường (model, provider, toolset đúng với cấu hình đã pin).
+    \item Khởi tạo target lab cô lập (Docker/VM); nạp scope vào AKG qua lớp Mission \& Policy.
+    \item Chạy agent; thu model call log, tool call log, event stream, evidence artifacts và thời điểm chuyển pha.
+    \item Chấm điểm bằng verifier; kiểm tra mỗi finding đều có evidence và đạt trạng thái \texttt{verified} trong AKG.
+    \item So sánh với baseline theo ba trục; phân tích failure mode để xác định lớp cần cải thiện.
+    \item Quyết định giữ/sửa/rollback; cập nhật tài liệu kiến trúc và schema nếu giữ.
+\end{enumerate}
+

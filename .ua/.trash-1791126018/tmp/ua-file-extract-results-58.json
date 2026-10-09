@@ -1,0 +1,400 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 6,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 6,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 6
+    }
+  },
+  "results": [
+    {
+      "path": "benchmark/EXPLOITBENCH-GAINS.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 157,
+      "nonEmptyLines": 129,
+      "sections": [
+        {
+          "heading": "Why route Raptix at ExploitBench?",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "TL;DR",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "What XBOW gives us today",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "What ExploitBench gives us",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Concrete gains, in priority order",
+          "level": 3,
+          "line": 53
+        },
+        {
+          "heading": "Non-goals (things this branch is NOT trying to do)",
+          "level": 3,
+          "line": 124
+        },
+        {
+          "heading": "Cost shape",
+          "level": 2,
+          "line": 135
+        },
+        {
+          "heading": "What success looks like at PR merge",
+          "level": 2,
+          "line": 145
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "benchmark/README-cybench.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 87,
+      "nonEmptyLines": 69,
+      "sections": [
+        {
+          "heading": "Cybench provider",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "Scope (v1): docker-served tasks only",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Run",
+          "level": 2,
+          "line": 43
+        },
+        {
+          "heading": "Scoring",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "Limits / follow-ups",
+          "level": 2,
+          "line": 75
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "benchmark/README-cybergym.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 114,
+      "nonEmptyLines": 91,
+      "sections": [
+        {
+          "heading": "CyberGym provider",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Task model (differs from flag-capture providers)",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Run",
+          "level": 2,
+          "line": 69
+        },
+        {
+          "heading": "Scoring",
+          "level": 2,
+          "line": 83
+        },
+        {
+          "heading": "Limits / follow-ups",
+          "level": 2,
+          "line": 100
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "benchmark/README-exploitbench.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 117,
+      "nonEmptyLines": 96,
+      "sections": [
+        {
+          "heading": "ExploitBench provider",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Run",
+          "level": 2,
+          "line": 21
+        },
+        {
+          "heading": "Lifecycle",
+          "level": 2,
+          "line": 54
+        },
+        {
+          "heading": "Capability → tier ladder",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Score parity",
+          "level": 2,
+          "line": 91
+        },
+        {
+          "heading": "Limits and follow-ups",
+          "level": 2,
+          "line": 100
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "benchmark/README-mhbench.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 332,
+      "nonEmptyLines": 280,
+      "sections": [
+        {
+          "heading": "MHBench Benchmark Provider — Operator Guide",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Category 1 — Environment setup (operator side)",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "1.1 OpenStack tenant",
+          "level": 3,
+          "line": 36
+        },
+        {
+          "heading": "1.2 Initialize the submodule + install MHBench deps",
+          "level": 3,
+          "line": 58
+        },
+        {
+          "heading": "1.3 Prepare Glance images and quotas",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "1.4 Fill in MHBench's `config.json`",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "1.5 Compile each topology you plan to run (once)",
+          "level": 3,
+          "line": 122
+        },
+        {
+          "heading": "Caldera is optional",
+          "level": 3,
+          "line": 138
+        },
+        {
+          "heading": "Category 2 — Raptix side (what the provider does automatically)",
+          "level": 2,
+          "line": 158
+        },
+        {
+          "heading": "Getting an OpenStack tenant",
+          "level": 2,
+          "line": 210
+        },
+        {
+          "heading": "Known limitations",
+          "level": 2,
+          "line": 219
+        },
+        {
+          "heading": "Live dogfood findings (2026-05-17)",
+          "level": 2,
+          "line": 246
+        },
+        {
+          "heading": "What did work",
+          "level": 3,
+          "line": 254
+        },
+        {
+          "heading": "What needed adaptation",
+          "level": 3,
+          "line": 273
+        },
+        {
+          "heading": "What was blocked",
+          "level": 3,
+          "line": 290
+        },
+        {
+          "heading": "Recommended infrastructure for next operator",
+          "level": 3,
+          "line": 313
+        },
+        {
+          "heading": "Roadmap",
+          "level": 2,
+          "line": 325
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 17
+      }
+    },
+    {
+      "path": "benchmark/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 252,
+      "nonEmptyLines": 201,
+      "sections": [
+        {
+          "heading": "Benchmark Framework",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Run",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Via Makefile (recommended)",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "Direct invocation",
+          "level": 3,
+          "line": 45
+        },
+        {
+          "heading": "CLI options",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "Examples",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "Per-challenge flow",
+          "level": 2,
+          "line": 96
+        },
+        {
+          "heading": "Scoring",
+          "level": 2,
+          "line": 136
+        },
+        {
+          "heading": "Output layout",
+          "level": 2,
+          "line": 144
+        },
+        {
+          "heading": "Module layout",
+          "level": 2,
+          "line": 180
+        },
+        {
+          "heading": "Adding a provider",
+          "level": 2,
+          "line": 205
+        },
+        {
+          "heading": "Tests",
+          "level": 2,
+          "line": 243
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    }
+  ]
+}

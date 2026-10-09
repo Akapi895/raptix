@@ -1,0 +1,109 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix\\packages\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "raptix/tools/defense/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  39,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/tools/defense/conops.py",
+                           "language":  "python",
+                           "sizeLines":  113,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/tools/defense/edr.py",
+                           "language":  "python",
+                           "sizeLines":  222,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/tools/defense/elastic.py",
+                           "language":  "python",
+                           "sizeLines":  178,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/tools/defense/sentinel.py",
+                           "language":  "python",
+                           "sizeLines":  216,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/tools/defense/splunk.py",
+                           "language":  "python",
+                           "sizeLines":  186,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/tools/defense/tools.py",
+                           "language":  "python",
+                           "sizeLines":  208,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/unit/tools/test_defense.py",
+                           "language":  "python",
+                           "sizeLines":  293,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/unit/tools/test_defense_edr.py",
+                           "language":  "python",
+                           "sizeLines":  434,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/unit/tools/test_defense_push.py",
+                           "language":  "python",
+                           "sizeLines":  1096,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "raptix/tools/defense/__init__.py":  [
+                                                                     "raptix/tools/defense/tools.py"
+                                                                 ],
+                            "raptix/tools/defense/conops.py":  [
+
+                                                               ],
+                            "raptix/tools/defense/edr.py":  [
+                                                                "raptix/tools/defense/conops.py"
+                                                            ],
+                            "raptix/tools/defense/elastic.py":  [
+                                                                    "raptix/tools/defense/conops.py"
+                                                                ],
+                            "raptix/tools/defense/sentinel.py":  [
+                                                                     "raptix/tools/defense/conops.py"
+                                                                 ],
+                            "raptix/tools/defense/splunk.py":  [
+                                                                   "raptix/tools/defense/conops.py"
+                                                               ],
+                            "raptix/tools/defense/tools.py":  [
+                                                                  "raptix/tools/defense/__init__.py",
+                                                                  "raptix/tools/defense/edr.py",
+                                                                  "raptix/tools/defense/elastic.py",
+                                                                  "raptix/tools/defense/sentinel.py",
+                                                                  "raptix/tools/defense/splunk.py"
+                                                              ],
+                            "tests/unit/tools/test_defense.py":  [
+                                                                     "raptix/tools/defense/__init__.py",
+                                                                     "raptix/tools/defense/edr.py",
+                                                                     "raptix/tools/defense/elastic.py",
+                                                                     "raptix/tools/defense/sentinel.py",
+                                                                     "raptix/tools/defense/splunk.py"
+                                                                 ],
+                            "tests/unit/tools/test_defense_edr.py":  [
+                                                                         "raptix/tools/defense/edr.py"
+                                                                     ],
+                            "tests/unit/tools/test_defense_push.py":  [
+                                                                          "raptix/tools/defense/__init__.py",
+                                                                          "raptix/tools/defense/edr.py",
+                                                                          "raptix/tools/defense/elastic.py",
+                                                                          "raptix/tools/defense/sentinel.py",
+                                                                          "raptix/tools/defense/splunk.py"
+                                                                      ]
+                        }
+}

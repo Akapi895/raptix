@@ -1,0 +1,2753 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 19,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 19,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 19
+    }
+  },
+  "results": [
+    {
+      "path": "docs/design/2026-06-03-external-docs-research.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 425,
+      "nonEmptyLines": 286,
+      "sections": [
+        {
+          "heading": "KG Middleware Redesign — External Docs Research",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Topic 1 — LangChain `AgentMiddleware`: Latest Official API",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "1.1 Lifecycle hooks — complete set",
+          "level": 3,
+          "line": 17
+        },
+        {
+          "heading": "1.2 `self.tools` — how tools merge at `create_agent` time",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "1.3 `state_schema` — merging with `AgentState`",
+          "level": 3,
+          "line": 76
+        },
+        {
+          "heading": "1.4 `InjectedState` and `InjectedToolCallId` — import paths and typing pattern",
+          "level": 3,
+          "line": 95
+        },
+        {
+          "heading": "1.5 Tool-specific middleware scoping",
+          "level": 3,
+          "line": 132
+        },
+        {
+          "heading": "1.6 Upgrade guide / release notes",
+          "level": 3,
+          "line": 136
+        },
+        {
+          "heading": "Topic 2 — LangGraph `BaseStore`: Can It Host Neo4j?",
+          "level": 2,
+          "line": 142
+        },
+        {
+          "heading": "2.1 `BaseStore` abstract interface",
+          "level": 3,
+          "line": 148
+        },
+        {
+          "heading": "2.2 Existing backend implementations",
+          "level": 3,
+          "line": 162
+        },
+        {
+          "heading": "2.3 Can `Neo4jStore` implement `BaseStore`? What gaps exist?",
+          "level": 3,
+          "line": 171
+        },
+        {
+          "heading": "Topic 3 — DeepAgents Middleware System",
+          "level": 2,
+          "line": 185
+        },
+        {
+          "heading": "3.1 `MemoryMiddleware`",
+          "level": 3,
+          "line": 192
+        },
+        {
+          "heading": "3.2 `FilesystemMiddleware`",
+          "level": 3,
+          "line": 196
+        },
+        {
+          "heading": "3.3 `SubAgentMiddleware`",
+          "level": 3,
+          "line": 219
+        },
+        {
+          "heading": "3.4 Composition of DeepAgents middleware with custom `AgentMiddleware`",
+          "level": 3,
+          "line": 225
+        },
+        {
+          "heading": "Topic 4 — Neo4j Python Driver: `execute_write` / Transaction Patterns",
+          "level": 2,
+          "line": 231
+        },
+        {
+          "heading": "4.1 `execute_write` / `execute_read` — per-operation pattern",
+          "level": 3,
+          "line": 238
+        },
+        {
+          "heading": "4.2 Retry semantics on `DeadlockDetected`",
+          "level": 3,
+          "line": 262
+        },
+        {
+          "heading": "4.3 Composite range index — verified Cypher syntax for Neo4j 5.24",
+          "level": 3,
+          "line": 266
+        },
+        {
+          "heading": "4.4 Vector index syntax (Neo4j 5.13+)",
+          "level": 3,
+          "line": 289
+        },
+        {
+          "heading": "4.5 APOC vs GDS for Dijkstra — recommendation",
+          "level": 3,
+          "line": 307
+        },
+        {
+          "heading": "Topic 5 — Reference Implementations",
+          "level": 2,
+          "line": 328
+        },
+        {
+          "heading": "5.1 BloodHound CE (SpecterOps) — 2026 patterns",
+          "level": 3,
+          "line": 330
+        },
+        {
+          "heading": "5.2 Cartography (Lyft / CNCF) — incremental MERGE pattern",
+          "level": 3,
+          "line": 346
+        },
+        {
+          "heading": "5.3 Graphiti (Zep) — bi-temporal provenance model",
+          "level": 3,
+          "line": 373
+        },
+        {
+          "heading": "5.4 Cognee — ECL pipeline customization",
+          "level": 3,
+          "line": 397
+        },
+        {
+          "heading": "Implications for KGMiddleware Design",
+          "level": 2,
+          "line": 407
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 29
+      }
+    },
+    {
+      "path": "docs/design/2026-06-03-kg-middleware-implementation-research.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 570,
+      "nonEmptyLines": 425,
+      "sections": [
+        {
+          "heading": "KG Middleware Implementation Research",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. TL;DR",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "2. Skills consulted (6) — what each contributed",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "3. Confirmed design decisions (no change from spec)",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "4. Open questions the spec did not answer",
+          "level": 2,
+          "line": 53
+        },
+        {
+          "heading": "Q1 — Does a KG middleware enable new capability, or constrain the model?",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Q2 — Is \"auto-ingest from files\" really off the table?",
+          "level": 3,
+          "line": 81
+        },
+        {
+          "heading": "Q3 — How much of analyst's current prompt survives?",
+          "level": 3,
+          "line": 92
+        },
+        {
+          "heading": "Q4 — Multi-engagement concurrency",
+          "level": 3,
+          "line": 101
+        },
+        {
+          "heading": "Q5 — Vector index for analyst's \"semantic recall\"?",
+          "level": 3,
+          "line": 109
+        },
+        {
+          "heading": "5. Skill-confirmed anti-patterns to avoid",
+          "level": 2,
+          "line": 119
+        },
+        {
+          "heading": "6. Three options for user review",
+          "level": 2,
+          "line": 133
+        },
+        {
+          "heading": "What each option means for the next 2-3 weeks of work",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "7. What's still pending (external docs research)",
+          "level": 2,
+          "line": 149
+        },
+        {
+          "heading": "8. Decision points for user review",
+          "level": 2,
+          "line": 163
+        },
+        {
+          "heading": "9. Post-decision minimal design (Option B confirmed, 2026-06-03)",
+          "level": 2,
+          "line": 177
+        },
+        {
+          "heading": "9.1 Why 3 tools (the original Option B count) is still too many",
+          "level": 3,
+          "line": 181
+        },
+        {
+          "heading": "9.2 The 2-tool minimum",
+          "level": 3,
+          "line": 199
+        },
+        {
+          "heading": "9.3 What we explicitly did NOT add",
+          "level": 3,
+          "line": 269
+        },
+        {
+          "heading": "9.4 What the middleware does (the actual workflow)",
+          "level": 3,
+          "line": 283
+        },
+        {
+          "heading": "9.5 Summary block — what to include (minimal)",
+          "level": 3,
+          "line": 333
+        },
+        {
+          "heading": "9.6 PR plan (revised, 4 atomic commits per PR, 3 PRs total)",
+          "level": 3,
+          "line": 347
+        },
+        {
+          "heading": "9.7 Pending external research",
+          "level": 3,
+          "line": 372
+        },
+        {
+          "heading": "9.8 Decision asks (need answers before PR-A code starts)",
+          "level": 3,
+          "line": 382
+        },
+        {
+          "heading": "10. External docs findings → §9 design adjustments (final pre-implementation pass)",
+          "level": 2,
+          "line": 394
+        },
+        {
+          "heading": "10.1 Five external findings → impact on §9",
+          "level": 3,
+          "line": 398
+        },
+        {
+          "heading": "10.2 Updated `kg_record` signature (with provenance, minimal)",
+          "level": 3,
+          "line": 408
+        },
+        {
+          "heading": "10.3 `kg_ingest` keeps its scanner_kind dispatcher (unchanged from §9), but inherits the same provenance auto-injection",
+          "level": 3,
+          "line": 457
+        },
+        {
+          "heading": "10.4 Final V002 migration content (PR-A.3)",
+          "level": 3,
+          "line": 461
+        },
+        {
+          "heading": "10.5 New `before_agent` responsibility — stale-node cleanup (Cartography pattern)",
+          "level": 3,
+          "line": 499
+        },
+        {
+          "heading": "10.6 Defense against `InjectedState` override bug",
+          "level": 3,
+          "line": 515
+        },
+        {
+          "heading": "10.7 Updated PR-A code surface (concrete file list)",
+          "level": 3,
+          "line": 537
+        },
+        {
+          "heading": "10.8 Updated decision asks (final, pre-PR-A)",
+          "level": 3,
+          "line": 560
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 33
+      }
+    },
+    {
+      "path": "docs/design/2026-06-03-kg-middleware-redesign.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 655,
+      "nonEmptyLines": 491,
+      "sections": [
+        {
+          "heading": "Raptix: KG Middleware Redesign — Design Spec",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. TL;DR",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "2. Background",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "2.1 Where we are after the narrow (commits 09401584..9fc7c958)",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "2.2 The five high-impact problems (from research notes)",
+          "level": 3,
+          "line": 56
+        },
+        {
+          "heading": "2.3 What the narrow already gave us",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "3. Goals & non-goals",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "Goals",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "Non-goals (explicit)",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "4. The KGMiddleware design",
+          "level": 2,
+          "line": 104
+        },
+        {
+          "heading": "4.1 Module layout",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "4.2 `KGState` schema",
+          "level": 3,
+          "line": 130
+        },
+        {
+          "heading": "4.3 Public class interface",
+          "level": 3,
+          "line": 153
+        },
+        {
+          "heading": "4.4 Lifecycle hooks — full behavior",
+          "level": 3,
+          "line": 217
+        },
+        {
+          "heading": "`before_agent`",
+          "level": 4,
+          "line": 219
+        },
+        {
+          "heading": "`wrap_model_call`",
+          "level": 4,
+          "line": 226
+        },
+        {
+          "heading": "`wrap_tool_call`",
+          "level": 4,
+          "line": 233
+        },
+        {
+          "heading": "`after_model`",
+          "level": 4,
+          "line": 252
+        },
+        {
+          "heading": "4.5 Tool surface (post-redesign)",
+          "level": 3,
+          "line": 256
+        },
+        {
+          "heading": "4.6 `KGStore` — the wrapper that replaces `_state.get_store()` + `graph_transaction()`",
+          "level": 3,
+          "line": 281
+        },
+        {
+          "heading": "4.7 `AttackGraphProtocol` — the runtime/cart.py contract",
+          "level": 3,
+          "line": 319
+        },
+        {
+          "heading": "4.8 Composite range indexes",
+          "level": 3,
+          "line": 344
+        },
+        {
+          "heading": "4.9 Adapter registry for `kg_ingest`",
+          "level": 3,
+          "line": 359
+        },
+        {
+          "heading": "4.10 Plugin surface — `MiddlewareSlot.KG`",
+          "level": 3,
+          "line": 384
+        },
+        {
+          "heading": "5. Plugin contract additions",
+          "level": 2,
+          "line": 410
+        },
+        {
+          "heading": "6. Migration plan",
+          "level": 2,
+          "line": 424
+        },
+        {
+          "heading": "6.1 Phased execution (4 PRs after this spec lands)",
+          "level": 3,
+          "line": 426
+        },
+        {
+          "heading": "6.2 File-by-file migration table (`tools/research/`)",
+          "level": 3,
+          "line": 440
+        },
+        {
+          "heading": "6.3 Test migration",
+          "level": 3,
+          "line": 463
+        },
+        {
+          "heading": "6.4 Downstream coordination",
+          "level": 3,
+          "line": 469
+        },
+        {
+          "heading": "7. Acceptance criteria",
+          "level": 2,
+          "line": 479
+        },
+        {
+          "heading": "PR-A",
+          "level": 3,
+          "line": 483
+        },
+        {
+          "heading": "PR-B",
+          "level": 3,
+          "line": 491
+        },
+        {
+          "heading": "PR-C",
+          "level": 3,
+          "line": 499
+        },
+        {
+          "heading": "PR-D",
+          "level": 3,
+          "line": 507
+        },
+        {
+          "heading": "Global acceptance (across all PRs)",
+          "level": 3,
+          "line": 514
+        },
+        {
+          "heading": "8. Risks & mitigations",
+          "level": 2,
+          "line": 522
+        },
+        {
+          "heading": "9. Out-of-band items",
+          "level": 2,
+          "line": 535
+        },
+        {
+          "heading": "10. Appendix — example tool implementations",
+          "level": 2,
+          "line": 544
+        },
+        {
+          "heading": "11. Open questions",
+          "level": 2,
+          "line": 634
+        },
+        {
+          "heading": "12. Sign-off checklist (pre-PR-A)",
+          "level": 2,
+          "line": 648
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 41
+      }
+    },
+    {
+      "path": "docs/design/2026-06-04-bloodhound-kgstore-mapping.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 236,
+      "nonEmptyLines": 173,
+      "sections": [
+        {
+          "heading": "BloodHound 5.x → KGStore Mapping (RFC)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Why this RFC exists",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "2. BloodHound 5.x JSON ground truth",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "2.1 Envelope",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "2.2 Node identifier rules",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "2.3 The mapping table (provisional)",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "2.4 Edges (`schemas/valid_edges.json`)",
+          "level": 3,
+          "line": 81
+        },
+        {
+          "heading": "2.5 ACE right names (Aces[].RightName)",
+          "level": 3,
+          "line": 111
+        },
+        {
+          "heading": "2.6 ADCS post-process edges (`schemas/valid_edges.json`, post category)",
+          "level": 3,
+          "line": 117
+        },
+        {
+          "heading": "2.7 Traps (must handle in ingest)",
+          "level": 3,
+          "line": 123
+        },
+        {
+          "heading": "3. Architecture decision: how to represent BloodHound nodes in KGStore",
+          "level": 2,
+          "line": 141
+        },
+        {
+          "heading": "Option A — Add dedicated BloodHound `NodeKind` values",
+          "level": 3,
+          "line": 145
+        },
+        {
+          "heading": "Option B — Reuse `NodeKind.USER` / `HOST` / `GROUP` with a `bh_type` prop",
+          "level": 3,
+          "line": 160
+        },
+        {
+          "heading": "Recommendation",
+          "level": 3,
+          "line": 175
+        },
+        {
+          "heading": "4. Phased migration plan (after this RFC is approved)",
+          "level": 2,
+          "line": 181
+        },
+        {
+          "heading": "4.1 `NodeKind` / `EdgeKind` extension",
+          "level": 3,
+          "line": 185
+        },
+        {
+          "heading": "4.2 BloodHound ingest core",
+          "level": 3,
+          "line": 191
+        },
+        {
+          "heading": "4.3 ADCS post-process edges",
+          "level": 3,
+          "line": 196
+        },
+        {
+          "heading": "4.4 LocalAdmin / GPO post-process",
+          "level": 3,
+          "line": 201
+        },
+        {
+          "heading": "4.5 Test migration + live validation",
+          "level": 3,
+          "line": 206
+        },
+        {
+          "heading": "4.6 Shim removal for AD",
+          "level": 3,
+          "line": 212
+        },
+        {
+          "heading": "5. Open questions",
+          "level": 2,
+          "line": 219
+        },
+        {
+          "heading": "6. Sources",
+          "level": 2,
+          "line": 228
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 23
+      }
+    },
+    {
+      "path": "docs/design/2026-06-04-slither-kgstore-mapping.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 230,
+      "nonEmptyLines": 172,
+      "sections": [
+        {
+          "heading": "Slither `--json` → KGStore Mapping (RFC)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Why this RFC exists",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "2. Slither `--json` ground truth",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "2.1 Top-level envelope",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "2.2 Detector finding object",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "2.3 Element object",
+          "level": 3,
+          "line": 67
+        },
+        {
+          "heading": "2.4 Mapping table (provisional)",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "2.5 Edges",
+          "level": 3,
+          "line": 121
+        },
+        {
+          "heading": "2.6 Traps (must handle in ingest)",
+          "level": 3,
+          "line": 130
+        },
+        {
+          "heading": "3. Architecture decision: how to represent Slither nodes in KGStore",
+          "level": 2,
+          "line": 145
+        },
+        {
+          "heading": "Option A — Add Solidity-specific `NodeKind` values",
+          "level": 3,
+          "line": 149
+        },
+        {
+          "heading": "Option B — Reuse existing kinds with `slither_type` prop",
+          "level": 3,
+          "line": 162
+        },
+        {
+          "heading": "Recommendation",
+          "level": 3,
+          "line": 175
+        },
+        {
+          "heading": "4. Phased migration plan (after this RFC is approved)",
+          "level": 2,
+          "line": 181
+        },
+        {
+          "heading": "4.1 `NodeKind` extension for Solidity",
+          "level": 3,
+          "line": 185
+        },
+        {
+          "heading": "4.2 Slither ingest core",
+          "level": 3,
+          "line": 190
+        },
+        {
+          "heading": "4.3 Function-summary join (optional, follow-up)",
+          "level": 3,
+          "line": 199
+        },
+        {
+          "heading": "4.4 Test migration + live validation",
+          "level": 3,
+          "line": 204
+        },
+        {
+          "heading": "4.5 Shim removal for Contract",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "5. Open questions",
+          "level": 2,
+          "line": 217
+        },
+        {
+          "heading": "6. Sources",
+          "level": 2,
+          "line": 225
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 21
+      }
+    },
+    {
+      "path": "docs/design/2026-06-11-launcher-image-decoupling.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 116,
+      "nonEmptyLines": 78,
+      "sections": [
+        {
+          "heading": "Launcher ↔ Image Version Decoupling",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Problem",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "The coupling",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Options",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "A. Launcher resolves the latest release tag at start",
+          "level": 3,
+          "line": 39
+        },
+        {
+          "heading": "B. Always build the launcher binary on patch tags",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "C. Pin compose to `:latest`",
+          "level": 3,
+          "line": 64
+        },
+        {
+          "heading": "Recommendation",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "Open questions",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Out of scope",
+          "level": 2,
+          "line": 104
+        },
+        {
+          "heading": "Decision needed",
+          "level": 2,
+          "line": 110
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "docs/design/2026-06-12-roe-guardrail-middleware-redesign.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 286,
+      "nonEmptyLines": 238,
+      "sections": [
+        {
+          "heading": "RoE Guardrail Middleware — root cause + redesign",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "TL;DR",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "How target extraction works today",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Evidence (measured 2026-06-12)",
+          "level": 2,
+          "line": 94
+        },
+        {
+          "heading": "Why string parsing is the wrong layer",
+          "level": 2,
+          "line": 128
+        },
+        {
+          "heading": "Proposed redesign",
+          "level": 2,
+          "line": 146
+        },
+        {
+          "heading": "Layer 1 — parser: fail-closed, verb-agnostic (tactical, contained)",
+          "level": 3,
+          "line": 148
+        },
+        {
+          "heading": "Layer 2 — egress: authoritative network boundary (strategic)",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "Rename — \"RoE Guardrail Middleware\"",
+          "level": 3,
+          "line": 231
+        },
+        {
+          "heading": "Affected code / docs",
+          "level": 2,
+          "line": 245
+        },
+        {
+          "heading": "Sequencing",
+          "level": 2,
+          "line": 256
+        },
+        {
+          "heading": "Open questions",
+          "level": 2,
+          "line": 264
+        },
+        {
+          "heading": "Reproducer",
+          "level": 2,
+          "line": 277
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "docs/design/2026-06-12-skillogy-load-skill-by-name-pollution.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 85,
+      "nonEmptyLines": 66,
+      "sections": [
+        {
+          "heading": "skillogy: load_skill by name 404s when find_skill ranking is polluted",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Symptom",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Root cause — name resolution goes through a polluted keyword search",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Fix",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "Follow-up (separate, lower severity)",
+          "level": 2,
+          "line": 80
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/design/2026-06-12-tmux-per-command-env-resync-marker-race.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 93,
+      "nonEmptyLines": 72,
+      "sections": [
+        {
+          "heading": "tmux bash tool: per-command env re-sync races the PS1 completion marker",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Symptom",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Root cause — a PS1-marker race introduced by per-command env re-sync",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Fix",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Note on per-command env changes",
+          "level": 2,
+          "line": 87
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/design/2026-06-15-web-search-engine-plan.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 151,
+      "nonEmptyLines": 129,
+      "sections": [
+        {
+          "heading": "Web Search/Fetch Engine — Design & Implementation Plan",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "0. Decisions locked",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "1. What we adopt from insane-search (engine intelligence)",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "2. What we invert (Raptix governance)",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "3. Sandbox routing — how \"all egress in sandbox\" stays invariant-safe",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "4. Module layout (proposed)",
+          "level": 2,
+          "line": 86
+        },
+        {
+          "heading": "5. Implementation phases (TDD — test first each step)",
+          "level": 2,
+          "line": 110
+        },
+        {
+          "heading": "6. Test strategy",
+          "level": 2,
+          "line": 136
+        },
+        {
+          "heading": "7. Disposition of #605 / #650",
+          "level": 2,
+          "line": 146
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "docs/design/2026-06-20-telemetry-data-collection-design.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 221,
+      "nonEmptyLines": 176,
+      "sections": [
+        {
+          "heading": "Telemetry & Usage Data Collection — Design",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "0. Decisions locked",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "1. Current state (what already exists)",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "2. Data tiers",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "3. Sanitization pipeline (how Tier B is produced)",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "① Classification (zero free-text)",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "② Placeholder redaction (preserve shape, drop identifiers)",
+          "level": 3,
+          "line": 83
+        },
+        {
+          "heading": "③ Local-LLM abstractive summary (deferred)",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "4. Architecture (two layers, two purposes)",
+          "level": 2,
+          "line": 104
+        },
+        {
+          "heading": "5. What maintainers realistically get",
+          "level": 2,
+          "line": 132
+        },
+        {
+          "heading": "6. Why not LangSmith as the collection channel?",
+          "level": 2,
+          "line": 147
+        },
+        {
+          "heading": "7. Consent model",
+          "level": 2,
+          "line": 166
+        },
+        {
+          "heading": "8. Implementation mapping (real files)",
+          "level": 2,
+          "line": 186
+        },
+        {
+          "heading": "9. Sequencing",
+          "level": 2,
+          "line": 202
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 211
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "docs/design/2026-07-27-telemetry-semantic-redaction-design.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 113,
+      "nonEmptyLines": 87,
+      "sections": [
+        {
+          "heading": "Semantic redaction for the research corpus",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Why",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Non-goal",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Design",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "Layer 1 — client, deterministic (keep, unchanged)",
+          "level": 3,
+          "line": 44
+        },
+        {
+          "heading": "Layer 2 — server-side semantic pass (new)",
+          "level": 3,
+          "line": 58
+        },
+        {
+          "heading": "Layer 3 — audit before release",
+          "level": 3,
+          "line": 84
+        },
+        {
+          "heading": "Open questions",
+          "level": 2,
+          "line": 90
+        },
+        {
+          "heading": "What to change in the docs now",
+          "level": 2,
+          "line": 108
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "docs/design/attack-graph-schema.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 414,
+      "nonEmptyLines": 339,
+      "sections": [
+        {
+          "heading": "Attack Graph Schema — Neo4j Native Design",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. What is an Attack Graph?",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Red Team Context",
+          "level": 3,
+          "line": 7
+        },
+        {
+          "heading": "Reference Implementations",
+          "level": 3,
+          "line": 20
+        },
+        {
+          "heading": "Raptix's Extension",
+          "level": 3,
+          "line": 26
+        },
+        {
+          "heading": "2. Node Labels (Neo4j Native)",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Infrastructure Layer",
+          "level": 3,
+          "line": 43
+        },
+        {
+          "heading": "Identity Layer",
+          "level": 3,
+          "line": 55
+        },
+        {
+          "heading": "Vulnerability Layer",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "Code Layer",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "Attack Progression Layer",
+          "level": 3,
+          "line": 83
+        },
+        {
+          "heading": "Analysis Layer",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "3. Relationship Types",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "Topology (Infrastructure Discovery)",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "Access & Authentication",
+          "level": 3,
+          "line": 117
+        },
+        {
+          "heading": "Exploitation",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "Kill Chain Progression",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "Validation & Remediation",
+          "level": 3,
+          "line": 152
+        },
+        {
+          "heading": "4. Weight / Cost Model",
+          "level": 2,
+          "line": 163
+        },
+        {
+          "heading": "5. Constraints & Indexes",
+          "level": 2,
+          "line": 186
+        },
+        {
+          "heading": "6. Core Cypher Query Patterns",
+          "level": 2,
+          "line": 225
+        },
+        {
+          "heading": "Q1. Shortest Attack Path (Entry → Crown Jewel)",
+          "level": 3,
+          "line": 227
+        },
+        {
+          "heading": "Q2. Unexplored Attack Surface",
+          "level": 3,
+          "line": 242
+        },
+        {
+          "heading": "Q3. Credential Reachability (Pass-the-Hash / Credential Reuse)",
+          "level": 3,
+          "line": 253
+        },
+        {
+          "heading": "Q4. Impact Analysis (What does compromising X enable?)",
+          "level": 3,
+          "line": 266
+        },
+        {
+          "heading": "Q5. Lateral Movement Paths (Host-to-Host Pivoting)",
+          "level": 3,
+          "line": 284
+        },
+        {
+          "heading": "Q6. Kill Chain Coverage Assessment",
+          "level": 3,
+          "line": 297
+        },
+        {
+          "heading": "Q7. Crown Jewel Risk Score",
+          "level": 3,
+          "line": 319
+        },
+        {
+          "heading": "7. Migration from Current Schema",
+          "level": 2,
+          "line": 334
+        },
+        {
+          "heading": "Current → New Mapping",
+          "level": 3,
+          "line": 336
+        },
+        {
+          "heading": "New Node Types (added)",
+          "level": 3,
+          "line": 359
+        },
+        {
+          "heading": "Relationship Mapping",
+          "level": 3,
+          "line": 374
+        },
+        {
+          "heading": "New Relationships (added)",
+          "level": 3,
+          "line": 397
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 33
+      }
+    },
+    {
+      "path": "docs/design/evidence-and-findings-conventions-research.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 423,
+      "nonEmptyLines": 337,
+      "sections": [
+        {
+          "heading": "Evidence, Findings & Shared-Artifact Conventions — External Research",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Why this matters for an autonomous red-team system",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "2. Evidence & chain-of-custody (the operator log + artifact store)",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "2.1 The append-only activity log (NIST SP 800-115)",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "2.2 The artifact store (what must be retained)",
+          "level": 3,
+          "line": 82
+        },
+        {
+          "heading": "3. Findings documentation",
+          "level": 2,
+          "line": 99
+        },
+        {
+          "heading": "3.1 The minimum finding schema (convergent across sources)",
+          "level": 3,
+          "line": 101
+        },
+        {
+          "heading": "3.2 Severity: CVSS v4.0, store the vector not just the score",
+          "level": 3,
+          "line": 146
+        },
+        {
+          "heading": "3.3 Vulnerability classification: Bugcrowd VRT",
+          "level": 3,
+          "line": 169
+        },
+        {
+          "heading": "3.4 Proof-of-concept structure (reproducibility)",
+          "level": 3,
+          "line": 189
+        },
+        {
+          "heading": "3.5 Structured intake (HackerOne)",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "4. Evidence-per-finding linkage (the load-bearing relationship)",
+          "level": 2,
+          "line": 220
+        },
+        {
+          "heading": "5. Interchange & attack-path artifacts (emit standard formats)",
+          "level": 2,
+          "line": 244
+        },
+        {
+          "heading": "5.1 SARIF — machine-readable findings",
+          "level": 3,
+          "line": 249
+        },
+        {
+          "heading": "5.2 MITRE ATT&CK Navigator layers — coverage / attack-path",
+          "level": 3,
+          "line": 263
+        },
+        {
+          "heading": "5.3 DefectDojo unified import / OCSF",
+          "level": 3,
+          "line": 278
+        },
+        {
+          "heading": "6. Shared-workspace / collaborative data models",
+          "level": 2,
+          "line": 288
+        },
+        {
+          "heading": "7. Mapping to Raptix: alignment & gaps",
+          "level": 2,
+          "line": 310
+        },
+        {
+          "heading": "Highest-value actions for the redesign — APPLIED 2026-06-12",
+          "level": 3,
+          "line": 327
+        },
+        {
+          "heading": "8. Caveats & open questions",
+          "level": 2,
+          "line": 363
+        },
+        {
+          "heading": "9. Sources",
+          "level": 2,
+          "line": 401
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 21
+      }
+    },
+    {
+      "path": "docs/design/neo4j-research-notes.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 1020,
+      "nonEmptyLines": 781,
+      "sections": [
+        {
+          "heading": "Neo4j Attack-Graph Refactor — Research Notes",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Multi-Agent Concurrent Cypher Writes",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 16
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 21
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "2. APOC `apoc.algo.dijkstra` vs GDS `gds.shortestPath.dijkstra`",
+          "level": 2,
+          "line": 91
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 96
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 161
+        },
+        {
+          "heading": "3. Engagement Multi-Tenancy Strategies",
+          "level": 2,
+          "line": 171
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 173
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 177
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 216
+        },
+        {
+          "heading": "4. Vector Index Integration (Neo4j 5.13+)",
+          "level": 2,
+          "line": 233
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 235
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 239
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 298
+        },
+        {
+          "heading": "5. Bulk Ingest Patterns",
+          "level": 2,
+          "line": 309
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 311
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 315
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 362
+        },
+        {
+          "heading": "6. Schema Evolution Without Downtime",
+          "level": 2,
+          "line": 372
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 374
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 378
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 415
+        },
+        {
+          "heading": "7. Indexing Strategy",
+          "level": 2,
+          "line": 426
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 428
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 433
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 497
+        },
+        {
+          "heading": "8. Driver Session Lifecycle",
+          "level": 2,
+          "line": 507
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 509
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 513
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 565
+        },
+        {
+          "heading": "9. Read-Only Query Optimization",
+          "level": 2,
+          "line": 578
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 580
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 584
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 617
+        },
+        {
+          "heading": "10. Cypher Injection Defense",
+          "level": 2,
+          "line": 630
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 632
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 636
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 683
+        },
+        {
+          "heading": "11. `apoc.path.expandConfig` Patterns",
+          "level": 2,
+          "line": 698
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 700
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 704
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 755
+        },
+        {
+          "heading": "12. Subqueries: `CALL { }` and `CALL ... IN TRANSACTIONS`",
+          "level": 2,
+          "line": 766
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 768
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 772
+        },
+        {
+          "heading": "Recommendation for Raptix",
+          "level": 3,
+          "line": 811
+        },
+        {
+          "heading": "13. Reference Implementations",
+          "level": 2,
+          "line": 839
+        },
+        {
+          "heading": "Question",
+          "level": 3,
+          "line": 841
+        },
+        {
+          "heading": "Findings",
+          "level": 3,
+          "line": 845
+        },
+        {
+          "heading": "BloodHound Community Edition (SpecterOps)",
+          "level": 4,
+          "line": 847
+        },
+        {
+          "heading": "Cartography (Lyft / CNCF)",
+          "level": 4,
+          "line": 875
+        },
+        {
+          "heading": "BRON (Threat Intelligence Knowledge Graph)",
+          "level": 4,
+          "line": 899
+        },
+        {
+          "heading": "Memgraph and Kuzu as Neo4j Alternatives",
+          "level": 4,
+          "line": 921
+        },
+        {
+          "heading": "Synthesis: Top 7 Highest-Impact Changes",
+          "level": 2,
+          "line": 958
+        },
+        {
+          "heading": "1. Replace `graph_transaction()` with per-operation `execute_write` calls (Critical)",
+          "level": 3,
+          "line": 962
+        },
+        {
+          "heading": "2. Remove `threading.Lock` from `graph_transaction()` (Critical)",
+          "level": 3,
+          "line": 971
+        },
+        {
+          "heading": "3. Add engagement-scoped composite indexes (High)",
+          "level": 3,
+          "line": 978
+        },
+        {
+          "heading": "4. Enforce engagement scoping in `query_custom()` (High)",
+          "level": 3,
+          "line": 986
+        },
+        {
+          "heading": "5. Rewrite `promote_chain()` as a single atomic subquery (Medium)",
+          "level": 3,
+          "line": 994
+        },
+        {
+          "heading": "6. Adopt `neo4j-migrations` for schema evolution (Medium)",
+          "level": 3,
+          "line": 1001
+        },
+        {
+          "heading": "7. Parameterize interpolated values in `plan_chains()` (Low-Medium)",
+          "level": 3,
+          "line": 1008
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 64
+      }
+    },
+    {
+      "path": "docs/design/opplan-middleware.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 694,
+      "nonEmptyLines": 566,
+      "sections": [
+        {
+          "heading": "OPPLANMiddleware Design Document (v2)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Claude Code Task 시스템 → OPPLAN 매핑",
+          "level": 3,
+          "line": 12
+        },
+        {
+          "heading": "핵심 설계 원칙 (Claude Code에서 차용)",
+          "level": 3,
+          "line": 23
+        },
+        {
+          "heading": "변경 동기",
+          "level": 3,
+          "line": 32
+        },
+        {
+          "heading": "Architecture",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "에이전트 역할 재정의",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "전체 흐름",
+          "level": 3,
+          "line": 71
+        },
+        {
+          "heading": "서브에이전트에는 미들웨어 불필요",
+          "level": 3,
+          "line": 104
+        },
+        {
+          "heading": "opplan.json 파일 불필요",
+          "level": 3,
+          "line": 111
+        },
+        {
+          "heading": "Implementation",
+          "level": 2,
+          "line": 119
+        },
+        {
+          "heading": "File: `raptix/middleware/opplan.py`",
+          "level": 3,
+          "line": 121
+        },
+        {
+          "heading": "State Schema",
+          "level": 4,
+          "line": 123
+        },
+        {
+          "heading": "Tool 1: `create_opplan` — 인게이지먼트 초기화",
+          "level": 4,
+          "line": 142
+        },
+        {
+          "heading": "Tool 2: `add_objective` — 개별 objective 추가",
+          "level": 4,
+          "line": 174
+        },
+        {
+          "heading": "Tool 3: `get_objective` — 단일 objective 상세 조회",
+          "level": 4,
+          "line": 246
+        },
+        {
+          "heading": "Tool 4: `list_objectives` — 전체 목록 + 진행률",
+          "level": 4,
+          "line": 312
+        },
+        {
+          "heading": "Tool 5: `update_objective` — 상태/메타데이터 변경",
+          "level": 4,
+          "line": 330
+        },
+        {
+          "heading": "State Transition Rules",
+          "level": 3,
+          "line": 430
+        },
+        {
+          "heading": "Middleware Class",
+          "level": 3,
+          "line": 462
+        },
+        {
+          "heading": "wrap_model_call: 동적 상태 주입",
+          "level": 3,
+          "line": 477
+        },
+        {
+          "heading": "awrap_tool_call: 도구 인터셉트",
+          "level": 3,
+          "line": 501
+        },
+        {
+          "heading": "after_model: 병렬 호출 검증",
+          "level": 3,
+          "line": 513
+        },
+        {
+          "heading": "Integration",
+          "level": 2,
+          "line": 528
+        },
+        {
+          "heading": "File Changes",
+          "level": 3,
+          "line": 530
+        },
+        {
+          "heading": "New Files",
+          "level": 4,
+          "line": 532
+        },
+        {
+          "heading": "Modified Files",
+          "level": 4,
+          "line": 540
+        },
+        {
+          "heading": "Removed Files",
+          "level": 4,
+          "line": 548
+        },
+        {
+          "heading": "Unchanged Files",
+          "level": 4,
+          "line": 555
+        },
+        {
+          "heading": "Orchestrator Middleware Stack",
+          "level": 3,
+          "line": 564
+        },
+        {
+          "heading": "Prompt Update: `agents/prompts/decepticon.md`",
+          "level": 3,
+          "line": 585
+        },
+        {
+          "heading": "Claude Code 패턴과의 상세 비교",
+          "level": 2,
+          "line": 606
+        },
+        {
+          "heading": "1. TaskCreate vs add_objective",
+          "level": 3,
+          "line": 608
+        },
+        {
+          "heading": "2. TaskGet vs get_objective",
+          "level": 3,
+          "line": 618
+        },
+        {
+          "heading": "3. TaskList vs list_objectives",
+          "level": 3,
+          "line": 626
+        },
+        {
+          "heading": "4. TaskUpdate vs update_objective",
+          "level": 3,
+          "line": 633
+        },
+        {
+          "heading": "5. 동적 상태 주입",
+          "level": 3,
+          "line": 644
+        },
+        {
+          "heading": "6. Verification Nudge",
+          "level": 3,
+          "line": 659
+        },
+        {
+          "heading": "Schemas",
+          "level": 2,
+          "line": 672
+        },
+        {
+          "heading": "Objective model 확장 (core/schemas.py)",
+          "level": 3,
+          "line": 674
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 40
+      }
+    },
+    {
+      "path": "docs/design/single-bash-and-graphdb.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 61,
+      "nonEmptyLines": 43,
+      "sections": [
+        {
+          "heading": "Raptix Core Direction: Single Bash Tool + Graph DB Memory",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Why \"single bash tool\"",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Operational rule",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Knowledge graph migration strategy",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Differentiating edge (security-focused AGI direction)",
+          "level": 2,
+          "line": 46
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/design/skillogy-brain-redesign.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 901,
+      "nonEmptyLines": 688,
+      "sections": [
+        {
+          "heading": "Skillogy — Brain Redesign (v0.2 Design)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "TL;DR",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "Amendment v0.2.2 — Tool surface + prompt-assembly refinements",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "1. Motivation",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "1.1 Where we are today",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "1.2 What hurts (user-confirmed, in priority order)",
+          "level": 3,
+          "line": 63
+        },
+        {
+          "heading": "1.3 Reality check on the corpus",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "1.4 Audit of which frontmatter fields are actually used",
+          "level": 3,
+          "line": 103
+        },
+        {
+          "heading": "2. Concept",
+          "level": 2,
+          "line": 131
+        },
+        {
+          "heading": "2.1 One-line definition",
+          "level": 3,
+          "line": 133
+        },
+        {
+          "heading": "2.2 Six principles",
+          "level": 3,
+          "line": 137
+        },
+        {
+          "heading": "2.3 Paradigm shift, side by side",
+          "level": 3,
+          "line": 148
+        },
+        {
+          "heading": "2.4 What does **not** change",
+          "level": 3,
+          "line": 162
+        },
+        {
+          "heading": "3. Architecture",
+          "level": 2,
+          "line": 171
+        },
+        {
+          "heading": "3.1 System diagram",
+          "level": 3,
+          "line": 173
+        },
+        {
+          "heading": "3.2 Component decomposition",
+          "level": 3,
+          "line": 227
+        },
+        {
+          "heading": "3.3 Phase split",
+          "level": 3,
+          "line": 243
+        },
+        {
+          "heading": "4. Phase 0 — Skill Corpus Cleanup",
+          "level": 2,
+          "line": 257
+        },
+        {
+          "heading": "4.1 Deliverables",
+          "level": 3,
+          "line": 261
+        },
+        {
+          "heading": "4.2 Execution model — Co-design",
+          "level": 3,
+          "line": 270
+        },
+        {
+          "heading": "4.3 Sub-decisions (defaults; can be revised before Phase 0)",
+          "level": 3,
+          "line": 284
+        },
+        {
+          "heading": "4.4 Canonical frontmatter schema (target)",
+          "level": 3,
+          "line": 292
+        },
+        {
+          "heading": "4.5 Canonical subdomain list (initial proposal, to be locked during Phase 0)",
+          "level": 3,
+          "line": 332
+        },
+        {
+          "heading": "5. Phase 1a — Brain Anatomy",
+          "level": 2,
+          "line": 344
+        },
+        {
+          "heading": "5.1 Graph schema — node labels",
+          "level": 3,
+          "line": 348
+        },
+        {
+          "heading": "5.2 `:Skill` node — full property contract",
+          "level": 3,
+          "line": 366
+        },
+        {
+          "heading": "5.3 `:Technique` node — matrix-aware",
+          "level": 3,
+          "line": 406
+        },
+        {
+          "heading": "5.4 Edge inventory (Phase 1a)",
+          "level": 3,
+          "line": 424
+        },
+        {
+          "heading": "5.5 MITRE STIX importer (Enterprise only in Phase 1a)",
+          "level": 3,
+          "line": 444
+        },
+        {
+          "heading": "5.6 CI build pipeline (`skillogy.builder`)",
+          "level": 3,
+          "line": 458
+        },
+        {
+          "heading": "5.7 Agent tool surface (Phase 1a — 3 tools)",
+          "level": 3,
+          "line": 498
+        },
+        {
+          "heading": "5.7.1 `load_skill(name_or_path: str) -> str`",
+          "level": 4,
+          "line": 502
+        },
+        {
+          "heading": "5.7.2 `traverse(start: str, edges: list[str], depth: int = 2) -> list[dict]`",
+          "level": 4,
+          "line": 514
+        },
+        {
+          "heading": "5.7.3 `run_cypher_read(query: str, params: dict | None = None) -> list[dict]`",
+          "level": 4,
+          "line": 522
+        },
+        {
+          "heading": "Read-only enforcement",
+          "level": 4,
+          "line": 533
+        },
+        {
+          "heading": "5.8 Constraints + indexes (Phase 1a)",
+          "level": 3,
+          "line": 543
+        },
+        {
+          "heading": "5.9 Validation rules (build-time, `validate.py`)",
+          "level": 3,
+          "line": 570
+        },
+        {
+          "heading": "5.10 Runtime middleware (`SkillogyMiddleware`)",
+          "level": 3,
+          "line": 620
+        },
+        {
+          "heading": "5.11 Migration (Phase 1a)",
+          "level": 3,
+          "line": 688
+        },
+        {
+          "heading": "5.12 Observability (Phase 1a)",
+          "level": 3,
+          "line": 700
+        },
+        {
+          "heading": "5.13 Testing strategy (Phase 1a)",
+          "level": 3,
+          "line": 707
+        },
+        {
+          "heading": "6. Phase 1b — Associative Memory",
+          "level": 2,
+          "line": 721
+        },
+        {
+          "heading": "6.1 Scope",
+          "level": 3,
+          "line": 723
+        },
+        {
+          "heading": "6.2 Embedding pipeline",
+          "level": 3,
+          "line": 733
+        },
+        {
+          "heading": "6.3 `recall` tool semantics",
+          "level": 3,
+          "line": 739
+        },
+        {
+          "heading": "6.4 Performance budget",
+          "level": 3,
+          "line": 753
+        },
+        {
+          "heading": "6.5 Migration",
+          "level": 3,
+          "line": 759
+        },
+        {
+          "heading": "7. Phase 2 — LLM-Inferred Edges + `:Tool` / `:Agent` / `:RoEConstraint`",
+          "level": 2,
+          "line": 765
+        },
+        {
+          "heading": "8. Phase 3 — Plasticity + Capability Plane",
+          "level": 2,
+          "line": 778
+        },
+        {
+          "heading": "9. Open Questions",
+          "level": 2,
+          "line": 788
+        },
+        {
+          "heading": "10. Migration Plan",
+          "level": 2,
+          "line": 802
+        },
+        {
+          "heading": "10.1 Phase 0 → 1a",
+          "level": 3,
+          "line": 804
+        },
+        {
+          "heading": "10.2 Phase 1a → 1b",
+          "level": 3,
+          "line": 815
+        },
+        {
+          "heading": "10.3 Plugin SDK compat",
+          "level": 3,
+          "line": 819
+        },
+        {
+          "heading": "11. Relation to Existing Code",
+          "level": 2,
+          "line": 825
+        },
+        {
+          "heading": "12. Effort Estimate",
+          "level": 2,
+          "line": 848
+        },
+        {
+          "heading": "13. Changelog",
+          "level": 2,
+          "line": 862
+        },
+        {
+          "heading": "14. References",
+          "level": 2,
+          "line": 874
+        },
+        {
+          "heading": "Internal",
+          "level": 3,
+          "line": 876
+        },
+        {
+          "heading": "MITRE (verified 2026-06-03)",
+          "level": 3,
+          "line": 884
+        },
+        {
+          "heading": "Prior art (selective)",
+          "level": 3,
+          "line": 896
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 61
+      }
+    },
+    {
+      "path": "docs/design/skillogy.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 733,
+      "nonEmptyLines": 575,
+      "sections": [
+        {
+          "heading": "Skillogy — Knowledge-Graph-Backed Skill System",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "TL;DR",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "1. Motivation",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "1.1 Current skill system",
+          "level": 3,
+          "line": 40
+        },
+        {
+          "heading": "1.2 Structural limitations (all confirmed by 2024–2026 research)",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "1.3 Research consensus (2024–2026)",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "2. Concept",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "2.1 One-line definition",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "2.2 Four principles",
+          "level": 3,
+          "line": 84
+        },
+        {
+          "heading": "2.3 Paradigm shift, side by side",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "2.4 What does **not** change",
+          "level": 3,
+          "line": 108
+        },
+        {
+          "heading": "3. Architecture",
+          "level": 2,
+          "line": 117
+        },
+        {
+          "heading": "4. Knowledge Graph Schema",
+          "level": 2,
+          "line": 176
+        },
+        {
+          "heading": "4.1 Node labels",
+          "level": 3,
+          "line": 178
+        },
+        {
+          "heading": "4.2 Edge types",
+          "level": 3,
+          "line": 194
+        },
+        {
+          "heading": "Explicit (provenance = `frontmatter` or `seed`)",
+          "level": 4,
+          "line": 196
+        },
+        {
+          "heading": "LLM-inferred — v0.1 scope (provenance = `body-llm`)",
+          "level": 4,
+          "line": 209
+        },
+        {
+          "heading": "Reserved for v0.2 (schema defined, not populated in v0.1)",
+          "level": 4,
+          "line": 218
+        },
+        {
+          "heading": "Bridge to the attack graph (runtime, not in `skills.cypher`)",
+          "level": 4,
+          "line": 228
+        },
+        {
+          "heading": "4.3 MITRE v19.1 considerations",
+          "level": 3,
+          "line": 236
+        },
+        {
+          "heading": "4.4 Engagement-graph bridge (runtime)",
+          "level": 3,
+          "line": 262
+        },
+        {
+          "heading": "5. Tool Interface",
+          "level": 2,
+          "line": 287
+        },
+        {
+          "heading": "5.1 `find_skill(query: str, phase: str | None = None, asset_hint: str | None = None, limit: int = 5)`",
+          "level": 3,
+          "line": 291
+        },
+        {
+          "heading": "5.2 `load_skill(name_or_path: str)`",
+          "level": 3,
+          "line": 315
+        },
+        {
+          "heading": "5.3 `get_prereqs(skill_name: str)`",
+          "level": 3,
+          "line": 319
+        },
+        {
+          "heading": "5.4 `suggest_next(last_skill: str, current_findings: dict | None = None)` *(v0.2)*",
+          "level": 3,
+          "line": 330
+        },
+        {
+          "heading": "5.5 `get_skill_chain(target_capability: str)` *(v0.2)*",
+          "level": 3,
+          "line": 334
+        },
+        {
+          "heading": "6. SkillogyMiddleware",
+          "level": 2,
+          "line": 342
+        },
+        {
+          "heading": "7. Build Pipeline",
+          "level": 2,
+          "line": 405
+        },
+        {
+          "heading": "7.1 Module layout",
+          "level": 3,
+          "line": 409
+        },
+        {
+          "heading": "7.2 The 12 stages",
+          "level": 3,
+          "line": 433
+        },
+        {
+          "heading": "7.3 Determinism",
+          "level": 3,
+          "line": 453
+        },
+        {
+          "heading": "8. Neo4j Setup",
+          "level": 2,
+          "line": 461
+        },
+        {
+          "heading": "8.1 Unique constraints",
+          "level": 3,
+          "line": 463
+        },
+        {
+          "heading": "8.2 Performance indexes",
+          "level": 3,
+          "line": 492
+        },
+        {
+          "heading": "8.3 GDS projection (for PPR)",
+          "level": 3,
+          "line": 504
+        },
+        {
+          "heading": "9. AssetType Seed (v0.1, ~35 nodes)",
+          "level": 2,
+          "line": 525
+        },
+        {
+          "heading": "10. Validation Rules",
+          "level": 2,
+          "line": 601
+        },
+        {
+          "heading": "11. Migration from `SkillsMiddleware`",
+          "level": 2,
+          "line": 660
+        },
+        {
+          "heading": "12. Open Questions",
+          "level": 2,
+          "line": 676
+        },
+        {
+          "heading": "13. References",
+          "level": 2,
+          "line": 691
+        },
+        {
+          "heading": "Internal docs",
+          "level": 3,
+          "line": 693
+        },
+        {
+          "heading": "MITRE",
+          "level": 3,
+          "line": 699
+        },
+        {
+          "heading": "Prior art (selected — full list maintained out-of-tree)",
+          "level": 3,
+          "line": 706
+        },
+        {
+          "heading": "Frameworks we considered but did not adopt for v0.1",
+          "level": 3,
+          "line": 719
+        },
+        {
+          "heading": "14. Changelog",
+          "level": 2,
+          "line": 731
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 46
+      }
+    }
+  ]
+}

@@ -1,0 +1,4394 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 17,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 17,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 17,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/mcp_server/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 13,
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/__main__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 131,
+      "nonEmptyLines": 116,
+      "functions": [
+        {
+          "name": "_build_parser",
+          "startLine": 22,
+          "endLine": 81,
+          "params": []
+        },
+        {
+          "name": "_apply_cli",
+          "startLine": 84,
+          "endLine": 103,
+          "params": [
+            "config",
+            "args"
+          ]
+        },
+        {
+          "name": "main",
+          "startLine": 106,
+          "endLine": 127,
+          "params": [
+            "argv"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_build_parser",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "_apply_cli",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 106,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_build_parser",
+          "callee": "argparse.ArgumentParser",
+          "lineNumber": 23
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 29
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 35
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 40
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 62
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 63
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 69
+        },
+        {
+          "caller": "_build_parser",
+          "callee": "parser.add_argument",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_apply_cli",
+          "callee": "tuple",
+          "lineNumber": 102
+        },
+        {
+          "caller": "_apply_cli",
+          "callee": "replace",
+          "lineNumber": 103
+        },
+        {
+          "caller": "main",
+          "callee": "_build_parser().parse_args",
+          "lineNumber": 107
+        },
+        {
+          "caller": "main",
+          "callee": "_build_parser",
+          "lineNumber": 107
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 112
+        },
+        {
+          "caller": "main",
+          "callee": "_apply_cli",
+          "lineNumber": 115
+        },
+        {
+          "caller": "main",
+          "callee": "load_config",
+          "lineNumber": 115
+        },
+        {
+          "caller": "main",
+          "callee": "open_bind_error",
+          "lineNumber": 116
+        },
+        {
+          "caller": "main",
+          "callee": "resolve_auth_mode",
+          "lineNumber": 116
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 118
+        },
+        {
+          "caller": "main",
+          "callee": "build_server",
+          "lineNumber": 122
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 124
+        },
+        {
+          "caller": "main",
+          "callee": "server.run",
+          "lineNumber": 126
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/auth.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 208,
+      "nonEmptyLines": 174,
+      "functions": [
+        {
+          "name": "is_loopback_host",
+          "startLine": 43,
+          "endLine": 45,
+          "params": [
+            "host"
+          ]
+        },
+        {
+          "name": "_claim_scopes",
+          "startLine": 119,
+          "endLine": 127,
+          "params": [
+            "claims"
+          ]
+        },
+        {
+          "name": "resolve_auth_mode",
+          "startLine": 130,
+          "endLine": 138,
+          "params": [
+            "config"
+          ]
+        },
+        {
+          "name": "open_bind_error",
+          "startLine": 141,
+          "endLine": 154,
+          "params": [
+            "mode",
+            "transport",
+            "host"
+          ]
+        },
+        {
+          "name": "build_auth",
+          "startLine": 157,
+          "endLine": 198,
+          "params": [
+            "config",
+            "host",
+            "port"
+          ]
+        },
+        {
+          "name": "_load_pem",
+          "startLine": 201,
+          "endLine": 208,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "SharedSecretVerifier",
+          "startLine": 48,
+          "endLine": 63,
+          "methods": [
+            "__init__",
+            "verify_token"
+          ],
+          "properties": []
+        },
+        {
+          "name": "JwtVerifier",
+          "startLine": 66,
+          "endLine": 116,
+          "methods": [
+            "__init__",
+            "verify_token"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "is_loopback_host",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "SharedSecretVerifier",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "JwtVerifier",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "_claim_scopes",
+          "line": 119,
+          "isDefault": false
+        },
+        {
+          "name": "resolve_auth_mode",
+          "line": 130,
+          "isDefault": false
+        },
+        {
+          "name": "open_bind_error",
+          "line": 141,
+          "isDefault": false
+        },
+        {
+          "name": "build_auth",
+          "line": 157,
+          "isDefault": false
+        },
+        {
+          "name": "_load_pem",
+          "line": 201,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "is_loopback_host",
+          "callee": "host.strip().lower",
+          "lineNumber": 45
+        },
+        {
+          "caller": "is_loopback_host",
+          "callee": "host.strip",
+          "lineNumber": 45
+        },
+        {
+          "caller": "verify_token",
+          "callee": "hmac.compare_digest",
+          "lineNumber": 56
+        },
+        {
+          "caller": "verify_token",
+          "callee": "AccessToken",
+          "lineNumber": 58
+        },
+        {
+          "caller": "__init__",
+          "callee": "jwt.PyJWKClient",
+          "lineNumber": 87
+        },
+        {
+          "caller": "verify_token",
+          "callee": "self._jwk_client.get_signing_key_from_jwt",
+          "lineNumber": 94
+        },
+        {
+          "caller": "verify_token",
+          "callee": "jwt.decode",
+          "lineNumber": 99
+        },
+        {
+          "caller": "verify_token",
+          "callee": "list",
+          "lineNumber": 102
+        },
+        {
+          "caller": "verify_token",
+          "callee": "AccessToken",
+          "lineNumber": 108
+        },
+        {
+          "caller": "verify_token",
+          "callee": "str",
+          "lineNumber": 110
+        },
+        {
+          "caller": "verify_token",
+          "callee": "claims.get",
+          "lineNumber": 111
+        },
+        {
+          "caller": "verify_token",
+          "callee": "claims.get",
+          "lineNumber": 111
+        },
+        {
+          "caller": "verify_token",
+          "callee": "claims.get",
+          "lineNumber": 111
+        },
+        {
+          "caller": "verify_token",
+          "callee": "_claim_scopes",
+          "lineNumber": 113
+        },
+        {
+          "caller": "verify_token",
+          "callee": "claims.get",
+          "lineNumber": 114
+        },
+        {
+          "caller": "_claim_scopes",
+          "callee": "claims.get",
+          "lineNumber": 121
+        },
+        {
+          "caller": "_claim_scopes",
+          "callee": "isinstance",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_claim_scopes",
+          "callee": "granted.split",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_claim_scopes",
+          "callee": "claims.get",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_claim_scopes",
+          "callee": "isinstance",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_claim_scopes",
+          "callee": "str",
+          "lineNumber": 126
+        },
+        {
+          "caller": "open_bind_error",
+          "callee": "is_loopback_host",
+          "lineNumber": 147
+        },
+        {
+          "caller": "build_auth",
+          "callee": "resolve_auth_mode",
+          "lineNumber": 166
+        },
+        {
+          "caller": "build_auth",
+          "callee": "ValueError",
+          "lineNumber": 173
+        },
+        {
+          "caller": "build_auth",
+          "callee": "SharedSecretVerifier",
+          "lineNumber": 174
+        },
+        {
+          "caller": "build_auth",
+          "callee": "AuthSettings",
+          "lineNumber": 175
+        },
+        {
+          "caller": "build_auth",
+          "callee": "AnyHttpUrl",
+          "lineNumber": 176
+        },
+        {
+          "caller": "build_auth",
+          "callee": "AnyHttpUrl",
+          "lineNumber": 177
+        },
+        {
+          "caller": "build_auth",
+          "callee": "ValueError",
+          "lineNumber": 182
+        },
+        {
+          "caller": "build_auth",
+          "callee": "ValueError",
+          "lineNumber": 184
+        },
+        {
+          "caller": "build_auth",
+          "callee": "ValueError",
+          "lineNumber": 186
+        },
+        {
+          "caller": "build_auth",
+          "callee": "JwtVerifier",
+          "lineNumber": 187
+        },
+        {
+          "caller": "build_auth",
+          "callee": "_load_pem",
+          "lineNumber": 191
+        },
+        {
+          "caller": "build_auth",
+          "callee": "AuthSettings",
+          "lineNumber": 193
+        },
+        {
+          "caller": "build_auth",
+          "callee": "AnyHttpUrl",
+          "lineNumber": 194
+        },
+        {
+          "caller": "build_auth",
+          "callee": "AnyHttpUrl",
+          "lineNumber": 195
+        },
+        {
+          "caller": "build_auth",
+          "callee": "list",
+          "lineNumber": 196
+        },
+        {
+          "caller": "build_auth",
+          "callee": "ValueError",
+          "lineNumber": 198
+        },
+        {
+          "caller": "_load_pem",
+          "callee": "Path",
+          "lineNumber": 205
+        },
+        {
+          "caller": "_load_pem",
+          "callee": "candidate.is_file",
+          "lineNumber": 206
+        },
+        {
+          "caller": "_load_pem",
+          "callee": "candidate.read_text",
+          "lineNumber": 207
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 8,
+        "functionCount": 6,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/config.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 99,
+      "nonEmptyLines": 83,
+      "functions": [
+        {
+          "name": "_parse_timeout",
+          "startLine": 60,
+          "endLine": 67,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "_parse_scopes",
+          "startLine": 70,
+          "endLine": 73,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "_parse_auth_mode",
+          "startLine": 76,
+          "endLine": 82,
+          "params": [
+            "raw"
+          ]
+        },
+        {
+          "name": "load_config",
+          "startLine": 85,
+          "endLine": 99,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "ServerConfig",
+          "startLine": 44,
+          "endLine": 57,
+          "methods": [],
+          "properties": [
+            "langgraph_url",
+            "default_assistant",
+            "request_timeout_seconds",
+            "auth_mode",
+            "auth_token",
+            "issuer",
+            "audience",
+            "jwks_uri",
+            "public_key",
+            "resource_url",
+            "required_scopes"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ServerConfig",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "_parse_timeout",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "_parse_scopes",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "_parse_auth_mode",
+          "line": 76,
+          "isDefault": false
+        },
+        {
+          "name": "load_config",
+          "line": 85,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_parse_timeout",
+          "callee": "float",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_parse_scopes",
+          "callee": "tuple",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_parse_scopes",
+          "callee": "raw.replace(\",\", \" \").split",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_parse_scopes",
+          "callee": "raw.replace",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_parse_auth_mode",
+          "callee": "raw.strip().lower",
+          "lineNumber": 79
+        },
+        {
+          "caller": "_parse_auth_mode",
+          "callee": "raw.strip",
+          "lineNumber": 79
+        },
+        {
+          "caller": "_parse_auth_mode",
+          "callee": "ValueError",
+          "lineNumber": 81
+        },
+        {
+          "caller": "_parse_auth_mode",
+          "callee": "sorted",
+          "lineNumber": 81
+        },
+        {
+          "caller": "load_config",
+          "callee": "ServerConfig",
+          "lineNumber": 87
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 88
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 89
+        },
+        {
+          "caller": "load_config",
+          "callee": "_parse_timeout",
+          "lineNumber": 90
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 90
+        },
+        {
+          "caller": "load_config",
+          "callee": "_parse_auth_mode",
+          "lineNumber": 91
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 91
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 92
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 93
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 94
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 95
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 96
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 97
+        },
+        {
+          "caller": "load_config",
+          "callee": "_parse_scopes",
+          "lineNumber": 98
+        },
+        {
+          "caller": "load_config",
+          "callee": "os.environ.get",
+          "lineNumber": 98
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/conversation.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 110,
+      "nonEmptyLines": 89,
+      "functions": [
+        {
+          "name": "_truncate",
+          "startLine": 21,
+          "endLine": 22,
+          "params": [
+            "text",
+            "limit"
+          ]
+        },
+        {
+          "name": "_content_text",
+          "startLine": 25,
+          "endLine": 37,
+          "params": [
+            "content"
+          ]
+        },
+        {
+          "name": "_tool_call_label",
+          "startLine": 40,
+          "endLine": 47,
+          "params": [
+            "call"
+          ]
+        },
+        {
+          "name": "_to_message",
+          "startLine": 50,
+          "endLine": 59,
+          "params": [
+            "index",
+            "raw"
+          ]
+        },
+        {
+          "name": "_messages",
+          "startLine": 62,
+          "endLine": 67,
+          "params": [
+            "state"
+          ]
+        },
+        {
+          "name": "build_transcript",
+          "startLine": 70,
+          "endLine": 85,
+          "params": [
+            "state",
+            "thread_id",
+            "run_status",
+            "after_index",
+            "limit"
+          ]
+        },
+        {
+          "name": "_compact_value",
+          "startLine": 88,
+          "endLine": 95,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "build_engagement_state",
+          "startLine": 98,
+          "endLine": 110,
+          "params": [
+            "state",
+            "thread_id",
+            "run_status"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_truncate",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "_content_text",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "_tool_call_label",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "_to_message",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "_messages",
+          "line": 62,
+          "isDefault": false
+        },
+        {
+          "name": "build_transcript",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "_compact_value",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "build_engagement_state",
+          "line": 98,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_truncate",
+          "callee": "len",
+          "lineNumber": 22
+        },
+        {
+          "caller": "_truncate",
+          "callee": "len",
+          "lineNumber": 22
+        },
+        {
+          "caller": "_content_text",
+          "callee": "isinstance",
+          "lineNumber": 27
+        },
+        {
+          "caller": "_content_text",
+          "callee": "isinstance",
+          "lineNumber": 29
+        },
+        {
+          "caller": "_content_text",
+          "callee": "isinstance",
+          "lineNumber": 32
+        },
+        {
+          "caller": "_content_text",
+          "callee": "parts.append",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_content_text",
+          "callee": "isinstance",
+          "lineNumber": 34
+        },
+        {
+          "caller": "_content_text",
+          "callee": "block.get",
+          "lineNumber": 34
+        },
+        {
+          "caller": "_content_text",
+          "callee": "parts.append",
+          "lineNumber": 35
+        },
+        {
+          "caller": "_content_text",
+          "callee": "str",
+          "lineNumber": 35
+        },
+        {
+          "caller": "_content_text",
+          "callee": "block.get",
+          "lineNumber": 35
+        },
+        {
+          "caller": "_content_text",
+          "callee": "\"\\n\".join",
+          "lineNumber": 36
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "str",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "call.get",
+          "lineNumber": 41
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "call.get",
+          "lineNumber": 42
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "isinstance",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "args.get",
+          "lineNumber": 44
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "args.get",
+          "lineNumber": 44
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "args.get",
+          "lineNumber": 44
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "_truncate",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_tool_call_label",
+          "callee": "str",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_to_message",
+          "callee": "str",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_to_message",
+          "callee": "raw.get",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_to_message",
+          "callee": "_tool_call_label",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_to_message",
+          "callee": "raw.get",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_to_message",
+          "callee": "isinstance",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_to_message",
+          "callee": "TranscriptMessage",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_to_message",
+          "callee": "_ROLE_MAP.get",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_to_message",
+          "callee": "_truncate",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_to_message",
+          "callee": "_content_text",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_to_message",
+          "callee": "raw.get",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_to_message",
+          "callee": "str",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_to_message",
+          "callee": "raw.get",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_messages",
+          "callee": "state.get",
+          "lineNumber": 63
+        },
+        {
+          "caller": "_messages",
+          "callee": "isinstance",
+          "lineNumber": 63
+        },
+        {
+          "caller": "_messages",
+          "callee": "isinstance",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_messages",
+          "callee": "values.get",
+          "lineNumber": 66
+        },
+        {
+          "caller": "_messages",
+          "callee": "isinstance",
+          "lineNumber": 67
+        },
+        {
+          "caller": "_messages",
+          "callee": "isinstance",
+          "lineNumber": 67
+        },
+        {
+          "caller": "build_transcript",
+          "callee": "_messages",
+          "lineNumber": 74
+        },
+        {
+          "caller": "build_transcript",
+          "callee": "len",
+          "lineNumber": 75
+        },
+        {
+          "caller": "build_transcript",
+          "callee": "max",
+          "lineNumber": 76
+        },
+        {
+          "caller": "build_transcript",
+          "callee": "_to_message",
+          "lineNumber": 78
+        },
+        {
+          "caller": "build_transcript",
+          "callee": "enumerate",
+          "lineNumber": 78
+        },
+        {
+          "caller": "build_transcript",
+          "callee": "Transcript",
+          "lineNumber": 79
+        },
+        {
+          "caller": "build_transcript",
+          "callee": "len",
+          "lineNumber": 83
+        },
+        {
+          "caller": "_compact_value",
+          "callee": "json.dumps",
+          "lineNumber": 90
+        },
+        {
+          "caller": "_compact_value",
+          "callee": "_truncate",
+          "lineNumber": 92
+        },
+        {
+          "caller": "_compact_value",
+          "callee": "str",
+          "lineNumber": 92
+        },
+        {
+          "caller": "_compact_value",
+          "callee": "len",
+          "lineNumber": 93
+        },
+        {
+          "caller": "_compact_value",
+          "callee": "len",
+          "lineNumber": 95
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "state.get",
+          "lineNumber": 100
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "isinstance",
+          "lineNumber": 100
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "isinstance",
+          "lineNumber": 101
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "values.get",
+          "lineNumber": 102
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "_compact_value",
+          "lineNumber": 103
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "values.items",
+          "lineNumber": 103
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "EngagementState",
+          "lineNumber": 104
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "str",
+          "lineNumber": 106
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "len",
+          "lineNumber": 108
+        },
+        {
+          "caller": "build_engagement_state",
+          "callee": "_messages",
+          "lineNumber": 108
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 8,
+        "functionCount": 8,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/engagements.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 235,
+      "nonEmptyLines": 203,
+      "functions": [
+        {
+          "name": "_split_model_command",
+          "startLine": 38,
+          "endLine": 53,
+          "params": [
+            "message"
+          ]
+        },
+        {
+          "name": "_engagement_input",
+          "startLine": 218,
+          "endLine": 231,
+          "params": [
+            "scope_payload",
+            "engagement_name"
+          ]
+        },
+        {
+          "name": "_opt_str",
+          "startLine": 234,
+          "endLine": 235,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "EngagementClient",
+          "startLine": 56,
+          "endLine": 215,
+          "methods": [
+            "__init__",
+            "_ensure_client",
+            "list_graphs",
+            "list_engagements",
+            "get_state",
+            "latest_run",
+            "start",
+            "send_message",
+            "cancel",
+            "watch"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_split_model_command",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "EngagementClient",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "_engagement_input",
+          "line": 218,
+          "isDefault": false
+        },
+        {
+          "name": "_opt_str",
+          "line": 234,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_split_model_command",
+          "callee": "message.lstrip().split",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_split_model_command",
+          "callee": "message.lstrip",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_split_model_command",
+          "callee": "len",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_split_model_command",
+          "callee": "parts[0].lower",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_split_model_command",
+          "callee": "len",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_ensure_client",
+          "callee": "get_client",
+          "lineNumber": 72
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "self._ensure_client",
+          "lineNumber": 77
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "client.assistants.search",
+          "lineNumber": 78
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "GraphInfo",
+          "lineNumber": 80
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "str",
+          "lineNumber": 81
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "entry.get",
+          "lineNumber": 81
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "str",
+          "lineNumber": 82
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "entry.get",
+          "lineNumber": 82
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "str",
+          "lineNumber": 83
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "entry.get",
+          "lineNumber": 83
+        },
+        {
+          "caller": "list_graphs",
+          "callee": "entry.get",
+          "lineNumber": 83
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "self._ensure_client",
+          "lineNumber": 90
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "client.threads.search",
+          "lineNumber": 91
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "thread.get",
+          "lineNumber": 94
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "values.get",
+          "lineNumber": 95
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "isinstance",
+          "lineNumber": 95
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "summaries.append",
+          "lineNumber": 96
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "EngagementSummary",
+          "lineNumber": 97
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "str",
+          "lineNumber": 98
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "thread.get",
+          "lineNumber": 98
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "str",
+          "lineNumber": 99
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "str",
+          "lineNumber": 100
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "thread.get",
+          "lineNumber": 100
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "_opt_str",
+          "lineNumber": 101
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "thread.get",
+          "lineNumber": 101
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "_opt_str",
+          "lineNumber": 102
+        },
+        {
+          "caller": "list_engagements",
+          "callee": "thread.get",
+          "lineNumber": 102
+        },
+        {
+          "caller": "get_state",
+          "callee": "self._ensure_client",
+          "lineNumber": 109
+        },
+        {
+          "caller": "get_state",
+          "callee": "client.threads.get_state",
+          "lineNumber": 110
+        },
+        {
+          "caller": "latest_run",
+          "callee": "self._ensure_client",
+          "lineNumber": 114
+        },
+        {
+          "caller": "latest_run",
+          "callee": "client.runs.list",
+          "lineNumber": 115
+        },
+        {
+          "caller": "start",
+          "callee": "list",
+          "lineNumber": 129
+        },
+        {
+          "caller": "start",
+          "callee": "self._ensure_client",
+          "lineNumber": 139
+        },
+        {
+          "caller": "start",
+          "callee": "client.threads.create",
+          "lineNumber": 140
+        },
+        {
+          "caller": "start",
+          "callee": "str",
+          "lineNumber": 141
+        },
+        {
+          "caller": "start",
+          "callee": "client.runs.create",
+          "lineNumber": 142
+        },
+        {
+          "caller": "start",
+          "callee": "_engagement_input",
+          "lineNumber": 145
+        },
+        {
+          "caller": "start",
+          "callee": "log.info",
+          "lineNumber": 148
+        },
+        {
+          "caller": "start",
+          "callee": "StartResult",
+          "lineNumber": 149
+        },
+        {
+          "caller": "start",
+          "callee": "str",
+          "lineNumber": 152
+        },
+        {
+          "caller": "start",
+          "callee": "str",
+          "lineNumber": 154
+        },
+        {
+          "caller": "start",
+          "callee": "run.get",
+          "lineNumber": 154
+        },
+        {
+          "caller": "send_message",
+          "callee": "self._ensure_client",
+          "lineNumber": 167
+        },
+        {
+          "caller": "send_message",
+          "callee": "self.latest_run",
+          "lineNumber": 170
+        },
+        {
+          "caller": "send_message",
+          "callee": "str",
+          "lineNumber": 171
+        },
+        {
+          "caller": "send_message",
+          "callee": "latest.get",
+          "lineNumber": 171
+        },
+        {
+          "caller": "send_message",
+          "callee": "_split_model_command",
+          "lineNumber": 173
+        },
+        {
+          "caller": "send_message",
+          "callee": "client.runs.create",
+          "lineNumber": 188
+        },
+        {
+          "caller": "send_message",
+          "callee": "RunHandle",
+          "lineNumber": 189
+        },
+        {
+          "caller": "send_message",
+          "callee": "str",
+          "lineNumber": 191
+        },
+        {
+          "caller": "send_message",
+          "callee": "str",
+          "lineNumber": 193
+        },
+        {
+          "caller": "send_message",
+          "callee": "run.get",
+          "lineNumber": 193
+        },
+        {
+          "caller": "cancel",
+          "callee": "self.latest_run",
+          "lineNumber": 198
+        },
+        {
+          "caller": "cancel",
+          "callee": "str",
+          "lineNumber": 199
+        },
+        {
+          "caller": "cancel",
+          "callee": "latest.get",
+          "lineNumber": 199
+        },
+        {
+          "caller": "cancel",
+          "callee": "str",
+          "lineNumber": 201
+        },
+        {
+          "caller": "cancel",
+          "callee": "self._ensure_client().runs.cancel",
+          "lineNumber": 202
+        },
+        {
+          "caller": "cancel",
+          "callee": "self._ensure_client",
+          "lineNumber": 202
+        },
+        {
+          "caller": "watch",
+          "callee": "watch_run",
+          "lineNumber": 209
+        },
+        {
+          "caller": "watch",
+          "callee": "self._ensure_client",
+          "lineNumber": 210
+        },
+        {
+          "caller": "_engagement_input",
+          "callee": "json.dumps",
+          "lineNumber": 225
+        },
+        {
+          "caller": "_opt_str",
+          "callee": "str",
+          "lineNumber": 235
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 4,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/findings.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 105,
+      "nonEmptyLines": 86,
+      "functions": [
+        {
+          "name": "engagement_workspace",
+          "startLine": 25,
+          "endLine": 47,
+          "params": [
+            "engagement_name"
+          ]
+        },
+        {
+          "name": "load_findings_graph",
+          "startLine": 50,
+          "endLine": 68,
+          "params": [
+            "engagement_name"
+          ]
+        },
+        {
+          "name": "_count_levels",
+          "startLine": 71,
+          "endLine": 76,
+          "params": [
+            "results"
+          ]
+        },
+        {
+          "name": "summarize_findings",
+          "startLine": 79,
+          "endLine": 105,
+          "params": [
+            "graph",
+            "engagement_name",
+            "include_sarif"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "engagement_workspace",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "load_findings_graph",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "_count_levels",
+          "line": 71,
+          "isDefault": false
+        },
+        {
+          "name": "summarize_findings",
+          "line": 79,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "engagement_workspace",
+          "callee": "is_valid_engagement_label",
+          "lineNumber": 39
+        },
+        {
+          "caller": "engagement_workspace",
+          "callee": "ValueError",
+          "lineNumber": 40
+        },
+        {
+          "caller": "engagement_workspace",
+          "callee": "os.environ.get",
+          "lineNumber": 44
+        },
+        {
+          "caller": "engagement_workspace",
+          "callee": "Path",
+          "lineNumber": 46
+        },
+        {
+          "caller": "engagement_workspace",
+          "callee": "Path.home",
+          "lineNumber": 47
+        },
+        {
+          "caller": "load_findings_graph",
+          "callee": "is_valid_engagement_label",
+          "lineNumber": 57
+        },
+        {
+          "caller": "load_findings_graph",
+          "callee": "log.warning",
+          "lineNumber": 58
+        },
+        {
+          "caller": "load_findings_graph",
+          "callee": "engagement_workspace",
+          "lineNumber": 60
+        },
+        {
+          "caller": "load_findings_graph",
+          "callee": "graph_path.exists",
+          "lineNumber": 61
+        },
+        {
+          "caller": "load_findings_graph",
+          "callee": "log.info",
+          "lineNumber": 62
+        },
+        {
+          "caller": "load_findings_graph",
+          "callee": "KnowledgeGraph.from_json",
+          "lineNumber": 68
+        },
+        {
+          "caller": "load_findings_graph",
+          "callee": "graph_path.read_text",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_count_levels",
+          "callee": "str",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_count_levels",
+          "callee": "result.get",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_count_levels",
+          "callee": "counts.get",
+          "lineNumber": 75
+        },
+        {
+          "caller": "summarize_findings",
+          "callee": "FindingsResult",
+          "lineNumber": 87
+        },
+        {
+          "caller": "summarize_findings",
+          "callee": "export_findings_to_sarif",
+          "lineNumber": 96
+        },
+        {
+          "caller": "summarize_findings",
+          "callee": "doc.get",
+          "lineNumber": 97
+        },
+        {
+          "caller": "summarize_findings",
+          "callee": "runs[0].get",
+          "lineNumber": 98
+        },
+        {
+          "caller": "summarize_findings",
+          "callee": "FindingsResult",
+          "lineNumber": 99
+        },
+        {
+          "caller": "summarize_findings",
+          "callee": "len",
+          "lineNumber": 102
+        },
+        {
+          "caller": "summarize_findings",
+          "callee": "_count_levels",
+          "lineNumber": 103
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/models.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 143,
+      "nonEmptyLines": 94,
+      "classes": [
+        {
+          "name": "GraphInfo",
+          "startLine": 20,
+          "endLine": 27,
+          "methods": [],
+          "properties": [
+            "assistant_id",
+            "graph_id",
+            "name"
+          ]
+        },
+        {
+          "name": "StartResult",
+          "startLine": 30,
+          "endLine": 40,
+          "methods": [],
+          "properties": [
+            "engagement_name",
+            "thread_id",
+            "run_id",
+            "assistant",
+            "status",
+            "langgraph_url"
+          ]
+        },
+        {
+          "name": "RunHandle",
+          "startLine": 43,
+          "endLine": 51,
+          "methods": [],
+          "properties": [
+            "thread_id",
+            "run_id",
+            "assistant",
+            "status"
+          ]
+        },
+        {
+          "name": "StatusResult",
+          "startLine": 54,
+          "endLine": 62,
+          "methods": [],
+          "properties": [
+            "thread_id",
+            "run_id",
+            "status",
+            "findings_available"
+          ]
+        },
+        {
+          "name": "EngagementSummary",
+          "startLine": 65,
+          "endLine": 74,
+          "methods": [],
+          "properties": [
+            "thread_id",
+            "engagement_name",
+            "status",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        {
+          "name": "TranscriptMessage",
+          "startLine": 77,
+          "endLine": 86,
+          "methods": [],
+          "properties": [
+            "index",
+            "role",
+            "text",
+            "tool_calls",
+            "name"
+          ]
+        },
+        {
+          "name": "Transcript",
+          "startLine": 89,
+          "endLine": 98,
+          "methods": [],
+          "properties": [
+            "thread_id",
+            "run_status",
+            "total",
+            "next_index",
+            "messages"
+          ]
+        },
+        {
+          "name": "EngagementState",
+          "startLine": 101,
+          "endLine": 110,
+          "methods": [],
+          "properties": [
+            "thread_id",
+            "engagement_name",
+            "run_status",
+            "message_count",
+            "values"
+          ]
+        },
+        {
+          "name": "StreamEvent",
+          "startLine": 113,
+          "endLine": 119,
+          "methods": [],
+          "properties": [
+            "event",
+            "data"
+          ]
+        },
+        {
+          "name": "WatchResult",
+          "startLine": 122,
+          "endLine": 131,
+          "methods": [],
+          "properties": [
+            "thread_id",
+            "run_id",
+            "run_status",
+            "events",
+            "truncated"
+          ]
+        },
+        {
+          "name": "FindingsResult",
+          "startLine": 134,
+          "endLine": 143,
+          "methods": [],
+          "properties": [
+            "engagement_name",
+            "available",
+            "result_count",
+            "level_counts",
+            "sarif"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "GraphInfo",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "StartResult",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "RunHandle",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "StatusResult",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "EngagementSummary",
+          "line": 65,
+          "isDefault": false
+        },
+        {
+          "name": "TranscriptMessage",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "Transcript",
+          "line": 89,
+          "isDefault": false
+        },
+        {
+          "name": "EngagementState",
+          "line": 101,
+          "isDefault": false
+        },
+        {
+          "name": "StreamEvent",
+          "line": 113,
+          "isDefault": false
+        },
+        {
+          "name": "WatchResult",
+          "line": 122,
+          "isDefault": false
+        },
+        {
+          "name": "FindingsResult",
+          "line": 134,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 11,
+        "functionCount": 0,
+        "classCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/server.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 53,
+      "nonEmptyLines": 43,
+      "functions": [
+        {
+          "name": "build_server",
+          "startLine": 35,
+          "endLine": 53,
+          "params": [
+            "config",
+            "client",
+            "host",
+            "port"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "build_server",
+          "line": 35,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "build_server",
+          "callee": "load_config",
+          "lineNumber": 47
+        },
+        {
+          "caller": "build_server",
+          "callee": "EngagementClient",
+          "lineNumber": 48
+        },
+        {
+          "caller": "build_server",
+          "callee": "build_auth",
+          "lineNumber": 49
+        },
+        {
+          "caller": "build_server",
+          "callee": "FastMCP",
+          "lineNumber": 50
+        },
+        {
+          "caller": "build_server",
+          "callee": "register_lifecycle_tools",
+          "lineNumber": 51
+        },
+        {
+          "caller": "build_server",
+          "callee": "register_interactive_tools",
+          "lineNumber": 52
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/streaming.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 65,
+      "nonEmptyLines": 53,
+      "functions": [
+        {
+          "name": "_compact",
+          "startLine": 22,
+          "endLine": 27,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "watch_run",
+          "startLine": 30,
+          "endLine": 65,
+          "params": [
+            "client",
+            "thread_id",
+            "run_id",
+            "max_seconds",
+            "max_events"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_compact",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "watch_run",
+          "line": 30,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_compact",
+          "callee": "json.dumps",
+          "lineNumber": 24
+        },
+        {
+          "caller": "_compact",
+          "callee": "str",
+          "lineNumber": 26
+        },
+        {
+          "caller": "_compact",
+          "callee": "len",
+          "lineNumber": 27
+        },
+        {
+          "caller": "_collect",
+          "callee": "client.runs.join_stream",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_collect",
+          "callee": "getattr",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_collect",
+          "callee": "getattr",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_collect",
+          "callee": "events.append",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_collect",
+          "callee": "StreamEvent",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_collect",
+          "callee": "str",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_collect",
+          "callee": "_compact",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_collect",
+          "callee": "len",
+          "lineNumber": 54
+        },
+        {
+          "caller": "watch_run",
+          "callee": "asyncio.wait_for",
+          "lineNumber": 59
+        },
+        {
+          "caller": "watch_run",
+          "callee": "_collect",
+          "lineNumber": 59
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/tools_interactive.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 124,
+      "nonEmptyLines": 103,
+      "functions": [
+        {
+          "name": "_clamp",
+          "startLine": 25,
+          "endLine": 26,
+          "params": [
+            "value",
+            "low",
+            "high"
+          ]
+        },
+        {
+          "name": "_run_status",
+          "startLine": 29,
+          "endLine": 33,
+          "params": [
+            "engagements",
+            "thread_id"
+          ]
+        },
+        {
+          "name": "register_interactive_tools",
+          "startLine": 36,
+          "endLine": 124,
+          "params": [
+            "mcp",
+            "engagements"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_clamp",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "_run_status",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "register_interactive_tools",
+          "line": 36,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_clamp",
+          "callee": "max",
+          "lineNumber": 26
+        },
+        {
+          "caller": "_clamp",
+          "callee": "min",
+          "lineNumber": 26
+        },
+        {
+          "caller": "_run_status",
+          "callee": "engagements.latest_run",
+          "lineNumber": 30
+        },
+        {
+          "caller": "_run_status",
+          "callee": "str",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_run_status",
+          "callee": "latest.get",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_run_status",
+          "callee": "str",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_run_status",
+          "callee": "latest.get",
+          "lineNumber": 33
+        },
+        {
+          "caller": "register_interactive_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 39
+        },
+        {
+          "caller": "decepticon_list_engagements",
+          "callee": "engagements.list_engagements",
+          "lineNumber": 46
+        },
+        {
+          "caller": "decepticon_list_engagements",
+          "callee": "_clamp",
+          "lineNumber": 46
+        },
+        {
+          "caller": "register_interactive_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 48
+        },
+        {
+          "caller": "decepticon_send_message",
+          "callee": "engagements.send_message",
+          "lineNumber": 58
+        },
+        {
+          "caller": "register_interactive_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 62
+        },
+        {
+          "caller": "decepticon_transcript",
+          "callee": "_run_status",
+          "lineNumber": 72
+        },
+        {
+          "caller": "decepticon_transcript",
+          "callee": "engagements.get_state",
+          "lineNumber": 73
+        },
+        {
+          "caller": "decepticon_transcript",
+          "callee": "build_transcript",
+          "lineNumber": 74
+        },
+        {
+          "caller": "decepticon_transcript",
+          "callee": "_clamp",
+          "lineNumber": 79
+        },
+        {
+          "caller": "register_interactive_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 82
+        },
+        {
+          "caller": "decepticon_engagement_state",
+          "callee": "_run_status",
+          "lineNumber": 89
+        },
+        {
+          "caller": "decepticon_engagement_state",
+          "callee": "engagements.get_state",
+          "lineNumber": 90
+        },
+        {
+          "caller": "decepticon_engagement_state",
+          "callee": "build_engagement_state",
+          "lineNumber": 91
+        },
+        {
+          "caller": "register_interactive_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 93
+        },
+        {
+          "caller": "decepticon_watch",
+          "callee": "_run_status",
+          "lineNumber": 103
+        },
+        {
+          "caller": "decepticon_watch",
+          "callee": "WatchResult",
+          "lineNumber": 105
+        },
+        {
+          "caller": "decepticon_watch",
+          "callee": "engagements.watch",
+          "lineNumber": 112
+        },
+        {
+          "caller": "decepticon_watch",
+          "callee": "float",
+          "lineNumber": 115
+        },
+        {
+          "caller": "decepticon_watch",
+          "callee": "_clamp",
+          "lineNumber": 115
+        },
+        {
+          "caller": "decepticon_watch",
+          "callee": "_clamp",
+          "lineNumber": 116
+        },
+        {
+          "caller": "decepticon_watch",
+          "callee": "WatchResult",
+          "lineNumber": 118
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/mcp_server/tools_lifecycle.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 123,
+      "nonEmptyLines": 105,
+      "functions": [
+        {
+          "name": "default_engagement_name",
+          "startLine": 26,
+          "endLine": 27,
+          "params": []
+        },
+        {
+          "name": "register_lifecycle_tools",
+          "startLine": 30,
+          "endLine": 123,
+          "params": [
+            "mcp",
+            "engagements",
+            "config"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "default_engagement_name",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "register_lifecycle_tools",
+          "line": 30,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "default_engagement_name",
+          "callee": "datetime.now(UTC).strftime",
+          "lineNumber": 27
+        },
+        {
+          "caller": "default_engagement_name",
+          "callee": "datetime.now",
+          "lineNumber": 27
+        },
+        {
+          "caller": "register_lifecycle_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 35
+        },
+        {
+          "caller": "decepticon_list_graphs",
+          "callee": "engagements.list_graphs",
+          "lineNumber": 43
+        },
+        {
+          "caller": "register_lifecycle_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 45
+        },
+        {
+          "caller": "decepticon_start_engagement",
+          "callee": "default_engagement_name",
+          "lineNumber": 65
+        },
+        {
+          "caller": "decepticon_start_engagement",
+          "callee": "is_valid_engagement_label",
+          "lineNumber": 66
+        },
+        {
+          "caller": "decepticon_start_engagement",
+          "callee": "ValueError",
+          "lineNumber": 67
+        },
+        {
+          "caller": "decepticon_start_engagement",
+          "callee": "engagements.start",
+          "lineNumber": 71
+        },
+        {
+          "caller": "register_lifecycle_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 79
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "engagements.latest_run",
+          "lineNumber": 89
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "str",
+          "lineNumber": 90
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "str",
+          "lineNumber": 91
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "latest.get",
+          "lineNumber": 91
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "bool",
+          "lineNumber": 93
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "is_valid_engagement_label",
+          "lineNumber": 94
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "(engagement_workspace(engagement_name) / \"graph.json\").exists",
+          "lineNumber": 95
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "engagement_workspace",
+          "lineNumber": 95
+        },
+        {
+          "caller": "decepticon_engagement_status",
+          "callee": "StatusResult",
+          "lineNumber": 97
+        },
+        {
+          "caller": "register_lifecycle_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 104
+        },
+        {
+          "caller": "decepticon_engagement_findings",
+          "callee": "load_findings_graph",
+          "lineNumber": 114
+        },
+        {
+          "caller": "decepticon_engagement_findings",
+          "callee": "summarize_findings",
+          "lineNumber": 115
+        },
+        {
+          "caller": "register_lifecycle_tools",
+          "callee": "mcp.tool",
+          "lineNumber": 119
+        },
+        {
+          "caller": "decepticon_cancel_engagement",
+          "callee": "engagements.cancel",
+          "lineNumber": 122
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/mcp_server/test_auth.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 215,
+      "nonEmptyLines": 155,
+      "functions": [
+        {
+          "name": "_cfg",
+          "startLine": 27,
+          "endLine": 34,
+          "params": []
+        },
+        {
+          "name": "test_is_loopback_host",
+          "startLine": 49,
+          "endLine": 50,
+          "params": [
+            "host",
+            "expected"
+          ]
+        },
+        {
+          "name": "test_resolve_mode_none_by_default",
+          "startLine": 53,
+          "endLine": 54,
+          "params": []
+        },
+        {
+          "name": "test_resolve_mode_infers_shared_secret_from_token",
+          "startLine": 57,
+          "endLine": 58,
+          "params": []
+        },
+        {
+          "name": "test_resolve_mode_infers_jwt_from_issuer_and_key",
+          "startLine": 61,
+          "endLine": 62,
+          "params": []
+        },
+        {
+          "name": "test_resolve_mode_explicit_override_wins_over_inference",
+          "startLine": 65,
+          "endLine": 66,
+          "params": []
+        },
+        {
+          "name": "test_open_bind_blocks_public_http_without_auth",
+          "startLine": 69,
+          "endLine": 70,
+          "params": []
+        },
+        {
+          "name": "test_open_bind_allows_loopback_without_auth",
+          "startLine": 73,
+          "endLine": 74,
+          "params": []
+        },
+        {
+          "name": "test_open_bind_allows_public_http_with_auth",
+          "startLine": 77,
+          "endLine": 78,
+          "params": []
+        },
+        {
+          "name": "test_open_bind_ignores_stdio",
+          "startLine": 81,
+          "endLine": 82,
+          "params": []
+        },
+        {
+          "name": "test_build_auth_none_returns_nothing",
+          "startLine": 85,
+          "endLine": 86,
+          "params": []
+        },
+        {
+          "name": "test_shared_secret_accepts_exact_token",
+          "startLine": 89,
+          "endLine": 94,
+          "params": []
+        },
+        {
+          "name": "test_shared_secret_rejects_wrong_and_empty_token",
+          "startLine": 97,
+          "endLine": 101,
+          "params": []
+        },
+        {
+          "name": "test_shared_secret_empty_secret_is_error",
+          "startLine": 104,
+          "endLine": 106,
+          "params": []
+        },
+        {
+          "name": "rsa_keys",
+          "startLine": 110,
+          "endLine": 122,
+          "params": []
+        },
+        {
+          "name": "_jwt_cfg",
+          "startLine": 125,
+          "endLine": 126,
+          "params": [
+            "pub"
+          ]
+        },
+        {
+          "name": "test_jwt_accepts_valid_token_and_reads_scopes",
+          "startLine": 129,
+          "endLine": 144,
+          "params": [
+            "rsa_keys"
+          ]
+        },
+        {
+          "name": "test_jwt_rejects_wrong_audience",
+          "startLine": 147,
+          "endLine": 154,
+          "params": [
+            "rsa_keys"
+          ]
+        },
+        {
+          "name": "test_jwt_rejects_wrong_issuer",
+          "startLine": 157,
+          "endLine": 164,
+          "params": [
+            "rsa_keys"
+          ]
+        },
+        {
+          "name": "test_jwt_rejects_garbage_token",
+          "startLine": 167,
+          "endLine": 171,
+          "params": [
+            "rsa_keys"
+          ]
+        },
+        {
+          "name": "test_jwt_requires_issuer",
+          "startLine": 174,
+          "endLine": 178,
+          "params": []
+        },
+        {
+          "name": "test_jwt_requires_audience",
+          "startLine": 181,
+          "endLine": 187,
+          "params": []
+        },
+        {
+          "name": "test_jwt_requires_a_key_source",
+          "startLine": 190,
+          "endLine": 194,
+          "params": []
+        },
+        {
+          "name": "_middleware_names",
+          "startLine": 197,
+          "endLine": 201,
+          "params": [
+            "app"
+          ]
+        },
+        {
+          "name": "test_build_server_installs_auth_middleware_when_secret_set",
+          "startLine": 204,
+          "endLine": 208,
+          "params": []
+        },
+        {
+          "name": "test_build_server_skips_auth_middleware_when_unset",
+          "startLine": 211,
+          "endLine": 215,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_cfg",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "test_is_loopback_host",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_mode_none_by_default",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_mode_infers_shared_secret_from_token",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_mode_infers_jwt_from_issuer_and_key",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "test_resolve_mode_explicit_override_wins_over_inference",
+          "line": 65,
+          "isDefault": false
+        },
+        {
+          "name": "test_open_bind_blocks_public_http_without_auth",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "test_open_bind_allows_loopback_without_auth",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "test_open_bind_allows_public_http_with_auth",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "test_open_bind_ignores_stdio",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "test_build_auth_none_returns_nothing",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "test_shared_secret_accepts_exact_token",
+          "line": 89,
+          "isDefault": false
+        },
+        {
+          "name": "test_shared_secret_rejects_wrong_and_empty_token",
+          "line": 97,
+          "isDefault": false
+        },
+        {
+          "name": "test_shared_secret_empty_secret_is_error",
+          "line": 104,
+          "isDefault": false
+        },
+        {
+          "name": "rsa_keys",
+          "line": 109,
+          "isDefault": false
+        },
+        {
+          "name": "_jwt_cfg",
+          "line": 125,
+          "isDefault": false
+        },
+        {
+          "name": "test_jwt_accepts_valid_token_and_reads_scopes",
+          "line": 129,
+          "isDefault": false
+        },
+        {
+          "name": "test_jwt_rejects_wrong_audience",
+          "line": 147,
+          "isDefault": false
+        },
+        {
+          "name": "test_jwt_rejects_wrong_issuer",
+          "line": 157,
+          "isDefault": false
+        },
+        {
+          "name": "test_jwt_rejects_garbage_token",
+          "line": 167,
+          "isDefault": false
+        },
+        {
+          "name": "test_jwt_requires_issuer",
+          "line": 174,
+          "isDefault": false
+        },
+        {
+          "name": "test_jwt_requires_audience",
+          "line": 181,
+          "isDefault": false
+        },
+        {
+          "name": "test_jwt_requires_a_key_source",
+          "line": 190,
+          "isDefault": false
+        },
+        {
+          "name": "_middleware_names",
+          "line": 197,
+          "isDefault": false
+        },
+        {
+          "name": "test_build_server_installs_auth_middleware_when_secret_set",
+          "line": 204,
+          "isDefault": false
+        },
+        {
+          "name": "test_build_server_skips_auth_middleware_when_unset",
+          "line": 211,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_cfg",
+          "callee": "base.update",
+          "lineNumber": 33
+        },
+        {
+          "caller": "_cfg",
+          "callee": "ServerConfig",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_is_loopback_host",
+          "callee": "is_loopback_host",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_resolve_mode_none_by_default",
+          "callee": "resolve_auth_mode",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_resolve_mode_none_by_default",
+          "callee": "_cfg",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_resolve_mode_infers_shared_secret_from_token",
+          "callee": "resolve_auth_mode",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_resolve_mode_infers_shared_secret_from_token",
+          "callee": "_cfg",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_resolve_mode_infers_jwt_from_issuer_and_key",
+          "callee": "resolve_auth_mode",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_resolve_mode_infers_jwt_from_issuer_and_key",
+          "callee": "_cfg",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_resolve_mode_explicit_override_wins_over_inference",
+          "callee": "resolve_auth_mode",
+          "lineNumber": 66
+        },
+        {
+          "caller": "test_resolve_mode_explicit_override_wins_over_inference",
+          "callee": "_cfg",
+          "lineNumber": 66
+        },
+        {
+          "caller": "test_open_bind_blocks_public_http_without_auth",
+          "callee": "open_bind_error",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_open_bind_allows_loopback_without_auth",
+          "callee": "open_bind_error",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_open_bind_allows_public_http_with_auth",
+          "callee": "open_bind_error",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_open_bind_ignores_stdio",
+          "callee": "open_bind_error",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_build_auth_none_returns_nothing",
+          "callee": "build_auth",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_build_auth_none_returns_nothing",
+          "callee": "_cfg",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_shared_secret_accepts_exact_token",
+          "callee": "build_auth",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_shared_secret_accepts_exact_token",
+          "callee": "_cfg",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_shared_secret_accepts_exact_token",
+          "callee": "asyncio.run",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_shared_secret_accepts_exact_token",
+          "callee": "verifier.verify_token",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_shared_secret_rejects_wrong_and_empty_token",
+          "callee": "build_auth",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_shared_secret_rejects_wrong_and_empty_token",
+          "callee": "_cfg",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_shared_secret_rejects_wrong_and_empty_token",
+          "callee": "asyncio.run",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_shared_secret_rejects_wrong_and_empty_token",
+          "callee": "verifier.verify_token",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_shared_secret_rejects_wrong_and_empty_token",
+          "callee": "asyncio.run",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_shared_secret_rejects_wrong_and_empty_token",
+          "callee": "verifier.verify_token",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_shared_secret_empty_secret_is_error",
+          "callee": "pytest.raises",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_shared_secret_empty_secret_is_error",
+          "callee": "build_auth",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_shared_secret_empty_secret_is_error",
+          "callee": "_cfg",
+          "lineNumber": 106
+        },
+        {
+          "caller": "rsa_keys",
+          "callee": "rsa.generate_private_key",
+          "lineNumber": 111
+        },
+        {
+          "caller": "rsa_keys",
+          "callee": "key.private_bytes(\n        serialization.Encoding.PEM,\n        serialization.PrivateFormat.PKCS8,\n        serialization.NoEncryption(),\n    ).decode",
+          "lineNumber": 112
+        },
+        {
+          "caller": "rsa_keys",
+          "callee": "key.private_bytes",
+          "lineNumber": 112
+        },
+        {
+          "caller": "rsa_keys",
+          "callee": "serialization.NoEncryption",
+          "lineNumber": 115
+        },
+        {
+          "caller": "rsa_keys",
+          "callee": "key.public_key()\n        .public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)\n        .decode",
+          "lineNumber": 118
+        },
+        {
+          "caller": "rsa_keys",
+          "callee": "key.public_key()\n        .public_bytes",
+          "lineNumber": 118
+        },
+        {
+          "caller": "rsa_keys",
+          "callee": "key.public_key",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_jwt_cfg",
+          "callee": "_cfg",
+          "lineNumber": 126
+        },
+        {
+          "caller": "test_jwt_accepts_valid_token_and_reads_scopes",
+          "callee": "build_auth",
+          "lineNumber": 131
+        },
+        {
+          "caller": "test_jwt_accepts_valid_token_and_reads_scopes",
+          "callee": "_jwt_cfg",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_jwt_accepts_valid_token_and_reads_scopes",
+          "callee": "list",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_jwt_accepts_valid_token_and_reads_scopes",
+          "callee": "jwt.encode",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_jwt_accepts_valid_token_and_reads_scopes",
+          "callee": "asyncio.run",
+          "lineNumber": 141
+        },
+        {
+          "caller": "test_jwt_accepts_valid_token_and_reads_scopes",
+          "callee": "verifier.verify_token",
+          "lineNumber": 141
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_audience",
+          "callee": "build_auth",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_audience",
+          "callee": "_jwt_cfg",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_audience",
+          "callee": "jwt.encode",
+          "lineNumber": 151
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_audience",
+          "callee": "asyncio.run",
+          "lineNumber": 154
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_audience",
+          "callee": "verifier.verify_token",
+          "lineNumber": 154
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_issuer",
+          "callee": "build_auth",
+          "lineNumber": 159
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_issuer",
+          "callee": "_jwt_cfg",
+          "lineNumber": 159
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_issuer",
+          "callee": "jwt.encode",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_issuer",
+          "callee": "asyncio.run",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_jwt_rejects_wrong_issuer",
+          "callee": "verifier.verify_token",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_jwt_rejects_garbage_token",
+          "callee": "build_auth",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_jwt_rejects_garbage_token",
+          "callee": "_jwt_cfg",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_jwt_rejects_garbage_token",
+          "callee": "asyncio.run",
+          "lineNumber": 171
+        },
+        {
+          "caller": "test_jwt_rejects_garbage_token",
+          "callee": "verifier.verify_token",
+          "lineNumber": 171
+        },
+        {
+          "caller": "test_jwt_requires_issuer",
+          "callee": "pytest.raises",
+          "lineNumber": 175
+        },
+        {
+          "caller": "test_jwt_requires_issuer",
+          "callee": "build_auth",
+          "lineNumber": 176
+        },
+        {
+          "caller": "test_jwt_requires_issuer",
+          "callee": "_cfg",
+          "lineNumber": 177
+        },
+        {
+          "caller": "test_jwt_requires_audience",
+          "callee": "pytest.raises",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_jwt_requires_audience",
+          "callee": "build_auth",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_jwt_requires_audience",
+          "callee": "_cfg",
+          "lineNumber": 184
+        },
+        {
+          "caller": "test_jwt_requires_a_key_source",
+          "callee": "pytest.raises",
+          "lineNumber": 191
+        },
+        {
+          "caller": "test_jwt_requires_a_key_source",
+          "callee": "build_auth",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_jwt_requires_a_key_source",
+          "callee": "_cfg",
+          "lineNumber": 193
+        },
+        {
+          "caller": "_middleware_names",
+          "callee": "getattr",
+          "lineNumber": 199
+        },
+        {
+          "caller": "_middleware_names",
+          "callee": "type",
+          "lineNumber": 199
+        },
+        {
+          "caller": "test_build_server_installs_auth_middleware_when_secret_set",
+          "callee": "build_server",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_build_server_installs_auth_middleware_when_secret_set",
+          "callee": "_cfg",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_build_server_installs_auth_middleware_when_secret_set",
+          "callee": "object",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_build_server_installs_auth_middleware_when_secret_set",
+          "callee": "_middleware_names",
+          "lineNumber": 208
+        },
+        {
+          "caller": "test_build_server_installs_auth_middleware_when_secret_set",
+          "callee": "server.streamable_http_app",
+          "lineNumber": 208
+        },
+        {
+          "caller": "test_build_server_skips_auth_middleware_when_unset",
+          "callee": "build_server",
+          "lineNumber": 214
+        },
+        {
+          "caller": "test_build_server_skips_auth_middleware_when_unset",
+          "callee": "_cfg",
+          "lineNumber": 214
+        },
+        {
+          "caller": "test_build_server_skips_auth_middleware_when_unset",
+          "callee": "object",
+          "lineNumber": 214
+        },
+        {
+          "caller": "test_build_server_skips_auth_middleware_when_unset",
+          "callee": "_middleware_names",
+          "lineNumber": 215
+        },
+        {
+          "caller": "test_build_server_skips_auth_middleware_when_unset",
+          "callee": "server.streamable_http_app",
+          "lineNumber": 215
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 26,
+        "functionCount": 26,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/mcp_server/test_config.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 83,
+      "nonEmptyLines": 64,
+      "functions": [
+        {
+          "name": "test_load_config_defaults",
+          "startLine": 21,
+          "endLine": 27,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_config_env_overrides",
+          "startLine": 30,
+          "endLine": 37,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_config_invalid_timeout_falls_back",
+          "startLine": 40,
+          "endLine": 42,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_config_nonpositive_timeout_falls_back",
+          "startLine": 45,
+          "endLine": 47,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_config_auth_unset_by_default",
+          "startLine": 50,
+          "endLine": 57,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_config_reads_jwt_auth_env",
+          "startLine": 60,
+          "endLine": 71,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_config_reads_shared_secret_token",
+          "startLine": 74,
+          "endLine": 77,
+          "params": [
+            "monkeypatch"
+          ]
+        },
+        {
+          "name": "test_load_config_invalid_auth_mode_raises",
+          "startLine": 80,
+          "endLine": 83,
+          "params": [
+            "monkeypatch"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_load_config_defaults",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_config_env_overrides",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_config_invalid_timeout_falls_back",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_config_nonpositive_timeout_falls_back",
+          "line": 45,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_config_auth_unset_by_default",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_config_reads_jwt_auth_env",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_config_reads_shared_secret_token",
+          "line": 74,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_config_invalid_auth_mode_raises",
+          "line": 80,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_load_config_defaults",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 23
+        },
+        {
+          "caller": "test_load_config_defaults",
+          "callee": "load_config",
+          "lineNumber": 24
+        },
+        {
+          "caller": "test_load_config_env_overrides",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 31
+        },
+        {
+          "caller": "test_load_config_env_overrides",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 32
+        },
+        {
+          "caller": "test_load_config_env_overrides",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_load_config_env_overrides",
+          "callee": "load_config",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_load_config_invalid_timeout_falls_back",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 41
+        },
+        {
+          "caller": "test_load_config_invalid_timeout_falls_back",
+          "callee": "load_config",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_load_config_nonpositive_timeout_falls_back",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 46
+        },
+        {
+          "caller": "test_load_config_nonpositive_timeout_falls_back",
+          "callee": "load_config",
+          "lineNumber": 47
+        },
+        {
+          "caller": "test_load_config_auth_unset_by_default",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 52
+        },
+        {
+          "caller": "test_load_config_auth_unset_by_default",
+          "callee": "load_config",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_load_config_reads_jwt_auth_env",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 61
+        },
+        {
+          "caller": "test_load_config_reads_jwt_auth_env",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_load_config_reads_jwt_auth_env",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_load_config_reads_jwt_auth_env",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_load_config_reads_jwt_auth_env",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_load_config_reads_jwt_auth_env",
+          "callee": "load_config",
+          "lineNumber": 66
+        },
+        {
+          "caller": "test_load_config_reads_shared_secret_token",
+          "callee": "monkeypatch.delenv",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_load_config_reads_shared_secret_token",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_load_config_reads_shared_secret_token",
+          "callee": "load_config",
+          "lineNumber": 77
+        },
+        {
+          "caller": "test_load_config_invalid_auth_mode_raises",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 81
+        },
+        {
+          "caller": "test_load_config_invalid_auth_mode_raises",
+          "callee": "pytest.raises",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_load_config_invalid_auth_mode_raises",
+          "callee": "load_config",
+          "lineNumber": 83
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 8,
+        "functionCount": 8,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/mcp_server/test_conversation.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 78,
+      "nonEmptyLines": 62,
+      "functions": [
+        {
+          "name": "test_transcript_parses_roles_and_delegations",
+          "startLine": 26,
+          "endLine": 33,
+          "params": []
+        },
+        {
+          "name": "test_transcript_windowing",
+          "startLine": 36,
+          "endLine": 40,
+          "params": []
+        },
+        {
+          "name": "test_transcript_flattens_content_blocks",
+          "startLine": 43,
+          "endLine": 58,
+          "params": []
+        },
+        {
+          "name": "test_transcript_handles_empty_state",
+          "startLine": 61,
+          "endLine": 64,
+          "params": []
+        },
+        {
+          "name": "test_engagement_state_excludes_messages",
+          "startLine": 67,
+          "endLine": 72,
+          "params": []
+        },
+        {
+          "name": "test_engagement_state_compacts_large_values",
+          "startLine": 75,
+          "endLine": 78,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_transcript_parses_roles_and_delegations",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "test_transcript_windowing",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "test_transcript_flattens_content_blocks",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "test_transcript_handles_empty_state",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "test_engagement_state_excludes_messages",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "test_engagement_state_compacts_large_values",
+          "line": 75,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_transcript_parses_roles_and_delegations",
+          "callee": "build_transcript",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_transcript_windowing",
+          "callee": "build_transcript",
+          "lineNumber": 37
+        },
+        {
+          "caller": "test_transcript_windowing",
+          "callee": "len",
+          "lineNumber": 38
+        },
+        {
+          "caller": "test_transcript_flattens_content_blocks",
+          "callee": "build_transcript",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_transcript_handles_empty_state",
+          "callee": "build_transcript",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_engagement_state_excludes_messages",
+          "callee": "build_engagement_state",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_engagement_state_compacts_large_values",
+          "callee": "build_engagement_state",
+          "lineNumber": 77
+        },
+        {
+          "caller": "test_engagement_state_compacts_large_values",
+          "callee": "str",
+          "lineNumber": 78
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/mcp_server/test_engagements.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 211,
+      "nonEmptyLines": 161,
+      "functions": [
+        {
+          "name": "_config",
+          "startLine": 79,
+          "endLine": 84,
+          "params": []
+        },
+        {
+          "name": "test_start_dispatches_background_run_with_scope",
+          "startLine": 87,
+          "endLine": 105,
+          "params": []
+        },
+        {
+          "name": "test_send_message_enqueues_and_resolves_assistant_from_thread",
+          "startLine": 108,
+          "endLine": 117,
+          "params": []
+        },
+        {
+          "name": "test_send_message_explicit_assistant_skips_lookup",
+          "startLine": 120,
+          "endLine": 124,
+          "params": []
+        },
+        {
+          "name": "test_send_message_model_command_sets_override_and_body",
+          "startLine": 127,
+          "endLine": 135,
+          "params": []
+        },
+        {
+          "name": "test_send_message_bare_model_command_rebinds_without_message",
+          "startLine": 138,
+          "endLine": 144,
+          "params": []
+        },
+        {
+          "name": "test_send_message_plain_text_passes_no_override_config",
+          "startLine": 147,
+          "endLine": 153,
+          "params": []
+        },
+        {
+          "name": "test_list_engagements_maps_threads",
+          "startLine": 156,
+          "endLine": 171,
+          "params": []
+        },
+        {
+          "name": "test_cancel_active_run",
+          "startLine": 174,
+          "endLine": 178,
+          "params": []
+        },
+        {
+          "name": "test_cancel_when_no_active_run_returns_none",
+          "startLine": 181,
+          "endLine": 185,
+          "params": []
+        },
+        {
+          "name": "test_watch_collects_stream_events",
+          "startLine": 188,
+          "endLine": 196,
+          "params": []
+        },
+        {
+          "name": "test_watch_truncates_at_event_cap",
+          "startLine": 199,
+          "endLine": 204,
+          "params": []
+        },
+        {
+          "name": "test_list_graphs_maps_assistants",
+          "startLine": 207,
+          "endLine": 211,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Part",
+          "startLine": 17,
+          "endLine": 21,
+          "methods": [
+            "__init__"
+          ],
+          "properties": []
+        },
+        {
+          "name": "_FakeThreads",
+          "startLine": 24,
+          "endLine": 34,
+          "methods": [
+            "__init__",
+            "create",
+            "search"
+          ],
+          "properties": []
+        },
+        {
+          "name": "_FakeRuns",
+          "startLine": 37,
+          "endLine": 58,
+          "methods": [
+            "__init__",
+            "create",
+            "list",
+            "cancel",
+            "join_stream"
+          ],
+          "properties": []
+        },
+        {
+          "name": "_FakeAssistants",
+          "startLine": 61,
+          "endLine": 63,
+          "methods": [
+            "search"
+          ],
+          "properties": []
+        },
+        {
+          "name": "_FakeClient",
+          "startLine": 66,
+          "endLine": 76,
+          "methods": [
+            "__init__"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_Part",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "_FakeThreads",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "_FakeRuns",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "_FakeAssistants",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "_FakeClient",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "_config",
+          "line": 79,
+          "isDefault": false
+        },
+        {
+          "name": "test_start_dispatches_background_run_with_scope",
+          "line": 87,
+          "isDefault": false
+        },
+        {
+          "name": "test_send_message_enqueues_and_resolves_assistant_from_thread",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "test_send_message_explicit_assistant_skips_lookup",
+          "line": 120,
+          "isDefault": false
+        },
+        {
+          "name": "test_send_message_model_command_sets_override_and_body",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "test_send_message_bare_model_command_rebinds_without_message",
+          "line": 138,
+          "isDefault": false
+        },
+        {
+          "name": "test_send_message_plain_text_passes_no_override_config",
+          "line": 147,
+          "isDefault": false
+        },
+        {
+          "name": "test_list_engagements_maps_threads",
+          "line": 156,
+          "isDefault": false
+        },
+        {
+          "name": "test_cancel_active_run",
+          "line": 174,
+          "isDefault": false
+        },
+        {
+          "name": "test_cancel_when_no_active_run_returns_none",
+          "line": 181,
+          "isDefault": false
+        },
+        {
+          "name": "test_watch_collects_stream_events",
+          "line": 188,
+          "isDefault": false
+        },
+        {
+          "name": "test_watch_truncates_at_event_cap",
+          "line": 199,
+          "isDefault": false
+        },
+        {
+          "name": "test_list_graphs_maps_assistants",
+          "line": 207,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "create",
+          "callee": "self.create_calls.append",
+          "lineNumber": 45
+        },
+        {
+          "caller": "__init__",
+          "callee": "_FakeThreads",
+          "lineNumber": 74
+        },
+        {
+          "caller": "__init__",
+          "callee": "_FakeRuns",
+          "lineNumber": 75
+        },
+        {
+          "caller": "__init__",
+          "callee": "_FakeAssistants",
+          "lineNumber": 76
+        },
+        {
+          "caller": "_config",
+          "callee": "ServerConfig",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_start_dispatches_background_run_with_scope",
+          "callee": "_FakeClient",
+          "lineNumber": 88
+        },
+        {
+          "caller": "test_start_dispatches_background_run_with_scope",
+          "callee": "EngagementClient",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_start_dispatches_background_run_with_scope",
+          "callee": "_config",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_start_dispatches_background_run_with_scope",
+          "callee": "client.start",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_send_message_enqueues_and_resolves_assistant_from_thread",
+          "callee": "_FakeClient",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_send_message_enqueues_and_resolves_assistant_from_thread",
+          "callee": "EngagementClient",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_send_message_enqueues_and_resolves_assistant_from_thread",
+          "callee": "_config",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_send_message_enqueues_and_resolves_assistant_from_thread",
+          "callee": "client.send_message",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_send_message_explicit_assistant_skips_lookup",
+          "callee": "_FakeClient",
+          "lineNumber": 121
+        },
+        {
+          "caller": "test_send_message_explicit_assistant_skips_lookup",
+          "callee": "EngagementClient",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_send_message_explicit_assistant_skips_lookup",
+          "callee": "_config",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_send_message_explicit_assistant_skips_lookup",
+          "callee": "client.send_message",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_send_message_model_command_sets_override_and_body",
+          "callee": "_FakeClient",
+          "lineNumber": 128
+        },
+        {
+          "caller": "test_send_message_model_command_sets_override_and_body",
+          "callee": "EngagementClient",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_send_message_model_command_sets_override_and_body",
+          "callee": "_config",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_send_message_model_command_sets_override_and_body",
+          "callee": "client.send_message",
+          "lineNumber": 130
+        },
+        {
+          "caller": "test_send_message_bare_model_command_rebinds_without_message",
+          "callee": "_FakeClient",
+          "lineNumber": 139
+        },
+        {
+          "caller": "test_send_message_bare_model_command_rebinds_without_message",
+          "callee": "EngagementClient",
+          "lineNumber": 140
+        },
+        {
+          "caller": "test_send_message_bare_model_command_rebinds_without_message",
+          "callee": "_config",
+          "lineNumber": 140
+        },
+        {
+          "caller": "test_send_message_bare_model_command_rebinds_without_message",
+          "callee": "client.send_message",
+          "lineNumber": 141
+        },
+        {
+          "caller": "test_send_message_plain_text_passes_no_override_config",
+          "callee": "_FakeClient",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_send_message_plain_text_passes_no_override_config",
+          "callee": "EngagementClient",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_send_message_plain_text_passes_no_override_config",
+          "callee": "_config",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_send_message_plain_text_passes_no_override_config",
+          "callee": "client.send_message",
+          "lineNumber": 150
+        },
+        {
+          "caller": "test_list_engagements_maps_threads",
+          "callee": "_FakeClient",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_list_engagements_maps_threads",
+          "callee": "EngagementClient",
+          "lineNumber": 168
+        },
+        {
+          "caller": "test_list_engagements_maps_threads",
+          "callee": "_config",
+          "lineNumber": 168
+        },
+        {
+          "caller": "test_list_engagements_maps_threads",
+          "callee": "client.list_engagements",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_cancel_active_run",
+          "callee": "_FakeClient",
+          "lineNumber": 175
+        },
+        {
+          "caller": "test_cancel_active_run",
+          "callee": "EngagementClient",
+          "lineNumber": 176
+        },
+        {
+          "caller": "test_cancel_active_run",
+          "callee": "_config",
+          "lineNumber": 176
+        },
+        {
+          "caller": "test_cancel_active_run",
+          "callee": "client.cancel",
+          "lineNumber": 177
+        },
+        {
+          "caller": "test_cancel_when_no_active_run_returns_none",
+          "callee": "_FakeClient",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_cancel_when_no_active_run_returns_none",
+          "callee": "EngagementClient",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_cancel_when_no_active_run_returns_none",
+          "callee": "_config",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_cancel_when_no_active_run_returns_none",
+          "callee": "client.cancel",
+          "lineNumber": 184
+        },
+        {
+          "caller": "test_watch_collects_stream_events",
+          "callee": "_Part",
+          "lineNumber": 189
+        },
+        {
+          "caller": "test_watch_collects_stream_events",
+          "callee": "_Part",
+          "lineNumber": 189
+        },
+        {
+          "caller": "test_watch_collects_stream_events",
+          "callee": "EngagementClient",
+          "lineNumber": 190
+        },
+        {
+          "caller": "test_watch_collects_stream_events",
+          "callee": "_config",
+          "lineNumber": 190
+        },
+        {
+          "caller": "test_watch_collects_stream_events",
+          "callee": "_FakeClient",
+          "lineNumber": 190
+        },
+        {
+          "caller": "test_watch_collects_stream_events",
+          "callee": "client.watch",
+          "lineNumber": 191
+        },
+        {
+          "caller": "test_watch_truncates_at_event_cap",
+          "callee": "_Part",
+          "lineNumber": 200
+        },
+        {
+          "caller": "test_watch_truncates_at_event_cap",
+          "callee": "range",
+          "lineNumber": 200
+        },
+        {
+          "caller": "test_watch_truncates_at_event_cap",
+          "callee": "EngagementClient",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_watch_truncates_at_event_cap",
+          "callee": "_config",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_watch_truncates_at_event_cap",
+          "callee": "_FakeClient",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_watch_truncates_at_event_cap",
+          "callee": "client.watch",
+          "lineNumber": 202
+        },
+        {
+          "caller": "test_watch_truncates_at_event_cap",
+          "callee": "len",
+          "lineNumber": 203
+        },
+        {
+          "caller": "test_list_graphs_maps_assistants",
+          "callee": "EngagementClient",
+          "lineNumber": 208
+        },
+        {
+          "caller": "test_list_graphs_maps_assistants",
+          "callee": "_config",
+          "lineNumber": 208
+        },
+        {
+          "caller": "test_list_graphs_maps_assistants",
+          "callee": "_FakeClient",
+          "lineNumber": 208
+        },
+        {
+          "caller": "test_list_graphs_maps_assistants",
+          "callee": "client.list_graphs",
+          "lineNumber": 209
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 18,
+        "functionCount": 13,
+        "classCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/mcp_server/test_findings.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 96,
+      "nonEmptyLines": 71,
+      "functions": [
+        {
+          "name": "test_summarize_absent_graph_is_unavailable",
+          "startLine": 32,
+          "endLine": 37,
+          "params": []
+        },
+        {
+          "name": "test_summarize_high_finding_counts_error_level",
+          "startLine": 40,
+          "endLine": 46,
+          "params": []
+        },
+        {
+          "name": "test_summarize_include_sarif_attaches_document",
+          "startLine": 49,
+          "endLine": 53,
+          "params": []
+        },
+        {
+          "name": "test_engagement_workspace_env_override",
+          "startLine": 56,
+          "endLine": 58,
+          "params": [
+            "monkeypatch",
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_load_findings_graph_absent_returns_none",
+          "startLine": 61,
+          "endLine": 65,
+          "params": [
+            "monkeypatch",
+            "tmp_path"
+          ]
+        },
+        {
+          "name": "test_engagement_workspace_rejects_unsafe_names",
+          "startLine": 86,
+          "endLine": 88,
+          "params": [
+            "bad_name"
+          ]
+        },
+        {
+          "name": "test_load_findings_graph_rejects_unsafe_names",
+          "startLine": 92,
+          "endLine": 96,
+          "params": [
+            "bad_name"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Node",
+          "startLine": 17,
+          "endLine": 24,
+          "methods": [
+            "__init__"
+          ],
+          "properties": []
+        },
+        {
+          "name": "_Graph",
+          "startLine": 27,
+          "endLine": 29,
+          "methods": [
+            "__init__"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_Node",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "_Graph",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "test_summarize_absent_graph_is_unavailable",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "test_summarize_high_finding_counts_error_level",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "test_summarize_include_sarif_attaches_document",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "test_engagement_workspace_env_override",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_findings_graph_absent_returns_none",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "test_engagement_workspace_rejects_unsafe_names",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "test_load_findings_graph_rejects_unsafe_names",
+          "line": 91,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_summarize_absent_graph_is_unavailable",
+          "callee": "summarize_findings",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_summarize_high_finding_counts_error_level",
+          "callee": "_Graph",
+          "lineNumber": 41
+        },
+        {
+          "caller": "test_summarize_high_finding_counts_error_level",
+          "callee": "_Node",
+          "lineNumber": 41
+        },
+        {
+          "caller": "test_summarize_high_finding_counts_error_level",
+          "callee": "summarize_findings",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_summarize_high_finding_counts_error_level",
+          "callee": "result.level_counts.get",
+          "lineNumber": 45
+        },
+        {
+          "caller": "test_summarize_include_sarif_attaches_document",
+          "callee": "_Graph",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_summarize_include_sarif_attaches_document",
+          "callee": "_Node",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_summarize_include_sarif_attaches_document",
+          "callee": "summarize_findings",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_engagement_workspace_env_override",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_engagement_workspace_env_override",
+          "callee": "str",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_engagement_workspace_env_override",
+          "callee": "engagement_workspace",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_load_findings_graph_absent_returns_none",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_load_findings_graph_absent_returns_none",
+          "callee": "str",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_load_findings_graph_absent_returns_none",
+          "callee": "load_findings_graph",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_engagement_workspace_rejects_unsafe_names",
+          "callee": "pytest.raises",
+          "lineNumber": 87
+        },
+        {
+          "caller": "test_engagement_workspace_rejects_unsafe_names",
+          "callee": "engagement_workspace",
+          "lineNumber": 88
+        },
+        {
+          "caller": "test_load_findings_graph_rejects_unsafe_names",
+          "callee": "load_findings_graph",
+          "lineNumber": 96
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 9,
+        "functionCount": 7,
+        "classCount": 2
+      }
+    }
+  ]
+}

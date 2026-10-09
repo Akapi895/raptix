@@ -1,0 +1,149 @@
+{
+  "batchIndex": 89,
+  "batchFiles": [
+    { "path": "docs/adr/0021-b0-session-isolation-gate.md", "language": "markdown", "sizeLines": 116, "fileCategory": "docs" },
+    { "path": "docs/adr/0022-sequential-surface-exploit-dispatch.md", "language": "markdown", "sizeLines": 49, "fileCategory": "docs" },
+    { "path": "docs/adr/0023-bounded-iterative-surface-reexpansion.md", "language": "markdown", "sizeLines": 61, "fileCategory": "docs" },
+    { "path": "docs/adr/0024-code-owned-surface-reexpansion-bounds.md", "language": "markdown", "sizeLines": 42, "fileCategory": "docs" },
+    { "path": "docs/adr/0025-surface-exploit-chained-surface-provenance.md", "language": "markdown", "sizeLines": 47, "fileCategory": "docs" },
+    { "path": "docs/adr/0026-bounded-parallel-surface-fanout.md", "language": "markdown", "sizeLines": 49, "fileCategory": "docs" },
+    { "path": "docs/adr/0033-control-plane-audit-integration.md", "language": "markdown", "sizeLines": 82, "fileCategory": "docs" },
+    { "path": "docs/adr/0034-local-runtime-durability.md", "language": "markdown", "sizeLines": 71, "fileCategory": "docs" },
+    { "path": "docs/adr/0035-campaign-provider-preparation.md", "language": "markdown", "sizeLines": 55, "fileCategory": "docs" },
+    { "path": "docs/adr/0036-sliver-c2-bridge.md", "language": "markdown", "sizeLines": 70, "fileCategory": "docs" },
+    { "path": "docs/adr/README.md", "language": "markdown", "sizeLines": 92, "fileCategory": "docs" },
+    { "path": "docs/adr/template.md", "language": "markdown", "sizeLines": 34, "fileCategory": "docs" }
+  ],
+  "nodes": [
+    {
+      "id": "document:docs/adr/0021-b0-session-isolation-gate.md",
+      "type": "document",
+      "name": "0021-b0-session-isolation-gate.md",
+      "filePath": "docs/adr/0021-b0-session-isolation-gate.md",
+      "summary": "ADR-0021: gate fan-out surface-exploit bằng session isolation — trước khi dispatch song song phải có bằng chứng các session được cô lập (mức B0); kèm B0 runbook gate testbed thủ công, phát hiện observability từ pane-log, kết quả isolation B0 đã ghi nhận và các phương án bị loại.",
+      "tags": ["adr", "session-isolation", "b0", "fan-out"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/adr/0022-sequential-surface-exploit-dispatch.md",
+      "type": "document",
+      "name": "0022-sequential-surface-exploit-dispatch.md",
+      "filePath": "docs/adr/0022-sequential-surface-exploit-dispatch.md",
+      "summary": "ADR-0022: dispatch các surface-exploit cell tuần tự — giảm nhiễu/tốn tài nguyên và dễ truy vết khi còn thiếu isolation; hậu quả với latency và các phương án bị loại (parallel ngay từ đầu).",
+      "tags": ["adr", "dispatch", "sequential", "surface-exploit"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/adr/0023-bounded-iterative-surface-reexpansion.md",
+      "type": "document",
+      "name": "0023-bounded-iterative-surface-reexpansion.md",
+      "filePath": "docs/adr/0023-bounded-iterative-surface-reexpansion.md",
+      "summary": "ADR-0023: chặn giới hạn (bound) việc re-expansion lặp của surface-exploit — đặt số vòng tối đa và điều kiện dừng để tránh bùng nổ trạng thái; hậu quả và các phương án bị loại (unbounded, giới hạn cứng toàn cục).",
+      "tags": ["adr", "re-expansion", "bound", "surface-exploit"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/adr/0024-code-owned-surface-reexpansion-bounds.md",
+      "type": "document",
+      "name": "0024-code-owned-surface-reexpansion-bounds.md",
+      "filePath": "docs/adr/0024-code-owned-surface-reexpansion-bounds.md",
+      "summary": "ADR-0024: nối bounded re-expansion vào KG surface inventory — các bounds do code sở hữu, đọc từ inventory thay vì hardcode trong dispatcher; hậu quả và các phương án bị loại.",
+      "tags": ["adr", "kg", "surface-inventory", "bounds"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/adr/0025-surface-exploit-chained-surface-provenance.md",
+      "type": "document",
+      "name": "0025-surface-exploit-chained-surface-provenance.md",
+      "filePath": "docs/adr/0025-surface-exploit-chained-surface-provenance.md",
+      "summary": "ADR-0025: ghi nhận provenance của surface nối dài (chained) tại thời điểm xác nhận — chuỗi surface gốc → cell kế được record vào KG để truy vết nguồn gốc exploit; hậu quả và các phương án bị loại.",
+      "tags": ["adr", "provenance", "chained-surface", "kg"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/adr/0026-bounded-parallel-surface-fanout.md",
+      "type": "document",
+      "name": "0026-bounded-parallel-surface-fanout.md",
+      "filePath": "docs/adr/0026-bounded-parallel-surface-fanout.md",
+      "summary": "ADR-0026: chặn giới hạn fan-out song song của surface-exploit — số cell chạy đồng thời tối đa, bổ sung cho dispatch tuần tự (ADR-0022) và re-expansion có bound (ADR-0023); hậu quả và các phương án bị loại.",
+      "tags": ["adr", "fan-out", "parallel", "bound"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/adr/0033-control-plane-audit-integration.md",
+      "type": "document",
+      "name": "0033-control-plane-audit-integration.md",
+      "filePath": "docs/adr/0033-control-plane-audit-integration.md",
+      "summary": "ADR-0033: tích hợp các fix audit tại control boundary đã verify — nhận IF prompt/skill contract corrections; biến dispatch failure thành controller outcome persist theo thread qua wrapper task tool + dispatch_ledger bounded (gom nhóm retry theo dispatch ID, fingerprint khi thiếu ID, cap thất bại chặn trước khi gọi worker); dùng Neo4j counter scoped theo engagement cho KG revision cùng giây nhiều writer; foothold evaluation và operational-state projection là opt-in experiments, không thay đổi RoE enforcement.",
+      "tags": ["adr", "audit", "dispatch-ledger", "neo4j"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/adr/0034-local-runtime-durability.md",
+      "type": "document",
+      "name": "0034-local-runtime-durability.md",
+      "filePath": "docs/adr/0034-local-runtime-durability.md",
+      "summary": "ADR-0034 (Accepted, IW-13): checkpoint bền cho local interactive web runtime — dùng extension checkpointer.path chính thức của LangGraph với AsyncSqliteSaver (không patch framework internals), persist /app/.langgraph_api trong volume langgraph_state, thêm RAPTIX_WORKSPACE_PATH làm mount-source override chung cho API/runtime/sandbox (giữ bind default khi không có), truy cập workspace canonical từ host bằng docker copy/exec giữ nguyên tên file Linux, và trả 503 recovery có scope cho thread cũ thiếu checkpoint.",
+      "tags": ["adr", "checkpoints", "sqlite", "durability"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/adr/0035-campaign-provider-preparation.md",
+      "type": "document",
+      "name": "0035-campaign-provider-preparation.md",
+      "filePath": "docs/adr/0035-campaign-provider-preparation.md",
+      "summary": "ADR-0035 (Proposed, IW-08): chuẩn bị asset provider phiên bản hóa cho campaign — Generate đọc native resources của GoPhish (template, landing-page, group, SMTP profile theo ID) và persist manifest versioned không chứa credential vào campaign; thất bại (thiếu resource, auth lỗi, response malformed, network) sinh failed jobs durable, không fabricate thành công; TLS bắt buộc (plaintext chỉ cho loopback/lab gophish), credential là server config browser không chọn được; dispatch mail và evilginx bridge để ngoài scope của slice này.",
+      "tags": ["adr", "gophish", "campaign", "manifest"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/adr/0036-sliver-c2-bridge.md",
+      "type": "document",
+      "name": "0036-sliver-c2-bridge.md",
+      "filePath": "docs/adr/0036-sliver-c2-bridge.md",
+      "summary": "ADR-0036 (Proposed, IW-09): session Sliver C2 và HTTP C2 profiles qua typed gRPC bridge — Sliver v1.7.7 release binary chính thức pin SHA256, protobuf pin theo commit, điều khiển qua operator gRPC mTLS + per-RPC token; lệnh là Execute với path + argv tường minh, environment policy cố định và deadline, không shell text qua API (Shell RPC/PTY ngoài scope); session ownership map qua lab listener theo engagement, session không thuộc engagement bị ẩn chứ không fabricate; implant generation chỉ trong lab harness, secret không lộ trong public DTO.",
+      "tags": ["adr", "sliver", "c2", "grpc"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/adr/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "docs/adr/README.md",
+      "summary": "Index và hướng dẫn của thư mục ADR: khi nào cần viết ADR (quyết định khó đảo ngược, ảnh hưởng nhiều team), format chuẩn (Context/Decision/Consequences/Alternatives), vòng đời status (proposed → accepted/superseded) và index toàn bộ ADR hiện có.",
+      "tags": ["adr", "index", "documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/adr/template.md",
+      "type": "document",
+      "name": "template.md",
+      "filePath": "docs/adr/template.md",
+      "summary": "Template ADR rỗng để copy khi tạo ADR mới: title ở hiện tại mệnh lệnh (present-tense imperative) với các mục Context, Decision, Consequences, Alternatives considered.",
+      "tags": ["adr", "template", "documentation"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    { "source": "document:docs/adr/0021-b0-session-isolation-gate.md", "target": "file:packages/raptix/raptix/agents/standard/_surface_dispatch.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0022-sequential-surface-exploit-dispatch.md", "target": "file:packages/raptix/raptix/agents/standard/_surface_dispatch.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0023-bounded-iterative-surface-reexpansion.md", "target": "file:packages/raptix/raptix/agents/standard/_surface_reexpand.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0024-code-owned-surface-reexpansion-bounds.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0025-surface-exploit-chained-surface-provenance.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0026-bounded-parallel-surface-fanout.md", "target": "file:packages/raptix/raptix/agents/standard/_surface_dispatch.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0033-control-plane-audit-integration.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/store.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0033-control-plane-audit-integration.md", "target": "file:packages/raptix/raptix/runtime/task_spec.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0034-local-runtime-durability.md", "target": "service:docker-compose.yml:langgraph", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0035-campaign-provider-preparation.md", "target": "file:clients/web-raptix/server/src/integrations/campaigns/evilginx-client.ts", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0035-campaign-provider-preparation.md", "target": "file:clients/web-raptix/server/src/http/routes/campaign.routes.ts", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0036-sliver-c2-bridge.md", "target": "file:clients/web-raptix/server/src/integrations/c2/sliver-client.ts", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/README.md", "target": "document:docs/adr/template.md", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/README.md", "target": "document:docs/adr/0001-record-architecture-decisions.md", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/template.md", "target": "document:docs/adr/0001-record-architecture-decisions.md", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0021-b0-session-isolation-gate.md", "target": "document:docs/adr/0022-sequential-surface-exploit-dispatch.md", "type": "related", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0021-b0-session-isolation-gate.md", "target": "document:docs/adr/0026-bounded-parallel-surface-fanout.md", "type": "related", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0022-sequential-surface-exploit-dispatch.md", "target": "document:docs/adr/0026-bounded-parallel-surface-fanout.md", "type": "related", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0023-bounded-iterative-surface-reexpansion.md", "target": "document:docs/adr/0024-code-owned-surface-reexpansion-bounds.md", "type": "related", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/adr/0033-control-plane-audit-integration.md", "target": "document:docs/adr/0013-fail-safe-kg-autoingest.md", "type": "related", "direction": "forward", "weight": 0.5 }
+  ]
+}

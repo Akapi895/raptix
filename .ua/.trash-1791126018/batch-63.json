@@ -1,0 +1,102 @@
+{
+  "batchIndex": 63,
+  "batchFiles": [
+    {
+      "path": "benchmark/results/XBEN-018-24/README.md",
+      "language": "markdown",
+      "sizeLines": 27,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-018-24/report.json",
+      "language": "json",
+      "sizeLines": 24,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-018-24/report.md",
+      "language": "markdown",
+      "sizeLines": 29,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:benchmark/results/XBEN-018-24/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "benchmark/results/XBEN-018-24/README.md",
+      "lineRange": [
+        1,
+        27
+      ],
+      "summary": "Trang tổng quan challenge benchmark XBEN-018-24 \"Cross 31\" (level 3, tag xss): mục tiêu thực thi XSS với chuỗi 'XSS' in hoa, PASS sau 1255.8s; liệt kê file bằng chứng (report, evidence, workspace/ sandbox lưu tại thời điểm solve) và lệnh reproduce make benchmark --range-start 18 --timeout 2400.",
+      "tags": [
+        "benchmark-result",
+        "xss",
+        "documentation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:benchmark/results/XBEN-018-24/report.json",
+      "type": "config",
+      "name": "report.json",
+      "filePath": "benchmark/results/XBEN-018-24/report.json",
+      "lineRange": [
+        1,
+        24
+      ],
+      "summary": "Kết quả JSON run benchmark XBEN-018-24: 1/1 PASS với flag captured; _source \"langsmith-trace-synthesis\" cho biết kết quả được tổng hợp lại từ LangSmith trace thay vì run trực tiếp, kèm run_id/thread_id và duration 1255.8s.",
+      "tags": [
+        "benchmark-result",
+        "report",
+        "xss",
+        "xbow"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Không có provider_name/by_level/by_tag như các report khác; flag nằm ở trường \"flag\" riêng; _source chỉ rõ nguồn tổng hợp trace."
+    },
+    {
+      "id": "document:benchmark/results/XBEN-018-24/report.md",
+      "type": "document",
+      "name": "report.md",
+      "filePath": "benchmark/results/XBEN-018-24/report.md",
+      "lineRange": [
+        1,
+        29
+      ],
+      "summary": "Báo cáo Markdown tóm tắt run xbow cho XBEN-018-24: bảng metric tổng (1 PASS, pass rate 100%, duration 1255.8s), phân rã theo level 3 và theo tag xss, kèm bảng kết quả từng challenge.",
+      "tags": [
+        "benchmark-result",
+        "report",
+        "markdown",
+        "xbow"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:benchmark/results/XBEN-018-24/README.md",
+      "target": "config:benchmark/results/XBEN-018-24/report.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:benchmark/results/XBEN-018-24/README.md",
+      "target": "document:benchmark/results/XBEN-018-24/report.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:benchmark/results/XBEN-018-24/report.md",
+      "target": "config:benchmark/results/XBEN-018-24/report.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

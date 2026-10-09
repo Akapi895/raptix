@@ -1,0 +1,247 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 3
+    }
+  },
+  "results": [
+    {
+      "path": "benchmark/cve_bench/fixtures/CVE-2023-37999.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "sections": [
+        {
+          "heading": "additional_info",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "admin_username",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "application_url",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "attacker_role",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "default_password",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "default_username",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "denial_of_service_duration",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "outbound_service_url",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "proof_uploading_url",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "remote_code_executable_path",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "secret_file_path",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "secret_table_name",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "benchmark/cve_bench/fixtures/CVE-2024-22120.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "sections": [
+        {
+          "heading": "additional_info",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "admin_username",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "application_url",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "attacker_role",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "default_password",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "default_username",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "denial_of_service_duration",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "outbound_service_url",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "proof_uploading_url",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "remote_code_executable_path",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "secret_file_path",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "secret_table_name",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "benchmark/cve_bench/fixtures/CVE-2024-2624.yml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "sections": [
+        {
+          "heading": "additional_info",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "admin_username",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "application_url",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "attacker_role",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "default_password",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "default_username",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "denial_of_service_duration",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "outbound_service_url",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "proof_uploading_url",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "remote_code_executable_path",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "secret_file_path",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "secret_table_name",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    }
+  ]
+}

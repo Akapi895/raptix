@@ -1,0 +1,188 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "clients/cli/vitest.config.ts",
+      "language": "typescript",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/desktop/README.md",
+      "language": "markdown",
+      "sizeLines": 14,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/desktop/package.json",
+      "language": "json",
+      "sizeLines": 15,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/desktop/src/preload.cjs",
+      "language": "javascript",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/instruction.raptix.txt",
+      "language": "txt",
+      "sizeLines": 54,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/launcher/internal/config/env.example",
+      "language": "example",
+      "sizeLines": 266,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/streaming/src/constants.ts",
+      "language": "typescript",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/streaming/src/index.ts",
+      "language": "typescript",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/streaming/src/sse.ts",
+      "language": "typescript",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/streaming/src/utils.ts",
+      "language": "typescript",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/streaming/tests/normalize.test.ts",
+      "language": "typescript",
+      "sizeLines": 296,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/streaming/tests/sse.test.ts",
+      "language": "typescript",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/web-contracts/src/index.ts",
+      "language": "typescript",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/shared/web-contracts/tests/contracts.test.ts",
+      "language": "typescript",
+      "sizeLines": 368,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/.gitattributes",
+      "language": "unknown",
+      "sizeLines": 146,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/pasted_text/project-workspace-updates.md",
+      "language": "markdown",
+      "sizeLines": 307,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/pasted_text/raptix-dashboard-design.md",
+      "language": "markdown",
+      "sizeLines": 268,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/AgentRun.tsx",
+      "language": "typescript",
+      "sizeLines": 811,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Assets.tsx",
+      "language": "typescript",
+      "sizeLines": 828,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/AttackGraph.tsx",
+      "language": "typescript",
+      "sizeLines": 615,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Chat.tsx",
+      "language": "typescript",
+      "sizeLines": 575,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Credentials.tsx",
+      "language": "typescript",
+      "sizeLines": 545,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Evidence.tsx",
+      "language": "typescript",
+      "sizeLines": 586,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/KnowledgeGraph.tsx",
+      "language": "typescript",
+      "sizeLines": 595,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Orchestrator.tsx",
+      "language": "typescript",
+      "sizeLines": 327,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "clients/cli/vitest.config.ts": [],
+    "clients/desktop/README.md": [],
+    "clients/desktop/package.json": [],
+    "clients/desktop/src/preload.cjs": [],
+    "clients/instruction.raptix.txt": [],
+    "clients/launcher/internal/config/env.example": [],
+    "clients/shared/streaming/src/constants.ts": [],
+    "clients/shared/streaming/src/index.ts": [],
+    "clients/shared/streaming/src/sse.ts": [],
+    "clients/shared/streaming/src/utils.ts": [],
+    "clients/shared/streaming/tests/normalize.test.ts": [
+      "clients/shared/streaming/src/index.ts"
+    ],
+    "clients/shared/streaming/tests/sse.test.ts": [
+      "clients/shared/streaming/src/sse.ts"
+    ],
+    "clients/shared/web-contracts/src/index.ts": [],
+    "clients/shared/web-contracts/tests/contracts.test.ts": [
+      "clients/shared/web-contracts/src/index.ts"
+    ],
+    "clients/web-raptix/.gitattributes": [],
+    "clients/web-raptix/docs/design-reference/imports/pasted_text/project-workspace-updates.md": [],
+    "clients/web-raptix/docs/design-reference/imports/pasted_text/raptix-dashboard-design.md": [],
+    "clients/web-raptix/docs/design-reference/pre-web-correct/screens/AgentRun.tsx": [],
+    "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Assets.tsx": [],
+    "clients/web-raptix/docs/design-reference/pre-web-correct/screens/AttackGraph.tsx": [],
+    "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Chat.tsx": [],
+    "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Credentials.tsx": [],
+    "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Evidence.tsx": [],
+    "clients/web-raptix/docs/design-reference/pre-web-correct/screens/KnowledgeGraph.tsx": [],
+    "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Orchestrator.tsx": []
+  }
+}

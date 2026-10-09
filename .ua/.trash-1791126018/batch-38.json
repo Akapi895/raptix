@@ -1,0 +1,1898 @@
+{
+  "batchIndex": 38,
+  "batchFiles": [
+    {
+      "path": "benchmark/dreadgoad/__main__.py",
+      "language": "python",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/config.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/harness.py",
+      "language": "python",
+      "sizeLines": 475,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/lab/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "language": "python",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/providers/base.py",
+      "language": "python",
+      "sizeLines": 70,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/providers/dreadgoad.py",
+      "language": "python",
+      "sizeLines": 91,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/reporter.py",
+      "language": "python",
+      "sizeLines": 401,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/runner.py",
+      "language": "python",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/schemas.py",
+      "language": "python",
+      "sizeLines": 119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/dreadgoad/state.py",
+      "language": "python",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:benchmark/dreadgoad/__main__.py",
+      "type": "file",
+      "name": "__main__.py",
+      "filePath": "benchmark/dreadgoad/__main__.py",
+      "summary": "CLI entry-point cho benchmark runner DreadGOAD: subcommand `run` (chạy grid trên lab mới provision, override --agents/--rounds) và `report` (tái phát grid-summary offline, không gọi AWS); exit 0 khi mọi scenario completed, 1 khi có failure/timeout, 2 khi lỗi runner.",
+      "tags": [
+        "cli",
+        "benchmark",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "benchmark/dreadgoad/config.py",
+      "summary": "Loader YAML cho benchmark config: bắt buộc name/provider/lab_profile/langgraph_url/operator_message_template, validate agents không rỗng, rounds/parallel ≥ 1, timeout > 0 và lab_mode ∈ {isolated, shared}; trả BenchmarkConfig frozen.",
+      "tags": [
+        "config",
+        "yaml",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/harness.py",
+      "type": "file",
+      "name": "harness.py",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "summary": "Vòng đời một run: provision lab → render operator message từ template → invoke LangGraph agent (stream, thu tool calls) → pull measurement record từ sandbox qua docker exec → tính cost từ LiteLLM spend logs → teardown trong try/finally; lab_mode isolated tự provision/teardown, shared dùng ProvisionResult của runner.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "provisioning"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/lab/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "benchmark/dreadgoad/lab/__init__.py",
+      "summary": "Package marker cho wrapper CLI DreadGOAD.",
+      "tags": [
+        "package",
+        "lab",
+        "marker"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "type": "file",
+      "name": "dreadgoad_cli.py",
+      "filePath": "benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "summary": "Subprocess wrapper quanh Go CLI DreadGOAD (DREADGOAD_CLI_PATH): provision --variant --output-json, wait_healthy polling tới timeout, destroy best-effort; DREADGOAD_BENCH_REUSE=1 dùng lab có sẵn từ DREADGOAD_BENCH_* env thay vì gọi CLI.",
+      "tags": [
+        "cli",
+        "subprocess",
+        "lab"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/providers/base.py",
+      "type": "file",
+      "name": "base.py",
+      "filePath": "benchmark/dreadgoad/providers/base.py",
+      "summary": "ABC cho benchmark provider: load_scenarios nở config thành Scenario, provision/teardown cho lab_mode isolated và cặp provision_grid/teardown_grid opt-in cho shared (default raise NotImplementedError).",
+      "tags": [
+        "provider",
+        "abstract",
+        "lifecycle"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "type": "file",
+      "name": "dreadgoad.py",
+      "filePath": "benchmark/dreadgoad/providers/dreadgoad.py",
+      "summary": "Provider DreadGOAD: nân agents × rounds thành Scenario với grid timestamp filesystem-safe, provision/teardown qua dreadgoad_cli (wait_healthy sau provision) và map inventory JSON sang ProvisionResult; tin BenchmarkConfig.agents verbatim, không registry cứng.",
+      "tags": [
+        "provider",
+        "dreadgoad",
+        "scenario"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/reporter.py",
+      "type": "file",
+      "name": "reporter.py",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "summary": "Ghi kết quả benchmark ra disk theo layout <agent_id>/<UTC-ts>: metadata.json tự chứa (lab inventory nhúng), scorecard.md, measurement/opplan/timeline, workspace.tar.gz qua docker cp và grid-summary.md tích lũy theo agent.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/runner.py",
+      "type": "file",
+      "name": "runner.py",
+      "filePath": "benchmark/dreadgoad/runner.py",
+      "summary": "Orchestrator grid: load provider theo tên (registry _PROVIDERS mở cho test inject), tạo LangGraph client, chạy scenario với semaphore(config.parallel) + wait_for timeout, persist state.json sau mỗi run và teardown shared lab trong finally.",
+      "tags": [
+        "runner",
+        "orchestration",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/schemas.py",
+      "type": "file",
+      "name": "schemas.py",
+      "filePath": "benchmark/dreadgoad/schemas.py",
+      "summary": "Typed contracts dùng chung của runner: BenchmarkConfig/Scenario/ProvisionResult frozen, RunResult mutable được phổ dần trong lúc chạy (cost, hosts_compromised, tool_calls, LangSmith trace ids) và JSON-serialize thành metadata.json.",
+      "tags": [
+        "schemas",
+        "dataclass",
+        "contracts"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:benchmark/dreadgoad/state.py",
+      "type": "file",
+      "name": "state.py",
+      "filePath": "benchmark/dreadgoad/state.py",
+      "summary": "State bền cho grid: BenchmarkRunState tích lũy results, tính remaining scenarios và persist state.json atomic (tempfile + os.replace) sau mỗi scenario để grid bị ngắt có thể resume.",
+      "tags": [
+        "state",
+        "persistence",
+        "crash-resilience"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/__main__.py:build_parser",
+      "type": "function",
+      "name": "build_parser",
+      "filePath": "benchmark/dreadgoad/__main__.py",
+      "lineRange": [
+        28,
+        55
+      ],
+      "summary": "Dựng argparse: subcommand run (--config bắt buộc, --results-dir, --agents, --rounds) và report (--results-dir).",
+      "tags": [
+        "cli",
+        "benchmark",
+        "entry-point"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/__main__.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "benchmark/dreadgoad/__main__.py",
+      "lineRange": [
+        58,
+        69
+      ],
+      "summary": "Điều phối subcommand: run → _cmd_run, report → _cmd_report; logging basicConfig INFO.",
+      "tags": [
+        "cli",
+        "benchmark",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/__main__.py:_cmd_run",
+      "type": "function",
+      "name": "_cmd_run",
+      "filePath": "benchmark/dreadgoad/__main__.py",
+      "lineRange": [
+        72,
+        92
+      ],
+      "summary": "load_config, áp override agents/rounds, asyncio.run(run_grid), write_report và map kết quả → exit code 0 (all completed) / 1 (có failure) / 2 (runner error).",
+      "tags": [
+        "cli",
+        "benchmark",
+        "entry-point"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/__main__.py:_cmd_report",
+      "type": "function",
+      "name": "_cmd_report",
+      "filePath": "benchmark/dreadgoad/__main__.py",
+      "lineRange": [
+        95,
+        107
+      ],
+      "summary": "refresh_grid_summaries từ results dir có sẵn (offline, không gọi AWS), exit 2 nếu dir không tồn tại.",
+      "tags": [
+        "cli",
+        "benchmark",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/__main__.py:_override",
+      "type": "function",
+      "name": "_override",
+      "filePath": "benchmark/dreadgoad/__main__.py",
+      "lineRange": [
+        110,
+        114
+      ],
+      "summary": "Hàm `_override`: Return a copy of ``cfg`` (frozen dataclass) with selected fields replaced.",
+      "tags": [
+        "cli",
+        "benchmark",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/config.py:load_config",
+      "type": "function",
+      "name": "load_config",
+      "filePath": "benchmark/dreadgoad/config.py",
+      "lineRange": [
+        28,
+        71
+      ],
+      "summary": "Hàm `load_config`: Parse a YAML benchmark config file into a typed ``BenchmarkConfig``.",
+      "tags": [
+        "config",
+        "yaml",
+        "validation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:_langsmith_trace_url",
+      "type": "function",
+      "name": "_langsmith_trace_url",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        68,
+        78
+      ],
+      "summary": "Hàm `_langsmith_trace_url`: Return a navigable LangSmith UI link for a given run/trace id.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:_compute_window_cost",
+      "type": "function",
+      "name": "_compute_window_cost",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        81,
+        138
+      ],
+      "summary": "Hàm `_compute_window_cost`: Aggregate litellm spend logs over a time window and price them.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:_iso_now",
+      "type": "function",
+      "name": "_iso_now",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        141,
+        142
+      ],
+      "summary": "Trả dấu thời gian UTC dạng ISO-8601 cho started_at/ended_at.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:render_operator_message",
+      "type": "function",
+      "name": "render_operator_message",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        145,
+        170
+      ],
+      "summary": "Hàm `render_operator_message`: Substitute placeholders in the operator message template.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:_measurement_path",
+      "type": "function",
+      "name": "_measurement_path",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        173,
+        174
+      ],
+      "summary": "Đường dẫn measurement record trong sandbox: /workspace/<scenario>/measurements/<run_id>.json.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:_provision_workspace",
+      "type": "function",
+      "name": "_provision_workspace",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        177,
+        221
+      ],
+      "summary": "Hàm `_provision_workspace`: Materialize ``/workspace/<slug>/`` in the sandbox before the agent runs.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:pull_measurement_bytes",
+      "type": "function",
+      "name": "pull_measurement_bytes",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        224,
+        260
+      ],
+      "summary": "Hàm `pull_measurement_bytes`: Read the raw measurement-callback record from the sandbox.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:pull_measurement_record",
+      "type": "function",
+      "name": "pull_measurement_record",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        263,
+        282
+      ],
+      "summary": "Hàm `pull_measurement_record`: Read the measurement-callback JSON record from the sandbox.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:_build_result",
+      "type": "function",
+      "name": "_build_result",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        285,
+        330
+      ],
+      "summary": "Tổng hợp RunResult: duration từ ISO timestamps, cost qua LiteLLM spend logs, trace URL LangSmith, hosts_compromised/tool_calls từ measurement record.",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/harness.py:run_one",
+      "type": "function",
+      "name": "run_one",
+      "filePath": "benchmark/dreadgoad/harness.py",
+      "lineRange": [
+        333,
+        475
+      ],
+      "summary": "Chạy một scenario trọn vẹn: provision (trừ khi shared_provision được cấp) → render operator message → invoke agent qua LangGraph streaming → pull measurement record → build RunResult → teardown luôn chạy trong finally; mọi failure được bọc…",
+      "tags": [
+        "harness",
+        "benchmark",
+        "lifecycle"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:_reuse_inventory",
+      "type": "function",
+      "name": "_reuse_inventory",
+      "filePath": "benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "lineRange": [
+        34,
+        55
+      ],
+      "summary": "Hàm `_reuse_inventory`: Build the same dict shape that the upstream JSON would have, sourced",
+      "tags": [
+        "cli",
+        "subprocess",
+        "lab"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:provision",
+      "type": "function",
+      "name": "provision",
+      "filePath": "benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "lineRange": [
+        58,
+        83
+      ],
+      "summary": "Hàm `provision`: Run ``./cli/dreadgoad provision --variant <variant>`` and parse JSON output.",
+      "tags": [
+        "cli",
+        "subprocess",
+        "lab"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:wait_healthy",
+      "type": "function",
+      "name": "wait_healthy",
+      "filePath": "benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "lineRange": [
+        86,
+        104
+      ],
+      "summary": "Hàm `wait_healthy`: Poll ``./cli/dreadgoad health-check`` until exit 0 or timeout.",
+      "tags": [
+        "cli",
+        "subprocess",
+        "lab"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:destroy",
+      "type": "function",
+      "name": "destroy",
+      "filePath": "benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "lineRange": [
+        107,
+        129
+      ],
+      "summary": "Hàm `destroy`: Best-effort lab destruction.",
+      "tags": [
+        "cli",
+        "subprocess",
+        "lab"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/dreadgoad/providers/base.py:BaseBenchmarkProvider",
+      "type": "class",
+      "name": "BaseBenchmarkProvider",
+      "filePath": "benchmark/dreadgoad/providers/base.py",
+      "lineRange": [
+        28,
+        70
+      ],
+      "summary": "Lớp `BaseBenchmarkProvider`: Abstract benchmark provider.",
+      "tags": [
+        "provider",
+        "abstract",
+        "lifecycle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/providers/dreadgoad.py:_iso_now",
+      "type": "function",
+      "name": "_iso_now",
+      "filePath": "benchmark/dreadgoad/providers/dreadgoad.py",
+      "lineRange": [
+        27,
+        28
+      ],
+      "summary": "Trả dấu thời gian UTC dạng ISO-8601 cho provisioned_at.",
+      "tags": [
+        "provider",
+        "dreadgoad",
+        "scenario"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/dreadgoad/providers/dreadgoad.py:DreadGOADProvider",
+      "type": "class",
+      "name": "DreadGOADProvider",
+      "filePath": "benchmark/dreadgoad/providers/dreadgoad.py",
+      "lineRange": [
+        31,
+        91
+      ],
+      "summary": "Lớp `DreadGOADProvider`: Provisions DreadGOAD AD labs via the upstream Go CLI.",
+      "tags": [
+        "provider",
+        "dreadgoad",
+        "scenario"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:write_report",
+      "type": "function",
+      "name": "write_report",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        74,
+        98
+      ],
+      "summary": "Hàm `write_report`: Emit one timestamped run dir per scenario + per-agent grid summary.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:refresh_grid_summaries",
+      "type": "function",
+      "name": "refresh_grid_summaries",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        101,
+        111
+      ],
+      "summary": "Hàm `refresh_grid_summaries`: Re-emit ``grid-summary.md`` for every per-agent subdir.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_ts_slug",
+      "type": "function",
+      "name": "_ts_slug",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        114,
+        121
+      ],
+      "summary": "Hàm `_ts_slug`: Convert ``2026-05-31T10:34:37.000+00:00`` → ``2026-05-31T10-34Z``.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_emit_run_dir",
+      "type": "function",
+      "name": "_emit_run_dir",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        124,
+        144
+      ],
+      "summary": "Hàm `_emit_run_dir`: Populate one run's evidence directory.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_build_metadata",
+      "type": "function",
+      "name": "_build_metadata",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        147,
+        187
+      ],
+      "summary": "metadata.json self-contained: LangSmith trace ids, timing, cost breakdown và lab inventory nhúng theo lab_profile.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_copy_workspace_artifacts",
+      "type": "function",
+      "name": "_copy_workspace_artifacts",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        190,
+        206
+      ],
+      "summary": "Hàm `_copy_workspace_artifacts`: Pull opplan.json + timeline.jsonl + findings/ + full tarball from sandbox.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_docker_cp",
+      "type": "function",
+      "name": "_docker_cp",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        209,
+        224
+      ],
+      "summary": "Hàm `_docker_cp`: ``docker cp`` a single file from the sandbox container. Best-effort.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_docker_cp_dir",
+      "type": "function",
+      "name": "_docker_cp_dir",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        227,
+        244
+      ],
+      "summary": "Hàm `_docker_cp_dir`: Copy directory contents using ``docker cp`` (recursive by default).",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_make_workspace_tarball",
+      "type": "function",
+      "name": "_make_workspace_tarball",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        247,
+        285
+      ],
+      "summary": "Hàm `_make_workspace_tarball`: ``tar -czf`` the sandbox-side engagement workspace, then docker cp to dst.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_format_run_scorecard",
+      "type": "function",
+      "name": "_format_run_scorecard",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        288,
+        329
+      ],
+      "summary": "Hàm `_format_run_scorecard`: Per-run human-readable summary written to scorecard.md.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/reporter.py:_emit_grid_summary",
+      "type": "function",
+      "name": "_emit_grid_summary",
+      "filePath": "benchmark/dreadgoad/reporter.py",
+      "lineRange": [
+        335,
+        401
+      ],
+      "summary": "Hàm `_emit_grid_summary`: Aggregate every timestamped run dir under ``results/<agent_id>/``.",
+      "tags": [
+        "reporting",
+        "artifacts",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/runner.py:load_provider",
+      "type": "function",
+      "name": "load_provider",
+      "filePath": "benchmark/dreadgoad/runner.py",
+      "lineRange": [
+        33,
+        38
+      ],
+      "summary": "Hàm `load_provider`: Return a constructed provider instance for ``name``.",
+      "tags": [
+        "runner",
+        "orchestration",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/runner.py:get_langgraph_client",
+      "type": "function",
+      "name": "get_langgraph_client",
+      "filePath": "benchmark/dreadgoad/runner.py",
+      "lineRange": [
+        41,
+        45
+      ],
+      "summary": "Hàm `get_langgraph_client`: Construct a LangGraph SDK client. Indirection for test injection.",
+      "tags": [
+        "runner",
+        "orchestration",
+        "benchmark"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:benchmark/dreadgoad/runner.py:run_grid",
+      "type": "function",
+      "name": "run_grid",
+      "filePath": "benchmark/dreadgoad/runner.py",
+      "lineRange": [
+        48,
+        143
+      ],
+      "summary": "Hàm `run_grid`: Walk every scenario sequentially (or parallel up to ``config.parallel``).",
+      "tags": [
+        "runner",
+        "orchestration",
+        "benchmark"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:benchmark/dreadgoad/schemas.py:BenchmarkConfig",
+      "type": "class",
+      "name": "BenchmarkConfig",
+      "filePath": "benchmark/dreadgoad/schemas.py",
+      "lineRange": [
+        15,
+        46
+      ],
+      "summary": "Lớp `BenchmarkConfig`: Parsed YAML grid config — immutable runtime constant.",
+      "tags": [
+        "schemas",
+        "dataclass",
+        "contracts"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/dreadgoad/schemas.py:Scenario",
+      "type": "class",
+      "name": "Scenario",
+      "filePath": "benchmark/dreadgoad/schemas.py",
+      "lineRange": [
+        50,
+        59
+      ],
+      "summary": "Lớp `Scenario`: One unit of work — one agent invocation, one round.",
+      "tags": [
+        "schemas",
+        "dataclass",
+        "contracts"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/dreadgoad/schemas.py:ProvisionResult",
+      "type": "class",
+      "name": "ProvisionResult",
+      "filePath": "benchmark/dreadgoad/schemas.py",
+      "lineRange": [
+        63,
+        71
+      ],
+      "summary": "Lớp `ProvisionResult`: Output of ``provider.provision`` — lab metadata.",
+      "tags": [
+        "schemas",
+        "dataclass",
+        "contracts"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:benchmark/dreadgoad/schemas.py:RunResult",
+      "type": "class",
+      "name": "RunResult",
+      "filePath": "benchmark/dreadgoad/schemas.py",
+      "lineRange": [
+        75,
+        119
+      ],
+      "summary": "Lớp `RunResult`: Complete record of a single run.",
+      "tags": [
+        "schemas",
+        "dataclass",
+        "contracts"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:benchmark/dreadgoad/state.py:BenchmarkRunState",
+      "type": "class",
+      "name": "BenchmarkRunState",
+      "filePath": "benchmark/dreadgoad/state.py",
+      "lineRange": [
+        21,
+        68
+      ],
+      "summary": "Lớp `BenchmarkRunState`: In-memory + on-disk state of one grid execution.",
+      "tags": [
+        "state",
+        "persistence",
+        "benchmark"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:build_parser",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:build_parser",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:_cmd_run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:_cmd_run",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:_cmd_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:_cmd_report",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:_override",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "function:benchmark/dreadgoad/__main__.py:_override",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/config.py",
+      "target": "function:benchmark/dreadgoad/config.py:load_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/config.py",
+      "target": "function:benchmark/dreadgoad/config.py:load_config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_langsmith_trace_url",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_langsmith_trace_url",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_compute_window_cost",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_compute_window_cost",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_iso_now",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_iso_now",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:render_operator_message",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:render_operator_message",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_measurement_path",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_measurement_path",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_provision_workspace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_provision_workspace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:pull_measurement_bytes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:pull_measurement_bytes",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:pull_measurement_record",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:pull_measurement_record",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_build_result",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:_build_result",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:run_one",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "function:benchmark/dreadgoad/harness.py:run_one",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:_reuse_inventory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:_reuse_inventory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:provision",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:provision",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:wait_healthy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:wait_healthy",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:destroy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:destroy",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/base.py",
+      "target": "class:benchmark/dreadgoad/providers/base.py:BaseBenchmarkProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/base.py",
+      "target": "class:benchmark/dreadgoad/providers/base.py:BaseBenchmarkProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "target": "function:benchmark/dreadgoad/providers/dreadgoad.py:_iso_now",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "target": "function:benchmark/dreadgoad/providers/dreadgoad.py:_iso_now",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "target": "class:benchmark/dreadgoad/providers/dreadgoad.py:DreadGOADProvider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "target": "class:benchmark/dreadgoad/providers/dreadgoad.py:DreadGOADProvider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:write_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:write_report",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:refresh_grid_summaries",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:refresh_grid_summaries",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_ts_slug",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_ts_slug",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_emit_run_dir",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_emit_run_dir",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_build_metadata",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_build_metadata",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_copy_workspace_artifacts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_copy_workspace_artifacts",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_docker_cp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_docker_cp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_docker_cp_dir",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_docker_cp_dir",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_make_workspace_tarball",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_make_workspace_tarball",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_format_run_scorecard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_format_run_scorecard",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_emit_grid_summary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "function:benchmark/dreadgoad/reporter.py:_emit_grid_summary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "function:benchmark/dreadgoad/runner.py:load_provider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "function:benchmark/dreadgoad/runner.py:load_provider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "function:benchmark/dreadgoad/runner.py:get_langgraph_client",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "function:benchmark/dreadgoad/runner.py:get_langgraph_client",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "function:benchmark/dreadgoad/runner.py:run_grid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "function:benchmark/dreadgoad/runner.py:run_grid",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/schemas.py",
+      "target": "class:benchmark/dreadgoad/schemas.py:BenchmarkConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/schemas.py",
+      "target": "class:benchmark/dreadgoad/schemas.py:BenchmarkConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/schemas.py",
+      "target": "class:benchmark/dreadgoad/schemas.py:Scenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/schemas.py",
+      "target": "class:benchmark/dreadgoad/schemas.py:Scenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/schemas.py",
+      "target": "class:benchmark/dreadgoad/schemas.py:ProvisionResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/schemas.py",
+      "target": "class:benchmark/dreadgoad/schemas.py:ProvisionResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/schemas.py",
+      "target": "class:benchmark/dreadgoad/schemas.py:RunResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/schemas.py",
+      "target": "class:benchmark/dreadgoad/schemas.py:RunResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/state.py",
+      "target": "class:benchmark/dreadgoad/state.py:BenchmarkRunState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:benchmark/dreadgoad/state.py",
+      "target": "class:benchmark/dreadgoad/state.py:BenchmarkRunState",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "file:benchmark/dreadgoad/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "file:benchmark/dreadgoad/reporter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/__main__.py",
+      "target": "file:benchmark/dreadgoad/runner.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/config.py",
+      "target": "file:benchmark/dreadgoad/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "file:benchmark/dreadgoad/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/harness.py",
+      "target": "file:benchmark/dreadgoad/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/base.py",
+      "target": "file:benchmark/dreadgoad/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "target": "file:benchmark/dreadgoad/lab/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "target": "file:benchmark/dreadgoad/lab/dreadgoad_cli.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "target": "file:benchmark/dreadgoad/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "target": "file:benchmark/dreadgoad/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "file:benchmark/dreadgoad/harness.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/reporter.py",
+      "target": "file:benchmark/dreadgoad/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "file:benchmark/dreadgoad/harness.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "file:benchmark/dreadgoad/providers/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "file:benchmark/dreadgoad/providers/dreadgoad.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "file:benchmark/dreadgoad/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/runner.py",
+      "target": "file:benchmark/dreadgoad/state.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:benchmark/dreadgoad/state.py",
+      "target": "file:benchmark/dreadgoad/schemas.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:benchmark/dreadgoad/__main__.py:main",
+      "target": "function:benchmark/dreadgoad/__main__.py:build_parser",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/__main__.py:main",
+      "target": "function:benchmark/dreadgoad/__main__.py:_cmd_run",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/__main__.py:main",
+      "target": "function:benchmark/dreadgoad/__main__.py:_cmd_report",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/__main__.py:_cmd_run",
+      "target": "function:benchmark/dreadgoad/config.py:load_config",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/__main__.py:_cmd_run",
+      "target": "function:benchmark/dreadgoad/__main__.py:_override",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/__main__.py:_cmd_run",
+      "target": "function:benchmark/dreadgoad/runner.py:run_grid",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/__main__.py:_cmd_run",
+      "target": "function:benchmark/dreadgoad/reporter.py:write_report",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/__main__.py:_cmd_report",
+      "target": "function:benchmark/dreadgoad/reporter.py:refresh_grid_summaries",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/config.py:load_config",
+      "target": "class:benchmark/dreadgoad/schemas.py:BenchmarkConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:pull_measurement_bytes",
+      "target": "function:benchmark/dreadgoad/harness.py:_measurement_path",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:pull_measurement_record",
+      "target": "function:benchmark/dreadgoad/harness.py:pull_measurement_bytes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:_build_result",
+      "target": "function:benchmark/dreadgoad/harness.py:_compute_window_cost",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:_build_result",
+      "target": "class:benchmark/dreadgoad/schemas.py:RunResult",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:_build_result",
+      "target": "function:benchmark/dreadgoad/harness.py:_langsmith_trace_url",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:run_one",
+      "target": "function:benchmark/dreadgoad/harness.py:_iso_now",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:run_one",
+      "target": "function:benchmark/dreadgoad/harness.py:_provision_workspace",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:run_one",
+      "target": "function:benchmark/dreadgoad/harness.py:render_operator_message",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:run_one",
+      "target": "function:benchmark/dreadgoad/harness.py:_build_result",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/harness.py:run_one",
+      "target": "function:benchmark/dreadgoad/harness.py:pull_measurement_record",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:provision",
+      "target": "function:benchmark/dreadgoad/lab/dreadgoad_cli.py:_reuse_inventory",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:write_report",
+      "target": "function:benchmark/dreadgoad/reporter.py:_ts_slug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:write_report",
+      "target": "function:benchmark/dreadgoad/reporter.py:_emit_run_dir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:write_report",
+      "target": "function:benchmark/dreadgoad/reporter.py:_emit_grid_summary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:refresh_grid_summaries",
+      "target": "function:benchmark/dreadgoad/reporter.py:_emit_grid_summary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:_emit_run_dir",
+      "target": "function:benchmark/dreadgoad/reporter.py:_build_metadata",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:_emit_run_dir",
+      "target": "function:benchmark/dreadgoad/reporter.py:_format_run_scorecard",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:_emit_run_dir",
+      "target": "function:benchmark/dreadgoad/harness.py:pull_measurement_bytes",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:_emit_run_dir",
+      "target": "function:benchmark/dreadgoad/reporter.py:_copy_workspace_artifacts",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:_copy_workspace_artifacts",
+      "target": "function:benchmark/dreadgoad/reporter.py:_docker_cp",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:_copy_workspace_artifacts",
+      "target": "function:benchmark/dreadgoad/reporter.py:_docker_cp_dir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/reporter.py:_copy_workspace_artifacts",
+      "target": "function:benchmark/dreadgoad/reporter.py:_make_workspace_tarball",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/runner.py:run_grid",
+      "target": "function:benchmark/dreadgoad/runner.py:load_provider",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/runner.py:run_grid",
+      "target": "function:benchmark/dreadgoad/runner.py:get_langgraph_client",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:benchmark/dreadgoad/runner.py:run_grid",
+      "target": "class:benchmark/dreadgoad/state.py:BenchmarkRunState",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:benchmark/dreadgoad/providers/dreadgoad.py:DreadGOADProvider",
+      "target": "class:benchmark/dreadgoad/providers/base.py:BaseBenchmarkProvider",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/sandworm/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 109,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/scattered-spider/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 104,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/volt-typhoon/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 106,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/references/adversary-archetypes.md",
+   "language": "markdown",
+   "sizeLines": 113,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/references/apt-groups.md",
+   "language": "markdown",
+   "sizeLines": 466,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/supply-chain/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 86,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/authn_jwt/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 15,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/authz/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 15,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/graphql/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 14,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/idor/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 15,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/open_redirect/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 14,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/sqli/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 15,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/ssrf/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 15,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/ssti/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 14,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/xss/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 14,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/surface_exploit/xxe/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 14,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/wireless/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 96,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/wireless/deauth-pmf/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 231,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/wireless/evil-twin-karma/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 253,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/wireless/krack-fragattacks/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 253,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/wireless/wpa-enterprise-eap/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 241,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/wireless/wpa2-psk/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 127,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/wireless/wpa3-sae/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 226,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/wireless/wps-pixie-dust/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 191,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/engine/builder/stix_bootstrap.py",
+   "language": "python",
+   "sizeLines": 82,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/sandworm/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/scattered-spider/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/volt-typhoon/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/references/adversary-archetypes.md": [],
+  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/references/apt-groups.md": [],
+  "packages/raptix/raptix/skills/defs/standard/supply-chain/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/authn_jwt/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/authz/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/graphql/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/idor/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/open_redirect/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/sqli/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/ssrf/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/ssti/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/xss/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/surface_exploit/xxe/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/wireless/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/wireless/deauth-pmf/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/wireless/evil-twin-karma/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/wireless/krack-fragattacks/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/wireless/wpa-enterprise-eap/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/wireless/wpa2-psk/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/wireless/wpa3-sae/SKILL.md": [],
+  "packages/raptix/raptix/skills/defs/standard/wireless/wps-pixie-dust/SKILL.md": [],
+  "packages/raptix/raptix/skills/engine/builder/stix_bootstrap.py": []
+ }
+}

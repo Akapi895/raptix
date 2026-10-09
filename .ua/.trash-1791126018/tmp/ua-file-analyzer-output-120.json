@@ -1,0 +1,1136 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 25,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 16,
+      "failed": 0,
+      "skipped": 9
+    }
+  },
+  "results": [
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Phases.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 334,
+      "nonEmptyLines": 316,
+      "functions": [
+        {
+          "name": "Phases",
+          "startLine": 121,
+          "endLine": 314,
+          "params": [
+            "{ project, onHitl }"
+          ]
+        },
+        {
+          "name": "StatusChip",
+          "startLine": 316,
+          "endLine": 323,
+          "params": [
+            "{ phase }"
+          ]
+        },
+        {
+          "name": "InfoRow",
+          "startLine": 325,
+          "endLine": 334,
+          "params": [
+            "{ label, value, mono, highlight }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Phases",
+          "line": 121,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Phases",
+          "callee": "useState",
+          "lineNumber": 122
+        },
+        {
+          "caller": "Phases",
+          "callee": "phases.map",
+          "lineNumber": 146
+        },
+        {
+          "caller": "Phases",
+          "callee": "setSelected",
+          "lineNumber": 153
+        },
+        {
+          "caller": "Phases",
+          "callee": "phases.findIndex",
+          "lineNumber": 173
+        },
+        {
+          "caller": "Phases",
+          "callee": "phases.map",
+          "lineNumber": 184
+        },
+        {
+          "caller": "Phases",
+          "callee": "setSelected",
+          "lineNumber": 190
+        },
+        {
+          "caller": "Phases",
+          "callee": "String",
+          "lineNumber": 276
+        },
+        {
+          "caller": "Phases",
+          "callee": "String",
+          "lineNumber": 277
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/ProjectList.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 298,
+      "nonEmptyLines": 276,
+      "functions": [
+        {
+          "name": "ProjectList",
+          "startLine": 40,
+          "endLine": 145,
+          "params": [
+            "{ projects, onEnter }"
+          ]
+        },
+        {
+          "name": "ProjectCard",
+          "startLine": 147,
+          "endLine": 277,
+          "params": [
+            "{\n  project, menuOpen, onMenuToggle, onEnter,\n}"
+          ]
+        },
+        {
+          "name": "StatItem",
+          "startLine": 279,
+          "endLine": 298,
+          "params": [
+            "{\n  icon, value, label, red, green,\n}"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProjectList",
+          "line": 40,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "ProjectList",
+          "callee": "useState",
+          "lineNumber": 41
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "useState",
+          "lineNumber": 42
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "useState",
+          "lineNumber": 43
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "projects.filter",
+          "lineNumber": 45
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "p.name.toLowerCase().includes",
+          "lineNumber": 48
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "p.name.toLowerCase",
+          "lineNumber": 48
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "search.toLowerCase",
+          "lineNumber": 48
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "p.client.toLowerCase().includes",
+          "lineNumber": 49
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "p.client.toLowerCase",
+          "lineNumber": 49
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "search.toLowerCase",
+          "lineNumber": 49
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "p.scopeType.toLowerCase().includes",
+          "lineNumber": 50
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "p.scopeType.toLowerCase",
+          "lineNumber": 50
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "search.toLowerCase",
+          "lineNumber": 50
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "projects.filter",
+          "lineNumber": 61
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "STATUS_TABS.map",
+          "lineNumber": 74
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "setFilter",
+          "lineNumber": 77
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "projects.filter",
+          "lineNumber": 87
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "setSearch",
+          "lineNumber": 97
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "setMenuOpen",
+          "lineNumber": 108
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "filtered.map",
+          "lineNumber": 110
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "setMenuOpen",
+          "lineNumber": 115
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "onEnter",
+          "lineNumber": 116
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "projects.reduce",
+          "lineNumber": 133
+        },
+        {
+          "caller": "ProjectList",
+          "callee": "projects.reduce",
+          "lineNumber": 138
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "project.members.slice",
+          "lineNumber": 158
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "e.stopPropagation",
+          "lineNumber": 181
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "onMenuToggle",
+          "lineNumber": 183
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "[\n                { label: 'View Overview' },\n                { label: 'Open Chat' },\n                { label: 'Manage Members' },\n                { label: 'Archive Project', danger: true },\n              ].map",
+          "lineNumber": 190
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "visibleMembers.map",
+          "lineNumber": 243
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/ProjectOverview.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 399,
+      "nonEmptyLines": 369,
+      "functions": [
+        {
+          "name": "pill",
+          "startLine": 37,
+          "endLine": 41,
+          "params": [
+            "bg",
+            "border",
+            "color"
+          ]
+        },
+        {
+          "name": "PulsingDot",
+          "startLine": 56,
+          "endLine": 63,
+          "params": [
+            "{ color }"
+          ]
+        },
+        {
+          "name": "sectionHeader",
+          "startLine": 65,
+          "endLine": 73,
+          "params": [
+            "labelText",
+            "icon",
+            "rightEl"
+          ]
+        },
+        {
+          "name": "textLink",
+          "startLine": 75,
+          "endLine": 89,
+          "params": [
+            "labelText",
+            "onClick"
+          ]
+        },
+        {
+          "name": "MetricCard",
+          "startLine": 91,
+          "endLine": 101,
+          "params": [
+            "{ icon, title, children }"
+          ]
+        },
+        {
+          "name": "Row",
+          "startLine": 103,
+          "endLine": 109,
+          "params": [
+            "{ children, last }"
+          ]
+        },
+        {
+          "name": "ProjectOverview",
+          "startLine": 111,
+          "endLine": 399,
+          "params": [
+            "{ project, navigate, onHitl, onNewChat }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProjectOverview",
+          "line": 111,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "ProjectOverview",
+          "callee": "useNarrowViewport",
+          "lineNumber": 112
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "useRunSnapshot",
+          "lineNumber": 113
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "snapshot.agents.filter",
+          "lineNumber": 116
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "snapshot.agents.filter",
+          "lineNumber": 117
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "snapshot.agents.some",
+          "lineNumber": 118
+        },
+        {
+          "caller": "openAgentRun",
+          "callee": "onNewChat",
+          "lineNumber": 121
+        },
+        {
+          "caller": "openAgentRun",
+          "callee": "navigate",
+          "lineNumber": 121
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "snapshot.agents\n    .flatMap(a => a.recentActions.map(action => ({ agent: a.name, label: action.label, ts: action.ts })))\n    .slice",
+          "lineNumber": 123
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "snapshot.agents\n    .flatMap",
+          "lineNumber": 123
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "a.recentActions.map",
+          "lineNumber": 124
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "pill",
+          "lineNumber": 160
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "pill",
+          "lineNumber": 161
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "navigate",
+          "lineNumber": 164
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 191
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "navigate",
+          "lineNumber": 191
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 192
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "navigate",
+          "lineNumber": 192
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 193
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "metricCaption",
+          "lineNumber": 204
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 205
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "navigate",
+          "lineNumber": 205
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "metricCaption",
+          "lineNumber": 212
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 213
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "navigate",
+          "lineNumber": 213
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 226
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "navigate",
+          "lineNumber": 226
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "sectionHeader",
+          "lineNumber": 255
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "pill",
+          "lineNumber": 259
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "activity.map",
+          "lineNumber": 268
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 282
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 283
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "navigate",
+          "lineNumber": 283
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "sectionHeader",
+          "lineNumber": 290
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "sectionHeader",
+          "lineNumber": 305
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "snapshot.threads.slice(0, 3).map",
+          "lineNumber": 308
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "snapshot.threads.slice",
+          "lineNumber": 308
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "Math.min",
+          "lineNumber": 309
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 325
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "unresolvedHitl.map",
+          "lineNumber": 347
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 369
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "sectionHeader",
+          "lineNumber": 379
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "[\n              { label: 'Findings', value: project.findings === 0 ? 'No findings recorded yet (mock record)' : `${project.findings} recorded (mock project record)`, to: 'findings' as Screen },\n              { label: 'Evidence', value: 'Count not tracked in demo data', to: 'evidence' as Screen },\n              { label: 'Reports', value: 'Mock previews only — export limited to JSON/Markdown', to: 'reports' as Screen },\n              { label: 'Operations Log', value: `Shared run (${snapshot.source}) + demo archive`, to: 'logs' as Screen },\n            ].map",
+          "lineNumber": 380
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "textLink",
+          "lineNumber": 391
+        },
+        {
+          "caller": "ProjectOverview",
+          "callee": "navigate",
+          "lineNumber": 391
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/eslint.config.mjs",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 38,
+      "nonEmptyLines": 37,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 11,
+      "nonEmptyLines": 10,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.console.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.controls.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.core.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.deployed.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 9,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.findings.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.graph.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 14,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.logs.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.planning.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 12,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/playwright.real.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 8,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/eslint.config.mjs",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 20,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 14,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20260412164158_init/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 27,
+      "nonEmptyLines": 22,
+      "definitions": [
+        {
+          "name": "Engagement",
+          "kind": "table",
+          "fields": [
+            "id",
+            "name",
+            "targetType",
+            "targetValue",
+            "status",
+            "userId",
+            "threadId",
+            "workspacePath",
+            "createdAt",
+            "updatedAt"
+          ],
+          "startLine": 8,
+          "endLine": 21
+        },
+        {
+          "name": "Engagement_userId_idx",
+          "kind": "index",
+          "fields": [],
+          "startLine": 24,
+          "endLine": 24
+        },
+        {
+          "name": "Engagement_status_idx",
+          "kind": "index",
+          "fields": [],
+          "startLine": 27,
+          "endLine": 27
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 3
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20260826090000_engagement_authorization_confirmation/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 2,
+      "nonEmptyLines": 2,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261001000000_engagement_display_name/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 5,
+      "nonEmptyLines": 4,
+      "definitions": [
+        {
+          "name": "Engagement_userId_name_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 5,
+          "endLine": 5
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 1
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261002000000_runtime_ownership/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 40,
+      "nonEmptyLines": 38,
+      "definitions": [
+        {
+          "name": "EngagementThread",
+          "kind": "table",
+          "fields": [
+            "threadId",
+            "engagementId",
+            "assistantId",
+            "kind",
+            "contextHash",
+            "createdAt",
+            "updatedAt"
+          ],
+          "startLine": 6,
+          "endLine": 15
+        },
+        {
+          "name": "WebRequestLedger",
+          "kind": "table",
+          "fields": [
+            "id",
+            "engagementId",
+            "requestId",
+            "operation",
+            "payloadHash",
+            "reservationToken",
+            "threadId",
+            "runId",
+            "activeThreadId",
+            "state",
+            "createdAt",
+            "updatedAt"
+          ],
+          "startLine": 18,
+          "endLine": 36
+        },
+        {
+          "name": "EngagementThread_engagementId_threadId_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 16,
+          "endLine": 16
+        },
+        {
+          "name": "WebRequestLedger_engagementId_requestId_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 37,
+          "endLine": 37
+        },
+        {
+          "name": "WebRequestLedger_activeThreadId_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 38,
+          "endLine": 38
+        },
+        {
+          "name": "WebRequestLedger_threadId_runId_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 39,
+          "endLine": 39
+        },
+        {
+          "name": "WebRequestLedger_state_updatedAt_idx",
+          "kind": "index",
+          "fields": [],
+          "startLine": 40,
+          "endLine": 40
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 7
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261002010000_runtime_context_proof/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 1,
+      "nonEmptyLines": 1,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261002020000_runtime_dispatch_recovery/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 6,
+      "nonEmptyLines": 6,
+      "definitions": [
+        {
+          "name": "WebRequestLedger_candidateThreadId_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 6,
+          "endLine": 6
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 1
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261002030000_campaign_drafts/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 46,
+      "nonEmptyLines": 37,
+      "definitions": [
+        {
+          "name": "Campaign",
+          "kind": "table",
+          "fields": [
+            "id",
+            "engagementId",
+            "name",
+            "vector",
+            "status",
+            "version",
+            "spec",
+            "createdAt",
+            "updatedAt"
+          ],
+          "startLine": 5,
+          "endLine": 17
+        },
+        {
+          "name": "CampaignJob",
+          "kind": "table",
+          "fields": [
+            "id",
+            "campaignId",
+            "kind",
+            "status",
+            "provider",
+            "error",
+            "createdAt",
+            "updatedAt"
+          ],
+          "startLine": 20,
+          "endLine": 31
+        },
+        {
+          "name": "Campaign_engagementId_name_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 34,
+          "endLine": 34
+        },
+        {
+          "name": "Campaign_engagementId_status_idx",
+          "kind": "index",
+          "fields": [],
+          "startLine": 37,
+          "endLine": 37
+        },
+        {
+          "name": "CampaignJob_campaignId_createdAt_idx",
+          "kind": "index",
+          "fields": [],
+          "startLine": 40,
+          "endLine": 40
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 5
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261002031000_vault_storage/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 38,
+      "nonEmptyLines": 31,
+      "definitions": [
+        {
+          "name": "VaultSecret",
+          "kind": "table",
+          "fields": [
+            "id",
+            "engagementId",
+            "kind",
+            "label",
+            "ciphertext",
+            "iv",
+            "authTag",
+            "createdBy",
+            "createdAt",
+            "updatedAt"
+          ],
+          "startLine": 5,
+          "endLine": 18
+        },
+        {
+          "name": "VaultAudit",
+          "kind": "table",
+          "fields": [
+            "id",
+            "engagementId",
+            "secretId",
+            "action",
+            "createdAt"
+          ],
+          "startLine": 21,
+          "endLine": 29
+        },
+        {
+          "name": "VaultSecret_engagementId_kind_idx",
+          "kind": "index",
+          "fields": [],
+          "startLine": 32,
+          "endLine": 32
+        },
+        {
+          "name": "VaultAudit_engagementId_createdAt_idx",
+          "kind": "index",
+          "fields": [],
+          "startLine": 35,
+          "endLine": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 4
+      }
+    },
+    {
+      "path": "clients/web-raptix/server/prisma/migrations/20261003000000_campaign_request_identity/migration.sql",
+      "language": "sql",
+      "fileCategory": "data",
+      "totalLines": 3,
+      "nonEmptyLines": 3,
+      "definitions": [
+        {
+          "name": "CampaignJob_campaignId_requestId_key",
+          "kind": "index",
+          "fields": [],
+          "startLine": 3,
+          "endLine": 3
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 1
+      }
+    }
+  ]
+}

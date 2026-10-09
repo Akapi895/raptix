@@ -1,0 +1,324 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+ "batchFiles": [
+  {
+   "path": "raptix/agents/middleware_slots.py",
+   "language": "python",
+   "sizeLines": 521,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/cli/__main__.py",
+   "language": "python",
+   "sizeLines": 55,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/cli/audit.py",
+   "language": "python",
+   "sizeLines": 99,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/cli/export_transcript.py",
+   "language": "python",
+   "sizeLines": 210,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/cli/zip.py",
+   "language": "python",
+   "sizeLines": 238,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/__init__.py",
+   "language": "python",
+   "sizeLines": 56,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/_audit_sink.py",
+   "language": "python",
+   "sizeLines": 245,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/_command_targets.py",
+   "language": "python",
+   "sizeLines": 441,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/_injection_detector.py",
+   "language": "python",
+   "sizeLines": 352,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/budget.py",
+   "language": "python",
+   "sizeLines": 344,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/engagement.py",
+   "language": "python",
+   "sizeLines": 497,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/event_logging.py",
+   "language": "python",
+   "sizeLines": 657,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/filesystem.py",
+   "language": "python",
+   "sizeLines": 351,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/hitl.py",
+   "language": "python",
+   "sizeLines": 524,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/opplan.py",
+   "language": "python",
+   "sizeLines": 445,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/opscontrol_notifications.py",
+   "language": "python",
+   "sizeLines": 213,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/prompt_injection_shield.py",
+   "language": "python",
+   "sizeLines": 481,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/roe.py",
+   "language": "python",
+   "sizeLines": 642,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/skillogy.py",
+   "language": "python",
+   "sizeLines": 542,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/skills.py",
+   "language": "python",
+   "sizeLines": 236,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/untrusted_output.py",
+   "language": "python",
+   "sizeLines": 331,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/runtime/event_log.py",
+   "language": "python",
+   "sizeLines": 296,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/filesystem.py",
+   "language": "python",
+   "sizeLines": 20,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/opplan.py",
+   "language": "python",
+   "sizeLines": 1244,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/ops/__init__.py",
+   "language": "python",
+   "sizeLines": 38,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/ops/client.py",
+   "language": "python",
+   "sizeLines": 143,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/ops/tools.py",
+   "language": "python",
+   "sizeLines": 210,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/skills.py",
+   "language": "python",
+   "sizeLines": 296,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/skills_registry.py",
+   "language": "python",
+   "sizeLines": 248,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/agents/test_build.py",
+   "language": "python",
+   "sizeLines": 688,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/agents/test_if_skill_contract.py",
+   "language": "python",
+   "sizeLines": 34,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cli/test_audit.py",
+   "language": "python",
+   "sizeLines": 90,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cli/test_export_transcript.py",
+   "language": "python",
+   "sizeLines": 117,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "raptix/agents/middleware_slots.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/middleware/__init__.py",
+   "raptix/middleware/budget.py",
+   "raptix/middleware/event_logging.py",
+   "raptix/middleware/hitl.py",
+   "raptix/middleware/model_override.py",
+   "raptix/middleware/notifications.py",
+   "raptix/middleware/opscontrol_notifications.py",
+   "raptix/middleware/prompt_injection_shield.py",
+   "raptix/middleware/proxy_key_override.py",
+   "raptix/middleware/roe.py",
+   "raptix/runtime/recording.py"
+  ],
+  "raptix/cli/__main__.py": [
+   "raptix/cli/audit.py",
+   "raptix/cli/auth.py",
+   "raptix/cli/export_transcript.py",
+   "raptix/cli/scan.py",
+   "raptix/cli/telemetry.py",
+   "raptix/cli/zip.py"
+  ],
+  "raptix/cli/audit.py": [
+   "raptix/middleware/_audit_sink.py"
+  ],
+  "raptix/cli/export_transcript.py": [
+   "raptix/runtime/event_log.py"
+  ],
+  "raptix/cli/zip.py": [],
+  "raptix/middleware/__init__.py": [
+   "raptix/middleware/budget.py",
+   "raptix/middleware/engagement.py",
+   "raptix/middleware/event_logging.py",
+   "raptix/middleware/filesystem.py",
+   "raptix/middleware/hitl.py",
+   "raptix/middleware/kg.py",
+   "raptix/middleware/notifications.py",
+   "raptix/middleware/opplan.py",
+   "raptix/middleware/prompt_injection_shield.py",
+   "raptix/middleware/roe.py",
+   "raptix/middleware/skillogy.py",
+   "raptix/middleware/skills.py",
+   "raptix/middleware/untrusted_output.py"
+  ],
+  "raptix/middleware/_audit_sink.py": [],
+  "raptix/middleware/_command_targets.py": [],
+  "raptix/middleware/_injection_detector.py": [],
+  "raptix/middleware/budget.py": [],
+  "raptix/middleware/engagement.py": [
+   "raptix/middleware/opplan.py",
+   "raptix/middleware/state_reducers.py",
+   "raptix/tools/bash/bash.py"
+  ],
+  "raptix/middleware/event_logging.py": [
+   "raptix/runtime/event_log.py",
+   "raptix/telemetry/sink.py"
+  ],
+  "raptix/middleware/filesystem.py": [
+   "raptix/sandbox_kernel/base.py",
+   "raptix/tools/filesystem.py"
+  ],
+  "raptix/middleware/hitl.py": [],
+  "raptix/middleware/opplan.py": [
+   "raptix/tools/opplan.py"
+  ],
+  "raptix/middleware/opscontrol_notifications.py": [
+   "raptix/tools/ops/client.py"
+  ],
+  "raptix/middleware/prompt_injection_shield.py": [
+   "raptix/middleware/_injection_detector.py"
+  ],
+  "raptix/middleware/roe.py": [
+   "raptix/middleware/_audit_sink.py",
+   "raptix/middleware/_command_targets.py"
+  ],
+  "raptix/middleware/skillogy.py": [],
+  "raptix/middleware/skills.py": [
+   "raptix/tools/skills.py"
+  ],
+  "raptix/middleware/untrusted_output.py": [
+   "raptix/middleware/_injection_detector.py"
+  ],
+  "raptix/runtime/event_log.py": [],
+  "raptix/tools/filesystem.py": [],
+  "raptix/tools/opplan.py": [],
+  "raptix/tools/ops/__init__.py": [
+   "raptix/tools/ops/client.py",
+   "raptix/tools/ops/tools.py"
+  ],
+  "raptix/tools/ops/client.py": [],
+  "raptix/tools/ops/tools.py": [
+   "raptix/tools/ops/client.py"
+  ],
+  "raptix/tools/skills.py": [
+   "raptix/tools/skills_registry.py"
+  ],
+  "raptix/tools/skills_registry.py": [],
+  "tests/unit/agents/test_build.py": [
+   "raptix/agents/__init__.py",
+   "raptix/agents/middleware_slots.py",
+   "raptix/middleware/budget.py",
+   "raptix/middleware/event_logging.py",
+   "raptix/middleware/hitl.py",
+   "raptix/middleware/prompt_injection_shield.py",
+   "raptix/middleware/untrusted_output.py"
+  ],
+  "tests/unit/agents/test_if_skill_contract.py": [
+   "raptix/agents/middleware_slots.py"
+  ],
+  "tests/unit/cli/test_audit.py": [
+   "raptix/cli/__main__.py",
+   "raptix/cli/audit.py",
+   "raptix/middleware/_audit_sink.py"
+  ],
+  "tests/unit/cli/test_export_transcript.py": [
+   "raptix/cli/__main__.py",
+   "raptix/cli/export_transcript.py",
+   "raptix/runtime/event_log.py"
+  ]
+ }
+}

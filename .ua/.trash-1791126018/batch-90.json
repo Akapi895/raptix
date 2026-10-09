@@ -1,0 +1,233 @@
+{
+  "batchIndex": 90,
+  "batchFiles": [
+    { "path": "docs/design/2026-06-03-external-docs-research.md", "language": "markdown", "sizeLines": 425, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-03-kg-middleware-implementation-research.md", "language": "markdown", "sizeLines": 570, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-03-kg-middleware-redesign.md", "language": "markdown", "sizeLines": 655, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-04-bloodhound-kgstore-mapping.md", "language": "markdown", "sizeLines": 236, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-04-slither-kgstore-mapping.md", "language": "markdown", "sizeLines": 230, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-11-launcher-image-decoupling.md", "language": "markdown", "sizeLines": 116, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-12-roe-guardrail-middleware-redesign.md", "language": "markdown", "sizeLines": 286, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-12-skillogy-load-skill-by-name-pollution.md", "language": "markdown", "sizeLines": 85, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-12-tmux-per-command-env-resync-marker-race.md", "language": "markdown", "sizeLines": 93, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-15-web-search-engine-plan.md", "language": "markdown", "sizeLines": 151, "fileCategory": "docs" },
+    { "path": "docs/design/2026-06-20-telemetry-data-collection-design.md", "language": "markdown", "sizeLines": 221, "fileCategory": "docs" },
+    { "path": "docs/design/2026-07-27-telemetry-semantic-redaction-design.md", "language": "markdown", "sizeLines": 113, "fileCategory": "docs" },
+    { "path": "docs/design/attack-graph-schema.md", "language": "markdown", "sizeLines": 414, "fileCategory": "docs" },
+    { "path": "docs/design/evidence-and-findings-conventions-research.md", "language": "markdown", "sizeLines": 423, "fileCategory": "docs" },
+    { "path": "docs/design/neo4j-research-notes.md", "language": "markdown", "sizeLines": 1020, "fileCategory": "docs" },
+    { "path": "docs/design/opplan-middleware.md", "language": "markdown", "sizeLines": 694, "fileCategory": "docs" },
+    { "path": "docs/design/single-bash-and-graphdb.md", "language": "markdown", "sizeLines": 61, "fileCategory": "docs" },
+    { "path": "docs/design/skillogy-brain-redesign.md", "language": "markdown", "sizeLines": 901, "fileCategory": "docs" },
+    { "path": "docs/design/skillogy.md", "language": "markdown", "sizeLines": 733, "fileCategory": "docs" }
+  ],
+  "nodes": [
+    {
+      "id": "document:docs/design/2026-06-03-external-docs-research.md",
+      "type": "document",
+      "name": "2026-06-03-external-docs-research.md",
+      "filePath": "docs/design/2026-06-03-external-docs-research.md",
+      "summary": "Nghiên cứu tài liệu ngoài cho KG middleware redesign (5 chủ đề): AgentMiddleware API chính thức của LangChain (bộ lifecycle hooks đầy đủ, self.tools merge, state_schema, InjectedState/InjectedToolCallId, scoping middleware theo tool); BaseStore của LangGraph và khoảng cách nếu host Neo4jStore; middleware DeepAgents (Memory/Filesystem/SubAgent); Neo4j Python driver (execute_write per-operation, retry DeadlockDetected, composite range index Neo4j 5.24, vector index 5.13+, khuyến nghị APOC vs GDS cho Dijkstra); reference implementations (BloodHound CE, Cartography, Graphiti, Cognee); kết thúc bằng các implications cho thiết kế.",
+      "tags": ["research", "langchain", "neo4j", "middleware"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/2026-06-03-kg-middleware-implementation-research.md",
+      "type": "document",
+      "name": "2026-06-03-kg-middleware-implementation-research.md",
+      "filePath": "docs/design/2026-06-03-kg-middleware-implementation-research.md",
+      "summary": "Nghiên cứu triển khai KG middleware: xác nhận các quyết định thiết kế từ spec, 5 câu hỏi mở (middleware mở capability hay constrain model, auto-ingest từ file, phần prompt của analyst được giữ lại bao nhiêu, multi-engagement concurrency, vector index cho semantic recall), anti-pattern cần tránh từ skills, 3 options đưa user review; thiết kế tối thiểu sau khi Option B được chốt — gọt còn 2 tools (kg_record + kg_ingest), workflow middleware, summary block, PR plan 3 PRs × 4 atomic commits; chỉnh cuối trước khi code: signature kg_record có provenance, kg_ingest giữ scanner_kind dispatcher, V002 migration, before_agent làm stale-node cleanup kiểu Cartography, phòng thủ lỗi InjectedState override và danh sách file PR-A.",
+      "tags": ["kg-middleware", "research", "design-decisions", "provenance"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/2026-06-03-kg-middleware-redesign.md",
+      "type": "document",
+      "name": "2026-06-03-kg-middleware-redesign.md",
+      "filePath": "docs/design/2026-06-03-kg-middleware-redesign.md",
+      "summary": "Design spec KG Middleware Redesign: nền tảng sau narrow phase và 5 vấn đề high-impact; module layout, KGState schema, interface public, hành vi đầy đủ các lifecycle hook (before_agent dọn node stale, wrap_model_call inject summary, wrap_tool_call, after_model); tool surface sau redesign, KGStore thay thế _state.get_store()+graph_transaction(), AttackGraphProtocol làm hợp đồng runtime/cart.py, composite range indexes, adapter registry cho kg_inest theo scanner_kind, MiddlewareSlot.KG cho plugin; bổ sung plugin contract, migration 4 PRs kèm bảng file-by-file, acceptance criteria theo PR, risks & mitigations, appendix ví dụ tool và sign-off checklist.",
+      "tags": ["kg-middleware", "design-spec", "migration", "neo4j"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/2026-06-04-bloodhound-kgstore-mapping.md",
+      "type": "document",
+      "name": "2026-06-04-bloodhound-kgstore-mapping.md",
+      "filePath": "docs/design/2026-06-04-bloodhound-kgstore-mapping.md",
+      "summary": "RFC ánh xạ BloodHound 5.x JSON vào KGStore: ground truth từ JSON chuẩn (envelope, quy tắc node identifier, bảng mapping tạm thời, edges từ valid_edges.json, tên RightName của ACE, post-process edges ADCS) và các trap bắt buộc xử lý khi ingest; quyết định kiến trúc giữa NodeKind BloodHound riêng (Option A) và reuse USER/HOST/GROUP kèm bh_type prop (Option B, được khuyến nghị); kế hoạch migration theo phase từ NodeKind/EdgeKind extension, ingest core, ADCS/LocalAdmin/GPO post-process, test + live validation tới shim removal; open questions và sources.",
+      "tags": ["bloodhound", "kgstore", "rfc", "mapping"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/2026-06-04-slither-kgstore-mapping.md",
+      "type": "document",
+      "name": "2026-06-04-slither-kgstore-mapping.md",
+      "filePath": "docs/design/2026-06-04-slither-kgstore-mapping.md",
+      "summary": "RFC ánh xạ output Slither --json vào KGStore: ground truth (top-level envelope, detector finding object, element object, bảng mapping tạm thời, edges) và các trap khi ingest; quyết định kiến trúc giữa Solidity-specific NodeKind (Option A) và reuse kind hiện có kèm slither_type prop (Option B, được khuyến nghị); kế hoạch migration 5 phase — extension NodeKind, slither ingest core, function-summary join tùy chọn, test + live validation, shim removal cho Contract; open questions và sources.",
+      "tags": ["slither", "kgstore", "rfc", "solidity"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/2026-06-11-launcher-image-decoupling.md",
+      "type": "document",
+      "name": "2026-06-11-launcher-image-decoupling.md",
+      "filePath": "docs/design/2026-06-11-launcher-image-decoupling.md",
+      "summary": "Design exploration (draft, chưa quyết) tách rời phiên bản launcher ↔ image: coupling RAPTIX_VERSION từ binary launcher (start.go:283) nội suy vào mọi image trong docker-compose khiến image-only patch tag vX.Y.Z.N không bao giờ tới người dùng đang giữ launcher cũ; hai blocker chồng thêm — compareSemver chỉ so 3 segment và cách detect prerelease; 3 options (launcher resolve latest release tag lúc start, luôn build launcher trên patch tag, pin compose :latest) với pros/cons, recommendation, open questions và out of scope.",
+      "tags": ["launcher", "versioning", "release", "docker"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/design/2026-06-12-roe-guardrail-middleware-redesign.md",
+      "type": "document",
+      "name": "2026-06-12-roe-guardrail-middleware-redesign.md",
+      "filePath": "docs/design/2026-06-12-roe-guardrail-middleware-redesign.md",
+      "summary": "Root cause + redesign RoE Guardrail Middleware: cách target extraction bằng string parsing hoạt động, bằng chứng đo được 2026-06-12 chỉ ra các chế độ bỏ lọt, vì sao string parsing là sai layer; redesign 2 lớp — Layer 1 parser fail-closed verb-agnostic (tactical, contained) và Layer 2 egress làm authoritative network boundary (strategic, sandbox nftables); đổi tên RoE Guardrail Middleware, liệt kê code/docs bị ảnh hưởng, sequencing triển khai, open questions và reproducer.",
+      "tags": ["roe-guardrail", "egress", "parser", "redesign"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/2026-06-12-skillogy-load-skill-by-name-pollution.md",
+      "type": "document",
+      "name": "2026-06-12-skillogy-load-skill-by-name-pollution.md",
+      "filePath": "docs/design/2026-06-12-skillogy-load-skill-by-name-pollution.md",
+      "summary": "Phân tích bug skillogy: load_skill theo name trả 404 khi ranking của find_skill bị pollution — root cause là đường name resolution đi qua keyword search bị nhiễu thay vì lookup trực tiếp; fix tách đường resolve name, cách verify và follow-up có severity thấp hơn.",
+      "tags": ["skillogy", "bug-analysis", "find-skill"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/design/2026-06-12-tmux-per-command-env-resync-marker-race.md",
+      "type": "document",
+      "name": "2026-06-12-tmux-per-command-env-resync-marker-race.md",
+      "filePath": "docs/design/2026-06-12-tmux-per-command-env-resync-marker-race.md",
+      "summary": "Phân tích race trong tmux bash tool: cơ chế re-sync env theo từng lệnh đua với PS1 completion marker khiến output parse sai — mô tả symptom, root cause chi tiết của race, fix (tách marker/buffer), cách verify và ghi chú về env changes theo từng lệnh.",
+      "tags": ["tmux", "race-condition", "bash-tool"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/design/2026-06-15-web-search-engine-plan.md",
+      "type": "document",
+      "name": "2026-06-15-web-search-engine-plan.md",
+      "filePath": "docs/design/2026-06-15-web-search-engine-plan.md",
+      "summary": "Kế hoạch thiết kế + triển khai web search/fetch engine: các quyết định đã khóa, phần adopt từ insane-search (engine intelligence) và phần đảo ngược (Raptix governance), cách routing sandbox giữ invariant 'all egress in sandbox', module layout đề xuất, các implementation phase theo TDD (test trước mỗi bước), test strategy và disposition cho issue #605/#650.",
+      "tags": ["web-search", "sandbox", "tdd", "engine"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/design/2026-06-20-telemetry-data-collection-design.md",
+      "type": "document",
+      "name": "2026-06-20-telemetry-data-collection-design.md",
+      "filePath": "docs/design/2026-06-20-telemetry-data-collection-design.md",
+      "summary": "Thiết kế thu thập telemetry & usage data: các quyết định đã khóa, trạng thái hiện tại, hai data tier, sanitization pipeline sinh Tier B (classification không có free-text, placeholder redaction giữ shape bỏ identifier, local-LLM abstractive summary bị defer), kiến trúc hai lớp hai mục đích, những gì maintainer thực nhận được, vì sao không dùng LangSmith làm kênh thu thập, consent model, mapping vào file thật trong codebase và sequencing.",
+      "tags": ["telemetry", "sanitization", "consent", "design"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/2026-07-27-telemetry-semantic-redaction-design.md",
+      "type": "document",
+      "name": "2026-07-27-telemetry-semantic-redaction-design.md",
+      "filePath": "docs/design/2026-07-27-telemetry-semantic-redaction-design.md",
+      "summary": "Thiết kế semantic redaction cho research corpus: vì sao cần lớp semantic, non-goal, ba lớp — client deterministic giữ nguyên, server-side semantic pass mới, audit trước release; open questions và các thay đổi cần làm trong docs ngay.",
+      "tags": ["telemetry", "redaction", "privacy", "design"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/design/attack-graph-schema.md",
+      "type": "document",
+      "name": "attack-graph-schema.md",
+      "filePath": "docs/design/attack-graph-schema.md",
+      "summary": "Schema Attack Graph thiết kế Neo4j native: định nghĩa attack graph trong ngữ cảnh red team, reference implementations và extension của Raptix; node labels theo 6 layer (infrastructure, identity, vulnerability, code, attack progression, analysis), relationship types theo nhóm (topology, access & authentication, exploitation, kill chain progression, validation & remediation), weight/cost model, constraints & indexes, 7 mẫu Cypher cốt lõi (shortest attack path, unexplored surface, credential reachability, impact analysis, lateral movement, kill chain coverage, crown jewel risk score) và migration từ schema hiện tại với bảng mapping.",
+      "tags": ["attack-graph", "neo4j", "schema", "cypher"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/evidence-and-findings-conventions-research.md",
+      "type": "document",
+      "name": "evidence-and-findings-conventions-research.md",
+      "filePath": "docs/design/evidence-and-findings-conventions-research.md",
+      "summary": "Nghiên cứu external về evidence/findings/shared-artifact conventions: tại sao quan trọng với hệ thống red-team tự chủ; evidence & chain-of-custody (activity log append-only theo NIST SP 800-115, artifact store); findings documentation (minimum finding schema hội tụ nhiều nguồn, severity CVSS v4.0 lưu vector chứ không chỉ score, phân loại Bugcrowd VRT, cấu trúc PoC reproducible, structured intake HackerOne); evidence-per-finding linkage là quan hệ load-bearing; định dạng trao đổi (SARIF, MITRE ATT&CK Navigator layers, DefectDojo/OCSF); shared-workspace data models; mapping vào Raptix kèm gaps — các hành động giá trị cao đã APPLIED 2026-06-12; caveats và sources.",
+      "tags": ["evidence", "findings", "sarif", "cvss"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/neo4j-research-notes.md",
+      "type": "document",
+      "name": "neo4j-research-notes.md",
+      "filePath": "docs/design/neo4j-research-notes.md",
+      "summary": "Ghi chú nghiên cứu Neo4j cho attack-graph refactor (13 chủ đề, mỗi chủ đề kèm Question/Findings/Recommendation cho Raptix): concurrent Cypher writes đa agent, APOC dijkstra vs GDS shortestPath, multi-tenancy theo engagement, vector index (5.13+), bulk ingest patterns, schema evolution không downtime, indexing strategy, driver session lifecycle, read-only query optimization, chống Cypher injection, apoc.path.expandConfig, subqueries CALL {} và CALL ... IN TRANSACTIONS, reference implementations (BloodHound CE, Cartography, BRON, Memgraph/Kuzu); tổng hợp 7 thay đổi impact cao nhất — replace graph_transaction bằng execute_write per-operation (Critical), bỏ threading.Lock (Critical), composite indexes theo engagement, enforce scoping trong query_custom, promote_chain atomic, neo4j-migrations, parameterize plan_chains.",
+      "tags": ["neo4j", "research", "cypher", "performance"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/opplan-middleware.md",
+      "type": "document",
+      "name": "opplan-middleware.md",
+      "filePath": "docs/design/opplan-middleware.md",
+      "summary": "Design document OPPLANMiddleware v2: context (mapping từ Claude Code TaskList và giới hạn), kiến trúc (state schema, opplan.json), triển khai trong raptix/middleware/opplan.py với 5 tools — create_opplan, add_objective, get_objective, list_objectives, update_objective — kèm state transition rules, middleware class với wrap_model_call (inject tiến độ), wrap_tool_call (gác trạng thái) và after_model; tích hợp vào middleware stack orchestrator kèm danh sách file new/modified/removed, prompt update cho decepticon, so sánh mapping từng Claude Code task tool với OPPLAN tool, verification nudge và Objective model schema.",
+      "tags": ["opplan", "middleware", "orchestrator", "design"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/single-bash-and-graphdb.md",
+      "type": "document",
+      "name": "single-bash-and-graphdb.md",
+      "filePath": "docs/design/single-bash-and-graphdb.md",
+      "summary": "Định hướng core của Raptix: single bash tool — một primitive thực thi phản chiếu operator thật (tradecraft là chuỗi lệnh shell, ít nhầm lẫn chọn tool, transferability tốt), wrapper chuyên biệt coi là legacy; luật operational theo lane recon/exploit/postexploit/ad/cloud; chiến lược migration knowledge graph — JSON backend mặc định (RAPTIX_KG_BACKEND=json) và Neo4j optional cho engagement lớn/đa agent, cùng differentiating edge hướng security AGI (execution substrate thật, persistent exploit memory, chain-native planning, operational guardrails).",
+      "tags": ["architecture-direction", "bash-tool", "neo4j"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/design/skillogy-brain-redesign.md",
+      "type": "document",
+      "name": "skillogy-brain-redesign.md",
+      "filePath": "docs/design/skillogy-brain-redesign.md",
+      "summary": "Thiết kế Skillogy v0.2 'Brain Redesign' (+amendment v0.2.2 về tool surface và prompt-assembly): động cơ từ điểm đau user-confirmed và audit thực tế corpus/frontmatter, 6 nguyên tắc và paradigm shift side-by-side, kiến trúc và component decomposition, phase split; Phase 0 cleanup corpus (deliverables, co-design, canonical frontmatter schema, danh sách subdomain); Phase 1a brain anatomy (graph schema :Skill/:Technique, edge inventory, MITRE STIX importer Enterprise, CI builder skillogy.builder, 3 tools agent — load_skill/traverse/run_cypher_read với read-only enforcement — constraints/indexes, validation rules, SkillogyMiddleware, migration, observability, testing); Phase 1b associative memory (embedding pipeline, recall, performance budget); Phase 2 LLM-inferred edges + :Tool/:Agent/:RoEConstraint; Phase 3 plasticity + capability plane; migration plan, plugin SDK compat, effort estimate, changelog và references.",
+      "tags": ["skillogy", "redesign", "phases", "knowledge-graph"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/design/skillogy.md",
+      "type": "document",
+      "name": "skillogy.md",
+      "filePath": "docs/design/skillogy.md",
+      "summary": "Thiết kế Skillogy v0.1 — hệ thống skill backed bởi knowledge graph: động cơ (giới hạn cấu trúc của skill system hiện tại, research consensus 2024–2026), 4 nguyên tắc và paradigm shift, kiến trúc tổng thể; schema graph (node labels, edge types explicit/LLM-inferred v0.1/reserved v0.2, bridge runtime sang engagement graph, cân nhắc MITRE v19.1); tool interface 5 hàm (find_skill, load_skill, get_prereqs, suggest_next và get_skill_chain cho v0.2); SkillogyMiddleware; build pipeline 12 stages đảm bảo determinism; Neo4j setup (unique constraints, performance indexes, GDS projection cho PPR); AssetType seed ~35 nodes, validation rules, migration từ SkillsMiddleware, open questions và changelog.",
+      "tags": ["skillogy", "design", "knowledge-graph", "build-pipeline"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    { "source": "document:docs/design/2026-06-03-external-docs-research.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/store.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-03-kg-middleware-implementation-research.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/tools.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-03-kg-middleware-redesign.md", "target": "file:packages/raptix/raptix/middleware/kg.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-03-kg-middleware-redesign.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/store.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-03-kg-middleware-redesign.md", "target": "file:packages/raptix/raptix/runtime/cart.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-04-bloodhound-kgstore-mapping.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-04-bloodhound-kgstore-mapping.md", "target": "file:packages/raptix/tests/unit/ad/test_bloodhound_kgstore.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-04-slither-kgstore-mapping.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-04-slither-kgstore-mapping.md", "target": "file:packages/raptix/tests/unit/contracts/test_slither_kgstore.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-11-launcher-image-decoupling.md", "target": "file:clients/launcher/cmd/start.go", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-11-launcher-image-decoupling.md", "target": "service:docker-compose.yml", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-12-roe-guardrail-middleware-redesign.md", "target": "file:packages/raptix/raptix/middleware/roe.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-12-skillogy-load-skill-by-name-pollution.md", "target": "file:packages/raptix/raptix/middleware/skillogy.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-12-tmux-per-command-env-resync-marker-race.md", "target": "file:packages/raptix/raptix/tools/bash/bash.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-15-web-search-engine-plan.md", "target": "document:docs/adr/0010-open-web-acquisition.md", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-20-telemetry-data-collection-design.md", "target": "file:packages/raptix/raptix/telemetry/sanitizer.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-20-telemetry-data-collection-design.md", "target": "file:packages/raptix/raptix/telemetry/sink.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-07-27-telemetry-semantic-redaction-design.md", "target": "file:packages/raptix/raptix/telemetry/redact.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-07-27-telemetry-semantic-redaction-design.md", "target": "document:docs/design/2026-06-20-telemetry-data-collection-design.md", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/attack-graph-schema.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/migrations/V001__initial_schema.cypher", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/evidence-and-findings-conventions-research.md", "target": "document:docs/design/attack-graph-schema.md", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/evidence-and-findings-conventions-research.md", "target": "file:packages/raptix/raptix/agents/standard/analyst.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/neo4j-research-notes.md", "target": "file:packages/raptix/raptix/middleware/kg_internal/store.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/opplan-middleware.md", "target": "file:packages/raptix/raptix/middleware/opplan.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/single-bash-and-graphdb.md", "target": "file:packages/raptix/raptix/tools/bash/bash.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/skillogy-brain-redesign.md", "target": "file:packages/raptix/raptix/middleware/skillogy.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/skillogy-brain-redesign.md", "target": "file:packages/raptix/raptix/skills/.graph/skills.cypher", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/skillogy.md", "target": "file:packages/raptix/raptix/middleware/skillogy.py", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/skillogy.md", "target": "service:containers/skillogy.Dockerfile", "type": "documents", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-03-external-docs-research.md", "target": "document:docs/design/2026-06-03-kg-middleware-redesign.md", "type": "related", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-03-kg-middleware-implementation-research.md", "target": "document:docs/design/2026-06-03-kg-middleware-redesign.md", "type": "related", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/2026-06-04-bloodhound-kgstore-mapping.md", "target": "document:docs/design/2026-06-04-slither-kgstore-mapping.md", "type": "related", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/neo4j-research-notes.md", "target": "document:docs/design/attack-graph-schema.md", "type": "related", "direction": "forward", "weight": 0.5 },
+    { "source": "document:docs/design/skillogy.md", "target": "document:docs/design/skillogy-brain-redesign.md", "type": "related", "direction": "forward", "weight": 0.5 }
+  ]
+}

@@ -1,0 +1,327 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "clients/cli/src/app.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  16,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/agent.ts",
+                           "language":  "typescript",
+                           "sizeLines":  142,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/assistantOverride.ts",
+                           "language":  "typescript",
+                           "sizeLines":  21,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/clear.ts",
+                           "language":  "typescript",
+                           "sizeLines":  11,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/file.ts",
+                           "language":  "typescript",
+                           "sizeLines":  62,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/help.ts",
+                           "language":  "typescript",
+                           "sizeLines":  30,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/model.ts",
+                           "language":  "typescript",
+                           "sizeLines":  250,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/modelOverride.ts",
+                           "language":  "typescript",
+                           "sizeLines":  21,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/plugins.ts",
+                           "language":  "typescript",
+                           "sizeLines":  154,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/quit.ts",
+                           "language":  "typescript",
+                           "sizeLines":  12,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/registry.ts",
+                           "language":  "typescript",
+                           "sizeLines":  58,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/resume.ts",
+                           "language":  "typescript",
+                           "sizeLines":  13,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/types.ts",
+                           "language":  "typescript",
+                           "sizeLines":  42,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/web.test.ts",
+                           "language":  "typescript",
+                           "sizeLines":  41,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/commands/web.ts",
+                           "language":  "typescript",
+                           "sizeLines":  37,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/ActivityIndicator.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  136,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/Banner.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  82,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/BashResult.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  98,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/EventItem.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  78,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/ObjectiveList.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  97,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/OpplanStatus.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  85,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/Prompt.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  235,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/QuestionPicker.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  212,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/SessionPicker.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  141,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/SpinnerIcon.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  15,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/TodoList.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  57,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/agents/AgentSessionGroup.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  233,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/agents/CoordinatorPanel.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  41,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/messages/AIMessage.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  19,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/messages/BackgroundCompleteMessage.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  58,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "clients/cli/src/components/messages/DelegateMessage.tsx",
+                           "language":  "typescript",
+                           "sizeLines":  37,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "clients/cli/src/app.tsx":  [
+                                                            "clients/cli/src/screens/REPL.tsx",
+                                                            "clients/cli/src/state/AppState.ts"
+                                                        ],
+                            "clients/cli/src/commands/agent.ts":  [
+                                                                      "clients/cli/src/commands/assistantOverride.ts",
+                                                                      "clients/cli/src/commands/types.ts"
+                                                                  ],
+                            "clients/cli/src/commands/assistantOverride.ts":  [
+
+                                                                              ],
+                            "clients/cli/src/commands/clear.ts":  [
+                                                                      "clients/cli/src/commands/types.ts"
+                                                                  ],
+                            "clients/cli/src/commands/file.ts":  [
+                                                                     "clients/cli/src/commands/types.ts"
+                                                                 ],
+                            "clients/cli/src/commands/help.ts":  [
+                                                                     "clients/cli/src/commands/registry.ts",
+                                                                     "clients/cli/src/commands/types.ts"
+                                                                 ],
+                            "clients/cli/src/commands/model.ts":  [
+                                                                      "clients/cli/src/commands/modelOverride.ts",
+                                                                      "clients/cli/src/commands/types.ts"
+                                                                  ],
+                            "clients/cli/src/commands/modelOverride.ts":  [
+
+                                                                          ],
+                            "clients/cli/src/commands/plugins.ts":  [
+                                                                        "clients/cli/src/commands/types.ts"
+                                                                    ],
+                            "clients/cli/src/commands/quit.ts":  [
+                                                                     "clients/cli/src/commands/types.ts"
+                                                                 ],
+                            "clients/cli/src/commands/registry.ts":  [
+                                                                         "clients/cli/src/commands/agent.ts",
+                                                                         "clients/cli/src/commands/clear.ts",
+                                                                         "clients/cli/src/commands/file.ts",
+                                                                         "clients/cli/src/commands/help.ts",
+                                                                         "clients/cli/src/commands/model.ts",
+                                                                         "clients/cli/src/commands/plugins.ts",
+                                                                         "clients/cli/src/commands/quit.ts",
+                                                                         "clients/cli/src/commands/resume.ts",
+                                                                         "clients/cli/src/commands/types.ts",
+                                                                         "clients/cli/src/commands/web.ts"
+                                                                     ],
+                            "clients/cli/src/commands/resume.ts":  [
+                                                                       "clients/cli/src/commands/types.ts"
+                                                                   ],
+                            "clients/cli/src/commands/types.ts":  [
+
+                                                                  ],
+                            "clients/cli/src/commands/web.test.ts":  [
+                                                                         "clients/cli/src/commands/types.ts",
+                                                                         "clients/cli/src/commands/web.ts"
+                                                                     ],
+                            "clients/cli/src/commands/web.ts":  [
+                                                                    "clients/cli/src/commands/types.ts"
+                                                                ],
+                            "clients/cli/src/components/ActivityIndicator.tsx":  [
+                                                                                     "clients/cli/src/hooks/useAgent.ts",
+                                                                                     "clients/cli/src/hooks/useSpinnerFrame.ts",
+                                                                                     "clients/cli/src/utils/theme.ts"
+                                                                                 ],
+                            "clients/cli/src/components/Banner.tsx":  [
+
+                                                                      ],
+                            "clients/cli/src/components/BashResult.tsx":  [
+                                                                              "clients/cli/src/components/shell/CtrlOToExpand.tsx",
+                                                                              "clients/cli/src/components/shell/ExpandOutputContext.tsx",
+                                                                              "clients/cli/src/components/shell/ScreenContext.tsx"
+                                                                          ],
+                            "clients/cli/src/components/EventItem.tsx":  [
+                                                                             "clients/cli/src/components/BashResult.tsx",
+                                                                             "clients/cli/src/components/messages/AIMessage.tsx",
+                                                                             "clients/cli/src/components/messages/BackgroundCompleteMessage.tsx",
+                                                                             "clients/cli/src/components/messages/DelegateMessage.tsx",
+                                                                             "clients/cli/src/components/messages/QAMessage.tsx",
+                                                                             "clients/cli/src/components/messages/SystemMessage.tsx",
+                                                                             "clients/cli/src/components/messages/ToolCallMessage.tsx",
+                                                                             "clients/cli/src/components/messages/UserMessage.tsx",
+                                                                             "clients/cli/src/types.ts"
+                                                                         ],
+                            "clients/cli/src/components/ObjectiveList.tsx":  [
+                                                                                 "clients/cli/src/utils/theme.ts"
+                                                                             ],
+                            "clients/cli/src/components/OpplanStatus.tsx":  [
+                                                                                "clients/cli/src/hooks/useOpplan.ts",
+                                                                                "clients/cli/src/utils/theme.ts"
+                                                                            ],
+                            "clients/cli/src/components/Prompt.tsx":  [
+                                                                          "clients/cli/src/commands/registry.ts",
+                                                                          "clients/cli/src/hooks/useAgent.ts",
+                                                                          "clients/cli/src/hooks/useSpinnerFrame.ts",
+                                                                          "clients/cli/src/hooks/useTerminalSize.ts",
+                                                                          "clients/cli/src/utils/agents.ts",
+                                                                          "clients/cli/src/utils/version.ts"
+                                                                      ],
+                            "clients/cli/src/components/QuestionPicker.tsx":  [
+                                                                                  "clients/cli/src/hooks/useTerminalSize.ts",
+                                                                                  "clients/cli/src/types.ts"
+                                                                              ],
+                            "clients/cli/src/components/SessionPicker.tsx":  [
+                                                                                 "clients/cli/src/hooks/useTerminalSize.ts",
+                                                                                 "clients/cli/src/utils/threadStore.ts"
+                                                                             ],
+                            "clients/cli/src/components/SpinnerIcon.tsx":  [
+                                                                               "clients/cli/src/hooks/useSpinnerFrame.ts"
+                                                                           ],
+                            "clients/cli/src/components/TodoList.tsx":  [
+                                                                            "clients/cli/src/utils/theme.ts"
+                                                                        ],
+                            "clients/cli/src/components/agents/AgentSessionGroup.tsx":  [
+                                                                                            "clients/cli/src/components/EventItem.tsx",
+                                                                                            "clients/cli/src/components/shell/SubAgentContext.tsx",
+                                                                                            "clients/cli/src/types.ts",
+                                                                                            "clients/cli/src/utils/format.ts",
+                                                                                            "clients/cli/src/utils/theme.ts"
+                                                                                        ],
+                            "clients/cli/src/components/agents/CoordinatorPanel.tsx":  [
+                                                                                           "clients/cli/src/components/agents/AgentSessionGroup.tsx",
+                                                                                           "clients/cli/src/types.ts"
+                                                                                       ],
+                            "clients/cli/src/components/messages/AIMessage.tsx":  [
+                                                                                      "clients/cli/src/utils/markdown.ts",
+                                                                                      "clients/cli/src/utils/theme.ts"
+                                                                                  ],
+                            "clients/cli/src/components/messages/BackgroundCompleteMessage.tsx":  [
+                                                                                                      "clients/cli/src/utils/theme.ts"
+                                                                                                  ],
+                            "clients/cli/src/components/messages/DelegateMessage.tsx":  [
+                                                                                            "clients/cli/src/components/shell/ScreenContext.tsx",
+                                                                                            "clients/cli/src/utils/theme.ts"
+                                                                                        ]
+                        }
+}

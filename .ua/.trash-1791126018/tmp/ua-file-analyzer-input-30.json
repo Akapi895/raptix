@@ -1,0 +1,173 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+   "language": "typescript",
+   "sizeLines": 214,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/export/route.ts",
+   "language": "typescript",
+   "sizeLines": 129,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/findings/route.ts",
+   "language": "typescript",
+   "sizeLines": 163,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/graph/route.ts",
+   "language": "typescript",
+   "sizeLines": 136,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+   "language": "typescript",
+   "sizeLines": 41,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+   "language": "typescript",
+   "sizeLines": 52,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/route.ts",
+   "language": "typescript",
+   "sizeLines": 135,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/threads/route.ts",
+   "language": "typescript",
+   "sizeLines": 73,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+   "language": "typescript",
+   "sizeLines": 125,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/engagements/route.ts",
+   "language": "typescript",
+   "sizeLines": 148,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+   "language": "typescript",
+   "sizeLines": 68,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/app/api/workspace/[name]/files/route.ts",
+   "language": "typescript",
+   "sizeLines": 82,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/lib/auth-bridge.ts",
+   "language": "typescript",
+   "sizeLines": 30,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/lib/engagement-slug.test.ts",
+   "language": "typescript",
+   "sizeLines": 59,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/lib/engagement-slug.ts",
+   "language": "typescript",
+   "sizeLines": 19,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/lib/prisma.ts",
+   "language": "typescript",
+   "sizeLines": 35,
+   "fileCategory": "code"
+  },
+  {
+   "path": "clients/web/src/lib/workspace.ts",
+   "language": "typescript",
+   "sizeLines": 21,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "clients/web/src/app/api/engagements/[id]/approvals/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/engagement-slug.ts",
+   "clients/web/src/lib/prisma.ts"
+  ],
+  "clients/web/src/app/api/engagements/[id]/export/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts"
+  ],
+  "clients/web/src/app/api/engagements/[id]/findings/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts",
+   "clients/web/src/lib/workspace.ts"
+  ],
+  "clients/web/src/app/api/engagements/[id]/graph/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts"
+  ],
+  "clients/web/src/app/api/engagements/[id]/opplan/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts",
+   "clients/web/src/lib/workspace.ts"
+  ],
+  "clients/web/src/app/api/engagements/[id]/plan-docs/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts",
+   "clients/web/src/lib/workspace.ts"
+  ],
+  "clients/web/src/app/api/engagements/[id]/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts",
+   "clients/web/src/lib/workspace.ts"
+  ],
+  "clients/web/src/app/api/engagements/[id]/threads/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts"
+  ],
+  "clients/web/src/app/api/engagements/[id]/timeline/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts",
+   "clients/web/src/lib/workspace.ts"
+  ],
+  "clients/web/src/app/api/engagements/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts",
+   "clients/web/src/lib/workspace.ts"
+  ],
+  "clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts",
+   "clients/web/src/lib/workspace.ts"
+  ],
+  "clients/web/src/app/api/workspace/[name]/files/route.ts": [
+   "clients/web/src/lib/auth-bridge.ts",
+   "clients/web/src/lib/prisma.ts",
+   "clients/web/src/lib/workspace.ts"
+  ],
+  "clients/web/src/lib/auth-bridge.ts": [],
+  "clients/web/src/lib/engagement-slug.test.ts": [
+   "clients/web/src/lib/engagement-slug.ts"
+  ],
+  "clients/web/src/lib/engagement-slug.ts": [],
+  "clients/web/src/lib/prisma.ts": [],
+  "clients/web/src/lib/workspace.ts": []
+ }
+}

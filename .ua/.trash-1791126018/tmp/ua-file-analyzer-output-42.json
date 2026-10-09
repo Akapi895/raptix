@@ -1,0 +1,438 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 7,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 7,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 7,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "telemetry-gateway/src/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 123,
+      "nonEmptyLines": 107,
+      "functions": [
+        {
+          "name": "json",
+          "startLine": 37,
+          "endLine": 42,
+          "params": [
+            "status",
+            "body"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "json",
+          "callee": "JSON.stringify",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 51
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 54
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 55
+        },
+        {
+          "caller": "fetch",
+          "callee": "request.headers.get",
+          "lineNumber": 57
+        },
+        {
+          "caller": "fetch",
+          "callee": "ctype.includes",
+          "lineNumber": 58
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 59
+        },
+        {
+          "caller": "fetch",
+          "callee": "Number",
+          "lineNumber": 64
+        },
+        {
+          "caller": "fetch",
+          "callee": "Number",
+          "lineNumber": 65
+        },
+        {
+          "caller": "fetch",
+          "callee": "request.headers.get",
+          "lineNumber": 65
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 66
+        },
+        {
+          "caller": "fetch",
+          "callee": "request.text",
+          "lineNumber": 70
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 72
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 74
+        },
+        {
+          "caller": "fetch",
+          "callee": "JSON.parse",
+          "lineNumber": 78
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 80
+        },
+        {
+          "caller": "fetch",
+          "callee": "TelemetryBatch.safeParse",
+          "lineNumber": 84
+        },
+        {
+          "caller": "fetch",
+          "callee": "result.error.issues.slice(0, 8).map",
+          "lineNumber": 87
+        },
+        {
+          "caller": "fetch",
+          "callee": "result.error.issues.slice",
+          "lineNumber": 87
+        },
+        {
+          "caller": "fetch",
+          "callee": "i.path.join",
+          "lineNumber": 88
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 91
+        },
+        {
+          "caller": "fetch",
+          "callee": "scanTierC",
+          "lineNumber": 97
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 101
+        },
+        {
+          "caller": "fetch",
+          "callee": "request.headers.get",
+          "lineNumber": 107
+        },
+        {
+          "caller": "fetch",
+          "callee": "env.RATE_LIMITER.limit",
+          "lineNumber": 108
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 109
+        },
+        {
+          "caller": "fetch",
+          "callee": "forwardToPostHog",
+          "lineNumber": 115
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 117
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 119
+        },
+        {
+          "caller": "fetch",
+          "callee": "json",
+          "lineNumber": 121
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "telemetry-gateway/src/posthog.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 61,
+      "nonEmptyLines": 55,
+      "functions": [
+        {
+          "name": "forwardToPostHog",
+          "startLine": 25,
+          "endLine": 61,
+          "params": [
+            "batch",
+            "env",
+            "fetchImpl"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "forwardToPostHog",
+          "line": 25,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "forwardToPostHog",
+          "callee": "host.endsWith",
+          "lineNumber": 33
+        },
+        {
+          "caller": "forwardToPostHog",
+          "callee": "host.slice",
+          "lineNumber": 33
+        },
+        {
+          "caller": "forwardToPostHog",
+          "callee": "batch.events.map",
+          "lineNumber": 35
+        },
+        {
+          "caller": "forwardToPostHog",
+          "callee": "new Date(ts * 1000).toISOString",
+          "lineNumber": 40
+        },
+        {
+          "caller": "forwardToPostHog",
+          "callee": "fetchImpl",
+          "lineNumber": 56
+        },
+        {
+          "caller": "forwardToPostHog",
+          "callee": "JSON.stringify",
+          "lineNumber": 59
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "telemetry-gateway/src/schema.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 147,
+      "nonEmptyLines": 138,
+      "exports": [
+        {
+          "name": "EVENT_TYPES",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "TelemetryEvent",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "ClientInfo",
+          "line": 116,
+          "isDefault": false
+        },
+        {
+          "name": "TelemetryBatch",
+          "line": 137,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "telemetry-gateway/src/tierc.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 95,
+      "nonEmptyLines": 91,
+      "functions": [
+        {
+          "name": "scanTierC",
+          "startLine": 72,
+          "endLine": 95,
+          "params": [
+            "value",
+            "path"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "scanTierC",
+          "line": 72,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "scanTierC",
+          "callee": "re.test",
+          "lineNumber": 75
+        },
+        {
+          "caller": "scanTierC",
+          "callee": "Array.isArray",
+          "lineNumber": 79
+        },
+        {
+          "caller": "scanTierC",
+          "callee": "scanTierC",
+          "lineNumber": 81
+        },
+        {
+          "caller": "scanTierC",
+          "callee": "Object.entries",
+          "lineNumber": 87
+        },
+        {
+          "caller": "scanTierC",
+          "callee": "ENUM_KEYS.has",
+          "lineNumber": 88
+        },
+        {
+          "caller": "scanTierC",
+          "callee": "scanTierC",
+          "lineNumber": 89
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "telemetry-gateway/test/schema.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 114,
+      "nonEmptyLines": 100,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "telemetry-gateway/test/tierc.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 99,
+      "nonEmptyLines": 89,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "telemetry-gateway/test/worker.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 139,
+      "nonEmptyLines": 119,
+      "functions": [
+        {
+          "name": "post",
+          "startLine": 14,
+          "endLine": 20,
+          "params": [
+            "body",
+            "headers"
+          ]
+        },
+        {
+          "name": "body",
+          "startLine": 25,
+          "endLine": 26,
+          "params": [
+            "r"
+          ]
+        },
+        {
+          "name": "okFetch",
+          "startLine": 28,
+          "endLine": 28,
+          "params": []
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "post",
+          "callee": "JSON.stringify",
+          "lineNumber": 18
+        },
+        {
+          "caller": "body",
+          "callee": "r.json",
+          "lineNumber": 26
+        },
+        {
+          "caller": "okFetch",
+          "callee": "vi.fn",
+          "lineNumber": 28
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    }
+  ]
+}

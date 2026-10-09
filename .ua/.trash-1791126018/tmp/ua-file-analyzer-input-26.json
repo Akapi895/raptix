@@ -1,0 +1,180 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/__init__.py",
+   "language": "python",
+   "sizeLines": 29,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/capabilities/__init__.py",
+   "language": "python",
+   "sizeLines": 39,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/capabilities/contracts.py",
+   "language": "python",
+   "sizeLines": 130,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/capabilities/evidence.py",
+   "language": "python",
+   "sizeLines": 137,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/capabilities/scorecards.py",
+   "language": "python",
+   "sizeLines": 138,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/graph_registry.py",
+   "language": "python",
+   "sizeLines": 113,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/server/__init__.py",
+   "language": "python",
+   "sizeLines": 15,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/server/plugins_api.py",
+   "language": "python",
+   "sizeLines": 280,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/__init__.py",
+   "language": "python",
+   "sizeLines": 17,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/__main__.py",
+   "language": "python",
+   "sizeLines": 10,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/aliases.py",
+   "language": "python",
+   "sizeLines": 49,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/canonical.py",
+   "language": "python",
+   "sizeLines": 34,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/cli.py",
+   "language": "python",
+   "sizeLines": 115,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/frontmatter.py",
+   "language": "python",
+   "sizeLines": 47,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/mitre.py",
+   "language": "python",
+   "sizeLines": 65,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/path_kind.py",
+   "language": "python",
+   "sizeLines": 23,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/audit/rules.py",
+   "language": "python",
+   "sizeLines": 159,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/engine/builder/__init__.py",
+   "language": "python",
+   "sizeLines": 40,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/engine/builder/__main__.py",
+   "language": "python",
+   "sizeLines": 10,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/engine/builder/cli.py",
+   "language": "python",
+   "sizeLines": 183,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/raptix/__init__.py": [],
+  "packages/raptix/raptix/capabilities/__init__.py": [
+   "packages/raptix/raptix/capabilities/contracts.py",
+   "packages/raptix/raptix/capabilities/evidence.py",
+   "packages/raptix/raptix/capabilities/scorecards.py"
+  ],
+  "packages/raptix/raptix/capabilities/contracts.py": [
+   "packages/raptix/raptix/skills/audit/frontmatter.py"
+  ],
+  "packages/raptix/raptix/capabilities/evidence.py": [],
+  "packages/raptix/raptix/capabilities/scorecards.py": [
+   "packages/raptix/raptix/capabilities/contracts.py"
+  ],
+  "packages/raptix/raptix/graph_registry.py": [],
+  "packages/raptix/raptix/server/__init__.py": [],
+  "packages/raptix/raptix/server/plugins_api.py": [
+   "packages/raptix/raptix/graph_registry.py"
+  ],
+  "packages/raptix/raptix/skills/audit/__init__.py": [
+   "packages/raptix/raptix/skills/audit/canonical.py"
+  ],
+  "packages/raptix/raptix/skills/audit/__main__.py": [
+   "packages/raptix/raptix/skills/audit/cli.py"
+  ],
+  "packages/raptix/raptix/skills/audit/aliases.py": [],
+  "packages/raptix/raptix/skills/audit/canonical.py": [],
+  "packages/raptix/raptix/skills/audit/cli.py": [
+   "packages/raptix/raptix/skills/audit/rules.py"
+  ],
+  "packages/raptix/raptix/skills/audit/frontmatter.py": [],
+  "packages/raptix/raptix/skills/audit/mitre.py": [],
+  "packages/raptix/raptix/skills/audit/path_kind.py": [],
+  "packages/raptix/raptix/skills/audit/rules.py": [
+   "packages/raptix/raptix/capabilities/contracts.py",
+   "packages/raptix/raptix/skills/audit/aliases.py",
+   "packages/raptix/raptix/skills/audit/canonical.py",
+   "packages/raptix/raptix/skills/audit/frontmatter.py",
+   "packages/raptix/raptix/skills/audit/mitre.py",
+   "packages/raptix/raptix/skills/audit/path_kind.py"
+  ],
+  "packages/raptix/raptix/skills/engine/builder/__init__.py": [
+   "packages/raptix/raptix/skills/engine/builder/seeds.py"
+  ],
+  "packages/raptix/raptix/skills/engine/builder/__main__.py": [
+   "packages/raptix/raptix/skills/engine/builder/cli.py"
+  ],
+  "packages/raptix/raptix/skills/engine/builder/cli.py": [
+   "packages/raptix/raptix/skills/engine/builder/emit.py",
+   "packages/raptix/raptix/skills/engine/builder/mitre_stix.py",
+   "packages/raptix/raptix/skills/engine/builder/model.py",
+   "packages/raptix/raptix/skills/engine/builder/seeds_to_graph.py",
+   "packages/raptix/raptix/skills/engine/builder/skills.py"
+  ]
+ }
+}

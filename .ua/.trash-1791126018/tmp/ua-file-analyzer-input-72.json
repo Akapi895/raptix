@@ -1,0 +1,70 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "clients/web-raptix/.env.example",
+   "language": "config",
+   "sizeLines": 19,
+   "fileCategory": "config"
+  },
+  {
+   "path": "clients/web-raptix/.mise.toml",
+   "language": "toml",
+   "sizeLines": 2,
+   "fileCategory": "config"
+  },
+  {
+   "path": "clients/web-raptix/AGENTS.md",
+   "language": "markdown",
+   "sizeLines": 53,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/README.md",
+   "language": "markdown",
+   "sizeLines": 73,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "clients/web-raptix/index.html",
+   "language": "html",
+   "sizeLines": 14,
+   "fileCategory": "markup"
+  },
+  {
+   "path": "clients/web-raptix/package.json",
+   "language": "json",
+   "sizeLines": 45,
+   "fileCategory": "config"
+  },
+  {
+   "path": "clients/web-raptix/tsconfig.json",
+   "language": "json",
+   "sizeLines": 24,
+   "fileCategory": "config"
+  },
+  {
+   "path": "clients/web-raptix/tsconfig.node.json",
+   "language": "json",
+   "sizeLines": 18,
+   "fileCategory": "config"
+  },
+  {
+   "path": "clients/web-raptix/tsconfig.tests.json",
+   "language": "json",
+   "sizeLines": 5,
+   "fileCategory": "config"
+  }
+ ],
+ "batchImportData": {
+  "clients/web-raptix/.env.example": [],
+  "clients/web-raptix/.mise.toml": [],
+  "clients/web-raptix/AGENTS.md": [],
+  "clients/web-raptix/README.md": [],
+  "clients/web-raptix/index.html": [],
+  "clients/web-raptix/package.json": [],
+  "clients/web-raptix/tsconfig.json": [],
+  "clients/web-raptix/tsconfig.node.json": [],
+  "clients/web-raptix/tsconfig.tests.json": []
+ }
+}

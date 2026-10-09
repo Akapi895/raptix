@@ -1,0 +1,217 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 3
+    }
+  },
+  "results": [
+    {
+      "path": "integrations/agent-skills/decepticon/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 129,
+      "nonEmptyLines": 108,
+      "sections": [
+        {
+          "heading": "Raptix engagements (over MCP)",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "Mental model — read this first",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Authorization — non-negotiable",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "Prerequisites (verify on first failure)",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Tools",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "The core loop",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Polling cadence (phone / chat friendly)",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Interpreting results (fast guide)",
+          "level": 2,
+          "line": 106
+        },
+        {
+          "heading": "Errors & recovery",
+          "level": 2,
+          "line": 118
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "integrations/agent-skills/decepticon/examples.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 124,
+      "nonEmptyLines": 90,
+      "sections": [
+        {
+          "heading": "Raptix MCP — worked examples",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Bug-bounty engagement, watched from a phone",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "2. Recon only",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "3. Steering a live engagement",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "4. Check status / resume later",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "5. A live burst (when the user wants detail \"right now\")",
+          "level": 2,
+          "line": 93
+        },
+        {
+          "heading": "6. Handling failure",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "Narration principles",
+          "level": 2,
+          "line": 117
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "integrations/agent-skills/decepticon/reference.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 137,
+      "nonEmptyLines": 100,
+      "sections": [
+        {
+          "heading": "Raptix MCP — tool reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Conventions",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "raptix_list_graphs()",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "raptix_list_engagements(limit=20)",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "raptix_start_engagement(targets, instruction=\"\", scan_mode=\"standard\", engagement_name=None, assistant=None)",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "raptix_transcript(thread_id, after_index=0, limit=40)",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "raptix_watch(thread_id, max_seconds=20, max_events=40)",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "raptix_send_message(thread_id, message, assistant=None)",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "raptix_engagement_state(thread_id)",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "raptix_engagement_status(thread_id, engagement_name=\"\")",
+          "level": 2,
+          "line": 98
+        },
+        {
+          "heading": "raptix_engagement_findings(engagement_name, include_sarif=False)",
+          "level": 2,
+          "line": 107
+        },
+        {
+          "heading": "raptix_cancel_engagement(thread_id)",
+          "level": 2,
+          "line": 119
+        },
+        {
+          "heading": "Notes & gotchas",
+          "level": 2,
+          "line": 128
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    }
+  ]
+}

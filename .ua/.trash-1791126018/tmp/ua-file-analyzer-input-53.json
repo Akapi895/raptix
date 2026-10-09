@@ -1,0 +1,14 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "containers/campaign-bridge/Dockerfile",
+      "language": "dockerfile",
+      "sizeLines": 18,
+      "fileCategory": "infra"
+    }
+  ],
+  "batchImportData": {
+    "containers/campaign-bridge/Dockerfile": []
+  }
+}

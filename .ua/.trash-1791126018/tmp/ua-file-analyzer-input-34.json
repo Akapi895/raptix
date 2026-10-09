@@ -1,0 +1,148 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  39,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/bugcrowd.py",
+                           "language":  "python",
+                           "sizeLines":  72,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/cvss.py",
+                           "language":  "python",
+                           "sizeLines":  267,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/executive.py",
+                           "language":  "python",
+                           "sizeLines":  97,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/hackerone.py",
+                           "language":  "python",
+                           "sizeLines":  133,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/kg_adapter.py",
+                           "language":  "python",
+                           "sizeLines":  173,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/sarif.py",
+                           "language":  "python",
+                           "sizeLines":  254,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/timeline.py",
+                           "language":  "python",
+                           "sizeLines":  74,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/tools/reporting/tools.py",
+                           "language":  "python",
+                           "sizeLines":  118,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/reporting/test_cvss.py",
+                           "language":  "python",
+                           "sizeLines":  104,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/reporting/test_hackerone.py",
+                           "language":  "python",
+                           "sizeLines":  168,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/reporting/test_reporting.py",
+                           "language":  "python",
+                           "sizeLines":  106,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py",
+                           "language":  "python",
+                           "sizeLines":  534,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/reporting/test_sarif.py",
+                           "language":  "python",
+                           "sizeLines":  225,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "packages/raptix/raptix/tools/reporting/__init__.py":  [
+                                                                                       "packages/raptix/raptix/tools/reporting/bugcrowd.py",
+                                                                                       "packages/raptix/raptix/tools/reporting/cvss.py",
+                                                                                       "packages/raptix/raptix/tools/reporting/executive.py",
+                                                                                       "packages/raptix/raptix/tools/reporting/hackerone.py",
+                                                                                       "packages/raptix/raptix/tools/reporting/sarif.py",
+                                                                                       "packages/raptix/raptix/tools/reporting/timeline.py"
+                                                                                   ],
+                            "packages/raptix/raptix/tools/reporting/bugcrowd.py":  [
+
+                                                                                   ],
+                            "packages/raptix/raptix/tools/reporting/cvss.py":  [
+
+                                                                               ],
+                            "packages/raptix/raptix/tools/reporting/executive.py":  [
+
+                                                                                    ],
+                            "packages/raptix/raptix/tools/reporting/hackerone.py":  [
+
+                                                                                    ],
+                            "packages/raptix/raptix/tools/reporting/kg_adapter.py":  [
+                                                                                         "packages/raptix/raptix/middleware/kg_internal/store.py"
+                                                                                     ],
+                            "packages/raptix/raptix/tools/reporting/sarif.py":  [
+
+                                                                                ],
+                            "packages/raptix/raptix/tools/reporting/timeline.py":  [
+
+                                                                                   ],
+                            "packages/raptix/raptix/tools/reporting/tools.py":  [
+                                                                                    "packages/raptix/raptix/tools/reporting/bugcrowd.py",
+                                                                                    "packages/raptix/raptix/tools/reporting/executive.py",
+                                                                                    "packages/raptix/raptix/tools/reporting/hackerone.py",
+                                                                                    "packages/raptix/raptix/tools/reporting/kg_adapter.py",
+                                                                                    "packages/raptix/raptix/tools/reporting/sarif.py",
+                                                                                    "packages/raptix/raptix/tools/reporting/timeline.py"
+                                                                                ],
+                            "packages/raptix/tests/unit/reporting/test_cvss.py":  [
+                                                                                      "packages/raptix/raptix/tools/reporting/cvss.py"
+                                                                                  ],
+                            "packages/raptix/tests/unit/reporting/test_hackerone.py":  [
+                                                                                           "packages/raptix/raptix/tools/reporting/hackerone.py"
+                                                                                       ],
+                            "packages/raptix/tests/unit/reporting/test_reporting.py":  [
+                                                                                           "packages/raptix/raptix/tools/reporting/bugcrowd.py",
+                                                                                           "packages/raptix/raptix/tools/reporting/executive.py",
+                                                                                           "packages/raptix/raptix/tools/reporting/hackerone.py",
+                                                                                           "packages/raptix/raptix/tools/reporting/timeline.py"
+                                                                                       ],
+                            "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py":  [
+                                                                                                               "packages/raptix/raptix/tools/reporting/executive.py",
+                                                                                                               "packages/raptix/raptix/tools/reporting/tools.py"
+                                                                                                           ],
+                            "packages/raptix/tests/unit/reporting/test_sarif.py":  [
+                                                                                       "packages/raptix/raptix/tools/reporting/sarif.py",
+                                                                                       "packages/raptix/raptix/tools/reporting/tools.py"
+                                                                                   ]
+                        }
+}

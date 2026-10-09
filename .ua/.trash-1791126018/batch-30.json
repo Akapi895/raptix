@@ -1,0 +1,1699 @@
+{
+  "batchIndex": 30,
+  "batchFiles": [
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "language": "typescript",
+      "sizeLines": 214,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "language": "typescript",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "language": "typescript",
+      "sizeLines": 163,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/graph/route.ts",
+      "language": "typescript",
+      "sizeLines": 136,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "language": "typescript",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "language": "typescript",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/route.ts",
+      "language": "typescript",
+      "sizeLines": 135,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/threads/route.ts",
+      "language": "typescript",
+      "sizeLines": 73,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "language": "typescript",
+      "sizeLines": 125,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/engagements/route.ts",
+      "language": "typescript",
+      "sizeLines": 148,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "language": "typescript",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "language": "typescript",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/lib/auth-bridge.ts",
+      "language": "typescript",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/lib/engagement-slug.test.ts",
+      "language": "typescript",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/lib/engagement-slug.ts",
+      "language": "typescript",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/lib/prisma.ts",
+      "language": "typescript",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web/src/lib/workspace.ts",
+      "language": "typescript",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "class:clients/web/src/lib/auth-bridge.ts:AuthError",
+      "type": "class",
+      "name": "AuthError",
+      "filePath": "clients/web/src/lib/auth-bridge.ts",
+      "lineRange": [
+        8,
+        13
+      ],
+      "summary": "Lớp AuthError: lớp lỗi chuyên biệt; phương thức: constructor.",
+      "tags": [
+        "auth",
+        "single-user",
+        "cầu-nối",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "summary": "API phê duyệt engagement: liệt kê pending từ JSONL và ghi quyết định, chặn slug traversal.",
+      "tags": [
+        "api",
+        "phê-duyệt",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "summary": "API xuất báo cáo engagement JSON/Markdown từ findings và tài liệu workspace.",
+      "tags": [
+        "api",
+        "xuất-báo-cáo",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "summary": "API đọc finding Markdown trong workspace: phân tích severity và nội dung.",
+      "tags": [
+        "api",
+        "findings",
+        "markdown",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/graph/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/graph/route.ts",
+      "summary": "API đồ thị Neo4j theo engagement: lọc node/edge trong phạm vi và giới hạn kích thước.",
+      "tags": [
+        "api",
+        "đồ-thị",
+        "neo4j",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "summary": "API đọc opplan JSON của engagement từ workspace.",
+      "tags": [
+        "api",
+        "opplan",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "summary": "API liệt kê và đọc tài liệu planning của engagement.",
+      "tags": [
+        "api",
+        "planning",
+        "tài-liệu",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/route.ts",
+      "summary": "API CRUD engagement theo id: đọc, vá slug/trạng thái/mục tiêu và xoá.",
+      "tags": [
+        "api",
+        "engagement",
+        "crud",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/threads/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/threads/route.ts",
+      "summary": "API liệt kê thread chạy của engagement qua runtime.",
+      "tags": [
+        "api",
+        "threads",
+        "runtime",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "summary": "API dòng thời gian: sự kiện tạo, tài liệu và findings theo mtime.",
+      "tags": [
+        "api",
+        "timeline",
+        "sự-kiện",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/engagements/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/engagements/route.ts",
+      "summary": "API danh sách và tạo engagement: lọc workspace dir, đồng bộ DB và disk.",
+      "tags": [
+        "api",
+        "engagement",
+        "danh-sách",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "summary": "API đọc file workspace: giới hạn thư mục cho phép, chặn traversal bằng resolved path.",
+      "tags": [
+        "api",
+        "workspace",
+        "file",
+        "an-toàn",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "type": "file",
+      "name": "route.ts",
+      "filePath": "clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "summary": "API liệt kê file và thư mục trong workspace của engagement.",
+      "tags": [
+        "api",
+        "workspace",
+        "liệt-kê",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "file",
+      "name": "auth-bridge.ts",
+      "filePath": "clients/web/src/lib/auth-bridge.ts",
+      "summary": "Cầu nối auth single-user: requireAuth trả local user, AuthError và cờ tắt auth.",
+      "tags": [
+        "auth",
+        "single-user",
+        "cầu-nối",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web/src/lib/engagement-slug.test.ts",
+      "type": "file",
+      "name": "engagement-slug.test.ts",
+      "filePath": "clients/web/src/lib/engagement-slug.test.ts",
+      "summary": "Kiểm thử regex slug engagement: hợp lệ, traversal và ký tự cấm.",
+      "tags": [
+        "kiểm-thử",
+        "slug",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web/src/lib/engagement-slug.ts",
+      "type": "file",
+      "name": "engagement-slug.ts",
+      "filePath": "clients/web/src/lib/engagement-slug.ts",
+      "summary": "Chính sách slug engagement: regex nguồn duy nhất chống traversal, dùng chung web và launcher.",
+      "tags": [
+        "slug",
+        "chính-sách",
+        "chống-traversal",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web/src/lib/prisma.ts",
+      "type": "file",
+      "name": "prisma.ts",
+      "filePath": "clients/web/src/lib/prisma.ts",
+      "summary": "Singleton Prisma lazy qua Proxy, tránh khởi tạo khi build thiếu DATABASE_URL.",
+      "tags": [
+        "prisma",
+        "singleton",
+        "lazy",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web/src/lib/workspace.ts",
+      "type": "file",
+      "name": "workspace.ts",
+      "filePath": "clients/web/src/lib/workspace.ts",
+      "summary": "Tiện ích workspace: SLUG_RE, loại mục tiêu/trạng thái và resolveEngagementDir chặn traversal.",
+      "tags": [
+        "workspace",
+        "slug",
+        "chống-traversal",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "lineRange": [
+        66,
+        115
+      ],
+      "summary": "Xử lý GET approvals/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "phê-duyệt",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:POST",
+      "type": "function",
+      "name": "POST",
+      "filePath": "clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "lineRange": [
+        117,
+        214
+      ],
+      "summary": "Xử lý POST approvals/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "phê-duyệt",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:readJsonl",
+      "type": "function",
+      "name": "readJsonl",
+      "filePath": "clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "lineRange": [
+        45,
+        64
+      ],
+      "summary": "Hàm readJsonl (tham số: file); gọi fs.readFile, raw.split, line.trim.",
+      "tags": [
+        "api",
+        "phê-duyệt",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:workspaceFor",
+      "type": "function",
+      "name": "workspaceFor",
+      "filePath": "clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "lineRange": [
+        33,
+        41
+      ],
+      "summary": "Hàm workspaceFor (tham số: name); gọi path.join, path.join, path.join.",
+      "tags": [
+        "api",
+        "phê-duyệt",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/export/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "lineRange": [
+        7,
+        95
+      ],
+      "summary": "Xử lý GET export/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "xuất-báo-cáo",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/export/route.ts:buildMarkdownExport",
+      "type": "function",
+      "name": "buildMarkdownExport",
+      "filePath": "clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "lineRange": [
+        97,
+        129
+      ],
+      "summary": "Hàm buildMarkdownExport (tham số: data); gọi lines.push, lines.push, lines.push.",
+      "tags": [
+        "api",
+        "xuất-báo-cáo",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "lineRange": [
+        119,
+        163
+      ],
+      "summary": "Xử lý GET findings/route.ts; xác thực local, truy vấn Prisma, giới hạn workspace chống traversal, trả JSON.",
+      "tags": [
+        "api",
+        "findings",
+        "markdown",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:parseFindingMarkdown",
+      "type": "function",
+      "name": "parseFindingMarkdown",
+      "filePath": "clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "lineRange": [
+        23,
+        117
+      ],
+      "summary": "Hàm parseFindingMarkdown (tham số: content, filename); gọi content.split, line.trim, trimmed.startsWith.",
+      "tags": [
+        "api",
+        "findings",
+        "markdown",
+        "typescript"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/graph/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/graph/route.ts",
+      "lineRange": [
+        5,
+        136
+      ],
+      "summary": "Xử lý GET graph/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "đồ-thị",
+        "neo4j",
+        "typescript"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/opplan/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "lineRange": [
+        8,
+        41
+      ],
+      "summary": "Xử lý GET opplan/route.ts; xác thực local, truy vấn Prisma, giới hạn workspace chống traversal, trả JSON.",
+      "tags": [
+        "api",
+        "opplan",
+        "engagement",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "lineRange": [
+        12,
+        52
+      ],
+      "summary": "Xử lý GET plan-docs/route.ts; xác thực local, truy vấn Prisma, giới hạn workspace chống traversal, trả JSON.",
+      "tags": [
+        "api",
+        "planning",
+        "tài-liệu",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/route.ts:DELETE",
+      "type": "function",
+      "name": "DELETE",
+      "filePath": "clients/web/src/app/api/engagements/[id]/route.ts",
+      "lineRange": [
+        108,
+        135
+      ],
+      "summary": "Xử lý DELETE [id]/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "engagement",
+        "crud",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/route.ts",
+      "lineRange": [
+        6,
+        33
+      ],
+      "summary": "Xử lý GET [id]/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "engagement",
+        "crud",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/route.ts:PATCH",
+      "type": "function",
+      "name": "PATCH",
+      "filePath": "clients/web/src/app/api/engagements/[id]/route.ts",
+      "lineRange": [
+        35,
+        106
+      ],
+      "summary": "Xử lý PATCH [id]/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "engagement",
+        "crud",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/threads/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/threads/route.ts",
+      "lineRange": [
+        14,
+        73
+      ],
+      "summary": "Xử lý GET threads/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "threads",
+        "runtime",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/[id]/timeline/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "lineRange": [
+        16,
+        125
+      ],
+      "summary": "Xử lý GET timeline/route.ts; xác thực local, truy vấn Prisma, giới hạn workspace chống traversal, trả JSON.",
+      "tags": [
+        "api",
+        "timeline",
+        "sự-kiện",
+        "typescript"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/engagements/route.ts",
+      "lineRange": [
+        16,
+        64
+      ],
+      "summary": "Xử lý GET engagements/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "engagement",
+        "danh-sách",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/route.ts:POST",
+      "type": "function",
+      "name": "POST",
+      "filePath": "clients/web/src/app/api/engagements/route.ts",
+      "lineRange": [
+        66,
+        148
+      ],
+      "summary": "Xử lý POST engagements/route.ts; xác thực local, truy vấn Prisma, trả JSON.",
+      "tags": [
+        "api",
+        "engagement",
+        "danh-sách",
+        "typescript"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web/src/app/api/engagements/route.ts:isEngagementWorkspaceDir",
+      "type": "function",
+      "name": "isEngagementWorkspaceDir",
+      "filePath": "clients/web/src/app/api/engagements/route.ts",
+      "lineRange": [
+        12,
+        14
+      ],
+      "summary": "Hàm isEngagementWorkspaceDir (tham số: name); gọi SLUG_RE.test, name.startsWith.",
+      "tags": [
+        "api",
+        "engagement",
+        "danh-sách",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "lineRange": [
+        12,
+        68
+      ],
+      "summary": "Xử lý GET [...path]/route.ts; xác thực local, truy vấn Prisma, giới hạn workspace chống traversal, trả JSON.",
+      "tags": [
+        "api",
+        "workspace",
+        "file",
+        "an-toàn",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/app/api/workspace/[name]/files/route.ts:GET",
+      "type": "function",
+      "name": "GET",
+      "filePath": "clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "lineRange": [
+        24,
+        82
+      ],
+      "summary": "Xử lý GET files/route.ts; xác thực local, truy vấn Prisma, giới hạn workspace chống traversal, trả JSON.",
+      "tags": [
+        "api",
+        "workspace",
+        "liệt-kê",
+        "typescript"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web/src/lib/auth-bridge.ts:getSession",
+      "type": "function",
+      "name": "getSession",
+      "filePath": "clients/web/src/lib/auth-bridge.ts",
+      "lineRange": [
+        24,
+        26
+      ],
+      "summary": "Hàm getSession.",
+      "tags": [
+        "auth",
+        "single-user",
+        "cầu-nối",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/lib/auth-bridge.ts:isAuthEnabled",
+      "type": "function",
+      "name": "isAuthEnabled",
+      "filePath": "clients/web/src/lib/auth-bridge.ts",
+      "lineRange": [
+        28,
+        30
+      ],
+      "summary": "Hàm isAuthEnabled.",
+      "tags": [
+        "auth",
+        "single-user",
+        "cầu-nối",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "function",
+      "name": "requireAuth",
+      "filePath": "clients/web/src/lib/auth-bridge.ts",
+      "lineRange": [
+        20,
+        22
+      ],
+      "summary": "Hàm requireAuth.",
+      "tags": [
+        "auth",
+        "single-user",
+        "cầu-nối",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/lib/engagement-slug.ts:isValidEngagementSlug",
+      "type": "function",
+      "name": "isValidEngagementSlug",
+      "filePath": "clients/web/src/lib/engagement-slug.ts",
+      "lineRange": [
+        17,
+        19
+      ],
+      "summary": "Hàm isValidEngagementSlug (tham số: name); gọi ENGAGEMENT_SLUG_RE.test.",
+      "tags": [
+        "slug",
+        "chính-sách",
+        "chống-traversal",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/lib/prisma.ts:createPrismaClient",
+      "type": "function",
+      "name": "createPrismaClient",
+      "filePath": "clients/web/src/lib/prisma.ts",
+      "lineRange": [
+        12,
+        19
+      ],
+      "summary": "Hàm createPrismaClient.",
+      "tags": [
+        "prisma",
+        "singleton",
+        "lazy",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/lib/prisma.ts:getOrCreatePrisma",
+      "type": "function",
+      "name": "getOrCreatePrisma",
+      "filePath": "clients/web/src/lib/prisma.ts",
+      "lineRange": [
+        24,
+        29
+      ],
+      "summary": "Hàm getOrCreatePrisma; gọi createPrismaClient.",
+      "tags": [
+        "prisma",
+        "singleton",
+        "lazy",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "function",
+      "name": "resolveEngagementDir",
+      "filePath": "clients/web/src/lib/workspace.ts",
+      "lineRange": [
+        14,
+        21
+      ],
+      "summary": "Hàm resolveEngagementDir (tham số: name, workspace); gọi path.resolve, path.resolve, dir.startsWith.",
+      "tags": [
+        "workspace",
+        "slug",
+        "chống-traversal",
+        "typescript"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:GET",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:readJsonl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:GET",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:workspaceFor",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:GET",
+      "target": "function:clients/web/src/lib/engagement-slug.ts:isValidEngagementSlug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:POST",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:readJsonl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:POST",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:workspaceFor",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:POST",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:POST",
+      "target": "function:clients/web/src/lib/engagement-slug.ts:isValidEngagementSlug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/export/route.ts:GET",
+      "target": "function:clients/web/src/app/api/engagements/[id]/export/route.ts:buildMarkdownExport",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/export/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:GET",
+      "target": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:parseFindingMarkdown",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:GET",
+      "target": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/graph/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/opplan/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/opplan/route.ts:GET",
+      "target": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts:GET",
+      "target": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/route.ts:DELETE",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/route.ts:PATCH",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/threads/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/timeline/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/[id]/timeline/route.ts:GET",
+      "target": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/route.ts:GET",
+      "target": "function:clients/web/src/app/api/engagements/route.ts:isEngagementWorkspaceDir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/engagements/route.ts:POST",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts:GET",
+      "target": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/workspace/[name]/files/route.ts:GET",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/app/api/workspace/[name]/files/route.ts:GET",
+      "target": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web/src/lib/prisma.ts:getOrCreatePrisma",
+      "target": "function:clients/web/src/lib/prisma.ts:createPrismaClient",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:POST",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:readJsonl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:workspaceFor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/export/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/export/route.ts:buildMarkdownExport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:parseFindingMarkdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/graph/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/graph/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/opplan/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/route.ts:DELETE",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/route.ts:PATCH",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/threads/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/threads/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/timeline/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/route.ts:POST",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/route.ts:isEngagementWorkspaceDir",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "target": "function:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "target": "function:clients/web/src/app/api/workspace/[name]/files/route.ts:GET",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/lib/auth-bridge.ts",
+      "target": "class:clients/web/src/lib/auth-bridge.ts:AuthError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/lib/auth-bridge.ts",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:getSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/lib/auth-bridge.ts",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:isAuthEnabled",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/lib/auth-bridge.ts",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/lib/engagement-slug.ts",
+      "target": "function:clients/web/src/lib/engagement-slug.ts:isValidEngagementSlug",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/lib/prisma.ts",
+      "target": "function:clients/web/src/lib/prisma.ts:createPrismaClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/lib/prisma.ts",
+      "target": "function:clients/web/src/lib/prisma.ts:getOrCreatePrisma",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/lib/workspace.ts",
+      "target": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/approvals/route.ts:POST",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/export/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/findings/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/graph/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/graph/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/opplan/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/route.ts:DELETE",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/route.ts:PATCH",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/threads/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/threads/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/[id]/timeline/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/route.ts",
+      "target": "function:clients/web/src/app/api/engagements/route.ts:POST",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "target": "function:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "target": "function:clients/web/src/app/api/workspace/[name]/files/route.ts:GET",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/lib/auth-bridge.ts",
+      "target": "class:clients/web/src/lib/auth-bridge.ts:AuthError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/lib/auth-bridge.ts",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:getSession",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/lib/auth-bridge.ts",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:isAuthEnabled",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/lib/auth-bridge.ts",
+      "target": "function:clients/web/src/lib/auth-bridge.ts:requireAuth",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/lib/engagement-slug.ts",
+      "target": "function:clients/web/src/lib/engagement-slug.ts:isValidEngagementSlug",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/lib/workspace.ts",
+      "target": "function:clients/web/src/lib/workspace.ts:resolveEngagementDir",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "file:clients/web/src/lib/engagement-slug.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/approvals/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/export/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/findings/route.ts",
+      "target": "file:clients/web/src/lib/workspace.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/graph/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/graph/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/opplan/route.ts",
+      "target": "file:clients/web/src/lib/workspace.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/plan-docs/route.ts",
+      "target": "file:clients/web/src/lib/workspace.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/route.ts",
+      "target": "file:clients/web/src/lib/workspace.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/threads/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/threads/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/[id]/timeline/route.ts",
+      "target": "file:clients/web/src/lib/workspace.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/engagements/route.ts",
+      "target": "file:clients/web/src/lib/workspace.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/[...path]/route.ts",
+      "target": "file:clients/web/src/lib/workspace.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "target": "file:clients/web/src/lib/auth-bridge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "target": "file:clients/web/src/lib/prisma.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/app/api/workspace/[name]/files/route.ts",
+      "target": "file:clients/web/src/lib/workspace.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/lib/engagement-slug.test.ts",
+      "target": "file:clients/web/src/lib/engagement-slug.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web/src/lib/engagement-slug.ts",
+      "target": "file:clients/web/src/lib/engagement-slug.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

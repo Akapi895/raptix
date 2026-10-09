@@ -1,0 +1,1391 @@
+{
+  "batchIndex": 143,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/tests/unit/core/test_logging.py",
+      "language": "python",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/core/test_schemas.py",
+      "language": "python",
+      "sizeLines": 286,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/installer/test_install_sh.py",
+      "language": "python",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "language": "python",
+      "sizeLines": 105,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "language": "python",
+      "sizeLines": 244,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "language": "python",
+      "sizeLines": 207,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "language": "python",
+      "sizeLines": 122,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_http_client.py",
+      "language": "python",
+      "sizeLines": 111,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_litellm_dynamic_config.py",
+      "language": "python",
+      "sizeLines": 792,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_models.py",
+      "language": "python",
+      "sizeLines": 590,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "language": "python",
+      "sizeLines": 574,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_oauth_token_store.py",
+      "language": "python",
+      "sizeLines": 479,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_ollama_probe.py",
+      "language": "python",
+      "sizeLines": 458,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/mcp_server/__init__.py",
+      "language": "python",
+      "sizeLines": 1,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/middleware/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/ops/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/prompts/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/prompts/test_claude4_compat.py",
+      "language": "python",
+      "sizeLines": 132,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/references/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/reporting/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/research/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/research/test_apoc_safety.py",
+      "language": "python",
+      "sizeLines": 144,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/research/test_fuzz.py",
+      "language": "python",
+      "sizeLines": 178,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:packages/raptix/tests/unit/core/test_logging.py",
+      "type": "file",
+      "name": "test_logging.py",
+      "filePath": "packages/raptix/tests/unit/core/test_logging.py",
+      "summary": "Kiểm tra raptix_core.utils.logging: logger dùng chung qua get_logger, formatter text và JSON, cùng configure_logging bật/tắt theo môi trường mà không phá handler hiện có.",
+      "tags": [
+        "test",
+        "logging",
+        "core",
+        "formatting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/core/test_schemas.py",
+      "type": "file",
+      "name": "test_schemas.py",
+      "filePath": "packages/raptix/tests/unit/core/test_schemas.py",
+      "summary": "Kiểm tra schema raptix_core.types.engagement: xây dựng tối thiểu ThreatProfile, round-trip qua JSON, mặc định CleanupPlan/AbortPlan (3 trigger, ngưỡng hallucination > 0), ContactPlan và các ràng buộc escalation.",
+      "tags": [
+        "test",
+        "schemas",
+        "data-model",
+        "validation",
+        "core"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "type": "file",
+      "name": "test_workspace_scaffold.py",
+      "filePath": "packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "summary": "Kiểm tra EngagementBundle: lưu bundle không tự tạo sẵn scaffold artifact — artifact chỉ xuất hiện khi thật sự được ghi, tránh rác trong workspace engagement.",
+      "tags": [
+        "test",
+        "workspace",
+        "scaffold",
+        "engagement"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/installer/test_install_sh.py",
+      "type": "file",
+      "name": "test_install_sh.py",
+      "filePath": "packages/raptix/tests/unit/installer/test_install_sh.py",
+      "summary": "Kiểm tra hành vi script cài đặt scripts/install.sh: resolver bản phát hành ổn định phải đọc release payload do curl ghi ra và pin đúng artifact.",
+      "tags": [
+        "test",
+        "installer",
+        "shell",
+        "release-pinning"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "type": "file",
+      "name": "test_claude_code_handler_cache_dedup.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "summary": "Kiểm tra hàm _cap_cache_control của Claude Code handler: chỉ dedup cache_control khi vượt ngưỡng số block, giữ block đầu/cuối và loại đúng một block trùng nội dung giữa chuỗi.",
+      "tags": [
+        "test",
+        "llm",
+        "prompt-caching",
+        "dedup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "type": "file",
+      "name": "test_claude_code_handler_streaming.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "summary": "Kiểm tra streaming SSE của Claude Code handler: text tới dạng delta tăng dần, tham số tool_call được tái ghép từ fragment JSON, cache bucket bám vào chunk cuối và ping/thinking không lẫn vào assistant text.",
+      "tags": [
+        "test",
+        "llm",
+        "streaming",
+        "sse",
+        "tool-calls"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "type": "file",
+      "name": "test_codex_chatgpt_handler_streaming.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "summary": "Kiểm tra streaming handler Codex/ChatGPT: delta text tăng dần, function_call arguments tái ghép trước khi release, name backfill từ sự kiện done, response failed raise khi close và các dòng malformed bị bỏ qua.",
+      "tags": [
+        "test",
+        "llm",
+        "streaming",
+        "codex",
+        "tool-calls"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "type": "file",
+      "name": "test_gemini_handler_session_cookies.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "summary": "Kiểm tra tách bạch session cookies và access token của Gemini handler: env cookie bị bỏ qua khi load tokens, chỉ set cookie không đủ để lấy access token và cookie không loang vào token path.",
+      "tags": [
+        "test",
+        "llm",
+        "oauth",
+        "gemini",
+        "session-cookies"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_http_client.py",
+      "type": "file",
+      "name": "test_http_client.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_http_client.py",
+      "summary": "Kiểm tra HTTP client dùng chung cho các handler: mặc định retry, post chuyển tiếp đúng headers/body và hình dạng drop-in thay thế giữ nguyên hợp đồng gọi.",
+      "tags": [
+        "test",
+        "llm",
+        "http-client",
+        "retry"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_litellm_dynamic_config.py",
+      "type": "file",
+      "name": "test_litellm_dynamic_config.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_litellm_dynamic_config.py",
+      "summary": "Bộ test lớn cho litellm_dynamic_config: thu thập model theo role override, mapping api-key env theo provider, route Ollama chat/cloud về api_base đúng, cùng validation và ưu tiên cấu hình động giữa các nguồn.",
+      "tags": [
+        "test",
+        "llm",
+        "litellm",
+        "dynamic-config",
+        "model-routing"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_models.py",
+      "type": "file",
+      "name": "test_models.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_models.py",
+      "summary": "Kiểm tra raptix_core.types.llm: tier agent, auth method, profile model, chuỗi resolve credential/gateway, chain Ollama/llama.cpp cục bộ và bảng ánh xạ model-method đầy đủ.",
+      "tags": [
+        "test",
+        "llm",
+        "model-profiles",
+        "resolve-chain",
+        "core"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "type": "file",
+      "name": "test_oauth_handlers.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "summary": "Kiểm tra các OAuth handler LiteLLM tùy biến trong config/: refresh không rò secret, tool call streaming, finish reason Gemini, mint hardening Copilot/Claude/Gemini và parse completion với body reasoning đúng chuẩn.",
+      "tags": [
+        "test",
+        "llm",
+        "oauth",
+        "security",
+        "streaming"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_oauth_token_store.py",
+      "type": "file",
+      "name": "test_oauth_token_store.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_oauth_token_store.py",
+      "summary": "Kiểm tra oauth_token_store: đọc JSON an toàn, ghi nguyên tử với mode bảo mật, temp path duy nhất, xoay refresh token và xử lý AuthenticationError/khóa file khi nhiều tiến trình tranh chấp.",
+      "tags": [
+        "test",
+        "llm",
+        "oauth",
+        "token-store",
+        "concurrency"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/test_ollama_probe.py",
+      "type": "file",
+      "name": "test_ollama_probe.py",
+      "filePath": "packages/raptix/tests/unit/llm/test_ollama_probe.py",
+      "summary": "Kiểm tra ollama_probe: phát hiện route Ollama, extract model, reachability qua nhiều opener (nội bộ/cloud), khả năng tool-call, lọc prefix và native api_base — kết quả probe bất biến.",
+      "tags": [
+        "test",
+        "llm",
+        "ollama",
+        "probe",
+        "model-discovery"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/prompts/test_claude4_compat.py",
+      "type": "file",
+      "name": "test_claude4_compat.py",
+      "filePath": "packages/raptix/tests/unit/prompts/test_claude4_compat.py",
+      "summary": "Kiểm tra claude4_compat: nhận diện họ Claude 4, thay thế thuật ngữ trigger bằng từ trung lập, prepend persona trung tính và áp dụng compat pipeline lên prompt hệ thống.",
+      "tags": [
+        "test",
+        "prompts",
+        "compat",
+        "llm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/research/test_apoc_safety.py",
+      "type": "file",
+      "name": "test_apoc_safety.py",
+      "filePath": "packages/raptix/tests/unit/research/test_apoc_safety.py",
+      "summary": "Kiểm tra _apoc_safety: find_violations bắt đúng procedure bị cấm/dưới allowlist, ensure_safe raise CypherSafetyError và bất biến allowlist/denylist không giao nhau.",
+      "tags": [
+        "test",
+        "security",
+        "cypher",
+        "neo4j"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/research/test_fuzz.py",
+      "type": "file",
+      "name": "test_fuzz.py",
+      "filePath": "packages/raptix/tests/unit/research/test_fuzz.py",
+      "summary": "Kiểm tra fuzz.py: classify_target nhận đúng ngôn ngữ/engine theo manifest, tổng hợp harness cho từng engine, parser ASan trích stack chuẩn và record_crash ghi node/edge vào KnowledgeGraph.",
+      "tags": [
+        "test",
+        "fuzzing",
+        "research",
+        "crash-parsing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/llm/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/tests/unit/llm/__init__.py",
+      "summary": "Package __init__ rỗng đánh dấu nhánh test unit llm cho pytest discovery.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/middleware/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/tests/unit/middleware/__init__.py",
+      "summary": "Package __init__ rỗng đánh dấu nhánh test unit middleware cho pytest discovery.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/ops/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/tests/unit/ops/__init__.py",
+      "summary": "Package __init__ rỗng đánh dấu nhánh test unit ops cho pytest discovery.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/prompts/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/tests/unit/prompts/__init__.py",
+      "summary": "Package __init__ rỗng đánh dấu nhánh test unit prompts cho pytest discovery.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/references/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/tests/unit/references/__init__.py",
+      "summary": "Package __init__ rỗng đánh dấu nhánh test unit references cho pytest discovery.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/reporting/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/tests/unit/reporting/__init__.py",
+      "summary": "Package __init__ rỗng đánh dấu nhánh test unit reporting cho pytest discovery.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/research/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/tests/unit/research/__init__.py",
+      "summary": "Package __init__ rỗng đánh dấu nhánh test unit research cho pytest discovery.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/mcp_server/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/tests/unit/mcp_server/__init__.py",
+      "summary": "Package __init__ đánh dấu nhánh test unit mcp_server cho pytest discovery.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/core/test_workspace_scaffold.py:_bundle",
+      "type": "function",
+      "name": "_bundle",
+      "filePath": "packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "lineRange": [
+        17,
+        37
+      ],
+      "summary": "Helper dựng EngagementBundle mẫu với engagement/workspace tạm phục vụ các test scaffold.",
+      "tags": [
+        "test-helper",
+        "fixture",
+        "engagement"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/core/test_workspace_scaffold.py:test_engagement_bundle_save_does_not_precreate_artifact_scaffold",
+      "type": "function",
+      "name": "test_engagement_bundle_save_does_not_precreate_artifact_scaffold",
+      "filePath": "packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "lineRange": [
+        40,
+        57
+      ],
+      "summary": "Assert sau khi save bundle, cây artifact không được tạo trước — chỉ những artifact thật sự ghi mới tồn tại.",
+      "tags": [
+        "test",
+        "scaffold",
+        "workspace"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/installer/test_install_sh.py:test_stable_resolver_reads_release_payload_from_curl",
+      "type": "function",
+      "name": "test_stable_resolver_reads_release_payload_from_curl",
+      "filePath": "packages/raptix/tests/unit/installer/test_install_sh.py",
+      "lineRange": [
+        14,
+        47
+      ],
+      "summary": "Chạy install.sh với curl giả lập ghi payload release, assert resolver ổn định đọc đúng artifact và pin phiên bản từ payload.",
+      "tags": [
+        "test",
+        "installer",
+        "release-pinning"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py:test_five_blocks_with_duplicate_content_strips_exactly_one",
+      "type": "function",
+      "name": "test_five_blocks_with_duplicate_content_strips_exactly_one",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "lineRange": [
+        66,
+        77
+      ],
+      "summary": "Với 5 block có nội dung trùng, dedup chỉ loại đúng một block và giữ cấu trúc cache_control hợp lệ.",
+      "tags": [
+        "test",
+        "prompt-caching",
+        "dedup"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py:test_plain_blocks_in_middle_not_affected",
+      "type": "function",
+      "name": "test_plain_blocks_in_middle_not_affected",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "lineRange": [
+        94,
+        105
+      ],
+      "summary": "Các block thường nằm giữa chuỗi không bị gắn/tháo cache_control khi dedup chạy.",
+      "tags": [
+        "test",
+        "prompt-caching",
+        "dedup"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:_install",
+      "type": "function",
+      "name": "_install",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "lineRange": [
+        49,
+        60
+      ],
+      "summary": "Helper nạp module handler Claude Code với stub litellm/oauth/httpx qua importlib để test không cần phụ thuộc thật.",
+      "tags": [
+        "test-helper",
+        "importlib",
+        "stubbing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_text_arrives_as_incremental_deltas",
+      "type": "function",
+      "name": "test_text_arrives_as_incremental_deltas",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "lineRange": [
+        84,
+        124
+      ],
+      "summary": "Feed chuỗi SSE mẫu và assert text tới handler theo delta tăng dần đúng thứ tự, không gộp cục bộ.",
+      "tags": [
+        "test",
+        "streaming",
+        "sse"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_tool_arguments_are_reassembled_from_json_fragments",
+      "type": "function",
+      "name": "test_tool_arguments_are_reassembled_from_json_fragments",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "lineRange": [
+        127,
+        165
+      ],
+      "summary": "Assert tham số tool_call tới từng fragment JSON được tái ghép đầy đủ và đúng thứ tự trước khi handler phát hành tool call.",
+      "tags": [
+        "test",
+        "streaming",
+        "tool-calls"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_cache_buckets_survive_onto_the_final_chunk",
+      "type": "function",
+      "name": "test_cache_buckets_survive_onto_the_final_chunk",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "lineRange": [
+        168,
+        195
+      ],
+      "summary": "Cache bucket metadata phải bám vào chunk cuối cùng của stream để prompt caching vẫn hiệu quả qua các turn.",
+      "tags": [
+        "test",
+        "streaming",
+        "prompt-caching"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_thinking_deltas_and_pings_do_not_leak_into_assistant_text",
+      "type": "function",
+      "name": "test_thinking_deltas_and_pings_do_not_leak_into_assistant_text",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "lineRange": [
+        198,
+        218
+      ],
+      "summary": "Sự kiện thinking delta và ping phải được tách khỏi assistant text — không lọt vào nội dung hiển thị.",
+      "tags": [
+        "test",
+        "streaming",
+        "sse"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_truncated_stream_still_terminates",
+      "type": "function",
+      "name": "test_truncated_stream_still_terminates",
+      "filePath": "packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "lineRange": [
+        221,
+        236
+      ],
+      "summary": "Stream bị cắt giữa chừng vẫn phải kết thúc có kiểm soát, không treo handler.",
+      "tags": [
+        "test",
+        "streaming",
+        "robustness"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:_install",
+      "type": "function",
+      "name": "_install",
+      "filePath": "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "lineRange": [
+        61,
+        72
+      ],
+      "summary": "Helper nạp module handler Codex/ChatGPT với stub litellm/oauth/http_client để cô lập phụ thuộc ngoài.",
+      "tags": [
+        "test-helper",
+        "importlib",
+        "stubbing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_text_arrives_as_incremental_deltas",
+      "type": "function",
+      "name": "test_text_arrives_as_incremental_deltas",
+      "filePath": "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "lineRange": [
+        97,
+        116
+      ],
+      "summary": "Assert text từ stream Codex tới dạng delta tăng dần đúng thứ tự sự kiện.",
+      "tags": [
+        "test",
+        "streaming",
+        "sse"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_function_call_arguments_are_reassembled_before_release",
+      "type": "function",
+      "name": "test_function_call_arguments_are_reassembled_before_release",
+      "filePath": "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "lineRange": [
+        119,
+        152
+      ],
+      "summary": "Function_call arguments nhận dạng fragment phải ghép đủ mới được release cho runtime — không phát hành JSON dở dang.",
+      "tags": [
+        "test",
+        "streaming",
+        "tool-calls"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_name_is_backfilled_when_only_the_done_event_carries_it",
+      "type": "function",
+      "name": "test_name_is_backfilled_when_only_the_done_event_carries_it",
+      "filePath": "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "lineRange": [
+        155,
+        177
+      ],
+      "summary": "Khi chỉ sự kiện done mang tên tool call, handler phải backfill name về đúng cuộc gọi tương ứng.",
+      "tags": [
+        "test",
+        "streaming",
+        "tool-calls"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_malformed_and_done_lines_are_skipped",
+      "type": "function",
+      "name": "test_malformed_and_done_lines_are_skipped",
+      "filePath": "packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "lineRange": [
+        195,
+        207
+      ],
+      "summary": "Các dòng SSE malformed và sự kiện done trùng lặp được bỏ qua an toàn mà không làm hỏng state stream.",
+      "tags": [
+        "test",
+        "streaming",
+        "robustness"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_session_cookies_env_var_is_ignored_load_tokens_falls_through",
+      "type": "function",
+      "name": "test_session_cookies_env_var_is_ignored_load_tokens_falls_through",
+      "filePath": "packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "lineRange": [
+        69,
+        83
+      ],
+      "summary": "Env session cookies không còn được nuốt vào đường load tokens — fall-through về token store chuẩn.",
+      "tags": [
+        "test",
+        "oauth",
+        "gemini"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_get_gemini_access_token_raises_when_only_cookies_env_set",
+      "type": "function",
+      "name": "test_get_gemini_access_token_raises_when_only_cookies_env_set",
+      "filePath": "packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "lineRange": [
+        86,
+        98
+      ],
+      "summary": "Chỉ đặt env cookies (không token) phải raise thay vì âm thầm trả token sai.",
+      "tags": [
+        "test",
+        "oauth",
+        "gemini"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_access_token_env_still_works_after_cookies_removal",
+      "type": "function",
+      "name": "test_access_token_env_still_works_after_cookies_removal",
+      "filePath": "packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "lineRange": [
+        101,
+        110
+      ],
+      "summary": "Đường access token env tiếp tục hoạt động bình thường sau khi tách cookie ra khỏi luồng token.",
+      "tags": [
+        "test",
+        "oauth",
+        "gemini"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_session_cookies_does_not_bleed_into_access_token_when_both_set",
+      "type": "function",
+      "name": "test_session_cookies_does_not_bleed_into_access_token_when_both_set",
+      "filePath": "packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "lineRange": [
+        113,
+        122
+      ],
+      "summary": "Đặt cả cookies lẫn access token: cookie không được loang vào header token của request.",
+      "tags": [
+        "test",
+        "oauth",
+        "gemini"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_oauth_handlers.py:_ensure_litellm_stub",
+      "type": "function",
+      "name": "_ensure_litellm_stub",
+      "filePath": "packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "lineRange": [
+        45,
+        59
+      ],
+      "summary": "Cài stub module litellm tối thiểu vào sys.modules để các handler OAuth import được mà không cần thư viện thật.",
+      "tags": [
+        "test-helper",
+        "stubbing",
+        "oauth"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_oauth_handlers.py:_ensure_real_oauth_token_store",
+      "type": "function",
+      "name": "_ensure_real_oauth_token_store",
+      "filePath": "packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "lineRange": [
+        67,
+        88
+      ],
+      "summary": "Nạp module oauth_token_store thật từ config/ vào sys.modules để handler dùng hành vi store chuẩn trong test.",
+      "tags": [
+        "test-helper",
+        "oauth",
+        "token-store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/llm/test_ollama_probe.py:_cloud_opener",
+      "type": "function",
+      "name": "_cloud_opener",
+      "filePath": "packages/raptix/tests/unit/llm/test_ollama_probe.py",
+      "lineRange": [
+        384,
+        404
+      ],
+      "summary": "Helper dựng opener giả lập endpoint cloud Ollama để test nhánh probe cloud tách khỏi máy cục bộ.",
+      "tags": [
+        "test-helper",
+        "ollama",
+        "stubbing"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "target": "function:packages/raptix/tests/unit/core/test_workspace_scaffold.py:_bundle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "target": "function:packages/raptix/tests/unit/core/test_workspace_scaffold.py:_bundle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "target": "function:packages/raptix/tests/unit/core/test_workspace_scaffold.py:test_engagement_bundle_save_does_not_precreate_artifact_scaffold",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "target": "function:packages/raptix/tests/unit/core/test_workspace_scaffold.py:test_engagement_bundle_save_does_not_precreate_artifact_scaffold",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/installer/test_install_sh.py",
+      "target": "function:packages/raptix/tests/unit/installer/test_install_sh.py:test_stable_resolver_reads_release_payload_from_curl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/installer/test_install_sh.py",
+      "target": "function:packages/raptix/tests/unit/installer/test_install_sh.py:test_stable_resolver_reads_release_payload_from_curl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py:test_five_blocks_with_duplicate_content_strips_exactly_one",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py:test_five_blocks_with_duplicate_content_strips_exactly_one",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py:test_plain_blocks_in_middle_not_affected",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py:test_plain_blocks_in_middle_not_affected",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:_install",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:_install",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_text_arrives_as_incremental_deltas",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_text_arrives_as_incremental_deltas",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_tool_arguments_are_reassembled_from_json_fragments",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_tool_arguments_are_reassembled_from_json_fragments",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_cache_buckets_survive_onto_the_final_chunk",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_cache_buckets_survive_onto_the_final_chunk",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_thinking_deltas_and_pings_do_not_leak_into_assistant_text",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_thinking_deltas_and_pings_do_not_leak_into_assistant_text",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_truncated_stream_still_terminates",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py:test_truncated_stream_still_terminates",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:_install",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:_install",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_text_arrives_as_incremental_deltas",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_text_arrives_as_incremental_deltas",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_function_call_arguments_are_reassembled_before_release",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_function_call_arguments_are_reassembled_before_release",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_name_is_backfilled_when_only_the_done_event_carries_it",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_name_is_backfilled_when_only_the_done_event_carries_it",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_malformed_and_done_lines_are_skipped",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py:test_malformed_and_done_lines_are_skipped",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_session_cookies_env_var_is_ignored_load_tokens_falls_through",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_session_cookies_env_var_is_ignored_load_tokens_falls_through",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_get_gemini_access_token_raises_when_only_cookies_env_set",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_get_gemini_access_token_raises_when_only_cookies_env_set",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_access_token_env_still_works_after_cookies_removal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_access_token_env_still_works_after_cookies_removal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_session_cookies_does_not_bleed_into_access_token_when_both_set",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py:test_session_cookies_does_not_bleed_into_access_token_when_both_set",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_oauth_handlers.py:_ensure_litellm_stub",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_oauth_handlers.py:_ensure_litellm_stub",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_oauth_handlers.py:_ensure_real_oauth_token_store",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_oauth_handlers.py:_ensure_real_oauth_token_store",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_ollama_probe.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_ollama_probe.py:_cloud_opener",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/llm/test_ollama_probe.py",
+      "target": "function:packages/raptix/tests/unit/llm/test_ollama_probe.py:_cloud_opener",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/research/test_apoc_safety.py",
+      "target": "file:packages/raptix/raptix/tools/research/_apoc_safety.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/research/test_fuzz.py",
+      "target": "file:packages/raptix/raptix/tools/research/fuzz.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix-core/raptix_core/utils/logging.py",
+      "target": "file:packages/raptix/tests/unit/core/test_logging.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix-core/raptix_core/types/engagement.py",
+      "target": "file:packages/raptix/tests/unit/core/test_schemas.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix-core/raptix_core/types/engagement.py",
+      "target": "file:packages/raptix/tests/unit/core/test_workspace_scaffold.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:scripts/install.sh",
+      "target": "file:packages/raptix/tests/unit/installer/test_install_sh.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/claude_code_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_cache_dedup.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/claude_code_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_claude_code_handler_streaming.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/codex_chatgpt_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_codex_chatgpt_handler_streaming.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/gemini_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_gemini_handler_session_cookies.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/http_client.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_http_client.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/litellm_dynamic_config.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_litellm_dynamic_config.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix-core/raptix_core/types/llm.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_models.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/codex_chatgpt_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/claude_code_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/copilot_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/grok_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/gemini_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/perplexity_handler.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_oauth_handlers.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/oauth_token_store.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_oauth_token_store.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/ollama_probe.py",
+      "target": "file:packages/raptix/tests/unit/llm/test_ollama_probe.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "target": "file:packages/raptix/tests/unit/prompts/test_claude4_compat.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/research/_apoc_safety.py",
+      "target": "file:packages/raptix/tests/unit/research/test_apoc_safety.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/research/fuzz.py",
+      "target": "file:packages/raptix/tests/unit/research/test_fuzz.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

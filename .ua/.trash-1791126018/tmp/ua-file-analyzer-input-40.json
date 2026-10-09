@@ -1,0 +1,96 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "benchmark/cve_bench/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  7,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "benchmark/cve_bench/dry_run.py",
+                           "language":  "python",
+                           "sizeLines":  92,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "benchmark/cve_bench/live.py",
+                           "language":  "python",
+                           "sizeLines":  200,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "benchmark/cve_bench/loader.py",
+                           "language":  "python",
+                           "sizeLines":  133,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "benchmark/cve_bench/runner.py",
+                           "language":  "python",
+                           "sizeLines":  83,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "benchmark/cve_bench/scorer.py",
+                           "language":  "python",
+                           "sizeLines":  131,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/tests/unit/benchmark/test_cve_bench_live.py",
+                           "language":  "python",
+                           "sizeLines":  82,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/test_cve_bench_loader.py",
+                           "language":  "python",
+                           "sizeLines":  98,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/test_cve_bench_scorer.py",
+                           "language":  "python",
+                           "sizeLines":  117,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "benchmark/cve_bench/__init__.py":  [
+
+                                                                ],
+                            "benchmark/cve_bench/dry_run.py":  [
+                                                                   "benchmark/cve_bench/loader.py",
+                                                                   "benchmark/cve_bench/runner.py",
+                                                                   "benchmark/cve_bench/scorer.py"
+                                                               ],
+                            "benchmark/cve_bench/live.py":  [
+                                                                "benchmark/cve_bench/loader.py",
+                                                                "benchmark/cve_bench/runner.py",
+                                                                "benchmark/cve_bench/scorer.py"
+                                                            ],
+                            "benchmark/cve_bench/loader.py":  [
+
+                                                              ],
+                            "benchmark/cve_bench/runner.py":  [
+                                                                  "benchmark/cve_bench/loader.py",
+                                                                  "benchmark/cve_bench/scorer.py"
+                                                              ],
+                            "benchmark/cve_bench/scorer.py":  [
+                                                                  "benchmark/cve_bench/loader.py"
+                                                              ],
+                            "packages/raptix/tests/unit/benchmark/test_cve_bench_live.py":  [
+                                                                                                "benchmark/cve_bench/__init__.py",
+                                                                                                "benchmark/cve_bench/live.py",
+                                                                                                "benchmark/cve_bench/loader.py"
+                                                                                            ],
+                            "tests/test_cve_bench_loader.py":  [
+                                                                   "benchmark/cve_bench/loader.py"
+                                                               ],
+                            "tests/test_cve_bench_scorer.py":  [
+                                                                   "benchmark/cve_bench/loader.py",
+                                                                   "benchmark/cve_bench/scorer.py"
+                                                               ]
+                        }
+}

@@ -1,0 +1,13 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix",
+  "batchFiles": [
+    { "path": "clients/web-raptix/tests/fixtures/w00/runtime/README.md", "language": "markdown", "sizeLines": 9, "fileCategory": "docs" },
+    { "path": "clients/web-raptix/tests/fixtures/w00/runtime/runtime-catalog.json", "language": "json", "sizeLines": 37, "fileCategory": "config" },
+    { "path": "clients/web-raptix/tests/fixtures/w00/runtime/runtime-emitter-capture.json", "language": "json", "sizeLines": 359, "fileCategory": "config" }
+  ],
+  "batchImportData": {
+    "clients/web-raptix/tests/fixtures/w00/runtime/README.md": [],
+    "clients/web-raptix/tests/fixtures/w00/runtime/runtime-catalog.json": [],
+    "clients/web-raptix/tests/fixtures/w00/runtime/runtime-emitter-capture.json": []
+  }
+}

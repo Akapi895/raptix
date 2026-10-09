@@ -1,0 +1,1814 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 20,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 20,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 20
+    }
+  },
+  "results": [
+    {
+      "path": "docs/COWORK.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 272,
+      "nonEmptyLines": 221,
+      "sections": [
+        {
+          "heading": "Working Together on Raptix",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Operating Model in One Paragraph",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "2. Roles",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "3. Branch Strategy",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "4. Pull Request Workflow",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "4.1 Opening a PR",
+          "level": 3,
+          "line": 77
+        },
+        {
+          "heading": "4.2 What CI runs",
+          "level": 3,
+          "line": 97
+        },
+        {
+          "heading": "4.3 Review",
+          "level": 3,
+          "line": 118
+        },
+        {
+          "heading": "4.4 Merging",
+          "level": 3,
+          "line": 138
+        },
+        {
+          "heading": "4.5 Anti-patterns we reject on sight",
+          "level": 3,
+          "line": 149
+        },
+        {
+          "heading": "5. Releases",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "5.1 The gate",
+          "level": 3,
+          "line": 181
+        },
+        {
+          "heading": "5.2 What a contributor sees",
+          "level": 3,
+          "line": 208
+        },
+        {
+          "heading": "5.3 Supply chain",
+          "level": 3,
+          "line": 224
+        },
+        {
+          "heading": "6. Communication",
+          "level": 2,
+          "line": 252
+        },
+        {
+          "heading": "7. Changing This Document",
+          "level": 2,
+          "line": 264
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 16
+      }
+    },
+    {
+      "path": "docs/QUALITY_BAR.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 511,
+      "nonEmptyLines": 399,
+      "sections": [
+        {
+          "heading": "The 100% Quality Bar",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "The Karpathy Four",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "1. Think Before Coding",
+          "level": 3,
+          "line": 24
+        },
+        {
+          "heading": "2. Simplicity First",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "3. Surgical Changes",
+          "level": 3,
+          "line": 44
+        },
+        {
+          "heading": "4. Goal-Driven Execution",
+          "level": 3,
+          "line": 56
+        },
+        {
+          "heading": "Hard limits",
+          "level": 2,
+          "line": 72
+        },
+        {
+          "heading": "Wired end-to-end, locally verified — no exceptions",
+          "level": 2,
+          "line": 94
+        },
+        {
+          "heading": "What \"wired\" means concretely",
+          "level": 3,
+          "line": 103
+        },
+        {
+          "heading": "What \"wired\" forbids",
+          "level": 3,
+          "line": 142
+        },
+        {
+          "heading": "What \"wired\" requires in the PR body",
+          "level": 3,
+          "line": 164
+        },
+        {
+          "heading": "Banned patterns — PR closed on sight",
+          "level": 2,
+          "line": 197
+        },
+        {
+          "heading": "Error handling",
+          "level": 3,
+          "line": 204
+        },
+        {
+          "heading": "Type-safety escape hatches",
+          "level": 3,
+          "line": 236
+        },
+        {
+          "heading": "Logging in production",
+          "level": 3,
+          "line": 250
+        },
+        {
+          "heading": "Suppressed return values",
+          "level": 3,
+          "line": 265
+        },
+        {
+          "heading": "Dead capabilities and stubs",
+          "level": 3,
+          "line": 279
+        },
+        {
+          "heading": "Mutable defaults and wildcard imports",
+          "level": 3,
+          "line": 286
+        },
+        {
+          "heading": "Cosmetic drive-bys",
+          "level": 3,
+          "line": 296
+        },
+        {
+          "heading": "Test anti-patterns",
+          "level": 3,
+          "line": 307
+        },
+        {
+          "heading": "Dependency hygiene",
+          "level": 3,
+          "line": 343
+        },
+        {
+          "heading": "AI-slop signatures",
+          "level": 2,
+          "line": 354
+        },
+        {
+          "heading": "Prose / comment slop",
+          "level": 3,
+          "line": 361
+        },
+        {
+          "heading": "Code slop",
+          "level": 3,
+          "line": 373
+        },
+        {
+          "heading": "Diff slop",
+          "level": 3,
+          "line": 388
+        },
+        {
+          "heading": "Required positive patterns",
+          "level": 2,
+          "line": 402
+        },
+        {
+          "heading": "Test quality bar",
+          "level": 2,
+          "line": 424
+        },
+        {
+          "heading": "Self-review standard",
+          "level": 2,
+          "line": 446
+        },
+        {
+          "heading": "Escalation",
+          "level": 2,
+          "line": 469
+        },
+        {
+          "heading": "What \"100%\" actually means",
+          "level": 2,
+          "line": 488
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 30
+      }
+    },
+    {
+      "path": "docs/agent-file-conventions.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 512,
+      "nonEmptyLines": 416,
+      "sections": [
+        {
+          "heading": "Agent File & Reporting Conventions",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Where files physically live",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "2. The workspace directory layout",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "3. The file-writing tools agents have",
+          "level": 2,
+          "line": 138
+        },
+        {
+          "heading": "4. Per-phase artifact contracts",
+          "level": 2,
+          "line": 180
+        },
+        {
+          "heading": "Recon (`recon.md`)",
+          "level": 3,
+          "line": 185
+        },
+        {
+          "heading": "Exploit (`exploit.md`)",
+          "level": 3,
+          "line": 204
+        },
+        {
+          "heading": "Post-exploit (`postexploit.md`)",
+          "level": 3,
+          "line": 224
+        },
+        {
+          "heading": "Analyst (`analyst.md`)",
+          "level": 3,
+          "line": 230
+        },
+        {
+          "heading": "5. Terminal-state handoff artifacts",
+          "level": 2,
+          "line": 242
+        },
+        {
+          "heading": "Recon terminal states (token inside `recon/SUMMARY.md`)",
+          "level": 3,
+          "line": 250
+        },
+        {
+          "heading": "Exploit terminal states",
+          "level": 3,
+          "line": 258
+        },
+        {
+          "heading": "6. The orchestrator read protocol",
+          "level": 2,
+          "line": 269
+        },
+        {
+          "heading": "Sub-agent failure modes",
+          "level": 3,
+          "line": 297
+        },
+        {
+          "heading": "Objective state discipline",
+          "level": 3,
+          "line": 307
+        },
+        {
+          "heading": "7. Cross-agent shared conventions",
+          "level": 2,
+          "line": 318
+        },
+        {
+          "heading": "Scoped sub-agent dispatch (`task_spec.py`)",
+          "level": 3,
+          "line": 346
+        },
+        {
+          "heading": "8. Planning documents (Soundwave)",
+          "level": 2,
+          "line": 358
+        },
+        {
+          "heading": "9. Final report generation",
+          "level": 2,
+          "line": 382
+        },
+        {
+          "heading": "10. The knowledge graph as a parallel channel",
+          "level": 2,
+          "line": 401
+        },
+        {
+          "heading": "11. Benchmark / CTF mode differences",
+          "level": 2,
+          "line": 422
+        },
+        {
+          "heading": "12. Client-side surfacing",
+          "level": 2,
+          "line": 443
+        },
+        {
+          "heading": "13. Lifecycle and checkpointing",
+          "level": 2,
+          "line": 459
+        },
+        {
+          "heading": "14. Writing a plugin agent that fits the contract",
+          "level": 2,
+          "line": 475
+        },
+        {
+          "heading": "See also",
+          "level": 3,
+          "line": 503
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 25
+      }
+    },
+    {
+      "path": "docs/agent-file-mapping.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 290,
+      "nonEmptyLines": 234,
+      "sections": [
+        {
+          "heading": "Agent & Skill → File-Write Mapping",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Per-agent write instructions",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Orchestration tier",
+          "level": 3,
+          "line": 38
+        },
+        {
+          "heading": "Raptix (orchestrator) — `agents/prompts/standard/raptix.md`",
+          "level": 4,
+          "line": 40
+        },
+        {
+          "heading": "Soundwave (planner) — `agents/prompts/standard/soundwave.md`",
+          "level": 4,
+          "line": 54
+        },
+        {
+          "heading": "Phase tier (kill-chain specialists)",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "Recon — `agents/prompts/standard/recon.md`",
+          "level": 4,
+          "line": 72
+        },
+        {
+          "heading": "Exploit — `agents/prompts/standard/exploit.md`",
+          "level": 4,
+          "line": 86
+        },
+        {
+          "heading": "Post-exploit — `agents/prompts/standard/postexploit.md`",
+          "level": 4,
+          "line": 104
+        },
+        {
+          "heading": "Analyst — `agents/prompts/standard/analyst.md`",
+          "level": 4,
+          "line": 120
+        },
+        {
+          "heading": "Domain specialists",
+          "level": 3,
+          "line": 132
+        },
+        {
+          "heading": "2. Per-skill write instructions",
+          "level": 2,
+          "line": 149
+        },
+        {
+          "heading": "Shared",
+          "level": 3,
+          "line": 153
+        },
+        {
+          "heading": "Reporting skills",
+          "level": 3,
+          "line": 159
+        },
+        {
+          "heading": "Soundwave planning templates",
+          "level": 3,
+          "line": 168
+        },
+        {
+          "heading": "Benchmark / CTF",
+          "level": 3,
+          "line": 184
+        },
+        {
+          "heading": "3. File namespace summary",
+          "level": 2,
+          "line": 192
+        },
+        {
+          "heading": "4. Known inconsistencies — RESOLVED 2026-06-12",
+          "level": 2,
+          "line": 210
+        },
+        {
+          "heading": "Source files",
+          "level": 3,
+          "line": 286
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 19
+      }
+    },
+    {
+      "path": "docs/agents.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 158,
+      "nonEmptyLines": 114,
+      "sections": [
+        {
+          "heading": "Agents",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Roster",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Orchestrators",
+          "level": 3,
+          "line": 9
+        },
+        {
+          "heading": "Reconnaissance",
+          "level": 3,
+          "line": 17
+        },
+        {
+          "heading": "Vulnerability Research Pipeline",
+          "level": 3,
+          "line": 23
+        },
+        {
+          "heading": "Exploitation & Post-Exploitation",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "Domain Specialists",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "Fresh Context Model",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "Middleware Stack",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Safety stack (every agent)",
+          "level": 3,
+          "line": 79
+        },
+        {
+          "heading": "Framework middleware",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "Safety-critical slots",
+          "level": 3,
+          "line": 113
+        },
+        {
+          "heading": "Stack per Agent Role",
+          "level": 3,
+          "line": 117
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "docs/architecture.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 216,
+      "nonEmptyLines": 156,
+      "sections": [
+        {
+          "heading": "Architecture",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Overview",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Components",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "LiteLLM Proxy (`raptix-net`, port 4000)",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "LangGraph Platform (`raptix-net`, port 2024)",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "PostgreSQL (`raptix-net`, port 5432)",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "Neo4j Knowledge Graph — KGStore (`sandbox-net` + `raptix-net`, port 7687 / browser 7474)",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "BloodHound Community Edition sidecar (`raptix-net`, BHCE API on host port 8081)",
+          "level": 3,
+          "line": 83
+        },
+        {
+          "heading": "Skillogy (`raptix-net`, REST API on host port 9100)",
+          "level": 3,
+          "line": 94
+        },
+        {
+          "heading": "Sandbox (`sandbox-net`)",
+          "level": 3,
+          "line": 114
+        },
+        {
+          "heading": "C2 Server (`sandbox-net`, Sliver — dynamic-spawn)",
+          "level": 3,
+          "line": 124
+        },
+        {
+          "heading": "Web Dashboard (`raptix-net`, port 3000 + terminal WebSocket on 3003 — dynamic-spawn)",
+          "level": 3,
+          "line": 133
+        },
+        {
+          "heading": "Dynamic Workload Lifecycle ([ADR-0006](adr/0006-agent-driven-container-lifecycle.md))",
+          "level": 3,
+          "line": 137
+        },
+        {
+          "heading": "Bash Tool & Interactive Sessions",
+          "level": 2,
+          "line": 151
+        },
+        {
+          "heading": "Data Flow: Single Objective",
+          "level": 2,
+          "line": 173
+        },
+        {
+          "heading": "Security Boundaries",
+          "level": 2,
+          "line": 207
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 16
+      }
+    },
+    {
+      "path": "docs/benchmark-comparison.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 88,
+      "nonEmptyLines": 68,
+      "sections": [
+        {
+          "heading": "XBOW Benchmark — Cross-Project Comparison",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Leaderboard",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Per-Difficulty (where published)",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "Per-Vulnerability — Shannon Lite (only system w/ full breakdown)",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "Adjacent — Don't Publish XBOW (different benchmark)",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "Sources",
+          "level": 2,
+          "line": 76
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/cli-reference.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 163,
+      "nonEmptyLines": 122,
+      "sections": [
+        {
+          "heading": "CLI Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Commands",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "`raptix logs` — Service names",
+          "level": 3,
+          "line": 20
+        },
+        {
+          "heading": "Interactive Terminal UI",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Keyboard Shortcuts",
+          "level": 3,
+          "line": 37
+        },
+        {
+          "heading": "View Modes",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "Graph Sidebar",
+          "level": 3,
+          "line": 61
+        },
+        {
+          "heading": "Slash Commands",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Environment Variables",
+          "level": 2,
+          "line": 91
+        },
+        {
+          "heading": "Required (at least one LLM key)",
+          "level": 3,
+          "line": 95
+        },
+        {
+          "heading": "Model Configuration",
+          "level": 3,
+          "line": 104
+        },
+        {
+          "heading": "Infrastructure",
+          "level": 3,
+          "line": 120
+        },
+        {
+          "heading": "Ports (optional)",
+          "level": 3,
+          "line": 129
+        },
+        {
+          "heading": "C2 Framework",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "Observability (optional)",
+          "level": 3,
+          "line": 151
+        },
+        {
+          "heading": "Debug",
+          "level": 3,
+          "line": 159
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 16
+      }
+    },
+    {
+      "path": "docs/contributing.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 191,
+      "nonEmptyLines": 139,
+      "sections": [
+        {
+          "heading": "Contributing",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Development Setup",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Project Structure",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Quality Gates",
+          "level": 2,
+          "line": 53
+        },
+        {
+          "heading": "Adding an Agent",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Activating plugin bundles",
+          "level": 3,
+          "line": 90
+        },
+        {
+          "heading": "Adding a Skill",
+          "level": 2,
+          "line": 132
+        },
+        {
+          "heading": "Testing",
+          "level": 2,
+          "line": 144
+        },
+        {
+          "heading": "Pull Request Process",
+          "level": 2,
+          "line": 163
+        },
+        {
+          "heading": "Areas Where Help Is Welcome",
+          "level": 2,
+          "line": 177
+        },
+        {
+          "heading": "Community",
+          "level": 2,
+          "line": 189
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "docs/contributor-architecture.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 147,
+      "nonEmptyLines": 123,
+      "sections": [
+        {
+          "heading": "Contributor Architecture Guide",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "The three packages, one paragraph each",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Where new code goes",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Core stays thin",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "Refactor rules",
+          "level": 2,
+          "line": 63
+        },
+        {
+          "heading": "Workspace layout",
+          "level": 2,
+          "line": 89
+        },
+        {
+          "heading": "Versioning",
+          "level": 2,
+          "line": 130
+        },
+        {
+          "heading": "See also",
+          "level": 2,
+          "line": 136
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "docs/e2e-testing-guide.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 211,
+      "nonEmptyLines": 169,
+      "sections": [
+        {
+          "heading": "E2E Testing Guide — LLM Gateway Enhancement",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Scenario 1: API Key Provider Routing",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "Steps",
+          "level": 3,
+          "line": 15
+        },
+        {
+          "heading": "Expected",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "Troubleshooting",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "Scenario 2: Custom LiteLLM Model Routing",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "Steps",
+          "level": 3,
+          "line": 45
+        },
+        {
+          "heading": "Expected",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "Troubleshooting",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "Scenario 3: OpenAI-Compatible Gateway or Local Model",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Steps",
+          "level": 3,
+          "line": 76
+        },
+        {
+          "heading": "Expected",
+          "level": 3,
+          "line": 94
+        },
+        {
+          "heading": "Troubleshooting",
+          "level": 3,
+          "line": 98
+        },
+        {
+          "heading": "Scenario 4: Ollama Local Provider",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "Steps",
+          "level": 3,
+          "line": 113
+        },
+        {
+          "heading": "Expected",
+          "level": 3,
+          "line": 133
+        },
+        {
+          "heading": "Troubleshooting",
+          "level": 3,
+          "line": 139
+        },
+        {
+          "heading": "Scenario 5: Onboard Wizard Complete Flow",
+          "level": 2,
+          "line": 155
+        },
+        {
+          "heading": "Steps",
+          "level": 3,
+          "line": 157
+        },
+        {
+          "heading": "Expected",
+          "level": 3,
+          "line": 171
+        },
+        {
+          "heading": "Scenario 6: Fallback Chain Activation",
+          "level": 2,
+          "line": 176
+        },
+        {
+          "heading": "Steps",
+          "level": 3,
+          "line": 178
+        },
+        {
+          "heading": "Expected",
+          "level": 3,
+          "line": 190
+        },
+        {
+          "heading": "Troubleshooting",
+          "level": 3,
+          "line": 194
+        },
+        {
+          "heading": "Scenario 7: Authorized OAuth / Subscription Use",
+          "level": 2,
+          "line": 198
+        },
+        {
+          "heading": "Security Verification",
+          "level": 2,
+          "line": 203
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 30
+      }
+    },
+    {
+      "path": "docs/engagement-workflow.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 166,
+      "nonEmptyLines": 119,
+      "sections": [
+        {
+          "heading": "Engagement Workflow",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Phase 1: Planning",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "1. Define the target",
+          "level": 3,
+          "line": 9
+        },
+        {
+          "heading": "2. Soundwave interview",
+          "level": 3,
+          "line": 21
+        },
+        {
+          "heading": "3. Document generation",
+          "level": 3,
+          "line": 37
+        },
+        {
+          "heading": "4. OPPLAN structure",
+          "level": 3,
+          "line": 56
+        },
+        {
+          "heading": "5. Operator review",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "Phase 2: Execution",
+          "level": 2,
+          "line": 81
+        },
+        {
+          "heading": "The orchestration loop",
+          "level": 3,
+          "line": 85
+        },
+        {
+          "heading": "Agent dispatch by phase",
+          "level": 3,
+          "line": 103
+        },
+        {
+          "heading": "Objective status transitions",
+          "level": 3,
+          "line": 113
+        },
+        {
+          "heading": "Findings format",
+          "level": 3,
+          "line": 123
+        },
+        {
+          "heading": "Phase 3: Offensive Vaccine (planned)",
+          "level": 2,
+          "line": 148
+        },
+        {
+          "heading": "Outputs",
+          "level": 2,
+          "line": 154
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "docs/getting-started.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 106,
+      "nonEmptyLines": 73,
+      "sections": [
+        {
+          "heading": "Getting Started",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Install",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Configure",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "Launch",
+          "level": 2,
+          "line": 46
+        },
+        {
+          "heading": "First Real Engagement",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "Stopping Services",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "Check Service Status",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Next Steps",
+          "level": 2,
+          "line": 96
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "docs/incalmo-lessons-implementation-guide.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 247,
+      "nonEmptyLines": 186,
+      "sections": [
+        {
+          "heading": "Incalmo-lessons — Implementation Guide (safe subset)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Global rules (recap — full text in AGENTS.md)",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Definition of Done (every WP)",
+          "level": 3,
+          "line": 23
+        },
+        {
+          "heading": "Dispatch order (within safe subset)",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "WP-L2a — Auto-ingest KG state (fail-safe post-tool hook)  ·  Value: High · Risk: Low · Effort: Low-Med",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "WP-L7-obs — Tried-edge + fail-reason ledger (observational only)  ·  Value: Med · Risk: Med · Effort: Low",
+          "level": 2,
+          "line": 95
+        },
+        {
+          "heading": "WP-L6 — Constrained/structured decoding  ·  Value: Med (format only) · Risk: Low · Effort: Med · **Investigate-first**",
+          "level": 2,
+          "line": 136
+        },
+        {
+          "heading": "WP-L2b — Extend `kg_ingest_*` parsers (narrow)  ·  Value: Med · Risk: Med (brittle) · Effort: Ongoing",
+          "level": 2,
+          "line": 177
+        },
+        {
+          "heading": "WP-L9 — Per-role structure knob (lowest priority; likely defer)  ·  Value: Low · Risk: Low",
+          "level": 2,
+          "line": 208
+        },
+        {
+          "heading": "Summary table",
+          "level": 2,
+          "line": 232
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "docs/knowledge-graph.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 110,
+      "nonEmptyLines": 80,
+      "sections": [
+        {
+          "heading": "Knowledge Graph",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Node Types",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Relationship Types",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Research Tools",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "Graph Mutations",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "Graph Queries",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "Attack Chain Planning",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Artifact Ingestion",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "Health Diagnostics",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "Querying Directly",
+          "level": 2,
+          "line": 88
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "docs/library-consumer-guide.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 214,
+      "nonEmptyLines": 171,
+      "sections": [
+        {
+          "heading": "Library Consumer Guide",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Install",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "2. Use the public API",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "3. Compose an agent",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "4. Override middleware",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "5. Mount per-tenant assets — `make_agent_backend(extra_routes=)`",
+          "level": 2,
+          "line": 106
+        },
+        {
+          "heading": "6. Register custom roles — `RoleRegistry.register()`",
+          "level": 2,
+          "line": 133
+        },
+        {
+          "heading": "7. Audit and observability",
+          "level": 2,
+          "line": 158
+        },
+        {
+          "heading": "8. Patterns for Enterprise customers",
+          "level": 2,
+          "line": 194
+        },
+        {
+          "heading": "See also",
+          "level": 2,
+          "line": 207
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "docs/library-usage.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 400,
+      "nonEmptyLines": 318,
+      "sections": [
+        {
+          "heading": "Raptix as a Library",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Three usage paths",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "1. Pre-built agents (OSS default)",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "2. Factory with explicit overrides",
+          "level": 3,
+          "line": 34
+        },
+        {
+          "heading": "3. Direct composition with `langchain.create_agent`",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "3b. Plugin orchestrator with the OSS slot system (`build_middleware(slots=...)`)",
+          "level": 3,
+          "line": 129
+        },
+        {
+          "heading": "Declarative plugin overrides (`PluginBundle`)",
+          "level": 2,
+          "line": 190
+        },
+        {
+          "heading": "Adding skills via entry-points",
+          "level": 3,
+          "line": 234
+        },
+        {
+          "heading": "Override resolution order",
+          "level": 3,
+          "line": 259
+        },
+        {
+          "heading": "Safety gate",
+          "level": 2,
+          "line": 272
+        },
+        {
+          "heading": "Building blocks reference",
+          "level": 2,
+          "line": 297
+        },
+        {
+          "heading": "Common patterns",
+          "level": 2,
+          "line": 320
+        },
+        {
+          "heading": "Add a single vendor tool to the default agent",
+          "level": 3,
+          "line": 322
+        },
+        {
+          "heading": "Run an OSS agent with a different model",
+          "level": 3,
+          "line": 336
+        },
+        {
+          "heading": "Replace `SkillsMiddleware` with a vendor caching version",
+          "level": 3,
+          "line": 345
+        },
+        {
+          "heading": "Disable a non-critical slot for one agent",
+          "level": 3,
+          "line": 363
+        },
+        {
+          "heading": "Versioning",
+          "level": 2,
+          "line": 380
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 17
+      }
+    },
+    {
+      "path": "docs/makefile-reference.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 124,
+      "nonEmptyLines": 85,
+      "sections": [
+        {
+          "heading": "Makefile Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Pre-release Verification",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Development",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "Quality Gates",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "Testing",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Web Dashboard (web-raptix stack)",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "Operations",
+          "level": 2,
+          "line": 86
+        },
+        {
+          "heading": "Benchmark",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Versioning (no manual step)",
+          "level": 2,
+          "line": 105
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "docs/mcp.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 57,
+      "nonEmptyLines": 42,
+      "sections": [
+        {
+          "heading": "MCP tool servers (opt-in)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "1. Install the adapter",
+          "level": 2,
+          "line": 11
+        },
+        {
+          "heading": "2. Declare your servers",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "3. Programmatic use",
+          "level": 2,
+          "line": 47
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "docs/models.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 356,
+      "nonEmptyLines": 261,
+      "sections": [
+        {
+          "heading": "Models",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "How model selection works",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Tier × AuthMethod matrix",
+          "level": 3,
+          "line": 21
+        },
+        {
+          "heading": "Profiles",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "`eco` — per-agent tier (production default)",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "`max` — every agent on HIGH",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "`test` — every agent on LOW",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "Credentials inventory",
+          "level": 2,
+          "line": 72
+        },
+        {
+          "heading": "Fallback chain examples",
+          "level": 2,
+          "line": 109
+        },
+        {
+          "heading": "Single API key (Anthropic only)",
+          "level": 3,
+          "line": 113
+        },
+        {
+          "heading": "Single API key (OpenAI only)",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "Claude Code OAuth + Anthropic API (subscription primary, paid fallback)",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "Mixed providers (Anthropic + OpenAI)",
+          "level": 3,
+          "line": 157
+        },
+        {
+          "heading": "Local Ollama only (offline / cost-free)",
+          "level": 3,
+          "line": 173
+        },
+        {
+          "heading": "Local Ollama + cloud fallback",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "Local llama.cpp (GGUF) only",
+          "level": 3,
+          "line": 230
+        },
+        {
+          "heading": "MiniMax-only (LOW gap)",
+          "level": 3,
+          "line": 265
+        },
+        {
+          "heading": "Failover behavior",
+          "level": 2,
+          "line": 282
+        },
+        {
+          "heading": "LiteLLM proxy",
+          "level": 2,
+          "line": 290
+        },
+        {
+          "heading": "Adding a model",
+          "level": 2,
+          "line": 303
+        },
+        {
+          "heading": "Dynamic model registration (Ollama, custom gateways, ad-hoc overrides)",
+          "level": 3,
+          "line": 313
+        },
+        {
+          "heading": "Subscription OAuth Providers",
+          "level": 2,
+          "line": 332
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 22
+      }
+    }
+  ]
+}

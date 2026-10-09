@@ -1,0 +1,2821 @@
+{
+  "batchIndex": 14,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "language": "typescript",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/agent-runs.ts",
+      "language": "typescript",
+      "sizeLines": 314,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/correct-projects.ts",
+      "language": "typescript",
+      "sizeLines": 160,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/planning.ts",
+      "language": "typescript",
+      "sizeLines": 176,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/projects.ts",
+      "language": "typescript",
+      "sizeLines": 114,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/reports.ts",
+      "language": "typescript",
+      "sizeLines": 93,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Charter.tsx",
+      "language": "typescript",
+      "sizeLines": 381,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Findings.tsx",
+      "language": "typescript",
+      "sizeLines": 1112,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Home.tsx",
+      "language": "typescript",
+      "sizeLines": 860,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "language": "typescript",
+      "sizeLines": 1348,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Logs.tsx",
+      "language": "typescript",
+      "sizeLines": 541,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Members.tsx",
+      "language": "typescript",
+      "sizeLines": 500,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "language": "typescript",
+      "sizeLines": 1106,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Reports.tsx",
+      "language": "typescript",
+      "sizeLines": 704,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/screens/VectorCampaigns.tsx",
+      "language": "typescript",
+      "sizeLines": 528,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/shared/api/errors.ts",
+      "language": "typescript",
+      "sizeLines": 112,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/shared/api/http.ts",
+      "language": "typescript",
+      "sizeLines": 111,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "language": "typescript",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "language": "typescript",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/types.ts",
+      "language": "typescript",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/console-view.test.ts",
+      "language": "typescript",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/findings-view.test.ts",
+      "language": "typescript",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/graph-view.test.ts",
+      "language": "typescript",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/history-merge.test.ts",
+      "language": "typescript",
+      "sizeLines": 75,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/logs-view.test.ts",
+      "language": "typescript",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/observe-stream.test.ts",
+      "language": "typescript",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "language": "typescript",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/projects.test.ts",
+      "language": "typescript",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/real-app.test.ts",
+      "language": "typescript",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/real-project-types.test.ts",
+      "language": "typescript",
+      "sizeLines": 105,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/router.test.ts",
+      "language": "typescript",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/stream-reducer.test.ts",
+      "language": "typescript",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "type": "file",
+      "name": "visual-projects.ts",
+      "filePath": "clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "summary": "Adapter du an visual demo: store useSyncExternalStore tren PROJECTS dung san voi localStorage, tai/tao project tu fixture correct-projects.",
+      "tags": [
+        "mock",
+        "adapter",
+        "du-an",
+        "demo",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/mocks/adapters/visual-projects.ts:useVisualProjects",
+      "type": "function",
+      "name": "useVisualProjects",
+      "filePath": "clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "lineRange": [
+        18,
+        23
+      ],
+      "summary": "Hook store mock du an qua useSyncExternalStore tren fixture, dong bo localStorage va publish thay doi. Duoc export cho man hinh demo.",
+      "tags": [
+        "hook",
+        "mock",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/mocks/adapters/visual-projects.ts:createVisualProject",
+      "type": "function",
+      "name": "createVisualProject",
+      "filePath": "clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "lineRange": [
+        25,
+        37
+      ],
+      "summary": "Thuc hien nghiep vu `createVisualProject` (13 dong) trong visual-projects.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "visual-projects",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/mocks/fixtures/agent-runs.ts",
+      "type": "file",
+      "name": "agent-runs.ts",
+      "filePath": "clients/web-raptix/src/mocks/fixtures/agent-runs.ts",
+      "summary": "Fixture kich ban agent-run demo (314 dong): ACME_ROOT_AGENT va DEMO_RUN_SCENARIOS voi getRunScenario tra kich ban theo id cho RealConsole.",
+      "tags": [
+        "mock",
+        "fixture",
+        "agent-run",
+        "demo",
+        "kich-ban"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/mocks/fixtures/agent-runs.ts:getRunScenario",
+      "type": "function",
+      "name": "getRunScenario",
+      "filePath": "clients/web-raptix/src/mocks/fixtures/agent-runs.ts",
+      "lineRange": [
+        312,
+        314
+      ],
+      "summary": "Thuc hien nghiep vu `getRunScenario` (3 dong) trong agent-runs.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "agent-runs",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/mocks/fixtures/correct-projects.ts",
+      "type": "file",
+      "name": "correct-projects.ts",
+      "filePath": "clients/web-raptix/src/mocks/fixtures/correct-projects.ts",
+      "summary": "Fixture du an chuan cho baseline visual: PROJECTS va MEMBERS_BY_PROJECT dung cho demo ma khong gia lap nguoi that ngoai operator.",
+      "tags": [
+        "mock",
+        "fixture",
+        "du-an",
+        "demo",
+        "baseline"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/mocks/fixtures/planning.ts",
+      "type": "file",
+      "name": "planning.ts",
+      "filePath": "clients/web-raptix/src/mocks/fixtures/planning.ts",
+      "summary": "Fixture lap ke hoach demo (read-only, dan MOCK): SAMPLE_PLANNING_BUNDLE/SAMPLE_SCOPE theo types planning, khong phai engagement that va khong bi may cuong che.",
+      "tags": [
+        "mock",
+        "fixture",
+        "lap-ke-hoach",
+        "demo",
+        "roe"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/mocks/fixtures/projects.ts",
+      "type": "file",
+      "name": "projects.ts",
+      "filePath": "clients/web-raptix/src/mocks/fixtures/projects.ts",
+      "summary": "Fixture du an/thanh vien demo: PROJECTS va MEMBERS_BY_PROJECT voi Alex Kim/Sarah Row mau cho Home/Members ban visual.",
+      "tags": [
+        "mock",
+        "fixture",
+        "du-an",
+        "thanh-vien",
+        "demo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/mocks/fixtures/reports.ts",
+      "type": "file",
+      "name": "reports.ts",
+      "filePath": "clients/web-raptix/src/mocks/fixtures/reports.ts",
+      "summary": "Fixture bao cao demo: REPORT_FIXTURES va DEMO_REPORT_DOCUMENT theo types reports, tac gia la operator don, total severity khop FINDINGS that.",
+      "tags": [
+        "mock",
+        "fixture",
+        "bao-cao",
+        "demo",
+        "tai-lieu"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/Charter.tsx",
+      "type": "file",
+      "name": "Charter.tsx",
+      "filePath": "clients/web-raptix/src/screens/Charter.tsx",
+      "summary": "Man hinh Hien chuong & RoE (381 dong): hien thi RoE/CONOPS/deconfliction/OPPLAN tu fixture, modal kill-campaign va trang thai halted cuc bo.",
+      "tags": [
+        "man-hinh",
+        "hien-chuong",
+        "roe",
+        "demo",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Charter.tsx:Charter",
+      "type": "function",
+      "name": "Charter",
+      "filePath": "clients/web-raptix/src/screens/Charter.tsx",
+      "lineRange": [
+        4,
+        381
+      ],
+      "summary": "Man hinh/khoi demo Charter: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/Findings.tsx",
+      "type": "file",
+      "name": "Findings.tsx",
+      "filePath": "clients/web-raptix/src/screens/Findings.tsx",
+      "summary": "Man hinh Phat hien & Bang chung (1112 dong, lon nhat batch): bang loc/tim kiem, modal chi tiet, drawer PoC, trich extractPoc va tai xuong bao cao.",
+      "tags": [
+        "man-hinh",
+        "phat-hien",
+        "bang-chung",
+        "demo",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Findings.tsx:Findings",
+      "type": "function",
+      "name": "Findings",
+      "filePath": "clients/web-raptix/src/screens/Findings.tsx",
+      "lineRange": [
+        352,
+        606
+      ],
+      "summary": "Man hinh/khoi demo Findings: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Findings.tsx:FindingModal",
+      "type": "function",
+      "name": "FindingModal",
+      "filePath": "clients/web-raptix/src/screens/Findings.tsx",
+      "lineRange": [
+        608,
+        804
+      ],
+      "summary": "Man hinh/khoi demo FindingModal: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Findings.tsx:ModalRow",
+      "type": "function",
+      "name": "ModalRow",
+      "filePath": "clients/web-raptix/src/screens/Findings.tsx",
+      "lineRange": [
+        806,
+        831
+      ],
+      "summary": "Component ModalRow dung giao dien cho Findings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Findings.tsx:FindingDrawer",
+      "type": "function",
+      "name": "FindingDrawer",
+      "filePath": "clients/web-raptix/src/screens/Findings.tsx",
+      "lineRange": [
+        833,
+        1098
+      ],
+      "summary": "Man hinh/khoi demo FindingDrawer: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Findings.tsx:DrawerRow",
+      "type": "function",
+      "name": "DrawerRow",
+      "filePath": "clients/web-raptix/src/screens/Findings.tsx",
+      "lineRange": [
+        1100,
+        1112
+      ],
+      "summary": "Component DrawerRow dung giao dien cho Findings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/Home.tsx",
+      "type": "file",
+      "name": "Home.tsx",
+      "filePath": "clients/web-raptix/src/screens/Home.tsx",
+      "summary": "Man hinh Home muc du an (860 dong): UKC stepper, telemetry, cum avatar, the du an va hang danh sach voi tim kiem/loc theo Screen/types.",
+      "tags": [
+        "man-hinh",
+        "trang-chu",
+        "du-an",
+        "demo",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Home.tsx:PhaseNode",
+      "type": "function",
+      "name": "PhaseNode",
+      "filePath": "clients/web-raptix/src/screens/Home.tsx",
+      "lineRange": [
+        48,
+        94
+      ],
+      "summary": "Component PhaseNode dung giao dien cho Home.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Home.tsx:UKCStepper",
+      "type": "function",
+      "name": "UKCStepper",
+      "filePath": "clients/web-raptix/src/screens/Home.tsx",
+      "lineRange": [
+        96,
+        107
+      ],
+      "summary": "Component UKCStepper dung giao dien cho Home.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Home.tsx:TelemetryBox",
+      "type": "function",
+      "name": "TelemetryBox",
+      "filePath": "clients/web-raptix/src/screens/Home.tsx",
+      "lineRange": [
+        109,
+        136
+      ],
+      "summary": "Component TelemetryBox dung giao dien cho Home.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Home.tsx:AvatarCluster",
+      "type": "function",
+      "name": "AvatarCluster",
+      "filePath": "clients/web-raptix/src/screens/Home.tsx",
+      "lineRange": [
+        138,
+        195
+      ],
+      "summary": "Component AvatarCluster dung giao dien cho Home.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Home.tsx:ProjectCard",
+      "type": "function",
+      "name": "ProjectCard",
+      "filePath": "clients/web-raptix/src/screens/Home.tsx",
+      "lineRange": [
+        197,
+        372
+      ],
+      "summary": "Man hinh/khoi demo ProjectCard: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Home.tsx:ListRow",
+      "type": "function",
+      "name": "ListRow",
+      "filePath": "clients/web-raptix/src/screens/Home.tsx",
+      "lineRange": [
+        374,
+        485
+      ],
+      "summary": "Man hinh/khoi demo ListRow: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Home.tsx:Home",
+      "type": "function",
+      "name": "Home",
+      "filePath": "clients/web-raptix/src/screens/Home.tsx",
+      "lineRange": [
+        487,
+        860
+      ],
+      "summary": "Man hinh/khoi demo Home: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "type": "file",
+      "name": "InfrastructureData.tsx",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "summary": "Man hinh Ha tang & Du lieu (1348 dong, lon nhat repo): ban do moi truong, kiem ke tai san, ket sat thong tin voi hang loat modal inspect (AssetInspect/CredDetail) va huy hieu loai/trang thai.",
+      "tags": [
+        "man-hinh",
+        "ha-tang",
+        "tai-san",
+        "ket-sat",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:IconServer",
+      "type": "function",
+      "name": "IconServer",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        177,
+        186
+      ],
+      "summary": "Component IconServer dung giao dien cho InfrastructureData.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:NodeIcon",
+      "type": "function",
+      "name": "NodeIcon",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        280,
+        289
+      ],
+      "summary": "Component NodeIcon dung giao dien cho InfrastructureData.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:AgentBadge",
+      "type": "function",
+      "name": "AgentBadge",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        301,
+        312
+      ],
+      "summary": "Component AgentBadge dung giao dien cho InfrastructureData.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:CredTypeBadge",
+      "type": "function",
+      "name": "CredTypeBadge",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        314,
+        323
+      ],
+      "summary": "Component CredTypeBadge dung giao dien cho InfrastructureData.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:AssetTypeModalBadge",
+      "type": "function",
+      "name": "AssetTypeModalBadge",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        335,
+        345
+      ],
+      "summary": "Component AssetTypeModalBadge dung giao dien cho InfrastructureData.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:AssetInspectModal",
+      "type": "function",
+      "name": "AssetInspectModal",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        414,
+        525
+      ],
+      "summary": "Man hinh/khoi demo AssetInspectModal: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:CredTypeModalBadge",
+      "type": "function",
+      "name": "CredTypeModalBadge",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        544,
+        553
+      ],
+      "summary": "Component CredTypeModalBadge dung giao dien cho InfrastructureData.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:CredDetailModal",
+      "type": "function",
+      "name": "CredDetailModal",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        555,
+        649
+      ],
+      "summary": "Man hinh/khoi demo CredDetailModal: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:EnvironmentMap",
+      "type": "function",
+      "name": "EnvironmentMap",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        653,
+        934
+      ],
+      "summary": "Man hinh/khoi demo EnvironmentMap: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:AssetsInventory",
+      "type": "function",
+      "name": "AssetsInventory",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        938,
+        1111
+      ],
+      "summary": "Man hinh/khoi demo AssetsInventory: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:CredentialsVault",
+      "type": "function",
+      "name": "CredentialsVault",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        1115,
+        1327
+      ],
+      "summary": "Man hinh/khoi demo CredentialsVault: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:InfrastructureData",
+      "type": "function",
+      "name": "InfrastructureData",
+      "filePath": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "lineRange": [
+        1331,
+        1348
+      ],
+      "summary": "Man hinh/khoi demo InfrastructureData: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/Logs.tsx",
+      "type": "file",
+      "name": "Logs.tsx",
+      "filePath": "clients/web-raptix/src/screens/Logs.tsx",
+      "summary": "Man hinh Operations Log ban visual (541 dong): bo loc Select, bang log, modal chi tiet LogModal va TerminalView xem truc tiep.",
+      "tags": [
+        "man-hinh",
+        "nhat-ky",
+        "terminal",
+        "demo",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Logs.tsx:Select",
+      "type": "function",
+      "name": "Select",
+      "filePath": "clients/web-raptix/src/screens/Logs.tsx",
+      "lineRange": [
+        62,
+        76
+      ],
+      "summary": "Component Select dung giao dien cho Logs.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Logs.tsx:Logs",
+      "type": "function",
+      "name": "Logs",
+      "filePath": "clients/web-raptix/src/screens/Logs.tsx",
+      "lineRange": [
+        78,
+        380
+      ],
+      "summary": "Man hinh/khoi demo Logs: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Logs.tsx:LogModal",
+      "type": "function",
+      "name": "LogModal",
+      "filePath": "clients/web-raptix/src/screens/Logs.tsx",
+      "lineRange": [
+        382,
+        501
+      ],
+      "summary": "Man hinh/khoi demo LogModal: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Logs.tsx:TerminalView",
+      "type": "function",
+      "name": "TerminalView",
+      "filePath": "clients/web-raptix/src/screens/Logs.tsx",
+      "lineRange": [
+        503,
+        541
+      ],
+      "summary": "Man hinh/khoi demo TerminalView: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/Members.tsx",
+      "type": "file",
+      "name": "Members.tsx",
+      "filePath": "clients/web-raptix/src/screens/Members.tsx",
+      "summary": "Man hinh Thanh vien ban visual (500 dong): danh sach Members voi vai tro/trang thai, modal moi AddMemberModal cuc bo.",
+      "tags": [
+        "man-hinh",
+        "thanh-vien",
+        "demo",
+        "react",
+        "bieu-mau"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Members.tsx:Members",
+      "type": "function",
+      "name": "Members",
+      "filePath": "clients/web-raptix/src/screens/Members.tsx",
+      "lineRange": [
+        51,
+        339
+      ],
+      "summary": "Man hinh/khoi demo Members: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Members.tsx:AddMemberModal",
+      "type": "function",
+      "name": "AddMemberModal",
+      "filePath": "clients/web-raptix/src/screens/Members.tsx",
+      "lineRange": [
+        341,
+        500
+      ],
+      "summary": "Man hinh/khoi demo AddMemberModal: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "type": "file",
+      "name": "ProjectSettings.tsx",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "summary": "Man hinh Cai dat du an ban visual (1106 dong): 6 tab General/AI/Integrations/Notifications/ReportTemplates/Danger voi SliderField/Toggle/ApiKeyRow/Modal luu cuc bo.",
+      "tags": [
+        "man-hinh",
+        "cai-dat",
+        "demo",
+        "react",
+        "bieu-mau"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:Field",
+      "type": "function",
+      "name": "Field",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        34,
+        49
+      ],
+      "summary": "Component Field dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:SelectWrapper",
+      "type": "function",
+      "name": "SelectWrapper",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        51,
+        61
+      ],
+      "summary": "Component SelectWrapper dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:SaveButton",
+      "type": "function",
+      "name": "SaveButton",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        63,
+        79
+      ],
+      "summary": "Component SaveButton dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:SectionCard",
+      "type": "function",
+      "name": "SectionCard",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        81,
+        96
+      ],
+      "summary": "Component SectionCard dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:Modal",
+      "type": "function",
+      "name": "Modal",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        100,
+        121
+      ],
+      "summary": "Component Modal dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabGeneral",
+      "type": "function",
+      "name": "TabGeneral",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        138,
+        228
+      ],
+      "summary": "Component TabGeneral dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:SliderField",
+      "type": "function",
+      "name": "SliderField",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        232,
+        279
+      ],
+      "summary": "Component SliderField dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabAI",
+      "type": "function",
+      "name": "TabAI",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        281,
+        376
+      ],
+      "summary": "Component TabAI dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:ApiKeyRow",
+      "type": "function",
+      "name": "ApiKeyRow",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        382,
+        463
+      ],
+      "summary": "Component ApiKeyRow dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabIntegrations",
+      "type": "function",
+      "name": "TabIntegrations",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        465,
+        547
+      ],
+      "summary": "Component TabIntegrations dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:Toggle",
+      "type": "function",
+      "name": "Toggle",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        551,
+        564
+      ],
+      "summary": "Component Toggle dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabNotifications",
+      "type": "function",
+      "name": "TabNotifications",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        566,
+        664
+      ],
+      "summary": "Component TabNotifications dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabReportTemplates",
+      "type": "function",
+      "name": "TabReportTemplates",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        668,
+        812
+      ],
+      "summary": "Component TabReportTemplates dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabDanger",
+      "type": "function",
+      "name": "TabDanger",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        816,
+        1030
+      ],
+      "summary": "Component TabDanger dung giao dien cho ProjectSettings.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:ProjectSettings",
+      "type": "function",
+      "name": "ProjectSettings",
+      "filePath": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "lineRange": [
+        1045,
+        1106
+      ],
+      "summary": "Man hinh/khoi demo ProjectSettings: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/Reports.tsx",
+      "type": "file",
+      "name": "Reports.tsx",
+      "filePath": "clients/web-raptix/src/screens/Reports.tsx",
+      "summary": "Man hinh Bao cao ban visual (704 dong): danh sach bao cao voi avatar viet tat, style loai/trang thai va tac vu tai xuong/them moi.",
+      "tags": [
+        "man-hinh",
+        "bao-cao",
+        "demo",
+        "react",
+        "danh-sach"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/Reports.tsx:Reports",
+      "type": "function",
+      "name": "Reports",
+      "filePath": "clients/web-raptix/src/screens/Reports.tsx",
+      "lineRange": [
+        74,
+        704
+      ],
+      "summary": "Man hinh/khoi demo Reports: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/screens/VectorCampaigns.tsx",
+      "type": "file",
+      "name": "VectorCampaigns.tsx",
+      "filePath": "clients/web-raptix/src/screens/VectorCampaigns.tsx",
+      "summary": "Man hinh Chien dich Vector (528 dong): chon vector phishing/web/mobile, tao chien dich demo va theo doi trang thai theo project.",
+      "tags": [
+        "man-hinh",
+        "chien-dich",
+        "phishing",
+        "demo",
+        "react"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/screens/VectorCampaigns.tsx:VectorCampaigns",
+      "type": "function",
+      "name": "VectorCampaigns",
+      "filePath": "clients/web-raptix/src/screens/VectorCampaigns.tsx",
+      "lineRange": [
+        4,
+        528
+      ],
+      "summary": "Man hinh/khoi demo VectorCampaigns: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam trang.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "file",
+      "name": "errors.ts",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "summary": "Phan loai loi HTTP bien API moi (W03): envelope {statusCode, error:{code,message}}, ApiStatusError giu status goc de nhanh 400/404/409, kem ApiTimeout/Canceled/Network/InvalidResponse.",
+      "tags": [
+        "loi-api",
+        "http",
+        "contract",
+        "real-mode",
+        "phan-loai"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/shared/api/errors.ts:isKnownApiErrorCode",
+      "type": "function",
+      "name": "isKnownApiErrorCode",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "lineRange": [
+        15,
+        17
+      ],
+      "summary": "Kiem tra ma loi co trong API_ERROR_CODES cho bien HTTP API moi. Duoc export dung chung.",
+      "tags": [
+        "http",
+        "loi-api",
+        "tien-ich"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/shared/api/errors.ts:parseApiStatusError",
+      "type": "function",
+      "name": "parseApiStatusError",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "lineRange": [
+        101,
+        112
+      ],
+      "summary": "Chuyen envelope loi thanh ApiStatusError giu status goc cho bien HTTP API moi. Duoc export dung chung.",
+      "tags": [
+        "http",
+        "loi-api",
+        "tien-ich"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/src/shared/api/errors.ts:ApiClientError",
+      "type": "class",
+      "name": "ApiClientError",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "lineRange": [
+        21,
+        29
+      ],
+      "summary": "Loi client chung cho bien HTTP. Duoc export de lop http/api phan nhanh.",
+      "tags": [
+        "loi",
+        "api",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/src/shared/api/errors.ts:ApiStatusError",
+      "type": "class",
+      "name": "ApiStatusError",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "lineRange": [
+        32,
+        48
+      ],
+      "summary": "Loi giu status goc de nhanh 400/404/409. Duoc export de lop http/api phan nhanh.",
+      "tags": [
+        "loi",
+        "api",
+        "http"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:clients/web-raptix/src/shared/api/errors.ts:ApiTimeoutError",
+      "type": "class",
+      "name": "ApiTimeoutError",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "lineRange": [
+        51,
+        58
+      ],
+      "summary": "Loi het thoi gian goi API. Duoc export de lop http/api phan nhanh.",
+      "tags": [
+        "loi",
+        "api",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/src/shared/api/errors.ts:ApiCanceledError",
+      "type": "class",
+      "name": "ApiCanceledError",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "lineRange": [
+        61,
+        65
+      ],
+      "summary": "Loi huy bo (route cancel). Duoc export de lop http/api phan nhanh.",
+      "tags": [
+        "loi",
+        "api",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/src/shared/api/errors.ts:ApiNetworkError",
+      "type": "class",
+      "name": "ApiNetworkError",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "lineRange": [
+        68,
+        75
+      ],
+      "summary": "Loi mang khi goi API. Duoc export de lop http/api phan nhanh.",
+      "tags": [
+        "loi",
+        "api",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:clients/web-raptix/src/shared/api/errors.ts:ApiInvalidResponseError",
+      "type": "class",
+      "name": "ApiInvalidResponseError",
+      "filePath": "clients/web-raptix/src/shared/api/errors.ts",
+      "lineRange": [
+        78,
+        85
+      ],
+      "summary": "Loi payload sai envelope contract. Duoc export de lop http/api phan nhanh.",
+      "tags": [
+        "loi",
+        "api",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/shared/api/http.ts",
+      "type": "file",
+      "name": "http.ts",
+      "filePath": "clients/web-raptix/src/shared/api/http.ts",
+      "summary": "Client JSON toi thieu cho bien API (W03): noi base URL voi path, encodePathSegment cho du lieu dong, gop AbortSignal voi timeout, fetchOnce/requestJson tra JSON da kiem chung.",
+      "tags": [
+        "http-client",
+        "api",
+        "abort-signal",
+        "real-mode",
+        "json"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/shared/api/http.ts:encodePathSegment",
+      "type": "function",
+      "name": "encodePathSegment",
+      "filePath": "clients/web-raptix/src/shared/api/http.ts",
+      "lineRange": [
+        26,
+        28
+      ],
+      "summary": "Ma hoa doan path dong cho bien HTTP API moi. Duoc export dung chung.",
+      "tags": [
+        "http",
+        "loi-api",
+        "tien-ich"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/shared/api/http.ts:joinApiPath",
+      "type": "function",
+      "name": "joinApiPath",
+      "filePath": "clients/web-raptix/src/shared/api/http.ts",
+      "lineRange": [
+        30,
+        33
+      ],
+      "summary": "Noi base URL voi path cho bien HTTP API moi. Duoc export dung chung.",
+      "tags": [
+        "http",
+        "loi-api",
+        "tien-ich"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/shared/api/http.ts:fetchOnce",
+      "type": "function",
+      "name": "fetchOnce",
+      "filePath": "clients/web-raptix/src/shared/api/http.ts",
+      "lineRange": [
+        56,
+        96
+      ],
+      "summary": "Fetch mot lan co phan loai abort/timeout cho bien HTTP API moi. Ham noi bo.",
+      "tags": [
+        "http",
+        "loi-api",
+        "tien-ich"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/shared/api/http.ts:requestJson",
+      "type": "function",
+      "name": "requestJson",
+      "filePath": "clients/web-raptix/src/shared/api/http.ts",
+      "lineRange": [
+        98,
+        111
+      ],
+      "summary": "Goi JSON co timeout + AbortSignal cho bien HTTP API moi. Duoc export dung chung.",
+      "tags": [
+        "http",
+        "loi-api",
+        "tien-ich"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "type": "file",
+      "name": "useNarrowViewport.ts",
+      "filePath": "clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "summary": "Hook viewport hep: dang ky matchMedia (max-width: 900px) qua useSyncExternalStore de chuyen layout mobile.",
+      "tags": [
+        "hook",
+        "viewport",
+        "responsive",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/shared/hooks/useNarrowViewport.ts:useNarrowViewport",
+      "type": "function",
+      "name": "useNarrowViewport",
+      "filePath": "clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "lineRange": [
+        10,
+        12
+      ],
+      "summary": "Hook phat hien viewport hep qua matchMedia (max-width 900px) de chuyen layout. Duoc export dung chung.",
+      "tags": [
+        "hook",
+        "responsive",
+        "viewport"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "type": "file",
+      "name": "Dialog.tsx",
+      "filePath": "clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "summary": "Hop thoai dung chung co focus-trap: quan ly focusable, dong Escape, khoa cuon nen, dung cho moi modal real/new-project/HITL.",
+      "tags": [
+        "component",
+        "dialog",
+        "focus-trap",
+        "tai-su-dung"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/shared/ui/Dialog.tsx:Dialog",
+      "type": "function",
+      "name": "Dialog",
+      "filePath": "clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "lineRange": [
+        16,
+        94
+      ],
+      "summary": "Thanh phan UI Dialog kieu shadcn tren Base UI, dung cn gop lop tailwind. Duoc export dung chung.",
+      "tags": [
+        "component",
+        "ui-kit",
+        "giao-dien"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/types.ts",
+      "type": "file",
+      "name": "types.ts",
+      "filePath": "clients/web-raptix/src/types.ts",
+      "summary": "Kieu dung chung web-raptix (48 dong): Screen 13 trang workspace, Project/ProjectStatus/Member/MemberRole lam nen cho router, fixture va man hinh.",
+      "tags": [
+        "kieu-du-lieu",
+        "dieu-huong",
+        "du-an",
+        "thanh-vien"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/console-view.test.ts",
+      "type": "file",
+      "name": "console-view.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/console-view.test.ts",
+      "summary": "Kiem thu hop dong console-view: giam su kien stream thanh StreamState va hop nhat lich su thread, bao dung reduceStreamEvent/mergeThreadHistory.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "console",
+        "stream"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/findings-view.test.ts",
+      "type": "file",
+      "name": "findings-view.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/findings-view.test.ts",
+      "summary": "Kiem thu hop dong findings-view: anh xa FindingView thanh hang, dem severity, loc tim kiem, duong dan artifact va header noi dung.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "phat-hien",
+        "bang-chung"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/graph-view.test.ts",
+      "type": "file",
+      "name": "graph-view.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/graph-view.test.ts",
+      "summary": "Kiem thu hop dong graph-view: loc tai san, bo dem assetCounters, tom tat do thi va nhan hien thi node.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "do-thi",
+        "tai-san"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/history-merge.test.ts",
+      "type": "file",
+      "name": "history-merge.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/history-merge.test.ts",
+      "summary": "Kiem thu hop dong history-merge: hop nhat snapshot thread voi su kien stream, xu ly mat ket noi va dem execution quan sat duoc.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "lich-su",
+        "stream"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/logs-view.test.ts",
+      "type": "file",
+      "name": "logs-view.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/logs-view.test.ts",
+      "summary": "Kiem thu hop dong logs-view: tuy chon loc, loc timeline, van ban tim kiem, nguon goc muc va dinh dang thoi gian.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "nhat-ky",
+        "bo-loc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/observe-stream.test.ts",
+      "type": "file",
+      "name": "observe-stream.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/observe-stream.test.ts",
+      "summary": "Kiem thu hop dong observe-stream: theo doi run stream voi scope engagement/thread/run va moc thoi gian co dinh.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "stream",
+        "quan-sat"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "type": "file",
+      "name": "projects-real.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "summary": "Kiem thu hop dong projects-real (356 dong): stub fetch tra ProjectViewModel, kiem chung bien API real, huy fetch, loi client/invalid-response va store use-real-projects.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "du-an",
+        "real-mode",
+        "mock-fetch"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/tests/contracts/projects-real.test.ts:projectDto",
+      "type": "function",
+      "name": "projectDto",
+      "filePath": "clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "lineRange": [
+        29,
+        47
+      ],
+      "summary": "Helper kiem thu projectDto trong projects-real.test.ts (19 dong). Ham noi bo cua mo-dun.",
+      "tags": [
+        "kiem-thu",
+        "tro-giup",
+        "hop-dong"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/projects.test.ts",
+      "type": "file",
+      "name": "projects.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/projects.test.ts",
+      "summary": "Kiem thu hop dong projects mock: luu tru Map gia lap localStorage cho adapter visual-projects truoc/sau moi test.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "du-an",
+        "mock"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/real-app.test.ts",
+      "type": "file",
+      "name": "real-app.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/real-app.test.ts",
+      "summary": "Kiem thu hop dong RealApp: 13 trang workspace tu navigation/router, ly do fallback va unavailable khi real mode loi.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "dieu-huong",
+        "real-mode"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/real-project-types.test.ts",
+      "type": "file",
+      "name": "real-project-types.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/real-project-types.test.ts",
+      "summary": "Kiem thu hop dong real-project.types: dinh dang so dem/thoi gian, dem lifecycle, loc du an va validate ban nhap tao.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "du-an",
+        "validation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/tests/contracts/real-project-types.test.ts:project",
+      "type": "function",
+      "name": "project",
+      "filePath": "clients/web-raptix/tests/contracts/real-project-types.test.ts",
+      "lineRange": [
+        11,
+        28
+      ],
+      "summary": "Helper kiem thu project trong real-project-types.test.ts (18 dong). Ham noi bo cua mo-dun.",
+      "tags": [
+        "kiem-thu",
+        "tro-giup",
+        "hop-dong"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/router.test.ts",
+      "type": "file",
+      "name": "router.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/router.test.ts",
+      "summary": "Kiem thu hop dong router: parseRoute/routePath bao dung 13 trang workspace theo NAV_GROUPS/ACTIVE_NAV_ITEMS.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "router",
+        "dieu-huong"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/tests/contracts/stream-reducer.test.ts",
+      "type": "file",
+      "name": "stream-reducer.test.ts",
+      "filePath": "clients/web-raptix/tests/contracts/stream-reducer.test.ts",
+      "summary": "Kiem thu hop dong stream-reducer: giam PublicStreamEvent/Payload thanh state, mat ket noi va hop nhat quan sat run.",
+      "tags": [
+        "kiem-thu",
+        "hop-dong",
+        "stream",
+        "reducer"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/visual-projects.ts:useVisualProjects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/visual-projects.ts:useVisualProjects",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/visual-projects.ts:createVisualProject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/visual-projects.ts:createVisualProject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/fixtures/agent-runs.ts",
+      "target": "function:clients/web-raptix/src/mocks/fixtures/agent-runs.ts:getRunScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/fixtures/agent-runs.ts",
+      "target": "function:clients/web-raptix/src/mocks/fixtures/agent-runs.ts:getRunScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Charter.tsx",
+      "target": "function:clients/web-raptix/src/screens/Charter.tsx:Charter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Charter.tsx",
+      "target": "function:clients/web-raptix/src/screens/Charter.tsx:Charter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Findings.tsx",
+      "target": "function:clients/web-raptix/src/screens/Findings.tsx:Findings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Findings.tsx",
+      "target": "function:clients/web-raptix/src/screens/Findings.tsx:Findings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Findings.tsx",
+      "target": "function:clients/web-raptix/src/screens/Findings.tsx:FindingModal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Findings.tsx",
+      "target": "function:clients/web-raptix/src/screens/Findings.tsx:ModalRow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Findings.tsx",
+      "target": "function:clients/web-raptix/src/screens/Findings.tsx:FindingDrawer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Findings.tsx",
+      "target": "function:clients/web-raptix/src/screens/Findings.tsx:DrawerRow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "function:clients/web-raptix/src/screens/Home.tsx:PhaseNode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "function:clients/web-raptix/src/screens/Home.tsx:UKCStepper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "function:clients/web-raptix/src/screens/Home.tsx:TelemetryBox",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "function:clients/web-raptix/src/screens/Home.tsx:AvatarCluster",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "function:clients/web-raptix/src/screens/Home.tsx:ProjectCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "function:clients/web-raptix/src/screens/Home.tsx:ListRow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "function:clients/web-raptix/src/screens/Home.tsx:Home",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "function:clients/web-raptix/src/screens/Home.tsx:Home",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:IconServer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:NodeIcon",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:AgentBadge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:CredTypeBadge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:AssetTypeModalBadge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:AssetInspectModal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:CredTypeModalBadge",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:CredDetailModal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:EnvironmentMap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:AssetsInventory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:CredentialsVault",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:InfrastructureData",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "function:clients/web-raptix/src/screens/InfrastructureData.tsx:InfrastructureData",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Logs.tsx",
+      "target": "function:clients/web-raptix/src/screens/Logs.tsx:Select",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Logs.tsx",
+      "target": "function:clients/web-raptix/src/screens/Logs.tsx:Logs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Logs.tsx",
+      "target": "function:clients/web-raptix/src/screens/Logs.tsx:Logs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Logs.tsx",
+      "target": "function:clients/web-raptix/src/screens/Logs.tsx:LogModal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Logs.tsx",
+      "target": "function:clients/web-raptix/src/screens/Logs.tsx:TerminalView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Members.tsx",
+      "target": "function:clients/web-raptix/src/screens/Members.tsx:Members",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Members.tsx",
+      "target": "function:clients/web-raptix/src/screens/Members.tsx:Members",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Members.tsx",
+      "target": "function:clients/web-raptix/src/screens/Members.tsx:AddMemberModal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:Field",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:SelectWrapper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:SaveButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:SectionCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:Modal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabGeneral",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:SliderField",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabAI",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:ApiKeyRow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabIntegrations",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:Toggle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabNotifications",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabReportTemplates",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:TabDanger",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:ProjectSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "function:clients/web-raptix/src/screens/ProjectSettings.tsx:ProjectSettings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Reports.tsx",
+      "target": "function:clients/web-raptix/src/screens/Reports.tsx:Reports",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Reports.tsx",
+      "target": "function:clients/web-raptix/src/screens/Reports.tsx:Reports",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/VectorCampaigns.tsx",
+      "target": "function:clients/web-raptix/src/screens/VectorCampaigns.tsx:VectorCampaigns",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/VectorCampaigns.tsx",
+      "target": "function:clients/web-raptix/src/screens/VectorCampaigns.tsx:VectorCampaigns",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "function:clients/web-raptix/src/shared/api/errors.ts:isKnownApiErrorCode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "function:clients/web-raptix/src/shared/api/errors.ts:isKnownApiErrorCode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "function:clients/web-raptix/src/shared/api/errors.ts:parseApiStatusError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "function:clients/web-raptix/src/shared/api/errors.ts:parseApiStatusError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiClientError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiClientError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiStatusError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiStatusError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiTimeoutError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiTimeoutError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiCanceledError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiCanceledError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiNetworkError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiNetworkError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiInvalidResponseError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiInvalidResponseError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "function:clients/web-raptix/src/shared/api/http.ts:encodePathSegment",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "function:clients/web-raptix/src/shared/api/http.ts:encodePathSegment",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "function:clients/web-raptix/src/shared/api/http.ts:joinApiPath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "function:clients/web-raptix/src/shared/api/http.ts:joinApiPath",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "function:clients/web-raptix/src/shared/api/http.ts:fetchOnce",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "function:clients/web-raptix/src/shared/api/http.ts:requestJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "function:clients/web-raptix/src/shared/api/http.ts:requestJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "target": "function:clients/web-raptix/src/shared/hooks/useNarrowViewport.ts:useNarrowViewport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "target": "function:clients/web-raptix/src/shared/hooks/useNarrowViewport.ts:useNarrowViewport",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "target": "function:clients/web-raptix/src/shared/ui/Dialog.tsx:Dialog",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "target": "function:clients/web-raptix/src/shared/ui/Dialog.tsx:Dialog",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "target": "function:clients/web-raptix/tests/contracts/projects-real.test.ts:projectDto",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/real-project-types.test.ts",
+      "target": "function:clients/web-raptix/tests/contracts/real-project-types.test.ts:project",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "target": "file:clients/web-raptix/src/mocks/fixtures/correct-projects.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/fixtures/agent-runs.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/model.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/fixtures/planning.ts",
+      "target": "file:clients/web-raptix/src/features/planning/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/fixtures/projects.ts",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/fixtures/reports.ts",
+      "target": "file:clients/web-raptix/src/features/reports/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Charter.tsx",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Findings.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Home.tsx",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Logs.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Members.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Members.tsx",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Reports.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/Reports.tsx",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/screens/VectorCampaigns.tsx",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/console-view.test.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/console-view.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/console-view.test.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/history-merge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/console-view.test.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/stream-reducer.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/findings-view.test.ts",
+      "target": "file:clients/web-raptix/src/features/findings-evidence/findings-view.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/graph-view.test.ts",
+      "target": "file:clients/web-raptix/src/features/infrastructure/graph-view.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/history-merge.test.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/history-merge.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/history-merge.test.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/stream-reducer.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/logs-view.test.ts",
+      "target": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/observe-stream.test.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/observe-stream.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "target": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "target": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "target": "file:clients/web-raptix/src/shared/api/http.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/projects.test.ts",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/real-app.test.ts",
+      "target": "file:clients/web-raptix/src/app/navigation.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/real-app.test.ts",
+      "target": "file:clients/web-raptix/src/app/real-capabilities.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/real-app.test.ts",
+      "target": "file:clients/web-raptix/src/app/router.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/real-app.test.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/real-project-types.test.ts",
+      "target": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/router.test.ts",
+      "target": "file:clients/web-raptix/src/app/navigation.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/router.test.ts",
+      "target": "file:clients/web-raptix/src/app/router.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/tests/contracts/stream-reducer.test.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/stream-reducer.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "file:clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/http.ts",
+      "target": "file:clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:clients/web-raptix/src/types.ts",
+      "target": "file:clients/web-raptix/tests/contracts/projects.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "target": "file:clients/web-raptix/tests/contracts/real-app.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "function:clients/web-raptix/src/shared/api/http.ts:fetchOnce",
+      "target": "function:clients/web-raptix/src/shared/api/errors.ts:parseApiStatusError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/shared/api/http.ts:requestJson",
+      "target": "function:clients/web-raptix/src/shared/api/http.ts:joinApiPath",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:clients/web-raptix/src/shared/api/errors.ts:ApiStatusError",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiClientError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:clients/web-raptix/src/shared/api/errors.ts:ApiTimeoutError",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiClientError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:clients/web-raptix/src/shared/api/errors.ts:ApiCanceledError",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiClientError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:clients/web-raptix/src/shared/api/errors.ts:ApiNetworkError",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiClientError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:clients/web-raptix/src/shared/api/errors.ts:ApiInvalidResponseError",
+      "target": "class:clients/web-raptix/src/shared/api/errors.ts:ApiClientError",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    }
+  ]
+}

@@ -1,0 +1,2101 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 4,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 4,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 4,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/tools/browser/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 29,
+      "nonEmptyLines": 25,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/browser/tools.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 384,
+      "nonEmptyLines": 323,
+      "functions": [
+        {
+          "name": "_safe_close",
+          "startLine": 39,
+          "endLine": 65,
+          "params": [
+            "obj",
+            "name",
+            "timeout",
+            "method"
+          ]
+        },
+        {
+          "name": "get_session_manager",
+          "startLine": 268,
+          "endLine": 274,
+          "params": []
+        },
+        {
+          "name": "_reset_session_manager_for_tests",
+          "startLine": 277,
+          "endLine": 281,
+          "params": []
+        },
+        {
+          "name": "_json",
+          "startLine": 284,
+          "endLine": 285,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "_dispatch",
+          "startLine": 288,
+          "endLine": 331,
+          "params": [
+            "action",
+            "kwargs"
+          ]
+        },
+        {
+          "name": "browser_action",
+          "startLine": 335,
+          "endLine": 372,
+          "params": [
+            "action",
+            "params_json"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "BrowserActionError",
+          "startLine": 68,
+          "endLine": 74,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "_Tab",
+          "startLine": 97,
+          "endLine": 106,
+          "methods": [],
+          "properties": [
+            "page",
+            "console"
+          ]
+        },
+        {
+          "name": "BrowserSessionManager",
+          "startLine": 109,
+          "endLine": 261,
+          "methods": [
+            "__init__",
+            "_import_playwright",
+            "_ensure_browser",
+            "launch",
+            "_new_tab",
+            "_active_tab",
+            "goto",
+            "click",
+            "type_text",
+            "scroll",
+            "screenshot",
+            "eval_js",
+            "console_logs",
+            "page_source",
+            "pdf",
+            "list_tabs",
+            "switch_tab",
+            "close"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_safe_close",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "BrowserActionError",
+          "line": 68,
+          "isDefault": false
+        },
+        {
+          "name": "_Tab",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "BrowserSessionManager",
+          "line": 109,
+          "isDefault": false
+        },
+        {
+          "name": "get_session_manager",
+          "line": 268,
+          "isDefault": false
+        },
+        {
+          "name": "_reset_session_manager_for_tests",
+          "line": 277,
+          "isDefault": false
+        },
+        {
+          "name": "_json",
+          "line": 284,
+          "isDefault": false
+        },
+        {
+          "name": "_dispatch",
+          "line": 288,
+          "isDefault": false
+        },
+        {
+          "name": "browser_action",
+          "line": 334,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_safe_close",
+          "callee": "getattr",
+          "lineNumber": 54
+        },
+        {
+          "caller": "_safe_close",
+          "callee": "asyncio.wait_for",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_safe_close",
+          "callee": "close_fn",
+          "lineNumber": 56
+        },
+        {
+          "caller": "_safe_close",
+          "callee": "log.warning",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_safe_close",
+          "callee": "log.warning",
+          "lineNumber": 65
+        },
+        {
+          "caller": "__init__",
+          "callee": "asyncio.Lock",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_import_playwright",
+          "callee": "BrowserActionError",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_ensure_browser",
+          "callee": "self._import_playwright",
+          "lineNumber": 140
+        },
+        {
+          "caller": "_ensure_browser",
+          "callee": "api.async_playwright().start",
+          "lineNumber": 141
+        },
+        {
+          "caller": "_ensure_browser",
+          "callee": "api.async_playwright",
+          "lineNumber": 141
+        },
+        {
+          "caller": "_ensure_browser",
+          "callee": "self._playwright.chromium.launch",
+          "lineNumber": 142
+        },
+        {
+          "caller": "_ensure_browser",
+          "callee": "self._browser.new_context",
+          "lineNumber": 143
+        },
+        {
+          "caller": "launch",
+          "callee": "self._ensure_browser",
+          "lineNumber": 147
+        },
+        {
+          "caller": "launch",
+          "callee": "self._new_tab",
+          "lineNumber": 149
+        },
+        {
+          "caller": "launch",
+          "callee": "list",
+          "lineNumber": 150
+        },
+        {
+          "caller": "launch",
+          "callee": "self._tabs.keys",
+          "lineNumber": 150
+        },
+        {
+          "caller": "_new_tab",
+          "callee": "self._context.new_page",
+          "lineNumber": 153
+        },
+        {
+          "caller": "_new_tab",
+          "callee": "_Tab",
+          "lineNumber": 154
+        },
+        {
+          "caller": "_new_tab",
+          "callee": "page.on",
+          "lineNumber": 155
+        },
+        {
+          "caller": "_new_tab",
+          "callee": "tab.console.append",
+          "lineNumber": 155
+        },
+        {
+          "caller": "_active_tab",
+          "callee": "BrowserActionError",
+          "lineNumber": 162
+        },
+        {
+          "caller": "goto",
+          "callee": "self._active_tab",
+          "lineNumber": 167
+        },
+        {
+          "caller": "goto",
+          "callee": "tab.page.goto",
+          "lineNumber": 168
+        },
+        {
+          "caller": "goto",
+          "callee": "tab.page.title",
+          "lineNumber": 172
+        },
+        {
+          "caller": "click",
+          "callee": "self._active_tab",
+          "lineNumber": 177
+        },
+        {
+          "caller": "click",
+          "callee": "tab.page.click",
+          "lineNumber": 178
+        },
+        {
+          "caller": "type_text",
+          "callee": "self._active_tab",
+          "lineNumber": 185
+        },
+        {
+          "caller": "type_text",
+          "callee": "tab.page.fill",
+          "lineNumber": 186
+        },
+        {
+          "caller": "type_text",
+          "callee": "asyncio.sleep",
+          "lineNumber": 188
+        },
+        {
+          "caller": "type_text",
+          "callee": "len",
+          "lineNumber": 189
+        },
+        {
+          "caller": "scroll",
+          "callee": "self._active_tab",
+          "lineNumber": 193
+        },
+        {
+          "caller": "scroll",
+          "callee": "tab.page.evaluate",
+          "lineNumber": 194
+        },
+        {
+          "caller": "screenshot",
+          "callee": "self._active_tab",
+          "lineNumber": 199
+        },
+        {
+          "caller": "screenshot",
+          "callee": "tab.page.screenshot",
+          "lineNumber": 200
+        },
+        {
+          "caller": "screenshot",
+          "callee": "len",
+          "lineNumber": 203
+        },
+        {
+          "caller": "screenshot",
+          "callee": "base64.b64encode(png).decode",
+          "lineNumber": 204
+        },
+        {
+          "caller": "screenshot",
+          "callee": "base64.b64encode",
+          "lineNumber": 204
+        },
+        {
+          "caller": "eval_js",
+          "callee": "self._active_tab",
+          "lineNumber": 209
+        },
+        {
+          "caller": "eval_js",
+          "callee": "tab.page.evaluate",
+          "lineNumber": 210
+        },
+        {
+          "caller": "console_logs",
+          "callee": "self._active_tab",
+          "lineNumber": 215
+        },
+        {
+          "caller": "console_logs",
+          "callee": "list",
+          "lineNumber": 216
+        },
+        {
+          "caller": "console_logs",
+          "callee": "tab.console.clear",
+          "lineNumber": 218
+        },
+        {
+          "caller": "console_logs",
+          "callee": "len",
+          "lineNumber": 219
+        },
+        {
+          "caller": "page_source",
+          "callee": "self._active_tab",
+          "lineNumber": 223
+        },
+        {
+          "caller": "page_source",
+          "callee": "tab.page.content",
+          "lineNumber": 224
+        },
+        {
+          "caller": "page_source",
+          "callee": "len",
+          "lineNumber": 225
+        },
+        {
+          "caller": "pdf",
+          "callee": "self._active_tab",
+          "lineNumber": 229
+        },
+        {
+          "caller": "pdf",
+          "callee": "tab.page.pdf",
+          "lineNumber": 230
+        },
+        {
+          "caller": "pdf",
+          "callee": "len",
+          "lineNumber": 233
+        },
+        {
+          "caller": "pdf",
+          "callee": "base64.b64encode(data).decode",
+          "lineNumber": 234
+        },
+        {
+          "caller": "pdf",
+          "callee": "base64.b64encode",
+          "lineNumber": 234
+        },
+        {
+          "caller": "list_tabs",
+          "callee": "list",
+          "lineNumber": 239
+        },
+        {
+          "caller": "list_tabs",
+          "callee": "self._tabs.keys",
+          "lineNumber": 239
+        },
+        {
+          "caller": "switch_tab",
+          "callee": "self._new_tab",
+          "lineNumber": 244
+        },
+        {
+          "caller": "close",
+          "callee": "self._tabs.items",
+          "lineNumber": 251
+        },
+        {
+          "caller": "close",
+          "callee": "_safe_close",
+          "lineNumber": 252
+        },
+        {
+          "caller": "close",
+          "callee": "self._tabs.clear",
+          "lineNumber": 253
+        },
+        {
+          "caller": "close",
+          "callee": "_safe_close",
+          "lineNumber": 255
+        },
+        {
+          "caller": "close",
+          "callee": "_safe_close",
+          "lineNumber": 257
+        },
+        {
+          "caller": "close",
+          "callee": "_safe_close",
+          "lineNumber": 259
+        },
+        {
+          "caller": "get_session_manager",
+          "callee": "BrowserSessionManager",
+          "lineNumber": 273
+        },
+        {
+          "caller": "_json",
+          "callee": "json.dumps",
+          "lineNumber": 285
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "BrowserActionError",
+          "lineNumber": 290
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "sorted",
+          "lineNumber": 291
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "get_session_manager",
+          "lineNumber": 293
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.launch",
+          "lineNumber": 295
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "bool",
+          "lineNumber": 295
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 295
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.goto",
+          "lineNumber": 297
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "str",
+          "lineNumber": 298
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "int",
+          "lineNumber": 299
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 299
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.click",
+          "lineNumber": 302
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "str",
+          "lineNumber": 303
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "int",
+          "lineNumber": 304
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 304
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.type_text",
+          "lineNumber": 307
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "str",
+          "lineNumber": 308
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "str",
+          "lineNumber": 309
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "int",
+          "lineNumber": 310
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 310
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "int",
+          "lineNumber": 311
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 311
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.scroll",
+          "lineNumber": 314
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "int",
+          "lineNumber": 314
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 314
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "int",
+          "lineNumber": 314
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 314
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.screenshot",
+          "lineNumber": 316
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "bool",
+          "lineNumber": 316
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 316
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.eval_js",
+          "lineNumber": 318
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "str",
+          "lineNumber": 318
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.console_logs",
+          "lineNumber": 320
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "bool",
+          "lineNumber": 320
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "kwargs.get",
+          "lineNumber": 320
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.page_source",
+          "lineNumber": 322
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.pdf",
+          "lineNumber": 324
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.list_tabs",
+          "lineNumber": 326
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.switch_tab",
+          "lineNumber": 328
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "str",
+          "lineNumber": 328
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "mgr.close",
+          "lineNumber": 330
+        },
+        {
+          "caller": "_dispatch",
+          "callee": "BrowserActionError",
+          "lineNumber": 331
+        },
+        {
+          "caller": "browser_action",
+          "callee": "json.loads",
+          "lineNumber": 358
+        },
+        {
+          "caller": "browser_action",
+          "callee": "_json",
+          "lineNumber": 360
+        },
+        {
+          "caller": "browser_action",
+          "callee": "isinstance",
+          "lineNumber": 361
+        },
+        {
+          "caller": "browser_action",
+          "callee": "_json",
+          "lineNumber": 362
+        },
+        {
+          "caller": "browser_action",
+          "callee": "_dispatch",
+          "lineNumber": 365
+        },
+        {
+          "caller": "browser_action",
+          "callee": "_json",
+          "lineNumber": 367
+        },
+        {
+          "caller": "browser_action",
+          "callee": "str",
+          "lineNumber": 367
+        },
+        {
+          "caller": "browser_action",
+          "callee": "_json",
+          "lineNumber": 369
+        },
+        {
+          "caller": "browser_action",
+          "callee": "_json",
+          "lineNumber": 371
+        },
+        {
+          "caller": "browser_action",
+          "callee": "type",
+          "lineNumber": 371
+        },
+        {
+          "caller": "browser_action",
+          "callee": "_json",
+          "lineNumber": 372
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 9,
+        "functionCount": 6,
+        "classCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_browser.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 281,
+      "nonEmptyLines": 232,
+      "functions": [
+        {
+          "name": "_reset_singleton",
+          "startLine": 24,
+          "endLine": 27,
+          "params": []
+        },
+        {
+          "name": "_async_mock",
+          "startLine": 30,
+          "endLine": 33,
+          "params": [
+            "return_value"
+          ]
+        },
+        {
+          "name": "_fake_page",
+          "startLine": 36,
+          "endLine": 55,
+          "params": [
+            "url",
+            "title",
+            "content_html",
+            "goto_status"
+          ]
+        },
+        {
+          "name": "_fake_browser_chain",
+          "startLine": 58,
+          "endLine": 75,
+          "params": [
+            "pages"
+          ]
+        },
+        {
+          "name": "test_get_session_manager_is_singleton",
+          "startLine": 78,
+          "endLine": 81,
+          "params": []
+        },
+        {
+          "name": "test_dispatcher_rejects_unknown_action",
+          "startLine": 84,
+          "endLine": 87,
+          "params": []
+        },
+        {
+          "name": "test_dispatcher_rejects_bad_params_json",
+          "startLine": 90,
+          "endLine": 93,
+          "params": []
+        },
+        {
+          "name": "test_dispatcher_rejects_non_object_params",
+          "startLine": 96,
+          "endLine": 99,
+          "params": []
+        },
+        {
+          "name": "test_missing_required_parameter_surfaces_as_error_json",
+          "startLine": 102,
+          "endLine": 108,
+          "params": []
+        },
+        {
+          "name": "test_missing_playwright_surfaces_install_hint",
+          "startLine": 111,
+          "endLine": 120,
+          "params": []
+        },
+        {
+          "name": "test_launch_starts_browser_and_creates_main_tab",
+          "startLine": 123,
+          "endLine": 129,
+          "params": []
+        },
+        {
+          "name": "test_goto_returns_url_status_title",
+          "startLine": 132,
+          "endLine": 148,
+          "params": []
+        },
+        {
+          "name": "test_click_invokes_page_click",
+          "startLine": 151,
+          "endLine": 166,
+          "params": []
+        },
+        {
+          "name": "test_type_invokes_page_fill",
+          "startLine": 169,
+          "endLine": 185,
+          "params": []
+        },
+        {
+          "name": "test_screenshot_returns_base64_png",
+          "startLine": 188,
+          "endLine": 197,
+          "params": []
+        },
+        {
+          "name": "test_eval_js_returns_result",
+          "startLine": 200,
+          "endLine": 212,
+          "params": []
+        },
+        {
+          "name": "test_console_logs_returns_captured_messages",
+          "startLine": 215,
+          "endLine": 229,
+          "params": []
+        },
+        {
+          "name": "test_page_source_returns_html_and_url",
+          "startLine": 232,
+          "endLine": 240,
+          "params": []
+        },
+        {
+          "name": "test_list_tabs_and_switch_tab",
+          "startLine": 243,
+          "endLine": 258,
+          "params": []
+        },
+        {
+          "name": "test_close_resets_session_state",
+          "startLine": 261,
+          "endLine": 268,
+          "params": []
+        },
+        {
+          "name": "test_browser_tools_export",
+          "startLine": 271,
+          "endLine": 273,
+          "params": []
+        },
+        {
+          "name": "test_active_tab_required_for_navigation",
+          "startLine": 276,
+          "endLine": 281,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_reset_singleton",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "_async_mock",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "_fake_page",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "_fake_browser_chain",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "test_get_session_manager_is_singleton",
+          "line": 78,
+          "isDefault": false
+        },
+        {
+          "name": "test_dispatcher_rejects_unknown_action",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "test_dispatcher_rejects_bad_params_json",
+          "line": 90,
+          "isDefault": false
+        },
+        {
+          "name": "test_dispatcher_rejects_non_object_params",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "test_missing_required_parameter_surfaces_as_error_json",
+          "line": 102,
+          "isDefault": false
+        },
+        {
+          "name": "test_missing_playwright_surfaces_install_hint",
+          "line": 111,
+          "isDefault": false
+        },
+        {
+          "name": "test_launch_starts_browser_and_creates_main_tab",
+          "line": 123,
+          "isDefault": false
+        },
+        {
+          "name": "test_goto_returns_url_status_title",
+          "line": 132,
+          "isDefault": false
+        },
+        {
+          "name": "test_click_invokes_page_click",
+          "line": 151,
+          "isDefault": false
+        },
+        {
+          "name": "test_type_invokes_page_fill",
+          "line": 169,
+          "isDefault": false
+        },
+        {
+          "name": "test_screenshot_returns_base64_png",
+          "line": 188,
+          "isDefault": false
+        },
+        {
+          "name": "test_eval_js_returns_result",
+          "line": 200,
+          "isDefault": false
+        },
+        {
+          "name": "test_console_logs_returns_captured_messages",
+          "line": 215,
+          "isDefault": false
+        },
+        {
+          "name": "test_page_source_returns_html_and_url",
+          "line": 232,
+          "isDefault": false
+        },
+        {
+          "name": "test_list_tabs_and_switch_tab",
+          "line": 243,
+          "isDefault": false
+        },
+        {
+          "name": "test_close_resets_session_state",
+          "line": 261,
+          "isDefault": false
+        },
+        {
+          "name": "test_browser_tools_export",
+          "line": 271,
+          "isDefault": false
+        },
+        {
+          "name": "test_active_tab_required_for_navigation",
+          "line": 276,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_reset_singleton",
+          "callee": "_reset_session_manager_for_tests",
+          "lineNumber": 25
+        },
+        {
+          "caller": "_reset_singleton",
+          "callee": "_reset_session_manager_for_tests",
+          "lineNumber": 27
+        },
+        {
+          "caller": "_async_mock",
+          "callee": "AsyncMock",
+          "lineNumber": 31
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "MagicMock",
+          "lineNumber": 43
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "MagicMock",
+          "lineNumber": 45
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "_async_mock",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_fake_page",
+          "callee": "MagicMock",
+          "lineNumber": 54
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "iter",
+          "lineNumber": 59
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "_fake_page",
+          "lineNumber": 59
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "MagicMock",
+          "lineNumber": 60
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "AsyncMock",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "next",
+          "lineNumber": 61
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "_async_mock",
+          "lineNumber": 62
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "MagicMock",
+          "lineNumber": 63
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "_async_mock",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "_async_mock",
+          "lineNumber": 65
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "MagicMock",
+          "lineNumber": 66
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "_async_mock",
+          "lineNumber": 67
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "MagicMock",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "_async_mock",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "MagicMock",
+          "lineNumber": 71
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "_async_mock",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "MagicMock",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_fake_browser_chain",
+          "callee": "MagicMock",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_get_session_manager_is_singleton",
+          "callee": "get_session_manager",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_get_session_manager_is_singleton",
+          "callee": "get_session_manager",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_dispatcher_rejects_unknown_action",
+          "callee": "asyncio.run",
+          "lineNumber": 85
+        },
+        {
+          "caller": "test_dispatcher_rejects_unknown_action",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 85
+        },
+        {
+          "caller": "test_dispatcher_rejects_unknown_action",
+          "callee": "json.loads",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_dispatcher_rejects_bad_params_json",
+          "callee": "asyncio.run",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_dispatcher_rejects_bad_params_json",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_dispatcher_rejects_bad_params_json",
+          "callee": "json.loads",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_dispatcher_rejects_non_object_params",
+          "callee": "asyncio.run",
+          "lineNumber": 97
+        },
+        {
+          "caller": "test_dispatcher_rejects_non_object_params",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 97
+        },
+        {
+          "caller": "test_dispatcher_rejects_non_object_params",
+          "callee": "json.loads",
+          "lineNumber": 98
+        },
+        {
+          "caller": "test_missing_required_parameter_surfaces_as_error_json",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 103
+        },
+        {
+          "caller": "test_missing_required_parameter_surfaces_as_error_json",
+          "callee": "patch.object",
+          "lineNumber": 104
+        },
+        {
+          "caller": "test_missing_required_parameter_surfaces_as_error_json",
+          "callee": "asyncio.run",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_missing_required_parameter_surfaces_as_error_json",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_missing_required_parameter_surfaces_as_error_json",
+          "callee": "asyncio.run",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_missing_required_parameter_surfaces_as_error_json",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_missing_required_parameter_surfaces_as_error_json",
+          "callee": "json.loads",
+          "lineNumber": 107
+        },
+        {
+          "caller": "_raise",
+          "callee": "BrowserActionError",
+          "lineNumber": 113
+        },
+        {
+          "caller": "test_missing_playwright_surfaces_install_hint",
+          "callee": "patch.object",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_missing_playwright_surfaces_install_hint",
+          "callee": "_raise",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_missing_playwright_surfaces_install_hint",
+          "callee": "asyncio.run",
+          "lineNumber": 118
+        },
+        {
+          "caller": "test_missing_playwright_surfaces_install_hint",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 118
+        },
+        {
+          "caller": "test_missing_playwright_surfaces_install_hint",
+          "callee": "json.loads",
+          "lineNumber": 119
+        },
+        {
+          "caller": "test_launch_starts_browser_and_creates_main_tab",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 124
+        },
+        {
+          "caller": "test_launch_starts_browser_and_creates_main_tab",
+          "callee": "patch.object",
+          "lineNumber": 125
+        },
+        {
+          "caller": "test_launch_starts_browser_and_creates_main_tab",
+          "callee": "asyncio.run",
+          "lineNumber": 126
+        },
+        {
+          "caller": "test_launch_starts_browser_and_creates_main_tab",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 126
+        },
+        {
+          "caller": "test_launch_starts_browser_and_creates_main_tab",
+          "callee": "json.loads",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "_fake_page",
+          "lineNumber": 133
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 134
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "patch.object",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "asyncio.run",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "asyncio.run",
+          "lineNumber": 137
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 138
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "json.dumps",
+          "lineNumber": 141
+        },
+        {
+          "caller": "test_goto_returns_url_status_title",
+          "callee": "json.loads",
+          "lineNumber": 145
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "_fake_page",
+          "lineNumber": 152
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 153
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "patch.object",
+          "lineNumber": 154
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "asyncio.run",
+          "lineNumber": 155
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 155
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "asyncio.run",
+          "lineNumber": 156
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "json.dumps",
+          "lineNumber": 160
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "json.loads",
+          "lineNumber": 164
+        },
+        {
+          "caller": "test_click_invokes_page_click",
+          "callee": "page.click.assert_called_once",
+          "lineNumber": 166
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "_fake_page",
+          "lineNumber": 170
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 171
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "patch.object",
+          "lineNumber": 172
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "asyncio.run",
+          "lineNumber": 173
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 173
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "asyncio.run",
+          "lineNumber": 174
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 175
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "json.dumps",
+          "lineNumber": 178
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "json.loads",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_type_invokes_page_fill",
+          "callee": "page.fill.assert_called_once",
+          "lineNumber": 185
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "_fake_page",
+          "lineNumber": 189
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 190
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "patch.object",
+          "lineNumber": 191
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "asyncio.run",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "asyncio.run",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "json.loads",
+          "lineNumber": 194
+        },
+        {
+          "caller": "test_screenshot_returns_base64_png",
+          "callee": "len",
+          "lineNumber": 196
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "_fake_page",
+          "lineNumber": 201
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "_async_mock",
+          "lineNumber": 202
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 203
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "patch.object",
+          "lineNumber": 204
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "asyncio.run",
+          "lineNumber": 205
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 205
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "asyncio.run",
+          "lineNumber": 206
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 207
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "json.dumps",
+          "lineNumber": 208
+        },
+        {
+          "caller": "test_eval_js_returns_result",
+          "callee": "json.loads",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "_fake_page",
+          "lineNumber": 216
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "MagicMock",
+          "lineNumber": 218
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "handlers.append",
+          "lineNumber": 218
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 219
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "patch.object",
+          "lineNumber": 220
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "asyncio.run",
+          "lineNumber": 221
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 221
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "fn",
+          "lineNumber": 223
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "MagicMock",
+          "lineNumber": 223
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "fn",
+          "lineNumber": 224
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "MagicMock",
+          "lineNumber": 224
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "asyncio.run",
+          "lineNumber": 225
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 225
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "json.loads",
+          "lineNumber": 226
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "any",
+          "lineNumber": 228
+        },
+        {
+          "caller": "test_console_logs_returns_captured_messages",
+          "callee": "any",
+          "lineNumber": 229
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "_fake_page",
+          "lineNumber": 233
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 234
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "patch.object",
+          "lineNumber": 235
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "asyncio.run",
+          "lineNumber": 236
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 236
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "asyncio.run",
+          "lineNumber": 237
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 237
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "json.loads",
+          "lineNumber": 238
+        },
+        {
+          "caller": "test_page_source_returns_html_and_url",
+          "callee": "parsed[\"html\"].startswith",
+          "lineNumber": 240
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "_fake_page",
+          "lineNumber": 244
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "_fake_page",
+          "lineNumber": 245
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 246
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "patch.object",
+          "lineNumber": 247
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "asyncio.run",
+          "lineNumber": 248
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 248
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "asyncio.run",
+          "lineNumber": 249
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 250
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "json.dumps",
+          "lineNumber": 251
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "asyncio.run",
+          "lineNumber": 254
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 254
+        },
+        {
+          "caller": "test_list_tabs_and_switch_tab",
+          "callee": "json.loads",
+          "lineNumber": 255
+        },
+        {
+          "caller": "test_close_resets_session_state",
+          "callee": "_fake_page",
+          "lineNumber": 262
+        },
+        {
+          "caller": "test_close_resets_session_state",
+          "callee": "_fake_browser_chain",
+          "lineNumber": 263
+        },
+        {
+          "caller": "test_close_resets_session_state",
+          "callee": "patch.object",
+          "lineNumber": 264
+        },
+        {
+          "caller": "test_close_resets_session_state",
+          "callee": "asyncio.run",
+          "lineNumber": 265
+        },
+        {
+          "caller": "test_close_resets_session_state",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 265
+        },
+        {
+          "caller": "test_close_resets_session_state",
+          "callee": "asyncio.run",
+          "lineNumber": 266
+        },
+        {
+          "caller": "test_close_resets_session_state",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 266
+        },
+        {
+          "caller": "test_close_resets_session_state",
+          "callee": "json.loads",
+          "lineNumber": 267
+        },
+        {
+          "caller": "test_browser_tools_export",
+          "callee": "len",
+          "lineNumber": 272
+        },
+        {
+          "caller": "test_active_tab_required_for_navigation",
+          "callee": "asyncio.run",
+          "lineNumber": 277
+        },
+        {
+          "caller": "test_active_tab_required_for_navigation",
+          "callee": "browser_action.ainvoke",
+          "lineNumber": 278
+        },
+        {
+          "caller": "test_active_tab_required_for_navigation",
+          "callee": "json.dumps",
+          "lineNumber": 278
+        },
+        {
+          "caller": "test_active_tab_required_for_navigation",
+          "callee": "json.loads",
+          "lineNumber": 280
+        },
+        {
+          "caller": "test_active_tab_required_for_navigation",
+          "callee": "parsed[\"error\"].lower",
+          "lineNumber": 281
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 22,
+        "functionCount": 22,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_browser_cleanup.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 159,
+      "nonEmptyLines": 117,
+      "functions": [
+        {
+          "name": "_reset_singleton",
+          "startLine": 22,
+          "endLine": 25,
+          "params": []
+        },
+        {
+          "name": "_propagate_decepticon_logger",
+          "startLine": 29,
+          "endLine": 38,
+          "params": []
+        },
+        {
+          "name": "test_safe_close_logs_raised_exception",
+          "startLine": 42,
+          "endLine": 54,
+          "params": [
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_safe_close_bounded_by_timeout",
+          "startLine": 58,
+          "endLine": 74,
+          "params": [
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_close_continues_when_page_close_raises",
+          "startLine": 78,
+          "endLine": 131,
+          "params": [
+            "caplog"
+          ]
+        },
+        {
+          "name": "test_close_bounded_when_browser_close_hangs",
+          "startLine": 135,
+          "endLine": 159,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_reset_singleton",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "_propagate_decepticon_logger",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "test_safe_close_logs_raised_exception",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "test_safe_close_bounded_by_timeout",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "test_close_continues_when_page_close_raises",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "test_close_bounded_when_browser_close_hangs",
+          "line": 134,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_reset_singleton",
+          "callee": "_reset_session_manager_for_tests",
+          "lineNumber": 23
+        },
+        {
+          "caller": "_reset_singleton",
+          "callee": "_reset_session_manager_for_tests",
+          "lineNumber": 25
+        },
+        {
+          "caller": "_propagate_decepticon_logger",
+          "callee": "logging.getLogger",
+          "lineNumber": 32
+        },
+        {
+          "caller": "test_safe_close_logs_raised_exception",
+          "callee": "MagicMock",
+          "lineNumber": 43
+        },
+        {
+          "caller": "boom",
+          "callee": "RuntimeError",
+          "lineNumber": 46
+        },
+        {
+          "caller": "test_safe_close_logs_raised_exception",
+          "callee": "caplog.set_level",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_safe_close_logs_raised_exception",
+          "callee": "logging.getLogger",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_safe_close_logs_raised_exception",
+          "callee": "_safe_close",
+          "lineNumber": 52
+        },
+        {
+          "caller": "test_safe_close_bounded_by_timeout",
+          "callee": "MagicMock",
+          "lineNumber": 59
+        },
+        {
+          "caller": "hang",
+          "callee": "asyncio.sleep",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_safe_close_bounded_by_timeout",
+          "callee": "caplog.set_level",
+          "lineNumber": 66
+        },
+        {
+          "caller": "test_safe_close_bounded_by_timeout",
+          "callee": "logging.getLogger",
+          "lineNumber": 67
+        },
+        {
+          "caller": "test_safe_close_bounded_by_timeout",
+          "callee": "asyncio.get_running_loop",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_safe_close_bounded_by_timeout",
+          "callee": "loop.time",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_safe_close_bounded_by_timeout",
+          "callee": "_safe_close",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_safe_close_bounded_by_timeout",
+          "callee": "loop.time",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_safe_close_bounded_by_timeout",
+          "callee": "caplog.text.lower",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "BrowserSessionManager",
+          "lineNumber": 81
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "MagicMock",
+          "lineNumber": 83
+        },
+        {
+          "caller": "page_boom",
+          "callee": "RuntimeError",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "MagicMock",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "MagicMock",
+          "lineNumber": 108
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "MagicMock",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "_Tab",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "caplog.set_level",
+          "lineNumber": 121
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "logging.getLogger",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_close_continues_when_page_close_raises",
+          "callee": "mgr.close",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_close_bounded_when_browser_close_hangs",
+          "callee": "BrowserSessionManager",
+          "lineNumber": 136
+        },
+        {
+          "caller": "hang",
+          "callee": "asyncio.sleep",
+          "lineNumber": 139
+        },
+        {
+          "caller": "test_close_bounded_when_browser_close_hangs",
+          "callee": "MagicMock",
+          "lineNumber": 141
+        },
+        {
+          "caller": "test_close_bounded_when_browser_close_hangs",
+          "callee": "MagicMock",
+          "lineNumber": 143
+        },
+        {
+          "caller": "test_close_bounded_when_browser_close_hangs",
+          "callee": "asyncio.get_running_loop",
+          "lineNumber": 152
+        },
+        {
+          "caller": "test_close_bounded_when_browser_close_hangs",
+          "callee": "loop.time",
+          "lineNumber": 153
+        },
+        {
+          "caller": "test_close_bounded_when_browser_close_hangs",
+          "callee": "asyncio.wait_for",
+          "lineNumber": 155
+        },
+        {
+          "caller": "test_close_bounded_when_browser_close_hangs",
+          "callee": "mgr.close",
+          "lineNumber": 155
+        },
+        {
+          "caller": "test_close_bounded_when_browser_close_hangs",
+          "callee": "loop.time",
+          "lineNumber": 156
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    }
+  ]
+}

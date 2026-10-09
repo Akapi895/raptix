@@ -1,0 +1,101 @@
+{
+  "batchIndex": 82,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/runtime/README.md",
+      "language": "markdown",
+      "sizeLines": 9,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/runtime/runtime-catalog.json",
+      "language": "json",
+      "sizeLines": 37,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/tests/fixtures/w00/runtime/runtime-emitter-capture.json",
+      "language": "json",
+      "sizeLines": 359,
+      "fileCategory": "config"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:clients/web-raptix/tests/fixtures/w00/runtime/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "clients/web-raptix/tests/fixtures/w00/runtime/README.md",
+      "summary": "Giải thích nguồn gốc runtime fixtures w00: runtime-emitter-capture.json được sinh từ Python streaming emitter thật của repo trong container cô lập không mạng (chỉ gọi các emission method với message giả, không chạy graph hay tool); live và checkpoint cố tình tách biệt — bản checkpoint bị cap 8000 ký tự kèm marker cắt ngắn; đây là bằng chứng contract của source-emitter, không phải acceptance test cho agent-run thật.",
+      "tags": [
+        "documentation",
+        "test-fixture",
+        "streaming",
+        "provenance"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:clients/web-raptix/tests/fixtures/w00/runtime/runtime-catalog.json",
+      "type": "config",
+      "name": "runtime-catalog.json",
+      "filePath": "clients/web-raptix/tests/fixtures/w00/runtime/runtime-catalog.json",
+      "summary": "Fixture catalog của LangGraph runtime w00: provenance \"runtime-catalog-read-only\" (chỉ gọi info và assistant discovery), baseUrl 127.0.0.1:2400, apiVersion 0.10.0, langgraph-python 1.2.4, flags (assistants/crons bật, langsmith tắt) và danh sách 21 registered graphs (ad_operator, recon, exploit, forensicator, phisher...).",
+      "tags": [
+        "test-fixture",
+        "langgraph",
+        "runtime",
+        "catalog",
+        "read-only"
+      ],
+      "complexity": "simple",
+      "languageNotes": "registeredGraphs liệt kê tên agent graph mà langgraph.json đăng ký — dùng làm baseline cho regression discovery API."
+    },
+    {
+      "id": "config:clients/web-raptix/tests/fixtures/w00/runtime/runtime-emitter-capture.json",
+      "type": "config",
+      "name": "runtime-emitter-capture.json",
+      "filePath": "clients/web-raptix/tests/fixtures/w00/runtime/runtime-emitter-capture.json",
+      "summary": "Fixture capture đầu ra của streaming emitter w00 (360 dòng): schemaSource mô tả StreamingRunnable trong subagent_streaming.py kèm sha256, cap kết quả 8000 ký tự, marker \"…[truncated]\" và 5 event types; body gồm liveEvents theo session song song (parallel-a/b), checkpointEvents và phần checks xác thực contract.",
+      "tags": [
+        "test-fixture",
+        "streaming",
+        "emitter",
+        "contract",
+        "langgraph"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Live tool result giữ nguyên nội dung còn bản checkpoint copy bị cap 8000 ký tự — fixture khóa đúng hành vi truncation hai đường emit."
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:clients/web-raptix/tests/fixtures/w00/runtime/README.md",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/runtime/runtime-catalog.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/tests/fixtures/w00/runtime/README.md",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/runtime/runtime-emitter-capture.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/runtime/runtime-emitter-capture.json",
+      "target": "file:packages/raptix/raptix/core/subagent_streaming.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:clients/web-raptix/tests/fixtures/w00/runtime/runtime-catalog.json",
+      "target": "config:clients/web-raptix/tests/fixtures/w00/runtime/runtime-emitter-capture.json",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

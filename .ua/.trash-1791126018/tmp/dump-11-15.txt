@@ -1,0 +1,496 @@
+====================================================================================================
+BATCH 11
+- clients/web-raptix/src/features/infrastructure/use-real-graph.ts (53 lines) fns=[('useRealGraph', 20, 53)] cls=[] exps=['useRealGraph']
+  head: /** |  * W13 real Infrastructure & Assets page state: loads the scoped public graph |  * projection and its derived asset summaries from the new API only. Graph-store |  * failure stays distinguishable from emptiness via the server's 503 reason. |  */ | import { useCallback, useState, useEffect } fr
+  imports: ['clients/web-raptix/src/features/infrastructure/real-graph-api.ts', 'clients/web-raptix/src/shared/api/errors.ts']
+- clients/web-raptix/src/features/members/RealMembers.tsx (84 lines) fns=[('RealMembers', 19, 84)] cls=[] exps=['RealMembers']
+  head: /** |  * W19 real Members: the truthful local single-user topology served by the |  * new API. One operator row, an explicit stated-absent invite/RBAC card |  * carrying the server's reason, and no imported demo people or role |  * dropdowns pretending to enforce anything. |  */
+  imports: ['clients/web-raptix/src/features/members/real-members-api.ts']
+- clients/web-raptix/src/features/members/real-members-api.ts (18 lines) fns=[('loadMembers', 12, 18)] cls=[] exps=['loadMembers']
+  head: /** |  * W19 real members API: reads the truthful single-user members view. There |  * is deliberately no invite/role mutation helper — those APIs do not exist |  * server-side and the view states the reason. |  */ | import { isMembersView } from '@raptix/web-contracts'
+  imports: ['clients/web-raptix/src/app/config.ts', 'clients/web-raptix/src/shared/api/errors.ts', 'clients/web-raptix/src/shared/api/http.ts']
+- clients/web-raptix/src/features/operations-log/RealLogs.tsx (145 lines) fns=[('RealLogs', 25, 111), ('EntryModal', 113, 145)] cls=[] exps=['RealLogs']
+  head: /** |  * W14 real Operations Log: the source screen's visual language (counter header, |  * filter selects, table, detail modal) bound to the merged server timeline. |  * Filters derive from the actual payload; there is no "Live" indicator and no |  * synthetic streaming — the log only shows entries
+  imports: ['clients/web-raptix/src/features/operations-log/logs-view.ts', 'clients/web-raptix/src/features/operations-log/use-real-logs.ts']
+- clients/web-raptix/src/features/operations-log/logs-view.ts (76 lines) fns=[('distinctValues', 26, 33), ('filterOptions', 35, 37), ('filterTimeline', 39, 49), ('entrySearchText', 51, 56), ('timelineSummary', 58, 61), ('entryProvenance', 63, 71), ('formatEntryTime', 73, 76)] cls=[] exps=['SOURCE_LABELS', 'filterOptions', 'filterTimeline', 'entrySearchText', 'timelineSummary', 'entryProvenance', 'formatEntryTime']
+  head: /** |  * W14 pure operations-log mapping: filter options derive from the actual |  * timeline payload (no hardcoded agent/tool lists), entries keep their source |  * labels, and the summary states trace completeness truthfully. |  */ | import type { TimelineEntryView, TimelineView } from '@raptix/we
+  imports: []
+- clients/web-raptix/src/features/operations-log/real-logs-api.ts (17 lines) fns=[('loadTimeline', 13, 17)] cls=[] exps=['loadTimeline']
+  head: /** |  * W14 operations-log API: new-server only. The merged timeline is validated |  * with the shared contract guards before use; every entry carries an explicit |  * `source` label so runtime events, checkpoint transcripts and workspace |  * artifact markers are never conflated. |  */
+  imports: ['clients/web-raptix/src/app/config.ts', 'clients/web-raptix/src/shared/api/errors.ts', 'clients/web-raptix/src/shared/api/http.ts']
+- clients/web-raptix/src/features/operations-log/use-real-logs.ts (45 lines) fns=[('useRealLogs', 17, 45)] cls=[] exps=['useRealLogs']
+  head: /** |  * W14 real Operations Log page state: loads the merged, server-bounded |  * timeline from the new API only. No synthetic telemetry is generated in the |  * browser; a bounded response is shown as bounded. |  */ | import { useCallback, useState, useEffect } from 'react'
+  imports: ['clients/web-raptix/src/features/operations-log/real-logs-api.ts']
+- clients/web-raptix/src/features/planning/RealPlanning.tsx (67 lines) fns=[('getRealPlanning', 8, 12), ('Card', 14, 16), ('List', 17, 19), ('ScopeTable', 20, 22), ('RealPlanning', 24, 67)] cls=[] exps=['RealPlanning']
+  head: import { useEffect, useState } from 'react' | import type { ReactNode } from 'react' | import { isPlanningView, type PlanningView, type ProjectViewModel, type ScopeEntry } from '@raptix/web-contracts' | import { apiBaseUrl } from '../../app/config' | import { ApiInvalidResponseError } from '../../sh
+  imports: ['clients/web-raptix/src/app/config.ts', 'clients/web-raptix/src/shared/api/errors.ts', 'clients/web-raptix/src/shared/api/http.ts']
+- clients/web-raptix/src/features/planning/styles.ts (67 lines) fns=[('opsecBadgeStyle', 30, 34), ('opplanStatusStyle', 36, 44), ('permissionBadgeStyle', 52, 56), ('targetTypeBadgeStyle', 62, 67)] cls=[] exps=['MOCK_CHIP', 'disabledStyle', 'PHASE_LABELS', 'OPSEC_LABELS', 'opsecBadgeStyle', 'opplanStatusStyle', 'PERMISSION_LABELS', 'permissionBadgeStyle', 'TARGET_TYPE_LABELS', 'targetTypeBadgeStyle']
+  head: import type { CSSProperties } from 'react' | import type { |   KillChainPhase, |   OpplanStatus, |   OpsecLevel, |   ScopePermission,
+  imports: ['clients/web-raptix/src/features/planning/types.ts']
+- clients/web-raptix/src/features/planning/types.ts (85 lines) fns=[] cls=[] exps=[]
+  head: // Typed model for the planning slice (Charter & ScopeBoundaries screens). | // Shapes follow the engagement planning bundle described in | // docs/engagement-workflow.md: Soundwave writes `plan/*.json`; the | // orchestrator builds `plan/opplan.json`. All data shown in the UI is | // fixture data —
+  imports: []
+- clients/web-raptix/src/features/planning/ui.tsx (108 lines) fns=[('MockSourceChip', 6, 8), ('PlanningNotice', 10, 32), ('DocCard', 34, 53), ('MissingDocsState', 55, 108)] cls=[] exps=['CapabilityButton', 'MockSourceChip', 'PlanningNotice', 'DocCard', 'MissingDocsState']
+  head: import type { CSSProperties, ReactNode } from 'react' | import { AlertTriangleIcon, LockIcon } from '../../components/Icons' | import { MOCK_CHIP } from './styles' | export { CapabilityButton } from '../../shared/ui/CapabilityButton' |  | export function MockSourceChip({ source }: { source: string }
+  imports: ['clients/web-raptix/src/components/Icons.tsx', 'clients/web-raptix/src/features/planning/styles.ts']
+- clients/web-raptix/src/features/projects/api/projects-api.ts (32 lines) fns=[] cls=[] exps=[]
+  head: /** |  * Public projects API contract (W03): the only projects surface the UI may |  * call in real mode. Mock/real implementations share these signatures. |  * |  * `CreateProjectRequest.authorizationConfirmed` is a literal `true`: the new |  * API rejects creation without explicit authorization (H
+  imports: []
+- clients/web-raptix/src/features/projects/api/projects-real.ts (69 lines) fns=[('assertProjectViewModel', 18, 21), ('assertProjectList', 23, 26), ('createRealProjectsApi', 28, 67)] cls=[] exps=['createRealProjectsApi', 'realProjectsApi']
+  head: /** |  * Real-mode ProjectsApi over the new API (127.0.0.1:5280 through the Vite |  * /api proxy). Every response is validated with `isProjectViewModel` at the |  * boundary — malformed payloads become errors, never cast DTOs. Nullable |  * counts are passed through as delivered (no fake normalizati
+  imports: ['clients/web-raptix/src/app/config.ts', 'clients/web-raptix/src/features/projects/api/projects-api.ts', 'clients/web-raptix/src/shared/api/errors.ts', 'clients/web-raptix/src/shared/api/http.ts']
+- clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx (252 lines) fns=[('focusInput', 15, 18), ('blurInput', 20, 23), ('FieldError', 25, 28), ('Label', 30, 37), ('TextField', 39, 69), ('RealNewProjectModal', 77, 252)] cls=[] exps=['RealNewProjectModal']
+  head: import { useState } from 'react' | import type { FocusEvent } from 'react' | import type { EngagementTargetType } from '@raptix/web-contracts' | import Dialog from '../../../shared/ui/Dialog' | import { FolderIcon, XIcon } from '../../../components/Icons' | import { validateCreateProjectDraft } from
+  imports: ['clients/web-raptix/src/components/Icons.tsx', 'clients/web-raptix/src/features/projects/real-project.types.ts', 'clients/web-raptix/src/shared/ui/Dialog.tsx']
+- clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx (280 lines) fns=[('StatusPill', 22, 30), ('CountChip', 32, 38), ('MetricBox', 40, 53), ('ProjectCard', 55, 89), ('ListRow', 91, 109), ('RealProjectsHome', 111, 280)] cls=[] exps=['RealProjectsHome']
+  head: import { useState } from 'react' | import type { ReactNode } from 'react' | import type { ProjectViewModel } from '@raptix/web-contracts' | import { |   AlertTriangleIcon, BotIcon, DatabaseIcon, GridIcon, ListIcon, PlusIcon, |   RefreshIcon, SearchIcon, ShieldIcon, TargetIcon, ZapIcon,
+  imports: ['clients/web-raptix/src/components/Icons.tsx', 'clients/web-raptix/src/features/projects/real-project.types.ts']
+- clients/web-raptix/src/features/projects/hooks/use-real-projects.ts (211 lines) fns=[('notify', 58, 60), ('ensureEntry', 62, 66), ('detailKey', 68, 68), ('listEntry', 70, 72), ('detailEntry', 74, 76), ('publish', 78, 81), ('isListResult', 83, 84), ('startRead', 86, 114), ('retain', 116, 119), ('release', 121, 126), ('seedAndRefresh', 128, 135), ('mutate', 137, 141), ('createProjectReal', 143, 145), ('updateProjectReal', 147, 149), ('reloadEntry', 151, 153), ('reloadProjects', 155, 155), ('reloadProject', 157, 157), ('subscribe', 159, 162), ('readListSnapshot', 164, 166), ('useRealProjects', 168, 181), ('useRealProject', 183, 194)] cls=[] exps=['createProjectReal', 'updateProjectReal', 'reloadProjects', 'reloadProject', 'useRealProjects', 'useRealProject', 'projectsStore']
+  head: /** |  * Real-mode projects state (W03): a light custom store (no query library) |  * consumed via `useSyncExternalStore`, matching the existing mock-adapter |  * pattern in `src/mocks/adapters`. |  * |  * Guarantees:
+  imports: ['clients/web-raptix/src/features/projects/api/projects-api.ts', 'clients/web-raptix/src/features/projects/api/projects-real.ts', 'clients/web-raptix/src/shared/api/errors.ts']
+- clients/web-raptix/src/features/projects/real-project.types.ts (165 lines) fns=[('formatPublicCount', 56, 58), ('formatUpdatedAt', 60, 65), ('countByLifecycle', 67, 69), ('filterRealProjects', 71, 85), ('validateCreateProjectDraft', 123, 139), ('targetValueError', 141, 165)] cls=[] exps=['formatPublicCount', 'formatUpdatedAt', 'countByLifecycle', 'filterRealProjects', 'REAL_HOME_COLORS', 'REAL_LIFECYCLE_META', 'PROJECT_SLUG_PATTERN', 'validateCreateProjectDraft']
+  head: /** |  * W03 real-projects shared feature module: the exact prop contracts for the |  * real Home/New Project UI plus the pure helpers its components and tests |  * share. No React, no fetch, no fixtures — components own all rendering. |  */ | import type {
+  imports: []
+- clients/web-raptix/src/features/projects/summary.ts (18 lines) fns=[('getProjectRunSummary', 10, 18)] cls=[] exps=['getProjectRunSummary']
+  head: import type { RunSnapshot } from '../agent-runs/model' |  | export interface ProjectRunSummary { |   needsAttention: boolean |   pendingApprovalAgents: string[] | }
+  imports: ['clients/web-raptix/src/features/agent-runs/model.ts']
+- clients/web-raptix/src/features/reports/RealReports.tsx (140 lines) fns=[('RealReports', 27, 140)] cls=[] exps=['RealReports']
+  head: /** |  * W14 real Reports: preview built from actual engagement and findings DTOs |  * (no dummy deliverables, authors or page counts) plus the real export |  * attachments. JSON/Markdown are the only offered formats because they are the |  * only formats the server validates; PDF/DOCX/AI-compile ar
+  imports: ['clients/web-raptix/src/features/findings-evidence/findings-view.ts', 'clients/web-raptix/src/features/findings-evidence/use-real-findings.ts', 'clients/web-raptix/src/features/reports/real-reports-api.ts']
+- clients/web-raptix/src/features/reports/ReportDocument.tsx (192 lines) fns=[('severityColor', 13, 15), ('ParagraphBlock', 28, 30), ('NoteBlock', 32, 39), ('RiskScoreBlock', 41, 53), ('TableBlock', 55, 105), ('PhasesBlock', 107, 126), ('CodeBlock', 128, 134), ('StepsBlock', 136, 160), ('BlockView', 162, 179), ('ReportSectionView', 181, 192)] cls=[] exps=['ReportSectionView']
+  head: import type { CSSProperties } from 'react' | import type { PhaseState, ReportSectionDef, SectionBlock } from './types' |  | const MONO = "'JetBrains Mono', monospace" |  | const SEVERITY_COLORS: Record<string, string> = {
+  imports: ['clients/web-raptix/src/features/reports/types.ts']
+- clients/web-raptix/src/features/reports/ReportsTable.tsx (230 lines) fns=[('getInitials', 18, 20), ('getAvatarColor', 22, 27), ('getTypeStyle', 29, 36), ('getStatusStyle', 38, 45), ('ReportsTable', 55, 230)] cls=[] exps=['ReportsTable']
+  head: import { useState } from 'react' | import type { CSSProperties } from 'react' | import { REPORT_FIXTURES } from '../../mocks/fixtures/reports' | import { CAPABILITY_LIMITS } from './export' | import type { ExportFormat } from './export' | import type { ReportMeta, ReportStatus, ReportType } from './
+  imports: ['clients/web-raptix/src/components/Icons.tsx', 'clients/web-raptix/src/features/reports/export.ts', 'clients/web-raptix/src/features/reports/styles.ts', 'clients/web-raptix/src/features/reports/types.ts', 'clients/web-raptix/src/features/reports/ui.tsx', 'clients/web-raptix/src/mocks/fixtures/reports.ts']
+- clients/web-raptix/src/features/reports/export.ts (155 lines) fns=[('slugify', 23, 29), ('buildExportFilename', 31, 34), ('buildReportJson', 36, 68), ('blockToMarkdown', 70, 97), ('buildReportMarkdown', 99, 132), ('exportReport', 134, 155)] cls=[] exps=['SUPPORTED_EXPORT_FORMATS', 'CAPABILITY_LIMITS', 'slugify', 'buildExportFilename', 'buildReportJson', 'buildReportMarkdown', 'exportReport']
+  head: import type { Project } from '../../types' | import type { ReportDocumentDef, ReportMeta, SectionBlock } from './types' |  | export type ExportFormat = 'json' | 'markdown' |  | export const SUPPORTED_EXPORT_FORMATS: readonly ExportFormat[] = ['json', 'markdown']
+  imports: ['clients/web-raptix/src/features/reports/types.ts', 'clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/features/reports/real-reports-api.ts (54 lines) fns=[('isExportFormat', 19, 21), ('exportEngagement', 23, 54)] cls=[] exps=['EXPORT_FORMATS', 'isExportFormat', 'exportEngagement']
+  head: /** |  * W14 report export API: hits the new server's validated attachment endpoint. |  * Only `json` and `markdown` exist server-side; the browser offers exactly |  * those and reads the filename from Content-Disposition, so success is claimed |  * only after the response body arrived. |  */
+  imports: ['clients/web-raptix/src/app/config.ts', 'clients/web-raptix/src/shared/api/errors.ts']
+- clients/web-raptix/src/features/reports/styles.ts (9 lines) fns=[] cls=[] exps=['DEMO_CHIP', 'disabledStyle']
+  head: import type { CSSProperties } from 'react' |  | export const DEMO_CHIP: CSSProperties = { |   fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 3, |   background: '#F5F3FF', color: '#7C3AED', border: '1px solid #DDD6FE', |   letterSpacing: '0.06em', whiteSpace: 'nowrap',
+  imports: []
+- clients/web-raptix/src/features/reports/types.ts (41 lines) fns=[] cls=[] exps=[]
+  head: export type ReportType = |   | 'Full Technical' |   | 'Executive Summary' |   | 'Remediation Playbook' |   | 'Attestation Certificate' | 
+  imports: []
+- clients/web-raptix/src/features/reports/ui.tsx (20 lines) fns=[('CapabilityNotice', 5, 20)] cls=[] exps=['CapabilityButton', 'CapabilityNotice']
+  head: import type { ReactNode } from 'react' | import { AlertTriangleIcon } from '../../components/Icons' | export { CapabilityButton } from '../../shared/ui/CapabilityButton' |  | export function CapabilityNotice({ children, style }: { children: ReactNode; style?: React.CSSProperties }) { |   return (
+  imports: ['clients/web-raptix/src/components/Icons.tsx']
+- clients/web-raptix/src/features/settings/RealSettings.tsx (138 lines) fns=[('RealSettings', 27, 138)] cls=[] exps=['RealSettings']
+  head: /** |  * W15 real Settings: only the fields the new server actually persists, saved |  * through the validated PATCH with save/reload acknowledgement. Unsupported |  * feature areas are stated as absent with their owning work package; the |  * danger zone names exactly what deletion removes (DB reco
+  imports: ['clients/web-raptix/src/features/settings/use-real-settings.ts']
+- clients/web-raptix/src/features/settings/real-settings-api.ts (41 lines) fns=[('engagementPath', 13, 13), ('loadSettings', 21, 25), ('saveSettings', 27, 33), ('deleteEngagement', 35, 41)] cls=[] exps=['loadSettings', 'saveSettings', 'deleteEngagement']
+  head: /** |  * W15 settings API: the persisted settings view plus the validated save path. |  * Saving PATCHes the existing engagement route (same lifecycle policy) and the |  * caller reloads the GET view afterwards, so the UI only ever shows |  * server-acknowledged state. |  */
+  imports: ['clients/web-raptix/src/app/config.ts', 'clients/web-raptix/src/shared/api/errors.ts', 'clients/web-raptix/src/shared/api/http.ts']
+- clients/web-raptix/src/features/settings/use-real-settings.ts (103 lines) fns=[('useRealSettings', 27, 103)] cls=[] exps=['useRealSettings']
+  head: /** |  * W15 settings page state: loads the persisted view, saves through the |  * validated PATCH and always reloads the server view afterwards. A save is |  * only reported as saved after the server acknowledged and the reload returned |  * the persisted values. |  */
+  imports: ['clients/web-raptix/src/features/settings/real-settings-api.ts', 'clients/web-raptix/src/shared/api/errors.ts']
+- clients/web-raptix/src/features/vault/RealVault.tsx (164 lines) fns=[('RealVault', 27, 164)] cls=[] exps=['RealVault']
+  head: /** |  * W18 real Credentials Vault: redacted server metadata by default, explicit |  * reveal with an acknowledged warning (plaintext is shown once, never |  * stored in component state beyond the current view), audited revocation. |  * No fixture eye-toggle: every value comes from the real API. | 
+  imports: ['clients/web-raptix/src/features/vault/real-vault-api.ts', 'clients/web-raptix/src/shared/api/errors.ts']
+- clients/web-raptix/src/features/vault/real-vault-api.ts (45 lines) fns=[('listVaultSecrets', 19, 25), ('createVaultSecret', 27, 33), ('revealVaultSecret', 35, 41), ('revokeVaultSecret', 43, 45)] cls=[] exps=['listVaultSecrets', 'createVaultSecret', 'revealVaultSecret', 'revokeVaultSecret']
+  head: /** |  * W18 real vault API: hits the new server's scoped vault endpoints. The |  * metadata list is redacted by the server (no ciphertext, no plaintext); |  * plaintext exists only in the explicit reveal response and is never |  * persisted client-side. |  */
+  imports: ['clients/web-raptix/src/app/config.ts', 'clients/web-raptix/src/shared/api/errors.ts', 'clients/web-raptix/src/shared/api/http.ts']
+- clients/web-raptix/src/main.tsx (10 lines) fns=[] cls=[] exps=[]
+  head: import React from 'react' | import ReactDOM from 'react-dom/client' | import App from './App' | import './index.css' |  | ReactDOM.createRoot(document.getElementById('root')!).render(
+  imports: ['clients/web-raptix/src/App.tsx', 'clients/web-raptix/src/index.css']
+- clients/web-raptix/src/mocks/adapters/projects.ts (83 lines) fns=[('isProject', 9, 16), ('normalizeProject', 18, 20), ('initialProjects', 22, 31), ('publish', 35, 43), ('useMockProjects', 45, 50), ('getProjectPersistenceError', 52, 54), ('createMockProject', 56, 77), ('updateMockProject', 79, 83)] cls=[] exps=['useMockProjects', 'getProjectPersistenceError', 'createMockProject', 'updateMockProject']
+  head: import { useSyncExternalStore } from 'react' | import { PROJECTS } from '../fixtures/projects' | import type { CreateProjectInput, Project } from '../../types' |  | const storageKey = 'raptix.mock.projects.v1' | const listeners = new Set<() => void>()
+  imports: ['clients/web-raptix/src/mocks/fixtures/projects.ts', 'clients/web-raptix/src/types.ts']
+====================================================================================================
+BATCH 12
+- clients/web/src/components/terminal/web-terminal.tsx (465 lines) fns=[('sanitizeTermBytes', 37, 40), ('WebTerminal', 54, 465)] cls=[] exps=['WebTerminal']
+  head: "use client"; |  | /** |  * WebTerminal — xterm.js terminal embedding the Raptix CLI. |  * |  * Connects to the standalone terminal WebSocket server which spawns
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/alert.tsx (76 lines) fns=[('Alert', 22, 35), ('AlertTitle', 37, 48), ('AlertDescription', 50, 64), ('AlertAction', 66, 74)] cls=[] exps=['Alert', 'AlertTitle', 'AlertDescription', 'AlertAction']
+  head: import * as React from "react" | import { cva, type VariantProps } from "class-variance-authority" |  | import { cn } from "@/lib/utils" |  | const alertVariants = cva(
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/avatar.tsx (109 lines) fns=[('Avatar', 8, 26), ('AvatarImage', 28, 39), ('AvatarFallback', 41, 55), ('AvatarBadge', 57, 71), ('AvatarGroup', 73, 84), ('AvatarGroupCount', 86, 100)] cls=[] exps=['Avatar', 'AvatarImage', 'AvatarFallback', 'AvatarGroup', 'AvatarGroupCount', 'AvatarBadge']
+  head: "use client" |  | import * as React from "react" | import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/badge.tsx (52 lines) fns=[('Badge', 30, 50)] cls=[] exps=['Badge', 'badgeVariants']
+  head: import { mergeProps } from "@base-ui/react/merge-props" | import { useRender } from "@base-ui/react/use-render" | import { cva, type VariantProps } from "class-variance-authority" |  | import { cn } from "@/lib/utils" | 
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/button.tsx (58 lines) fns=[('Button', 43, 56)] cls=[] exps=['Button', 'buttonVariants']
+  head: import { Button as ButtonPrimitive } from "@base-ui/react/button" | import { cva, type VariantProps } from "class-variance-authority" |  | import { cn } from "@/lib/utils" |  | const buttonVariants = cva(
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/card.tsx (103 lines) fns=[('Card', 5, 21), ('CardHeader', 23, 34), ('CardTitle', 36, 47), ('CardDescription', 49, 57), ('CardAction', 59, 70), ('CardContent', 72, 80), ('CardFooter', 82, 93)] cls=[] exps=['Card', 'CardHeader', 'CardFooter', 'CardTitle', 'CardAction', 'CardDescription', 'CardContent']
+  head: import * as React from "react" |  | import { cn } from "@/lib/utils" |  | function Card({ |   className,
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/command.tsx (196 lines) fns=[('Command', 20, 34), ('CommandDialog', 36, 67), ('CommandInput', 69, 90), ('CommandList', 92, 106), ('CommandEmpty', 108, 119), ('CommandGroup', 121, 135), ('CommandSeparator', 137, 148), ('CommandItem', 150, 168), ('CommandShortcut', 170, 184)] cls=[] exps=['Command', 'CommandDialog', 'CommandInput', 'CommandList', 'CommandEmpty', 'CommandGroup', 'CommandItem', 'CommandShortcut', 'CommandSeparator']
+  head: "use client" |  | import * as React from "react" | import { Command as CommandPrimitive } from "cmdk" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/components/ui/dialog.tsx', 'clients/web/src/components/ui/input-group.tsx', 'clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/dialog.tsx (160 lines) fns=[('Dialog', 10, 12), ('DialogTrigger', 14, 16), ('DialogPortal', 18, 20), ('DialogClose', 22, 24), ('DialogOverlay', 26, 40), ('DialogContent', 42, 81), ('DialogHeader', 83, 91), ('DialogFooter', 93, 118), ('DialogTitle', 120, 131), ('DialogDescription', 133, 147)] cls=[] exps=['Dialog', 'DialogClose', 'DialogContent', 'DialogDescription', 'DialogFooter', 'DialogHeader', 'DialogOverlay', 'DialogPortal', 'DialogTitle', 'DialogTrigger']
+  head: "use client" |  | import * as React from "react" | import { Dialog as DialogPrimitive } from "@base-ui/react/dialog" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/components/ui/button.tsx', 'clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/dropdown-menu.tsx (268 lines) fns=[('DropdownMenu', 9, 11), ('DropdownMenuPortal', 13, 15), ('DropdownMenuTrigger', 17, 19), ('DropdownMenuContent', 21, 50), ('DropdownMenuGroup', 52, 54), ('DropdownMenuLabel', 56, 74), ('DropdownMenuItem', 76, 97), ('DropdownMenuSub', 99, 101), ('DropdownMenuSubTrigger', 103, 125), ('DropdownMenuSubContent', 127, 146), ('DropdownMenuCheckboxItem', 148, 180), ('DropdownMenuRadioGroup', 182, 189), ('DropdownMenuRadioItem', 191, 221), ('DropdownMenuSeparator', 223, 234), ('DropdownMenuShortcut', 236, 250)] cls=[] exps=['DropdownMenu', 'DropdownMenuPortal', 'DropdownMenuTrigger', 'DropdownMenuContent', 'DropdownMenuGroup', 'DropdownMenuLabel', 'DropdownMenuItem', 'DropdownMenuCheckboxItem', 'DropdownMenuRadioGroup', 'DropdownMenuRadioItem', 'DropdownMenuSeparator', 'DropdownMenuShortcut', 'DropdownMenuSub', 'DropdownMenuSubTrigger', 'DropdownMenuSubContent']
+  head: "use client" |  | import * as React from "react" | import { Menu as MenuPrimitive } from "@base-ui/react/menu" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/input-group.tsx (158 lines) fns=[('InputGroup', 11, 23), ('InputGroupAddon', 46, 66), ('InputGroupButton', 86, 105), ('InputGroupText', 107, 117), ('InputGroupInput', 119, 133), ('InputGroupTextarea', 135, 149)] cls=[] exps=['InputGroup', 'InputGroupAddon', 'InputGroupButton', 'InputGroupText', 'InputGroupInput', 'InputGroupTextarea']
+  head: "use client" |  | import * as React from "react" | import { cva, type VariantProps } from "class-variance-authority" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/components/ui/button.tsx', 'clients/web/src/components/ui/input.tsx', 'clients/web/src/components/ui/textarea.tsx', 'clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/input.tsx (20 lines) fns=[('Input', 6, 18)] cls=[] exps=['Input']
+  head: import * as React from "react" | import { Input as InputPrimitive } from "@base-ui/react/input" |  | import { cn } from "@/lib/utils" |  | function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/label.tsx (20 lines) fns=[('Label', 7, 18)] cls=[] exps=['Label']
+  head: "use client" |  | import * as React from "react" |  | import { cn } from "@/lib/utils" | 
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/popover.tsx (90 lines) fns=[('Popover', 8, 10), ('PopoverTrigger', 12, 14), ('PopoverContent', 16, 48), ('PopoverHeader', 50, 58), ('PopoverTitle', 60, 68), ('PopoverDescription', 70, 81)] cls=[] exps=['Popover', 'PopoverContent', 'PopoverDescription', 'PopoverHeader', 'PopoverTitle', 'PopoverTrigger']
+  head: "use client" |  | import * as React from "react" | import { Popover as PopoverPrimitive } from "@base-ui/react/popover" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/scroll-area.tsx (55 lines) fns=[('ScrollArea', 8, 29), ('ScrollBar', 31, 53)] cls=[] exps=['ScrollArea', 'ScrollBar']
+  head: "use client" |  | import * as React from "react" | import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/select.tsx (201 lines) fns=[('SelectGroup', 11, 19), ('SelectValue', 21, 29), ('SelectTrigger', 31, 57), ('SelectContent', 59, 96), ('SelectLabel', 98, 109), ('SelectItem', 111, 137), ('SelectSeparator', 139, 150), ('SelectScrollUpButton', 152, 169), ('SelectScrollDownButton', 171, 188)] cls=[] exps=['Select', 'SelectContent', 'SelectGroup', 'SelectItem', 'SelectLabel', 'SelectScrollDownButton', 'SelectScrollUpButton', 'SelectSeparator', 'SelectTrigger', 'SelectValue']
+  head: "use client" |  | import * as React from "react" | import { Select as SelectPrimitive } from "@base-ui/react/select" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/separator.tsx (25 lines) fns=[('Separator', 7, 23)] cls=[] exps=['Separator']
+  head: "use client" |  | import { Separator as SeparatorPrimitive } from "@base-ui/react/separator" |  | import { cn } from "@/lib/utils" | 
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/sheet.tsx (138 lines) fns=[('Sheet', 10, 12), ('SheetTrigger', 14, 16), ('SheetClose', 18, 20), ('SheetPortal', 22, 24), ('SheetOverlay', 26, 37), ('SheetContent', 39, 81), ('SheetHeader', 83, 91), ('SheetFooter', 93, 101), ('SheetTitle', 103, 114), ('SheetDescription', 116, 127)] cls=[] exps=['Sheet', 'SheetTrigger', 'SheetClose', 'SheetContent', 'SheetHeader', 'SheetFooter', 'SheetTitle', 'SheetDescription']
+  head: "use client" |  | import * as React from "react" | import { Dialog as SheetPrimitive } from "@base-ui/react/dialog" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/components/ui/button.tsx', 'clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/skeleton.tsx (13 lines) fns=[('Skeleton', 3, 11)] cls=[] exps=['Skeleton']
+  head: import { cn } from "@/lib/utils" |  | function Skeleton({ className, ...props }: React.ComponentProps<"div">) { |   return ( |     <div |       data-slot="skeleton"
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/table.tsx (116 lines) fns=[('Table', 7, 20), ('TableHeader', 22, 30), ('TableBody', 32, 40), ('TableFooter', 42, 53), ('TableRow', 55, 66), ('TableHead', 68, 79), ('TableCell', 81, 92), ('TableCaption', 94, 105)] cls=[] exps=['Table', 'TableHeader', 'TableBody', 'TableFooter', 'TableHead', 'TableRow', 'TableCell', 'TableCaption']
+  head: "use client" |  | import * as React from "react" |  | import { cn } from "@/lib/utils" | 
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/tabs.tsx (82 lines) fns=[('Tabs', 8, 24), ('TabsList', 41, 54), ('TabsTrigger', 56, 70), ('TabsContent', 72, 80)] cls=[] exps=['Tabs', 'TabsList', 'TabsTrigger', 'TabsContent', 'tabsListVariants']
+  head: "use client" |  | import { Tabs as TabsPrimitive } from "@base-ui/react/tabs" | import { cva, type VariantProps } from "class-variance-authority" |  | import { cn } from "@/lib/utils"
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/textarea.tsx (18 lines) fns=[('Textarea', 5, 16)] cls=[] exps=['Textarea']
+  head: import * as React from "react" |  | import { cn } from "@/lib/utils" |  | function Textarea({ className, ...props }: React.ComponentProps<"textarea">) { |   return (
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/components/ui/tooltip.tsx (66 lines) fns=[('TooltipProvider', 7, 18), ('Tooltip', 20, 22), ('TooltipTrigger', 24, 26), ('TooltipContent', 28, 64)] cls=[] exps=['Tooltip', 'TooltipTrigger', 'TooltipContent', 'TooltipProvider']
+  head: "use client" |  | import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip" |  | import { cn } from "@/lib/utils" | 
+  imports: ['clients/web/src/lib/utils.ts']
+- clients/web/src/hooks/useAgentActivity.ts (196 lines) fns=[('useAgentActivity', 38, 196)] cls=[] exps=['useAgentActivity']
+  head: "use client"; |  | /** |  * useAgentActivity — maps SubagentCustomEvent[] to graph nodes/edges. |  * |  * Uses @raptix/streaming types directly — no regex parsing.
+  imports: ['clients/web/src/lib/agents.ts', 'clients/web/src/lib/graph/types.ts']
+- clients/web/src/hooks/useAgents.ts (54 lines) fns=[('useAgents', 21, 54)] cls=[] exps=['useAgents']
+  head: "use client"; |  | import { useState, useEffect, useRef } from "react"; | import { AGENTS, type AgentConfig } from "@/lib/agents"; |  | interface UseAgentsReturn {
+  imports: ['clients/web/src/lib/agents.ts']
+- clients/web/src/hooks/useCanvasTransform.ts (169 lines) fns=[('useCanvasTransform', 48, 169)] cls=[] exps=['useCanvasTransform']
+  head: "use client"; |  | /** |  * useCanvasTransform — pan & zoom for the SVG agent graph canvas. |  * |  * Manages a 2D affine transform (translate + uniform scale) driven by
+  imports: []
+- clients/web/src/hooks/useForceSimulation.ts (188 lines) fns=[('useForceSimulation', 70, 188)] cls=[] exps=['useForceSimulation']
+  head: "use client"; |  | /** |  * useForceSimulation — d3-force physics layout for the agent graph. |  * |  * Runs a force simulation with repulsion, linking, centering, and collision
+  imports: ['clients/web/src/lib/graph/types.ts']
+- clients/web/src/hooks/useRunObserver.ts (191 lines) fns=[('useRunObserver', 38, 191)] cls=[] exps=['useRunObserver']
+  head: "use client"; |  | /** |  * useRunObserver — real-time observation of LangGraph runs via @raptix/streaming. |  * |  * Uses the shared streaming library (same as CLI) to process LangGraph events.
+  imports: []
+- clients/web/src/lib/agents.ts (231 lines) fns=[('buildAgentConfig', 176, 194), ('groupByKillChain', 197, 215), ('getAgent', 225, 227), ('getAgentsByRole', 229, 231)] cls=[] exps=['KILL_CHAIN_PHASES', 'AGENT_DISPLAY_CONFIG', 'buildAgentConfig', 'groupByKillChain', 'AGENTS', 'getAgent', 'getAgentsByRole']
+  head: /* ── Agent Display Config & Dynamic Registry ────────────────────────── |  * |  * "Which agents exist" is determined by the backend (LangGraph Platform). |  * "How to display them" is determined by this frontend config. |  * |  * New agents added to langgraph.json appear automatically with default 
+  imports: []
+- clients/web/src/lib/chat/markdown-renderer.tsx (35 lines) fns=[] cls=[('MarkdownMessageRenderer', 13, 29)] exps=['MarkdownMessageRenderer', 'defaultRenderer']
+  head: "use client"; |  | import ReactMarkdown from "react-markdown"; | import remarkGfm from "remark-gfm"; | import type { MessageRenderer } from "./types"; | 
+  imports: ['clients/web/src/lib/chat/types.ts']
+- clients/web/src/lib/chat/types.ts (40 lines) fns=[] cls=[] exps=[]
+  head: /** |  * Chat types for the web dashboard. |  * |  * MessageRenderer handles output display — swappable for OpenUI (GenUI) in the future. |  */ | 
+  imports: []
+- clients/web/src/lib/engagement-context.tsx (64 lines) fns=[('useEngagementContext', 19, 23), ('EngagementProvider', 37, 64)] cls=[] exps=['useEngagementContext', 'EngagementProvider']
+  head: "use client"; |  | import { createContext, useContext, type ReactNode } from "react"; | import type { SubagentCustomEvent } from "@raptix/streaming"; |  | interface EngagementContextValue {
+  imports: []
+- clients/web/src/lib/graph/types.ts (58 lines) fns=[('isWaitingState', 56, 58)] cls=[] exps=['isWaitingState']
+  head: /** |  * Agent execution graph types for the force-directed visualization. |  * |  * Graph topology mirrors octogent's hierarchy: |  * |  *   ORCHESTRATOR (Raptix, center hub)
+  imports: []
+- clients/web/src/lib/utils.ts (6 lines) fns=[('cn', 4, 6)] cls=[] exps=['cn']
+  head: import { clsx, type ClassValue } from "clsx" | import { twMerge } from "tailwind-merge" |  | export function cn(...inputs: ClassValue[]) { |   return twMerge(clsx(inputs)) | }
+  imports: []
+====================================================================================================
+BATCH 13
+- packages/raptix-core/raptix_core/__init__.py (74 lines) fns=[('_alias_legacy_env', 19, 44)] cls=[] exps=['_alias_legacy_env']
+  head: """raptix-core — contract layer for the Raptix agent framework. |  | Pure types, protocols, plugin contracts, and registry primitives. This | package never imports ``langchain``, ``langgraph``, ``deepagents``, | ``httpx``, or ``fastapi`` — see the design spec at | ``docs/superpowers/specs/2026-05-23
+  imports: ['packages/raptix-core/raptix_core/__init__.py', 'packages/raptix-core/raptix_core/contracts/__init__.py', 'packages/raptix-core/raptix_core/plugin_loader.py', 'packages/raptix-core/raptix_core/protocols/__init__.py', 'packages/raptix-core/raptix_core/registry/__init__.py', 'packages/raptix-core/raptix_core/types/__init__.py', 'packages/raptix-core/raptix_core/utils/__init__.py']
+- packages/raptix-core/raptix_core/contracts/__init__.py (35 lines) fns=[] cls=[] exps=[]
+  head: """Plugin contracts — the surface plugin authors implement against. |  | Submodules: |  |   * ``slots`` — middleware slot enum and per-role applicability mapping. |     Was ``raptix.agents.middleware_slots``; framework keeps the
+  imports: ['packages/raptix-core/raptix_core/contracts/__init__.py', 'packages/raptix-core/raptix_core/contracts/contributions.py', 'packages/raptix-core/raptix_core/contracts/slots.py']
+- packages/raptix-core/raptix_core/contracts/contributions.py (153 lines) fns=[] cls=[('ToolContribution', 23, 50), ('MiddlewareContribution', 54, 71), ('PromptContribution', 75, 99), ('SubAgentContribution', 103, 123), ('SafetyDeclaration', 127, 144)] exps=['ToolContribution', 'MiddlewareContribution', 'PromptContribution', 'SubAgentContribution', 'SafetyDeclaration']
+  head: """Focused contribution dataclasses for plugin authors. |  | Per spec §7.2 Principle 3, the kitchen-sink ``PluginBundle`` of the | pre-redesign era splits into five focused contribution types — each | covers one extension surface so plugin authors construct just what | they need and the framework's 
+  imports: []
+- packages/raptix-core/raptix_core/contracts/slots.py (268 lines) fns=[] cls=[('MiddlewareSlot', 22, 77)] exps=['MiddlewareSlot']
+  head: """Middleware slot enum and per-role applicability mapping. |  | The Raptix agent factories assemble their middleware stack by | walking ``MiddlewareSlot`` in declaration order; each role declares | which slots apply via ``SLOTS_PER_ROLE``. | 
+  imports: []
+- packages/raptix-core/raptix_core/plugin_loader.py (681 lines) fns=[('_normalize_bundles_value', 83, 97), ('_config_file_bundles', 100, 137), ('_enabled_bundles', 140, 159), ('is_bundle_enabled', 162, 176), ('_looks_like_runtime_object', 382, 384), ('_discover', 387, 422), ('load_plugin_tools', 425, 434), ('load_plugin_middleware', 437, 445), ('load_plugin_callbacks', 448, 450), ('load_plugin_skill_sources', 453, 466), ('load_plugin_prompts', 469, 522), ('load_plugin_role_specs', 525, 567), ('_discover_subagent_specs', 570, 631), ('load_subagents_for_parent', 634, 659), ('load_plugin_agents', 662, 681)] cls=[('PluginBundle', 180, 320), ('SubAgentSpec', 324, 365)] exps=['_normalize_bundles_value', '_config_file_bundles', '_enabled_bundles', 'is_bundle_enabled', 'PluginBundle', 'SubAgentSpec', '_looks_like_runtime_object', '_discover', 'load_plugin_tools', 'load_plugin_middleware', 'load_plugin_callbacks', 'load_plugin_skill_sources', 'load_plugin_prompts', 'load_plugin_role_specs', '_discover_subagent_specs', 'load_subagents_for_parent', 'load_plugin_agents']
+  head: """Plugin discovery for Raptix. |  | Raptix supports adding tools, middleware, agents, and callback handlers | without modifying the OSS codebase. External packages declare their | contributions via Python entry-points; agent factories pick them up at | construction time.
+  imports: []
+- packages/raptix-core/raptix_core/protocols/__init__.py (41 lines) fns=[] cls=[] exps=[]
+  head: """Plugin-author Protocols for the Raptix contract layer. |  | Each Protocol declares the duck-type interface plugin authors must | implement to contribute a tool, middleware, callback, etc. Decorated | with ``@runtime_checkable`` so ``isinstance(obj, MiddlewareProtocol)`` | works at runtime; static
+  imports: ['packages/raptix-core/raptix_core/protocols/agent.py', 'packages/raptix-core/raptix_core/protocols/backend.py', 'packages/raptix-core/raptix_core/protocols/callback.py', 'packages/raptix-core/raptix_core/protocols/llm.py', 'packages/raptix-core/raptix_core/protocols/middleware.py', 'packages/raptix-core/raptix_core/protocols/sandbox.py', 'packages/raptix-core/raptix_core/protocols/tool.py']
+- packages/raptix-core/raptix_core/protocols/agent.py (31 lines) fns=[] cls=[('AgentProtocol', 16, 31)] exps=['AgentProtocol']
+  head: """Agent protocol — minimum compiled-agent surface. |  | Plugins shipping a custom main agent or sub-agent return an object | conforming to this Protocol from their factory function. The | ``SubAgentSpec.factory`` field (in ``raptix_core.plugin_loader``) | is typed against this Protocol so the frame
+  imports: []
+- packages/raptix-core/raptix_core/protocols/backend.py (38 lines) fns=[] cls=[('BackendProtocol', 19, 38)] exps=['BackendProtocol']
+  head: """Filesystem backend protocol — matches the deepagents Backend shape. |  | The Raptix framework composes a ``CompositeBackend`` per agent | (``raptix.backends.make_agent_backend``) that routes ``/skills/`` | to in-process file reads and everything else to the sandbox transport. | Plugin authors imp
+  imports: []
+- packages/raptix-core/raptix_core/protocols/callback.py (31 lines) fns=[] cls=[('CallbackProtocol', 16, 31)] exps=['CallbackProtocol']
+  head: """Callback protocol — matches the langchain ``BaseCallbackHandler`` shape. |  | Plugin-shipped callback handlers register via the ``raptix.callbacks`` | entry-point group; the framework wires them into every agent | construction. Implementations get called at well-known lifecycle | points (LLM star
+  imports: []
+- packages/raptix-core/raptix_core/protocols/llm.py (28 lines) fns=[] cls=[('LLMProtocol', 15, 28)] exps=['LLMProtocol']
+  head: """LLM protocol — minimum bound-language-model surface. |  | The framework's ``LLMFactory`` produces bound langchain chat models; | this Protocol documents the surface plugin authors and library | consumers can rely on when accepting an LLM. Concrete langchain | ``BaseChatModel`` instances naturally
+  imports: []
+- packages/raptix-core/raptix_core/protocols/middleware.py (43 lines) fns=[] cls=[('MiddlewareProtocol', 21, 43)] exps=['MiddlewareProtocol']
+  head: """Middleware protocol — matches the langchain agent middleware shape. |  | Plugin authors implementing custom middleware conform to this Protocol | and register via the ``raptix.middleware`` entry-point group (or | ship a ``PluginBundle`` that replaces a standard slot). The framework | walks ``Midd
+  imports: ['packages/raptix-core/raptix_core/contracts/slots.py']
+- packages/raptix-core/raptix_core/protocols/sandbox.py (32 lines) fns=[] cls=[('SandboxProtocol', 16, 32)] exps=['SandboxProtocol']
+  head: """Sandbox transport protocol — matches the ``HTTPSandbox`` shape. |  | The framework's bash execution + filesystem operations all route | through a sandbox transport (today, ``raptix.backends.HTTPSandbox`` | talking to the sandbox container's FastAPI daemon). Plugin authors | implementing alternati
+  imports: []
+- packages/raptix-core/raptix_core/protocols/tool.py (32 lines) fns=[] cls=[('ToolProtocol', 15, 32)] exps=['ToolProtocol']
+  head: """Tool protocol — matches the langchain ``@tool``-decorated callable shape. |  | Plugin authors ship tools either as langchain ``@tool`` callables or | as classes implementing this Protocol. The framework's tool registry | (``raptix.agents.build.build_tools``) accepts both shapes; this | Protocol d
+  imports: []
+- packages/raptix-core/raptix_core/registry/__init__.py (55 lines) fns=[] cls=[] exps=[]
+  head: """Registry primitives — pluggable role / skill / plugin catalogs. |  | Submodules: |  |   * ``conflict``  — ``PluginConflictWarning`` raised at registry-load |     time when two plugins register the same key (tool / slot / role /
+  imports: ['packages/raptix-core/raptix_core/registry/conflict.py', 'packages/raptix-core/raptix_core/registry/plugins.py', 'packages/raptix-core/raptix_core/registry/resolution.py', 'packages/raptix-core/raptix_core/registry/roles.py', 'packages/raptix-core/raptix_core/registry/safety.py', 'packages/raptix-core/raptix_core/registry/skills.py']
+- packages/raptix-core/raptix_core/registry/conflict.py (42 lines) fns=[] cls=[('PluginConflictWarning', 12, 42)] exps=['PluginConflictWarning']
+  head: """Plugin conflict warning. |  | Issued when ``PluginRegistry.detect_collisions()`` sees two plugins | registering the same key. Per spec §16.4 #6 the warning carries an | ``owner`` attribute identifying the contributor so audit log | attribution works.
+  imports: []
+- packages/raptix-core/raptix_core/registry/plugins.py (238 lines) fns=[('_strict_registry_enabled', 30, 35)] cls=[('PluginInfo', 39, 51), ('PluginRegistry', 71, 238)] exps=['_strict_registry_enabled', 'PluginInfo', 'PluginRegistry']
+  head: """Plugin registry — central read-only view of discovered plugins. |  | Closes gaps §8 #4 (collision detection) and §8 #7 (introspection API). | ``PluginRegistry.load()`` walks the eight Raptix entry-point | groups, snapshots every contribution, and exposes the result to | introspection consumers (a
+  imports: ['packages/raptix-core/raptix_core/registry/conflict.py', 'packages/raptix-core/raptix_core/registry/resolution.py']
+- packages/raptix-core/raptix_core/registry/resolution.py (69 lines) fns=[] cls=[('MiddlewareInfo', 16, 26), ('ToolInfo', 30, 34), ('OverrideInfo', 38, 49), ('RoleResolution', 53, 69)] exps=['MiddlewareInfo', 'ToolInfo', 'OverrideInfo', 'RoleResolution']
+  head: """Role resolution snapshot — returned by ``PluginRegistry.introspect_role()``. |  | Per spec §16.4 #1 the dataclass uses ``frozen=True`` with tuple-typed | collections so instances are hashable + cacheable. Audit systems | memoize ``RoleResolution`` per run-id to attribute middleware / tool | selec
+  imports: []
+- packages/raptix-core/raptix_core/registry/roles.py (94 lines) fns=[] cls=[('RoleSpec', 21, 31), ('RoleRegistry', 34, 94)] exps=['RoleSpec', 'RoleRegistry']
+  head: """Role registry — pluggable agent-role catalog. |  | OSS roles are pre-registered at framework boot from | ``raptix_core.contracts.slots.SLOTS_PER_ROLE``. Plugins register | custom roles via the new ``raptix.roles`` entry-point group; | this closes gap §8 #5 (a vendor ``apt`` previously had to abus
+  imports: ['packages/raptix-core/raptix_core/contracts/slots.py']
+- packages/raptix-core/raptix_core/registry/safety.py (87 lines) fns=[] cls=[('SafetyRegistry', 30, 87)] exps=['SafetyRegistry']
+  head: """Safety registry — plugin-extended safety-critical tool / middleware names. |  | Closes spec §16.4 #4. The framework's ``_check_safety_gate`` consults | this registry's merged accessors so plugin-declared safety-critical | names participate in the env-gated override check alongside the | OSS-hardc
+  imports: ['packages/raptix-core/raptix_core/contracts/contributions.py']
+- packages/raptix-core/raptix_core/registry/skills.py (67 lines) fns=[] cls=[('SkillSourceRegistry', 17, 67)] exps=['SkillSourceRegistry']
+  head: """Skill source registry — path validation + collision detection. |  | Closes gap §8 #12 from the consumption audit: plugin-registered | ``/skills/<bundle>/`` paths used to be silently accepted even when | malformed (``/workspace/foo``) or duplicated. ``SkillSourceRegistry`` | validates format at re
+  imports: ['packages/raptix-core/raptix_core/registry/conflict.py']
+- packages/raptix-core/raptix_core/types/__init__.py (29 lines) fns=[] cls=[] exps=[]
+  head: """Pure-pydantic types for the Raptix contract layer. |  | Four submodules: |  |   * ``engagement`` — red-team planning documents (RoE, ConOps, OPPLAN, |     Finding, Objective, OpsecLevel, C2Tier, MITREPhase, ...). Was
+  imports: ['packages/raptix-core/raptix_core/types/__init__.py', 'packages/raptix-core/raptix_core/types/engagement.py', 'packages/raptix-core/raptix_core/types/kg.py', 'packages/raptix-core/raptix_core/types/llm.py', 'packages/raptix-core/raptix_core/types/roe.py']
+- packages/raptix-core/raptix_core/types/engagement.py (1081 lines) fns=[] cls=[('EngagementType', 29, 34), ('ObjectivePhase', 37, 52), ('OpsecLevel', 55, 67), ('C2Tier', 70, 75), ('ObjectiveStatus', 78, 83), ('FindingSeverity', 86, 93), ('FindingConfidence', 96, 101), ('RemediationPriority', 104, 109), ('Evidence', 115, 131), ('Finding', 134, 200), ('AttackPathStep', 203, 214), ('AttackPath', 217, 234), ('ScopeEntry', 240, 245), ('EscalationContact', 248, 254), ('RoE', 257, 330), ('ThreatActor', 336, 347), ('KillChainPhase', 350, 356), ('CONOPS', 359, 396), ('DeconflictionEntry', 402, 407), ('DeconflictionPlan', 410, 421), ('Objective', 427, 481), ('OPPLAN', 484, 569), ('ThreatTier', 582, 590), ('ThreatProfile', 593, 638), ('CleanupArtifact', 651, 688), ('CleanupPlan', 691, 720), ('TriggerSeverity', 732, 738), ('AbortTrigger', 741, 764), ('AbortPlan', 767, 841), ('Contact', 854, 865), ('ContactPlan', 868, 906), ('DataClass', 918, 937), ('DataHandlingPlan', 940, 999), ('EngagementBundle', 1005, 1081)] exps=['EngagementType', 'ObjectivePhase', 'OpsecLevel', 'C2Tier', 'ObjectiveStatus', 'FindingSeverity', 'FindingConfidence', 'RemediationPriority', 'Evidence', 'Finding', 'AttackPathStep', 'AttackPath', 'ScopeEntry', 'EscalationContact', 'RoE', 'ThreatActor', 'KillChainPhase', 'CONOPS', 'DeconflictionEntry', 'DeconflictionPlan', 'Objective', 'OPPLAN', 'ThreatTier', 'ThreatProfile', 'CleanupArtifact', 'CleanupPlan', 'TriggerSeverity', 'AbortTrigger', 'AbortPlan', 'Contact', 'ContactPlan', 'DataClass', 'DataHandlingPlan', 'EngagementBundle']
+  head: """Red team engagement document schemas. |  | Defines the machine-readable document set for planning and executing | red team engagements. The baseline documents map to the military-style | planning hierarchy: | 
+  imports: []
+- packages/raptix-core/raptix_core/types/kg.py (552 lines) fns=[('technology_key', 286, 295)] cls=[('NodeKind', 46, 126), ('EdgeKind', 129, 261), ('TechnologyCategory', 264, 283), ('Severity', 298, 305), ('Node', 329, 352), ('Edge', 355, 383), ('KnowledgeGraph', 389, 552)] exps=['NodeKind', 'EdgeKind', 'TechnologyCategory', 'technology_key', 'Severity', 'Node', 'Edge', 'KnowledgeGraph']
+  head: """KnowledgeGraph — Neo4j-native attack graph. |  | Models the full attack surface as a directed graph with typed nodes and | edges. Node labels map 1-to-1 with Neo4j labels (PascalCase); edge kinds | map to Neo4j relationship types (UPPER_CASE).  The in-memory | :class:`KnowledgeGraph` remains usef
+  imports: []
+- packages/raptix-core/raptix_core/types/llm.py (937 lines) fns=[('_resolve_tier', 601, 607), ('_resolve_ollama_model', 652, 673), ('_resolve_ollama_cloud_model', 676, 702), ('_resolve_lmstudio_model', 705, 720), ('_resolve_llamacpp_model', 723, 747), ('_resolve_custom_openai_model', 750, 765), ('resolve_chain', 768, 813)] cls=[('Tier', 99, 104), ('AuthMethod', 107, 167), ('ModelProfile', 593, 598), ('Credentials', 613, 642), ('ProxyConfig', 822, 837), ('ModelAssignment', 840, 865), ('LLMModelMapping', 868, 927)] exps=['Tier', 'AuthMethod', 'ModelProfile', '_resolve_tier', 'Credentials', '_resolve_ollama_model', '_resolve_ollama_cloud_model', '_resolve_lmstudio_model', '_resolve_llamacpp_model', '_resolve_custom_openai_model', 'resolve_chain', 'ProxyConfig', 'ModelAssignment', 'LLMModelMapping']
+  head: """LLM model definitions — tier-based, credentials-aware mappings. |  | Three orthogonal axes control model selection: |  |   Tier        — model power level (HIGH / MID / LOW) |   AuthMethod  — specific way to authenticate (anthropic_api,
+  imports: []
+- packages/raptix-core/raptix_core/types/roe.py (400 lines) fns=[('_parse_rules', 146, 153), ('_parse_iso', 156, 162), ('_parse_windows', 165, 180), ('_glob_match', 214, 218), ('network_scope_pattern', 221, 241), ('_matches_rule', 244, 265), ('_sensitive_tld_match', 268, 285), ('evaluate_target', 288, 340), ('evaluate_command', 343, 360), ('_within', 363, 365), ('evaluate_time_window', 368, 400)] cls=[('EnforcementMode', 52, 55), ('ScopeRule', 76, 98), ('MachineEnforcement', 102, 143), ('Decision', 184, 211)] exps=['EnforcementMode', 'ScopeRule', 'MachineEnforcement', '_parse_rules', '_parse_iso', '_parse_windows', 'Decision', '_glob_match', 'network_scope_pattern', '_matches_rule', '_sensitive_tld_match', 'evaluate_target', 'evaluate_command', '_within', 'evaluate_time_window']
+  head: """Machine-readable Rules of Engagement schema. |  | The human-readable RoE (``roe.json:in_scope``, ``out_of_scope``, | ``prohibited_actions``) is authored by Soundwave for the operator's | review. This schema extends it with a ``machine_enforcement`` block | that drives the RoE-enforcement middlewa
+  imports: []
+- packages/raptix-core/raptix_core/utils/__init__.py (12 lines) fns=[] cls=[] exps=[]
+  head: """Utility modules for the Raptix contract layer. |  | Pure stdlib + pydantic helpers — config loaders, logging setup. Imported | by the framework (``raptix_core.utils.config``, ``raptix_core.utils.logging`` | shims) and freely usable by plugin authors. | """
+  imports: ['packages/raptix-core/raptix_core/utils/__init__.py', 'packages/raptix-core/raptix_core/utils/config.py', 'packages/raptix-core/raptix_core/utils/logging.py']
+- packages/raptix-core/raptix_core/utils/config.py (78 lines) fns=[('_project_root', 26, 31), ('load_config', 76, 78)] cls=[('LLMConfig', 37, 49), ('RaptixConfig', 52, 73)] exps=['_project_root', 'LLMConfig', 'RaptixConfig', 'load_config']
+  head: """Raptix configuration — defaults + environment variable overrides. |  | LLM model assignments are defined in raptix_core.types.llm (LLMModelMapping). | This config handles infrastructure settings: proxy connection. |  | Sandbox transport is HTTP-only and configured via SANDBOX_URL /
+  imports: ['packages/raptix-core/raptix_core/types/llm.py']
+- packages/raptix-core/raptix_core/utils/logging.py (120 lines) fns=[('configure_logging', 78, 104), ('get_logger', 107, 120)] cls=[('_JsonFormatter', 24, 75)] exps=['_JsonFormatter', 'configure_logging', 'get_logger']
+  head: """Raptix logging — stdlib wrapper with optional structured JSON output. |  | Use plain text logs for local dev, JSON for production / containers / CI. | Toggle via env vars (read once at import / first ``configure_logging`` call): |  |     RAPTIX_LOG_LEVEL    DEBUG | INFO (default) | WARNING | ERRO
+  imports: ['packages/raptix-core/raptix_core/utils/logging.py']
+- packages/raptix-core/tests/test_kg_detection_types.py (76 lines) fns=[('test_detection_node_kinds_have_neo4j_labels', 22, 24), ('test_detection_edge_kinds_have_neo4j_relationship_types', 27, 29), ('test_graph_records_detection_coverage_topology', 32, 54), ('test_detection_gap_query_finds_undetected_findings', 57, 76)] cls=[] exps=['test_detection_node_kinds_have_neo4j_labels', 'test_detection_edge_kinds_have_neo4j_relationship_types', 'test_graph_records_detection_coverage_topology', 'test_detection_gap_query_finds_undetected_findings']
+  head: """Regression tests for the Blue Cell defensive KG vocabulary. |  | The Offensive Vaccine / Blue Cell loop (``docs/features/blue-cell.md``) | records *proven* detection coverage in the engagement knowledge graph: | each fired detection becomes a ``DetectionFired`` node linked | ``-[:DETECTED]->`` th
+  imports: ['packages/raptix-core/raptix_core/types/kg.py']
+- packages/raptix-core/tests/test_kg_technology_types.py (77 lines) fns=[('test_technology_node_kind_has_neo4j_label', 28, 29), ('test_runs_edge_kind_has_neo4j_relationship_type', 32, 33), ('test_technology_categories_are_the_closed_vocabulary', 36, 41), ('test_technology_key_is_category_prefixed_and_normalized', 44, 50), ('test_technology_key_rejects_empty_name', 53, 55), ('test_two_classifiers_same_product_dedup_to_one_node', 58, 63), ('test_distinct_categories_are_distinct_nodes', 66, 77)] cls=[] exps=['test_technology_node_kind_has_neo4j_label', 'test_runs_edge_kind_has_neo4j_relationship_type', 'test_technology_categories_are_the_closed_vocabulary', 'test_technology_key_is_category_prefixed_and_normalized', 'test_technology_key_rejects_empty_name', 'test_two_classifiers_same_product_dedup_to_one_node', 'test_distinct_categories_are_distinct_nodes']
+  head: """Regression tests for the Technology KG vocabulary (ADR-0007). |  | AI-surface and tech-detection recon classifiers (HTTP header, port | catalog, nmap banner, frontend title) write detected products as | ``Technology`` nodes linked ``(Service)-[:RUNS]->(Technology)``. | 
+  imports: ['packages/raptix-core/raptix_core/types/kg.py']
+- packages/raptix-core/tests/test_plugin_registry.py (153 lines) fns=[('_patch_entry_points', 44, 56), ('test_no_plugins_means_no_collisions', 59, 63), ('test_single_plugin_per_group_yields_one_plugin_info', 66, 87), ('test_same_name_in_same_group_from_different_packages_collides', 90, 112), ('test_same_name_same_package_does_not_collide', 115, 137), ('test_get_plugin_by_name', 140, 153)] cls=[('_FakeDist', 28, 31), ('_FakeEntryPoint', 35, 41)] exps=['_FakeDist', '_FakeEntryPoint', '_patch_entry_points', 'test_no_plugins_means_no_collisions', 'test_single_plugin_per_group_yields_one_plugin_info', 'test_same_name_in_same_group_from_different_packages_collides', 'test_same_name_same_package_does_not_collide', 'test_get_plugin_by_name']
+  head: """PluginRegistry behavior — entry-point walk + collision detection. |  | Closes spec §14 acceptance #9: ``PluginRegistry.detect_collisions()`` | returns a non-empty list when two test plugins both register the | same key in the same entry-point group. | 
+  imports: ['packages/raptix-core/raptix_core/registry/__init__.py']
+- packages/raptix-core/tests/test_roe_wildcards.py (81 lines) fns=[('test_bug_bounty_wildcard_allows_nested_subdomains', 4, 10), ('test_bug_bounty_wildcard_does_not_expand_to_apex_or_lookalike', 13, 20), ('test_explicit_exclusion_overrides_recursive_wildcard', 23, 38), ('test_root_url_rule_matches_its_host_without_allowing_lookalikes', 41, 48), ('test_path_specific_url_cannot_become_host_wide_scope', 51, 59), ('test_root_url_exclusion_overrides_host_allow_rule', 62, 70), ('test_path_url_exclusion_denies_whole_host', 73, 81)] cls=[] exps=['test_bug_bounty_wildcard_allows_nested_subdomains', 'test_bug_bounty_wildcard_does_not_expand_to_apex_or_lookalike', 'test_explicit_exclusion_overrides_recursive_wildcard', 'test_root_url_rule_matches_its_host_without_allowing_lookalikes', 'test_path_specific_url_cannot_become_host_wide_scope', 'test_root_url_exclusion_overrides_host_allow_rule', 'test_path_url_exclusion_denies_whole_host']
+  head: from raptix_core.types.roe import MachineEnforcement, evaluate_target |  |  | def test_bug_bounty_wildcard_allows_nested_subdomains() -> None: |     rules = MachineEnforcement.from_dict( |         {"in_scope": [{"target": "*.anduril.dev", "type": "domain-glob"}]}
+  imports: ['packages/raptix-core/raptix_core/types/roe.py']
+- packages/raptix-core/tests/test_safety_registry.py (106 lines) fns=[('_reset_safety_registry', 20, 24), ('test_baseline_unaffected_when_no_plugin_registered', 27, 30), ('test_plugin_declaration_adds_to_merged_set', 33, 40), ('test_additive_only_cannot_remove_oss_baseline', 43, 56), ('test_middleware_declarations_separate_from_tools', 59, 74), ('test_plugin_tools_owner_attribution', 77, 81), ('test_check_safety_gate_consumes_registry', 84, 106)] cls=[] exps=['_reset_safety_registry', 'test_baseline_unaffected_when_no_plugin_registered', 'test_plugin_declaration_adds_to_merged_set', 'test_additive_only_cannot_remove_oss_baseline', 'test_middleware_declarations_separate_from_tools', 'test_plugin_tools_owner_attribution', 'test_check_safety_gate_consumes_registry']
+  head: """SafetyRegistry enforcement — closes spec §16.4 #4 additive-only. |  | Verifies the registry merges plugin contributions with the OSS | baseline at lookup time, and that the additive-only contract holds: | plugins can extend the safety-critical set but cannot remove safety | on OSS-declared names.
+  imports: ['packages/raptix-core/raptix_core/contracts/contributions.py', 'packages/raptix-core/raptix_core/registry/__init__.py']
+====================================================================================================
+BATCH 14
+- clients/web-raptix/src/mocks/adapters/visual-projects.ts (37 lines) fns=[('loadProjects', 8, 14), ('useVisualProjects', 18, 23), ('createVisualProject', 25, 37)] cls=[] exps=['useVisualProjects', 'createVisualProject']
+  head: import { useSyncExternalStore } from 'react' | import type { Project } from '../../types' | import { PROJECTS } from '../fixtures/correct-projects' |  | const storageKey = 'raptix.correct.visual-projects.v1' | const listeners = new Set<() => void>()
+  imports: ['clients/web-raptix/src/mocks/fixtures/correct-projects.ts', 'clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/mocks/fixtures/agent-runs.ts (314 lines) fns=[('getRunScenario', 312, 314)] cls=[] exps=['DEMO_RUN_SCENARIOS', 'getRunScenario']
+  head: import type { RunScenario, RunThread, SubAgent } from '../../features/agent-runs/model' |  | const ACME_ROOT_AGENT: SubAgent = { |   id: 'root', |   name: 'Root Agent', |   type: 'Orchestrator',
+  imports: ['clients/web-raptix/src/features/agent-runs/model.ts']
+- clients/web-raptix/src/mocks/fixtures/correct-projects.ts (160 lines) fns=[] cls=[] exps=['MEMBERS_BY_PROJECT', 'PROJECTS']
+  head: export type Screen = |   | 'projects' |   | 'overview' |   | 'charter' |   | 'agent-run' |   | 'assets'
+  imports: []
+- clients/web-raptix/src/mocks/fixtures/planning.ts (176 lines) fns=[] cls=[] exps=['SAMPLE_PLANNING_BUNDLE', 'SAMPLE_SCOPE']
+  head: // Sample planning fixtures shared across demo projects. Rendered read-only | // with explicit MOCK labels in the Charter and ScopeBoundaries screens — | // none of this data comes from a live engagement, and nothing here is | // machine-enforced (enforcement of RoE/scope happens in the backend | //
+  imports: ['clients/web-raptix/src/features/planning/types.ts']
+- clients/web-raptix/src/mocks/fixtures/projects.ts (114 lines) fns=[] cls=[] exps=['MEMBERS_BY_PROJECT', 'PROJECTS']
+  head: import type { Member, Project } from '../../types' |  | export const MEMBERS_BY_PROJECT: Record<string, Member[]> = { |   '1': [ |     { id: 'm1', name: 'Alex Kim', initials: 'AK', email: 'alex.kim@raptix.io', role: 'Owner', status: 'active', lastActivity: 'Now' }, |     { id: 'm2', name: 'Sarah Row
+  imports: ['clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/mocks/fixtures/reports.ts (93 lines) fns=[] cls=[] exps=['REPORT_FIXTURES', 'DEMO_REPORT_DOCUMENT']
+  head: import type { ReportDocumentDef, ReportMeta } from '../../features/reports/types' |  | // Sample report fixtures for the demo archive project (SAMPLE_PROJECT_ID in | // findings.ts). Authors are the local single-user operator — no fabricated | // team members. Severity totals mirror the actual FINDI
+  imports: ['clients/web-raptix/src/features/reports/types.ts']
+- clients/web-raptix/src/screens/Charter.tsx (381 lines) fns=[('Charter', 4, 381)] cls=[] exps=['Charter']
+  head: import { useState } from 'react' | import type { Project } from '../types' |  | export default function Charter({ project }: { project: Project }) { |   const [showKillModal, setShowKillModal] = useState(false) |   const [campaignHalted, setCampaignHalted] = useState(false)
+  imports: ['clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/screens/Findings.tsx (1112 lines) fns=[('extractPoc', 347, 350), ('Findings', 352, 606), ('FindingModal', 608, 804), ('ModalRow', 806, 831), ('FindingDrawer', 833, 1098), ('DrawerRow', 1100, 1112)] cls=[] exps=['Findings']
+  head: import { useState } from 'react' | import { |   SearchIcon, |   DownloadIcon, |   CheckIcon, |   ClockIcon,
+  imports: ['clients/web-raptix/src/components/Icons.tsx']
+- clients/web-raptix/src/screens/Home.tsx (860 lines) fns=[('getPhaseIndex', 33, 40), ('PhaseNode', 48, 94), ('UKCStepper', 96, 107), ('TelemetryBox', 109, 136), ('AvatarCluster', 138, 195), ('ProjectCard', 197, 372), ('ListRow', 374, 485), ('Home', 487, 860)] cls=[] exps=['Home']
+  head: import { useState } from 'react' | import type { Project, ProjectStatus, Screen } from '../types' | import { |   SearchIcon, PlusIcon, |   AlertTriangleIcon, MoreIcon, |   ShieldIcon, BellIcon, GridIcon, ListIcon,
+  imports: ['clients/web-raptix/src/components/Icons.tsx', 'clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/screens/InfrastructureData.tsx (1348 lines) fns=[('IconGlobe', 158, 166), ('IconCode', 168, 175), ('IconServer', 177, 186), ('IconShield', 188, 194), ('IconMonitor', 196, 204), ('IconDatabase', 206, 214), ('IconCrown', 216, 223), ('IconEye', 225, 232), ('IconEyeOff', 234, 242), ('IconCopy', 244, 251), ('IconChevronDown', 253, 259), ('IconX', 261, 268), ('IconPlay', 270, 276), ('NodeIcon', 280, 289), ('FindingsBadge', 291, 299), ('AgentBadge', 301, 312), ('CredTypeBadge', 314, 323), ('CredStatusBadge', 325, 331), ('AssetTypeModalBadge', 335, 345), ('getAssetExtra', 405, 412), ('AssetInspectModal', 414, 525), ('CredTypeModalBadge', 544, 553), ('CredDetailModal', 555, 649), ('EnvironmentMap', 653, 934), ('AssetsInventory', 938, 1111), ('CredentialsVault', 1115, 1327), ('InfrastructureData', 1331, 1348)] cls=[] exps=['InfrastructureData']
+  head: import { useState } from 'react' | import type { Screen } from '../types' |  | // ─── Types ──────────────────────────────────────────────────────────────────── |  | interface TopoNode {
+  imports: ['clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/screens/Logs.tsx (541 lines) fns=[('Select', 62, 76), ('Logs', 78, 380), ('LogModal', 382, 501), ('TerminalView', 503, 541)] cls=[] exps=['Logs']
+  head: import { useState } from 'react' | import { SearchIcon, DownloadIcon, TerminalIcon, RefreshIcon, XIcon } from '../components/Icons' |  | type LogLevel = 'info' | 'warn' | 'error' | 'debug' | 'critical' | type LogStatus = 'success' | 'warning' | 'error' | 'info' | 
+  imports: ['clients/web-raptix/src/components/Icons.tsx']
+- clients/web-raptix/src/screens/Members.tsx (500 lines) fns=[('Members', 51, 339), ('AddMemberModal', 341, 500)] cls=[] exps=['Members']
+  head: import { useState } from 'react' | import type { Project, Member, MemberRole } from '../types' | import { PlusIcon, MoreIcon, UserIcon, XIcon, CheckIcon, ChevronRightIcon, ShieldIcon, EyeIcon } from '../components/Icons' |  | interface Props { |   project: Project
+  imports: ['clients/web-raptix/src/components/Icons.tsx', 'clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/screens/ProjectSettings.tsx (1106 lines) fns=[('Field', 34, 49), ('SelectWrapper', 51, 61), ('SaveButton', 63, 79), ('SectionCard', 81, 96), ('Modal', 100, 121), ('TabGeneral', 138, 228), ('SliderField', 232, 279), ('TabAI', 281, 376), ('ApiKeyRow', 382, 463), ('TabIntegrations', 465, 547), ('Toggle', 551, 564), ('TabNotifications', 566, 664), ('TabReportTemplates', 668, 812), ('TabDanger', 816, 1030), ('ProjectSettings', 1045, 1106)] cls=[] exps=['ProjectSettings']
+  head: import { useState } from 'react' | import type { Project, ProjectStatus } from '../types' | import { |   SettingsIcon, |   AlertTriangleIcon, |   CheckIcon,
+  imports: ['clients/web-raptix/src/components/Icons.tsx', 'clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/screens/Reports.tsx (704 lines) fns=[('getInitials', 45, 47), ('getAvatarColor', 49, 54), ('getTypeStyle', 56, 63), ('getStatusStyle', 65, 72), ('Reports', 74, 704)] cls=[] exps=['Reports']
+  head: import { useState } from 'react' | import type { Project } from '../types' | import { |   DownloadIcon, |   PlusIcon, |   SearchIcon,
+  imports: ['clients/web-raptix/src/components/Icons.tsx', 'clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/screens/VectorCampaigns.tsx (528 lines) fns=[('VectorCampaigns', 4, 528)] cls=[] exps=['VectorCampaigns']
+  head: import { useState, useEffect } from 'react' | import type { Project } from '../types' |  | export default function VectorCampaigns({ project }: { project: Project }) { |   const [selectedVector, setSelectedVector] = useState<'phishing' | 'web' | 'mobile'>('phishing') |   const [campaignGenerated, se
+  imports: ['clients/web-raptix/src/types.ts']
+- clients/web-raptix/src/shared/api/errors.ts (112 lines) fns=[('isKnownApiErrorCode', 15, 17), ('isRecord', 92, 94), ('parseApiStatusError', 101, 112)] cls=[('ApiClientError', 21, 29), ('ApiStatusError', 32, 48), ('ApiTimeoutError', 51, 58), ('ApiCanceledError', 61, 65), ('ApiNetworkError', 68, 75), ('ApiInvalidResponseError', 78, 85)] exps=['API_ERROR_CODES', 'ApiErrorCode', 'isKnownApiErrorCode', 'ApiClientError', 'ApiStatusError', 'ApiTimeoutError', 'ApiCanceledError', 'ApiNetworkError', 'ApiInvalidResponseError', 'parseApiStatusError']
+  head: /** |  * API error taxonomy for the new-server HTTP boundary (W03). |  * |  * Wire envelope from `web-raptix-server`: `{ statusCode, error: { code, message } }`. |  * The HTTP status is preserved verbatim on {@link ApiStatusError} so callers can |  * branch 400 (field validation) / 404 / 409 correct
+  imports: []
+- clients/web-raptix/src/shared/api/http.ts (111 lines) fns=[('encodePathSegment', 26, 28), ('joinApiPath', 30, 33), ('isAbortLike', 45, 47), ('classifyAbort', 50, 54), ('fetchOnce', 56, 96), ('requestJson', 98, 111)] cls=[] exps=['DEFAULT_TIMEOUT_MS', 'MUTATION_TIMEOUT_MS', 'encodePathSegment', 'joinApiPath', 'requestJson']
+  head: /** |  * Minimal JSON HTTP client for the new API boundary (W03). |  * |  * - Joins the configured API base URL with a path; path segments with dynamic |  *   data must be pre-encoded via {@link encodePathSegment}. |  * - Combines the caller's AbortSignal (route cancel) with a per-operation
+  imports: ['clients/web-raptix/src/shared/api/errors.ts']
+- clients/web-raptix/src/shared/hooks/useNarrowViewport.ts (12 lines) fns=[('subscribe', 4, 8), ('useNarrowViewport', 10, 12)] cls=[] exps=['useNarrowViewport']
+  head: import { useSyncExternalStore } from 'react' |  | const query = '(max-width: 900px)' | function subscribe(listener: () => void): () => void { |   const media = window.matchMedia(query) |   media.addEventListener('change', listener)
+  imports: []
+- clients/web-raptix/src/shared/ui/Dialog.tsx (94 lines) fns=[('Dialog', 16, 94)] cls=[] exps=['Dialog']
+  head: import { useEffect, useRef } from 'react' | import type { CSSProperties, ReactNode } from 'react' |  | const FOCUSABLE_SELECTOR = |   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])' | 
+  imports: []
+- clients/web-raptix/src/types.ts (48 lines) fns=[] cls=[] exps=[]
+  head: export type Screen = |   | 'projects' | 'overview' | 'charter' | 'agent-run' | 'attack-graph' |   | 'knowledge-graph' | 'assets' | 'findings' | 'evidence' | 'reports' | 'logs' |   | 'credentials' | 'members' | 'project-settings' | 'operator-console' |   | 'vector-campaigns' | 'c2-sessions' | 'scope-
+  imports: []
+- clients/web-raptix/tests/contracts/console-view.test.ts (54 lines) fns=[('event', 9, 11)] cls=[] exps=[]
+  head: import { expect, it } from 'vitest'; | import type { PublicStreamEvent, ScopedRunView, ThreadHistoryEvent } from '@raptix/web-contracts'; | import { emptyStreamState, reduceStreamEvent } from '../../src/features/agent-runs/stream-reducer'; | import { mergeThreadHistory } from '../../src/features/age
+  imports: ['clients/web-raptix/src/features/agent-runs/console-view.ts', 'clients/web-raptix/src/features/agent-runs/history-merge.ts', 'clients/web-raptix/src/features/agent-runs/stream-reducer.ts']
+- clients/web-raptix/tests/contracts/findings-view.test.ts (45 lines) fns=[('view', 14, 14)] cls=[] exps=[]
+  head: import { expect, it } from 'vitest' | import type { FindingsView, FindingView } from '@raptix/web-contracts' | import { artifactPaths, contentHeader, findingRow, findingRows, formatSize, matchesSearch, severityCounts, toSeverity } from '../../src/features/findings-evidence/findings-view' |  | const 
+  imports: ['clients/web-raptix/src/features/findings-evidence/findings-view.ts']
+- clients/web-raptix/tests/contracts/graph-view.test.ts (38 lines) fns=[] cls=[] exps=[]
+  head: import { expect, it } from 'vitest' | import type { AssetSummaryView, AssetsView, GraphView } from '@raptix/web-contracts' | import { ASSET_FILTERS, assetCounters, assetsSummary, filterAssets, graphSummary, matchesAssetSearch, nodeDisplayLabel } from '../../src/features/infrastructure/graph-view' | 
+  imports: ['clients/web-raptix/src/features/infrastructure/graph-view.ts']
+- clients/web-raptix/tests/contracts/history-merge.test.ts (75 lines) fns=[('snapshot', 9, 9), ('run', 10, 12)] cls=[] exps=[]
+  head: ﻿import { expect, it } from 'vitest'; | import { isScopedThreadView } from '@raptix/web-contracts' | import type { ScopedThreadView, PublicStreamEvent } from '@raptix/web-contracts' | import { emptyStreamState, reduceStreamEvent, streamDisconnected } from '../../src/features/agent-runs/stream-reduce
+  imports: ['clients/web-raptix/src/features/agent-runs/history-merge.ts', 'clients/web-raptix/src/features/agent-runs/stream-reducer.ts']
+- clients/web-raptix/tests/contracts/logs-view.test.ts (48 lines) fns=[] cls=[] exps=[]
+  head: import { describe, expect, it } from 'vitest' | import type { TimelineView } from '@raptix/web-contracts' | import { |   entryProvenance, |   entrySearchText, |   filterOptions,
+  imports: ['clients/web-raptix/src/features/operations-log/logs-view.ts']
+- clients/web-raptix/tests/contracts/observe-stream.test.ts (24 lines) fns=[] cls=[] exps=[]
+  head: import { afterEach, expect, it, vi } from 'vitest'; | import { observeRunStream } from '../../src/features/agent-runs/observe-stream'; | const time = '2026-10-02T00:00:00.000Z'; | const scope = { engagementId: 'eng', threadId: 'thread', runId: 'run' }; | afterEach(() => { vi.unstubAllGlobals(); }); 
+  imports: ['clients/web-raptix/src/features/agent-runs/observe-stream.ts']
+- clients/web-raptix/tests/contracts/projects-real.test.ts (356 lines) fns=[('jsonResponse', 22, 27), ('projectDto', 29, 47), ('stubFetch', 51, 58), ('stubPendingFetch', 60, 68), ('flush', 70, 72)] cls=[] exps=[]
+  head: import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest' | import type { ProjectViewModel } from '@raptix/web-contracts' | import { |   ApiCanceledError, |   ApiClientError, |   ApiInvalidResponseError,
+  imports: ['clients/web-raptix/src/features/projects/api/projects-real.ts', 'clients/web-raptix/src/features/projects/hooks/use-real-projects.ts', 'clients/web-raptix/src/shared/api/errors.ts', 'clients/web-raptix/src/shared/api/http.ts']
+- clients/web-raptix/tests/contracts/projects.test.ts (32 lines) fns=[] cls=[] exps=[]
+  head: import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest' | import type { CreateProjectInput } from '../../src/types' |  | let storage: Map<string, string> | beforeEach(() => { |   storage = new Map()
+  imports: ['clients/web-raptix/src/types.ts']
+- clients/web-raptix/tests/contracts/real-app.test.ts (40 lines) fns=[] cls=[] exps=[]
+  head: import { describe, expect, it } from 'vitest' | import { ACTIVE_NAV_ITEMS } from '../../src/app/navigation' | import { parseRoute } from '../../src/app/router' | import { |   REAL_FALLBACK_REASON, |   REAL_UNAVAILABLE_REASONS,
+  imports: ['clients/web-raptix/src/app/navigation.ts', 'clients/web-raptix/src/app/real-capabilities.ts', 'clients/web-raptix/src/app/router.ts', 'clients/web-raptix/src/shared/api/errors.ts']
+- clients/web-raptix/tests/contracts/real-project-types.test.ts (105 lines) fns=[('project', 11, 28)] cls=[] exps=[]
+  head: import { describe, expect, it } from 'vitest' | import type { ProjectViewModel } from '@raptix/web-contracts' | import { |   countByLifecycle, |   filterRealProjects, |   formatPublicCount,
+  imports: ['clients/web-raptix/src/features/projects/real-project.types.ts']
+- clients/web-raptix/tests/contracts/router.test.ts (21 lines) fns=[] cls=[] exps=[]
+  head: import { describe, expect, it } from 'vitest' | import { parseRoute, routePath } from '../../src/app/router' | import { ACTIVE_NAV_ITEMS, NAV_GROUPS } from '../../src/app/navigation' |  | describe('correct-source visual routing', () => { |   it('exposes exactly the 13 requested workspace pages in th
+  imports: ['clients/web-raptix/src/app/navigation.ts', 'clients/web-raptix/src/app/router.ts']
+- clients/web-raptix/tests/contracts/stream-reducer.test.ts (46 lines) fns=[('event', 5, 7)] cls=[] exps=[]
+  head: import { expect, it } from 'vitest'; | import type { PublicStreamEvent, PublicStreamPayload } from '@raptix/web-contracts'; | import { emptyStreamState, reduceStreamEvent, streamDisconnected, mergeRunObservation, observedExecutionCount } from '../../src/features/agent-runs/stream-reducer'; | const t
+  imports: ['clients/web-raptix/src/features/agent-runs/stream-reducer.ts']
+====================================================================================================
+BATCH 15
+- clients/cli/src/app.tsx (16 lines) fns=[('App', 10, 16)] cls=[] exps=['App']
+  head: import React from "react"; | import { AppStateProvider } from "./state/AppState.js"; | import { REPL } from "./screens/REPL.js"; |  | interface AppProps { |   initialMessage?: string;
+  imports: ['clients/cli/src/screens/REPL.tsx', 'clients/cli/src/state/AppState.ts']
+- clients/cli/src/commands/agent.ts (142 lines) fns=[('apiBase', 34, 36), ('listOrchestrators', 42, 57)] cls=[] exps=[]
+  head: /** |  * /agent — switch the active orchestrator for this CLI session. |  * |  * Only orchestration agents are surfaced here. Sub-agents (recon, |  * exploit, postexploit, …) are invoked via the orchestrator's task() |  * tool and shouldn't be selected directly. Available orchestrators are
+  imports: ['clients/cli/src/commands/assistantOverride.ts', 'clients/cli/src/commands/types.ts']
+- clients/cli/src/commands/assistantOverride.ts (21 lines) fns=[('setAssistantOverride', 15, 17), ('getAssistantOverride', 19, 21)] cls=[] exps=['setAssistantOverride', 'getAssistantOverride']
+  head: /** |  * Per-process orchestrator override store. |  * |  * The /agent slash command writes here; useAgent reads here on every |  * submit() / resume() so user-driven switches take effect on the next |  * message. When set, the override beats both the default
+  imports: []
+- clients/cli/src/commands/clear.ts (11 lines) fns=[] cls=[] exps=[]
+  head: import type { Command } from "./types.js"; |  | const clear: Command = { |   name: "clear", |   description: "Clear conversation history", |   execute(_args, ctx) {
+  imports: ['clients/cli/src/commands/types.ts']
+- clients/cli/src/commands/file.ts (62 lines) fns=[] cls=[] exps=[]
+  head: /** |  * /file <path> — Load a prompt from a file and submit it. |  * |  * Reads the contents of the given file and submits it as a message to the |  * agent. Designed for long multi-line prompts (engagement briefs, VDP |  * scopes, etc.) that are impractical to paste into the single-line input.
+  imports: ['clients/cli/src/commands/types.ts']
+- clients/cli/src/commands/help.ts (30 lines) fns=[] cls=[] exps=[]
+  head: import type { Command } from "./types.js"; | import { getCommands } from "./registry.js"; |  | const help: Command = { |   name: "help", |   description: "Show available commands and shortcuts",
+  imports: ['clients/cli/src/commands/registry.ts', 'clients/cli/src/commands/types.ts']
+- clients/cli/src/commands/model.ts (250 lines) fns=[('flatten', 183, 185), ('isKnown', 187, 193)] cls=[] exps=[]
+  head: /** |  * /model — runtime LLM swap for the current REPL session. |  * |  * Usage: |  *   /model              List the active override + every supported model id |  *   /model <id>         Set the override (e.g. /model groq/llama-3.3-70b-versatile)
+  imports: ['clients/cli/src/commands/modelOverride.ts', 'clients/cli/src/commands/types.ts']
+- clients/cli/src/commands/modelOverride.ts (21 lines) fns=[('setModelOverride', 15, 17), ('getModelOverride', 19, 21)] cls=[] exps=['setModelOverride', 'getModelOverride']
+  head: /** |  * Per-process model override store. |  * |  * The /model slash command writes here; useAgent reads here when |  * building the LangGraph stream config so each submit() carries the |  * current override in config.configurable.model_override. The agent's
+  imports: []
+- clients/cli/src/commands/plugins.ts (154 lines) fns=[('apiBase', 43, 45), ('formatList', 47, 67), ('getJson', 69, 83)] cls=[] exps=[]
+  head: /** |  * /plugins — runtime plugin bundle enable/disable. |  * |  * OSS default loads the ``standard`` bundle only (10 official agents). |  * The ``plugins`` bundle ships extras (vulnresearch orchestrator + its |  * 5 specialists) but is off by default. /plugins lets the operator
+  imports: ['clients/cli/src/commands/types.ts']
+- clients/cli/src/commands/quit.ts (12 lines) fns=[] cls=[] exps=[]
+  head: import type { Command } from "./types.js"; |  | const quit: Command = { |   name: "quit", |   description: "Exit Raptix CLI", |   aliases: ["exit"],
+  imports: ['clients/cli/src/commands/types.ts']
+- clients/cli/src/commands/registry.ts (58 lines) fns=[('getCommands', 23, 25), ('findCommand', 28, 33), ('parseSlashCommand', 44, 58)] cls=[] exps=['getCommands', 'findCommand', 'parseSlashCommand']
+  head: /** |  * Command registry — central registration and lookup for slash commands. |  * |  * Follows Claude Code's pattern: all commands registered in a single array, |  * lookup by name or alias. |  */
+  imports: ['clients/cli/src/commands/agent.ts', 'clients/cli/src/commands/clear.ts', 'clients/cli/src/commands/file.ts', 'clients/cli/src/commands/help.ts', 'clients/cli/src/commands/model.ts', 'clients/cli/src/commands/plugins.ts', 'clients/cli/src/commands/quit.ts', 'clients/cli/src/commands/resume.ts', 'clients/cli/src/commands/types.ts', 'clients/cli/src/commands/web.ts']
+- clients/cli/src/commands/resume.ts (13 lines) fns=[] cls=[] exps=[]
+  head: import type { Command } from "./types.js"; |  | const resume: Command = { |   name: "resume", |   description: "Resume paused run or continue previous session", |   aliases: ["r", "continue"],
+  imports: ['clients/cli/src/commands/types.ts']
+- clients/cli/src/commands/types.ts (42 lines) fns=[] cls=[] exps=[]
+  head: /** |  * Command type definitions for the Raptix CLI slash command system. |  * |  * Simplified from Claude Code's three-type system (prompt/local/local-jsx) |  * to a single `Command` interface — all commands execute locally. |  */
+  imports: []
+- clients/cli/src/commands/web.test.ts (41 lines) fns=[('fakeContext', 5, 11)] cls=[] exps=[]
+  head: import { describe, expect, it } from "vitest"; | import web from "./web.js"; | import type { CommandContext } from "./types.js"; |  | function fakeContext(): { ctx: CommandContext; events: string[] } { |   const events: string[] = [];
+  imports: ['clients/cli/src/commands/types.ts', 'clients/cli/src/commands/web.ts']
+- clients/cli/src/commands/web.ts (37 lines) fns=[('url', 35, 37)] cls=[] exps=[]
+  head: import type { Command, CommandContext } from "./types.js"; |  | /** |  * `/web` slash command — print the URL of the web dashboard. |  * |  * W20 retirement: the legacy Next.js `web` compose service was removed
+  imports: ['clients/cli/src/commands/types.ts']
+- clients/cli/src/components/ActivityIndicator.tsx (136 lines) fns=[('formatElapsed', 13, 19), ('formatTokens', 21, 24), ('ShimmerText', 41, 58)] cls=[] exps=['ActivityIndicator']
+  head: import React, { useRef } from "react"; | import { Box, Text } from "ink"; | import { useSpinnerFrame } from "../hooks/useSpinnerFrame.js"; | import type { StreamStats } from "../hooks/useAgent.js"; | import type { RunState } from "../hooks/useAgent.js"; | import { GLYPH_DOT, GLYPH_SEP } from "../uti
+  imports: ['clients/cli/src/hooks/useAgent.ts', 'clients/cli/src/hooks/useSpinnerFrame.ts', 'clients/cli/src/utils/theme.ts']
+- clients/cli/src/components/Banner.tsx (82 lines) fns=[('extractLogo', 36, 44)] cls=[] exps=['Banner']
+  head: import React from "react"; | import { Text, Box, useStdout } from "ink"; |  | // ── Full banner: braille logo + block-character text art (≥140 cols) ── | const BANNER_FULL = ` | ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  imports: []
+- clients/cli/src/components/BashResult.tsx (98 lines) fns=[] cls=[] exps=['BashResult']
+  head: import React from "react"; | import { Box, Text } from "ink"; | import { useScreen } from "./shell/ScreenContext.js"; | import { useExpandOutput } from "./shell/ExpandOutputContext.js"; | import { CtrlOToExpand } from "./shell/CtrlOToExpand.js"; | 
+  imports: ['clients/cli/src/components/shell/CtrlOToExpand.tsx', 'clients/cli/src/components/shell/ExpandOutputContext.tsx', 'clients/cli/src/components/shell/ScreenContext.tsx']
+- clients/cli/src/components/EventItem.tsx (78 lines) fns=[] cls=[] exps=['EventItem']
+  head: import React from "react"; | import { Box } from "ink"; | import type { AgentEvent } from "../types.js"; | import { BashResult } from "./BashResult.js"; | import { UserMessage } from "./messages/UserMessage.js"; | import { AIMessage } from "./messages/AIMessage.js";
+  imports: ['clients/cli/src/components/BashResult.tsx', 'clients/cli/src/components/messages/AIMessage.tsx', 'clients/cli/src/components/messages/BackgroundCompleteMessage.tsx', 'clients/cli/src/components/messages/DelegateMessage.tsx', 'clients/cli/src/components/messages/QAMessage.tsx', 'clients/cli/src/components/messages/SystemMessage.tsx', 'clients/cli/src/components/messages/ToolCallMessage.tsx', 'clients/cli/src/components/messages/UserMessage.tsx', 'clients/cli/src/types.ts']
+- clients/cli/src/components/ObjectiveList.tsx (97 lines) fns=[('parseObjectives', 21, 65)] cls=[] exps=['parseObjectives', 'ObjectiveList']
+  head: import React from "react"; | import { Box, Text } from "ink"; | import { STATUS_ICON, GLYPH_HOOK } from "../utils/theme.js"; |  | export interface ObjectiveItem { |   id: string;
+  imports: ['clients/cli/src/utils/theme.ts']
+- clients/cli/src/components/OpplanStatus.tsx (85 lines) fns=[] cls=[] exps=['OpplanStatus']
+  head: /** |  * OpplanStatus — Claude Code inline task list pattern for OPPLAN objectives. |  * |  * Visual format: |  *   ● 6 objectives (2 completed, 1 active, 3 pending) |  *     ⎿  ✓ Subdomain enumeration
+  imports: ['clients/cli/src/hooks/useOpplan.ts', 'clients/cli/src/utils/theme.ts']
+- clients/cli/src/components/Prompt.tsx (235 lines) fns=[('KeybindingHints', 61, 85)] cls=[] exps=['Prompt']
+  head: import React, { useState, useCallback, useRef, useEffect, useMemo } from "react"; | import { Box, Text, useInput } from "ink"; | import { TextInput } from "@inkjs/ui"; | import { useTerminalSize } from "../hooks/useTerminalSize.js"; | import { useSpinnerFrame } from "../hooks/useSpinnerFrame.js"; | 
+  imports: ['clients/cli/src/commands/registry.ts', 'clients/cli/src/hooks/useAgent.ts', 'clients/cli/src/hooks/useSpinnerFrame.ts', 'clients/cli/src/hooks/useTerminalSize.ts', 'clients/cli/src/utils/agents.ts', 'clients/cli/src/utils/version.ts']
+- clients/cli/src/components/QuestionPicker.tsx (212 lines) fns=[('KeybindingHints', 190, 212)] cls=[] exps=['QuestionPicker']
+  head: import React, { useState, useCallback, useEffect } from "react"; | import { Box, Text, useInput } from "ink"; | import { TextInput } from "@inkjs/ui"; | import { useTerminalSize } from "../hooks/useTerminalSize.js"; | import type { ActiveQuestion } from "../types.js"; | 
+  imports: ['clients/cli/src/hooks/useTerminalSize.ts', 'clients/cli/src/types.ts']
+- clients/cli/src/components/SessionPicker.tsx (141 lines) fns=[('formatTimeAgo', 19, 28)] cls=[] exps=['SessionPicker']
+  head: /** |  * SessionPicker — Interactive session resume UI (Claude Code style). |  * |  * Shows a searchable list of previous sessions. Arrow keys to navigate, |  * Enter to select, Escape to cancel. |  */
+  imports: ['clients/cli/src/hooks/useTerminalSize.ts', 'clients/cli/src/utils/threadStore.ts']
+- clients/cli/src/components/SpinnerIcon.tsx (15 lines) fns=[] cls=[] exps=['SpinnerIcon']
+  head: import React from "react"; | import { Text } from "ink"; | import { useSpinnerFrame } from "../hooks/useSpinnerFrame.js"; |  | interface SpinnerIconProps { |   active: boolean;
+  imports: ['clients/cli/src/hooks/useSpinnerFrame.ts']
+- clients/cli/src/components/TodoList.tsx (57 lines) fns=[('parseTodos', 16, 29)] cls=[] exps=['parseTodos', 'TodoList']
+  head: import React from "react"; | import { Box, Text } from "ink"; | import { TODO_ICON } from "../utils/theme.js"; |  | interface TodoItem { |   content: string;
+  imports: ['clients/cli/src/utils/theme.ts']
+- clients/cli/src/components/agents/AgentSessionGroup.tsx (233 lines) fns=[('capitalize', 47, 49), ('truncText', 52, 56), ('SessionHeader', 60, 100), ('SessionFooter', 104, 127)] cls=[] exps=['AgentSessionGroup']
+  head: /** |  * AgentSessionGroup — hybrid sub-agent display. |  * |  * Prompt mode (compact — Claude Code pattern): |  *   ● Recon(Scan target network for open ports) |  *     ⎿  Prompt:
+  imports: ['clients/cli/src/components/EventItem.tsx', 'clients/cli/src/components/shell/SubAgentContext.tsx', 'clients/cli/src/types.ts', 'clients/cli/src/utils/format.ts', 'clients/cli/src/utils/theme.ts']
+- clients/cli/src/components/agents/CoordinatorPanel.tsx (41 lines) fns=[] cls=[] exps=['CoordinatorPanel']
+  head: /** |  * CoordinatorPanel — dynamic region sub-agent display. |  * |  * Shows currently running sub-agent sessions using Claude Code's inline |  * format via AgentSessionGroup. |  */
+  imports: ['clients/cli/src/components/agents/AgentSessionGroup.tsx', 'clients/cli/src/types.ts']
+- clients/cli/src/components/messages/AIMessage.tsx (19 lines) fns=[] cls=[] exps=['AIMessage']
+  head: import React from "react"; | import { Box, Text } from "ink"; | import { renderMarkdown } from "../../utils/markdown.js"; | import { GLYPH_DOT } from "../../utils/theme.js"; |  | interface Props {
+  imports: ['clients/cli/src/utils/markdown.ts', 'clients/cli/src/utils/theme.ts']
+- clients/cli/src/components/messages/BackgroundCompleteMessage.tsx (58 lines) fns=[] cls=[] exps=['BackgroundCompleteMessage']
+  head: import React from "react"; | import { Box, Text } from "ink"; | import { GLYPH_DOT } from "../../utils/theme.js"; |  | interface Props { |   command?: string;
+  imports: ['clients/cli/src/utils/theme.ts']
+- clients/cli/src/components/messages/DelegateMessage.tsx (37 lines) fns=[] cls=[] exps=['DelegateMessage']
+  head: /** |  * DelegateMessage — sub-agent delegation display. |  * |  * Prompt mode:  ● Delegate(recon)           — compact, no description |  * Transcript:   ● Delegate(recon) |  *                 ⎿  Scan target network for open ports...
+  imports: ['clients/cli/src/components/shell/ScreenContext.tsx', 'clients/cli/src/utils/theme.ts']

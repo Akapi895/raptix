@@ -1,0 +1,306 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 3,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix-sdk/raptix_sdk/scaffold/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 14,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/raptix_sdk/scaffold/cli.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 114,
+      "nonEmptyLines": 94,
+      "functions": [
+        {
+          "name": "_normalize_module_name",
+          "startLine": 34,
+          "endLine": 36,
+          "params": [
+            "plugin_name"
+          ]
+        },
+        {
+          "name": "plugin_new",
+          "startLine": 40,
+          "endLine": 110,
+          "params": [
+            "kind",
+            "name",
+            "path",
+            "force"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_normalize_module_name",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "plugin_new",
+          "line": 39,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_normalize_module_name",
+          "callee": "plugin_name.replace",
+          "lineNumber": 36
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.Option",
+          "lineNumber": 41
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "', '.join",
+          "lineNumber": 44
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "sorted",
+          "lineNumber": 44
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.Option",
+          "lineNumber": 46
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.Option",
+          "lineNumber": 51
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.Option",
+          "lineNumber": 56
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.BadParameter",
+          "lineNumber": 64
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "sorted",
+          "lineNumber": 64
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "_normalize_module_name",
+          "lineNumber": 66
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "path.resolve",
+          "lineNumber": 68
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "pyproject_path.exists",
+          "lineNumber": 74
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.BadParameter",
+          "lineNumber": 75
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "src_dir.mkdir",
+          "lineNumber": 77
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "pyproject_path.write_text",
+          "lineNumber": 79
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "pyproject_for",
+          "lineNumber": 80
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "readme_path.write_text",
+          "lineNumber": 87
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "template.readme_body.format",
+          "lineNumber": 88
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "init_path.write_text",
+          "lineNumber": 95
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "template.module_body.format",
+          "lineNumber": 96
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 100
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 101
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "pyproject_path.relative_to",
+          "lineNumber": 101
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 102
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "init_path.relative_to",
+          "lineNumber": 102
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 103
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 104
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 105
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 106
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "target.relative_to",
+          "lineNumber": 107
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "Path.cwd",
+          "lineNumber": 107
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "target.is_relative_to",
+          "lineNumber": 107
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "Path.cwd",
+          "lineNumber": 107
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 109
+        },
+        {
+          "caller": "plugin_new",
+          "callee": "typer.echo",
+          "lineNumber": 110
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/raptix_sdk/scaffold/templates.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 250,
+      "nonEmptyLines": 174,
+      "functions": [
+        {
+          "name": "pyproject_for",
+          "startLine": 224,
+          "endLine": 247,
+          "params": [
+            "plugin_name",
+            "module_name",
+            "group"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ScaffoldTemplate",
+          "startLine": 15,
+          "endLine": 21,
+          "methods": [],
+          "properties": [
+            "kind",
+            "entry_point_group",
+            "module_body",
+            "readme_body"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ScaffoldTemplate",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "pyproject_for",
+          "line": 224,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    }
+  ]
+}

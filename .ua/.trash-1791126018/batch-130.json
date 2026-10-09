@@ -1,0 +1,714 @@
+{
+  "batchIndex": 130,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/references/cve-apt-mapping.md",
+      "language": "markdown",
+      "sizeLines": 203,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/salt-typhoon/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 195,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/sandworm-team/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 142,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/scattered-spider/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 170,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/sidewinder/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 157,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/turla/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 274,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/volt-typhoon/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 161,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/defense-evasion/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 19,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/defense-evasion/references/amsi-bypass-techniques.md",
+      "language": "markdown",
+      "sizeLines": 103,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/defense-evasion/references/modern-evasion-techniques.md",
+      "language": "markdown",
+      "sizeLines": 696,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/finding-protocol/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 160,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/opsec/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 239,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/references/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 86,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/shared/stealth-infra/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 334,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/adcs-esc1/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 131,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/asrep-roasting/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 102,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/bloodhound-bhce/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 143,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/bloodhound-query/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 86,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/certipy-esc-chain/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 130,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/coercer/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 106,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/dcsync/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 133,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/kerberoasting/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 97,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/laps/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 135,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/ad/netexec/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 177,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/references/cve-apt-mapping.md",
+      "type": "document",
+      "name": "cve-apt-mapping.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/references/cve-apt-mapping.md",
+      "summary": "Reference CVE-to-APT mapping (cập nhật 2025-06): map CVE đang bị exploit chủ động với threat actor có attribution từ CISA KEV, MITRE ATT&CK, vendor advisory, Google GTIG, Mandiant; cột \"Exploit Skill in Raptix\" trỏ tới skill có sẵn dưới skills/standard/exploit/ hoặc đánh dấu NEW.",
+      "tags": [
+        "reference",
+        "cve",
+        "apt",
+        "mapping"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        203
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/salt-typhoon/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/salt-typhoon/SKILL.md",
+      "summary": "Hồ sơ adversary-emulation cho Salt Typhoon (G1045 / Earth Estries / GhostEmperor / RedMike / OPERATOR PANDA), TQ MSS: xâm phạm telecom + critical infrastructure toàn cầu, Cisco IOS XE CVE-2023-20198, edge device exploitation, DEMODEX rootkit, GhostSpider/SnappyBee/ZINGDOOR, network device persistence + GRE tunneling, pre-positioning ISP.",
+      "tags": [
+        "skill",
+        "adversary-emulation",
+        "apt",
+        "mitre"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        195
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/sandworm-team/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/sandworm-team/SKILL.md",
+      "summary": "Hồ sơ adversary-emulation cho Sandworm Team (G0034 / Voodoo Bear / Seashell Blizzard / APT44), Nga GRU Unit 74455: destructive ICS/OT + influence — Industroyer, NotPetya, Olympic Destroyer, BlackEnergy, CaddyWiper/Prestige wiper, nhắm lưới điện Ukraine, microSCADA, BadPilot initial access.",
+      "tags": [
+        "skill",
+        "adversary-emulation",
+        "apt",
+        "mitre"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        142
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/scattered-spider/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/scattered-spider/SKILL.md",
+      "summary": "Hồ sơ adversary-emulation cho Scattered Spider (G1015 / UNC3944 / Octo Tempest / Muddled Libra), e-crime social-engineering-led: help desk social engineering, SIM swap, MFA fatigue/bypass, vishing, 0ktapus Okta phishing, Entra ID federation abuse, ESXi ransomware (DragonForce/ALPHV/RansomHub), RMM abuse, identity attacks.",
+      "tags": [
+        "skill",
+        "adversary-emulation",
+        "apt",
+        "mitre"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        170
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/sidewinder/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/sidewinder/SKILL.md",
+      "summary": "Hồ sơ adversary-emulation cho SideWinder (G0121 / Rattlesnake / T-APT-04 / Razor Tiger), Ấn Độ (suspected state): LNK execution chain, HTA JavaScript downloader, StealerBot/WarHawk, DLL side-loading, CVE-2017-11882, spearphishing lure chính phủ nhắm quân sự Pakistan, maritime/nuclear logistics.",
+      "tags": [
+        "skill",
+        "adversary-emulation",
+        "apt",
+        "mitre"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        157
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/turla/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/turla/SKILL.md",
+      "summary": "Hồ sơ adversary-emulation cho Turla (G0010 / Venomous Bear / Secret Blizzard / Waterbug / Snake), Nga FSB Center 16: Snake rootkit/Uroburos, ComRAT/Carbon framework, Kazuar, LightNeuron Exchange, Penquin Linux, TinyTurla, satellite C2, watering hole, chiếm hạ tầng APT khác, DoH/Gmail C2.",
+      "tags": [
+        "skill",
+        "adversary-emulation",
+        "apt",
+        "mitre"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        274
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/volt-typhoon/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/adversary-emulation/volt-typhoon/SKILL.md",
+      "summary": "Hồ sơ adversary-emulation cho Volt Typhoon (G1017 / BRONZE SILHOUETTE / Vanguard Panda / DEV-0391), TQ: pre-positioning trong critical infrastructure Mỹ bằng living-off-the-land (LOTL/LOLBins), SOHO router botnet (KV botnet), OT pre-positioning, stealth espionage không malware.",
+      "tags": [
+        "skill",
+        "adversary-emulation",
+        "apt",
+        "mitre"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        161
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/defense-evasion/SKILL.md",
+      "summary": "Skill defense-evasion: router tham chiếu cho đánh giá host-side defense-evasion được ủy quyền — trỏ tới các reference kỹ thuật (AMSI bypass, modern evasion) khi tradecraft cần thiết; MITRE T1562/T1027, subdomain defense-evasion.",
+      "tags": [
+        "skill",
+        "defense-evasion",
+        "router",
+        "reference"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        19
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/references/amsi-bypass-techniques.md",
+      "type": "document",
+      "name": "amsi-bypass-techniques.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/defense-evasion/references/amsi-bypass-techniques.md",
+      "summary": "Deep reference AMSI bypass: kiến trúc AMSI (AmsiInitialize → AmsiScanBuffer/String → AV provider) rồi các kỹ thuật bypass qua từng tầng — patch amsi.dll, hook, memory tampering, PowerShell downgraded host…",
+      "tags": [
+        "reference",
+        "amsi",
+        "evasion",
+        "powershell"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        103
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/references/modern-evasion-techniques.md",
+      "type": "document",
+      "name": "modern-evasion-techniques.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/defense-evasion/references/modern-evasion-techniques.md",
+      "summary": "Reference evasion hiện đại 2024-2026 từ threat intel: bảng MITRE ATT&CK (ETW bypass T1562.006/.002, smart contract C2 T1102, asymmetric crypto channel T1573.002…) kèm phân tích pattern từng kỹ thuật và các campaign thật — bổ sung cho defense-evasion/SKILL.md và amsi-bypass-techniques.md.",
+      "tags": [
+        "reference",
+        "evasion",
+        "etw",
+        "threat-intel"
+      ],
+      "complexity": "complex",
+      "lineRange": [
+        1,
+        696
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/finding-protocol/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/finding-protocol/SKILL.md",
+      "summary": "Skill finding-protocol: template finding tier operational — các field tối thiểu (FIND-id, severity, target, evidence, recommendation) cho sub-agent ghi quyết định vào findings/; promotion deliverable nặng nằm ở skills/raptix/final-report.",
+      "tags": [
+        "skill",
+        "finding",
+        "template",
+        "reporting"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        160
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/opsec/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/opsec/SKILL.md",
+      "summary": "Skill opsec: quản lý operational security — traffic shaping, scan rate limiting, source IP management, tránh tool signature, evidence handling, anti-detection patterns; MITRE T1562/T1070/T1036; dùng cho OPSEC check, stealth, scan timing, scope check, clean up.",
+      "tags": [
+        "skill",
+        "opsec",
+        "stealth",
+        "rate-limit"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        239
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/references/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/references/SKILL.md",
+      "summary": "Skill references: tích hợp kiến thức bên ngoài — HackerOne disclosed reports, PayloadsAllTheThings, Book of Secret Knowledge, CVE PoC corpora, bug bounty methodologies và reference pentest agent architectures; query metadata hoặc fetch full repo vào sandbox để grep-level access.",
+      "tags": [
+        "skill",
+        "reference",
+        "payloads",
+        "calibration"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        86
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/shared/stealth-infra/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/shared/stealth-infra/SKILL.md",
+      "summary": "Skill stealth-infra: anti-bot evasion, proxy rotation, lấy credential từ password manager (1Password, GNOME Keyring) và stealth HTTP tooling cho web operation covert — captcha/Cloudflare bypass, cookie injection, TLS fingerprint browser impersonation; MITRE T1562/T1036/T1090.",
+      "tags": [
+        "skill",
+        "stealth",
+        "anti-bot",
+        "proxy"
+      ],
+      "complexity": "moderate",
+      "lineRange": [
+        1,
+        334
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "summary": "Skill ad-overview: attack lane Active Directory — BloodHound ingestion, Kerberoasting, ADCS ESC scanning, DCSync, LAPS extraction; capability contract lane active-directory (isolated-lab, bloodhound-ce/certipy/netexec), verification bằng replay trong lab reset + negative control sau remediation, scorecard DreadGoad.",
+      "tags": [
+        "skill",
+        "ad",
+        "lane",
+        "routing"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        53
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/adcs-esc1/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/adcs-esc1/SKILL.md",
+      "summary": "Skill AD adcs-esc1: Exploit ADCS ESC1 — template cho phép arbitrary SAN, impersonate user tới domain admin; MITRE T1649/T1078.002.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        131
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/asrep-roasting/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/asrep-roasting/SKILL.md",
+      "summary": "Skill AD asrep-roasting: AS-REP Roasting: request AS-REP cho account có DONT_REQ_PREAUTH rồi crack offline — như kerberoast nhưng không cần auth; MITRE T1558.004.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        102
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/bloodhound-bhce/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/bloodhound-bhce/SKILL.md",
+      "summary": "Skill AD bloodhound-bhce: Vận hành BloodHound Community Edition qua bộ tool bhce_* của Raptix (health check, Cypher passthrough, ingest ZIP SharpHound) — thay pipeline ingest + post-process ESC* in-house theo ADR-0005.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        143
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/bloodhound-query/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/bloodhound-query/SKILL.md",
+      "summary": "Skill AD bloodhound-query: BloodHound ingest + Cypher query canonical cho AD attack-path enumeration (shortest path kerberoastable, unconstrained delegation); chạy sau khi collector dump zip, promote finding vào knowledge graph.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        86
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/certipy-esc-chain/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/certipy-esc-chain/SKILL.md",
+      "summary": "Skill AD certipy-esc-chain: ADCS abuse qua Certipy: tìm template lỗi (ESC1-15), request cert, authenticate as target, dump krbtgt — full chain 4 lệnh, phủ ESC1 (any SAN), ESC2/3/4, ESC8 (NTLM relay tới CA), ESC9/10/11/13; MITRE T1649/T1078.002.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        130
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/coercer/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/coercer/SKILL.md",
+      "summary": "Skill AD coercer: Authentication coercion Windows/AD: PetitPotam (MS-EFSR), PrinterBug (MS-RPRN), DFSCoerce, ShadowCoerce, meta-tool Coercer.py — ép machine NTLM-authenticate về attacker rồi relay hoặc crack offline; MITRE T1187/T1557.001.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        106
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/dcsync/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/dcsync/SKILL.md",
+      "summary": "Skill AD dcsync: DCSync: lạm dụng replication rights (DS-Replication-Get-Changes + GetChangesAll) dump krbtgt và NT hash user từ DC; MITRE T1003.006.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        133
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/kerberoasting/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/kerberoasting/SKILL.md",
+      "summary": "Skill AD kerberoasting: Kerberoasting: request TGS cho service account có SPN rồi crack offline bằng hashcat — priv-esc primitive kinh điển của AD; MITRE T1558.003.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        97
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/laps/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/laps/SKILL.md",
+      "summary": "Skill AD laps: LAPS: extract local admin password quản lý bởi LAPS từ computer object AD (ms-Mcs-AdmPwd / msLAPS-Password) qua LDAP/PowerView/netexec; MITRE T1555.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        135
+      ]
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/ad/netexec/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/ad/netexec/SKILL.md",
+      "summary": "Skill AD netexec: NetExec (kế nhiệm CrackMapExec): auth + post-auth module thống nhất SMB/LDAP/MSSQL/WinRM/RDP/SSH/FTP/VNC, 200+ module (BloodHound auto-ingest, ESC1-15 scan, PrintNightmare, LDAP relay); MITRE T1078/T1110/T1135/T1018/T1021.",
+      "tags": [
+        "skill",
+        "ad",
+        "active-directory",
+        "exploitation"
+      ],
+      "complexity": "simple",
+      "lineRange": [
+        1,
+        177
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/references/amsi-bypass-techniques.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/references/modern-evasion-techniques.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/references/modern-evasion-techniques.md",
+      "target": "document:packages/raptix/raptix/skills/defs/shared/defense-evasion/references/amsi-bypass-techniques.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/shared/opsec/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/shared/stealth-infra/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/references/cve-apt-mapping.md",
+      "target": "document:packages/raptix/raptix/skills/defs/shared/adversary-emulation/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/adcs-esc1/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/asrep-roasting/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/bloodhound-bhce/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/bloodhound-query/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/certipy-esc-chain/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/coercer/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/dcsync/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/kerberoasting/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/laps/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/ad/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/ad/netexec/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

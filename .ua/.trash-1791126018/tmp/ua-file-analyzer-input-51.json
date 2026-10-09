@@ -1,0 +1,32 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/tools/mcp/__init__.py",
+      "language": "python",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/mcp/client.py",
+      "language": "python",
+      "sizeLines": 269,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "language": "python",
+      "sizeLines": 338,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "packages/raptix/raptix/tools/mcp/__init__.py": [
+      "packages/raptix/raptix/tools/mcp/client.py"
+    ],
+    "packages/raptix/raptix/tools/mcp/client.py": [],
+    "packages/raptix/tests/unit/tools/test_mcp_client.py": [
+      "packages/raptix/raptix/tools/mcp/client.py"
+    ]
+  }
+}

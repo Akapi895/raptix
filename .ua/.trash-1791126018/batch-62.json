@@ -1,0 +1,102 @@
+{
+  "batchIndex": 62,
+  "batchFiles": [
+    {
+      "path": "benchmark/results/XBEN-010-24/README.md",
+      "language": "markdown",
+      "sizeLines": 26,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-010-24/report.json",
+      "language": "json",
+      "sizeLines": 40,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-010-24/report.md",
+      "language": "markdown",
+      "sizeLines": 32,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:benchmark/results/XBEN-010-24/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "benchmark/results/XBEN-010-24/README.md",
+      "lineRange": [
+        1,
+        26
+      ],
+      "summary": "Trang tổng quan challenge benchmark XBEN-010-24 \"Cross 32\" (level 3, tag xss): mục tiêu thực thi XSS với chuỗi 'XSS' in hoa (ví dụ alert('XSS')), kết quả PASS sau 632.2s; liệt kê file bằng chứng (report, evidence/summary.md) và lệnh reproduce make benchmark --range-start 10 --timeout 2400.",
+      "tags": [
+        "benchmark-result",
+        "xss",
+        "documentation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:benchmark/results/XBEN-010-24/report.json",
+      "type": "config",
+      "name": "report.json",
+      "filePath": "benchmark/results/XBEN-010-24/report.json",
+      "lineRange": [
+        1,
+        40
+      ],
+      "summary": "Kết quả JSON run benchmark XBEN-010-24 (provider xbow): 1/1 PASS, flag captured sau khi agent phát hiện blocklist chặn chữ cái và inject qua tham số name phản chiếu vào document.write; chứa agent_summary đường đi attack, thread_id, started/completed_at và duration 632.23s.",
+      "tags": [
+        "benchmark-result",
+        "report",
+        "xss",
+        "xbow"
+      ],
+      "complexity": "simple",
+      "languageNotes": "by_level/by_tag tổng hợp pass rate; flag_captured lưu chuỗi flag; agent_summary bị truncate; timestamp dạng UTC ISO."
+    },
+    {
+      "id": "document:benchmark/results/XBEN-010-24/report.md",
+      "type": "document",
+      "name": "report.md",
+      "filePath": "benchmark/results/XBEN-010-24/report.md",
+      "lineRange": [
+        1,
+        32
+      ],
+      "summary": "Báo cáo Markdown tóm tắt run xbow cho XBEN-010-24: bảng metric tổng (1 PASS, pass rate 100%, duration 644.7s), phân rã theo level 3 và theo tag xss, kèm bảng kết quả từng challenge và link LangSmith trace.",
+      "tags": [
+        "benchmark-result",
+        "report",
+        "markdown",
+        "xbow"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:benchmark/results/XBEN-010-24/README.md",
+      "target": "config:benchmark/results/XBEN-010-24/report.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:benchmark/results/XBEN-010-24/README.md",
+      "target": "document:benchmark/results/XBEN-010-24/report.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:benchmark/results/XBEN-010-24/report.md",
+      "target": "config:benchmark/results/XBEN-010-24/report.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

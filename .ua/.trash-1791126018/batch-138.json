@@ -1,0 +1,723 @@
+{
+  "batchIndex": 138,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 410,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/references/sliver-quickstart.md",
+      "language": "markdown",
+      "sizeLines": 148,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 216,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/havoc/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 156,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/mythic/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 144,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 377,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/references/lsass-techniques.md",
+      "language": "markdown",
+      "sizeLines": 126,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/lateral-movement/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 460,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/linux-privesc-enum/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 410,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/macos/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 85,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/network-replay/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 264,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/privilege-escalation/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 499,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/reporting/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 549,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/active-recon/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 399,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 264,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-ip-ranges.md",
+      "language": "markdown",
+      "sizeLines": 111,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-naming-patterns.md",
+      "language": "markdown",
+      "sizeLines": 136,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/iot-security/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 363,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/mobile-security/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 233,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/open-web/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 102,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/osint/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 235,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 311,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/references/dns-techniques.md",
+      "language": "markdown",
+      "sizeLines": 99,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "language": "python",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/reporting/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 495,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/SKILL.md",
+      "lineRange": [
+        1,
+        410
+      ],
+      "summary": "Skill vận hành Sliver C2 (410 dòng): kết nối server, setup listener, sinh implant, extension BOF/Armory, thao tác post-implant, HTTP C2 profile; có phần Raptix Setup riêng cho hạ tầng lab.",
+      "tags": [
+        "sliver",
+        "c2",
+        "implant",
+        "bof"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/references/sliver-quickstart.md",
+      "type": "document",
+      "name": "sliver-quickstart.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/references/sliver-quickstart.md",
+      "lineRange": [
+        1,
+        148
+      ],
+      "summary": "Tài liệu tham khảo Sliver quickstart: kiến trúc C2 trong Raptix, setup server, cấu hình listener, sinh implant — hướng dẫn nhanh rút gọn đi kèm skill c2-sliver.",
+      "tags": [
+        "sliver",
+        "quickstart",
+        "reference"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/SKILL.md",
+      "lineRange": [
+        1,
+        216
+      ],
+      "summary": "Skill C2 orchestration framework-agnostic: các loại listener, chế độ implant, kiến trúc redirector, malleable profile, chiến lược jitter, hướng dẫn OPSEC; kiến trúc C2 của Raptix + mapping ATT&CK.",
+      "tags": [
+        "c2",
+        "orchestration",
+        "redirector",
+        "opsec"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2/havoc/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/havoc/SKILL.md",
+      "lineRange": [
+        1,
+        156
+      ],
+      "summary": "Skill Havoc C2: thay thế Sliver/CS hiện đại — Demon agent với indirect syscall, sleep obfuscation (Ekko/Zilean/FOLIAGE), tích hợp Donut PIC loader, comms HTTP theo profile, web client MaterialUI; dùng khi cần OPSEC hiện đại mà không tốn chi phí Cobalt Strike.",
+      "tags": [
+        "havoc",
+        "c2",
+        "demon",
+        "syscall"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2/mythic/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/mythic/SKILL.md",
+      "lineRange": [
+        1,
+        144
+      ],
+      "summary": "Skill Mythic C2: multi-agent (Apfell, Apollo, Athena, Poseidon, Medusa), web UI cổng 7443, backend RabbitMQ + PostgreSQL, tasking JSON-RPC, build agent qua mythic-cli, thiết kế profile (HTTP/SMB/named pipe/P2P), opsec defaults; so sánh với Sliver.",
+      "tags": [
+        "mythic",
+        "c2",
+        "apollo",
+        "rabbitmq"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/SKILL.md",
+      "lineRange": [
+        1,
+        377
+      ],
+      "summary": "Skill trích xuất credential (377 dòng): dump LSASS, trích hive SAM/SECURITY, giải mã DPAPI, NTLM relay, poisoning bằng Responder, password spraying, crack hash.",
+      "tags": [
+        "credential-access",
+        "lsass",
+        "dpapi",
+        "ntlm"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/references/lsass-techniques.md",
+      "type": "document",
+      "name": "lsass-techniques.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/references/lsass-techniques.md",
+      "lineRange": [
+        1,
+        126
+      ],
+      "summary": "Tham khảo kỹ thuật LSASS: bảng so sánh method, các kỹ thuật xếp theo mức stealth, trích hive SAM/SECURITY — tài liệu nền cho skill credential-access.",
+      "tags": [
+        "lsass",
+        "reference",
+        "stealth"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/lateral-movement/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/lateral-movement/SKILL.md",
+      "lineRange": [
+        1,
+        460
+      ],
+      "summary": "Skill lateral movement (460 dòng): Pass-the-Hash, Pass-the-Ticket, thực thi WMI/WinRM/PsExec/RDP, thao tác SMB, tunnel mạng bằng Ligolo-ng và Chisel.",
+      "tags": [
+        "lateral-movement",
+        "pass-the-hash",
+        "wmi",
+        "tunneling"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/linux-privesc-enum/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/linux-privesc-enum/SKILL.md",
+      "lineRange": [
+        1,
+        410
+      ],
+      "summary": "Skill phương pháp enumerate privesc Linux có hệ thống (410 dòng): các phase theo thứ tự — sudo, SUID/SGID, capabilities, cron, writable path, NFS, kernel CVE, tra GTFOBins; dựa trên nghiên cứu privesc tự động LLM (hackingBuddyGPT/ipa-lab).",
+      "tags": [
+        "linux",
+        "privesc",
+        "enumeration",
+        "gtfobins"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/macos/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/macos/SKILL.md",
+      "lineRange": [
+        1,
+        85
+      ],
+      "summary": "Skill post-exploitation macOS: persistence launchd, bypass TCC, truy cập Keychain, dylib hijacking, né Gatekeeper/quarantine, discovery trên host Apple; mỗi mục gắn tactic ATT&CK, có ghi chú blue-cell về detection.",
+      "tags": [
+        "macos",
+        "launchd",
+        "tcc",
+        "keychain"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/network-replay/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/network-replay/SKILL.md",
+      "lineRange": [
+        1,
+        264
+      ],
+      "summary": "Skill replay mạng dựa trên PCAP: capture chuỗi xác thực, session token, protocol frame rồi replay/inject để đạt truy cập trái phép hoặc session hijack; inventory tool + phase capture và extract replayable material.",
+      "tags": [
+        "network-replay",
+        "pcap",
+        "session-hijack",
+        "traffic"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/privilege-escalation/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/privilege-escalation/SKILL.md",
+      "lineRange": [
+        1,
+        499
+      ],
+      "summary": "Skill privesc host (499 dòng): Windows token impersonation (họ Potato), bypass UAC, lạm dụng service, DLL hijacking; Linux SUID/sudo/kernel exploit; enumeration tự động.",
+      "tags": [
+        "privilege-escalation",
+        "potato",
+        "uac-bypass",
+        "dll-hijacking"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/reporting/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/post-exploit/reporting/SKILL.md",
+      "lineRange": [
+        1,
+        549
+      ],
+      "summary": "Skill báo cáo post-exploitation (549 dòng): template finding cho credential access/privesc/lateral movement, phân tích detection gap, tài liệu hóa attack path, chấm điểm CVSS v4.0.",
+      "tags": [
+        "reporting",
+        "cvss",
+        "findings",
+        "detection-gap"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/active-recon/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/active-recon/SKILL.md",
+      "lineRange": [
+        1,
+        399
+      ],
+      "summary": "Skill active recon (399 dòng): port scan, service detection, vuln scan, banner grabbing, fuzz web directory, phân tích SSL/TLS; nguyên tắc OPSEC cho quét chủ động và các pattern Nmap copy-paste.",
+      "tags": [
+        "active-recon",
+        "port-scanning",
+        "nmap",
+        "opsec"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/SKILL.md",
+      "lineRange": [
+        1,
+        264
+      ],
+      "summary": "Skill enumeration cloud: S3/GCS/Azure blob bucket, cloud metadata endpoint, IAM misconfiguration, phát hiện CDN origin; phát hiện provider trước khi enumerate sâu.",
+      "tags": [
+        "cloud-recon",
+        "s3",
+        "azure",
+        "gcp"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-ip-ranges.md",
+      "type": "document",
+      "name": "cloud-ip-ranges.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-ip-ranges.md",
+      "lineRange": [
+        1,
+        111
+      ],
+      "summary": "Tham khảo IP ranges cloud: endpoint live tải IP range AWS/GCP/Azure, script check IP nhanh, mapping CNAME → provider.",
+      "tags": [
+        "cloud",
+        "ip-ranges",
+        "reference"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-naming-patterns.md",
+      "type": "document",
+      "name": "cloud-naming-patterns.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-naming-patterns.md",
+      "lineRange": [
+        1,
+        136
+      ],
+      "summary": "Tham khảo pattern đặt tên bucket S3/GCS/Azure Blob để dò bucket theo cấu trúc tên tổ chức.",
+      "tags": [
+        "bucket-naming",
+        "cloud",
+        "reference"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/iot-security/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/iot-security/SKILL.md",
+      "lineRange": [
+        1,
+        363
+      ],
+      "summary": "Skill recon IoT (363 dòng): trích firmware, phân tích embedded, nhận diện protocol, check default credential, vuln scan, device fingerprinting.",
+      "tags": [
+        "iot",
+        "recon",
+        "firmware",
+        "fingerprinting"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/mobile-security/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/mobile-security/SKILL.md",
+      "lineRange": [
+        1,
+        233
+      ],
+      "summary": "Skill recon mobile (233 dòng): phân tích APK/IPA, enumerate permission, kiểm tra certificate/signature, phát hiện hardcoded secret, nhận diện insecure storage, phân tích network security.",
+      "tags": [
+        "mobile",
+        "apk",
+        "ipa",
+        "secrets"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/open-web/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/open-web/SKILL.md",
+      "lineRange": [
+        1,
+        102
+      ],
+      "summary": "Skill đọc trang public + tìm kiếm OSINT bền vững: web_search (provider allowlist) và web_fetch (grid curl_cffi TLS-impersonation + fallback headless browser qua WAF/403/anti-bot); quy tắc R2 (HTTP 200 chưa chắc success), R6 (give-up không phải exhaustion) và biên RoE/OSINT.",
+      "tags": [
+        "osint",
+        "web-fetch",
+        "anti-bot",
+        "roe"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/osint/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/osint/SKILL.md",
+      "lineRange": [
+        1,
+        235
+      ],
+      "summary": "Skill OSINT (235 dòng): harvest email, profile social media, check breach data, enumerate employee, scan GitHub secret, mapping tổ chức.",
+      "tags": [
+        "osint",
+        "email-harvest",
+        "breach-data",
+        "github"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/SKILL.md",
+      "lineRange": [
+        1,
+        311
+      ],
+      "summary": "Skill passive recon không chạm target (311 dòng): DNS, WHOIS, enumerate subdomain, Certificate Transparency, fingerprint technology, map ASN; kèm bộ lệnh copy-paste nhanh.",
+      "tags": [
+        "passive-recon",
+        "dns",
+        "whois",
+        "subdomain"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/references/dns-techniques.md",
+      "type": "document",
+      "name": "dns-techniques.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/references/dns-techniques.md",
+      "lineRange": [
+        1,
+        99
+      ],
+      "summary": "Tham khảo kỹ thuật DNS: loại record phục vụ recon, so sánh tool enumerate subdomain, cấu hình Subfinder, Certificate Transparency chi tiết, passive DNS database, intelligence ASN/BGP.",
+      "tags": [
+        "dns",
+        "reference",
+        "subdomain",
+        "ct-logs"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "type": "file",
+      "name": "parse_subdomains.py",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "lineRange": [
+        1,
+        71
+      ],
+      "summary": "Script Python parse subdomain cho passive-recon: đọc file text đầu vào (output HTTP, txt), trích subdomain bằng regex, gộp unique, sort rồi ghi output; CLI argparse nhận input/output, báo lỗi nếu file không tồn tại.",
+      "tags": [
+        "python",
+        "parser",
+        "subdomain",
+        "cli"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py:extract_subdomains",
+      "type": "function",
+      "name": "extract_subdomains",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "lineRange": [
+        16,
+        19
+      ],
+      "summary": "Hàm trích danh sách subdomain từ text bằng re.findall với pattern domain, chuyển lowercase; hàm export của script, được main gọi.",
+      "tags": [
+        "regex",
+        "parsing",
+        "export"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "lineRange": [
+        22,
+        67
+      ],
+      "summary": "Entry point CLI: argparse với 3 tham số (-i input, -o output, tùy chọn), kiểm tra file input tồn tại, đọc từng dòng, gọi extract_subdomains gộp vào set unique, sort và ghi output, in số lượng subdomain tìm được.",
+      "tags": [
+        "cli",
+        "argparse",
+        "io"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/reporting/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/reporting/SKILL.md",
+      "lineRange": [
+        1,
+        495
+      ],
+      "summary": "Skill báo cáo recon (495 dòng): cấu trúc report, template finding document, chấm điểm CVSS v4.0 (primary), mapping MITRE ATT&CK, ưu tiên hóa finding, output Markdown, tracking detection gap, checklist handoff.",
+      "tags": [
+        "reporting",
+        "cvss",
+        "recon",
+        "handoff"
+      ],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "target": "function:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py:extract_subdomains",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "target": "function:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py:extract_subdomains",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "target": "function:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "target": "function:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2/havoc/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2/mythic/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/references/sliver-quickstart.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/references/lsass-techniques.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-ip-ranges.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-naming-patterns.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/references/dns-techniques.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/passive-recon/SKILL.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

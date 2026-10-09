@@ -1,0 +1,2104 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 25,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 25
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ad/references/attack-paths.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 135,
+      "nonEmptyLines": 100,
+      "sections": [
+        {
+          "heading": "Active Directory Attack Paths — Deep Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "BloodHound Queries (Cypher)",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "High-Value Paths",
+          "level": 3,
+          "line": 5
+        },
+        {
+          "heading": "SharpHound Collection",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "Kerberos Attack Reference",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "Service Principal Names (SPNs)",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "Hashcat Modes for Kerberos",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "AD CS (Active Directory Certificate Services)",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "ESC1 — Enrollee Supplies Subject",
+          "level": 3,
+          "line": 76
+        },
+        {
+          "heading": "ESC8 — NTLM Relay to ADCS HTTP Enrollment",
+          "level": 3,
+          "line": 89
+        },
+        {
+          "heading": "DCSync Attack Chain",
+          "level": 2,
+          "line": 98
+        },
+        {
+          "heading": "Golden Ticket",
+          "level": 2,
+          "line": 112
+        },
+        {
+          "heading": "Constrained Delegation Abuse",
+          "level": 2,
+          "line": 126
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/api/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 46,
+      "nonEmptyLines": 35,
+      "sections": [
+        {
+          "heading": "Modern API Attack Category",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Sub-skills",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Quick fingerprint",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Sibling skills",
+          "level": 2,
+          "line": 43
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/api/grpc/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 109,
+      "nonEmptyLines": 83,
+      "sections": [
+        {
+          "heading": "gRPC API Attack Surface",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Discovery",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Attack patterns",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Missing authz on streaming RPCs",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "Protobuf field-number reuse / unknown-field exfil",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "Metadata header injection",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "h2c smuggling — gRPC fronted by Envoy/nginx",
+          "level": 3,
+          "line": 58
+        },
+        {
+          "heading": "mTLS bypass via SNI mismatch",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "gRPC-Web → backend SSRF",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "Fuzz strategy",
+          "level": 2,
+          "line": 83
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 99
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 104
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/api/server-sent-events/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 94,
+      "nonEmptyLines": 71,
+      "sections": [
+        {
+          "heading": "Server-Sent Events (SSE) Attack Surface",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Detect",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Top bug classes",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "1. Cross-Origin streaming exfil (SSE doesn't enforce CORS for `EventSource`)",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "2. Prompt injection into LLM chat clients",
+          "level": 3,
+          "line": 43
+        },
+        {
+          "heading": "3. Reconnection token leak via `Last-Event-ID`",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "4. Retry timing DoS",
+          "level": 3,
+          "line": 61
+        },
+        {
+          "heading": "5. Fragmenting events past content-type sniffers",
+          "level": 3,
+          "line": 64
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 67
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 90
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/api/soap-wsdl/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 110,
+      "nonEmptyLines": 85,
+      "sections": [
+        {
+          "heading": "SOAP / WSDL Attack Surface",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Discovery",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Quick attack catalog",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "XXE in SOAP envelope",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "WS-Security UsernameToken brute / clear-text leak",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "WS-Addressing replay",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "SAML in WS-Trust / SAML EncryptedAssertion",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "Schema validation bypass",
+          "level": 3,
+          "line": 60
+        },
+        {
+          "heading": "XML Bomb / Billion Laughs DoS",
+          "level": 3,
+          "line": 72
+        },
+        {
+          "heading": "SOAPAction routing confusion",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 87
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 99
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 105
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/api/websocket/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 119,
+      "nonEmptyLines": 90,
+      "sections": [
+        {
+          "heading": "WebSocket Attack Surface",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Detect",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Top 5 bug classes",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "1. Cross-Site WebSocket Hijacking (CSWSH)",
+          "level": 3,
+          "line": 32
+        },
+        {
+          "heading": "2. Missing per-message authorization",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "3. Message-type confusion",
+          "level": 3,
+          "line": 54
+        },
+        {
+          "heading": "4. WS → wss downgrade",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "5. Hidden RPC routes",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "Protocol-specific tips",
+          "level": 2,
+          "line": 95
+        },
+        {
+          "heading": "Socket.IO",
+          "level": 3,
+          "line": 97
+        },
+        {
+          "heading": "STOMP over WebSocket",
+          "level": 3,
+          "line": 100
+        },
+        {
+          "heading": "GraphQL-WS / graphql-transport-ws",
+          "level": 3,
+          "line": 103
+        },
+        {
+          "heading": "SignalR",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 109
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 115
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 16
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/cicd/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 110,
+      "nonEmptyLines": 84,
+      "sections": [
+        {
+          "heading": "CI/CD Pipeline Exploitation — Category Overview",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Sub-Skills",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Provider fingerprinting",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Workflow file recon (GitHub Actions example)",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "Risky-surface triage",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "Secret-exposure surface",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 86
+        },
+        {
+          "heading": "Decision gate",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Cross-references",
+          "level": 2,
+          "line": 106
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/cicd/cicd-secrets-exfil/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 198,
+      "nonEmptyLines": 147,
+      "sections": [
+        {
+          "heading": "CI/CD Secrets & OIDC Exfiltration",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Surface map",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Log masking — and how it fails",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "What lives in `env`",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "GitHub OIDC -> cloud role",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "`GITHUB_TOKEN` abuse",
+          "level": 2,
+          "line": 107
+        },
+        {
+          "heading": "GitLab `CI_JOB_TOKEN`",
+          "level": 2,
+          "line": 125
+        },
+        {
+          "heading": "Cache / artifact secret leakage",
+          "level": 2,
+          "line": 138
+        },
+        {
+          "heading": "Provenance / supply-chain pivot",
+          "level": 2,
+          "line": 154
+        },
+        {
+          "heading": "Detection signatures",
+          "level": 2,
+          "line": 165
+        },
+        {
+          "heading": "Tools",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "Decision gate",
+          "level": 2,
+          "line": 185
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 192
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/cicd/github-actions-injection/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 200,
+      "nonEmptyLines": 151,
+      "sections": [
+        {
+          "heading": "GitHub Actions Expression Injection",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Untrusted context — the sinks",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Recon — find injection sinks",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Sink pattern — the vulnerable workflow",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "Exploit payload — issue title",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "Branch-name injection",
+          "level": 2,
+          "line": 72
+        },
+        {
+          "heading": "`pull_request_target` + PR-head checkout",
+          "level": 2,
+          "line": 84
+        },
+        {
+          "heading": "Safe pattern (defender)",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "`GITHUB_TOKEN` permission abuse",
+          "level": 2,
+          "line": 115
+        },
+        {
+          "heading": "Artifact / cache poisoning",
+          "level": 2,
+          "line": 139
+        },
+        {
+          "heading": "Third-party action pinning",
+          "level": 2,
+          "line": 150
+        },
+        {
+          "heading": "Detection signatures",
+          "level": 2,
+          "line": 169
+        },
+        {
+          "heading": "Tools",
+          "level": 2,
+          "line": 179
+        },
+        {
+          "heading": "Decision gate",
+          "level": 2,
+          "line": 189
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 195
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/cicd/poisoned-pipeline-execution/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 190,
+      "nonEmptyLines": 149,
+      "sections": [
+        {
+          "heading": "Poisoned Pipeline Execution (PPE)",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Recon — does the target build untrusted code?",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Direct PPE — edit the workflow itself",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "Indirect PPE — edit a file the pipeline calls",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "package.json scripts",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "Makefile / `make test`",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Gradle / Maven",
+          "level": 3,
+          "line": 82
+        },
+        {
+          "heading": "Danger / pre-commit / lint hooks",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "setup.py / pyproject.toml",
+          "level": 3,
+          "line": 121
+        },
+        {
+          "heading": "Test fixtures",
+          "level": 3,
+          "line": 130
+        },
+        {
+          "heading": "`pull_request_target` — the dangerous trigger",
+          "level": 2,
+          "line": 134
+        },
+        {
+          "heading": "Chains",
+          "level": 2,
+          "line": 152
+        },
+        {
+          "heading": "Tools",
+          "level": 2,
+          "line": 161
+        },
+        {
+          "heading": "Detection signatures (defender view)",
+          "level": 2,
+          "line": 170
+        },
+        {
+          "heading": "Decision gate",
+          "level": 2,
+          "line": 179
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 186
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 16
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/cicd/self-hosted-runner-abuse/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 187,
+      "nonEmptyLines": 147,
+      "sections": [
+        {
+          "heading": "Self-Hosted Runner Abuse",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Recon — does the target use self-hosted?",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Default vs ephemeral",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Fork-PR execution on self-hosted",
+          "level": 2,
+          "line": 53
+        },
+        {
+          "heading": "Persistence on non-ephemeral runners",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "Token / secret theft from runner env",
+          "level": 2,
+          "line": 98
+        },
+        {
+          "heading": "Lateral movement from the runner",
+          "level": 2,
+          "line": 116
+        },
+        {
+          "heading": "Runner-label targeting",
+          "level": 2,
+          "line": 140
+        },
+        {
+          "heading": "Detection signatures",
+          "level": 2,
+          "line": 156
+        },
+        {
+          "heading": "Tools",
+          "level": 2,
+          "line": 166
+        },
+        {
+          "heading": "Decision gate",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 182
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/crypto/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 161,
+      "nonEmptyLines": 134,
+      "sections": [
+        {
+          "heading": "Crypto / Decode Playbook",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "1. Identify FIRST",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Unknown text → automated cracker",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "Hash → identify type",
+          "level": 3,
+          "line": 31
+        },
+        {
+          "heading": "Specific format checks",
+          "level": 3,
+          "line": 38
+        },
+        {
+          "heading": "2. Classical cipher quick-checks",
+          "level": 2,
+          "line": 53
+        },
+        {
+          "heading": "3. CyberChef recipe library",
+          "level": 2,
+          "line": 67
+        },
+        {
+          "heading": "4. Hash cracking quick-ref",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "5. Token / blob unfolding workflow",
+          "level": 2,
+          "line": 105
+        },
+        {
+          "heading": "6. Raptix integration",
+          "level": 2,
+          "line": 117
+        },
+        {
+          "heading": "7. Severity (depends on what was decoded)",
+          "level": 2,
+          "line": 142
+        },
+        {
+          "heading": "Cross-references",
+          "level": 2,
+          "line": 152
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 157
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/edge-device-exploitation/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 318,
+      "nonEmptyLines": 252,
+      "sections": [
+        {
+          "heading": "Edge Device Exploitation",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "1. Identifying Edge Devices",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "External Reconnaissance",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "Fingerprinting",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "2. CVE Exploitation Chains",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "CVE-2023-20198 — Cisco IOS XE Web UI Privilege Escalation (CVSS 10.0)",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "CVE-2024-21887 — Ivanti Connect Secure Command Injection (CVSS 9.1)",
+          "level": 3,
+          "line": 102
+        },
+        {
+          "heading": "CVE-2024-3400 — Palo Alto PAN-OS GlobalProtect Command Injection (CVSS 10.0)",
+          "level": 3,
+          "line": 124
+        },
+        {
+          "heading": "CVE-2024-47575 — FortiManager Unauthenticated RCE (CVSS 9.8)",
+          "level": 3,
+          "line": 146
+        },
+        {
+          "heading": "3. Post-Exploitation on Network Devices",
+          "level": 2,
+          "line": 174
+        },
+        {
+          "heading": "Config Extraction",
+          "level": 3,
+          "line": 176
+        },
+        {
+          "heading": "Credential Harvesting",
+          "level": 3,
+          "line": 201
+        },
+        {
+          "heading": "Traffic Interception",
+          "level": 3,
+          "line": 221
+        },
+        {
+          "heading": "4. Implant Deployment",
+          "level": 2,
+          "line": 238
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 268
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 280
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 292
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 301
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 20
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 53,
+      "nonEmptyLines": 41,
+      "sections": [
+        {
+          "heading": "Industrial Control Systems / OT Category",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "SAFETY FIRST",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Protocol routing",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Quick fingerprint sweep",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "Useful tooling",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "Defender baseline (useful for triage)",
+          "level": 2,
+          "line": 51
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/bacnet/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 114,
+      "nonEmptyLines": 87,
+      "sections": [
+        {
+          "heading": "BACnet/IP Attack — Building Automation",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Discover",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "What you get from discovery",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "Read everything",
+          "level": 2,
+          "line": 50
+        },
+        {
+          "heading": "Write attacks",
+          "level": 2,
+          "line": 63
+        },
+        {
+          "heading": "Override an output (the actual physical effect)",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "Subscribe to COV — Change Of Value (passive observation w/ delivery to attacker)",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "Broadcast Storm (BBMD abuse)",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "Vendor-specific overrides",
+          "level": 3,
+          "line": 88
+        },
+        {
+          "heading": "Pivot from BACnet to OT network",
+          "level": 2,
+          "line": 93
+        },
+        {
+          "heading": "OPSEC + safety",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 109
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/dnp3/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 118,
+      "nonEmptyLines": 91,
+      "sections": [
+        {
+          "heading": "DNP3 Attack — Utility SCADA",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Discover",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Read attacks (passive — generally safe)",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Control attacks (potentially HIGH IMPACT)",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "Control Relay Output Block (CROB) — trip / close a breaker",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "Analog Output Block (AOB) — setpoint",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "Unsolicited reporting abuse",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "DNP3 Secure Authentication (DNP3-SA) downgrade",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "OPSEC + safety",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Reference indices for common deployments",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 113
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/enip-cip/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 277,
+      "nonEmptyLines": 218,
+      "sections": [
+        {
+          "heading": "EtherNet/IP + CIP Attack Playbook (TCP 44818 / UDP 2222)",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "SAFETY FIRST",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Phase 1 — Discover",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "UDP 2222 List Identity broadcast",
+          "level": 3,
+          "line": 36
+        },
+        {
+          "heading": "Phase 2 — Tag database enumeration (unauthenticated on ControlLogix/CompactLogix)",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "Phase 3 — Read tags",
+          "level": 2,
+          "line": 101
+        },
+        {
+          "heading": "Phase 4 — Write tags (SAFETY GATE — write-class authorization required)",
+          "level": 2,
+          "line": 129
+        },
+        {
+          "heading": "Phase 5 — CIP mode change: Stop / Run / Reset",
+          "level": 2,
+          "line": 152
+        },
+        {
+          "heading": "Phase 6 — Historical Rockwell auth-bypass CVEs",
+          "level": 2,
+          "line": 200
+        },
+        {
+          "heading": "Common findings",
+          "level": 2,
+          "line": 222
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 234
+        },
+        {
+          "heading": "ZFP (two-method evidence)",
+          "level": 2,
+          "line": 253
+        },
+        {
+          "heading": "OPSEC notes",
+          "level": 2,
+          "line": 260
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 268
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/modbus/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 116,
+      "nonEmptyLines": 94,
+      "sections": [
+        {
+          "heading": "Modbus TCP Attack",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Discover",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Read everything",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "Identify the device (FC43 / MEI)",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "Write attacks",
+          "level": 2,
+          "line": 65
+        },
+        {
+          "heading": "Single coil flip (DO output)",
+          "level": 3,
+          "line": 67
+        },
+        {
+          "heading": "Tamper holding registers (process setpoints)",
+          "level": 3,
+          "line": 73
+        },
+        {
+          "heading": "Flood diagnostic FC8 sub-function 4 (\"Force Listen Only Mode\")",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "Bulk-write registers (often unauthenticated)",
+          "level": 3,
+          "line": 90
+        },
+        {
+          "heading": "Common findings",
+          "level": 2,
+          "line": 95
+        },
+        {
+          "heading": "OPSEC + safety",
+          "level": 2,
+          "line": 105
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 111
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/opcua/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 373,
+      "nonEmptyLines": 304,
+      "sections": [
+        {
+          "heading": "OPC-UA Attack Playbook (TCP 4840)",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "SAFETY FIRST",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Phase 1 — Discover",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Phase 2 — GetEndpoints (unauthenticated policy enumeration)",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Phase 3 — Auth testing",
+          "level": 2,
+          "line": 75
+        },
+        {
+          "heading": "Anonymous connect",
+          "level": 3,
+          "line": 77
+        },
+        {
+          "heading": "Username/password dictionary attack",
+          "level": 3,
+          "line": 97
+        },
+        {
+          "heading": "Phase 4 — Address-space browsing and tag read",
+          "level": 2,
+          "line": 131
+        },
+        {
+          "heading": "Read ServerStatus for vendor/version fingerprint",
+          "level": 3,
+          "line": 173
+        },
+        {
+          "heading": "Phase 5 — HistoryRead (process data exfiltration)",
+          "level": 2,
+          "line": 187
+        },
+        {
+          "heading": "Phase 6 — Method node calls (write-class, SAFETY GATE)",
+          "level": 2,
+          "line": 218
+        },
+        {
+          "heading": "Phase 7 — Session exhaustion DoS",
+          "level": 2,
+          "line": 264
+        },
+        {
+          "heading": "Common findings",
+          "level": 2,
+          "line": 299
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 311
+        },
+        {
+          "heading": "ZFP (two-method evidence)",
+          "level": 2,
+          "line": 351
+        },
+        {
+          "heading": "OPSEC notes",
+          "level": 2,
+          "line": 356
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 364
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 18
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/profinet/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 351,
+      "nonEmptyLines": 286,
+      "sections": [
+        {
+          "heading": "PROFINET Attack Playbook (EtherType 0x8892 / DCP)",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "SAFETY FIRST",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Phase 1 — Discover: DCP Identify-All broadcast",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "Wireshark passive discovery",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "Active DCP Identify-All broadcast (Scapy)",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Using Siemens STEP 7 / TIA Portal (if available on compromised engineering workstation)",
+          "level": 3,
+          "line": 108
+        },
+        {
+          "heading": "Phase 2 — Device fingerprinting: DCP Get",
+          "level": 2,
+          "line": 112
+        },
+        {
+          "heading": "Phase 3 — Flash-LED (physical device location)",
+          "level": 2,
+          "line": 150
+        },
+        {
+          "heading": "Phase 4 — DCP Set attacks (SAFETY GATE — write-class authorization required)",
+          "level": 2,
+          "line": 176
+        },
+        {
+          "heading": "Station-name reassignment (process disruption)",
+          "level": 3,
+          "line": 181
+        },
+        {
+          "heading": "IP address reassignment",
+          "level": 3,
+          "line": 211
+        },
+        {
+          "heading": "Factory reset",
+          "level": 3,
+          "line": 237
+        },
+        {
+          "heading": "Phase 5 — PROFINET RT frame injection / cyclic IO spoofing",
+          "level": 2,
+          "line": 258
+        },
+        {
+          "heading": "Common findings",
+          "level": 2,
+          "line": 295
+        },
+        {
+          "heading": "Evidence",
+          "level": 2,
+          "line": 306
+        },
+        {
+          "heading": "ZFP (two-method evidence)",
+          "level": 2,
+          "line": 325
+        },
+        {
+          "heading": "OPSEC notes",
+          "level": 2,
+          "line": 332
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 342
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 19
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/s7comm/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 119,
+      "nonEmptyLines": 91,
+      "sections": [
+        {
+          "heading": "Siemens S7 PLC Attack",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Discover",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Read / Write data blocks",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Stop / Start the PLC",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "Authentication / \"Protection Level\" differences",
+          "level": 2,
+          "line": 65
+        },
+        {
+          "heading": "Stuxnet-class primitives (S7-300/400 still in many old fleets)",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "CVE-2019-10936 — info leak on S7-1200/1500",
+          "level": 2,
+          "line": 91
+        },
+        {
+          "heading": "TIA Portal interaction",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "OPSEC + safety",
+          "level": 2,
+          "line": 107
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 114
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/reporting/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 464,
+      "nonEmptyLines": 361,
+      "sections": [
+        {
+          "heading": "Exploitation Reporting Knowledge Base",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "1. Exploitation Finding Template",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "1. Confirm the target is running Struts (identified during recon)",
+          "level": 1,
+          "line": 51
+        },
+        {
+          "heading": "2. Generate the malicious multipart upload request",
+          "level": 1,
+          "line": 54
+        },
+        {
+          "heading": "Upload a JSP webshell to /struts2/../shell.jsp (resolves to web root)",
+          "level": 1,
+          "line": 55
+        },
+        {
+          "heading": "3. Confirm shell placement",
+          "level": 1,
+          "line": 61
+        },
+        {
+          "heading": "4. Upgrade to reverse shell",
+          "level": 1,
+          "line": 65
+        },
+        {
+          "heading": "whoami output on compromised host",
+          "level": 1,
+          "line": 73
+        },
+        {
+          "heading": "id output",
+          "level": 1,
+          "line": 76
+        },
+        {
+          "heading": "hostname",
+          "level": 1,
+          "line": 79
+        },
+        {
+          "heading": "uname -a",
+          "level": 1,
+          "line": 82
+        },
+        {
+          "heading": "ip addr (abridged)",
+          "level": 1,
+          "line": 85
+        },
+        {
+          "heading": "2. Common Exploitation CVSS v4.0 Reference Scores",
+          "level": 2,
+          "line": 152
+        },
+        {
+          "heading": "CVSS 4.0 Severity Bands",
+          "level": 3,
+          "line": 168
+        },
+        {
+          "heading": "Key CVSS 4.0 Metrics (vs 3.1)",
+          "level": 3,
+          "line": 177
+        },
+        {
+          "heading": "3. Shell and Credential Cross-Reference",
+          "level": 2,
+          "line": 190
+        },
+        {
+          "heading": "Shell Entry — `exploit/shells.json`",
+          "level": 3,
+          "line": 194
+        },
+        {
+          "heading": "Credential Entry — `exploit/creds/initial.json`",
+          "level": 3,
+          "line": 219
+        },
+        {
+          "heading": "Linking Rule",
+          "level": 3,
+          "line": 242
+        },
+        {
+          "heading": "4. Attack Path Documentation",
+          "level": 2,
+          "line": 250
+        },
+        {
+          "heading": "Chain Severity Escalation Rules",
+          "level": 3,
+          "line": 290
+        },
+        {
+          "heading": "5. Evidence Collection Checklist",
+          "level": 2,
+          "line": 303
+        },
+        {
+          "heading": "Required for Every Finding",
+          "level": 3,
+          "line": 307
+        },
+        {
+          "heading": "Web Exploitation Specific",
+          "level": 3,
+          "line": 314
+        },
+        {
+          "heading": "Credential Capture Specific",
+          "level": 3,
+          "line": 320
+        },
+        {
+          "heading": "Reverse Shell Specific",
+          "level": 3,
+          "line": 326
+        },
+        {
+          "heading": "Evidence File Naming Convention",
+          "level": 3,
+          "line": 333
+        },
+        {
+          "heading": "6. MITRE ATT&CK Exploitation Technique Reference",
+          "level": 2,
+          "line": 351
+        },
+        {
+          "heading": "Initial Access (TA0001)",
+          "level": 3,
+          "line": 353
+        },
+        {
+          "heading": "Execution (TA0002)",
+          "level": 3,
+          "line": 363
+        },
+        {
+          "heading": "Persistence (TA0003) — Note if achieved during initial access",
+          "level": 3,
+          "line": 374
+        },
+        {
+          "heading": "7. File Layout Reference",
+          "level": 2,
+          "line": 384
+        },
+        {
+          "heading": "8. OPPLAN Update After Exploitation",
+          "level": 2,
+          "line": 410
+        },
+        {
+          "heading": "9. Pre-Submission Checklist",
+          "level": 2,
+          "line": 449
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 34
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/rmm-tool-abuse/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 285,
+      "nonEmptyLines": 222,
+      "sections": [
+        {
+          "heading": "RMM Tool Abuse",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "1. Discovery — Finding Existing RMM Installations",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "2. Deploying RMM Agents for Persistence",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "AnyDesk",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "ScreenConnect (ConnectWise Control)",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "TeamViewer",
+          "level": 3,
+          "line": 125
+        },
+        {
+          "heading": "Atera",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "3. Leveraging Existing RMM Installations",
+          "level": 2,
+          "line": 153
+        },
+        {
+          "heading": "4. Lateral Movement via RMM Console",
+          "level": 2,
+          "line": 182
+        },
+        {
+          "heading": "5. C2 via RMM Channel",
+          "level": 2,
+          "line": 210
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 236
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 247
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 259
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 268
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 16
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/supplychain/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 40,
+      "nonEmptyLines": 32,
+      "sections": [
+        {
+          "heading": "Supply-Chain Exploitation — Category Overview",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Sub-Skills",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Surface Discovery",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Decision Notes",
+          "level": 2,
+          "line": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/supplychain/dep-confusion/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 151,
+      "nonEmptyLines": 120,
+      "sections": [
+        {
+          "heading": "Dependency Confusion (Alex Birsan 2021)",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "1. Reconnaissance — find internal package names",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "2. Verify the package is private",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "3. Build the malicious package",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "4. Publish",
+          "level": 2,
+          "line": 94
+        },
+        {
+          "heading": "5. Wait + observe",
+          "level": 2,
+          "line": 101
+        },
+        {
+          "heading": "6. Programs that PAY for this",
+          "level": 2,
+          "line": 106
+        },
+        {
+          "heading": "7. PoC framing (for the report)",
+          "level": 2,
+          "line": 114
+        },
+        {
+          "heading": "8. Severity",
+          "level": 2,
+          "line": 128
+        },
+        {
+          "heading": "9. Defender",
+          "level": 2,
+          "line": 136
+        },
+        {
+          "heading": "Cross-references",
+          "level": 2,
+          "line": 144
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 148
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    }
+  ]
+}

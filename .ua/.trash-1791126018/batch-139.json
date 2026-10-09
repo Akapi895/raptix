@@ -1,0 +1,756 @@
+{
+  "batchIndex": 139,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 69,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/api-enumeration/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 67,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/auth-mapping/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 40,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/cms-scanning/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 39,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/cookie-audit/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 45,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/discovery/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 116,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/subdomain-takeover/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 175,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/waf-detection/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 39,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/wireless-security/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 380,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 45,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/android-malware/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 333,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/anti-debug-bypass/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 198,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/ctf-triage/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 350,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/deep-analysis/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 235,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/dotnet-malware/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 304,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/fileless-malware/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 319,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/firmware/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 67,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/fuzzing/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 272,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/game-security/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 52,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/ghidra/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 69,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/ios-static/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 162,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/malware-triage/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 142,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/packer-unpacking/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 177,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/ransomware-analysis/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 343,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/reverser/rootkit-analysis/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 428,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "lineRange": [
+        1,
+        69
+      ],
+      "summary": "Skill hub enumeration web app: fuzz directory/file, phát hiện vhost, enumerate API, scan CMS, detect WAF, map auth surface, audit cookie; fast-path theo tag + pattern dedup HTTP request + danh sách output file.",
+      "tags": [
+        "web-recon",
+        "hub",
+        "fuzzing",
+        "waf"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/api-enumeration/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/api-enumeration/SKILL.md",
+      "lineRange": [
+        1,
+        67
+      ],
+      "summary": "Skill enumerate REST API: phát hiện GraphQL, fuzz parameter; endpoint enumeration và parameter discovery.",
+      "tags": [
+        "api",
+        "graphql",
+        "enumeration"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/auth-mapping/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/auth-mapping/SKILL.md",
+      "lineRange": [
+        1,
+        40
+      ],
+      "summary": "Skill map auth surface: tìm login endpoint, nhận diện cơ chế JWT/OAuth/SAML/SSO/API-key, output handoff cho agent exploit.",
+      "tags": [
+        "auth-mapping",
+        "jwt",
+        "oauth",
+        "sso"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/cms-scanning/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/cms-scanning/SKILL.md",
+      "lineRange": [
+        1,
+        39
+      ],
+      "summary": "Skill scan CMS: phát hiện phiên bản WordPress (wpscan), Joomla, Drupal.",
+      "tags": [
+        "cms",
+        "wordpress",
+        "wpscan",
+        "joomla"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/cookie-audit/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/cookie-audit/SKILL.md",
+      "lineRange": [
+        1,
+        45
+      ],
+      "summary": "Skill audit cookie: bisect cookie bắt buộc theo sink, dựng timeline session-write phục vụ challenge race-condition.",
+      "tags": [
+        "cookie",
+        "session",
+        "race-condition"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/discovery/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/discovery/SKILL.md",
+      "lineRange": [
+        1,
+        116
+      ],
+      "summary": "Skill web discovery: fuzz directory/file, vhost discovery, trích endpoint JavaScript; có probe alias off-by-one cho Nginx/Apache.",
+      "tags": [
+        "discovery",
+        "fuzzing",
+        "vhost",
+        "javascript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/subdomain-takeover/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/subdomain-takeover/SKILL.md",
+      "lineRange": [
+        1,
+        175
+      ],
+      "summary": "Skill subdomain takeover qua dangling DNS/CNAME: fingerprint GitHub Pages, Heroku, Azure, Fastly, Shopify, Netlify, Surge, Tumblr, Beanstalk, Zendesk; quy trình enumerate asset → CNAME → body fingerprint.",
+      "tags": [
+        "subdomain-takeover",
+        "dns",
+        "cname"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/waf-detection/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/web-recon/waf-detection/SKILL.md",
+      "lineRange": [
+        1,
+        39
+      ],
+      "summary": "Skill fingerprint WAF: nhận diện Cloudflare, AWS WAF, Akamai, Imperva qua header/behavior; kèm tín hiệu multi-proxy/smuggling.",
+      "tags": [
+        "waf",
+        "fingerprinting",
+        "cloudflare"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/recon/wireless-security/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/recon/wireless-security/SKILL.md",
+      "lineRange": [
+        1,
+        380
+      ],
+      "summary": "Skill recon bảo mật không dây (380 dòng): phân tích WiFi, đánh giá Bluetooth, RFID/NFC, capture tín hiệu, phân tích protocol, kiểm thử mã hóa, phát hiện rogue device.",
+      "tags": [
+        "wireless",
+        "wifi",
+        "bluetooth",
+        "rfid"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "lineRange": [
+        1,
+        45
+      ],
+      "summary": "Skill root pointer lane binary reversing: điều hướng tới triage, fallback Radare2, trích string, unpack packer, virtualized protector, rủi ro symbol, ROP, deep analysis Ghidra, trích firmware; playbooks + workflow.",
+      "tags": [
+        "reversing",
+        "overview",
+        "triage"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/android-malware/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/android-malware/SKILL.md",
+      "lineRange": [
+        1,
+        333
+      ],
+      "summary": "Skill phân tích malware Android (333 dòng): review permission manifest, disassembly smali, decompile Java bằng jadx, instrument Frida, chặn network traffic, phân tích native library, scan tự động MobSF.",
+      "tags": [
+        "android-malware",
+        "jadx",
+        "frida",
+        "mobsf"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/anti-debug-bypass/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/anti-debug-bypass/SKILL.md",
+      "lineRange": [
+        1,
+        198
+      ],
+      "summary": "Skill phát hiện + vô hiệu hóa anti-debug/anti-VM: IsDebuggerPresent, ptrace, NtGlobalFlag, timing, hardware-breakpoint detection; enumerate kỹ thuật trong binary rồi áp bypass tương ứng.",
+      "tags": [
+        "anti-debug",
+        "bypass",
+        "ptrace"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/ctf-triage/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/ctf-triage/SKILL.md",
+      "lineRange": [
+        1,
+        350
+      ],
+      "summary": "Skill triage + giải challenge CTF (350 dòng): phát hiện category, chọn tool, chuỗi solve multi-step qua pwn/rev/crypto/forensics/web/misc; Phase 0 triage luôn chạy trước, fast-path riêng cho pwn.",
+      "tags": [
+        "ctf",
+        "triage",
+        "pwn",
+        "methodology"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/deep-analysis/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/deep-analysis/SKILL.md",
+      "lineRange": [
+        1,
+        235
+      ],
+      "summary": "Skill vòng lặp RE depth-first cho một binary/cụm function (235 dòng): decompile→rename→retype→comment→đọc lại với guard chống context-rot và check on-task; dùng khi triage đã xác định vùng quan trọng — hiểu function X, nhận diện crypto primitive, định vị C2 protocol, khôi phục struct.",
+      "tags": [
+        "deep-analysis",
+        "decompilation",
+        "crypto",
+        "c2-protocol"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/dotnet-malware/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/dotnet-malware/SKILL.md",
+      "lineRange": [
+        1,
+        304
+      ],
+      "summary": "Skill phân tích malware .NET (304 dòng): decompile dnSpy/ILSpy, de-obfuscate (ConfuserEx, .NET Reactor, Babel, Crypto Obfuscator), phân tích hành vi managed assembly, trích PowerShell cradle, giải mã config các họ .NET RAT phổ biến.",
+      "tags": [
+        "dotnet",
+        "malware",
+        "dnspy",
+        "deobfuscation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/fileless-malware/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/fileless-malware/SKILL.md",
+      "lineRange": [
+        1,
+        319
+      ],
+      "summary": "Skill phát hiện malware in-memory/fileless (319 dòng): phân tích AMSI bypass, reflective DLL injection, CLR-hosted payload, process hollowing, chuỗi PowerShell cradle, persistence WMI/COM, payload resident registry; memory forensics + trích payload.",
+      "tags": [
+        "fileless",
+        "amsi",
+        "process-hollowing",
+        "powershell"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/firmware/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/firmware/SKILL.md",
+      "lineRange": [
+        1,
+        67
+      ],
+      "summary": "Skill pipeline trích xuất firmware router/IoT: unpack filesystem lồng nhau, định vị web server binary, tìm backdoor credential, audit auth bypass, đối chiếu CVE; 7 bước từ extract tới record.",
+      "tags": [
+        "firmware",
+        "router",
+        "backdoor",
+        "web-server"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/fuzzing/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/fuzzing/SKILL.md",
+      "lineRange": [
+        1,
+        272
+      ],
+      "summary": "Skill fuzzing coverage-guided cho binary/library (272 dòng): scoping target, chọn fuzzer (AFL++/libFuzzer/Honggfuzz), khung harness, flag ASan+UBSan, curate corpus, triage + minimize crash (afl-tmin), rubric đánh giá exploitability; output corpus/crash vào /workspace.",
+      "tags": [
+        "fuzzing",
+        "afl",
+        "harness",
+        "sanitizer"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/game-security/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/game-security/SKILL.md",
+      "lineRange": [
+        1,
+        52
+      ],
+      "summary": "Skill research bảo mật game có ủy quyền: client, protocol, replay, anti-tamper cho target local/self-hosted/cố ý dễ tổn thương; workflow + luật promotion.",
+      "tags": [
+        "game-security",
+        "anti-tamper",
+        "protocol"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/ghidra/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/ghidra/SKILL.md",
+      "lineRange": [
+        1,
+        69
+      ],
+      "summary": "Skill phân tích binary sâu bằng Ghidra: headless analyzeHeadless hoặc MCP bridge live với 245 tools; decompile, xrefs, function listing, batch operations, P-code emulation, enforce convention; có fallback sinh script.",
+      "tags": [
+        "ghidra",
+        "decompiler",
+        "mcp",
+        "headless"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/ios-static/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/ios-static/SKILL.md",
+      "lineRange": [
+        1,
+        162
+      ],
+      "summary": "Skill phân tích tĩnh IPA iOS (162 dòng): class-dump-z/class-dump-ng, Hopper/IDA/Ghidra cho Mach-O ARM64, introspection ObjC runtime, Swift demangling, kiểm tra App Transport Security, phân tích plist, parse provisioning profile; quy trình acquire + unpack IPA + quick triage.",
+      "tags": [
+        "ios",
+        "ipa",
+        "mach-o",
+        "class-dump"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/malware-triage/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/malware-triage/SKILL.md",
+      "lineRange": [
+        1,
+        142
+      ],
+      "summary": "Skill triage malware nhanh (142 dòng): tĩnh (PE/Mach-O/ELF, strings, imports, entropy/packed), động (sandbox INetSim, Wireshark, Process Monitor, time-shift), unpack (Scylla/PE-sieve), rồi RE đầy đủ Ghidra/IDA; mục tiêu verdict ban đầu ≤15 phút.",
+      "tags": [
+        "malware-triage",
+        "sandbox",
+        "unpacking",
+        "pe"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/packer-unpacking/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/packer-unpacking/SKILL.md",
+      "lineRange": [
+        1,
+        177
+      ],
+      "summary": "Skill nhận diện + unpack packer phổ biến: UPX, ASPack, Themida, VMProtect, MPRESS, PECompact, Enigma; detect packing qua signature và automated unpacking.",
+      "tags": [
+        "packer",
+        "unpacking",
+        "upx",
+        "vmprotect"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/ransomware-analysis/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/ransomware-analysis/SKILL.md",
+      "lineRange": [
+        1,
+        343
+      ],
+      "summary": "Skill nhận diện + phân tích ransomware (343 dòng): nhận diện scheme mã hóa, kỹ thuật khôi phục key, parse ransom note, phân tích shadow copy/recovery inhibition, check decryptor công khai, trích IOC theo họ.",
+      "tags": [
+        "ransomware",
+        "encryption",
+        "ioc",
+        "key-recovery"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:packages/raptix/raptix/skills/defs/standard/reverser/rootkit-analysis/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "packages/raptix/raptix/skills/defs/standard/reverser/rootkit-analysis/SKILL.md",
+      "lineRange": [
+        1,
+        428
+      ],
+      "summary": "Skill phát hiện + phân tích rootkit (428 dòng): UEFI rootkit, kernel-level, bootkit, kỹ thuật DKOM, hook SSDT/IDT/IRP, hypervisor rootkit, firmware implant; dùng GMER, Volatility, chipsec, UEFITool.",
+      "tags": [
+        "rootkit",
+        "uefi",
+        "volatility",
+        "chipsec"
+      ],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/api-enumeration/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/auth-mapping/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/cms-scanning/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/cookie-audit/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/discovery/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/subdomain-takeover/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/waf-detection/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/recon/web-recon/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/android-malware/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/anti-debug-bypass/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/ctf-triage/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/deep-analysis/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/dotnet-malware/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/fileless-malware/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/firmware/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/fuzzing/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/game-security/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/ghidra/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/ios-static/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/malware-triage/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/packer-unpacking/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/ransomware-analysis/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:packages/raptix/raptix/skills/defs/standard/reverser/rootkit-analysis/SKILL.md",
+      "target": "document:packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

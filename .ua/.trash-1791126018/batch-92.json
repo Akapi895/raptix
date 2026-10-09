@@ -1,0 +1,106 @@
+{
+  "batchIndex": 92,
+  "batchFiles": [
+    {
+      "path": "docs/proposals/156-compose-architecture.md",
+      "language": "markdown",
+      "sizeLines": 123,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/proposals/redamon-feature-integration.md",
+      "language": "markdown",
+      "sizeLines": 142,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/proposals/redamon-top3-integration-plan.md",
+      "language": "markdown",
+      "sizeLines": 98,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:docs/proposals/156-compose-architecture.md",
+      "type": "document",
+      "name": "156-compose-architecture.md",
+      "filePath": "docs/proposals/156-compose-architecture.md",
+      "lineRange": [1, 123],
+      "summary": "Proposal giải quyết kiến trúc dual docker-compose.yml (issue #156): đối chiếu 7 concern với trạng thái main — 2 moot, 2 đã xử lý một phần (env-parameterization 5/7 port; Neo4j 7474/7687 còn hardcoded, fix bằng companion patch), 3 còn lại (override placement mơ hồ, container_name chặn dual-stack); đề xuất Direction 1 — giữ OSS install làm nguồn chính thống, đổi docker-compose.override.yml thành docker-compose.dev.yml opt-in qua make dev, tài liệu hóa ~/.raptix/ là bề mặt override cho user, parameterize cổng Neo4j (NEO4J_HTTP_PORT/BOLT_PORT), phương án D1 parameterize container_name qua COMPOSE_PROJECT_NAME, CI guardrail chạy docker compose config; kèm kế hoạch migration 5 bước và sketch Direction 2 (hai compose hoàn chỉnh).",
+      "tags": ["proposal", "docker-compose", "architecture", "infrastructure", "issue-156"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/proposals/redamon-feature-integration.md",
+      "type": "document",
+      "name": "redamon-feature-integration.md",
+      "filePath": "docs/proposals/redamon-feature-integration.md",
+      "lineRange": [1, 142],
+      "summary": "Phân tích gap Redamon → Raptix đã adversarially re-verify: 27 feature ứng viên chia 3 tier — Tier 1 (HTTP-header AI-stack matcher, AI port catalog hai tầng, endpoint AI interface classifier, title/banner regex, mid-run guidance injection, transcript export), Tier 2 (JS AI-SDK/secret scanner 240+ pattern với live validation, httpx provisioning, uncover OSINT, subdomain-takeover scoring, vulnx KEV loader, nmap CPE, RoE upload+LLM-parse, Kali PTY, vhost/SNI enum, ZIP export), Tier 3 (MCP preset, Playwright XSS oracle, GraphQL scanner, dep-confusion, GVM); chiến lược harvest deterministic data layers nhưng decline imperative orchestration; danh sách feature bị từ chối kèm lý do (parity hoặc vi phạm security invariant — đặc biệt từ chối tái thêm NL-to-Cypher); addendum 9 feature (web_search tool, target guardrail deny-list .gov/.mil, wildcard-DNS filter); ràng buộc xuyên suốt: Technology NodeKind + V004 migration là tiền đề, AGPL tool chạy sidecar-only, bảo toàn RoE/UntrustedOutput/engagement-scoped KG.",
+      "tags": ["proposal", "gap-analysis", "recon", "ai-redteam", "licensing"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/proposals/redamon-top3-integration-plan.md",
+      "type": "document",
+      "name": "redamon-top3-integration-plan.md",
+      "filePath": "docs/proposals/redamon-top3-integration-plan.md",
+      "lineRange": [1, 98],
+      "summary": "Kế hoạch triển khai top-3 integration Redamon thành PR đúng rule (1 concern, ≤400 runtime lines, ≤10 files, e2e verification thật): cluster A — AI-surface discovery (A0 ADR + Technology node kind trong types/kg.py là public-type change owner-gated, A1 ai_signatures.py catalog thuần Python, A2-A4 fold matcher vào kg_ingest_httpx_jsonl/kg_ingest_masscan/kg_ingest_nmap_xml với two-tier disambiguation); B — classify_endpoints taxonomy (B1 @tool thuần, B2 fold class vào kg_ingest_katana/ffuf, file_params→LFI, command_params→RCE, redirect_params→SSRF); C — mid-run guidance injection dùng file-backed per-engagement inbox với byte-offset cursor (C1 slot GUANCE không thể nới RoE, C2 POST route + CLI /guide); thứ tự A0 trước, B/C song song; quy ước commit repo: không Co-Authored-By trailer, Conventional-Commit, squash-merge, make quality trước push.",
+      "tags": ["proposal", "implementation-plan", "kg-schema", "middleware", "contribution-rules"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:docs/proposals/156-compose-architecture.md",
+      "target": "service:docker-compose.yml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/proposals/156-compose-architecture.md",
+      "target": "service:docker-compose.dev.yml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/proposals/156-compose-architecture.md",
+      "target": "document:docs/setup-guide.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/proposals/redamon-top3-integration-plan.md",
+      "target": "document:docs/proposals/redamon-feature-integration.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/proposals/redamon-feature-integration.md",
+      "target": "file:packages/raptix/raptix/tools/research/tools.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/proposals/redamon-top3-integration-plan.md",
+      "target": "file:packages/raptix-core/raptix_core/types/kg.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/proposals/redamon-top3-integration-plan.md",
+      "target": "file:packages/raptix/raptix/tools/research/tools.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

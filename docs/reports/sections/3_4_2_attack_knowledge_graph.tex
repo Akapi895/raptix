@@ -1,0 +1,127 @@
+% =====================================================================
+%  File: sections/3_4_2_attack_knowledge_graph.tex
+%  Mục đích: Phần 3.4.2 - Attack Knowledge Graph (AKG)
+% =====================================================================
+
+\subsubsection{Attack Knowledge Graph (AKG)}
+\label{sec:attack-knowledge-graph}
+
+Attack Knowledge Graph (AKG) là đóng góp thiết kế cốt lõi của Raptix. Đây là một đồ thị có hướng, có nhãn, được thiết kế để lưu trữ \emph{tất cả} các thực thể và quan hệ mà một red team agent cần trong suốt mission, thay thế cho mô hình state phẳng hoặc nhồi toàn bộ vào context LLM.
+
+\paragraph{Các loại node trong AKG}
+
+AKG phân loại node theo bảy nhóm chính, tương ứng với các thực thể mà một red teamer thao tác trong thực tế:
+
+\begin{table}[H]
+\centering
+\caption{Các loại node trong Attack Knowledge Graph}
+\label{tab:akg-nodes}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{2.6cm}|p{4.5cm}|p{8.5cm}|}
+\hline
+\textbf{Nhóm node} & \textbf{Ví dụ} & \textbf{Vai trò} \\
+\hline
+Asset & Host, Port, Service, Endpoint, Application & Mô tả bề mặt tấn công đã quan sát được. \\
+\hline
+Identity & User, Account, Group, Role & Đối tượng xác thực và phân quyền. \\
+\hline
+Credential & Password, NTLM hash, Kerberos ticket, SSH key, Session cookie & Vật liệu xác thực thu được trong quá trình khai thác. \\
+\hline
+Vulnerability & CVE, Misconfiguration, Logic flaw & Lỗ hổng hoặc điểm yếu đã nhận diện. \\
+\hline
+Finding & Candidate, Validated, Verified, Reported & Kết luận về một vấn đề an toàn thông tin, có lifecycle bốn bước rõ ràng. \\
+\hline
+Action & Tool call, Command, Exploit attempt & Bản ghi thao tác đã thực thi, phục vụ audit và replay. \\
+\hline
+Evidence & stdout, HTTP response, Screenshot, File artifact & Dữ liệu thô hỗ trợ cho finding hoặc state. \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Các loại cạnh trong AKG}
+
+Quan hệ giữa các node được biểu diễn bằng các cạnh có nhãn, có hướng và trọng số (chi phí, rủi ro OPSEC, mức tin cậy). Mười ba cạnh chính cùng domain/range tương ứng được liệt kê trong Bảng~\ref{tab:akg-edges}.
+
+\begin{table}[H]
+\centering
+\caption{Các loại cạnh trong AKG với domain và range}
+\label{tab:akg-edges}
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{3.2cm}|p{3.4cm}|p{3.4cm}|p{5.5cm}|}
+\hline
+\textbf{Cạnh} & \textbf{Domain} & \textbf{Range} & \textbf{Ý nghĩa} \\
+\hline
+\texttt{HOSTS} & Asset & Asset & Host chứa service/port \\
+\hline
+\texttt{RUNS\_ON} & Asset & Asset & Service chạy trên host \\
+\hline
+\texttt{EXPOSES} & Asset & Vulnerability & Asset có lỗ hổng \\
+\hline
+\texttt{EXPLOITABLE\_VIA} & Vulnerability & Action & Lỗ hổng được khai thác qua action \\
+\hline
+\texttt{YIELDS} & Action & Credential \textbar\ Evidence & Action sinh ra credential hoặc evidence \\
+\hline
+\texttt{LEADS\_TO} & Action & Finding & Action dẫn tới finding \\
+\hline
+\texttt{EVIDENCES} & Evidence & Finding & Evidence hỗ trợ finding \\
+\hline
+\texttt{HAS\_CREDENTIAL} & Identity & Credential & Identity sở hữu credential \\
+\hline
+\texttt{CAN\_AUTH\_AS} & Credential & Identity & Credential cho phép xác thực thành identity \\
+\hline
+\texttt{MEMBER\_OF} & Identity & Identity & Thuộc nhóm/vai trò \\
+\hline
+\texttt{HAS\_PRIVILEGE} & Identity & Asset & Identity có quyền trên asset \\
+\hline
+\texttt{CONNECTS\_TO} & Asset & Asset & Kết nối mạng giữa các asset \\
+\hline
+\texttt{PIVOT\_VIA} & Asset & Asset & Pivot qua asset trung gian \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Ví dụ một đoạn AKG}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=10mm and 14mm,
+    n/.style={draw, rounded corners, align=center, inner sep=3pt, font=\scriptsize, minimum height=8mm},
+    e/.style={-{Latex[length=1.6mm]}, thick, font=\scriptsize}
+]
+\node[n, fill=red!15] (webapp) {WebApp\\\texttt{/upload}};
+\node[n, fill=red!15, right=of webapp] (cve) {CVE-2025-XXXX\\RCE};
+\node[n, fill=orange!15, right=of cve] (shell) {Action:\\exec\_rce};
+\node[n, fill=blue!15, below=of shell] (cred) {Credential\\svc\_backup};
+\node[n, fill=blue!15, left=of cred] (smb) {SMB\\fs01};
+\node[n, fill=green!15, left=of smb] (find) {Finding\\Verified};
+
+\draw[e] (webapp) -- node[above]{\texttt{EXPOSES}} (cve);
+\draw[e] (cve) -- node[above]{\texttt{EXPLOITABLE\_VIA}} (shell);
+\draw[e] (shell) -- node[right]{\texttt{YIELDS}} (cred);
+\draw[e] (cred) -- node[above]{\texttt{CAN\_AUTH\_AS}} (smb);
+\draw[e] (smb) -- node[above]{\texttt{EVIDENCES}} (find);
+\end{tikzpicture}
+\caption{Ví dụ một đoạn AKG sau pha Initial Foothold}
+\label{fig:akg-example}
+\end{figure}
+
+\paragraph{Cơ chế cập nhật và tính nhất quán}
+
+AKG ghi event theo mô hình \textbf{append-only} (bất biến) và state là ảnh chụp tái tạo được từ event stream (versioned). Kết hợp hai nguyên tắc này đảm bảo: auditability (truy vết finding về event gốc), replayability (dựng lại toàn mission để debug), concurrency (ghi song song qua transaction theo node) và recovery (phục hồi sau crash mà không mất dữ liệu).
+
+\paragraph{Ba invariant của AKG}
+
+Để đảm bảo tính đúng đắn của đồ thị trong suốt mission, AKG được bảo vệ bởi ba invariant:
+
+\begin{itemize}
+    \item \textbf{Schema invariant:} mọi node và edge phải tuân theo schema đã định nghĩa; mọi edge phải tham chiếu tới hai endpoint tồn tại và đúng kiểu theo schema; các node bắt buộc phải thỏa ràng buộc định danh và provenance tương ứng.
+    \item \textbf{Provenance invariant:} mọi finding phải truy vết được về evidence và action đã tạo ra nó. Finding không có evidence bị coi là chưa xác minh.
+    \item \textbf{Scope invariant:} mọi node asset phải nằm trong scope đã được phê duyệt; node ngoài scope bị từ chối ngay tại thời điểm ghi. Đây là lớp bảo vệ thứ hai, độc lập với scope guard ở tầng tool executor.
+\end{itemize}
+
+\paragraph{Lựa chọn backend}
+
+AKG không phụ thuộc backend cụ thể. Trong giai đoạn thực tập, Neo4j được chọn làm backend chính vì tương thích với Decepticon và hỗ trợ Cypher-native path search với APOC; Memgraph (tương thích Cypher) và graph store nhúng (NetworkX/igraph) là lựa chọn thay thế cho môi trường streaming hoặc lab nhẹ.

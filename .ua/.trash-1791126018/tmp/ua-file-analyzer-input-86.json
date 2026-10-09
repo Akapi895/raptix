@@ -1,0 +1,187 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "docs/COWORK.md",
+                           "language":  "markdown",
+                           "sizeLines":  272,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/QUALITY_BAR.md",
+                           "language":  "markdown",
+                           "sizeLines":  511,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/agent-file-conventions.md",
+                           "language":  "markdown",
+                           "sizeLines":  512,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/agent-file-mapping.md",
+                           "language":  "markdown",
+                           "sizeLines":  290,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/agents.md",
+                           "language":  "markdown",
+                           "sizeLines":  158,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/architecture.md",
+                           "language":  "markdown",
+                           "sizeLines":  216,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/benchmark-comparison.md",
+                           "language":  "markdown",
+                           "sizeLines":  88,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/cli-reference.md",
+                           "language":  "markdown",
+                           "sizeLines":  163,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/contributing.md",
+                           "language":  "markdown",
+                           "sizeLines":  191,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/contributor-architecture.md",
+                           "language":  "markdown",
+                           "sizeLines":  147,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/e2e-testing-guide.md",
+                           "language":  "markdown",
+                           "sizeLines":  211,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/engagement-workflow.md",
+                           "language":  "markdown",
+                           "sizeLines":  166,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/getting-started.md",
+                           "language":  "markdown",
+                           "sizeLines":  106,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/incalmo-lessons-implementation-guide.md",
+                           "language":  "markdown",
+                           "sizeLines":  247,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/knowledge-graph.md",
+                           "language":  "markdown",
+                           "sizeLines":  110,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/library-consumer-guide.md",
+                           "language":  "markdown",
+                           "sizeLines":  214,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/library-usage.md",
+                           "language":  "markdown",
+                           "sizeLines":  400,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/makefile-reference.md",
+                           "language":  "markdown",
+                           "sizeLines":  124,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/mcp.md",
+                           "language":  "markdown",
+                           "sizeLines":  57,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/models.md",
+                           "language":  "markdown",
+                           "sizeLines":  356,
+                           "fileCategory":  "docs"
+                       }
+                   ],
+    "batchImportData":  {
+                            "docs/COWORK.md":  [
+
+                                               ],
+                            "docs/QUALITY_BAR.md":  [
+
+                                                    ],
+                            "docs/agent-file-conventions.md":  [
+
+                                                               ],
+                            "docs/agent-file-mapping.md":  [
+
+                                                           ],
+                            "docs/agents.md":  [
+
+                                               ],
+                            "docs/architecture.md":  [
+
+                                                     ],
+                            "docs/benchmark-comparison.md":  [
+
+                                                             ],
+                            "docs/cli-reference.md":  [
+
+                                                      ],
+                            "docs/contributing.md":  [
+
+                                                     ],
+                            "docs/contributor-architecture.md":  [
+
+                                                                 ],
+                            "docs/e2e-testing-guide.md":  [
+
+                                                          ],
+                            "docs/engagement-workflow.md":  [
+
+                                                            ],
+                            "docs/getting-started.md":  [
+
+                                                        ],
+                            "docs/incalmo-lessons-implementation-guide.md":  [
+
+                                                                             ],
+                            "docs/knowledge-graph.md":  [
+
+                                                        ],
+                            "docs/library-consumer-guide.md":  [
+
+                                                               ],
+                            "docs/library-usage.md":  [
+
+                                                      ],
+                            "docs/makefile-reference.md":  [
+
+                                                           ],
+                            "docs/mcp.md":  [
+
+                                            ],
+                            "docs/models.md":  [
+
+                                               ]
+                        }
+}

@@ -1,0 +1,44 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix\\packages\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "raptix/middleware/egress.py",
+                           "language":  "python",
+                           "sizeLines":  141,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/sandbox_kernel/egress.py",
+                           "language":  "python",
+                           "sizeLines":  466,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/unit/middleware/test_egress.py",
+                           "language":  "python",
+                           "sizeLines":  221,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/unit/sandbox_kernel/test_egress_applier.py",
+                           "language":  "python",
+                           "sizeLines":  323,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "raptix/middleware/egress.py":  [
+                                                                "raptix/sandbox_kernel/egress.py"
+                                                            ],
+                            "raptix/sandbox_kernel/egress.py":  [
+
+                                                                ],
+                            "tests/unit/middleware/test_egress.py":  [
+                                                                         "raptix/middleware/egress.py"
+                                                                     ],
+                            "tests/unit/sandbox_kernel/test_egress_applier.py":  [
+                                                                                     "raptix/middleware/egress.py",
+                                                                                     "raptix/sandbox_kernel/egress.py"
+                                                                                 ]
+                        }
+}

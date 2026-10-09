@@ -1,0 +1,363 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 9,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 9,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 9
+    }
+  },
+  "results": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 765,
+      "nonEmptyLines": 749,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "concurrency",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 36
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 39
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": ".github/workflows/pin-digests.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 49,
+      "nonEmptyLines": 44,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 20
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 23
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".github/workflows/promote-stable.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 126,
+      "nonEmptyLines": 119,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 24
+        },
+        {
+          "heading": "concurrency",
+          "level": 1,
+          "line": 27
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 31
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": ".github/workflows/release-recover.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 100,
+      "nonEmptyLines": 93,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 19
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 22
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 566,
+      "nonEmptyLines": 515,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".github/workflows/scorecard.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 39,
+      "nonEmptyLines": 36,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".github/workflows/security-scan-example.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 41,
+      "nonEmptyLines": 36,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 11
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": ".github/workflows/security.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 194,
+      "nonEmptyLines": 185,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "concurrency",
+          "level": 1,
+          "line": 19
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 23
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 45
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 48
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": ".github/workflows/todo-to-issue.yml",
+      "language": "yaml",
+      "fileCategory": "infra",
+      "totalLines": 78,
+      "nonEmptyLines": 72,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "on",
+          "level": 1,
+          "line": 24
+        },
+        {
+          "heading": "permissions",
+          "level": 1,
+          "line": 34
+        },
+        {
+          "heading": "concurrency",
+          "level": 1,
+          "line": 38
+        },
+        {
+          "heading": "jobs",
+          "level": 1,
+          "line": 42
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    }
+  ]
+}

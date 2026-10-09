@@ -1,0 +1,34 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/builder/seeds/asset_types.yaml",
+                           "language":  "yaml",
+                           "sizeLines":  213,
+                           "fileCategory":  "config"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/builder/seeds/moc.yaml",
+                           "language":  "yaml",
+                           "sizeLines":  58,
+                           "fileCategory":  "config"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/engine/builder/seeds/phases.yaml",
+                           "language":  "yaml",
+                           "sizeLines":  49,
+                           "fileCategory":  "config"
+                       }
+                   ],
+    "batchImportData":  {
+                            "packages/raptix/raptix/skills/engine/builder/seeds/asset_types.yaml":  [
+
+                                                                                                    ],
+                            "packages/raptix/raptix/skills/engine/builder/seeds/moc.yaml":  [
+
+                                                                                            ],
+                            "packages/raptix/raptix/skills/engine/builder/seeds/phases.yaml":  [
+
+                                                                                               ]
+                        }
+}

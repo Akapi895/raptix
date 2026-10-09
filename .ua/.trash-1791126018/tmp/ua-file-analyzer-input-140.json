@@ -1,0 +1,232 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/rop-chain/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  213,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/triage/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  51,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/virtualized-protectors/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  50,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/windows-internals/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  55,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/reverser/yara-hunting/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  170,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/abort-template/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  74,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/cleanup-template/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  72,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/conops-template/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  76,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/conops-template/references/kill-chain-templates.md",
+                           "language":  "markdown",
+                           "sizeLines":  66,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/contact-template/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  82,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/data-handling-template/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  72,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  83,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-rules.md",
+                           "language":  "markdown",
+                           "sizeLines":  107,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-templates.md",
+                           "language":  "markdown",
+                           "sizeLines":  240,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/references/schema-quick-reference.md",
+                           "language":  "markdown",
+                           "sizeLines":  146,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  60,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/references/roe-example.json",
+                           "language":  "json",
+                           "sizeLines":  47,
+                           "fileCategory":  "config"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/references/validation-checklist.md",
+                           "language":  "markdown",
+                           "sizeLines":  32,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/structured-questions/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  113,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  99,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  78,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/apt29/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  120,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/fin7/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  99,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/lazarus/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  104,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/lockbit/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  101,
+                           "fileCategory":  "docs"
+                       }
+                   ],
+    "batchImportData":  {
+                            "packages/raptix/raptix/skills/defs/standard/reverser/rop-chain/SKILL.md":  [
+
+                                                                                                        ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/triage/SKILL.md":  [
+
+                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/virtualized-protectors/SKILL.md":  [
+
+                                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/windows-internals/SKILL.md":  [
+
+                                                                                                                ],
+                            "packages/raptix/raptix/skills/defs/standard/reverser/yara-hunting/SKILL.md":  [
+
+                                                                                                           ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/abort-template/SKILL.md":  [
+
+                                                                                                              ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/cleanup-template/SKILL.md":  [
+
+                                                                                                                ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/conops-template/SKILL.md":  [
+
+                                                                                                               ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/conops-template/references/kill-chain-templates.md":  [
+
+                                                                                                                                         ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/contact-template/SKILL.md":  [
+
+                                                                                                                ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/data-handling-template/SKILL.md":  [
+
+                                                                                                                      ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/SKILL.md":  [
+
+                                                                                                                ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-rules.md":  [
+
+                                                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-templates.md":  [
+
+                                                                                                                                         ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/references/schema-quick-reference.md":  [
+
+                                                                                                                           ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/SKILL.md":  [
+
+                                                                                                            ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/references/roe-example.json":  [
+
+                                                                                                                               ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/roe-template/references/validation-checklist.md":  [
+
+                                                                                                                                      ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/structured-questions/SKILL.md":  [
+
+                                                                                                                    ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/SKILL.md":  [
+
+                                                                                                              ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/SKILL.md":  [
+
+                                                                                                                        ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/apt29/SKILL.md":  [
+
+                                                                                                                              ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/fin7/SKILL.md":  [
+
+                                                                                                                             ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/lazarus/SKILL.md":  [
+
+                                                                                                                                ],
+                            "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/lockbit/SKILL.md":  [
+
+                                                                                                                                ]
+                        }
+}

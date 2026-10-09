@@ -1,0 +1,38 @@
+% =====================================================================
+%  File: sections/3_1_ai_agent_red_team.tex
+%  Mục đích: Phần 3.1 - AI Agent trong red team
+% =====================================================================
+
+\subsection{AI Agent trong red team}
+\label{sec:ai-agent-red-team}
+
+Trong báo cáo này, AI Agent được hiểu là một hệ thống có mô hình ngôn ngữ lớn (LLM) làm thành phần suy luận trung tâm, nhưng được bao quanh bởi ba lớp cấu trúc: \textbf{state} (trạng thái hệ thống biết về mục tiêu), \textbf{tool interfaces} (giao diện gọi công cụ) và \textbf{control loop} (vòng lặp điều khiển hành động). Agent nhận mục tiêu từ người vận hành, quan sát trạng thái hiện tại, lựa chọn hành động, thực thi công cụ, đọc kết quả và tiếp tục cho đến khi đạt điều kiện dừng. Do đó, chất lượng của hệ thống không chỉ phụ thuộc vào model mà còn phụ thuộc lớn vào cách thiết kế runtime.
+
+Điểm khác biệt giữa AI Agent dùng cho red team và AI Agent dùng cho pentest nằm ở \emph{độ dài chuỗi hành động} và \emph{số lượng thực thể cần quản lý}. Một pentest agent thường hoạt động trên một mục tiêu đơn lẻ, dừng lại khi đã xác minh được lỗ hổng. Ngược lại, red team agent phải duy trì một chuỗi tấn công đa host, có thể kéo dài hàng trăm bước, trong đó mỗi bước lại làm thay đổi trạng thái của toàn bộ mạng. Sự phức tạp này đòi hỏi kiến trúc runtime phải được thiết kế cẩn thận hơn nhiều so với một công cụ pentest thông thường.
+
+\subsubsection*{Hai loại tri thức cần phân tách}
+
+Một agent red team cần kết hợp hai loại tri thức có đặc tính rất khác nhau, và việc phân tách chúng là điều kiện tiên quyết để hệ thống vận hành ổn định trong mission dài:
+
+\begin{itemize}
+    \item \textbf{Tri thức ổn định (stable knowledge):} bao gồm phương pháp kiểm thử, cách dùng công cụ, mẫu lỗ hổng, playbook tấn công, kỹ thuật theo MITRE ATT\&CK. Phần này mang tính tái sử dụng cao giữa các mission, phù hợp để đóng gói dưới dạng skill hoặc knowledge base.
+    \item \textbf{Tri thức theo phiên (session knowledge):} bao gồm asset đã phát hiện, endpoint, credential, phiên đăng nhập, finding, command output và các giả thuyết đang chờ xác minh. Phần này chỉ có giá trị trong một mission cụ thể và phải được lưu trữ thành state/evidence có cấu trúc.
+\end{itemize}
+
+Việc trộn hai loại tri thức vào cùng một vector store hoặc một history dài sẽ khiến việc truy hồi trở nên khó kiểm soát: agent có thể nhầm lẫn giữa playbook chung và tình trạng thực tế của mục tiêu, hoặc nhầm giữa giả thuyết chưa kiểm chứng và fact đã xác minh. Đây là một trong những nguyên nhân chính khiến các hệ thống LLM-assisted offense trước đây thất bại trước các bài toán nhiều bước, như đã được phân tích trong nghiên cứu về Incalmo.
+
+\subsubsection*{Vòng lặp hành động của red team agent}
+
+Vòng lặp của một red team agent gồm: nhận mission (scope, policy), quan sát state hiện tại, lập kế hoạch, thực thi tool trong sandbox biệt lập, diễn giải kết quả, cập nhật state, và kiểm tra điều kiện dừng. Điểm quan trọng cần nhấn mạnh là \emph{state có cấu trúc} đóng vai trò trung tâm trong vòng lặp này. Nếu không có state, agent buộc phải nhồi toàn bộ lịch sử vào context LLM, dẫn đến ba hệ quả tiêu cực: chi phí token tăng theo cấp số nhân, khả năng truy hồi thông tin cũ giảm dần theo độ dài hội thoại, và agent có xu hướng lặp lại các hành động đã thực hiện. Đây chính là lý do vì sao các hệ thống red team hiện đại như Decepticon và Incalmo đều chọn cách off-load state ra khỏi context của LLM và lưu trữ nó dưới dạng có cấu trúc - hoặc knowledge graph, hoặc auxiliary services.
+
+\subsubsection*{Vai trò của LLM trong hệ thống red team}
+
+Cần phân biệt rõ rằng LLM \emph{không} phải là thành phần duy nhất quyết định chất lượng của một red team agent. LLM đóng vai trò \emph{planner và analyst}: nó đọc state, đưa ra quyết định về hành động tiếp theo, và diễn giải kết quả trả về. Nhưng bản thân LLM không đảm bảo được ba yêu cầu cốt lõi của một hệ thống red team:
+
+\begin{itemize}
+    \item \textbf{Tính nhất quán của state:} LLM có thể sinh ra kết luận không nhất quán giữa các lần chạy; state cần được duy trì bởi lớp lưu trữ độc lập.
+    \item \textbf{Kiểm chứng finding:} LLM có thể đưa ra kết luận dựa trên suy đoán; việc xác minh phải do verifier hoặc oracle độc lập thực hiện.
+    \item \textbf{Kiểm soát scope và safety:} LLM không đủ tin cậy để tự quyết định hành động nào nằm trong scope; scope guard phải được enforce ở tầng tool executor.
+\end{itemize}
+
+Chính vì vậy, một red team agent được thiết kế tốt là hệ thống trong đó LLM chỉ đảm nhận phần suy luận, còn các phần quản lý state, kiểm chứng và kiểm soát scope được giao cho các thành phần xác định (deterministic) hoặc bán xác định. Đây cũng là triết lý thiết kế mà em kế thừa và mở rộng trong prototype Raptix.

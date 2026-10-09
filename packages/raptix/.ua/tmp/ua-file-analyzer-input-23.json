@@ -1,0 +1,53 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix\\packages\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "raptix/tools/interaction/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  13,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/tools/interaction/ask_user.py",
+                           "language":  "python",
+                           "sizeLines":  187,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "raptix/tools/interaction/complete_planning.py",
+                           "language":  "python",
+                           "sizeLines":  123,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/unit/tools/test_ask_user_question.py",
+                           "language":  "python",
+                           "sizeLines":  342,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "tests/unit/tools/test_complete_planning.py",
+                           "language":  "python",
+                           "sizeLines":  79,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "raptix/tools/interaction/__init__.py":  [
+                                                                         "raptix/tools/interaction/ask_user.py",
+                                                                         "raptix/tools/interaction/complete_planning.py"
+                                                                     ],
+                            "raptix/tools/interaction/ask_user.py":  [
+
+                                                                     ],
+                            "raptix/tools/interaction/complete_planning.py":  [
+
+                                                                              ],
+                            "tests/unit/tools/test_ask_user_question.py":  [
+                                                                               "raptix/tools/interaction/__init__.py"
+                                                                           ],
+                            "tests/unit/tools/test_complete_planning.py":  [
+                                                                               "raptix/tools/interaction/complete_planning.py"
+                                                                           ]
+                        }
+}

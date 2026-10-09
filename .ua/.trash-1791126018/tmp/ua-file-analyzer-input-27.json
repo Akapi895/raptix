@@ -1,0 +1,183 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/sandbox_web/__init__.py",
+   "language": "python",
+   "sizeLines": 23,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/__main__.py",
+   "language": "python",
+   "sizeLines": 195,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/bias_check.py",
+   "language": "python",
+   "sizeLines": 227,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/executor.py",
+   "language": "python",
+   "sizeLines": 286,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/fetch_chain.py",
+   "language": "python",
+   "sizeLines": 939,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/providers.py",
+   "language": "python",
+   "sizeLines": 126,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/safety.py",
+   "language": "python",
+   "sizeLines": 125,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/url_transforms.py",
+   "language": "python",
+   "sizeLines": 99,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/validators.py",
+   "language": "python",
+   "sizeLines": 336,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/sandbox_web/waf_detector.py",
+   "language": "python",
+   "sizeLines": 218,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_bias_check.py",
+   "language": "python",
+   "sizeLines": 43,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_executor.py",
+   "language": "python",
+   "sizeLines": 151,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_fetch_chain.py",
+   "language": "python",
+   "sizeLines": 173,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_main.py",
+   "language": "python",
+   "sizeLines": 117,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_providers.py",
+   "language": "python",
+   "sizeLines": 69,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_safety.py",
+   "language": "python",
+   "sizeLines": 37,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_url_transforms.py",
+   "language": "python",
+   "sizeLines": 76,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_validators.py",
+   "language": "python",
+   "sizeLines": 124,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/sandbox_web/test_waf_detector.py",
+   "language": "python",
+   "sizeLines": 85,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/raptix/sandbox_web/__init__.py": [
+   "packages/raptix/raptix/sandbox_web/fetch_chain.py",
+   "packages/raptix/raptix/sandbox_web/url_transforms.py",
+   "packages/raptix/raptix/sandbox_web/validators.py",
+   "packages/raptix/raptix/sandbox_web/waf_detector.py"
+  ],
+  "packages/raptix/raptix/sandbox_web/__main__.py": [
+   "packages/raptix/raptix/sandbox_web/fetch_chain.py",
+   "packages/raptix/raptix/sandbox_web/providers.py"
+  ],
+  "packages/raptix/raptix/sandbox_web/bias_check.py": [],
+  "packages/raptix/raptix/sandbox_web/executor.py": [
+   "packages/raptix/raptix/sandbox_web/fetch_chain.py",
+   "packages/raptix/raptix/sandbox_web/validators.py",
+   "packages/raptix/raptix/sandbox_web/waf_detector.py"
+  ],
+  "packages/raptix/raptix/sandbox_web/fetch_chain.py": [
+   "packages/raptix/raptix/sandbox_web/url_transforms.py",
+   "packages/raptix/raptix/sandbox_web/validators.py",
+   "packages/raptix/raptix/sandbox_web/waf_detector.py"
+  ],
+  "packages/raptix/raptix/sandbox_web/providers.py": [],
+  "packages/raptix/raptix/sandbox_web/safety.py": [],
+  "packages/raptix/raptix/sandbox_web/url_transforms.py": [],
+  "packages/raptix/raptix/sandbox_web/validators.py": [],
+  "packages/raptix/raptix/sandbox_web/waf_detector.py": [],
+  "packages/raptix/tests/unit/sandbox_web/test_bias_check.py": [
+   "packages/raptix/raptix/sandbox_web/__init__.py",
+   "packages/raptix/raptix/sandbox_web/bias_check.py"
+  ],
+  "packages/raptix/tests/unit/sandbox_web/test_executor.py": [
+   "packages/raptix/raptix/sandbox_web/__init__.py",
+   "packages/raptix/raptix/sandbox_web/executor.py",
+   "packages/raptix/raptix/sandbox_web/validators.py"
+  ],
+  "packages/raptix/tests/unit/sandbox_web/test_fetch_chain.py": [
+   "packages/raptix/raptix/sandbox_web/__init__.py",
+   "packages/raptix/raptix/sandbox_web/fetch_chain.py",
+   "packages/raptix/raptix/sandbox_web/validators.py"
+  ],
+  "packages/raptix/tests/unit/sandbox_web/test_main.py": [
+   "packages/raptix/raptix/sandbox_web/__init__.py",
+   "packages/raptix/raptix/sandbox_web/fetch_chain.py",
+   "packages/raptix/raptix/sandbox_web/validators.py"
+  ],
+  "packages/raptix/tests/unit/sandbox_web/test_providers.py": [
+   "packages/raptix/raptix/sandbox_web/providers.py"
+  ],
+  "packages/raptix/tests/unit/sandbox_web/test_safety.py": [
+   "packages/raptix/raptix/sandbox_web/__init__.py",
+   "packages/raptix/raptix/sandbox_web/safety.py"
+  ],
+  "packages/raptix/tests/unit/sandbox_web/test_url_transforms.py": [
+   "packages/raptix/raptix/sandbox_web/url_transforms.py"
+  ],
+  "packages/raptix/tests/unit/sandbox_web/test_validators.py": [
+   "packages/raptix/raptix/sandbox_web/validators.py"
+  ],
+  "packages/raptix/tests/unit/sandbox_web/test_waf_detector.py": [
+   "packages/raptix/raptix/sandbox_web/__init__.py",
+   "packages/raptix/raptix/sandbox_web/waf_detector.py"
+  ]
+ }
+}

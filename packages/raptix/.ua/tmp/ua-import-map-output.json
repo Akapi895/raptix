@@ -1,0 +1,2499 @@
+{
+  "scriptCompleted": true,
+  "stats": {
+    "filesScanned": 1029,
+    "filesWithImports": 416,
+    "totalEdges": 1043
+  },
+  "failures": [],
+  "importMap": {
+    ".ua/config.json": [],
+    "README.md": [],
+    "pyproject.toml": [],
+    "raptix/__init__.py": [],
+    "raptix/_boot.py": [],
+    "raptix/agents/__init__.py": [
+      "raptix/agents/plugins/detector.py",
+      "raptix/agents/plugins/exploiter.py",
+      "raptix/agents/plugins/patcher.py",
+      "raptix/agents/plugins/scanner.py",
+      "raptix/agents/plugins/verifier.py",
+      "raptix/agents/plugins/vulnresearch.py",
+      "raptix/agents/standard/ad_operator.py",
+      "raptix/agents/standard/analyst.py",
+      "raptix/agents/standard/autohunt.py",
+      "raptix/agents/standard/blue_cell.py",
+      "raptix/agents/standard/cloud_hunter.py",
+      "raptix/agents/standard/contract_auditor.py",
+      "raptix/agents/standard/decepticon.py",
+      "raptix/agents/standard/exploit.py",
+      "raptix/agents/standard/forensicator.py",
+      "raptix/agents/standard/ics_operator.py",
+      "raptix/agents/standard/iot_operator.py",
+      "raptix/agents/standard/mobile_operator.py",
+      "raptix/agents/standard/osint_operator.py",
+      "raptix/agents/standard/phisher.py",
+      "raptix/agents/standard/postexploit.py",
+      "raptix/agents/standard/recon.py",
+      "raptix/agents/standard/reverser.py",
+      "raptix/agents/standard/soundwave.py",
+      "raptix/agents/standard/supply_chain_operator.py",
+      "raptix/agents/standard/surface_exploit.py",
+      "raptix/agents/standard/wireless_operator.py"
+    ],
+    "raptix/agents/_benchmark_mode.py": [],
+    "raptix/agents/build.py": [
+      "raptix/agents/middleware_slots.py",
+      "raptix/middleware/skillogy.py"
+    ],
+    "raptix/agents/middleware_slots.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/middleware/__init__.py",
+      "raptix/middleware/budget.py",
+      "raptix/middleware/event_logging.py",
+      "raptix/middleware/hitl.py",
+      "raptix/middleware/model_override.py",
+      "raptix/middleware/notifications.py",
+      "raptix/middleware/opscontrol_notifications.py",
+      "raptix/middleware/prompt_injection_shield.py",
+      "raptix/middleware/proxy_key_override.py",
+      "raptix/middleware/roe.py",
+      "raptix/runtime/recording.py"
+    ],
+    "raptix/agents/plugins/__init__.py": [],
+    "raptix/agents/plugins/detector.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/plugins/exploiter.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/plugins/patcher.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py"
+    ],
+    "raptix/agents/plugins/scanner.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/research/scanner_tools.py"
+    ],
+    "raptix/agents/plugins/verifier.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/verification.py"
+    ],
+    "raptix/agents/plugins/vulnresearch.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/core/subagent_streaming.py",
+      "raptix/llm/__init__.py"
+    ],
+    "raptix/agents/prompts/__init__.py": [
+      "raptix/agents/prompts/builder.py",
+      "raptix/agents/prompts/registry.py"
+    ],
+    "raptix/agents/prompts/builder.py": [
+      "raptix/agents/prompts/registry.py"
+    ],
+    "raptix/agents/prompts/claude4_compat.py": [],
+    "raptix/agents/prompts/language.md": [],
+    "raptix/agents/prompts/plugins/detector.md": [],
+    "raptix/agents/prompts/plugins/exploiter.md": [],
+    "raptix/agents/prompts/plugins/patcher.md": [],
+    "raptix/agents/prompts/plugins/scanner.md": [],
+    "raptix/agents/prompts/plugins/verifier.md": [],
+    "raptix/agents/prompts/plugins/vulnresearch.md": [],
+    "raptix/agents/prompts/registry.py": [],
+    "raptix/agents/prompts/standard/ad_operator.md": [],
+    "raptix/agents/prompts/standard/analyst.md": [],
+    "raptix/agents/prompts/standard/autohunt.md": [],
+    "raptix/agents/prompts/standard/blue_cell.md": [],
+    "raptix/agents/prompts/standard/cloud_hunter.md": [],
+    "raptix/agents/prompts/standard/contract_auditor.md": [],
+    "raptix/agents/prompts/standard/exploit.md": [],
+    "raptix/agents/prompts/standard/forensicator.md": [],
+    "raptix/agents/prompts/standard/ics_operator.md": [],
+    "raptix/agents/prompts/standard/iot_operator.md": [],
+    "raptix/agents/prompts/standard/mobile_operator.md": [],
+    "raptix/agents/prompts/standard/osint_operator.md": [],
+    "raptix/agents/prompts/standard/phisher.md": [],
+    "raptix/agents/prompts/standard/postexploit.md": [],
+    "raptix/agents/prompts/standard/raptix.md": [],
+    "raptix/agents/prompts/standard/recon.md": [],
+    "raptix/agents/prompts/standard/reverser.md": [],
+    "raptix/agents/prompts/standard/soundwave.md": [],
+    "raptix/agents/prompts/standard/supply_chain_operator.md": [],
+    "raptix/agents/prompts/standard/surface_exploit.md": [],
+    "raptix/agents/prompts/standard/wireless_operator.md": [],
+    "raptix/agents/prompts/workflows/exploit.md": [],
+    "raptix/agents/prompts/workflows/mobile_operator.md": [],
+    "raptix/agents/prompts/workflows/phisher.md": [],
+    "raptix/agents/prompts/workflows/postexploit.md": [],
+    "raptix/agents/prompts/workflows/raptix.md": [],
+    "raptix/agents/prompts/workflows/recon.md": [],
+    "raptix/agents/prompts/workflows/soundwave.md": [],
+    "raptix/agents/prompts/workflows/wireless_operator.md": [],
+    "raptix/agents/standard/__init__.py": [],
+    "raptix/agents/standard/_surface_dispatch.py": [],
+    "raptix/agents/standard/_surface_reexpand.py": [],
+    "raptix/agents/standard/_surface_registry.py": [],
+    "raptix/agents/standard/ad_operator.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/ad/tools.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py"
+    ],
+    "raptix/agents/standard/analyst.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/reporting/tools.py",
+      "raptix/tools/web/search.py"
+    ],
+    "raptix/agents/standard/autohunt.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/agents/standard/soundwave.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py"
+    ],
+    "raptix/agents/standard/blue_cell.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/defense/blue_cell.py",
+      "raptix/tools/defense/brief.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/standard/cloud_hunter.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/cloud/tools.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/standard/contract_auditor.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/contracts/tools.py"
+    ],
+    "raptix/agents/standard/decepticon.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/core/subagent_streaming.py",
+      "raptix/llm/__init__.py"
+    ],
+    "raptix/agents/standard/exploit.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/standard/forensicator.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/standard/ics_operator.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/standard/iot_operator.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/standard/mobile_operator.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/standard/osint_operator.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py",
+      "raptix/tools/web/search.py"
+    ],
+    "raptix/agents/standard/phisher.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/web/search.py"
+    ],
+    "raptix/agents/standard/postexploit.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py"
+    ],
+    "raptix/agents/standard/recon.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/web/search.py"
+    ],
+    "raptix/agents/standard/reverser.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/reversing/tools.py"
+    ],
+    "raptix/agents/standard/soundwave.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/interaction/__init__.py"
+    ],
+    "raptix/agents/standard/supply_chain_operator.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "raptix/agents/standard/surface_exploit.py": [
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/proxy/__init__.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/research/tools.py",
+      "raptix/tools/web/tools.py"
+    ],
+    "raptix/agents/standard/wireless_operator.py": [
+      "raptix/agents/_benchmark_mode.py",
+      "raptix/agents/build.py",
+      "raptix/agents/prompts/__init__.py",
+      "raptix/backends/__init__.py",
+      "raptix/llm/__init__.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/references/tools.py"
+    ],
+    "raptix/agents/task_spec.py": [],
+    "raptix/backends/__init__.py": [
+      "raptix/backends/factory.py",
+      "raptix/backends/http_sandbox.py"
+    ],
+    "raptix/backends/factory.py": [
+      "raptix/backends/http_sandbox.py"
+    ],
+    "raptix/backends/http_sandbox.py": [
+      "raptix/sandbox_kernel/__init__.py"
+    ],
+    "raptix/blue_cell/__init__.py": [
+      "raptix/blue_cell/rule_match.py",
+      "raptix/blue_cell/tap.py"
+    ],
+    "raptix/blue_cell/rule_match.py": [],
+    "raptix/blue_cell/sample_rules.jsonl": [],
+    "raptix/blue_cell/tap.py": [
+      "raptix/middleware/_command_targets.py"
+    ],
+    "raptix/capabilities/__init__.py": [
+      "raptix/capabilities/contracts.py",
+      "raptix/capabilities/evidence.py",
+      "raptix/capabilities/scorecards.py"
+    ],
+    "raptix/capabilities/contracts.py": [
+      "raptix/skills/audit/frontmatter.py"
+    ],
+    "raptix/capabilities/evidence.py": [],
+    "raptix/capabilities/scorecards.py": [
+      "raptix/capabilities/contracts.py"
+    ],
+    "raptix/cli/__init__.py": [
+      "raptix/cli/scan.py"
+    ],
+    "raptix/cli/__main__.py": [
+      "raptix/cli/audit.py",
+      "raptix/cli/auth.py",
+      "raptix/cli/export_transcript.py",
+      "raptix/cli/scan.py",
+      "raptix/cli/telemetry.py",
+      "raptix/cli/zip.py"
+    ],
+    "raptix/cli/audit.py": [
+      "raptix/middleware/_audit_sink.py"
+    ],
+    "raptix/cli/auth.py": [],
+    "raptix/cli/export_transcript.py": [
+      "raptix/runtime/event_log.py"
+    ],
+    "raptix/cli/scan.py": [],
+    "raptix/cli/telemetry.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/sink.py"
+    ],
+    "raptix/cli/zip.py": [],
+    "raptix/compat/__init__.py": [],
+    "raptix/core/__init__.py": [],
+    "raptix/core/config.py": [],
+    "raptix/core/dispatch_context.py": [],
+    "raptix/core/logging.py": [],
+    "raptix/core/schemas.py": [],
+    "raptix/core/subagent_streaming.py": [
+      "raptix/core/logging.py"
+    ],
+    "raptix/graph_registry.py": [],
+    "raptix/llm/__init__.py": [
+      "raptix/llm/factory.py",
+      "raptix/llm/router.py"
+    ],
+    "raptix/llm/factory.py": [
+      "raptix/llm/router.py"
+    ],
+    "raptix/llm/models.py": [],
+    "raptix/llm/router.py": [],
+    "raptix/mcp_server/__init__.py": [
+      "raptix/mcp_server/__main__.py",
+      "raptix/mcp_server/config.py"
+    ],
+    "raptix/mcp_server/__main__.py": [
+      "raptix/mcp_server/config.py"
+    ],
+    "raptix/mcp_server/auth.py": [],
+    "raptix/mcp_server/config.py": [],
+    "raptix/mcp_server/conversation.py": [
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/mcp_server/engagements.py": [
+      "raptix/mcp_server/config.py",
+      "raptix/mcp_server/models.py",
+      "raptix/mcp_server/streaming.py"
+    ],
+    "raptix/mcp_server/findings.py": [
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/mcp_server/models.py": [],
+    "raptix/mcp_server/server.py": [
+      "raptix/mcp_server/auth.py",
+      "raptix/mcp_server/config.py",
+      "raptix/mcp_server/engagements.py",
+      "raptix/mcp_server/tools_interactive.py",
+      "raptix/mcp_server/tools_lifecycle.py"
+    ],
+    "raptix/mcp_server/streaming.py": [
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/mcp_server/tools_interactive.py": [
+      "raptix/mcp_server/conversation.py",
+      "raptix/mcp_server/engagements.py",
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/mcp_server/tools_lifecycle.py": [
+      "raptix/mcp_server/config.py",
+      "raptix/mcp_server/engagements.py",
+      "raptix/mcp_server/findings.py",
+      "raptix/mcp_server/models.py"
+    ],
+    "raptix/middleware/__init__.py": [
+      "raptix/middleware/budget.py",
+      "raptix/middleware/engagement.py",
+      "raptix/middleware/event_logging.py",
+      "raptix/middleware/filesystem.py",
+      "raptix/middleware/hitl.py",
+      "raptix/middleware/kg.py",
+      "raptix/middleware/notifications.py",
+      "raptix/middleware/opplan.py",
+      "raptix/middleware/prompt_injection_shield.py",
+      "raptix/middleware/roe.py",
+      "raptix/middleware/skillogy.py",
+      "raptix/middleware/skills.py",
+      "raptix/middleware/untrusted_output.py"
+    ],
+    "raptix/middleware/_audit_sink.py": [],
+    "raptix/middleware/_command_targets.py": [],
+    "raptix/middleware/_injection_detector.py": [],
+    "raptix/middleware/budget.py": [],
+    "raptix/middleware/dispatch.py": [
+      "raptix/core/dispatch_context.py",
+      "raptix/core/subagent_streaming.py",
+      "raptix/middleware/subagent_transcript_state.py"
+    ],
+    "raptix/middleware/egress.py": [
+      "raptix/sandbox_kernel/egress.py"
+    ],
+    "raptix/middleware/engagement.py": [
+      "raptix/middleware/opplan.py",
+      "raptix/middleware/state_reducers.py",
+      "raptix/tools/bash/bash.py"
+    ],
+    "raptix/middleware/event_logging.py": [
+      "raptix/runtime/event_log.py",
+      "raptix/telemetry/sink.py"
+    ],
+    "raptix/middleware/filesystem.py": [
+      "raptix/sandbox_kernel/base.py",
+      "raptix/tools/filesystem.py"
+    ],
+    "raptix/middleware/hitl.py": [],
+    "raptix/middleware/kg.py": [
+      "raptix/middleware/kg_internal/operational_state.py",
+      "raptix/middleware/kg_internal/state.py",
+      "raptix/middleware/kg_internal/store.py",
+      "raptix/middleware/kg_internal/summary.py",
+      "raptix/middleware/kg_internal/tools.py"
+    ],
+    "raptix/middleware/kg_autoingest.py": [
+      "raptix/middleware/filesystem.py",
+      "raptix/middleware/kg_internal/ingest.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/middleware/kg_internal/__init__.py": [],
+    "raptix/middleware/kg_internal/ai_surface.py": [],
+    "raptix/middleware/kg_internal/ingest.py": [
+      "raptix/middleware/kg_internal/ai_surface.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/middleware/kg_internal/migration_runner.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/middleware/kg_internal/migrations/V001__initial_schema.cypher": [],
+    "raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes_and_provenance.cypher": [],
+    "raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher": [],
+    "raptix/middleware/kg_internal/migrations/V004__technology_node.cypher": [],
+    "raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher": [],
+    "raptix/middleware/kg_internal/migrations/V006__engagement_revision_counter.cypher": [],
+    "raptix/middleware/kg_internal/migrations/__init__.py": [],
+    "raptix/middleware/kg_internal/operational_state.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/middleware/kg_internal/state.py": [
+      "raptix/middleware/state_reducers.py"
+    ],
+    "raptix/middleware/kg_internal/store.py": [],
+    "raptix/middleware/kg_internal/summary.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/middleware/kg_internal/tools.py": [
+      "raptix/agents/standard/_surface_reexpand.py",
+      "raptix/agents/standard/_surface_registry.py",
+      "raptix/middleware/kg_internal/ingest.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/middleware/model_override.py": [
+      "raptix/llm/factory.py",
+      "raptix/middleware/state_reducers.py"
+    ],
+    "raptix/middleware/notifications.py": [
+      "raptix/backends/http_sandbox.py"
+    ],
+    "raptix/middleware/opplan.py": [
+      "raptix/tools/opplan.py"
+    ],
+    "raptix/middleware/opscontrol_notifications.py": [
+      "raptix/tools/ops/client.py"
+    ],
+    "raptix/middleware/prompt_injection_shield.py": [
+      "raptix/middleware/_injection_detector.py"
+    ],
+    "raptix/middleware/proxy_key_override.py": [
+      "raptix/llm/factory.py",
+      "raptix/middleware/state_reducers.py"
+    ],
+    "raptix/middleware/roe.py": [
+      "raptix/middleware/_audit_sink.py",
+      "raptix/middleware/_command_targets.py"
+    ],
+    "raptix/middleware/skillogy.py": [],
+    "raptix/middleware/skills.py": [
+      "raptix/tools/skills.py"
+    ],
+    "raptix/middleware/state_reducers.py": [],
+    "raptix/middleware/subagent_transcript_state.py": [
+      "raptix/middleware/state_reducers.py"
+    ],
+    "raptix/middleware/tried_edges.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/middleware/untrusted_output.py": [
+      "raptix/middleware/_injection_detector.py"
+    ],
+    "raptix/plugin_loader.py": [],
+    "raptix/py.typed": [],
+    "raptix/runtime/__init__.py": [],
+    "raptix/runtime/cart.py": [
+      "raptix/runtime/recording.py",
+      "raptix/runtime/task_spec.py"
+    ],
+    "raptix/runtime/event_log.py": [],
+    "raptix/runtime/recording.py": [],
+    "raptix/runtime/shutdown.py": [],
+    "raptix/runtime/task_spec.py": [],
+    "raptix/sandbox_kernel/__init__.py": [
+      "raptix/sandbox_kernel/jobs.py",
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "raptix/sandbox_kernel/base.py": [
+      "raptix/sandbox_kernel/jobs.py",
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "raptix/sandbox_kernel/daemon.py": [
+      "raptix/sandbox_kernel/base.py",
+      "raptix/sandbox_kernel/jobs.py"
+    ],
+    "raptix/sandbox_kernel/egress.py": [],
+    "raptix/sandbox_kernel/jobs.py": [],
+    "raptix/sandbox_kernel/tmux.py": [],
+    "raptix/sandbox_server/__init__.py": [
+      "raptix/sandbox_server/app.py"
+    ],
+    "raptix/sandbox_server/__main__.py": [
+      "raptix/sandbox_server/app.py"
+    ],
+    "raptix/sandbox_server/app.py": [
+      "raptix/sandbox_kernel/daemon.py"
+    ],
+    "raptix/sandbox_web/INSANE_SEARCH_LICENSE": [],
+    "raptix/sandbox_web/NOTICE.md": [],
+    "raptix/sandbox_web/__init__.py": [
+      "raptix/sandbox_web/fetch_chain.py",
+      "raptix/sandbox_web/url_transforms.py",
+      "raptix/sandbox_web/validators.py",
+      "raptix/sandbox_web/waf_detector.py"
+    ],
+    "raptix/sandbox_web/__main__.py": [
+      "raptix/sandbox_web/fetch_chain.py",
+      "raptix/sandbox_web/providers.py"
+    ],
+    "raptix/sandbox_web/bias_check.py": [],
+    "raptix/sandbox_web/executor.py": [
+      "raptix/sandbox_web/fetch_chain.py",
+      "raptix/sandbox_web/validators.py",
+      "raptix/sandbox_web/waf_detector.py"
+    ],
+    "raptix/sandbox_web/fetch_chain.py": [
+      "raptix/sandbox_web/url_transforms.py",
+      "raptix/sandbox_web/validators.py",
+      "raptix/sandbox_web/waf_detector.py"
+    ],
+    "raptix/sandbox_web/learning.py": [],
+    "raptix/sandbox_web/phase0.py": [],
+    "raptix/sandbox_web/providers.py": [],
+    "raptix/sandbox_web/safety.py": [],
+    "raptix/sandbox_web/templates/package.json": [],
+    "raptix/sandbox_web/templates/playwright_mobile_chrome.js": [],
+    "raptix/sandbox_web/templates/playwright_real_chrome.js": [],
+    "raptix/sandbox_web/transport.py": [],
+    "raptix/sandbox_web/url_transforms.py": [],
+    "raptix/sandbox_web/validators.py": [],
+    "raptix/sandbox_web/waf_detector.py": [],
+    "raptix/sandbox_web/waf_profiles.yaml": [],
+    "raptix/server/__init__.py": [],
+    "raptix/server/checkpointer.py": [],
+    "raptix/server/plugins_api.py": [
+      "raptix/graph_registry.py"
+    ],
+    "raptix/skills/.graph/skills.cypher": [],
+    "raptix/skills/.graph/threat-actor-nodes.cypher": [],
+    "raptix/skills/__init__.py": [],
+    "raptix/skills/audit/__init__.py": [
+      "raptix/skills/audit/canonical.py"
+    ],
+    "raptix/skills/audit/__main__.py": [
+      "raptix/skills/audit/cli.py"
+    ],
+    "raptix/skills/audit/aliases.py": [],
+    "raptix/skills/audit/canonical.py": [],
+    "raptix/skills/audit/cli.py": [
+      "raptix/skills/audit/rules.py"
+    ],
+    "raptix/skills/audit/frontmatter.py": [],
+    "raptix/skills/audit/mitre.py": [],
+    "raptix/skills/audit/path_kind.py": [],
+    "raptix/skills/audit/rules.py": [
+      "raptix/capabilities/contracts.py",
+      "raptix/skills/audit/aliases.py",
+      "raptix/skills/audit/canonical.py",
+      "raptix/skills/audit/frontmatter.py",
+      "raptix/skills/audit/mitre.py",
+      "raptix/skills/audit/path_kind.py"
+    ],
+    "raptix/skills/audit/subdomains.yaml": [],
+    "raptix/skills/defs/benchmark/SKILL.md": [],
+    "raptix/skills/defs/plugins/detector/SKILL.md": [],
+    "raptix/skills/defs/plugins/exploiter/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t01-prompt-injection/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t02-linguistic-evasion/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t03-reasoning-exploit/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t04-memory-manipulation/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t05-api-exploitation/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t06-training-poisoning/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t07-output-exfil/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t08-deception/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t09-multimodal/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t10-confidentiality-breach/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t11-agentic-exploit/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t12-rag-poisoning/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t13-supply-chain/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t14-infra-warfare/SKILL.md": [],
+    "raptix/skills/defs/plugins/llm-redteam/t15-human-ai-coupling/SKILL.md": [],
+    "raptix/skills/defs/plugins/patcher/SKILL.md": [],
+    "raptix/skills/defs/plugins/scanner/SKILL.md": [],
+    "raptix/skills/defs/plugins/verifier/SKILL.md": [],
+    "raptix/skills/defs/plugins/verifier/bounty-report/SKILL.md": [],
+    "raptix/skills/defs/plugins/verifier/seven-question-gate/SKILL.md": [],
+    "raptix/skills/defs/plugins/vulnresearch/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/apt10-stone-panda/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/apt28-fancy-bear/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/apt29-cozy-bear/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/apt33-elfin/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/apt34-oilrig/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/apt36-transparent-tribe/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/apt37-reaper/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/apt41-double-dragon/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/dark-caracal/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/fin7-carbanak/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/kimsuky/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/lazarus-group/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/muddywater/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/mustang-panda/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/patchwork/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/pink-sandstorm/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/references/anyrun-free-iocs.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/references/cve-apt-mapping.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/salt-typhoon/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/sandworm-team/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/scattered-spider/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/sidewinder/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/turla/SKILL.md": [],
+    "raptix/skills/defs/shared/adversary-emulation/volt-typhoon/SKILL.md": [],
+    "raptix/skills/defs/shared/defense-evasion/SKILL.md": [],
+    "raptix/skills/defs/shared/defense-evasion/references/amsi-bypass-techniques.md": [],
+    "raptix/skills/defs/shared/defense-evasion/references/modern-evasion-techniques.md": [],
+    "raptix/skills/defs/shared/finding-protocol/SKILL.md": [],
+    "raptix/skills/defs/shared/opsec/SKILL.md": [],
+    "raptix/skills/defs/shared/references/SKILL.md": [],
+    "raptix/skills/defs/shared/stealth-infra/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/adcs-esc1/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/asrep-roasting/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/bloodhound-bhce/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/bloodhound-query/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/certipy-esc-chain/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/coercer/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/dcsync/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/kerberoasting/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/laps/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/netexec/SKILL.md": [],
+    "raptix/skills/defs/standard/ad/ntlm-relay/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/adversarial-ml-evasion/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/auth-bypass/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/bounty-hunting/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/chains/cred-reuse/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/chains/idor-to-priv-esc/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/chains/ssrf-to-rce/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/chains/xss-to-takeover/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/command-injection/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/data-and-model-poisoning/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/deserialization/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/excessive-agency/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/idor/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/improper-output-handling/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/misinformation/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/ml-model-extraction/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/patch-diff/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/path-traversal/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/pattern-exhaustion/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/prompt-injection/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/prototype-pollution/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/redos/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/sensitive-information-disclosure/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/sql-injection/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/ssrf/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/ssti/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/supply-chain/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/system-prompt-leakage/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/ti-anyrun-lookup/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/ti-ioc-extraction/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/ti-yara-hunting/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/trust-boundary/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/unbounded-consumption/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/vector-and-embedding-weaknesses/SKILL.md": [],
+    "raptix/skills/defs/standard/analyst/xxe/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/aws-iam-enum/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/aws-iam-passrole-chain/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/azure-managed-identity/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/container/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/container/container-cve/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/container/docker-socket-mount/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/container/k8s-pod-escape/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/container/k8s-rbac-abuse/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/entra-conditional-access-bypass/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/entra-device-code-phishing/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/entra-enum/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/entra-privesc/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/gcp-org-escalation/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/gcp-svc-account-impersonation/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/imds-pivot/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/k8s-pivot/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/m365-mailbox-compromise/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/s3-takeover/SKILL.md": [],
+    "raptix/skills/defs/standard/cloud/terraform-state-leak/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/access-control/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/bridge-exploit/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/flash-loan/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/governance-attack/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/mev-sandwich/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/oracle-manipulation/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/reentrancy/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/signature-replay/SKILL.md": [],
+    "raptix/skills/defs/standard/contracts/upgradeable-proxy/SKILL.md": [],
+    "raptix/skills/defs/standard/decepticon/engagement-lifecycle/SKILL.md": [],
+    "raptix/skills/defs/standard/decepticon/engagement-startup/SKILL.md": [],
+    "raptix/skills/defs/standard/decepticon/final-report/SKILL.md": [],
+    "raptix/skills/defs/standard/decepticon/kali-mcp-bridge/SKILL.md": [],
+    "raptix/skills/defs/standard/decepticon/kill-chain-analysis/SKILL.md": [],
+    "raptix/skills/defs/standard/decepticon/orchestration/SKILL.md": [],
+    "raptix/skills/defs/standard/decepticon/pentest-task-tree/SKILL.md": [],
+    "raptix/skills/defs/standard/dfir/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ad/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ad/references/attack-paths.md": [],
+    "raptix/skills/defs/standard/exploit/api/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/api/grpc/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/api/server-sent-events/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/api/soap-wsdl/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/api/websocket/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/cicd/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/cicd/cicd-secrets-exfil/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/cicd/github-actions-injection/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/cicd/poisoned-pipeline-execution/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/cicd/self-hosted-runner-abuse/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/crypto/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/edge-device-exploitation/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ics-ot/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ics-ot/bacnet/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ics-ot/dnp3/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ics-ot/enip-cip/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ics-ot/modbus/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ics-ot/opcua/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ics-ot/profinet/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/ics-ot/s7comm/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/reporting/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/rmm-tool-abuse/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/supplychain/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/supplychain/dep-confusion/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/ato-methodology/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/bfla/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/blind-sqli/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/business-logic/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/cache-deception/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/clickjacking/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/command-injection/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/cors/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/crypto/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/csrf/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/cve/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/deserialization/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/dns-rebinding/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/dom-clobbering/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/graphql/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/header-injection/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/hpp/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/idor/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/jwt/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/ldapi/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/lfi/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/mass-assignment/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/mfa-bypass/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/nosqli/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/oauth/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/open-redirect/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/php-type-juggling/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/proxy-misconfig/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/race-condition/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/saml/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/smuggling/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/sqli/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/ssrf/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/ssti/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/verb-tampering/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/waf-bypass/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/web-cache-poisoning/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/xpath-xslt/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/xs-leaks/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/xss/SKILL.md": [],
+    "raptix/skills/defs/standard/exploit/web/xxe/SKILL.md": [],
+    "raptix/skills/defs/standard/ics/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/binwalk-extract/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/ble-gatt/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/bootloader-uboot/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/dev-mem/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/firmware-acquisition/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/hardcoded-creds/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/lorawan-otaa/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/ros2-dds-attack/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/sub-ghz/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/z-wave/SKILL.md": [],
+    "raptix/skills/defs/standard/iot/zigbee-touchlink/SKILL.md": [],
+    "raptix/skills/defs/standard/mobile/SKILL.md": [],
+    "raptix/skills/defs/standard/mobile/android/SKILL.md": [],
+    "raptix/skills/defs/standard/mobile/android/il2cpp/SKILL.md": [],
+    "raptix/skills/defs/standard/mobile/flutter/SKILL.md": [],
+    "raptix/skills/defs/standard/mobile/ios/dynamic/SKILL.md": [],
+    "raptix/skills/defs/standard/osint/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/evilginx2-proxy/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/gophish-campaign/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/html-smuggling-lure/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/lookalike-domain/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/lure-deconfliction/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/mfa-fatigue-social/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/o365-credential-harvest/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/pdf-credential-harvest/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/pretext-engineering/SKILL.md": [],
+    "raptix/skills/defs/standard/phisher/quishing/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/c2-alternative-channels/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/c2-cobalt-strike/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/c2-domain-fronting/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/c2-sliver/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/c2-sliver/references/sliver-quickstart.md": [],
+    "raptix/skills/defs/standard/post-exploit/c2/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/c2/havoc/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/c2/mythic/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/credential-access/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/credential-access/references/lsass-techniques.md": [],
+    "raptix/skills/defs/standard/post-exploit/lateral-movement/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/linux-privesc-enum/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/macos/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/network-replay/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/privilege-escalation/SKILL.md": [],
+    "raptix/skills/defs/standard/post-exploit/reporting/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/active-recon/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/cloud-recon/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/cloud-recon/references/cloud-ip-ranges.md": [],
+    "raptix/skills/defs/standard/recon/cloud-recon/references/cloud-naming-patterns.md": [],
+    "raptix/skills/defs/standard/recon/iot-security/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/mobile-security/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/open-web/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/osint/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/passive-recon/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/passive-recon/references/dns-techniques.md": [],
+    "raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py": [],
+    "raptix/skills/defs/standard/recon/reporting/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/web-recon/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/web-recon/api-enumeration/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/web-recon/auth-mapping/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/web-recon/cms-scanning/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/web-recon/cookie-audit/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/web-recon/discovery/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/web-recon/subdomain-takeover/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/web-recon/waf-detection/SKILL.md": [],
+    "raptix/skills/defs/standard/recon/wireless-security/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/android-malware/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/anti-debug-bypass/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/ctf-triage/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/deep-analysis/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/dotnet-malware/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/fileless-malware/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/firmware/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/fuzzing/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/game-security/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/ghidra/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/ios-static/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/malware-triage/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/packer-unpacking/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/ransomware-analysis/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/rootkit-analysis/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/rop-chain/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/triage/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/virtualized-protectors/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/windows-internals/SKILL.md": [],
+    "raptix/skills/defs/standard/reverser/yara-hunting/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/abort-template/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/cleanup-template/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/conops-template/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/conops-template/references/kill-chain-templates.md": [],
+    "raptix/skills/defs/standard/soundwave/contact-template/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/data-handling-template/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/opplan-converter/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-rules.md": [],
+    "raptix/skills/defs/standard/soundwave/opplan-converter/references/objective-templates.md": [],
+    "raptix/skills/defs/standard/soundwave/references/schema-quick-reference.md": [],
+    "raptix/skills/defs/standard/soundwave/roe-template/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/roe-template/references/roe-example.json": [],
+    "raptix/skills/defs/standard/soundwave/roe-template/references/validation-checklist.md": [],
+    "raptix/skills/defs/standard/soundwave/structured-questions/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/emulation/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/emulation/apt29/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/emulation/fin7/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/emulation/lazarus/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/emulation/lockbit/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/emulation/sandworm/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/emulation/scattered-spider/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/emulation/volt-typhoon/SKILL.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/references/adversary-archetypes.md": [],
+    "raptix/skills/defs/standard/soundwave/threat-profile/references/apt-groups.md": [],
+    "raptix/skills/defs/standard/supply-chain/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/authn_jwt/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/authz/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/graphql/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/idor/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/open_redirect/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/sqli/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/ssrf/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/ssti/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/xss/SKILL.md": [],
+    "raptix/skills/defs/standard/surface_exploit/xxe/SKILL.md": [],
+    "raptix/skills/defs/standard/wireless/SKILL.md": [],
+    "raptix/skills/defs/standard/wireless/deauth-pmf/SKILL.md": [],
+    "raptix/skills/defs/standard/wireless/evil-twin-karma/SKILL.md": [],
+    "raptix/skills/defs/standard/wireless/krack-fragattacks/SKILL.md": [],
+    "raptix/skills/defs/standard/wireless/wpa-enterprise-eap/SKILL.md": [],
+    "raptix/skills/defs/standard/wireless/wpa2-psk/SKILL.md": [],
+    "raptix/skills/defs/standard/wireless/wpa3-sae/SKILL.md": [],
+    "raptix/skills/defs/standard/wireless/wps-pixie-dust/SKILL.md": [],
+    "raptix/skills/engine/__init__.py": [
+      "raptix/skills/engine/proto/__init__.py"
+    ],
+    "raptix/skills/engine/__main__.py": [
+      "raptix/skills/engine/server/app.py",
+      "raptix/skills/engine/server/neo4j_backend.py"
+    ],
+    "raptix/skills/engine/builder/__init__.py": [
+      "raptix/skills/engine/builder/seeds.py"
+    ],
+    "raptix/skills/engine/builder/__main__.py": [
+      "raptix/skills/engine/builder/cli.py"
+    ],
+    "raptix/skills/engine/builder/cli.py": [
+      "raptix/skills/engine/builder/emit.py",
+      "raptix/skills/engine/builder/mitre_stix.py",
+      "raptix/skills/engine/builder/model.py",
+      "raptix/skills/engine/builder/seeds_to_graph.py",
+      "raptix/skills/engine/builder/skills.py"
+    ],
+    "raptix/skills/engine/builder/emit.py": [
+      "raptix/skills/engine/builder/model.py"
+    ],
+    "raptix/skills/engine/builder/mitre_stix.py": [
+      "raptix/skills/engine/builder/model.py"
+    ],
+    "raptix/skills/engine/builder/model.py": [],
+    "raptix/skills/engine/builder/seeds.py": [],
+    "raptix/skills/engine/builder/seeds/asset_types.yaml": [],
+    "raptix/skills/engine/builder/seeds/moc.yaml": [],
+    "raptix/skills/engine/builder/seeds/phases.yaml": [],
+    "raptix/skills/engine/builder/seeds_to_graph.py": [
+      "raptix/skills/engine/builder/model.py",
+      "raptix/skills/engine/builder/seeds.py"
+    ],
+    "raptix/skills/engine/builder/skills.py": [
+      "raptix/skills/audit/aliases.py",
+      "raptix/skills/audit/frontmatter.py",
+      "raptix/skills/audit/mitre.py",
+      "raptix/skills/engine/builder/model.py",
+      "raptix/skills/engine/builder/seeds.py"
+    ],
+    "raptix/skills/engine/builder/stix_bootstrap.py": [],
+    "raptix/skills/engine/client/__init__.py": [
+      "raptix/skills/engine/client/rest.py"
+    ],
+    "raptix/skills/engine/client/rest.py": [],
+    "raptix/skills/engine/embed_ingest.py": [
+      "raptix/skills/engine/__init__.py",
+      "raptix/skills/engine/embeddings.py",
+      "raptix/skills/engine/server/neo4j_backend.py"
+    ],
+    "raptix/skills/engine/embeddings.py": [],
+    "raptix/skills/engine/proto/__init__.py": [],
+    "raptix/skills/engine/proto/skillogy.proto": [],
+    "raptix/skills/engine/server/__init__.py": [
+      "raptix/skills/engine/server/app.py",
+      "raptix/skills/engine/server/neo4j_backend.py"
+    ],
+    "raptix/skills/engine/server/app.py": [
+      "raptix/skills/engine/server/neo4j_backend.py"
+    ],
+    "raptix/skills/engine/server/neo4j_backend.py": [],
+    "raptix/telemetry/__init__.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/otel.py",
+      "raptix/telemetry/sink.py"
+    ],
+    "raptix/telemetry/config.py": [],
+    "raptix/telemetry/exporter.py": [],
+    "raptix/telemetry/otel.py": [],
+    "raptix/telemetry/redact.py": [],
+    "raptix/telemetry/sanitizer.py": [],
+    "raptix/telemetry/sink.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/exporter.py",
+      "raptix/telemetry/redact.py",
+      "raptix/telemetry/sanitizer.py"
+    ],
+    "raptix/tools/README.md": [],
+    "raptix/tools/__init__.py": [
+      "raptix/tools/ad/tools.py",
+      "raptix/tools/bash/__init__.py",
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/cloud/tools.py",
+      "raptix/tools/contracts/tools.py",
+      "raptix/tools/defense/__init__.py",
+      "raptix/tools/evidence/__init__.py",
+      "raptix/tools/references/tools.py",
+      "raptix/tools/reporting/tools.py",
+      "raptix/tools/research/patch.py",
+      "raptix/tools/research/scanner_tools.py",
+      "raptix/tools/research/tools.py",
+      "raptix/tools/reversing/tools.py",
+      "raptix/tools/web/tools.py"
+    ],
+    "raptix/tools/ad/__init__.py": [
+      "raptix/tools/ad/adcs.py",
+      "raptix/tools/ad/bloodhound.py",
+      "raptix/tools/ad/dcsync.py",
+      "raptix/tools/ad/delegation.py",
+      "raptix/tools/ad/gpo.py",
+      "raptix/tools/ad/kerberos.py",
+      "raptix/tools/ad/shadow_creds.py"
+    ],
+    "raptix/tools/ad/adcs.py": [],
+    "raptix/tools/ad/adcs_post.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/tools/ad/bh_tools.py": [
+      "raptix/tools/ad/bhce_client.py"
+    ],
+    "raptix/tools/ad/bhce_client.py": [],
+    "raptix/tools/ad/bloodhound.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/tools/ad/dcsync.py": [],
+    "raptix/tools/ad/delegation.py": [
+      "raptix/tools/research/graph.py"
+    ],
+    "raptix/tools/ad/gpo.py": [
+      "raptix/tools/research/graph.py"
+    ],
+    "raptix/tools/ad/kerberos.py": [],
+    "raptix/tools/ad/shadow_creds.py": [
+      "raptix/tools/research/graph.py"
+    ],
+    "raptix/tools/ad/tools.py": [
+      "raptix/tools/ad/adcs.py",
+      "raptix/tools/ad/adcs_post.py",
+      "raptix/tools/ad/bh_tools.py",
+      "raptix/tools/ad/bloodhound.py",
+      "raptix/tools/ad/dcsync.py",
+      "raptix/tools/ad/delegation.py",
+      "raptix/tools/ad/gpo.py",
+      "raptix/tools/ad/kerberos.py",
+      "raptix/tools/ad/shadow_creds.py",
+      "raptix/tools/research/_engagement_scope.py",
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/bash/__init__.py": [
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/bash/prompt.py"
+    ],
+    "raptix/tools/bash/bash.py": [
+      "raptix/backends/http_sandbox.py",
+      "raptix/sandbox_kernel/base.py",
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "raptix/tools/bash/prompt.py": [],
+    "raptix/tools/browser/__init__.py": [
+      "raptix/tools/browser/tools.py"
+    ],
+    "raptix/tools/browser/tools.py": [],
+    "raptix/tools/cloud/__init__.py": [
+      "raptix/tools/cloud/aws.py",
+      "raptix/tools/cloud/k8s.py",
+      "raptix/tools/cloud/metadata.py",
+      "raptix/tools/cloud/terraform.py"
+    ],
+    "raptix/tools/cloud/aws.py": [],
+    "raptix/tools/cloud/k8s.py": [],
+    "raptix/tools/cloud/metadata.py": [],
+    "raptix/tools/cloud/terraform.py": [],
+    "raptix/tools/cloud/tools.py": [
+      "raptix/tools/cloud/aws.py",
+      "raptix/tools/cloud/k8s.py",
+      "raptix/tools/cloud/metadata.py",
+      "raptix/tools/cloud/terraform.py"
+    ],
+    "raptix/tools/contracts/__init__.py": [
+      "raptix/tools/contracts/foundry.py",
+      "raptix/tools/contracts/patterns.py",
+      "raptix/tools/contracts/slither.py"
+    ],
+    "raptix/tools/contracts/foundry.py": [],
+    "raptix/tools/contracts/patterns.py": [],
+    "raptix/tools/contracts/slither.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/tools/contracts/tools.py": [
+      "raptix/tools/contracts/foundry.py",
+      "raptix/tools/contracts/patterns.py",
+      "raptix/tools/contracts/slither.py",
+      "raptix/tools/research/_engagement_scope.py"
+    ],
+    "raptix/tools/defense/__init__.py": [
+      "raptix/tools/defense/tools.py"
+    ],
+    "raptix/tools/defense/blue_cell.py": [
+      "raptix/blue_cell/rule_match.py",
+      "raptix/blue_cell/tap.py",
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/defense/brief.py": [
+      "raptix/tools/defense/blue_cell.py",
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/defense/conops.py": [],
+    "raptix/tools/defense/edr.py": [
+      "raptix/tools/defense/conops.py"
+    ],
+    "raptix/tools/defense/elastic.py": [
+      "raptix/tools/defense/conops.py"
+    ],
+    "raptix/tools/defense/sentinel.py": [
+      "raptix/tools/defense/conops.py"
+    ],
+    "raptix/tools/defense/splunk.py": [
+      "raptix/tools/defense/conops.py"
+    ],
+    "raptix/tools/defense/tools.py": [
+      "raptix/tools/defense/__init__.py",
+      "raptix/tools/defense/edr.py",
+      "raptix/tools/defense/elastic.py",
+      "raptix/tools/defense/sentinel.py",
+      "raptix/tools/defense/splunk.py"
+    ],
+    "raptix/tools/evidence/__init__.py": [
+      "raptix/tools/evidence/tools.py"
+    ],
+    "raptix/tools/evidence/asciicast.py": [],
+    "raptix/tools/evidence/tools.py": [
+      "raptix/middleware/_audit_sink.py",
+      "raptix/tools/evidence/asciicast.py"
+    ],
+    "raptix/tools/filesystem.py": [],
+    "raptix/tools/interaction/__init__.py": [
+      "raptix/tools/interaction/ask_user.py",
+      "raptix/tools/interaction/complete_planning.py"
+    ],
+    "raptix/tools/interaction/ask_user.py": [],
+    "raptix/tools/interaction/complete_planning.py": [],
+    "raptix/tools/mcp/__init__.py": [
+      "raptix/tools/mcp/client.py"
+    ],
+    "raptix/tools/mcp/client.py": [],
+    "raptix/tools/network/__init__.py": [
+      "raptix/tools/network/protocols.py",
+      "raptix/tools/network/scanners.py",
+      "raptix/tools/network/vulnerability.py"
+    ],
+    "raptix/tools/network/protocols.py": [],
+    "raptix/tools/network/scanners.py": [],
+    "raptix/tools/network/vulnerability.py": [],
+    "raptix/tools/opplan.py": [],
+    "raptix/tools/ops/__init__.py": [
+      "raptix/tools/ops/client.py",
+      "raptix/tools/ops/tools.py"
+    ],
+    "raptix/tools/ops/client.py": [],
+    "raptix/tools/ops/tools.py": [
+      "raptix/tools/ops/client.py"
+    ],
+    "raptix/tools/proxy/__init__.py": [
+      "raptix/tools/proxy/tools.py"
+    ],
+    "raptix/tools/proxy/tools.py": [],
+    "raptix/tools/references/__init__.py": [
+      "raptix/tools/references/catalog.py",
+      "raptix/tools/references/fetch.py",
+      "raptix/tools/references/payloads.py"
+    ],
+    "raptix/tools/references/catalog.py": [],
+    "raptix/tools/references/cve_poc_index.py": [
+      "raptix/tools/references/fetch.py"
+    ],
+    "raptix/tools/references/fetch.py": [
+      "raptix/tools/references/catalog.py"
+    ],
+    "raptix/tools/references/h1_corpus.py": [
+      "raptix/tools/references/fetch.py"
+    ],
+    "raptix/tools/references/hydrate.py": [
+      "raptix/tools/references/cve_poc_index.py",
+      "raptix/tools/references/fetch.py",
+      "raptix/tools/references/h1_corpus.py",
+      "raptix/tools/references/killchain.py",
+      "raptix/tools/references/methodology.py",
+      "raptix/tools/references/oneliners.py",
+      "raptix/tools/references/payloads_ingest.py"
+    ],
+    "raptix/tools/references/killchain.py": [
+      "raptix/tools/references/fetch.py"
+    ],
+    "raptix/tools/references/killchain.yaml": [],
+    "raptix/tools/references/methodology.py": [
+      "raptix/tools/references/fetch.py"
+    ],
+    "raptix/tools/references/oneliners.py": [
+      "raptix/tools/references/fetch.py"
+    ],
+    "raptix/tools/references/payloads.py": [],
+    "raptix/tools/references/payloads_ingest.py": [
+      "raptix/tools/references/fetch.py",
+      "raptix/tools/references/payloads.py"
+    ],
+    "raptix/tools/references/tools.py": [
+      "raptix/tools/references/catalog.py",
+      "raptix/tools/references/cve_poc_index.py",
+      "raptix/tools/references/fetch.py",
+      "raptix/tools/references/h1_corpus.py",
+      "raptix/tools/references/hydrate.py",
+      "raptix/tools/references/killchain.py",
+      "raptix/tools/references/methodology.py",
+      "raptix/tools/references/oneliners.py",
+      "raptix/tools/references/payloads.py",
+      "raptix/tools/references/payloads_ingest.py"
+    ],
+    "raptix/tools/reporting/__init__.py": [
+      "raptix/tools/reporting/bugcrowd.py",
+      "raptix/tools/reporting/cvss.py",
+      "raptix/tools/reporting/executive.py",
+      "raptix/tools/reporting/hackerone.py",
+      "raptix/tools/reporting/sarif.py",
+      "raptix/tools/reporting/timeline.py"
+    ],
+    "raptix/tools/reporting/bugcrowd.py": [],
+    "raptix/tools/reporting/cvss.py": [],
+    "raptix/tools/reporting/executive.py": [],
+    "raptix/tools/reporting/hackerone.py": [],
+    "raptix/tools/reporting/kg_adapter.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "raptix/tools/reporting/sarif.py": [],
+    "raptix/tools/reporting/timeline.py": [],
+    "raptix/tools/reporting/tools.py": [
+      "raptix/tools/reporting/bugcrowd.py",
+      "raptix/tools/reporting/executive.py",
+      "raptix/tools/reporting/hackerone.py",
+      "raptix/tools/reporting/kg_adapter.py",
+      "raptix/tools/reporting/sarif.py",
+      "raptix/tools/reporting/timeline.py"
+    ],
+    "raptix/tools/research/__init__.py": [],
+    "raptix/tools/research/_apoc_safety.py": [],
+    "raptix/tools/research/_engagement_scope.py": [],
+    "raptix/tools/research/_state.py": [
+      "raptix/middleware/kg_internal/store.py",
+      "raptix/tools/reporting/kg_adapter.py",
+      "raptix/tools/research/_engagement_scope.py"
+    ],
+    "raptix/tools/research/bounty.py": [
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/research/chain.py": [
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/research/cve.py": [],
+    "raptix/tools/research/dedupe.py": [
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/research/fuzz.py": [],
+    "raptix/tools/research/graph.py": [],
+    "raptix/tools/research/health.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/research/osint.py": [
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/research/patch.py": [
+      "raptix/tools/research/_state.py",
+      "raptix/tools/research/poc.py"
+    ],
+    "raptix/tools/research/poc.py": [],
+    "raptix/tools/research/sarif.py": [],
+    "raptix/tools/research/sarif_export.py": [],
+    "raptix/tools/research/scanner_tools.py": [
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/research/secret_scanner.py": [
+      "raptix/tools/research/_state.py"
+    ],
+    "raptix/tools/research/tech_detection.py": [],
+    "raptix/tools/research/tools.py": [
+      "raptix/tools/contracts/patterns.py",
+      "raptix/tools/contracts/slither.py",
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/_state.py",
+      "raptix/tools/research/chain.py",
+      "raptix/tools/research/dedupe.py",
+      "raptix/tools/research/health.py",
+      "raptix/tools/research/osint.py",
+      "raptix/tools/research/patch.py",
+      "raptix/tools/research/sarif.py",
+      "raptix/tools/research/scanner_tools.py",
+      "raptix/tools/research/secret_scanner.py",
+      "raptix/tools/research/tech_detection.py",
+      "raptix/tools/reversing/binary.py",
+      "raptix/tools/reversing/packer.py",
+      "raptix/tools/reversing/strings.py",
+      "raptix/tools/reversing/symbols.py",
+      "raptix/tools/web/jwt.py",
+      "raptix/tools/web/oauth.py",
+      "raptix/tools/web/session.py"
+    ],
+    "raptix/tools/reversing/__init__.py": [
+      "raptix/tools/reversing/binary.py",
+      "raptix/tools/reversing/ghidra.py",
+      "raptix/tools/reversing/packer.py",
+      "raptix/tools/reversing/rop.py",
+      "raptix/tools/reversing/scripts.py",
+      "raptix/tools/reversing/strings.py",
+      "raptix/tools/reversing/symbols.py"
+    ],
+    "raptix/tools/reversing/binary.py": [],
+    "raptix/tools/reversing/ghidra.py": [],
+    "raptix/tools/reversing/packer.py": [],
+    "raptix/tools/reversing/rop.py": [],
+    "raptix/tools/reversing/scripts.py": [],
+    "raptix/tools/reversing/strings.py": [],
+    "raptix/tools/reversing/symbols.py": [],
+    "raptix/tools/reversing/tools.py": [
+      "raptix/tools/reversing/binary.py",
+      "raptix/tools/reversing/ghidra.py",
+      "raptix/tools/reversing/packer.py",
+      "raptix/tools/reversing/rop.py",
+      "raptix/tools/reversing/scripts.py",
+      "raptix/tools/reversing/strings.py",
+      "raptix/tools/reversing/symbols.py"
+    ],
+    "raptix/tools/skills.py": [
+      "raptix/tools/skills_registry.py"
+    ],
+    "raptix/tools/skills_registry.py": [],
+    "raptix/tools/verification.py": [
+      "raptix/tools/bash/bash.py",
+      "raptix/tools/research/poc.py"
+    ],
+    "raptix/tools/web/__init__.py": [
+      "raptix/tools/web/graphql.py",
+      "raptix/tools/web/http.py",
+      "raptix/tools/web/jwt.py",
+      "raptix/tools/web/oauth.py",
+      "raptix/tools/web/session.py",
+      "raptix/tools/web/tools.py"
+    ],
+    "raptix/tools/web/graphql.py": [],
+    "raptix/tools/web/http.py": [],
+    "raptix/tools/web/jwt.py": [],
+    "raptix/tools/web/oauth.py": [],
+    "raptix/tools/web/search.py": [
+      "raptix/tools/bash/bash.py"
+    ],
+    "raptix/tools/web/session.py": [],
+    "raptix/tools/web/tools.py": [
+      "raptix/tools/web/graphql.py",
+      "raptix/tools/web/http.py",
+      "raptix/tools/web/jwt.py",
+      "raptix/tools/web/oauth.py",
+      "raptix/tools/web/search.py",
+      "raptix/tools/web/session.py"
+    ],
+    "tests/__init__.py": [],
+    "tests/fixtures/capabilities/held-out.jsonl": [],
+    "tests/integration/__init__.py": [],
+    "tests/integration/kg/__init__.py": [],
+    "tests/integration/kg/conftest.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/integration/kg/test_kg_ingest_live.py": [
+      "raptix/middleware/kg_internal/ingest.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/integration/kg/test_kg_live.py": [
+      "raptix/middleware/kg_internal/migration_runner.py",
+      "raptix/middleware/kg_internal/store.py",
+      "raptix/runtime/cart.py"
+    ],
+    "tests/integration/kg/test_kg_middleware_live.py": [
+      "raptix/middleware/kg.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/integration/kg/test_kg_summary_live.py": [
+      "raptix/middleware/kg_internal/store.py",
+      "raptix/middleware/kg_internal/summary.py"
+    ],
+    "tests/integration/kg/test_kg_tools_live.py": [
+      "raptix/middleware/kg_internal/store.py",
+      "raptix/middleware/kg_internal/tools.py"
+    ],
+    "tests/unit/__init__.py": [],
+    "tests/unit/ad/__init__.py": [],
+    "tests/unit/ad/test_ad.py": [
+      "raptix/tools/ad/adcs.py",
+      "raptix/tools/ad/kerberos.py"
+    ],
+    "tests/unit/ad/test_ad_tools.py": [
+      "raptix/tools/ad/delegation.py",
+      "raptix/tools/ad/gpo.py",
+      "raptix/tools/ad/shadow_creds.py"
+    ],
+    "tests/unit/ad/test_adcs_post.py": [
+      "raptix/tools/ad/adcs_post.py"
+    ],
+    "tests/unit/ad/test_bh_tools.py": [
+      "raptix/tools/ad/bh_tools.py"
+    ],
+    "tests/unit/ad/test_bhce_client.py": [
+      "raptix/tools/ad/bhce_client.py"
+    ],
+    "tests/unit/ad/test_bloodhound_kgstore.py": [
+      "raptix/tools/ad/bloodhound.py"
+    ],
+    "tests/unit/agents/__init__.py": [],
+    "tests/unit/agents/standard/__init__.py": [],
+    "tests/unit/agents/standard/test_specialist_skill_sources.py": [
+      "raptix/agents/standard/__init__.py",
+      "raptix/agents/standard/ad_operator.py",
+      "raptix/agents/standard/contract_auditor.py",
+      "raptix/agents/standard/forensicator.py",
+      "raptix/agents/standard/ics_operator.py",
+      "raptix/agents/standard/iot_operator.py",
+      "raptix/agents/standard/mobile_operator.py",
+      "raptix/agents/standard/osint_operator.py",
+      "raptix/agents/standard/phisher.py",
+      "raptix/agents/standard/supply_chain_operator.py",
+      "raptix/agents/standard/wireless_operator.py",
+      "raptix/backends/__init__.py"
+    ],
+    "tests/unit/agents/test_blue_cell_agent.py": [
+      "raptix/agents/__init__.py",
+      "raptix/agents/build.py",
+      "raptix/agents/standard/__init__.py"
+    ],
+    "tests/unit/agents/test_build.py": [
+      "raptix/agents/__init__.py",
+      "raptix/agents/middleware_slots.py",
+      "raptix/middleware/budget.py",
+      "raptix/middleware/event_logging.py",
+      "raptix/middleware/hitl.py",
+      "raptix/middleware/prompt_injection_shield.py",
+      "raptix/middleware/untrusted_output.py"
+    ],
+    "tests/unit/agents/test_if_skill_contract.py": [
+      "raptix/agents/middleware_slots.py"
+    ],
+    "tests/unit/agents/test_registry_parity.py": [
+      "raptix/__init__.py",
+      "raptix/graph_registry.py",
+      "raptix/middleware/skillogy.py",
+      "raptix/skills/engine/builder/seeds.py"
+    ],
+    "tests/unit/agents/test_reporting_tools_wired.py": [
+      "raptix/agents/prompts/__init__.py",
+      "raptix/agents/standard/__init__.py",
+      "raptix/agents/standard/analyst.py",
+      "raptix/tools/reporting/tools.py"
+    ],
+    "tests/unit/agents/test_reverser_workload_fallback.py": [],
+    "tests/unit/agents/test_surface_dispatch.py": [
+      "raptix/agents/standard/_surface_dispatch.py",
+      "raptix/agents/standard/_surface_registry.py"
+    ],
+    "tests/unit/agents/test_surface_reexpand.py": [
+      "raptix/agents/standard/_surface_reexpand.py",
+      "raptix/agents/standard/_surface_registry.py"
+    ],
+    "tests/unit/agents/test_surface_registry.py": [
+      "raptix/agents/standard/_surface_registry.py"
+    ],
+    "tests/unit/agents/test_task_spec.py": [
+      "raptix/agents/task_spec.py"
+    ],
+    "tests/unit/backends/__init__.py": [],
+    "tests/unit/backends/conftest.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/sandbox_kernel/base.py",
+      "raptix/sandbox_kernel/daemon.py"
+    ],
+    "tests/unit/backends/test_background_jobs.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/sandbox_kernel/daemon.py"
+    ],
+    "tests/unit/backends/test_docker_sandbox_helpers.py": [
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "tests/unit/backends/test_factory.py": [
+      "raptix/backends/__init__.py",
+      "raptix/backends/factory.py"
+    ],
+    "tests/unit/backends/test_http_sandbox.py": [
+      "raptix/backends/http_sandbox.py",
+      "raptix/sandbox_kernel/__init__.py"
+    ],
+    "tests/unit/backends/test_http_sandbox_job_key.py": [
+      "raptix/backends/http_sandbox.py"
+    ],
+    "tests/unit/backends/test_session_log.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/sandbox_kernel/daemon.py"
+    ],
+    "tests/unit/backends/test_skills_path.py": [
+      "raptix/backends/__init__.py"
+    ],
+    "tests/unit/benchmark/__init__.py": [],
+    "tests/unit/benchmark/test_cve_bench_live.py": [],
+    "tests/unit/benchmark/test_cybench_provider.py": [],
+    "tests/unit/benchmark/test_cybergym_provider.py": [],
+    "tests/unit/benchmark/test_harness.py": [],
+    "tests/unit/benchmark/test_harness_cost.py": [],
+    "tests/unit/benchmark/test_mhbench_provider.py": [],
+    "tests/unit/benchmark/test_provenance.py": [],
+    "tests/unit/benchmark/test_schemas.py": [],
+    "tests/unit/benchmark/test_scorer.py": [],
+    "tests/unit/benchmark/test_xbow_provider.py": [],
+    "tests/unit/blue_cell/__init__.py": [],
+    "tests/unit/blue_cell/test_brief.py": [
+      "raptix/tools/defense/brief.py",
+      "raptix/tools/research/__init__.py"
+    ],
+    "tests/unit/blue_cell/test_rule_match.py": [
+      "raptix/blue_cell/rule_match.py"
+    ],
+    "tests/unit/blue_cell/test_rule_match_internals.py": [
+      "raptix/blue_cell/rule_match.py"
+    ],
+    "tests/unit/blue_cell/test_rule_match_uppercase_selection.py": [
+      "raptix/blue_cell/rule_match.py"
+    ],
+    "tests/unit/blue_cell/test_scan.py": [
+      "raptix/blue_cell/rule_match.py",
+      "raptix/tools/defense/blue_cell.py",
+      "raptix/tools/research/__init__.py"
+    ],
+    "tests/unit/blue_cell/test_tap.py": [
+      "raptix/blue_cell/tap.py"
+    ],
+    "tests/unit/capabilities/test_contracts.py": [
+      "raptix/capabilities/contracts.py",
+      "raptix/skills/audit/rules.py"
+    ],
+    "tests/unit/capabilities/test_evidence.py": [
+      "raptix/capabilities/evidence.py"
+    ],
+    "tests/unit/capabilities/test_scorecards.py": [
+      "raptix/capabilities/contracts.py",
+      "raptix/capabilities/scorecards.py"
+    ],
+    "tests/unit/cli/__init__.py": [],
+    "tests/unit/cli/test_audit.py": [
+      "raptix/cli/__main__.py",
+      "raptix/cli/audit.py",
+      "raptix/middleware/_audit_sink.py"
+    ],
+    "tests/unit/cli/test_auth.py": [
+      "raptix/cli/auth.py",
+      "raptix/llm/__init__.py",
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/cli/test_auth_branches.py": [
+      "raptix/cli/__init__.py",
+      "raptix/cli/auth.py",
+      "raptix/llm/__init__.py",
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/cli/test_export_transcript.py": [
+      "raptix/cli/__main__.py",
+      "raptix/cli/export_transcript.py",
+      "raptix/runtime/event_log.py"
+    ],
+    "tests/unit/cli/test_scan.py": [
+      "raptix/cli/scan.py"
+    ],
+    "tests/unit/cli/test_scan_extra.py": [
+      "raptix/cli/scan.py"
+    ],
+    "tests/unit/cli/test_zip.py": [
+      "raptix/cli/__main__.py",
+      "raptix/cli/zip.py"
+    ],
+    "tests/unit/cloud/__init__.py": [],
+    "tests/unit/cloud/test_cloud.py": [
+      "raptix/tools/cloud/aws.py",
+      "raptix/tools/cloud/k8s.py",
+      "raptix/tools/cloud/metadata.py",
+      "raptix/tools/cloud/terraform.py"
+    ],
+    "tests/unit/cloud/test_cloud_tools.py": [
+      "raptix/tools/cloud/__init__.py",
+      "raptix/tools/cloud/metadata.py"
+    ],
+    "tests/unit/cloud/test_k8s_branches.py": [
+      "raptix/tools/cloud/k8s.py"
+    ],
+    "tests/unit/contracts/__init__.py": [],
+    "tests/unit/contracts/test_contract_tools.py": [
+      "raptix/tools/contracts/tools.py"
+    ],
+    "tests/unit/contracts/test_patterns_slither.py": [
+      "raptix/tools/contracts/foundry.py",
+      "raptix/tools/contracts/patterns.py"
+    ],
+    "tests/unit/contracts/test_slither_kgstore.py": [
+      "raptix/tools/contracts/slither.py"
+    ],
+    "tests/unit/core/__init__.py": [],
+    "tests/unit/core/test_config.py": [],
+    "tests/unit/core/test_dispatch_boundary.py": [
+      "raptix/core/subagent_streaming.py",
+      "raptix/middleware/dispatch.py"
+    ],
+    "tests/unit/core/test_logging.py": [],
+    "tests/unit/core/test_schemas.py": [],
+    "tests/unit/core/test_subagent_streaming.py": [
+      "raptix/core/subagent_streaming.py"
+    ],
+    "tests/unit/core/test_subagent_streaming_guard.py": [
+      "raptix/core/subagent_streaming.py"
+    ],
+    "tests/unit/core/test_subagent_transcript_state.py": [
+      "raptix/core/subagent_streaming.py",
+      "raptix/middleware/state_reducers.py",
+      "raptix/middleware/subagent_transcript_state.py"
+    ],
+    "tests/unit/core/test_workspace_scaffold.py": [],
+    "tests/unit/installer/test_install_sh.py": [],
+    "tests/unit/llm/__init__.py": [],
+    "tests/unit/llm/test_claude_code_handler_cache_dedup.py": [],
+    "tests/unit/llm/test_claude_code_handler_streaming.py": [],
+    "tests/unit/llm/test_codex_chatgpt_handler_streaming.py": [],
+    "tests/unit/llm/test_factory.py": [
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/llm/test_factory_attribution.py": [
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/llm/test_factory_classify_errors.py": [
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/llm/test_factory_fallback_execution.py": [
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/llm/test_factory_url_redaction.py": [
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/llm/test_gemini_handler_session_cookies.py": [],
+    "tests/unit/llm/test_http_client.py": [],
+    "tests/unit/llm/test_litellm_dynamic_config.py": [],
+    "tests/unit/llm/test_models.py": [],
+    "tests/unit/llm/test_oauth_handlers.py": [],
+    "tests/unit/llm/test_oauth_token_store.py": [],
+    "tests/unit/llm/test_ollama_probe.py": [],
+    "tests/unit/llm/test_provider_controls.py": [
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/llm/test_role_model_override.py": [
+      "raptix/agents/build.py",
+      "raptix/llm/factory.py"
+    ],
+    "tests/unit/llm/test_router.py": [
+      "raptix/llm/router.py"
+    ],
+    "tests/unit/mcp_server/__init__.py": [],
+    "tests/unit/mcp_server/test_auth.py": [
+      "raptix/mcp_server/auth.py",
+      "raptix/mcp_server/config.py"
+    ],
+    "tests/unit/mcp_server/test_config.py": [
+      "raptix/mcp_server/config.py"
+    ],
+    "tests/unit/mcp_server/test_conversation.py": [
+      "raptix/mcp_server/conversation.py"
+    ],
+    "tests/unit/mcp_server/test_engagements.py": [
+      "raptix/mcp_server/config.py",
+      "raptix/mcp_server/engagements.py"
+    ],
+    "tests/unit/mcp_server/test_findings.py": [
+      "raptix/mcp_server/findings.py"
+    ],
+    "tests/unit/middleware/__init__.py": [],
+    "tests/unit/middleware/test_ai_surface.py": [
+      "raptix/middleware/kg_internal/ai_surface.py"
+    ],
+    "tests/unit/middleware/test_api_spec_ingest.py": [
+      "raptix/middleware/kg_internal/ingest.py"
+    ],
+    "tests/unit/middleware/test_audit_sink.py": [
+      "raptix/middleware/_audit_sink.py"
+    ],
+    "tests/unit/middleware/test_budget.py": [
+      "raptix/middleware/budget.py"
+    ],
+    "tests/unit/middleware/test_budget_internals.py": [
+      "raptix/middleware/__init__.py",
+      "raptix/middleware/budget.py"
+    ],
+    "tests/unit/middleware/test_command_targets.py": [
+      "raptix/middleware/_command_targets.py"
+    ],
+    "tests/unit/middleware/test_command_targets_scope_bypass.py": [
+      "raptix/middleware/_command_targets.py"
+    ],
+    "tests/unit/middleware/test_egress.py": [
+      "raptix/middleware/egress.py"
+    ],
+    "tests/unit/middleware/test_engagement.py": [
+      "raptix/middleware/engagement.py",
+      "raptix/middleware/opplan.py"
+    ],
+    "tests/unit/middleware/test_event_logging.py": [
+      "raptix/middleware/event_logging.py",
+      "raptix/runtime/event_log.py"
+    ],
+    "tests/unit/middleware/test_filesystem.py": [
+      "raptix/backends/http_sandbox.py",
+      "raptix/middleware/filesystem.py"
+    ],
+    "tests/unit/middleware/test_hitl.py": [
+      "raptix/middleware/hitl.py"
+    ],
+    "tests/unit/middleware/test_injection_detector.py": [
+      "raptix/middleware/_injection_detector.py"
+    ],
+    "tests/unit/middleware/test_kg_autoingest.py": [
+      "raptix/runtime/recording.py"
+    ],
+    "tests/unit/middleware/test_kg_control_freshness.py": [
+      "raptix/middleware/kg.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/unit/middleware/test_kg_engagement_scope.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/unit/middleware/test_kg_ingest_unit.py": [
+      "raptix/middleware/kg_internal/ingest.py"
+    ],
+    "tests/unit/middleware/test_kg_middleware_unit.py": [
+      "raptix/middleware/kg.py",
+      "raptix/middleware/kg_internal/state.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/unit/middleware/test_kg_migration_runner.py": [
+      "raptix/middleware/kg_internal/migration_runner.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/unit/middleware/test_kg_operational_shadow.py": [
+      "raptix/middleware/kg.py",
+      "raptix/middleware/kg_internal/operational_state.py",
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/unit/middleware/test_kg_summary_unit.py": [
+      "raptix/middleware/kg_internal/store.py",
+      "raptix/middleware/kg_internal/summary.py"
+    ],
+    "tests/unit/middleware/test_kg_tools_unit.py": [
+      "raptix/middleware/kg_internal/tools.py"
+    ],
+    "tests/unit/middleware/test_kgstore_unit.py": [
+      "raptix/middleware/kg_internal/store.py"
+    ],
+    "tests/unit/middleware/test_model_override.py": [
+      "raptix/middleware/model_override.py"
+    ],
+    "tests/unit/middleware/test_notifications.py": [
+      "raptix/middleware/notifications.py",
+      "raptix/sandbox_kernel/__init__.py"
+    ],
+    "tests/unit/middleware/test_opplan_hierarchy.py": [
+      "raptix/agents/standard/_surface_reexpand.py",
+      "raptix/agents/standard/_surface_registry.py",
+      "raptix/tools/opplan.py"
+    ],
+    "tests/unit/middleware/test_opplan_inject_format.py": [
+      "raptix/middleware/__init__.py",
+      "raptix/middleware/opplan.py"
+    ],
+    "tests/unit/middleware/test_opplan_persistence.py": [
+      "raptix/middleware/__init__.py",
+      "raptix/middleware/filesystem.py",
+      "raptix/middleware/opplan.py",
+      "raptix/tools/opplan.py"
+    ],
+    "tests/unit/middleware/test_prompt_injection_shield.py": [
+      "raptix/middleware/prompt_injection_shield.py"
+    ],
+    "tests/unit/middleware/test_proxy_key_override.py": [
+      "raptix/middleware/proxy_key_override.py"
+    ],
+    "tests/unit/middleware/test_roe.py": [
+      "raptix/middleware/__init__.py",
+      "raptix/middleware/_audit_sink.py",
+      "raptix/middleware/_command_targets.py",
+      "raptix/middleware/roe.py"
+    ],
+    "tests/unit/middleware/test_skillogy.py": [
+      "raptix/middleware/__init__.py",
+      "raptix/middleware/skillogy.py"
+    ],
+    "tests/unit/middleware/test_skills.py": [
+      "raptix/middleware/skills.py"
+    ],
+    "tests/unit/middleware/test_summarization_fallback.py": [
+      "raptix/agents/middleware_slots.py"
+    ],
+    "tests/unit/middleware/test_surface_inventory_ingest.py": [
+      "raptix/middleware/kg_autoingest.py",
+      "raptix/middleware/kg_internal/ingest.py",
+      "raptix/runtime/recording.py"
+    ],
+    "tests/unit/middleware/test_tried_edges.py": [
+      "raptix/runtime/recording.py"
+    ],
+    "tests/unit/middleware/test_untrusted_output.py": [
+      "raptix/middleware/_injection_detector.py",
+      "raptix/middleware/untrusted_output.py"
+    ],
+    "tests/unit/middleware/test_untrusted_output_envelope.py": [
+      "raptix/middleware/untrusted_output.py"
+    ],
+    "tests/unit/ops/__init__.py": [],
+    "tests/unit/ops/test_client.py": [
+      "raptix/tools/ops/client.py"
+    ],
+    "tests/unit/ops/test_tools.py": [
+      "raptix/tools/ops/__init__.py",
+      "raptix/tools/ops/client.py"
+    ],
+    "tests/unit/prompts/__init__.py": [],
+    "tests/unit/prompts/test_claude4_compat.py": [],
+    "tests/unit/references/__init__.py": [],
+    "tests/unit/references/test_cve_poc_index.py": [
+      "raptix/tools/references/cve_poc_index.py"
+    ],
+    "tests/unit/references/test_fetch_comprehensive.py": [
+      "raptix/tools/references/__init__.py",
+      "raptix/tools/references/fetch.py"
+    ],
+    "tests/unit/references/test_h1_corpus.py": [
+      "raptix/tools/references/h1_corpus.py"
+    ],
+    "tests/unit/references/test_hydrate.py": [
+      "raptix/tools/references/__init__.py",
+      "raptix/tools/references/fetch.py",
+      "raptix/tools/references/hydrate.py"
+    ],
+    "tests/unit/references/test_killchain.py": [
+      "raptix/tools/references/killchain.py"
+    ],
+    "tests/unit/references/test_methodology.py": [
+      "raptix/tools/references/methodology.py"
+    ],
+    "tests/unit/references/test_oneliners.py": [
+      "raptix/tools/references/oneliners.py"
+    ],
+    "tests/unit/references/test_payloads_ingest.py": [
+      "raptix/tools/references/payloads.py",
+      "raptix/tools/references/payloads_ingest.py"
+    ],
+    "tests/unit/references/test_references.py": [
+      "raptix/tools/references/__init__.py",
+      "raptix/tools/references/catalog.py",
+      "raptix/tools/references/fetch.py",
+      "raptix/tools/references/payloads.py"
+    ],
+    "tests/unit/references/test_tools_new.py": [
+      "raptix/tools/references/__init__.py",
+      "raptix/tools/references/cve_poc_index.py",
+      "raptix/tools/references/fetch.py",
+      "raptix/tools/references/h1_corpus.py",
+      "raptix/tools/references/killchain.py",
+      "raptix/tools/references/methodology.py",
+      "raptix/tools/references/oneliners.py",
+      "raptix/tools/references/payloads_ingest.py"
+    ],
+    "tests/unit/references/test_tools_wrappers.py": [
+      "raptix/tools/references/__init__.py",
+      "raptix/tools/references/catalog.py",
+      "raptix/tools/references/hydrate.py",
+      "raptix/tools/references/payloads.py"
+    ],
+    "tests/unit/reporting/__init__.py": [],
+    "tests/unit/reporting/test_cvss.py": [
+      "raptix/tools/reporting/cvss.py"
+    ],
+    "tests/unit/reporting/test_hackerone.py": [
+      "raptix/tools/reporting/hackerone.py"
+    ],
+    "tests/unit/reporting/test_reporting.py": [
+      "raptix/tools/reporting/bugcrowd.py",
+      "raptix/tools/reporting/executive.py",
+      "raptix/tools/reporting/hackerone.py",
+      "raptix/tools/reporting/timeline.py"
+    ],
+    "tests/unit/reporting/test_reporting_tools_and_executive.py": [
+      "raptix/tools/reporting/executive.py",
+      "raptix/tools/reporting/tools.py"
+    ],
+    "tests/unit/reporting/test_sarif.py": [
+      "raptix/tools/reporting/sarif.py",
+      "raptix/tools/reporting/tools.py"
+    ],
+    "tests/unit/research/__init__.py": [],
+    "tests/unit/research/test_apoc_safety.py": [
+      "raptix/tools/research/_apoc_safety.py"
+    ],
+    "tests/unit/research/test_bounty.py": [
+      "raptix/tools/research/bounty.py"
+    ],
+    "tests/unit/research/test_bounty_extended.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/bounty.py"
+    ],
+    "tests/unit/research/test_chain.py": [
+      "raptix/tools/research/chain.py"
+    ],
+    "tests/unit/research/test_cve.py": [
+      "raptix/tools/research/cve.py"
+    ],
+    "tests/unit/research/test_cve_extended.py": [
+      "raptix/tools/research/cve.py"
+    ],
+    "tests/unit/research/test_dedupe.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/dedupe.py"
+    ],
+    "tests/unit/research/test_dependency_enrichment_evidence.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/cve.py"
+    ],
+    "tests/unit/research/test_dependency_evidence.py": [
+      "raptix/tools/research/tools.py"
+    ],
+    "tests/unit/research/test_engagement_scope.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/_engagement_scope.py"
+    ],
+    "tests/unit/research/test_fuzz.py": [
+      "raptix/tools/research/fuzz.py"
+    ],
+    "tests/unit/research/test_graph.py": [],
+    "tests/unit/research/test_kg_ingest_kali.py": [
+      "raptix/runtime/recording.py",
+      "raptix/tools/research/__init__.py"
+    ],
+    "tests/unit/research/test_no_neo4j_at_import.py": [],
+    "tests/unit/research/test_osint.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/osint.py"
+    ],
+    "tests/unit/research/test_patch.py": [
+      "raptix/tools/research/patch.py"
+    ],
+    "tests/unit/research/test_poc.py": [
+      "raptix/tools/research/poc.py"
+    ],
+    "tests/unit/research/test_poc_runner_timeout.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/poc.py"
+    ],
+    "tests/unit/research/test_sarif.py": [
+      "raptix/tools/research/sarif.py"
+    ],
+    "tests/unit/research/test_sarif_export.py": [
+      "raptix/tools/research/sarif_export.py"
+    ],
+    "tests/unit/research/test_sarif_export_props_attr.py": [
+      "raptix/tools/research/sarif_export.py"
+    ],
+    "tests/unit/research/test_scanner_tools.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/scanner_tools.py"
+    ],
+    "tests/unit/research/test_secret_scanner.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/secret_scanner.py"
+    ],
+    "tests/unit/research/test_state_backend.py": [
+      "raptix/tools/research/__init__.py"
+    ],
+    "tests/unit/research/test_tech_detection.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/tech_detection.py"
+    ],
+    "tests/unit/research/test_tools.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/cve.py",
+      "raptix/tools/web/jwt.py"
+    ],
+    "tests/unit/research/test_tools_extended.py": [
+      "raptix/tools/research/__init__.py",
+      "raptix/tools/research/tools.py"
+    ],
+    "tests/unit/reversing/__init__.py": [],
+    "tests/unit/reversing/test_binary_strings_packer.py": [
+      "raptix/tools/reversing/binary.py",
+      "raptix/tools/reversing/packer.py",
+      "raptix/tools/reversing/rop.py",
+      "raptix/tools/reversing/scripts.py",
+      "raptix/tools/reversing/strings.py",
+      "raptix/tools/reversing/symbols.py"
+    ],
+    "tests/unit/reversing/test_reversing_internals.py": [
+      "raptix/tools/reversing/binary.py",
+      "raptix/tools/reversing/packer.py",
+      "raptix/tools/reversing/rop.py",
+      "raptix/tools/reversing/scripts.py",
+      "raptix/tools/reversing/strings.py",
+      "raptix/tools/reversing/symbols.py"
+    ],
+    "tests/unit/reversing/test_reversing_robustness.py": [
+      "raptix/tools/reversing/ghidra.py",
+      "raptix/tools/reversing/scripts.py",
+      "raptix/tools/reversing/tools.py"
+    ],
+    "tests/unit/runtime/__init__.py": [],
+    "tests/unit/runtime/test_attack_graph_protocol.py": [
+      "raptix/runtime/cart.py"
+    ],
+    "tests/unit/runtime/test_cart.py": [
+      "raptix/runtime/__init__.py",
+      "raptix/runtime/cart.py",
+      "raptix/runtime/recording.py",
+      "raptix/runtime/task_spec.py"
+    ],
+    "tests/unit/runtime/test_event_log.py": [
+      "raptix/runtime/event_log.py"
+    ],
+    "tests/unit/runtime/test_event_log_retry_lock.py": [
+      "raptix/runtime/event_log.py"
+    ],
+    "tests/unit/runtime/test_event_log_winlock.py": [
+      "raptix/runtime/event_log.py"
+    ],
+    "tests/unit/runtime/test_recording.py": [
+      "raptix/runtime/recording.py"
+    ],
+    "tests/unit/runtime/test_recording_internals.py": [
+      "raptix/runtime/recording.py"
+    ],
+    "tests/unit/runtime/test_shutdown.py": [],
+    "tests/unit/runtime/test_task_spec.py": [
+      "raptix/runtime/__init__.py",
+      "raptix/runtime/task_spec.py"
+    ],
+    "tests/unit/sandbox_kernel/__init__.py": [],
+    "tests/unit/sandbox_kernel/test_daemon_fileio.py": [
+      "raptix/sandbox_kernel/daemon.py"
+    ],
+    "tests/unit/sandbox_kernel/test_egress_applier.py": [
+      "raptix/middleware/egress.py",
+      "raptix/sandbox_kernel/egress.py"
+    ],
+    "tests/unit/sandbox_kernel/test_interactive_prompt_detection.py": [
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "tests/unit/sandbox_kernel/test_log_sanitize.py": [
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "tests/unit/sandbox_kernel/test_orphan_reap.py": [
+      "raptix/sandbox_kernel/base.py",
+      "raptix/sandbox_kernel/daemon.py"
+    ],
+    "tests/unit/sandbox_kernel/test_poll_backoff.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "tests/unit/sandbox_kernel/test_poll_capture_failures.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "tests/unit/sandbox_kernel/test_ps1_marker_collision.py": [
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "tests/unit/sandbox_kernel/test_tmux_lifecycle.py": [
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "tests/unit/sandbox_kernel/test_workspace_path.py": [
+      "raptix/sandbox_kernel/base.py"
+    ],
+    "tests/unit/sandbox_server/__init__.py": [],
+    "tests/unit/sandbox_server/test_app.py": [],
+    "tests/unit/sandbox_server/test_app_consttime_auth.py": [],
+    "tests/unit/sandbox_web/test_bias_check.py": [
+      "raptix/sandbox_web/__init__.py",
+      "raptix/sandbox_web/bias_check.py"
+    ],
+    "tests/unit/sandbox_web/test_executor.py": [
+      "raptix/sandbox_web/__init__.py",
+      "raptix/sandbox_web/executor.py",
+      "raptix/sandbox_web/validators.py"
+    ],
+    "tests/unit/sandbox_web/test_fetch_chain.py": [
+      "raptix/sandbox_web/__init__.py",
+      "raptix/sandbox_web/fetch_chain.py",
+      "raptix/sandbox_web/validators.py"
+    ],
+    "tests/unit/sandbox_web/test_main.py": [
+      "raptix/sandbox_web/__init__.py",
+      "raptix/sandbox_web/fetch_chain.py",
+      "raptix/sandbox_web/validators.py"
+    ],
+    "tests/unit/sandbox_web/test_providers.py": [
+      "raptix/sandbox_web/providers.py"
+    ],
+    "tests/unit/sandbox_web/test_safety.py": [
+      "raptix/sandbox_web/__init__.py",
+      "raptix/sandbox_web/safety.py"
+    ],
+    "tests/unit/sandbox_web/test_url_transforms.py": [
+      "raptix/sandbox_web/url_transforms.py"
+    ],
+    "tests/unit/sandbox_web/test_validators.py": [
+      "raptix/sandbox_web/validators.py"
+    ],
+    "tests/unit/sandbox_web/test_waf_detector.py": [
+      "raptix/sandbox_web/__init__.py",
+      "raptix/sandbox_web/waf_detector.py"
+    ],
+    "tests/unit/schemas/__init__.py": [],
+    "tests/unit/server/__init__.py": [],
+    "tests/unit/server/test_checkpoint_persistence.py": [
+      "raptix/server/checkpointer.py"
+    ],
+    "tests/unit/server/test_plugins_api.py": [
+      "raptix/graph_registry.py",
+      "raptix/server/__init__.py",
+      "raptix/server/plugins_api.py"
+    ],
+    "tests/unit/skill_audit/__init__.py": [],
+    "tests/unit/skill_audit/fixtures/bad_mitre.md": [],
+    "tests/unit/skill_audit/fixtures/clean.md": [],
+    "tests/unit/skill_audit/fixtures/missing_subdomain.md": [],
+    "tests/unit/skill_audit/fixtures/no_attribution.md": [],
+    "tests/unit/skill_audit/fixtures/reporting_skill.md": [],
+    "tests/unit/skill_audit/test_aliases.py": [
+      "raptix/skills/audit/aliases.py"
+    ],
+    "tests/unit/skill_audit/test_canonical.py": [
+      "raptix/skills/audit/canonical.py"
+    ],
+    "tests/unit/skill_audit/test_cli.py": [
+      "raptix/skills/audit/cli.py"
+    ],
+    "tests/unit/skill_audit/test_frontmatter.py": [
+      "raptix/skills/audit/frontmatter.py"
+    ],
+    "tests/unit/skill_audit/test_mitre.py": [
+      "raptix/skills/audit/mitre.py"
+    ],
+    "tests/unit/skill_audit/test_path_kind.py": [
+      "raptix/skills/audit/path_kind.py"
+    ],
+    "tests/unit/skill_audit/test_rules.py": [
+      "raptix/skills/audit/rules.py"
+    ],
+    "tests/unit/skillogy/__init__.py": [],
+    "tests/unit/skillogy/test_acl.py": [
+      "raptix/middleware/skillogy.py",
+      "raptix/middleware/skills.py"
+    ],
+    "tests/unit/skillogy/test_app.py": [
+      "raptix/skills/engine/server/app.py"
+    ],
+    "tests/unit/skillogy/test_asset_types.py": [
+      "raptix/skills/engine/builder/seeds.py",
+      "raptix/skills/engine/builder/seeds_to_graph.py"
+    ],
+    "tests/unit/skillogy/test_embed_ingest.py": [
+      "raptix/skills/engine/__init__.py",
+      "raptix/skills/engine/embed_ingest.py",
+      "raptix/skills/engine/embeddings.py"
+    ],
+    "tests/unit/skillogy/test_embeddings.py": [
+      "raptix/skills/engine/__init__.py",
+      "raptix/skills/engine/embeddings.py"
+    ],
+    "tests/unit/skillogy/test_find_skill_fusion.py": [
+      "raptix/skills/engine/server/neo4j_backend.py"
+    ],
+    "tests/unit/skillogy/test_middleware.py": [
+      "raptix/middleware/skillogy.py",
+      "raptix/middleware/skills.py"
+    ],
+    "tests/unit/skillogy/test_seed.py": [
+      "raptix/skills/engine/__init__.py"
+    ],
+    "tests/unit/skillogy/test_stix_bootstrap.py": [
+      "raptix/skills/engine/builder/stix_bootstrap.py"
+    ],
+    "tests/unit/telemetry/__init__.py": [],
+    "tests/unit/telemetry/test_otel.py": [
+      "raptix/telemetry/__init__.py",
+      "raptix/telemetry/otel.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_behavioral.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/sink.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_config.py": [
+      "raptix/telemetry/config.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_exporter.py": [
+      "raptix/telemetry/__init__.py",
+      "raptix/telemetry/exporter.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_redact.py": [
+      "raptix/telemetry/redact.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_sanitizer.py": [
+      "raptix/telemetry/sanitizer.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_sink.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/sink.py"
+    ],
+    "tests/unit/test_next_version.py": [],
+    "tests/unit/test_plugin_loader.py": [],
+    "tests/unit/test_wheel_contents.py": [],
+    "tests/unit/tools/__init__.py": [],
+    "tests/unit/tools/bash/__init__.py": [],
+    "tests/unit/tools/bash/test_bash_output.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/tools/bash/bash.py"
+    ],
+    "tests/unit/tools/bash/test_offload_bracket_prefix.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/tools/bash/bash.py"
+    ],
+    "tests/unit/tools/bash/test_passive_read_bounds.py": [
+      "raptix/tools/bash/bash.py"
+    ],
+    "tests/unit/tools/bash/test_passive_read_stale_guard.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/tools/bash/bash.py"
+    ],
+    "tests/unit/tools/bash/test_proxy_env.py": [
+      "raptix/sandbox_kernel/__init__.py",
+      "raptix/sandbox_kernel/tmux.py"
+    ],
+    "tests/unit/tools/bash/test_sandbox_routing.py": [
+      "raptix/backends/__init__.py",
+      "raptix/backends/factory.py",
+      "raptix/tools/bash/bash.py"
+    ],
+    "tests/unit/tools/test_ask_user_question.py": [
+      "raptix/tools/interaction/__init__.py"
+    ],
+    "tests/unit/tools/test_browser.py": [
+      "raptix/tools/browser/tools.py"
+    ],
+    "tests/unit/tools/test_browser_cleanup.py": [
+      "raptix/tools/browser/tools.py"
+    ],
+    "tests/unit/tools/test_complete_planning.py": [
+      "raptix/tools/interaction/complete_planning.py"
+    ],
+    "tests/unit/tools/test_defense.py": [
+      "raptix/tools/defense/__init__.py",
+      "raptix/tools/defense/edr.py",
+      "raptix/tools/defense/elastic.py",
+      "raptix/tools/defense/sentinel.py",
+      "raptix/tools/defense/splunk.py"
+    ],
+    "tests/unit/tools/test_defense_edr.py": [
+      "raptix/tools/defense/edr.py"
+    ],
+    "tests/unit/tools/test_defense_push.py": [
+      "raptix/tools/defense/__init__.py",
+      "raptix/tools/defense/edr.py",
+      "raptix/tools/defense/elastic.py",
+      "raptix/tools/defense/sentinel.py",
+      "raptix/tools/defense/splunk.py"
+    ],
+    "tests/unit/tools/test_evidence.py": [
+      "raptix/tools/evidence/asciicast.py"
+    ],
+    "tests/unit/tools/test_evidence_tools.py": [
+      "raptix/tools/evidence/__init__.py",
+      "raptix/tools/evidence/tools.py"
+    ],
+    "tests/unit/tools/test_foothold_shadow.py": [
+      "raptix/tools/opplan.py"
+    ],
+    "tests/unit/tools/test_mcp_client.py": [
+      "raptix/tools/mcp/client.py"
+    ],
+    "tests/unit/tools/test_misc_tool_wrappers.py": [],
+    "tests/unit/tools/test_opplan_tool.py": [
+      "raptix/tools/opplan.py"
+    ],
+    "tests/unit/tools/test_proxy.py": [
+      "raptix/tools/proxy/__init__.py"
+    ],
+    "tests/unit/tools/test_skills.py": [
+      "raptix/tools/skills.py",
+      "raptix/tools/skills_registry.py"
+    ],
+    "tests/unit/tools/test_skills_loader.py": [
+      "raptix/tools/skills.py"
+    ],
+    "tests/unit/tools/test_skills_registry.py": [
+      "raptix/tools/skills_registry.py"
+    ],
+    "tests/unit/tools/test_verification.py": [
+      "raptix/tools/verification.py"
+    ],
+    "tests/unit/tools/web/__init__.py": [],
+    "tests/unit/tools/web/test_http_request.py": [
+      "raptix/tools/web/tools.py"
+    ],
+    "tests/unit/tools/web/test_search.py": [
+      "raptix/middleware/roe.py",
+      "raptix/middleware/untrusted_output.py",
+      "raptix/tools/web/__init__.py",
+      "raptix/tools/web/search.py"
+    ],
+    "tests/unit/web/__init__.py": [],
+    "tests/unit/web/test_graphql.py": [
+      "raptix/tools/web/graphql.py"
+    ],
+    "tests/unit/web/test_graphql_introspection.py": [
+      "raptix/tools/web/graphql.py"
+    ],
+    "tests/unit/web/test_http.py": [
+      "raptix/tools/web/http.py"
+    ],
+    "tests/unit/web/test_http_branches.py": [
+      "raptix/tools/web/http.py"
+    ],
+    "tests/unit/web/test_http_timeout.py": [
+      "raptix/tools/web/http.py"
+    ],
+    "tests/unit/web/test_jwt.py": [
+      "raptix/tools/web/jwt.py"
+    ],
+    "tests/unit/web/test_jwt_jku_x5u_flagging.py": [
+      "raptix/tools/web/jwt.py"
+    ],
+    "tests/unit/web/test_jwt_nonstring_headers.py": [
+      "raptix/tools/web/jwt.py"
+    ],
+    "tests/unit/web/test_oauth_detections.py": [
+      "raptix/tools/web/oauth.py"
+    ],
+    "tests/unit/web/test_oauth_session.py": [
+      "raptix/tools/web/oauth.py",
+      "raptix/tools/web/session.py"
+    ]
+  }
+}

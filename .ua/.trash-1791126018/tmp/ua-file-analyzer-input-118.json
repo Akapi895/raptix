@@ -1,0 +1,184 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "benchmark/results/XBEN-100-24/report.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-100-24/report.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-101-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 13,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-101-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 27,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-102-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-102-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-102-24/report.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-102-24/report.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-103-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-103-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-103-24/report.json",
+      "language": "json",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-103-24/report.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-104-24/evidence/summary.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-104-24/evidence/summary.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/XBEN-104-24/report.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/results/XBEN-104-24/report.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/cve-bench/README.md",
+      "language": "markdown",
+      "sizeLines": 57,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "benchmark/results/cve-bench/dry-run-2026-06-11.jsonl",
+      "language": "jsonl",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/package.json",
+      "language": "json",
+      "sizeLines": 38,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/cli/src/hooks/__fixtures__/mockStream.ts",
+      "language": "typescript",
+      "sizeLines": 111,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/hooks/sub-agent-sessions.test.ts",
+      "language": "typescript",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/hooks/useAgent.test.tsx",
+      "language": "typescript",
+      "sizeLines": 355,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/keybindings/shortcuts.ts",
+      "language": "typescript",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/utils/marked-terminal.d.ts",
+      "language": "typescript",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/tsconfig.json",
+      "language": "json",
+      "sizeLines": 23,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "benchmark/results/XBEN-100-24/report.json": [],
+    "benchmark/results/XBEN-100-24/report.md": [],
+    "benchmark/results/XBEN-101-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-101-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-102-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-102-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-102-24/report.json": [],
+    "benchmark/results/XBEN-102-24/report.md": [],
+    "benchmark/results/XBEN-103-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-103-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-103-24/report.json": [],
+    "benchmark/results/XBEN-103-24/report.md": [],
+    "benchmark/results/XBEN-104-24/evidence/summary.json": [],
+    "benchmark/results/XBEN-104-24/evidence/summary.md": [],
+    "benchmark/results/XBEN-104-24/report.json": [],
+    "benchmark/results/XBEN-104-24/report.md": [],
+    "benchmark/results/cve-bench/README.md": [],
+    "benchmark/results/cve-bench/dry-run-2026-06-11.jsonl": [],
+    "clients/cli/package.json": [],
+    "clients/cli/src/hooks/__fixtures__/mockStream.ts": [],
+    "clients/cli/src/hooks/sub-agent-sessions.test.ts": [],
+    "clients/cli/src/hooks/useAgent.test.tsx": [
+      "clients/cli/src/hooks/__fixtures__/mockStream.ts"
+    ],
+    "clients/cli/src/keybindings/shortcuts.ts": [],
+    "clients/cli/src/utils/marked-terminal.d.ts": [],
+    "clients/cli/tsconfig.json": []
+  }
+}

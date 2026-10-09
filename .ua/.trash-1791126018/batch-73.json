@@ -1,0 +1,115 @@
+{
+  "batchIndex": 73,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/docs/api-mapping.md",
+      "language": "markdown",
+      "sizeLines": 92,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/correct-frontend-scope.md",
+      "language": "markdown",
+      "sizeLines": 68,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/implementation-checklist.md",
+      "language": "markdown",
+      "sizeLines": 131,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/screen-inventory.md",
+      "language": "markdown",
+      "sizeLines": 108,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:clients/web-raptix/docs/api-mapping.md",
+      "type": "document",
+      "name": "api-mapping.md",
+      "filePath": "clients/web-raptix/docs/api-mapping.md",
+      "lineRange": [1, 92],
+      "summary": "Deliverable Phase 0 (W00): bản đồ API giữa web-raptix và backend Next.js clients/web — bảng 19 endpoint hiện có (engagements CRUD, agents, health, threads limit 20, plan-docs 4 tài liệu, opplan, findings, timeline, graph, approvals, workspace files, export JSON/Markdown) kèm behavior thực tế và integration note; mutation contracts create engagement (name/targetType/targetValue/authorizationConfirmed, targetType chỉ web_url|ip_range) và approval decision (allow/deny/redirect, duplicate → 409); status mapping UI↔backend (planning/running/completed, paused không có tương đương, run lifecycle là view-state); đề xuất scoped API P4–P6 cho chat trực tiếp (threads, runs, SSE, cancel, resume); gap map 10 mục (auto-import side effect, findings read-only, file API text-only non-recursive, graph cần Neo4j...).",
+      "tags": ["api-mapping", "backend-contracts", "integration", "web-raptix"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/correct-frontend-scope.md",
+      "type": "document",
+      "name": "correct-frontend-scope.md",
+      "filePath": "clients/web-raptix/docs/correct-frontend-scope.md",
+      "lineRange": [1, 68],
+      "summary": "Ghi nhận scope bản sửa 2026-10-01: copy clients/web-correct, chỉ expose đúng 13 mục sidebar, không backend integration — supersedes các quyết định single-user trước đó; checklist implemented (13 trang đúng thứ tự, archive 11 screens cũ ra docs/design-reference/pre-web-correct, fixture/avatars/counts nguồn phục hồi, dialog Escape/focus dùng chung, HITL dismiss không ghi decision, fixes mobile containment); các thay đổi nhỏ có chủ đích so với bản copy (bỏ Overview, Environment Map đổi thành Infrastructure & Data, Update Scope điều hướng sang Scope & Boundary); bảng verification: build pass (256.32 kB JS), ESLint 0 errors, Vitest 17/17, browser scenarios 8/8, real-mode guard 1/1, zero /api/ requests; known demo-only limits.",
+      "tags": ["scope", "frontend", "verification", "web-raptix"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/implementation-checklist.md",
+      "type": "document",
+      "name": "implementation-checklist.md",
+      "filePath": "clients/web-raptix/docs/implementation-checklist.md",
+      "lineRange": [1, 131],
+      "summary": "Checklist bàn giao UI 2026-10-01 (historical, bị correct-frontend-scope.md supersedes): P0/P1 baseline standalone frontend (package workspace, lazy-load, bundle 272.43 kB), P2 shell/design system (Dialog dùng chung Escape/focus, responsive drawer, run model/store/scenarios tách), P3 acceptance (URL deep links, validation slug/target/authorization, seeded scenarios, connection lost ≠ failed, findings↔evidence cross-links, mock markers); evidence: typecheck/lint/build pass, 15 model tests, 13 production-browser flows, real-mode guard 1/1; P4–P7 backend integration không claim, P8/P9 deferred; backlog Members/RBAC, Vault, Campaigns, C2, PDF/DOCX; ghi chú ensemble integration và follow-up regressions run lifecycle.",
+      "tags": ["checklist", "delivery", "verification", "web-raptix"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/screen-inventory.md",
+      "type": "document",
+      "name": "screen-inventory.md",
+      "filePath": "clients/web-raptix/docs/screen-inventory.md",
+      "lineRange": [1, 108],
+      "summary": "Khảo sát Phase 0 (W00) 23 screens của web-raptix trước refactor: bảng screen/số dòng/mount/reachable/scope/nguồn dữ liệu (fixture, mock, hardcode), quy tắc giữ 6 screens design-ref (Chat, Orchestrator, Phases, ProjectList, Assets, Credentials) theo decision 0001; canonical screens cho refactor (Home, AgentRun, OperatorConsole, InfrastructureData); shell components kèm bug label (Header agent-run → 'Scope & Boundaries', search box decorative) và modals/CTAs (New Project với id Date.now(), HITL badge global); dữ liệu giả cần xử lý khi real mode (counters hardcode, status enum lệch backend, badge '3 Live'); visual baseline đo được từ code (brand #DC2626, HITL dark #EE0033, sidebar 240px, header 60px, font Inter/JetBrains Mono, radius 16/8/6px); empty/loading/error states là công việc P3.",
+      "tags": ["screen-inventory", "survey", "visual-baseline", "web-raptix"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:clients/web-raptix/docs/implementation-checklist.md",
+      "target": "document:clients/web-raptix/docs/api-mapping.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/screen-inventory.md",
+      "target": "document:clients/web-raptix/docs/api-mapping.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/correct-frontend-scope.md",
+      "target": "document:clients/web-raptix/docs/implementation-checklist.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/screen-inventory.md",
+      "target": "document:clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/screen-inventory.md",
+      "target": "document:clients/web-raptix/docs/decisions/0002-brand-token.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:clients/web-raptix/docs/correct-frontend-scope.md",
+      "target": "document:clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,777 @@
+{
+ "batchIndex": 135,
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 141,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/ato-methodology/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 104,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/bfla/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 251,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/blind-sqli/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 213,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/business-logic/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 144,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/cache-deception/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 123,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/clickjacking/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 115,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/command-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 118,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/cors/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 99,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/crypto/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 328,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/csrf/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 123,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/cve/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 194,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/deserialization/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 305,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/dns-rebinding/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 223,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/dom-clobbering/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 127,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/graphql/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 111,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/header-injection/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 229,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/hpp/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 189,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/idor/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 304,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/jwt/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 140,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/ldapi/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 85,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/lfi/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 334,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/mass-assignment/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 153,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/mfa-bypass/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 137,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/web/nosqli/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 116,
+   "fileCategory": "docs"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "lineRange": [
+    1,
+    141
+   ],
+   "summary": "Skill điều hướng khai thác web application — category chính cho mọi web attack; là routing skill: đọc trước để xác định loại tấn công rồi load sub-skill chuyên biệt tương ứng.",
+   "tags": [
+    "web",
+    "routing",
+    "exploitation",
+    "category"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/ato-methodology/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/ato-methodology/SKILL.md",
+   "lineRange": [
+    1,
+    104
+   ],
+   "summary": "Cây quyết định Account Takeover: 9 đường ATO kinh điển, mẫu ghép chain (IDOR→ATO, XSS→ATO, OAuth→ATO) và các điểm vào để bypass MFA.",
+   "tags": [
+    "account-takeover",
+    "methodology",
+    "mfa-bypass",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/bfla/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/bfla/SKILL.md",
+   "lineRange": [
+    1,
+    251
+   ],
+   "summary": "Skill khai thác BFLA (Broken Function Level Authorization): lỗi kiểm soát truy cập cấp hành động cho phép principal đặc quyền thấp gọi hàm admin/staff qua REST, GraphQL, gRPC, WebSocket.",
+   "tags": [
+    "bfla",
+    "authorization",
+    "api",
+    "privilege-escalation"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/blind-sqli/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/blind-sqli/SKILL.md",
+   "lineRange": [
+    1,
+    213
+   ],
+   "summary": "Playbook blind SQL injection dưới WAF thù địch khi sqlmap thất bại vì các token phổ biến (SUBSTRING, IF, AND, WHERE, quote) bị lọc: fingerprint token, kỹ thuật bypass thủ công và trích xuất từng ký tự.",
+   "tags": [
+    "blind-sqli",
+    "waf-bypass",
+    "sql-injection",
+    "manual"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/business-logic/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/business-logic/SKILL.md",
+   "lineRange": [
+    1,
+    144
+   ],
+   "summary": "Skill khai thác lỗi logic nghiệp vụ/auth bypass/privilege escalation: tamper trường POST (role/is_admin/user_type), bypass 2FA qua response manipulation, TOTP seed đoán được, hidden API và luồng trạng thái thiếu kiểm soát.",
+   "tags": [
+    "business-logic",
+    "auth-bypass",
+    "privilege-escalation",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/cache-deception/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/cache-deception/SKILL.md",
+   "lineRange": [
+    1,
+    123
+   ],
+   "summary": "Web cache deception: lừa CDN/proxy cache response đã xác thực dưới URL không xác thực để lộ PII cho bất kỳ visitor nào.",
+   "tags": [
+    "cache-deception",
+    "cdn",
+    "pii",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/clickjacking/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/clickjacking/SKILL.md",
+   "lineRange": [
+    1,
+    115
+   ],
+   "summary": "UI redressing: thiếu X-Frame-Options/frame-ancestors, bypass frame-buster, drag-and-drop, cursorjacking, double-clickjacking và framing các hành động nhạy cảm.",
+   "tags": [
+    "clickjacking",
+    "ui-redressing",
+    "framing",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/command-injection/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/command-injection/SKILL.md",
+   "lineRange": [
+    1,
+    118
+   ],
+   "summary": "Khai thác OS Command Injection trên ứng dụng truyền input người dùng vào lệnh hệ điều hành không sanitize: toán tử injection (;, |, ||, &&, $(), backtick, newline), phát hiện blind và exfiltrate output out-of-band.",
+   "tags": [
+    "command-injection",
+    "rce",
+    "injection",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/cors/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/cors/SKILL.md",
+   "lineRange": [
+    1,
+    99
+   ],
+   "summary": "Khai thác CORS cấu hình sai: origin phản chiếu, null origin, lạm dụng trusted-subdomain, bypass validate regex và đánh cắp dữ liệu chéo origin có credential.",
+   "tags": [
+    "cors",
+    "misconfiguration",
+    "exfiltration",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/crypto/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/crypto/SKILL.md",
+   "lineRange": [
+    1,
+    328
+   ],
+   "summary": "Khai thác mật mã web: padding-oracle (Vaudenay), bit-flipping/thao túng IV trên AES-CBC, tấn công pattern AES-ECB (cut-and-paste, khôi phục prefix/suffix), bypass HMAC và hash-length extension.",
+   "tags": [
+    "crypto",
+    "padding-oracle",
+    "aes",
+    "web"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/csrf/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/csrf/SKILL.md",
+   "lineRange": [
+    1,
+    123
+   ],
+   "summary": "Cross-Site Request Forgery: thiếu/invalid token, method override, JSON CSRF, hở SameSite, lỗi double-submit, login/logout CSRF và chuỗi CSRF-via-XSS dẫn tới account takeover.",
+   "tags": [
+    "csrf",
+    "same-site",
+    "token",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/cve/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/cve/SKILL.md",
+   "lineRange": [
+    1,
+    194
+   ],
+   "summary": "Khai thác CVE đã biết: fingerprint phiên bản CMS/framework/plugin, tra ứng viên qua cve_lookup, lấy PoC qua cve_poc_lookup, điều chỉnh exploit công khai cho mục tiêu và xác nhận impact.",
+   "tags": [
+    "cve",
+    "fingerprinting",
+    "poc",
+    "exploitation"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/deserialization/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/deserialization/SKILL.md",
+   "lineRange": [
+    1,
+    305
+   ],
+   "summary": "Khai thác insecure deserialization — RCE qua serialized object độc hại trên Java (ysoserial), PHP (PHPGGC), .NET (ysoserial.net), Python (pickle): chọn gadget chain, sinh payload và xác nhận thực thi.",
+   "tags": [
+    "deserialization",
+    "ysoserial",
+    "rce",
+    "gadget-chain"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/dns-rebinding/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/dns-rebinding/SKILL.md",
+   "lineRange": [
+    1,
+    223
+   ],
+   "summary": "Tấn công DNS rebinding để bypass same-origin policy của trình duyệt và với tới IMDS/localhost/dịch vụ nội bộ: cơ chế rebind TTL=0, công cụ rbndr.us/singularity, DNS cache pinning của trình duyệt và ghép chuỗi khai thác.",
+   "tags": [
+    "dns-rebinding",
+    "ssrf",
+    "same-origin",
+    "browser"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/dom-clobbering/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/dom-clobbering/SKILL.md",
+   "lineRange": [
+    1,
+    127
+   ],
+   "summary": "DOM clobbering: lạm dụng named HTML element để ghi đè biến global JavaScript, bypass CSP và hijack property lookup của object.",
+   "tags": [
+    "dom-clobbering",
+    "csp-bypass",
+    "client-side",
+    "xss"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/graphql/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/graphql/SKILL.md",
+   "lineRange": [
+    1,
+    111
+   ],
+   "summary": "Khai thác GraphQL: introspection, injection, bypass phân quyền và exfiltrate dữ liệu qua GraphQL API.",
+   "tags": [
+    "graphql",
+    "introspection",
+    "authorization-bypass",
+    "api"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/header-injection/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/header-injection/SKILL.md",
+   "lineRange": [
+    1,
+    229
+   ],
+   "summary": "HTTP header injection: CRLF/response splitting, Host-header cache poisoning, lạm dụng X-Forwarded-*, inject Content-Disposition/Set-Cookie và đầu độc link password-reset qua header không validate.",
+   "tags": [
+    "header-injection",
+    "crlf",
+    "cache-poisoning",
+    "web"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/hpp/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/hpp/SKILL.md",
+   "lineRange": [
+    1,
+    189
+   ],
+   "summary": "HTTP Parameter Pollution: sai lệch parser giữa proxy/server/app, bypass WAF, bypass auth/ACL và đưa payload qua tham số trùng lặp.",
+   "tags": [
+    "hpp",
+    "parameter-pollution",
+    "waf-bypass",
+    "web"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/idor/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/idor/SKILL.md",
+   "lineRange": [
+    1,
+    304
+   ],
+   "summary": "Khai thác IDOR — bypass phân quyền qua object reference đoán được (ID tuần tự, UUID, filename, ID mã hóa): leo thang ngang/dọc, enumeration và ghép chuỗi lên account takeover.",
+   "tags": [
+    "idor",
+    "access-control",
+    "enumeration",
+    "web"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/jwt/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/jwt/SKILL.md",
+   "lineRange": [
+    1,
+    140
+   ],
+   "summary": "Tấn công JSON Web Token: algorithm confusion (alg=none, HS256↔RS256), kid header injection, spoof JWKS, crack secret HMAC yếu, strip signature.",
+   "tags": [
+    "jwt",
+    "algorithm-confusion",
+    "authentication",
+    "token"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/ldapi/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/ldapi/SKILL.md",
+   "lineRange": [
+    1,
+    85
+   ],
+   "summary": "LDAP injection: auth bypass qua thao túng filter, trích xuất blind, lạm dụng search filter và DN injection.",
+   "tags": [
+    "ldap",
+    "injection",
+    "auth-bypass",
+    "directory"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/lfi/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/lfi/SKILL.md",
+   "lineRange": [
+    1,
+    334
+   ],
+   "summary": "Path traversal và Local File Inclusion: đọc file tùy ý qua directory traversal, RCE qua PHP filter/input/data wrapper, log poisoning, lộ static resource và trích thông tin cấu hình.",
+   "tags": [
+    "lfi",
+    "path-traversal",
+    "php-wrappers",
+    "log-poisoning"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/mass-assignment/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/mass-assignment/SKILL.md",
+   "lineRange": [
+    1,
+    153
+   ],
+   "summary": "Mass assignment + ORM leak: chèn trường thừa vào request create/update để leo lên admin và lộ trường được bảo vệ qua response.",
+   "tags": [
+    "mass-assignment",
+    "orm",
+    "privilege-escalation",
+    "api"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/mfa-bypass/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/mfa-bypass/SKILL.md",
+   "lineRange": [
+    1,
+    137
+   ],
+   "summary": "Lỗi logic 2FA/OTP: tamper response và status, brute force, OTP reuse, lạm dụng backup-code, race condition, thiếu bước 2FA trong luồng, bypass remember-me và password-reset bỏ qua 2FA.",
+   "tags": [
+    "mfa-bypass",
+    "otp",
+    "authentication",
+    "logic-flaw"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/nosqli/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/web/nosqli/SKILL.md",
+   "lineRange": [
+    1,
+    116
+   ],
+   "summary": "NoSQL injection: operator injection MongoDB ($ne, $gt, $where, $regex), mẫu tấn công CouchDB/Firebase/Redis, auth bypass và trích xuất blind.",
+   "tags": [
+    "nosql",
+    "mongodb",
+    "injection",
+    "auth-bypass"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": [
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/ato-methodology/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/bfla/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/blind-sqli/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/business-logic/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/cache-deception/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/clickjacking/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/command-injection/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/cors/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/crypto/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/csrf/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/cve/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/deserialization/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/dns-rebinding/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/dom-clobbering/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/graphql/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/header-injection/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/hpp/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/idor/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/jwt/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/ldapi/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/lfi/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/mass-assignment/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/mfa-bypass/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/nosqli/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/exploit/web/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  }
+ ]
+}

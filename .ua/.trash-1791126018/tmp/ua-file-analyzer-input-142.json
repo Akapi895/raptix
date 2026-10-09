@@ -1,0 +1,186 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/skills/engine/client/__init__.py",
+   "language": "python",
+   "sizeLines": 9,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/engine/client/rest.py",
+   "language": "python",
+   "sizeLines": 184,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/engine/proto/skillogy.proto",
+   "language": "protobuf",
+   "sizeLines": 98,
+   "fileCategory": "data"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/README.md",
+   "language": "markdown",
+   "sizeLines": 43,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/references/killchain.yaml",
+   "language": "yaml",
+   "sizeLines": 361,
+   "fileCategory": "config"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/research/_apoc_safety.py",
+   "language": "python",
+   "sizeLines": 145,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/research/fuzz.py",
+   "language": "python",
+   "sizeLines": 357,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/fixtures/capabilities/held-out.jsonl",
+   "language": "jsonl",
+   "sizeLines": 6,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/integration/__init__.py",
+   "language": "python",
+   "sizeLines": 9,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/integration/kg/__init__.py",
+   "language": "python",
+   "sizeLines": 10,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/ad/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/agents/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/agents/standard/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/agents/test_reverser_workload_fallback.py",
+   "language": "python",
+   "sizeLines": 64,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/agents/test_task_spec.py",
+   "language": "python",
+   "sizeLines": 135,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/backends/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/benchmark/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/blue_cell/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/cli/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/cloud/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/contracts/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/core/__init__.py",
+   "language": "python",
+   "sizeLines": 0,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/core/test_config.py",
+   "language": "python",
+   "sizeLines": 25,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/raptix/skills/engine/client/__init__.py": [
+   "packages/raptix/raptix/skills/engine/client/rest.py"
+  ],
+  "packages/raptix/raptix/skills/engine/client/rest.py": [],
+  "packages/raptix/raptix/skills/engine/proto/skillogy.proto": [],
+  "packages/raptix/raptix/tools/README.md": [],
+  "packages/raptix/raptix/tools/references/killchain.yaml": [],
+  "packages/raptix/raptix/tools/research/_apoc_safety.py": [],
+  "packages/raptix/raptix/tools/research/fuzz.py": [],
+  "packages/raptix/tests/__init__.py": [],
+  "packages/raptix/tests/fixtures/capabilities/held-out.jsonl": [],
+  "packages/raptix/tests/integration/__init__.py": [],
+  "packages/raptix/tests/integration/kg/__init__.py": [],
+  "packages/raptix/tests/unit/__init__.py": [],
+  "packages/raptix/tests/unit/ad/__init__.py": [],
+  "packages/raptix/tests/unit/agents/__init__.py": [],
+  "packages/raptix/tests/unit/agents/standard/__init__.py": [],
+  "packages/raptix/tests/unit/agents/test_reverser_workload_fallback.py": [],
+  "packages/raptix/tests/unit/agents/test_task_spec.py": [
+   "packages/raptix/raptix/agents/task_spec.py"
+  ],
+  "packages/raptix/tests/unit/backends/__init__.py": [],
+  "packages/raptix/tests/unit/benchmark/__init__.py": [],
+  "packages/raptix/tests/unit/blue_cell/__init__.py": [],
+  "packages/raptix/tests/unit/cli/__init__.py": [],
+  "packages/raptix/tests/unit/cloud/__init__.py": [],
+  "packages/raptix/tests/unit/contracts/__init__.py": [],
+  "packages/raptix/tests/unit/core/__init__.py": [],
+  "packages/raptix/tests/unit/core/test_config.py": []
+ }
+}

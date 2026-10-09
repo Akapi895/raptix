@@ -1,0 +1,228 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 3,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "clients/shared/streaming/src/normalize.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 212,
+      "nonEmptyLines": 193,
+      "functions": [
+        {
+          "name": "isRecord",
+          "startLine": 99,
+          "endLine": 101,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "asOptions",
+          "startLine": 103,
+          "endLine": 112,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "normalizedEventKey",
+          "startLine": 125,
+          "endLine": 131,
+          "params": [
+            "event"
+          ]
+        },
+        {
+          "name": "normalizedGroupKey",
+          "startLine": 135,
+          "endLine": 137,
+          "params": [
+            "event"
+          ]
+        },
+        {
+          "name": "normalizeSubagentEvent",
+          "startLine": 147,
+          "endLine": 212,
+          "params": [
+            "raw"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "normalizedEventKey",
+          "line": 125,
+          "isDefault": false
+        },
+        {
+          "name": "normalizedGroupKey",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "normalizeSubagentEvent",
+          "line": 147,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isRecord",
+          "callee": "Array.isArray",
+          "lineNumber": 100
+        },
+        {
+          "caller": "asOptions",
+          "callee": "Array.isArray",
+          "lineNumber": 104
+        },
+        {
+          "caller": "asOptions",
+          "callee": "isRecord",
+          "lineNumber": 107
+        },
+        {
+          "caller": "asOptions",
+          "callee": "options.push",
+          "lineNumber": 108
+        },
+        {
+          "caller": "normalizeSubagentEvent",
+          "callee": "isRecord",
+          "lineNumber": 150
+        },
+        {
+          "caller": "normalizeSubagentEvent",
+          "callee": "EVENT_TYPES.has",
+          "lineNumber": 153
+        },
+        {
+          "caller": "normalizeSubagentEvent",
+          "callee": "isRecord",
+          "lineNumber": 164
+        },
+        {
+          "caller": "normalizeSubagentEvent",
+          "callee": "Number.isFinite",
+          "lineNumber": 171
+        },
+        {
+          "caller": "normalizeSubagentEvent",
+          "callee": "asOptions",
+          "lineNumber": 179
+        },
+        {
+          "caller": "normalizeSubagentEvent",
+          "callee": "Number.isFinite",
+          "lineNumber": 189
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/streaming/src/sessions.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 98,
+      "nonEmptyLines": 91,
+      "functions": [
+        {
+          "name": "deriveSubAgentSessions",
+          "startLine": 44,
+          "endLine": 98,
+          "params": [
+            "events"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "deriveSubAgentSessions",
+          "line": 44,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "deriveSubAgentSessions",
+          "callee": "sessionKey",
+          "lineNumber": 58
+        },
+        {
+          "caller": "deriveSubAgentSessions",
+          "callee": "openSessions.set",
+          "lineNumber": 71
+        },
+        {
+          "caller": "deriveSubAgentSessions",
+          "callee": "sessions.push",
+          "lineNumber": 72
+        },
+        {
+          "caller": "deriveSubAgentSessions",
+          "callee": "openSessions.get",
+          "lineNumber": 74
+        },
+        {
+          "caller": "deriveSubAgentSessions",
+          "callee": "session.eventIds.push",
+          "lineNumber": 83
+        },
+        {
+          "caller": "deriveSubAgentSessions",
+          "callee": "openSessions.delete",
+          "lineNumber": 84
+        },
+        {
+          "caller": "deriveSubAgentSessions",
+          "callee": "openSessions.get",
+          "lineNumber": 87
+        },
+        {
+          "caller": "deriveSubAgentSessions",
+          "callee": "session.eventIds.push",
+          "lineNumber": 89
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/streaming/src/types.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 91,
+      "nonEmptyLines": 87,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

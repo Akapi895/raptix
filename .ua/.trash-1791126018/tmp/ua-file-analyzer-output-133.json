@@ -1,0 +1,2174 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 25,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 25
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/cloud/gcp-svc-account-impersonation/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 133,
+      "nonEmptyLines": 105,
+      "sections": [
+        {
+          "heading": "GCP Service Account Impersonation",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Steal the token",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "From GCE / GKE / Cloud Run / Functions",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "From a leaked key.json",
+          "level": 3,
+          "line": 29
+        },
+        {
+          "heading": "Phase 1: Enumerate current permissions",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Phase 2: Impersonation primitives",
+          "level": 2,
+          "line": 51
+        },
+        {
+          "heading": "`roles/iam.serviceAccountTokenCreator`",
+          "level": 3,
+          "line": 53
+        },
+        {
+          "heading": "`iam.serviceAccountKeys.create`",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "`cloudfunctions.functions.update` + `actAs`",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "`compute.instances.setMetadata`",
+          "level": 3,
+          "line": 91
+        },
+        {
+          "heading": "`compute.projects.setCommonInstanceMetadata`",
+          "level": 3,
+          "line": 100
+        },
+        {
+          "heading": "Phase 3: Cross-project pivot",
+          "level": 2,
+          "line": 108
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 122
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 129
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/cloud/imds-pivot/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 179,
+      "nonEmptyLines": 148,
+      "sections": [
+        {
+          "heading": "Instance Metadata Service Pivot",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Identify the cloud provider",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "2. AWS — extract IAM role creds",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "3. AWS — user-data (often holds secrets)",
+          "level": 2,
+          "line": 72
+        },
+        {
+          "heading": "4. GCP — service account tokens",
+          "level": 2,
+          "line": 83
+        },
+        {
+          "heading": "5. Azure — managed identity tokens",
+          "level": 2,
+          "line": 105
+        },
+        {
+          "heading": "6. SSRF through filters",
+          "level": 2,
+          "line": 127
+        },
+        {
+          "heading": "7. IMDSv2 bypass attempts (when v2 enforced)",
+          "level": 2,
+          "line": 140
+        },
+        {
+          "heading": "8. Promote",
+          "level": 2,
+          "line": 148
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 156
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 162
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 167
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 176
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/cloud/k8s-pivot/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 166,
+      "nonEmptyLines": 144,
+      "sections": [
+        {
+          "heading": "Kubernetes Pivot",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "1. Identify the cluster you're in",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "2. Inventory permissions",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "3. RBAC escalation primitives",
+          "level": 2,
+          "line": 54
+        },
+        {
+          "heading": "4. Pod escape — host root via hostPath",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "5. Secrets harvest",
+          "level": 2,
+          "line": 102
+        },
+        {
+          "heading": "6. Container runtime escapes (when you have privileged pod or specific caps)",
+          "level": 2,
+          "line": 118
+        },
+        {
+          "heading": "7. Pivoting from the API server",
+          "level": 2,
+          "line": 128
+        },
+        {
+          "heading": "8. Promote",
+          "level": 2,
+          "line": 144
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 151
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 156
+        },
+        {
+          "heading": "Defender remediation (high-level)",
+          "level": 2,
+          "line": 162
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/cloud/m365-mailbox-compromise/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 313,
+      "nonEmptyLines": 257,
+      "sections": [
+        {
+          "heading": "Microsoft 365 Mailbox Compromise",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "1. OAuth Consent Grant Phishing",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "Craft Malicious OAuth Application",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "Evasion: Disguise the Application",
+          "level": 3,
+          "line": 68
+        },
+        {
+          "heading": "2. Device Code Phishing",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "3. ApplicationImpersonation & Delegate Access",
+          "level": 2,
+          "line": 112
+        },
+        {
+          "heading": "4. Mail Rule Persistence",
+          "level": 2,
+          "line": 153
+        },
+        {
+          "heading": "Inbox Rules via Graph API",
+          "level": 3,
+          "line": 155
+        },
+        {
+          "heading": "Transport/Mail Flow Rules (Admin-Level)",
+          "level": 3,
+          "line": 197
+        },
+        {
+          "heading": "5. Email Collection & Exfiltration",
+          "level": 2,
+          "line": 208
+        },
+        {
+          "heading": "6. Token Refresh & Long-Term Persistence",
+          "level": 2,
+          "line": 234
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 256
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 268
+        },
+        {
+          "heading": "Error Handling & Edge Cases",
+          "level": 2,
+          "line": 281
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 290
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 17
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/cloud/s3-takeover/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 138,
+      "nonEmptyLines": 118,
+      "sections": [
+        {
+          "heading": "S3 Subdomain Takeover",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Enumerate subdomains pointing at S3",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "2. Verify dangling",
+          "level": 2,
+          "line": 42
+        },
+        {
+          "heading": "3. Claim the bucket",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "4. Demonstrate impact (safe)",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "5. Impact framing",
+          "level": 2,
+          "line": 98
+        },
+        {
+          "heading": "6. Promote",
+          "level": 2,
+          "line": 107
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 114
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 119
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 134
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/cloud/terraform-state-leak/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 189,
+      "nonEmptyLines": 158,
+      "sections": [
+        {
+          "heading": "Terraform State Leak Exploitation",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Discover exposed state files",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "2. Parse the state",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "3. Topology gold-mine",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "4. Validate IAM keys",
+          "level": 2,
+          "line": 116
+        },
+        {
+          "heading": "5. RDS pivot",
+          "level": 2,
+          "line": 127
+        },
+        {
+          "heading": "6. Promote",
+          "level": 2,
+          "line": 142
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 151
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 156
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 161
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 185
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 51,
+      "nonEmptyLines": 47,
+      "sections": [
+        {
+          "heading": "Smart Contract Audit Catalog",
+          "level": 1,
+          "line": 23
+        },
+        {
+          "heading": "Playbooks",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Workflow",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Default severity floor",
+          "level": 2,
+          "line": 45
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/access-control/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 203,
+      "nonEmptyLines": 164,
+      "sections": [
+        {
+          "heading": "Access Control Playbook",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "Audit steps",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "1. Find every state-changing function",
+          "level": 3,
+          "line": 19
+        },
+        {
+          "heading": "2. For each external/public state-changer, ask",
+          "level": 3,
+          "line": 28
+        },
+        {
+          "heading": "3. Audit each modifier",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "4. Specific anti-patterns to grep",
+          "level": 3,
+          "line": 48
+        },
+        {
+          "heading": "5. Initializer bugs",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "6. Function-selector collisions (proxies)",
+          "level": 3,
+          "line": 90
+        },
+        {
+          "heading": "7. Role grant/revoke",
+          "level": 3,
+          "line": 98
+        },
+        {
+          "heading": "PoC template (Foundry)",
+          "level": 2,
+          "line": 109
+        },
+        {
+          "heading": "Severity calibration",
+          "level": 2,
+          "line": 154
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 167
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 173
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 195
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/bridge-exploit/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 114,
+      "nonEmptyLines": 86,
+      "sections": [
+        {
+          "heading": "Cross-Chain Bridge Attack",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Bridge taxonomy",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Attack classes",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "1. Validator-signature bypass (Wormhole, Feb 2022, $325M)",
+          "level": 3,
+          "line": 28
+        },
+        {
+          "heading": "2. Validator key compromise (Ronin, March 2022, $600M)",
+          "level": 3,
+          "line": 33
+        },
+        {
+          "heading": "3. Merkle-proof forgery (Nomad, August 2022, $190M)",
+          "level": 3,
+          "line": 38
+        },
+        {
+          "heading": "4. Replay across chains (Multichain class)",
+          "level": 3,
+          "line": 43
+        },
+        {
+          "heading": "5. Reentrancy on bridge claim",
+          "level": 3,
+          "line": 56
+        },
+        {
+          "heading": "6. Liquidity-pool draining via fee oracle (Hop / Across class)",
+          "level": 3,
+          "line": 67
+        },
+        {
+          "heading": "Bridge audit checklist (the bugs that broke real bridges)",
+          "level": 2,
+          "line": 77
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "OPSEC / scope",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 109
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/flash-loan/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 194,
+      "nonEmptyLines": 165,
+      "sections": [
+        {
+          "heading": "Flash Loan Attack Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Common attack patterns",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "1. Oracle amplification (most common)",
+          "level": 3,
+          "line": 21
+        },
+        {
+          "heading": "2. Unauthenticated callback handler",
+          "level": 3,
+          "line": 25
+        },
+        {
+          "heading": "3. Governance attack via flash loan",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "4. Liquidity manipulation",
+          "level": 3,
+          "line": 54
+        },
+        {
+          "heading": "5. Liquidation arbitrage gone wrong",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "Audit steps",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "1. Locate flash-loan integrations",
+          "level": 3,
+          "line": 78
+        },
+        {
+          "heading": "2. For each handler",
+          "level": 3,
+          "line": 83
+        },
+        {
+          "heading": "3. For each price-reading function",
+          "level": 3,
+          "line": 90
+        },
+        {
+          "heading": "4. For each share-mint / share-burn function",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Severity calibration",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "PoC template (Foundry)",
+          "level": 2,
+          "line": 122
+        },
+        {
+          "heading": "OPSEC (operational, not blue team — this is on-chain)",
+          "level": 2,
+          "line": 172
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 180
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 187
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 17
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/governance-attack/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 122,
+      "nonEmptyLines": 96,
+      "sections": [
+        {
+          "heading": "DAO Governance Attack",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Attack classes",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "1. Flash-loan-backed vote",
+          "level": 3,
+          "line": 16
+        },
+        {
+          "heading": "2. Delegation hijack",
+          "level": 3,
+          "line": 36
+        },
+        {
+          "heading": "3. Quorum dilution attack",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "4. Proposal spam DoS",
+          "level": 3,
+          "line": 55
+        },
+        {
+          "heading": "5. Time-lock bypass via emergency multisig",
+          "level": 3,
+          "line": 61
+        },
+        {
+          "heading": "6. Snapshot vs. on-chain desync",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "7. Proposal-script slippage",
+          "level": 3,
+          "line": 72
+        },
+        {
+          "heading": "Recon",
+          "level": 2,
+          "line": 81
+        },
+        {
+          "heading": "Defender's checklist (the audit you're trying to defeat)",
+          "level": 2,
+          "line": 99
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 108
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 117
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/mev-sandwich/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 116,
+      "nonEmptyLines": 86,
+      "sections": [
+        {
+          "heading": "MEV Sandwich Attack",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Detect a sandwichable swap",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Construct the sandwich bundle",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "JIT (Just-In-Time) liquidity sandwich",
+          "level": 2,
+          "line": 60
+        },
+        {
+          "heading": "Multi-block MEV",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Defenses that break sandwiches (what to look for as \"harder targets\")",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Common pitfalls (sandwich-of-sandwich = your sandwich gets sandwiched)",
+          "level": 2,
+          "line": 92
+        },
+        {
+          "heading": "Tooling",
+          "level": 2,
+          "line": 98
+        },
+        {
+          "heading": "OPSEC / ethics / legal",
+          "level": 2,
+          "line": 105
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 111
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/oracle-manipulation/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 155,
+      "nonEmptyLines": 134,
+      "sections": [
+        {
+          "heading": "Oracle Manipulation Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Audit steps",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "1. Locate price-reading code",
+          "level": 3,
+          "line": 26
+        },
+        {
+          "heading": "2. Trace each price use",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "3. Validate staleness handling",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "4. Trace the price's use",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "PoC via Foundry",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "Flash-loan price push (Uniswap V2 reserves)",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "Chainlink stale check missing",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Severity calibration",
+          "level": 2,
+          "line": 109
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 120
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 125
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 148
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/reentrancy/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 52,
+      "nonEmptyLines": 45,
+      "sections": [
+        {
+          "heading": "Reentrancy Playbook",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "Variants",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Audit steps",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "PoC via Foundry",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Success criteria",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 43
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 47
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/signature-replay/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 265,
+      "nonEmptyLines": 220,
+      "sections": [
+        {
+          "heading": "Signature Replay Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Bug classes",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "1. Missing nonce → replay",
+          "level": 3,
+          "line": 19
+        },
+        {
+          "heading": "2. Missing chain ID → cross-chain replay",
+          "level": 3,
+          "line": 40
+        },
+        {
+          "heading": "3. Signature malleability (ecrecover variants)",
+          "level": 3,
+          "line": 55
+        },
+        {
+          "heading": "4. ecrecover zero address on invalid sig",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "5. Domain separator without chainid",
+          "level": 3,
+          "line": 85
+        },
+        {
+          "heading": "6. Permit signature replay across forks / hard forks",
+          "level": 3,
+          "line": 107
+        },
+        {
+          "heading": "7. Replay across function selectors",
+          "level": 3,
+          "line": 117
+        },
+        {
+          "heading": "Audit steps",
+          "level": 2,
+          "line": 139
+        },
+        {
+          "heading": "1. Find every ecrecover",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "2. For each call site, verify the payload contains",
+          "level": 3,
+          "line": 146
+        },
+        {
+          "heading": "3. Verify signature validation",
+          "level": 3,
+          "line": 152
+        },
+        {
+          "heading": "4. Look for the dangerous patterns",
+          "level": 3,
+          "line": 157
+        },
+        {
+          "heading": "PoC templates (Foundry)",
+          "level": 2,
+          "line": 169
+        },
+        {
+          "heading": "Cross-chain replay",
+          "level": 3,
+          "line": 171
+        },
+        {
+          "heading": "Malleability",
+          "level": 3,
+          "line": 194
+        },
+        {
+          "heading": "Missing nonce",
+          "level": 3,
+          "line": 211
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 220
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 227
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 258
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 21
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/contracts/upgradeable-proxy/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 253,
+      "nonEmptyLines": 203,
+      "sections": [
+        {
+          "heading": "Upgradeable Proxy Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Audit checklist",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "1. Uninitialized implementation",
+          "level": 3,
+          "line": 26
+        },
+        {
+          "heading": "2. Storage slot collisions",
+          "level": 3,
+          "line": 59
+        },
+        {
+          "heading": "3. Function selector collisions (Transparent Proxy specifically)",
+          "level": 3,
+          "line": 90
+        },
+        {
+          "heading": "4. `_authorizeUpgrade` empty / wrong",
+          "level": 3,
+          "line": 104
+        },
+        {
+          "heading": "5. `delegatecall` to attacker-controlled address",
+          "level": 3,
+          "line": 124
+        },
+        {
+          "heading": "6. Constructor logic in upgradeable contracts",
+          "level": 3,
+          "line": 133
+        },
+        {
+          "heading": "7. Diamond / EIP-2535 specific bugs",
+          "level": 3,
+          "line": 147
+        },
+        {
+          "heading": "8. Storage gap for inheritance",
+          "level": 3,
+          "line": 157
+        },
+        {
+          "heading": "PoC template (Foundry)",
+          "level": 2,
+          "line": 172
+        },
+        {
+          "heading": "CVSS",
+          "level": 2,
+          "line": 210
+        },
+        {
+          "heading": "Defender remediation",
+          "level": 2,
+          "line": 217
+        },
+        {
+          "heading": "Known exemplars",
+          "level": 2,
+          "line": 246
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/decepticon/engagement-lifecycle/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 129,
+      "nonEmptyLines": 100,
+      "sections": [
+        {
+          "heading": "Engagement Lifecycle Management",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Engagement Initiation",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Pre-Flight Checklist",
+          "level": 3,
+          "line": 16
+        },
+        {
+          "heading": "Engagement Types and Implications",
+          "level": 3,
+          "line": 36
+        },
+        {
+          "heading": "Phase Transitions",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "Gate Checks (Go/No-Go Decisions)",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "Phase Transition Protocol",
+          "level": 3,
+          "line": 60
+        },
+        {
+          "heading": "Handling Cross-Phase Dependencies",
+          "level": 3,
+          "line": 67
+        },
+        {
+          "heading": "Deconfliction",
+          "level": 2,
+          "line": 73
+        },
+        {
+          "heading": "Blue Team Coordination",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "Emergency Stop Procedure",
+          "level": 3,
+          "line": 81
+        },
+        {
+          "heading": "Engagement Metrics",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "Engagement Completion",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "Final Reporting Checklist",
+          "level": 3,
+          "line": 102
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/decepticon/engagement-startup/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 83,
+      "nonEmptyLines": 60,
+      "sections": [
+        {
+          "heading": "Engagement Startup Procedure",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Step 1: Bind the Active Workspace",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Step 2: Inspect Planning State",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "Step 3A: Resume an Existing OPPLAN",
+          "level": 2,
+          "line": 56
+        },
+        {
+          "heading": "Step 3B: Build a New OPPLAN",
+          "level": 2,
+          "line": 66
+        },
+        {
+          "heading": "Constraints",
+          "level": 2,
+          "line": 77
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/decepticon/final-report/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 517,
+      "nonEmptyLines": 375,
+      "sections": [
+        {
+          "heading": "Final Engagement Report Generation",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Report Generation Workflow",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Step 1: Initialize Output Directory",
+          "level": 3,
+          "line": 29
+        },
+        {
+          "heading": "Step 2: Aggregate Findings",
+          "level": 3,
+          "line": 35
+        },
+        {
+          "heading": "Step 3: Generate Executive Summary",
+          "level": 3,
+          "line": 53
+        },
+        {
+          "heading": "Step 4: Generate Technical Report",
+          "level": 3,
+          "line": 145
+        },
+        {
+          "heading": "Findings Aggregation Rules",
+          "level": 2,
+          "line": 403
+        },
+        {
+          "heading": "Deliverable-Tier Finding Promotion",
+          "level": 2,
+          "line": 414
+        },
+        {
+          "heading": "Heavyweight Schema (deliverable tier)",
+          "level": 3,
+          "line": 434
+        },
+        {
+          "heading": "Severity → CVSS-numeric Mapping (when CVSS not pre-assigned)",
+          "level": 3,
+          "line": 471
+        },
+        {
+          "heading": "Promotion Algorithm",
+          "level": 3,
+          "line": 475
+        },
+        {
+          "heading": "Promotion is One-Way",
+          "level": 3,
+          "line": 500
+        },
+        {
+          "heading": "Quality Checklist",
+          "level": 2,
+          "line": 504
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/decepticon/kali-mcp-bridge/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 286,
+      "nonEmptyLines": 226,
+      "sections": [
+        {
+          "heading": "Kali MCP Bridge — Operator Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Architecture",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "2. Deployment",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "2a. Kali server (on engagement jump box / VM)",
+          "level": 3,
+          "line": 37
+        },
+        {
+          "heading": "2b. SSH tunnel (when client and server are on different machines)",
+          "level": 3,
+          "line": 58
+        },
+        {
+          "heading": "2c. MCP client registration (Claude Desktop / Raptix)",
+          "level": 3,
+          "line": 71
+        },
+        {
+          "heading": "3. Tool Call Reference",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "3.1 nmap_scan",
+          "level": 3,
+          "line": 92
+        },
+        {
+          "heading": "3.2 gobuster_scan",
+          "level": 3,
+          "line": 100
+        },
+        {
+          "heading": "3.3 dirb_scan",
+          "level": 3,
+          "line": 108
+        },
+        {
+          "heading": "3.4 nikto_scan",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "3.5 sqlmap_scan",
+          "level": 3,
+          "line": 121
+        },
+        {
+          "heading": "3.6 metasploit_run",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "3.7 hydra_attack",
+          "level": 3,
+          "line": 145
+        },
+        {
+          "heading": "3.8 john_crack",
+          "level": 3,
+          "line": 156
+        },
+        {
+          "heading": "3.9 enum4linux_scan",
+          "level": 3,
+          "line": 164
+        },
+        {
+          "heading": "3.10 execute_command (raw)",
+          "level": 3,
+          "line": 170
+        },
+        {
+          "heading": "4. Engagement Workflow",
+          "level": 2,
+          "line": 179
+        },
+        {
+          "heading": "Phase 1 — Verify connectivity",
+          "level": 3,
+          "line": 181
+        },
+        {
+          "heading": "Phase 2 — Port/service recon",
+          "level": 3,
+          "line": 186
+        },
+        {
+          "heading": "Phase 3 — Web surface",
+          "level": 3,
+          "line": 192
+        },
+        {
+          "heading": "Phase 4 — SQLi (if web form/params found)",
+          "level": 3,
+          "line": 198
+        },
+        {
+          "heading": "Phase 5 — Credential attacks (only with explicit RoE permission)",
+          "level": 3,
+          "line": 203
+        },
+        {
+          "heading": "Phase 6 — SMB enumeration",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "5. Prompt Injection Hygiene (Critical)",
+          "level": 2,
+          "line": 217
+        },
+        {
+          "heading": "Rules — apply before acting on any tool output",
+          "level": 3,
+          "line": 221
+        },
+        {
+          "heading": "Detection patterns for indirect prompt injection in scan output",
+          "level": 3,
+          "line": 231
+        },
+        {
+          "heading": "6. OPSEC Notes",
+          "level": 2,
+          "line": 250
+        },
+        {
+          "heading": "7. ATT&CK Mapping",
+          "level": 2,
+          "line": 262
+        },
+        {
+          "heading": "8. Troubleshooting",
+          "level": 2,
+          "line": 277
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 30
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/decepticon/kill-chain-analysis/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 133,
+      "nonEmptyLines": 106,
+      "sections": [
+        {
+          "heading": "Kill Chain Analysis & Attack Path Decision-Making",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "Decision Framework",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Findings Analysis",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "After Recon Phase — Selecting Attack Vectors",
+          "level": 3,
+          "line": 26
+        },
+        {
+          "heading": "Attack Vector Prioritization",
+          "level": 3,
+          "line": 39
+        },
+        {
+          "heading": "After Exploitation — Deciding Post-Exploit Strategy",
+          "level": 3,
+          "line": 55
+        },
+        {
+          "heading": "Handling Blocked Objectives",
+          "level": 2,
+          "line": 67
+        },
+        {
+          "heading": "Failure Analysis Decision Tree",
+          "level": 3,
+          "line": 69
+        },
+        {
+          "heading": "Common Pivots",
+          "level": 3,
+          "line": 96
+        },
+        {
+          "heading": "MITRE ATT&CK Phase Mapping",
+          "level": 2,
+          "line": 106
+        },
+        {
+          "heading": "Target Prioritization",
+          "level": 2,
+          "line": 124
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 11
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/decepticon/orchestration/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 183,
+      "nonEmptyLines": 147,
+      "sections": [
+        {
+          "heading": "Raptix Orchestration Patterns",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Delegation Protocol",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Context Handoff — What Every Sub-Agent Needs",
+          "level": 3,
+          "line": 16
+        },
+        {
+          "heading": "Delegation Template",
+          "level": 3,
+          "line": 26
+        },
+        {
+          "heading": "Sub-Agent Selection Matrix",
+          "level": 3,
+          "line": 53
+        },
+        {
+          "heading": "Parallel Execution",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "State Management",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "Engagement State Files",
+          "level": 3,
+          "line": 76
+        },
+        {
+          "heading": "State Update Protocol (After Each Sub-Agent Returns)",
+          "level": 3,
+          "line": 89
+        },
+        {
+          "heading": "Context Window Budget",
+          "level": 3,
+          "line": 98
+        },
+        {
+          "heading": "After Recon Returns — Decision Tree",
+          "level": 2,
+          "line": 103
+        },
+        {
+          "heading": "Adaptive Re-planning",
+          "level": 2,
+          "line": 125
+        },
+        {
+          "heading": "When an Objective is BLOCKED",
+          "level": 3,
+          "line": 127
+        },
+        {
+          "heading": "Re-ordering Objectives",
+          "level": 3,
+          "line": 145
+        },
+        {
+          "heading": "Response Format",
+          "level": 2,
+          "line": 153
+        },
+        {
+          "heading": "After Each Sub-Agent Completes",
+          "level": 3,
+          "line": 155
+        },
+        {
+          "heading": "Decision Transparency",
+          "level": 3,
+          "line": 162
+        },
+        {
+          "heading": "Progress Summary",
+          "level": 3,
+          "line": 168
+        },
+        {
+          "heading": "Engagement Completion Report",
+          "level": 3,
+          "line": 178
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 19
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/decepticon/pentest-task-tree/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 242,
+      "nonEmptyLines": 191,
+      "sections": [
+        {
+          "heading": "Pentest Task Tree (PTT) — Session Reasoning Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "What This Skill Does",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "PTT Format",
+          "level": 2,
+          "line": 24
+        },
+        {
+          "heading": "Session Lifecycle",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "Phase 1 — Tree Initialization",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "Phase 2 — Task Selection Loop",
+          "level": 3,
+          "line": 67
+        },
+        {
+          "heading": "Phase 3 — Result Ingestion and Tree Update",
+          "level": 3,
+          "line": 88
+        },
+        {
+          "heading": "Decision Logic: Which Node Next?",
+          "level": 2,
+          "line": 113
+        },
+        {
+          "heading": "Tool-Output Distillation Examples",
+          "level": 2,
+          "line": 134
+        },
+        {
+          "heading": "nmap raw → distilled",
+          "level": 3,
+          "line": 136
+        },
+        {
+          "heading": "gobuster raw → distilled",
+          "level": 3,
+          "line": 154
+        },
+        {
+          "heading": "PTT State File: `<engagement>/ptt.md`",
+          "level": 2,
+          "line": 167
+        },
+        {
+          "heading": "Integration with Raptix Skills",
+          "level": 2,
+          "line": 199
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 212
+        },
+        {
+          "heading": "Detection Notes",
+          "level": 2,
+          "line": 228
+        },
+        {
+          "heading": "Reference",
+          "level": 2,
+          "line": 238
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 16
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/dfir/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 75,
+      "nonEmptyLines": 63,
+      "sections": [
+        {
+          "heading": "Forensicator / DFIR Skill Catalog",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "Playbooks",
+          "level": 2,
+          "line": 22
+        },
+        {
+          "heading": "Loop closure workflow",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "Tools sandbox",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "Why this is differentiating",
+          "level": 2,
+          "line": 69
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/exploit/ad/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 427,
+      "nonEmptyLines": 323,
+      "sections": [
+        {
+          "heading": "Active Directory Exploitation Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference — Common AD Attack Patterns",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "1. BloodHound / SharpHound — Attack Path Analysis",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "Data Collection",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "Key BloodHound Queries",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "2. Kerberoasting",
+          "level": 2,
+          "line": 92
+        },
+        {
+          "heading": "Enumeration & Extraction",
+          "level": 3,
+          "line": 96
+        },
+        {
+          "heading": "Offline Cracking",
+          "level": 3,
+          "line": 125
+        },
+        {
+          "heading": "3. AS-REP Roasting",
+          "level": 2,
+          "line": 137
+        },
+        {
+          "heading": "Enumeration & Extraction",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "Offline Cracking",
+          "level": 3,
+          "line": 161
+        },
+        {
+          "heading": "4. AD CS Abuse — ESC1 (Certificate Template Exploitation)",
+          "level": 2,
+          "line": 167
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 3,
+          "line": 171
+        },
+        {
+          "heading": "Enumeration",
+          "level": 3,
+          "line": 176
+        },
+        {
+          "heading": "ESC1 Exploitation",
+          "level": 3,
+          "line": 197
+        },
+        {
+          "heading": "5. DCSync Attack",
+          "level": 2,
+          "line": 222
+        },
+        {
+          "heading": "Check Replication Rights",
+          "level": 3,
+          "line": 226
+        },
+        {
+          "heading": "Execution",
+          "level": 3,
+          "line": 235
+        },
+        {
+          "heading": "Output Format",
+          "level": 3,
+          "line": 261
+        },
+        {
+          "heading": "6. Golden Ticket Creation",
+          "level": 2,
+          "line": 272
+        },
+        {
+          "heading": "Prerequisites",
+          "level": 3,
+          "line": 276
+        },
+        {
+          "heading": "Forge the Ticket",
+          "level": 3,
+          "line": 281
+        },
+        {
+          "heading": "Lookup Domain SID",
+          "level": 3,
+          "line": 307
+        },
+        {
+          "heading": "7. Constrained Delegation Abuse",
+          "level": 2,
+          "line": 317
+        },
+        {
+          "heading": "Enumeration",
+          "level": 3,
+          "line": 321
+        },
+        {
+          "heading": "S4U2self / S4U2proxy Exploitation",
+          "level": 3,
+          "line": 335
+        },
+        {
+          "heading": "Common Delegation Targets",
+          "level": 3,
+          "line": 363
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 372
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 385
+        },
+        {
+          "heading": "Behavioral Indicators",
+          "level": 3,
+          "line": 398
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 406
+        },
+        {
+          "heading": "Bundled Resources",
+          "level": 2,
+          "line": 424
+        },
+        {
+          "heading": "References",
+          "level": 3,
+          "line": 426
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 34
+      }
+    }
+  ]
+}

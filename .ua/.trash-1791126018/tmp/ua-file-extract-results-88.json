@@ -1,0 +1,889 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 20,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 20,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 20
+    }
+  },
+  "results": [
+    {
+      "path": "docs/adr/0001-record-architecture-decisions.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 72,
+      "nonEmptyLines": 60,
+      "sections": [
+        {
+          "heading": "0001. Record architecture decisions",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 32
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 62
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0002-pr-tiering-and-blast-radius.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 75,
+      "nonEmptyLines": 61,
+      "sections": [
+        {
+          "heading": "0002. PR tiering by blast radius",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 25
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 46
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 62
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0003-ai-contributor-self-review.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 94,
+      "nonEmptyLines": 80,
+      "sections": [
+        {
+          "heading": "0003. AI-assisted contribution self-review charter",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 65
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 79
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0004-zero-ai-slop-policy.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 118,
+      "nonEmptyLines": 102,
+      "sections": [
+        {
+          "heading": "0004. Zero AI-slop policy — the 100% quality bar",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 68
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 92
+        },
+        {
+          "heading": "Operating note",
+          "level": 2,
+          "line": 113
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/adr/0005-bloodhound-via-bhce-rest-client.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 170,
+      "nonEmptyLines": 149,
+      "sections": [
+        {
+          "heading": "0005. Integrate BloodHound via the official BHCE REST API, not via in-house reimplementation",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Authoritative facts the client must encode (source-cited)",
+          "level": 3,
+          "line": 72
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 104
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 146
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "docs/adr/0006-agent-driven-container-lifecycle.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 453,
+      "nonEmptyLines": 394,
+      "sections": [
+        {
+          "heading": "0006. Agent-driven domain-tool container lifecycle via an ops-control sidecar",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "Workload catalog",
+          "level": 3,
+          "line": 136
+        },
+        {
+          "heading": "Catalog extension protocol",
+          "level": 3,
+          "line": 199
+        },
+        {
+          "heading": "External validation",
+          "level": 3,
+          "line": 257
+        },
+        {
+          "heading": "CLAUDE.md invariant update",
+          "level": 3,
+          "line": 310
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 329
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 399
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "docs/adr/0007-ai-surface-technology-node.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 71,
+      "nonEmptyLines": 58,
+      "sections": [
+        {
+          "heading": "0007. Add a Technology knowledge-graph node kind for AI-surface and tech-detection signals",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 31
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 61
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0008-skillogy-hard-acl-phase1a.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 137,
+      "nonEmptyLines": 118,
+      "sections": [
+        {
+          "heading": "0008. Skillogy enforces path-prefix ACL in Phase 1a (don't wait for Phase 2)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 54
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "How to undo",
+          "level": 2,
+          "line": 129
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0009-hitl-langgraph-native-migration.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 342,
+      "nonEmptyLines": 303,
+      "sections": [
+        {
+          "heading": "0009. Migrate HITL to LangGraph-native `interrupt()` + explicit-policy sets",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "External validation",
+          "level": 3,
+          "line": 185
+        },
+        {
+          "heading": "CLAUDE.md / docs updates",
+          "level": 3,
+          "line": 222
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 238
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 301
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 7
+      }
+    },
+    {
+      "path": "docs/adr/0010-open-web-acquisition.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 106,
+      "nonEmptyLines": 90,
+      "sections": [
+        {
+          "heading": "0010. Acquire open-web content with a sandbox-side, RoE-gated fetch engine",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 12
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 74
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 92
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0011-skillogy-lightrag-hybrid-retrieval.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 253,
+      "nonEmptyLines": 219,
+      "sections": [
+        {
+          "heading": "0011. Skillogy find_skill uses LightRAG-style hybrid retrieval over the existing graph",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 10
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "Why implement the algorithm, not adopt the library",
+          "level": 3,
+          "line": 60
+        },
+        {
+          "heading": "Architecture (dual-level hybrid, mapped to our graph)",
+          "level": 3,
+          "line": 75
+        },
+        {
+          "heading": "Backward compatibility",
+          "level": 3,
+          "line": 144
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 153
+        },
+        {
+          "heading": "Implementation plan (for the implementing session)",
+          "level": 2,
+          "line": 175
+        },
+        {
+          "heading": "Step 1 — embedding helper (new module)",
+          "level": 3,
+          "line": 179
+        },
+        {
+          "heading": "Step 2 — boot-ingest: embed each skill into Neo4j (NOT into the dump)",
+          "level": 3,
+          "line": 188
+        },
+        {
+          "heading": "Step 3 — vector index DDL (boot ingest)",
+          "level": 3,
+          "line": 200
+        },
+        {
+          "heading": "Step 4 — find_skill hybrid retrieval (backend)",
+          "level": 3,
+          "line": 206
+        },
+        {
+          "heading": "Step 5 — tests",
+          "level": 3,
+          "line": 226
+        },
+        {
+          "heading": "Step 6 — container env / image (NOT CI)",
+          "level": 3,
+          "line": 234
+        },
+        {
+          "heading": "Open questions",
+          "level": 2,
+          "line": 243
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 15
+      }
+    },
+    {
+      "path": "docs/adr/0012-retire-codeowners-merge-gate.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 127,
+      "nonEmptyLines": 111,
+      "sections": [
+        {
+          "heading": "0012. Retire the CODEOWNERS merge gate; keep required CI and the release environment",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 54
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 113
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0013-fail-safe-kg-autoingest.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 48,
+      "nonEmptyLines": 39,
+      "sections": [
+        {
+          "heading": "0013. Fail-safe KG auto-ingest after scanner tool calls",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Consequences and verification",
+          "level": 2,
+          "line": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "docs/adr/0014-observational-tried-edge-ledger.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 40,
+      "nonEmptyLines": 32,
+      "sections": [
+        {
+          "heading": "0014. Record tried edges without restricting retries",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 34
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "docs/adr/0015-defer-structured-decoding.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 36,
+      "nonEmptyLines": 29,
+      "sections": [
+        {
+          "heading": "0015. Defer provider-side structured decoding pending measured failures",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Investigation",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Evidence and decision",
+          "level": 2,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "docs/adr/0016-ingest-gobuster-directory-results.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 36,
+      "nonEmptyLines": 29,
+      "sections": [
+        {
+          "heading": "0016. Parse Gobuster directory results into existing KG node types",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Coverage audit",
+          "level": 2,
+          "line": 7
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Verification",
+          "level": 2,
+          "line": 30
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "docs/adr/0017-defer-per-role-structure.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 16,
+      "nonEmptyLines": 13,
+      "sections": [
+        {
+          "heading": "0017. Defer an inert per-role structure knob",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 7
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "docs/adr/0018-recon-surface-inventory.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 51,
+      "nonEmptyLines": 40,
+      "sections": [
+        {
+          "heading": "0018. Normalize reconnaissance into a KG surface inventory",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 44
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0019-parameterize-surface-exploit-cells.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 50,
+      "nonEmptyLines": 39,
+      "sections": [
+        {
+          "heading": "0019. Parameterize surface exploitation by coverage cell",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 33
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 43
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "docs/adr/0020-coverage-matrix-objectives.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 41,
+      "nonEmptyLines": 32,
+      "sections": [
+        {
+          "heading": "0020. Derive Initial Foothold coverage from the KG into OPPLAN children",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Context",
+          "level": 2,
+          "line": 8
+        },
+        {
+          "heading": "Decision",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Consequences",
+          "level": 2,
+          "line": 26
+        },
+        {
+          "heading": "Alternatives considered",
+          "level": 2,
+          "line": 34
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    }
+  ]
+}

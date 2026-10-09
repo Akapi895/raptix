@@ -1,0 +1,1665 @@
+{
+  "batchIndex": 15,
+  "batchFiles": [
+    {
+      "path": "clients/cli/src/app.tsx",
+      "language": "typescript",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/agent.ts",
+      "language": "typescript",
+      "sizeLines": 142,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/assistantOverride.ts",
+      "language": "typescript",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/clear.ts",
+      "language": "typescript",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/file.ts",
+      "language": "typescript",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/help.ts",
+      "language": "typescript",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/model.ts",
+      "language": "typescript",
+      "sizeLines": 250,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/modelOverride.ts",
+      "language": "typescript",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/plugins.ts",
+      "language": "typescript",
+      "sizeLines": 154,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/quit.ts",
+      "language": "typescript",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/registry.ts",
+      "language": "typescript",
+      "sizeLines": 58,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/resume.ts",
+      "language": "typescript",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/types.ts",
+      "language": "typescript",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/web.test.ts",
+      "language": "typescript",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/commands/web.ts",
+      "language": "typescript",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/ActivityIndicator.tsx",
+      "language": "typescript",
+      "sizeLines": 136,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/Banner.tsx",
+      "language": "typescript",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/BashResult.tsx",
+      "language": "typescript",
+      "sizeLines": 98,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/EventItem.tsx",
+      "language": "typescript",
+      "sizeLines": 78,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/ObjectiveList.tsx",
+      "language": "typescript",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/OpplanStatus.tsx",
+      "language": "typescript",
+      "sizeLines": 85,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/Prompt.tsx",
+      "language": "typescript",
+      "sizeLines": 235,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/QuestionPicker.tsx",
+      "language": "typescript",
+      "sizeLines": 212,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/SessionPicker.tsx",
+      "language": "typescript",
+      "sizeLines": 141,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/SpinnerIcon.tsx",
+      "language": "typescript",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/TodoList.tsx",
+      "language": "typescript",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "language": "typescript",
+      "sizeLines": 233,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/agents/CoordinatorPanel.tsx",
+      "language": "typescript",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/messages/AIMessage.tsx",
+      "language": "typescript",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/messages/BackgroundCompleteMessage.tsx",
+      "language": "typescript",
+      "sizeLines": 58,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/cli/src/components/messages/DelegateMessage.tsx",
+      "language": "typescript",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:clients/cli/src/app.tsx",
+      "type": "file",
+      "name": "app.tsx",
+      "filePath": "clients/cli/src/app.tsx",
+      "summary": "Goc CLI (Ink): boc AppStateProvider quanh REPL, nhan initialMessage tuy chon de mo phien co san noi dung.",
+      "tags": [
+        "entry-point",
+        "cli",
+        "ink",
+        "repl",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/cli/src/app.tsx:App",
+      "type": "function",
+      "name": "App",
+      "filePath": "clients/cli/src/app.tsx",
+      "lineRange": [
+        10,
+        16
+      ],
+      "summary": "Goc ung dung: re sang RealApp o che do real va VisualApp o che do mock. Duoc export lam entry.",
+      "tags": [
+        "entry-point",
+        "dieu-huong",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/agent.ts",
+      "type": "file",
+      "name": "agent.ts",
+      "filePath": "clients/cli/src/commands/agent.ts",
+      "summary": "Lenh /agent: chuyen orchestrator hien tai cua phien, chi hien thi orchestration agent, sub-agent goi qua tool task cua orchestrator.",
+      "tags": [
+        "lenh-slash",
+        "agent",
+        "orchestrator",
+        "cli"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/commands/agent.ts:listOrchestrators",
+      "type": "function",
+      "name": "listOrchestrators",
+      "filePath": "clients/cli/src/commands/agent.ts",
+      "lineRange": [
+        42,
+        57
+      ],
+      "summary": "Thuc hien nghiep vu `listOrchestrators` (16 dong) trong agent.ts. Ham noi bo cua mo-dun.",
+      "tags": [
+        "ham",
+        "agent",
+        "noi-bo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/commands/assistantOverride.ts",
+      "type": "file",
+      "name": "assistantOverride.ts",
+      "filePath": "clients/cli/src/commands/assistantOverride.ts",
+      "summary": "Store ghi de orchestrator theo process: /agent ghi vao day, useAgent doc moi submit/resume de lan gui ke tiep co hieu luc, uu tien hon mac dinh.",
+      "tags": [
+        "store",
+        "ghi-de",
+        "orchestrator",
+        "cli"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/cli/src/commands/assistantOverride.ts:setAssistantOverride",
+      "type": "function",
+      "name": "setAssistantOverride",
+      "filePath": "clients/cli/src/commands/assistantOverride.ts",
+      "lineRange": [
+        15,
+        17
+      ],
+      "summary": "Thuc hien nghiep vu `setAssistantOverride` (3 dong) trong assistantOverride.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/cli/src/commands/assistantOverride.ts:getAssistantOverride",
+      "type": "function",
+      "name": "getAssistantOverride",
+      "filePath": "clients/cli/src/commands/assistantOverride.ts",
+      "lineRange": [
+        19,
+        21
+      ],
+      "summary": "Thuc hien nghiep vu `getAssistantOverride` (3 dong) trong assistantOverride.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/clear.ts",
+      "type": "file",
+      "name": "clear.ts",
+      "filePath": "clients/cli/src/commands/clear.ts",
+      "summary": "Lenh /clear: xoa lich su hoi thoai cua phien hien tai theo interface Command.",
+      "tags": [
+        "lenh-slash",
+        "xoa-lich-su",
+        "cli",
+        "phien"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/file.ts",
+      "type": "file",
+      "name": "file.ts",
+      "filePath": "clients/cli/src/commands/file.ts",
+      "summary": "Lenh /file <path>: doc file prompt dai (brief engagement, pham vi VDP) va gui thanh message cho agent, tien cho nhap nhieu dong.",
+      "tags": [
+        "lenh-slash",
+        "nap-file",
+        "prompt",
+        "cli"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/commands/help.ts",
+      "type": "file",
+      "name": "help.ts",
+      "filePath": "clients/cli/src/commands/help.ts",
+      "summary": "Lenh /help: liet ke lenh kha dung va phim tat tu registry trung tam.",
+      "tags": [
+        "lenh-slash",
+        "tro-giup",
+        "registry",
+        "cli"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/model.ts",
+      "type": "file",
+      "name": "model.ts",
+      "filePath": "clients/cli/src/commands/model.ts",
+      "summary": "Lenh /model (250 dong): liet ke override hien tai + moi model id ho tro, dat override (/model <id>), kiem tra isKnown va lam phang danh sach.",
+      "tags": [
+        "lenh-slash",
+        "mo-hinh",
+        "llm",
+        "cli",
+        "ghi-de"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/cli/src/commands/modelOverride.ts",
+      "type": "file",
+      "name": "modelOverride.ts",
+      "filePath": "clients/cli/src/commands/modelOverride.ts",
+      "summary": "Store ghi de model theo process: /model ghi vao day, useAgent dua vao config.configurable.model_override moi submit de agent rebind LLM.",
+      "tags": [
+        "store",
+        "ghi-de",
+        "mo-hinh",
+        "llm",
+        "cli"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/cli/src/commands/modelOverride.ts:setModelOverride",
+      "type": "function",
+      "name": "setModelOverride",
+      "filePath": "clients/cli/src/commands/modelOverride.ts",
+      "lineRange": [
+        15,
+        17
+      ],
+      "summary": "Thuc hien nghiep vu `setModelOverride` (3 dong) trong modelOverride.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/cli/src/commands/modelOverride.ts:getModelOverride",
+      "type": "function",
+      "name": "getModelOverride",
+      "filePath": "clients/cli/src/commands/modelOverride.ts",
+      "lineRange": [
+        19,
+        21
+      ],
+      "summary": "Thuc hien nghiep vu `getModelOverride` (3 dong) trong modelOverride.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/plugins.ts",
+      "type": "file",
+      "name": "plugins.ts",
+      "filePath": "clients/cli/src/commands/plugins.ts",
+      "summary": "Lenh /plugins: bat/tat bundle plugin luc chay, mac dinh chi nap standard (10 agent chinh), bundle plugins them vulnresearch + 5 chuyen gia.",
+      "tags": [
+        "lenh-slash",
+        "plugin",
+        "bundle",
+        "cli",
+        "agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/commands/plugins.ts:formatList",
+      "type": "function",
+      "name": "formatList",
+      "filePath": "clients/cli/src/commands/plugins.ts",
+      "lineRange": [
+        47,
+        67
+      ],
+      "summary": "Thuc hien nghiep vu `formatList` (21 dong) trong plugins.ts. Ham noi bo cua mo-dun.",
+      "tags": [
+        "ham",
+        "plugins",
+        "noi-bo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/commands/plugins.ts:getJson",
+      "type": "function",
+      "name": "getJson",
+      "filePath": "clients/cli/src/commands/plugins.ts",
+      "lineRange": [
+        69,
+        83
+      ],
+      "summary": "Thuc hien nghiep vu `getJson` (15 dong) trong plugins.ts. Ham noi bo cua mo-dun.",
+      "tags": [
+        "ham",
+        "plugins",
+        "noi-bo"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/quit.ts",
+      "type": "file",
+      "name": "quit.ts",
+      "filePath": "clients/cli/src/commands/quit.ts",
+      "summary": "Lenh /quit (alias exit): thoat CLI Raptix theo interface Command.",
+      "tags": [
+        "lenh-slash",
+        "thoat",
+        "cli",
+        "phien"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/registry.ts",
+      "type": "file",
+      "name": "registry.ts",
+      "filePath": "clients/cli/src/commands/registry.ts",
+      "summary": "Registry lenh slash trung tam theo mau Claude Code: mang dang ky duy nhat, tra cuu theo ten/alias qua getCommands/findCommand/parseSlashCommand.",
+      "tags": [
+        "registry",
+        "lenh-slash",
+        "tra-cuu",
+        "cli"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/commands/registry.ts:getCommands",
+      "type": "function",
+      "name": "getCommands",
+      "filePath": "clients/cli/src/commands/registry.ts",
+      "lineRange": [
+        23,
+        25
+      ],
+      "summary": "Thuc hien nghiep vu `getCommands` (3 dong) trong registry.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "registry",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/cli/src/commands/registry.ts:findCommand",
+      "type": "function",
+      "name": "findCommand",
+      "filePath": "clients/cli/src/commands/registry.ts",
+      "lineRange": [
+        28,
+        33
+      ],
+      "summary": "Thuc hien nghiep vu `findCommand` (6 dong) trong registry.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "registry",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/cli/src/commands/registry.ts:parseSlashCommand",
+      "type": "function",
+      "name": "parseSlashCommand",
+      "filePath": "clients/cli/src/commands/registry.ts",
+      "lineRange": [
+        44,
+        58
+      ],
+      "summary": "Thuc hien nghiep vu `parseSlashCommand` (15 dong) trong registry.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "registry",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/resume.ts",
+      "type": "file",
+      "name": "resume.ts",
+      "filePath": "clients/cli/src/commands/resume.ts",
+      "summary": "Lenh /resume (alias r/continue): tiep tuc run dang tam dung hoac phien truoc theo interface Command.",
+      "tags": [
+        "lenh-slash",
+        "tiep-tuc",
+        "phien",
+        "cli"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/types.ts",
+      "type": "file",
+      "name": "types.ts",
+      "filePath": "clients/cli/src/commands/types.ts",
+      "summary": "Kieu lenh slash CLI: gon tu ba kieu prompt/local/local-jsx cua Claude Code ve mot interface Command thuc thi cuc bo duy nhat.",
+      "tags": [
+        "kieu-du-lieu",
+        "lenh-slash",
+        "cli",
+        "giao-dien"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/web.test.ts",
+      "type": "file",
+      "name": "web.test.ts",
+      "filePath": "clients/cli/src/commands/web.test.ts",
+      "summary": "Kiem thu lenh /web: dung fakeContext ghi su kien de khang dinh in URL dashboard, bao dung registry va types.",
+      "tags": [
+        "kiem-thu",
+        "lenh-slash",
+        "web",
+        "cli"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/commands/web.ts",
+      "type": "file",
+      "name": "web.ts",
+      "filePath": "clients/cli/src/commands/web.ts",
+      "summary": "Lenh /web: in URL dashboard web; W20 da huu tri dich vu web legacy, chi con thong bao duong dan.",
+      "tags": [
+        "lenh-slash",
+        "web",
+        "dashboard",
+        "cli"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/components/ActivityIndicator.tsx",
+      "type": "file",
+      "name": "ActivityIndicator.tsx",
+      "filePath": "clients/cli/src/components/ActivityIndicator.tsx",
+      "summary": "Chi bao hoat dong (Ink): chu nhap nhay ShimmerText, dinh dang elapsed/token tu StreamStats/RunState, dung spinner frame va glyph theme.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "trang-thai-chay",
+        "spinner"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/components/ActivityIndicator.tsx:ShimmerText",
+      "type": "function",
+      "name": "ShimmerText",
+      "filePath": "clients/cli/src/components/ActivityIndicator.tsx",
+      "lineRange": [
+        41,
+        58
+      ],
+      "summary": "Component ShimmerText dung giao dien cho ActivityIndicator.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/Banner.tsx",
+      "type": "file",
+      "name": "Banner.tsx",
+      "filePath": "clients/cli/src/components/Banner.tsx",
+      "summary": "Banner ASCII Raptix (Ink): chon BANNER_FULL braille + block-art khi rong >=140 cot, trich logo bang extractLogo theo stdout.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "banner",
+        "giao-dien"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/BashResult.tsx",
+      "type": "file",
+      "name": "BashResult.tsx",
+      "filePath": "clients/cli/src/components/BashResult.tsx",
+      "summary": "Hien thi ket qua bash (Ink): boc ScreenContext/ExpandOutputContext, mo rong Ctrl+O, dung cho EventItem render output dai.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "bash",
+        "hien-thi"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/EventItem.tsx",
+      "type": "file",
+      "name": "EventItem.tsx",
+      "filePath": "clients/cli/src/components/EventItem.tsx",
+      "summary": "Dieu phoi render su kien agent (Ink): re sang BashResult/AIMessage/BackgroundComplete/Delegate/QA/System/ToolCall/UserMessage theo AgentEvent.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "su-kien",
+        "dieu-phoi"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/ObjectiveList.tsx",
+      "type": "file",
+      "name": "ObjectiveList.tsx",
+      "filePath": "clients/cli/src/components/ObjectiveList.tsx",
+      "summary": "Danh sach muc tieu OPPLAN (Ink): parseObjectives trich ObjectiveItem tu text va render kem STATUS_ICON/GLYPH_HOOK cua theme.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "opplan",
+        "muc-tieu"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/components/ObjectiveList.tsx:parseObjectives",
+      "type": "function",
+      "name": "parseObjectives",
+      "filePath": "clients/cli/src/components/ObjectiveList.tsx",
+      "lineRange": [
+        21,
+        65
+      ],
+      "summary": "Thuc hien nghiep vu `parseObjectives` (45 dong) trong ObjectiveList.tsx. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "objectivelist",
+        "exported"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/OpplanStatus.tsx",
+      "type": "file",
+      "name": "OpplanStatus.tsx",
+      "filePath": "clients/cli/src/components/OpplanStatus.tsx",
+      "summary": "Trang thai OPPLAN kieu task list (Ink): tom tat so objective hoan thanh/active/pending tu useOpplan, dinh dang theo theme.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "opplan",
+        "trang-thai"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/Prompt.tsx",
+      "type": "file",
+      "name": "Prompt.tsx",
+      "filePath": "clients/cli/src/components/Prompt.tsx",
+      "summary": "O nhap lieu REPL (Ink, 235 dong): TextInput kem goi y phim tat, tich hop registry lenh, useAgent/useSpinnerFrame/useTerminalSize va nhan agents/version.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "nhap-lieu",
+        "repl"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/cli/src/components/Prompt.tsx:KeybindingHints",
+      "type": "function",
+      "name": "KeybindingHints",
+      "filePath": "clients/cli/src/components/Prompt.tsx",
+      "lineRange": [
+        61,
+        85
+      ],
+      "summary": "Component KeybindingHints dung giao dien cho Prompt.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/QuestionPicker.tsx",
+      "type": "file",
+      "name": "QuestionPicker.tsx",
+      "filePath": "clients/cli/src/components/QuestionPicker.tsx",
+      "summary": "Chon cau hoi HITL (Ink): danh sach ActiveQuestion co the tim kiem, dieu huong phim mui ten, Enter chon, Escape huy.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "hitl",
+        "chon-lua"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/components/QuestionPicker.tsx:KeybindingHints",
+      "type": "function",
+      "name": "KeybindingHints",
+      "filePath": "clients/cli/src/components/QuestionPicker.tsx",
+      "lineRange": [
+        190,
+        212
+      ],
+      "summary": "Component KeybindingHints dung giao dien cho QuestionPicker.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/SessionPicker.tsx",
+      "type": "file",
+      "name": "SessionPicker.tsx",
+      "filePath": "clients/cli/src/components/SessionPicker.tsx",
+      "summary": "Chon phien resume kieu Claude Code (Ink): danh sach phien truoc co the tim kiem tu threadStore, hien thi formatTimeAgo.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "phien",
+        "tiep-tuc"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/components/SessionPicker.tsx:formatTimeAgo",
+      "type": "function",
+      "name": "formatTimeAgo",
+      "filePath": "clients/cli/src/components/SessionPicker.tsx",
+      "lineRange": [
+        19,
+        28
+      ],
+      "summary": "Thuc hien nghiep vu `formatTimeAgo` (10 dong) trong SessionPicker.tsx. Ham noi bo cua mo-dun.",
+      "tags": [
+        "ham",
+        "sessionpicker",
+        "noi-bo"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/components/SpinnerIcon.tsx",
+      "type": "file",
+      "name": "SpinnerIcon.tsx",
+      "filePath": "clients/cli/src/components/SpinnerIcon.tsx",
+      "summary": "Icon spinner (Ink): render frame xoay khi active tu useSpinnerFrame, dung trong prompt/activity.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "spinner",
+        "giao-dien"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/components/TodoList.tsx",
+      "type": "file",
+      "name": "TodoList.tsx",
+      "filePath": "clients/cli/src/components/TodoList.tsx",
+      "summary": "Danh sach viec (Ink): parseTodos trich TodoItem tu text va render kem TODO_ICON cua theme.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "viec-can-lam",
+        "hien-thi"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/components/TodoList.tsx:parseTodos",
+      "type": "function",
+      "name": "parseTodos",
+      "filePath": "clients/cli/src/components/TodoList.tsx",
+      "lineRange": [
+        16,
+        29
+      ],
+      "summary": "Thuc hien nghiep vu `parseTodos` (14 dong) trong TodoList.tsx. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "todolist",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "type": "file",
+      "name": "AgentSessionGroup.tsx",
+      "filePath": "clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "summary": "Nhom phien sub-agent hybrid (Ink, 233 dong): che do prompt gon kieu Claude Code va transcript day du, gom SessionHeader/Footer voi capitalize/truncText.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "sub-agent",
+        "phien"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/cli/src/components/agents/AgentSessionGroup.tsx:SessionHeader",
+      "type": "function",
+      "name": "SessionHeader",
+      "filePath": "clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "lineRange": [
+        60,
+        100
+      ],
+      "summary": "Component SessionHeader dung giao dien cho AgentSessionGroup.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/cli/src/components/agents/AgentSessionGroup.tsx:SessionFooter",
+      "type": "function",
+      "name": "SessionFooter",
+      "filePath": "clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "lineRange": [
+        104,
+        127
+      ],
+      "summary": "Component SessionFooter dung giao dien cho AgentSessionGroup.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/agents/CoordinatorPanel.tsx",
+      "type": "file",
+      "name": "CoordinatorPanel.tsx",
+      "filePath": "clients/cli/src/components/agents/CoordinatorPanel.tsx",
+      "summary": "Panel dieu phoi sub-agent (Ink): vung dong hien thi cac phien dang chay qua AgentSessionGroup theo dinh dang inline Claude Code.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "dieu-phoi",
+        "sub-agent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/components/messages/AIMessage.tsx",
+      "type": "file",
+      "name": "AIMessage.tsx",
+      "filePath": "clients/cli/src/components/messages/AIMessage.tsx",
+      "summary": "Tin nhan AI (Ink): render markdown qua renderMarkdown kem GLYPH_DOT cua theme.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "tin-nhan",
+        "markdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/cli/src/components/messages/BackgroundCompleteMessage.tsx",
+      "type": "file",
+      "name": "BackgroundCompleteMessage.tsx",
+      "filePath": "clients/cli/src/components/messages/BackgroundCompleteMessage.tsx",
+      "summary": "Thong bao nen hoan tat (Ink): hien thi lenh da xong kem GLYPH_DOT, dung trong EventItem.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "thong-bao",
+        "nen"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/cli/src/components/messages/DelegateMessage.tsx",
+      "type": "file",
+      "name": "DelegateMessage.tsx",
+      "filePath": "clients/cli/src/components/messages/DelegateMessage.tsx",
+      "summary": "Tin nhan uy thac sub-agent (Ink): che do prompt gon va transcript day du voi mo ta tac vu, dung ScreenContext/theme.",
+      "tags": [
+        "component",
+        "cli",
+        "ink",
+        "uy-thac",
+        "sub-agent"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:clients/cli/src/app.tsx",
+      "target": "function:clients/cli/src/app.tsx:App",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/app.tsx",
+      "target": "function:clients/cli/src/app.tsx:App",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/commands/agent.ts",
+      "target": "function:clients/cli/src/commands/agent.ts:listOrchestrators",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/assistantOverride.ts",
+      "target": "function:clients/cli/src/commands/assistantOverride.ts:setAssistantOverride",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/assistantOverride.ts",
+      "target": "function:clients/cli/src/commands/assistantOverride.ts:setAssistantOverride",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/commands/assistantOverride.ts",
+      "target": "function:clients/cli/src/commands/assistantOverride.ts:getAssistantOverride",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/assistantOverride.ts",
+      "target": "function:clients/cli/src/commands/assistantOverride.ts:getAssistantOverride",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/commands/modelOverride.ts",
+      "target": "function:clients/cli/src/commands/modelOverride.ts:setModelOverride",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/modelOverride.ts",
+      "target": "function:clients/cli/src/commands/modelOverride.ts:setModelOverride",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/commands/modelOverride.ts",
+      "target": "function:clients/cli/src/commands/modelOverride.ts:getModelOverride",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/modelOverride.ts",
+      "target": "function:clients/cli/src/commands/modelOverride.ts:getModelOverride",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/commands/plugins.ts",
+      "target": "function:clients/cli/src/commands/plugins.ts:formatList",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/plugins.ts",
+      "target": "function:clients/cli/src/commands/plugins.ts:getJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "function:clients/cli/src/commands/registry.ts:getCommands",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "function:clients/cli/src/commands/registry.ts:getCommands",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "function:clients/cli/src/commands/registry.ts:findCommand",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "function:clients/cli/src/commands/registry.ts:findCommand",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "function:clients/cli/src/commands/registry.ts:parseSlashCommand",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "function:clients/cli/src/commands/registry.ts:parseSlashCommand",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/components/ActivityIndicator.tsx",
+      "target": "function:clients/cli/src/components/ActivityIndicator.tsx:ShimmerText",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/components/ObjectiveList.tsx",
+      "target": "function:clients/cli/src/components/ObjectiveList.tsx:parseObjectives",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/components/ObjectiveList.tsx",
+      "target": "function:clients/cli/src/components/ObjectiveList.tsx:parseObjectives",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/components/Prompt.tsx",
+      "target": "function:clients/cli/src/components/Prompt.tsx:KeybindingHints",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/components/QuestionPicker.tsx",
+      "target": "function:clients/cli/src/components/QuestionPicker.tsx:KeybindingHints",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/components/SessionPicker.tsx",
+      "target": "function:clients/cli/src/components/SessionPicker.tsx:formatTimeAgo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/components/TodoList.tsx",
+      "target": "function:clients/cli/src/components/TodoList.tsx:parseTodos",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/components/TodoList.tsx",
+      "target": "function:clients/cli/src/components/TodoList.tsx:parseTodos",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "target": "function:clients/cli/src/components/agents/AgentSessionGroup.tsx:SessionHeader",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "target": "function:clients/cli/src/components/agents/AgentSessionGroup.tsx:SessionFooter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/cli/src/app.tsx",
+      "target": "file:clients/cli/src/screens/REPL.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/app.tsx",
+      "target": "file:clients/cli/src/state/AppState.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/agent.ts",
+      "target": "file:clients/cli/src/commands/assistantOverride.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/agent.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/clear.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/file.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/help.ts",
+      "target": "file:clients/cli/src/commands/registry.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/help.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/model.ts",
+      "target": "file:clients/cli/src/commands/modelOverride.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/model.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/plugins.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/quit.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/agent.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/clear.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/file.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/help.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/model.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/plugins.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/quit.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/resume.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/registry.ts",
+      "target": "file:clients/cli/src/commands/web.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/resume.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/web.test.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/web.test.ts",
+      "target": "file:clients/cli/src/commands/web.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/web.ts",
+      "target": "file:clients/cli/src/commands/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/ActivityIndicator.tsx",
+      "target": "file:clients/cli/src/hooks/useAgent.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/ActivityIndicator.tsx",
+      "target": "file:clients/cli/src/hooks/useSpinnerFrame.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/ActivityIndicator.tsx",
+      "target": "file:clients/cli/src/utils/theme.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/BashResult.tsx",
+      "target": "file:clients/cli/src/components/shell/CtrlOToExpand.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/BashResult.tsx",
+      "target": "file:clients/cli/src/components/shell/ExpandOutputContext.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/BashResult.tsx",
+      "target": "file:clients/cli/src/components/shell/ScreenContext.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/components/BashResult.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/components/messages/AIMessage.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/components/messages/BackgroundCompleteMessage.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/components/messages/DelegateMessage.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/components/messages/QAMessage.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/components/messages/SystemMessage.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/components/messages/ToolCallMessage.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/components/messages/UserMessage.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/EventItem.tsx",
+      "target": "file:clients/cli/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/ObjectiveList.tsx",
+      "target": "file:clients/cli/src/utils/theme.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/OpplanStatus.tsx",
+      "target": "file:clients/cli/src/hooks/useOpplan.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/OpplanStatus.tsx",
+      "target": "file:clients/cli/src/utils/theme.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/Prompt.tsx",
+      "target": "file:clients/cli/src/commands/registry.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/Prompt.tsx",
+      "target": "file:clients/cli/src/hooks/useAgent.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/Prompt.tsx",
+      "target": "file:clients/cli/src/hooks/useSpinnerFrame.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/Prompt.tsx",
+      "target": "file:clients/cli/src/hooks/useTerminalSize.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/Prompt.tsx",
+      "target": "file:clients/cli/src/utils/agents.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/Prompt.tsx",
+      "target": "file:clients/cli/src/utils/version.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/QuestionPicker.tsx",
+      "target": "file:clients/cli/src/hooks/useTerminalSize.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/QuestionPicker.tsx",
+      "target": "file:clients/cli/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/SessionPicker.tsx",
+      "target": "file:clients/cli/src/hooks/useTerminalSize.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/SessionPicker.tsx",
+      "target": "file:clients/cli/src/utils/threadStore.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/SpinnerIcon.tsx",
+      "target": "file:clients/cli/src/hooks/useSpinnerFrame.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/TodoList.tsx",
+      "target": "file:clients/cli/src/utils/theme.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "target": "file:clients/cli/src/components/EventItem.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "target": "file:clients/cli/src/components/shell/SubAgentContext.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "target": "file:clients/cli/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "target": "file:clients/cli/src/utils/format.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "target": "file:clients/cli/src/utils/theme.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/CoordinatorPanel.tsx",
+      "target": "file:clients/cli/src/components/agents/AgentSessionGroup.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/agents/CoordinatorPanel.tsx",
+      "target": "file:clients/cli/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/messages/AIMessage.tsx",
+      "target": "file:clients/cli/src/utils/markdown.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/messages/AIMessage.tsx",
+      "target": "file:clients/cli/src/utils/theme.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/messages/BackgroundCompleteMessage.tsx",
+      "target": "file:clients/cli/src/utils/theme.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/messages/DelegateMessage.tsx",
+      "target": "file:clients/cli/src/components/shell/ScreenContext.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/components/messages/DelegateMessage.tsx",
+      "target": "file:clients/cli/src/utils/theme.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/cli/src/commands/types.ts",
+      "target": "file:clients/cli/src/commands/web.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:clients/cli/src/commands/web.ts",
+      "target": "file:clients/cli/src/commands/web.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

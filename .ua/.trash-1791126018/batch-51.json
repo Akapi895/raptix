@@ -1,0 +1,708 @@
+{
+  "batchIndex": 51,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/tools/mcp/__init__.py",
+      "language": "python",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/mcp/client.py",
+      "language": "python",
+      "sizeLines": 269,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "language": "python",
+      "sizeLines": 338,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:packages/raptix/raptix/tools/mcp/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/tools/mcp/__init__.py",
+      "summary": "Façade công khai của subpackage MCP: re-export MCPServerConfig, load_mcp_tools, mcp_servers_configured và parse_mcp_servers_env từ client.py; không bị import lúc framework start-up, kích hoạt hoàn toàn qua env RAPTIX_MCP__SERVERS.",
+      "tags": [
+        "mcp",
+        "facade",
+        "re-export",
+        "opt-in"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "type": "file",
+      "name": "client.py",
+      "filePath": "packages/raptix/raptix/tools/mcp/client.py",
+      "summary": "Cầu nối duy nhất giữa Raptix và các MCP server bên ngoài (Kali MCP, HexStrike): parse JSON env RAPTIX_MCP__SERVERS thành MCPServerConfig, kết nối từng server qua langchain-mcp-adapters (lazy import), retry 3 lần với backoff nhân đôi; server lỗi chỉ log+skip, thiếu package optional chỉ cảnh báo — không bao giờ làm chết agent.",
+      "tags": [
+        "mcp",
+        "tool-server",
+        "lazy-import",
+        "fail-safe",
+        "retry"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "Dependency nặng (langchain-mcp-adapters) được import bên trong load_mcp_tools; env theo convention RAPTIX_<SECTION>__<KEY>; _sleep tách module-level để test patch không đụng asyncio.sleep."
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "class",
+      "name": "MCPServerConfig",
+      "filePath": "packages/raptix/raptix/tools/mcp/client.py",
+      "lineRange": [
+        65,
+        103
+      ],
+      "summary": "Dataclass frozen cấu hình một MCP server: transport (streamable_http/sse/stdio), url/command/args/headers; to_client_kwargs render đúng dict mà MultiServerMCPClient của langchain-mcp-adapters mong đợi theo transport đã chọn.",
+      "tags": [
+        "dataclass",
+        "config",
+        "mcp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/mcp/client.py:_default_transport",
+      "type": "function",
+      "name": "_default_transport",
+      "filePath": "packages/raptix/raptix/tools/mcp/client.py",
+      "lineRange": [
+        106,
+        115
+      ],
+      "summary": "Chọn transport mặc định khi operator bỏ trống: entry có \"command\" → stdio, còn lại → streamable_http (server SSE legacy phải khai báo transport tường minh).",
+      "tags": [
+        "mcp",
+        "config",
+        "default"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/mcp/client.py:_parse_one",
+      "type": "function",
+      "name": "_parse_one",
+      "filePath": "packages/raptix/raptix/tools/mcp/client.py",
+      "lineRange": [
+        118,
+        156
+      ],
+      "summary": "Validate và parse một entry server: trả None kèm log warning khi entry không phải JSON object, transport lạ, args không phải list hay headers không phải mapping — entry xấu bị bỏ qua thay vì làm hỏng cả bộ config.",
+      "tags": [
+        "validation",
+        "mcp",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/mcp/client.py:parse_mcp_servers_env",
+      "type": "function",
+      "name": "parse_mcp_servers_env",
+      "filePath": "packages/raptix/raptix/tools/mcp/client.py",
+      "lineRange": [
+        159,
+        191
+      ],
+      "summary": "Parse giá trị JSON của RAPTIX_MCP__SERVERS thành tuple MCPServerConfig; input rỗng, JSON malformed hay top-level không phải object đều trả () kèm warning — env hỏng không bao giờ làm crash agent process.",
+      "tags": [
+        "mcp",
+        "env-parsing",
+        "fail-safe"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/mcp/client.py:mcp_servers_configured",
+      "type": "function",
+      "name": "mcp_servers_configured",
+      "filePath": "packages/raptix/raptix/tools/mcp/client.py",
+      "lineRange": [
+        198,
+        200
+      ],
+      "summary": "Probe boolean: True khi và chỉ khi env có ít nhất một MCP server hợp lệ được cấu hình.",
+      "tags": [
+        "mcp",
+        "probe",
+        "env"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/mcp/client.py:load_mcp_tools",
+      "type": "function",
+      "name": "load_mcp_tools",
+      "filePath": "packages/raptix/raptix/tools/mcp/client.py",
+      "lineRange": [
+        203,
+        269
+      ],
+      "summary": "Kết nối từng MCP server đã cấu hình và gom tools về agent: lazy-import langchain-mcp-adapters (thiếu → warning + []), probe từng server riêng lẻ tối đa 3 lần với backoff 1s/2s; server chết bị skip còn các server khác vẫn đóng góp tools.",
+      "tags": [
+        "mcp",
+        "async",
+        "retry",
+        "resilience"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "type": "file",
+      "name": "test_mcp_client.py",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "summary": "Unit test cho MCP client: không chạm mạng thật và không cần langchain-mcp-adapters (giả lập qua monkeypatch sys.modules); phủ parse env (rỗng/malformed/transport lạ/entry xấu), to_client_kwargs theo từng transport, probe mcp_servers_configured và toàn bộ hành vi load_mcp_tools (thiếu package, retry thành công, cạn retry, một server xấu không giết server khác).",
+      "tags": [
+        "unit-test",
+        "mcp",
+        "mock",
+        "pytest"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:_propagate_mcp_logger",
+      "type": "function",
+      "name": "_propagate_mcp_logger",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        28,
+        40
+      ],
+      "summary": "Fixture autouse bật propagate trên logger \"raptix\" để caplog của pytest thấy được record (logger gốc đặt propagate=False).",
+      "tags": [
+        "fixture",
+        "logging",
+        "pytest"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_parse_two_servers_roundtrip",
+      "type": "function",
+      "name": "test_parse_two_servers_roundtrip",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        52,
+        66
+      ],
+      "summary": "Parse env 2 server (HTTP + stdio) và khẳng định từng trường transport/url/command/args roundtrip đúng vào MCPServerConfig.",
+      "tags": [
+        "unit-test",
+        "parsing",
+        "mcp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_parse_unknown_transport_is_skipped",
+      "type": "function",
+      "name": "test_parse_unknown_transport_is_skipped",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        95,
+        106
+      ],
+      "summary": "Transport không hợp lệ (carrier-pigeon) khiến entry đó bị bỏ qua kèm warning \"unknown transport\", entry tốt vẫn được giữ lại.",
+      "tags": [
+        "unit-test",
+        "validation",
+        "mcp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_to_client_kwargs_http_includes_url_and_headers",
+      "type": "function",
+      "name": "test_to_client_kwargs_http_includes_url_and_headers",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        117,
+        129
+      ],
+      "summary": "to_client_kwargs với transport streamable_http xuất đúng transport/url/headers và không lẫn trường stdio.",
+      "tags": [
+        "unit-test",
+        "serialization",
+        "mcp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_to_client_kwargs_stdio_includes_command_args",
+      "type": "function",
+      "name": "test_to_client_kwargs_stdio_includes_command_args",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        132,
+        141
+      ],
+      "summary": "to_client_kwargs với transport stdio xuất đúng command và args dạng list.",
+      "tags": [
+        "unit-test",
+        "serialization",
+        "mcp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_missing_package_is_graceful",
+      "type": "function",
+      "name": "test_load_mcp_tools_missing_package_is_graceful",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        177,
+        189
+      ],
+      "summary": "Chặn import langchain_mcp_adapters qua sys.modules để khẳng định load_mcp_tools trả [] và chỉ warning — MCP không cài không làm chết agent.",
+      "tags": [
+        "unit-test",
+        "graceful-degradation",
+        "mcp"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_uses_mock_client_when_package_present",
+      "type": "function",
+      "name": "test_load_mcp_tools_uses_mock_client_when_package_present",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        192,
+        229
+      ],
+      "summary": "Tiêm fake MultiServerMCPClient vào sys.modules: tools sentinel được trả về và connection dict dựng từ MCPServerConfig truyền đúng (transport/url/headers).",
+      "tags": [
+        "unit-test",
+        "mock",
+        "mcp"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_retries_transient_failures",
+      "type": "function",
+      "name": "test_load_mcp_tools_retries_transient_failures",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        232,
+        271
+      ],
+      "summary": "Fake client fail 2 lần rồi thành công: load_mcp_tools thử đúng 3 lần với 2 khoảng sleep dương (patch _sleep thành no-op) và trả tools ở lần cuối.",
+      "tags": [
+        "unit-test",
+        "retry",
+        "mcp"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_skips_after_all_attempts_exhausted",
+      "type": "function",
+      "name": "test_load_mcp_tools_skips_after_all_attempts_exhausted",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        274,
+        307
+      ],
+      "summary": "Server fail mọi lần thử bị log \"unreachable\" và skip; load_mcp_tools trả [] thay vì raise.",
+      "tags": [
+        "unit-test",
+        "retry",
+        "fail-safe"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_one_bad_server_does_not_kill_others",
+      "type": "function",
+      "name": "test_load_mcp_tools_one_bad_server_does_not_kill_others",
+      "filePath": "packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "lineRange": [
+        310,
+        338
+      ],
+      "summary": "Hai server (bad/ok): server bad fail ConnectionError còn server ok vẫn đóng góp tool — cô lập lỗi theo từng endpoint hoạt động đúng.",
+      "tags": [
+        "unit-test",
+        "resilience",
+        "mcp"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:_default_transport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:_parse_one",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:parse_mcp_servers_env",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:mcp_servers_configured",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:load_mcp_tools",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:_default_transport",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:_parse_one",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:parse_mcp_servers_env",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:mcp_servers_configured",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:load_mcp_tools",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:_propagate_mcp_logger",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_parse_two_servers_roundtrip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_parse_unknown_transport_is_skipped",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_to_client_kwargs_http_includes_url_and_headers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_to_client_kwargs_stdio_includes_command_args",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_missing_package_is_graceful",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_uses_mock_client_when_package_present",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_retries_transient_failures",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_skips_after_all_attempts_exhausted",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_one_bad_server_does_not_kill_others",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:_propagate_mcp_logger",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_parse_two_servers_roundtrip",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_parse_unknown_transport_is_skipped",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_to_client_kwargs_http_includes_url_and_headers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_to_client_kwargs_stdio_includes_command_args",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_missing_package_is_graceful",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_uses_mock_client_when_package_present",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_retries_transient_failures",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_skips_after_all_attempts_exhausted",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_one_bad_server_does_not_kill_others",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "target": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/mcp/client.py:_parse_one",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:_default_transport",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/mcp/client.py:_parse_one",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/mcp/client.py:parse_mcp_servers_env",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:_parse_one",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_parse_two_servers_roundtrip",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:parse_mcp_servers_env",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_parse_unknown_transport_is_skipped",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:parse_mcp_servers_env",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_to_client_kwargs_http_includes_url_and_headers",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_to_client_kwargs_stdio_includes_command_args",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_missing_package_is_graceful",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_missing_package_is_graceful",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:load_mcp_tools",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_uses_mock_client_when_package_present",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_uses_mock_client_when_package_present",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:load_mcp_tools",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_retries_transient_failures",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_retries_transient_failures",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:load_mcp_tools",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_skips_after_all_attempts_exhausted",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_skips_after_all_attempts_exhausted",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:load_mcp_tools",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_one_bad_server_does_not_kill_others",
+      "target": "class:packages/raptix/raptix/tools/mcp/client.py:MCPServerConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_mcp_client.py:test_load_mcp_tools_one_bad_server_does_not_kill_others",
+      "target": "function:packages/raptix/raptix/tools/mcp/client.py:load_mcp_tools",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/mcp/client.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_mcp_client.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

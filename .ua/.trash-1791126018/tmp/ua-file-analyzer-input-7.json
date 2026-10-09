@@ -1,0 +1,324 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix",
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/agents/middleware_slots.py",
+      "language": "python",
+      "sizeLines": 521,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/cli/__init__.py",
+      "language": "python",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/cli/__main__.py",
+      "language": "python",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/cli/audit.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/cli/auth.py",
+      "language": "python",
+      "sizeLines": 186,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/cli/export_transcript.py",
+      "language": "python",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/cli/scan.py",
+      "language": "python",
+      "sizeLines": 421,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/cli/zip.py",
+      "language": "python",
+      "sizeLines": 238,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/core/dispatch_context.py",
+      "language": "python",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/core/logging.py",
+      "language": "python",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/core/subagent_streaming.py",
+      "language": "python",
+      "sizeLines": 745,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/llm/factory.py",
+      "language": "python",
+      "sizeLines": 1796,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/llm/router.py",
+      "language": "python",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/__init__.py",
+      "language": "python",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/_audit_sink.py",
+      "language": "python",
+      "sizeLines": 245,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/_command_targets.py",
+      "language": "python",
+      "sizeLines": 441,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/_injection_detector.py",
+      "language": "python",
+      "sizeLines": 352,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/budget.py",
+      "language": "python",
+      "sizeLines": 344,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/dispatch.py",
+      "language": "python",
+      "sizeLines": 255,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/engagement.py",
+      "language": "python",
+      "sizeLines": 497,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/event_logging.py",
+      "language": "python",
+      "sizeLines": 657,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/filesystem.py",
+      "language": "python",
+      "sizeLines": 351,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/hitl.py",
+      "language": "python",
+      "sizeLines": 524,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/model_override.py",
+      "language": "python",
+      "sizeLines": 204,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/opplan.py",
+      "language": "python",
+      "sizeLines": 445,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/opscontrol_notifications.py",
+      "language": "python",
+      "sizeLines": 213,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/prompt_injection_shield.py",
+      "language": "python",
+      "sizeLines": 481,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/proxy_key_override.py",
+      "language": "python",
+      "sizeLines": 172,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/roe.py",
+      "language": "python",
+      "sizeLines": 642,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/skillogy.py",
+      "language": "python",
+      "sizeLines": 542,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/skills.py",
+      "language": "python",
+      "sizeLines": 236,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/state_reducers.py",
+      "language": "python",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/subagent_transcript_state.py",
+      "language": "python",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/middleware/untrusted_output.py",
+      "language": "python",
+      "sizeLines": 331,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "packages/raptix/raptix/agents/middleware_slots.py": [
+      "packages/raptix/raptix/agents/_benchmark_mode.py",
+      "packages/raptix/raptix/middleware/__init__.py",
+      "packages/raptix/raptix/middleware/budget.py",
+      "packages/raptix/raptix/middleware/event_logging.py",
+      "packages/raptix/raptix/middleware/hitl.py",
+      "packages/raptix/raptix/middleware/model_override.py",
+      "packages/raptix/raptix/middleware/notifications.py",
+      "packages/raptix/raptix/middleware/opscontrol_notifications.py",
+      "packages/raptix/raptix/middleware/prompt_injection_shield.py",
+      "packages/raptix/raptix/middleware/proxy_key_override.py",
+      "packages/raptix/raptix/middleware/roe.py",
+      "packages/raptix/raptix/runtime/recording.py"
+    ],
+    "packages/raptix/raptix/cli/__init__.py": [
+      "packages/raptix/raptix/cli/scan.py"
+    ],
+    "packages/raptix/raptix/cli/__main__.py": [
+      "packages/raptix/raptix/cli/audit.py",
+      "packages/raptix/raptix/cli/auth.py",
+      "packages/raptix/raptix/cli/export_transcript.py",
+      "packages/raptix/raptix/cli/scan.py",
+      "packages/raptix/raptix/cli/telemetry.py",
+      "packages/raptix/raptix/cli/zip.py"
+    ],
+    "packages/raptix/raptix/cli/audit.py": [
+      "packages/raptix/raptix/middleware/_audit_sink.py"
+    ],
+    "packages/raptix/raptix/cli/auth.py": [],
+    "packages/raptix/raptix/cli/export_transcript.py": [
+      "packages/raptix/raptix/runtime/event_log.py"
+    ],
+    "packages/raptix/raptix/cli/scan.py": [],
+    "packages/raptix/raptix/cli/zip.py": [],
+    "packages/raptix/raptix/core/dispatch_context.py": [],
+    "packages/raptix/raptix/core/logging.py": [],
+    "packages/raptix/raptix/core/subagent_streaming.py": [
+      "packages/raptix/raptix/core/logging.py"
+    ],
+    "packages/raptix/raptix/llm/factory.py": [
+      "packages/raptix/raptix/llm/router.py"
+    ],
+    "packages/raptix/raptix/llm/router.py": [],
+    "packages/raptix/raptix/middleware/__init__.py": [
+      "packages/raptix/raptix/middleware/budget.py",
+      "packages/raptix/raptix/middleware/engagement.py",
+      "packages/raptix/raptix/middleware/event_logging.py",
+      "packages/raptix/raptix/middleware/filesystem.py",
+      "packages/raptix/raptix/middleware/hitl.py",
+      "packages/raptix/raptix/middleware/kg.py",
+      "packages/raptix/raptix/middleware/notifications.py",
+      "packages/raptix/raptix/middleware/opplan.py",
+      "packages/raptix/raptix/middleware/prompt_injection_shield.py",
+      "packages/raptix/raptix/middleware/roe.py",
+      "packages/raptix/raptix/middleware/skillogy.py",
+      "packages/raptix/raptix/middleware/skills.py",
+      "packages/raptix/raptix/middleware/untrusted_output.py"
+    ],
+    "packages/raptix/raptix/middleware/_audit_sink.py": [],
+    "packages/raptix/raptix/middleware/_command_targets.py": [],
+    "packages/raptix/raptix/middleware/_injection_detector.py": [],
+    "packages/raptix/raptix/middleware/budget.py": [],
+    "packages/raptix/raptix/middleware/dispatch.py": [
+      "packages/raptix/raptix/core/dispatch_context.py",
+      "packages/raptix/raptix/core/subagent_streaming.py",
+      "packages/raptix/raptix/middleware/subagent_transcript_state.py"
+    ],
+    "packages/raptix/raptix/middleware/engagement.py": [
+      "packages/raptix/raptix/middleware/opplan.py",
+      "packages/raptix/raptix/middleware/state_reducers.py",
+      "packages/raptix/raptix/tools/bash/bash.py"
+    ],
+    "packages/raptix/raptix/middleware/event_logging.py": [
+      "packages/raptix/raptix/runtime/event_log.py",
+      "packages/raptix/raptix/telemetry/sink.py"
+    ],
+    "packages/raptix/raptix/middleware/filesystem.py": [
+      "packages/raptix/raptix/sandbox_kernel/base.py",
+      "packages/raptix/raptix/tools/filesystem.py"
+    ],
+    "packages/raptix/raptix/middleware/hitl.py": [],
+    "packages/raptix/raptix/middleware/model_override.py": [
+      "packages/raptix/raptix/llm/factory.py",
+      "packages/raptix/raptix/middleware/state_reducers.py"
+    ],
+    "packages/raptix/raptix/middleware/opplan.py": [
+      "packages/raptix/raptix/tools/opplan.py"
+    ],
+    "packages/raptix/raptix/middleware/opscontrol_notifications.py": [
+      "packages/raptix/raptix/tools/ops/client.py"
+    ],
+    "packages/raptix/raptix/middleware/prompt_injection_shield.py": [
+      "packages/raptix/raptix/middleware/_injection_detector.py"
+    ],
+    "packages/raptix/raptix/middleware/proxy_key_override.py": [
+      "packages/raptix/raptix/llm/factory.py",
+      "packages/raptix/raptix/middleware/state_reducers.py"
+    ],
+    "packages/raptix/raptix/middleware/roe.py": [
+      "packages/raptix/raptix/middleware/_audit_sink.py",
+      "packages/raptix/raptix/middleware/_command_targets.py"
+    ],
+    "packages/raptix/raptix/middleware/skillogy.py": [],
+    "packages/raptix/raptix/middleware/skills.py": [
+      "packages/raptix/raptix/tools/skills.py"
+    ],
+    "packages/raptix/raptix/middleware/state_reducers.py": [],
+    "packages/raptix/raptix/middleware/subagent_transcript_state.py": [
+      "packages/raptix/raptix/middleware/state_reducers.py"
+    ],
+    "packages/raptix/raptix/middleware/untrusted_output.py": [
+      "packages/raptix/raptix/middleware/_injection_detector.py"
+    ]
+  }
+}

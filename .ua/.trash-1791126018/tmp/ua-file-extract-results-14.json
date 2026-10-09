@@ -1,0 +1,5096 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 32,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 32,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 32,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "clients/web-raptix/src/mocks/adapters/visual-projects.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 37,
+      "nonEmptyLines": 32,
+      "functions": [
+        {
+          "name": "loadProjects",
+          "startLine": 8,
+          "endLine": 14,
+          "params": []
+        },
+        {
+          "name": "useVisualProjects",
+          "startLine": 18,
+          "endLine": 23,
+          "params": []
+        },
+        {
+          "name": "createVisualProject",
+          "startLine": 25,
+          "endLine": 37,
+          "params": [
+            "name",
+            "scopeType",
+            "client"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "useVisualProjects",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "createVisualProject",
+          "line": 25,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "loadProjects",
+          "callee": "JSON.parse",
+          "lineNumber": 10
+        },
+        {
+          "caller": "loadProjects",
+          "callee": "localStorage.getItem",
+          "lineNumber": 10
+        },
+        {
+          "caller": "loadProjects",
+          "callee": "Array.isArray",
+          "lineNumber": 11
+        },
+        {
+          "caller": "loadProjects",
+          "callee": "saved.every",
+          "lineNumber": 11
+        },
+        {
+          "caller": "loadProjects",
+          "callee": "Array.isArray",
+          "lineNumber": 11
+        },
+        {
+          "caller": "loadProjects",
+          "callee": "['active', 'completed', 'paused', 'planning'].includes",
+          "lineNumber": 11
+        },
+        {
+          "caller": "loadProjects",
+          "callee": "PROJECTS.map",
+          "lineNumber": 13
+        },
+        {
+          "caller": "loadProjects",
+          "callee": "project.members.map",
+          "lineNumber": 13
+        },
+        {
+          "caller": "useVisualProjects",
+          "callee": "useSyncExternalStore",
+          "lineNumber": 19
+        },
+        {
+          "caller": "useVisualProjects",
+          "callee": "listeners.add",
+          "lineNumber": 20
+        },
+        {
+          "caller": "useVisualProjects",
+          "callee": "listeners.delete",
+          "lineNumber": 21
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "name.trim",
+          "lineNumber": 26
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "client.trim",
+          "lineNumber": 26
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "crypto.randomUUID",
+          "lineNumber": 28
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "name.trim",
+          "lineNumber": 28
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "client.trim",
+          "lineNumber": 28
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "client.trim",
+          "lineNumber": 29
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "new Date().toISOString().slice",
+          "lineNumber": 30
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "new Date().toISOString",
+          "lineNumber": 30
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "localStorage.setItem",
+          "lineNumber": 34
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "JSON.stringify",
+          "lineNumber": 34
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "listeners.forEach",
+          "lineNumber": 35
+        },
+        {
+          "caller": "createVisualProject",
+          "callee": "listener",
+          "lineNumber": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 2,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/agent-runs.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 314,
+      "nonEmptyLines": 303,
+      "functions": [
+        {
+          "name": "getRunScenario",
+          "startLine": 312,
+          "endLine": 314,
+          "params": [
+            "projectId"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "DEMO_RUN_SCENARIOS",
+          "line": 284,
+          "isDefault": false
+        },
+        {
+          "name": "getRunScenario",
+          "line": 312,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/correct-projects.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 160,
+      "nonEmptyLines": 155,
+      "exports": [
+        {
+          "name": "MEMBERS_BY_PROJECT",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "PROJECTS",
+          "line": 79,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/planning.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 176,
+      "nonEmptyLines": 173,
+      "exports": [
+        {
+          "name": "SAMPLE_PLANNING_BUNDLE",
+          "line": 9,
+          "isDefault": false
+        },
+        {
+          "name": "SAMPLE_SCOPE",
+          "line": 135,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/projects.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 114,
+      "nonEmptyLines": 112,
+      "exports": [
+        {
+          "name": "MEMBERS_BY_PROJECT",
+          "line": 3,
+          "isDefault": false
+        },
+        {
+          "name": "PROJECTS",
+          "line": 33,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/fixtures/reports.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 93,
+      "nonEmptyLines": 91,
+      "exports": [
+        {
+          "name": "REPORT_FIXTURES",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "DEMO_REPORT_DOCUMENT",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Charter.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 381,
+      "nonEmptyLines": 369,
+      "functions": [
+        {
+          "name": "Charter",
+          "startLine": 4,
+          "endLine": 381,
+          "params": [
+            "{ project }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Charter",
+          "line": 4,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Charter",
+          "callee": "useState",
+          "lineNumber": 5
+        },
+        {
+          "caller": "Charter",
+          "callee": "useState",
+          "lineNumber": 6
+        },
+        {
+          "caller": "Charter",
+          "callee": "useState",
+          "lineNumber": 7
+        },
+        {
+          "caller": "Charter",
+          "callee": "useState",
+          "lineNumber": 8
+        },
+        {
+          "caller": "Charter",
+          "callee": "useState",
+          "lineNumber": 9
+        },
+        {
+          "caller": "Charter",
+          "callee": "objectives.filter",
+          "lineNumber": 17
+        },
+        {
+          "caller": "handleConfirmAbort",
+          "callee": "abortReason.trim",
+          "lineNumber": 21
+        },
+        {
+          "caller": "handleConfirmAbort",
+          "callee": "setCampaignHalted",
+          "lineNumber": 22
+        },
+        {
+          "caller": "handleConfirmAbort",
+          "callee": "setShowKillModal",
+          "lineNumber": 23
+        },
+        {
+          "caller": "handleConfirmAbort",
+          "callee": "setAbortReason",
+          "lineNumber": 24
+        },
+        {
+          "caller": "Charter",
+          "callee": "setShowKillModal",
+          "lineNumber": 36
+        },
+        {
+          "caller": "Charter",
+          "callee": "setAbortReason",
+          "lineNumber": 57
+        },
+        {
+          "caller": "Charter",
+          "callee": "setShowKillModal",
+          "lineNumber": 68
+        },
+        {
+          "caller": "Charter",
+          "callee": "abortReason.trim",
+          "lineNumber": 79
+        },
+        {
+          "caller": "Charter",
+          "callee": "abortReason.trim",
+          "lineNumber": 82
+        },
+        {
+          "caller": "Charter",
+          "callee": "abortReason.trim",
+          "lineNumber": 83
+        },
+        {
+          "caller": "Charter",
+          "callee": "abortReason.trim",
+          "lineNumber": 85
+        },
+        {
+          "caller": "Charter",
+          "callee": "[\n                  { role: 'White Team Lead', name: 'Marcus Chen', phone: '+1 (555) 0142', email: 'marcus.chen@acme-whiteteam.com' },\n                  { role: 'Red Team Lead', name: 'Sarah Voss', phone: '+1 (555) 0187', email: 's.voss@raptix.io' },\n                  { role: 'CISO', name: 'David Park', phone: '+1 (555) 0093', email: null },\n                ].map",
+          "lineNumber": 154
+        },
+        {
+          "caller": "Charter",
+          "callee": "setShowKillModal",
+          "lineNumber": 175
+        },
+        {
+          "caller": "Charter",
+          "callee": "[\n                { label: 'Mon–Fri', time: '22:00 — 05:00 UTC', allowed: true, note: 'Authorized' },\n                { label: 'Weekends', time: '00:00 — 23:59 UTC', allowed: true, note: 'Authorized' },\n                { label: 'Business Hours (09:00–18:00)', time: '❌ No Testing', allowed: false, note: '' },\n              ].map",
+          "lineNumber": 206
+        },
+        {
+          "caller": "Charter",
+          "callee": "[\n                { name: 'Denial of Service (DoS/DDoS) attacks', reason: 'Risk of service disruption impacting production systems' },\n                { name: 'Ransomware deployment or simulation', reason: 'Catastrophic data risk even in simulation mode' },\n                { name: 'C-Level / Executive phishing without approval', reason: 'Requires White Team sign-off per campaign addendum' },\n                { name: 'Physical facility access', reason: 'Outside engagement scope — requires separate authorization' },\n                { name: 'Data exfiltration > 10MB without approval', reason: 'Exceeds agreed data handling limits' },\n                { name: 'Third-party/partner systems outside scope', reason: 'No authorization for systems not listed in scope document' },\n              ].map",
+          "lineNumber": 235
+        },
+        {
+          "caller": "Charter",
+          "callee": "objectives.map",
+          "lineNumber": 268
+        },
+        {
+          "caller": "Charter",
+          "callee": "setObjectives",
+          "lineNumber": 281
+        },
+        {
+          "caller": "Charter",
+          "callee": "setShowHash",
+          "lineNumber": 331
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Findings.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 1112,
+      "nonEmptyLines": 1065,
+      "functions": [
+        {
+          "name": "extractPoc",
+          "startLine": 347,
+          "endLine": 350,
+          "params": [
+            "md"
+          ]
+        },
+        {
+          "name": "Findings",
+          "startLine": 352,
+          "endLine": 606,
+          "params": []
+        },
+        {
+          "name": "FindingModal",
+          "startLine": 608,
+          "endLine": 804,
+          "params": [
+            "{ finding, onClose }"
+          ]
+        },
+        {
+          "name": "ModalRow",
+          "startLine": 806,
+          "endLine": 831,
+          "params": [
+            "{\n  label, value, mono, badge, badgeBg, badgeColor,\n}"
+          ]
+        },
+        {
+          "name": "FindingDrawer",
+          "startLine": 833,
+          "endLine": 1098,
+          "params": [
+            "{\n  finding,\n  tab,\n  onTabChange,\n  onClose,\n}"
+          ]
+        },
+        {
+          "name": "DrawerRow",
+          "startLine": 1100,
+          "endLine": 1112,
+          "params": [
+            "{ label, value, mono }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Findings",
+          "line": 352,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "extractPoc",
+          "callee": "md.match",
+          "lineNumber": 348
+        },
+        {
+          "caller": "extractPoc",
+          "callee": "match[1].trim",
+          "lineNumber": 349
+        },
+        {
+          "caller": "Findings",
+          "callee": "useState",
+          "lineNumber": 353
+        },
+        {
+          "caller": "Findings",
+          "callee": "useState",
+          "lineNumber": 354
+        },
+        {
+          "caller": "Findings",
+          "callee": "useState",
+          "lineNumber": 355
+        },
+        {
+          "caller": "Findings",
+          "callee": "useState",
+          "lineNumber": 356
+        },
+        {
+          "caller": "Findings",
+          "callee": "useState",
+          "lineNumber": 357
+        },
+        {
+          "caller": "Findings",
+          "callee": "useState",
+          "lineNumber": 358
+        },
+        {
+          "caller": "Findings",
+          "callee": "MOCK_FINDINGS.filter",
+          "lineNumber": 360
+        },
+        {
+          "caller": "Findings",
+          "callee": "f.title.toLowerCase().includes",
+          "lineNumber": 363
+        },
+        {
+          "caller": "Findings",
+          "callee": "f.title.toLowerCase",
+          "lineNumber": 363
+        },
+        {
+          "caller": "Findings",
+          "callee": "search.toLowerCase",
+          "lineNumber": 363
+        },
+        {
+          "caller": "Findings",
+          "callee": "f.asset.toLowerCase().includes",
+          "lineNumber": 363
+        },
+        {
+          "caller": "Findings",
+          "callee": "f.asset.toLowerCase",
+          "lineNumber": 363
+        },
+        {
+          "caller": "Findings",
+          "callee": "search.toLowerCase",
+          "lineNumber": 363
+        },
+        {
+          "caller": "Findings",
+          "callee": "Object.fromEntries",
+          "lineNumber": 367
+        },
+        {
+          "caller": "Findings",
+          "callee": "SEV_ORDER.map",
+          "lineNumber": 368
+        },
+        {
+          "caller": "Findings",
+          "callee": "MOCK_FINDINGS.filter",
+          "lineNumber": 368
+        },
+        {
+          "caller": "Findings",
+          "callee": "setSearch",
+          "lineNumber": 394
+        },
+        {
+          "caller": "Findings",
+          "callee": "STATUSES.map",
+          "lineNumber": 402
+        },
+        {
+          "caller": "Findings",
+          "callee": "setStatusFilter",
+          "lineNumber": 405
+        },
+        {
+          "caller": "Findings",
+          "callee": "SEV_ORDER.filter(s => counts[s] > 0).map",
+          "lineNumber": 434
+        },
+        {
+          "caller": "Findings",
+          "callee": "SEV_ORDER.filter",
+          "lineNumber": 434
+        },
+        {
+          "caller": "Findings",
+          "callee": "SEV_ORDER.map",
+          "lineNumber": 447
+        },
+        {
+          "caller": "Findings",
+          "callee": "setSevFilter",
+          "lineNumber": 450
+        },
+        {
+          "caller": "Findings",
+          "callee": "filtered.map",
+          "lineNumber": 507
+        },
+        {
+          "caller": "Findings",
+          "callee": "setSelectedItem",
+          "lineNumber": 513
+        },
+        {
+          "caller": "Findings",
+          "callee": "setSelectedItem",
+          "lineNumber": 592
+        },
+        {
+          "caller": "Findings",
+          "callee": "setDrawer",
+          "lineNumber": 601
+        },
+        {
+          "caller": "FindingModal",
+          "callee": "extractPoc",
+          "lineNumber": 611
+        },
+        {
+          "caller": "FindingModal",
+          "callee": "useState",
+          "lineNumber": 612
+        },
+        {
+          "caller": "FindingModal",
+          "callee": "useState",
+          "lineNumber": 613
+        },
+        {
+          "caller": "runPoc",
+          "callee": "setPocRunning",
+          "lineNumber": 616
+        },
+        {
+          "caller": "runPoc",
+          "callee": "setPocOutput",
+          "lineNumber": 617
+        },
+        {
+          "caller": "runPoc",
+          "callee": "setTimeout",
+          "lineNumber": 618
+        },
+        {
+          "caller": "runPoc",
+          "callee": "setPocRunning",
+          "lineNumber": 619
+        },
+        {
+          "caller": "runPoc",
+          "callee": "setPocOutput",
+          "lineNumber": 620
+        },
+        {
+          "caller": "runPoc",
+          "callee": "new Date().toISOString",
+          "lineNumber": 622
+        },
+        {
+          "caller": "runPoc",
+          "callee": "new Date().toISOString",
+          "lineNumber": 623
+        },
+        {
+          "caller": "FindingModal",
+          "callee": "e.stopPropagation",
+          "lineNumber": 637
+        },
+        {
+          "caller": "FindingModal",
+          "callee": "String",
+          "lineNumber": 677
+        },
+        {
+          "caller": "FindingModal",
+          "callee": "finding.cve.replace",
+          "lineNumber": 678
+        },
+        {
+          "caller": "FindingModal",
+          "callee": "finding.evidence.map",
+          "lineNumber": 705
+        },
+        {
+          "caller": "FindingModal",
+          "callee": "ev.type.replace",
+          "lineNumber": 717
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "(['summary', 'evidence', 'report'] as DrawerTab[]).map",
+          "lineNumber": 907
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "onTabChange",
+          "lineNumber": 910
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "finding.evidence.map",
+          "lineNumber": 971
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "ev.type.replace",
+          "lineNumber": 983
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "finding.reportMarkdown.split('\\n').map",
+          "lineNumber": 1006
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "finding.reportMarkdown.split",
+          "lineNumber": 1006
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.startsWith",
+          "lineNumber": 1007
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.replace",
+          "lineNumber": 1010
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.startsWith",
+          "lineNumber": 1014
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.replace",
+          "lineNumber": 1017
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.startsWith",
+          "lineNumber": 1021
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.endsWith",
+          "lineNumber": 1021
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.replace",
+          "lineNumber": 1024
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.startsWith",
+          "lineNumber": 1028
+        },
+        {
+          "caller": "FindingDrawer",
+          "callee": "line.trim",
+          "lineNumber": 1031
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Home.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 860,
+      "nonEmptyLines": 814,
+      "functions": [
+        {
+          "name": "getPhaseIndex",
+          "startLine": 33,
+          "endLine": 40,
+          "params": [
+            "project"
+          ]
+        },
+        {
+          "name": "PhaseNode",
+          "startLine": 48,
+          "endLine": 94,
+          "params": [
+            "{ label, state, isLast }"
+          ]
+        },
+        {
+          "name": "UKCStepper",
+          "startLine": 96,
+          "endLine": 107,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "TelemetryBox",
+          "startLine": 109,
+          "endLine": 136,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "AvatarCluster",
+          "startLine": 138,
+          "endLine": 195,
+          "params": [
+            "{ members }"
+          ]
+        },
+        {
+          "name": "ProjectCard",
+          "startLine": 197,
+          "endLine": 372,
+          "params": [
+            "{\n  project,\n  onEnter,\n  menuOpen,\n  setMenuOpen,\n}"
+          ]
+        },
+        {
+          "name": "ListRow",
+          "startLine": 374,
+          "endLine": 485,
+          "params": [
+            "{ project, onEnter }"
+          ]
+        },
+        {
+          "name": "Home",
+          "startLine": 487,
+          "endLine": 860,
+          "params": [
+            "{ projects, onEnter, onNewProject }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Home",
+          "line": 487,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getPhaseIndex",
+          "callee": "project.currentPhase?.toLowerCase",
+          "lineNumber": 36
+        },
+        {
+          "caller": "getPhaseIndex",
+          "callee": "phase.includes",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getPhaseIndex",
+          "callee": "phase.includes",
+          "lineNumber": 37
+        },
+        {
+          "caller": "getPhaseIndex",
+          "callee": "phase.includes",
+          "lineNumber": 38
+        },
+        {
+          "caller": "UKCStepper",
+          "callee": "getPhaseIndex",
+          "lineNumber": 97
+        },
+        {
+          "caller": "UKCStepper",
+          "callee": "phases.map",
+          "lineNumber": 101
+        },
+        {
+          "caller": "AvatarCluster",
+          "callee": "members.slice",
+          "lineNumber": 139
+        },
+        {
+          "caller": "AvatarCluster",
+          "callee": "shown.map",
+          "lineNumber": 145
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "e.stopPropagation",
+          "lineNumber": 223
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "e.stopPropagation",
+          "lineNumber": 258
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "setMenuOpen",
+          "lineNumber": 258
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "['View Charter & ROE', 'Edit Charter', 'Archive', 'Delete'].map",
+          "lineNumber": 285
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "setMenuOpen",
+          "lineNumber": 288
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "onEnter",
+          "lineNumber": 334
+        },
+        {
+          "caller": "ProjectCard",
+          "callee": "onEnter",
+          "lineNumber": 355
+        },
+        {
+          "caller": "ListRow",
+          "callee": "getPhaseIndex",
+          "lineNumber": 377
+        },
+        {
+          "caller": "ListRow",
+          "callee": "onEnter",
+          "lineNumber": 468
+        },
+        {
+          "caller": "Home",
+          "callee": "useState",
+          "lineNumber": 488
+        },
+        {
+          "caller": "Home",
+          "callee": "useState",
+          "lineNumber": 489
+        },
+        {
+          "caller": "Home",
+          "callee": "useState",
+          "lineNumber": 490
+        },
+        {
+          "caller": "Home",
+          "callee": "useState",
+          "lineNumber": 491
+        },
+        {
+          "caller": "Home",
+          "callee": "projects.filter",
+          "lineNumber": 493
+        },
+        {
+          "caller": "Home",
+          "callee": "projects.filter",
+          "lineNumber": 494
+        },
+        {
+          "caller": "Home",
+          "callee": "projects.filter",
+          "lineNumber": 495
+        },
+        {
+          "caller": "Home",
+          "callee": "projects.filter",
+          "lineNumber": 496
+        },
+        {
+          "caller": "Home",
+          "callee": "projects.filter",
+          "lineNumber": 498
+        },
+        {
+          "caller": "Home",
+          "callee": "p.name.toLowerCase().includes",
+          "lineNumber": 501
+        },
+        {
+          "caller": "Home",
+          "callee": "p.name.toLowerCase",
+          "lineNumber": 501
+        },
+        {
+          "caller": "Home",
+          "callee": "search.toLowerCase",
+          "lineNumber": 501
+        },
+        {
+          "caller": "Home",
+          "callee": "p.client.toLowerCase().includes",
+          "lineNumber": 502
+        },
+        {
+          "caller": "Home",
+          "callee": "p.client.toLowerCase",
+          "lineNumber": 502
+        },
+        {
+          "caller": "Home",
+          "callee": "search.toLowerCase",
+          "lineNumber": 502
+        },
+        {
+          "caller": "Home",
+          "callee": "p.scopeLabel.toLowerCase().includes",
+          "lineNumber": 503
+        },
+        {
+          "caller": "Home",
+          "callee": "p.scopeLabel.toLowerCase",
+          "lineNumber": 503
+        },
+        {
+          "caller": "Home",
+          "callee": "search.toLowerCase",
+          "lineNumber": 503
+        },
+        {
+          "caller": "Home",
+          "callee": "setMenuOpen",
+          "lineNumber": 516
+        },
+        {
+          "caller": "Home",
+          "callee": "e.stopPropagation",
+          "lineNumber": 631
+        },
+        {
+          "caller": "Home",
+          "callee": "onNewProject",
+          "lineNumber": 631
+        },
+        {
+          "caller": "Home",
+          "callee": "setSearch",
+          "lineNumber": 712
+        },
+        {
+          "caller": "Home",
+          "callee": "FILTER_PILLS.map",
+          "lineNumber": 730
+        },
+        {
+          "caller": "Home",
+          "callee": "pill.count",
+          "lineNumber": 731
+        },
+        {
+          "caller": "Home",
+          "callee": "setFilter",
+          "lineNumber": 736
+        },
+        {
+          "caller": "Home",
+          "callee": "(['grid', 'list'] as const).map",
+          "lineNumber": 757
+        },
+        {
+          "caller": "Home",
+          "callee": "setViewMode",
+          "lineNumber": 762
+        },
+        {
+          "caller": "Home",
+          "callee": "filteredProjects.map",
+          "lineNumber": 789
+        },
+        {
+          "caller": "Home",
+          "callee": "['PROJECT • CLIENT', 'STATUS', 'UKC PHASE', 'SESSIONS', 'OBJECTIVES', 'WINDOW', 'LEAD', 'ACTIONS'].map",
+          "lineNumber": 828
+        },
+        {
+          "caller": "Home",
+          "callee": "filteredProjects.map",
+          "lineNumber": 840
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 8,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/InfrastructureData.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 1348,
+      "nonEmptyLines": 1240,
+      "functions": [
+        {
+          "name": "IconGlobe",
+          "startLine": 158,
+          "endLine": 166,
+          "params": [
+            "{ size = 14, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconCode",
+          "startLine": 168,
+          "endLine": 175,
+          "params": [
+            "{ size = 14, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconServer",
+          "startLine": 177,
+          "endLine": 186,
+          "params": [
+            "{ size = 14, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconShield",
+          "startLine": 188,
+          "endLine": 194,
+          "params": [
+            "{ size = 14, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconMonitor",
+          "startLine": 196,
+          "endLine": 204,
+          "params": [
+            "{ size = 14, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconDatabase",
+          "startLine": 206,
+          "endLine": 214,
+          "params": [
+            "{ size = 14, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconCrown",
+          "startLine": 216,
+          "endLine": 223,
+          "params": [
+            "{ size = 14, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconEye",
+          "startLine": 225,
+          "endLine": 232,
+          "params": [
+            "{ size = 13, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconEyeOff",
+          "startLine": 234,
+          "endLine": 242,
+          "params": [
+            "{ size = 13, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconCopy",
+          "startLine": 244,
+          "endLine": 251,
+          "params": [
+            "{ size = 13, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconChevronDown",
+          "startLine": 253,
+          "endLine": 259,
+          "params": [
+            "{ size = 12, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconX",
+          "startLine": 261,
+          "endLine": 268,
+          "params": [
+            "{ size = 13, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "IconPlay",
+          "startLine": 270,
+          "endLine": 276,
+          "params": [
+            "{ size = 13, color = 'currentColor' }"
+          ]
+        },
+        {
+          "name": "NodeIcon",
+          "startLine": 280,
+          "endLine": 289,
+          "params": [
+            "{ node }"
+          ]
+        },
+        {
+          "name": "FindingsBadge",
+          "startLine": 291,
+          "endLine": 299,
+          "params": [
+            "{ label }"
+          ]
+        },
+        {
+          "name": "AgentBadge",
+          "startLine": 301,
+          "endLine": 312,
+          "params": [
+            "{ status }"
+          ]
+        },
+        {
+          "name": "CredTypeBadge",
+          "startLine": 314,
+          "endLine": 323,
+          "params": [
+            "{ type }"
+          ]
+        },
+        {
+          "name": "CredStatusBadge",
+          "startLine": 325,
+          "endLine": 331,
+          "params": [
+            "{ status }"
+          ]
+        },
+        {
+          "name": "AssetTypeModalBadge",
+          "startLine": 335,
+          "endLine": 345,
+          "params": [
+            "{ type }"
+          ]
+        },
+        {
+          "name": "getAssetExtra",
+          "startLine": 405,
+          "endLine": 412,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "AssetInspectModal",
+          "startLine": 414,
+          "endLine": 525,
+          "params": [
+            "{ asset, onClose }"
+          ]
+        },
+        {
+          "name": "CredTypeModalBadge",
+          "startLine": 544,
+          "endLine": 553,
+          "params": [
+            "{ type }"
+          ]
+        },
+        {
+          "name": "CredDetailModal",
+          "startLine": 555,
+          "endLine": 649,
+          "params": [
+            "{ cred, onClose, navigate }"
+          ]
+        },
+        {
+          "name": "EnvironmentMap",
+          "startLine": 653,
+          "endLine": 934,
+          "params": [
+            "{ navigate }"
+          ]
+        },
+        {
+          "name": "AssetsInventory",
+          "startLine": 938,
+          "endLine": 1111,
+          "params": [
+            "{ onUpdateScope }"
+          ]
+        },
+        {
+          "name": "CredentialsVault",
+          "startLine": 1115,
+          "endLine": 1327,
+          "params": [
+            "{ navigate }"
+          ]
+        },
+        {
+          "name": "InfrastructureData",
+          "startLine": 1331,
+          "endLine": 1348,
+          "params": [
+            "{\n  screen: currentScreen,\n  navigate,\n}"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "InfrastructureData",
+          "line": 1331,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "FindingsBadge",
+          "callee": "label.includes",
+          "lineNumber": 292
+        },
+        {
+          "caller": "FindingsBadge",
+          "callee": "label.includes",
+          "lineNumber": 294
+        },
+        {
+          "caller": "FindingsBadge",
+          "callee": "label.includes",
+          "lineNumber": 296
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "getAssetExtra",
+          "lineNumber": 415
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "e.stopPropagation",
+          "lineNumber": 424
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "[\n              { label: 'OS',          value: extra.os },\n              { label: 'IP Address',  value: asset.ip },\n              { label: 'MAC Address', value: extra.mac },\n              { label: 'Last Seen',   value: extra.lastSeen },\n            ].map",
+          "lineNumber": 441
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "row.label.toUpperCase",
+          "lineNumber": 448
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "['Port', 'Protocol', 'Service', 'State'].map",
+          "lineNumber": 466
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "h.toUpperCase",
+          "lineNumber": 467
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "extra.openPorts.map",
+          "lineNumber": 472
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "extra.vulns.map",
+          "lineNumber": 494
+        },
+        {
+          "caller": "AssetInspectModal",
+          "callee": "extra.tags.map",
+          "lineNumber": 504
+        },
+        {
+          "caller": "CredDetailModal",
+          "callee": "useState",
+          "lineNumber": 556
+        },
+        {
+          "caller": "CredDetailModal",
+          "callee": "useState",
+          "lineNumber": 557
+        },
+        {
+          "caller": "copy",
+          "callee": "navigator.clipboard.writeText(cred.secret).catch",
+          "lineNumber": 561
+        },
+        {
+          "caller": "copy",
+          "callee": "navigator.clipboard.writeText",
+          "lineNumber": 561
+        },
+        {
+          "caller": "copy",
+          "callee": "setCopied",
+          "lineNumber": 562
+        },
+        {
+          "caller": "copy",
+          "callee": "setTimeout",
+          "lineNumber": 563
+        },
+        {
+          "caller": "copy",
+          "callee": "setCopied",
+          "lineNumber": 563
+        },
+        {
+          "caller": "CredDetailModal",
+          "callee": "e.stopPropagation",
+          "lineNumber": 573
+        },
+        {
+          "caller": "CredDetailModal",
+          "callee": "[\n            { label: 'Target Host',   value: extra.targetHost },\n            { label: 'Username',      value: cred.identity },\n            { label: 'Last Used',     value: extra.lastUsed },\n            { label: 'Last Rotated',  value: extra.rotated },\n            { label: 'Source',        value: extra.source },\n            { label: 'Status',        value: cred.status },\n          ].map",
+          "lineNumber": 588
+        },
+        {
+          "caller": "CredDetailModal",
+          "callee": "row.label.toUpperCase",
+          "lineNumber": 597
+        },
+        {
+          "caller": "CredDetailModal",
+          "callee": "setRevealed",
+          "lineNumber": 611
+        },
+        {
+          "caller": "CredDetailModal",
+          "callee": "navigate",
+          "lineNumber": 630
+        },
+        {
+          "caller": "CredDetailModal",
+          "callee": "onClose",
+          "lineNumber": 630
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "useState",
+          "lineNumber": 654
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "useState",
+          "lineNumber": 655
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "useState",
+          "lineNumber": 656
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "useState",
+          "lineNumber": 657
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "TOPO_NODES.find",
+          "lineNumber": 659
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "TOPO_NODES.filter",
+          "lineNumber": 661
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "setZone",
+          "lineNumber": 672
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "['All Zones', 'DMZ', 'Internal LAN', 'External'].map",
+          "lineNumber": 675
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "(['topology', 'list'] as const).map",
+          "lineNumber": 679
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "setViewMode",
+          "lineNumber": 682
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "setShowCompromisedOnly",
+          "lineNumber": 702
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "visibleNodes.map",
+          "lineNumber": 746
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "setSelectedNodeId",
+          "lineNumber": 754
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "visibleNodes.map",
+          "lineNumber": 810
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "setSelectedNodeId",
+          "lineNumber": 813
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "setSelectedNodeId",
+          "lineNumber": 842
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "[\n                { label: 'IP ADDRESS', value: selectedNode.ip, mono: true },\n                { label: 'OS', value: selectedNode.os, mono: false },\n                { label: 'ZONE', value: selectedNode.zone === 'dmz' ? 'DMZ / Perimeter' : selectedNode.zone === 'internal' ? 'Internal Core LAN' : 'External Surface', mono: false },\n                { label: 'TYPE', value: selectedNode.type, mono: false },\n              ]\n                .filter(r => r.value)\n                .map",
+          "lineNumber": 864
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "[\n                { label: 'IP ADDRESS', value: selectedNode.ip, mono: true },\n                { label: 'OS', value: selectedNode.os, mono: false },\n                { label: 'ZONE', value: selectedNode.zone === 'dmz' ? 'DMZ / Perimeter' : selectedNode.zone === 'internal' ? 'Internal Core LAN' : 'External Surface', mono: false },\n                { label: 'TYPE', value: selectedNode.type, mono: false },\n              ]\n                .filter",
+          "lineNumber": 864
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "selectedNode.creds.map",
+          "lineNumber": 891
+        },
+        {
+          "caller": "EnvironmentMap",
+          "callee": "navigate",
+          "lineNumber": 907
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "useState",
+          "lineNumber": 939
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "useState",
+          "lineNumber": 940
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "useState",
+          "lineNumber": 941
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "useState",
+          "lineNumber": 942
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "ASSETS.filter",
+          "lineNumber": 952
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "a.name.toLowerCase().includes",
+          "lineNumber": 957
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "a.name.toLowerCase",
+          "lineNumber": 957
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "assetSearch.toLowerCase",
+          "lineNumber": 957
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "filtered.every",
+          "lineNumber": 961
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "selectedAssets.has",
+          "lineNumber": 961
+        },
+        {
+          "caller": "toggleAll",
+          "callee": "setSelectedAssets",
+          "lineNumber": 964
+        },
+        {
+          "caller": "toggleAll",
+          "callee": "setSelectedAssets",
+          "lineNumber": 965
+        },
+        {
+          "caller": "toggleAll",
+          "callee": "filtered.map",
+          "lineNumber": 965
+        },
+        {
+          "caller": "toggleAsset",
+          "callee": "setSelectedAssets",
+          "lineNumber": 969
+        },
+        {
+          "caller": "toggleAsset",
+          "callee": "next.has",
+          "lineNumber": 971
+        },
+        {
+          "caller": "toggleAsset",
+          "callee": "next.delete",
+          "lineNumber": 971
+        },
+        {
+          "caller": "toggleAsset",
+          "callee": "next.add",
+          "lineNumber": 972
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "metrics.map",
+          "lineNumber": 990
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "filterTabs.map",
+          "lineNumber": 1001
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "setAssetFilter",
+          "lineNumber": 1004
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "setAssetSearch",
+          "lineNumber": 1028
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "['Asset Name', 'Type', 'IP / Address', 'Open Ports', 'Findings', 'Agent Status', 'Actions'].map",
+          "lineNumber": 1053
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "h.toUpperCase",
+          "lineNumber": 1054
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "filtered.map",
+          "lineNumber": 1059
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "selectedAssets.has",
+          "lineNumber": 1060
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "selectedAssets.has",
+          "lineNumber": 1062
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "toggleAsset",
+          "lineNumber": 1062
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "setInspectAsset",
+          "lineNumber": 1073
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "setSelectedAssets",
+          "lineNumber": 1101
+        },
+        {
+          "caller": "AssetsInventory",
+          "callee": "setInspectAsset",
+          "lineNumber": 1108
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "useState",
+          "lineNumber": 1116
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "useState",
+          "lineNumber": 1117
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "useState",
+          "lineNumber": 1118
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "useState",
+          "lineNumber": 1119
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "useState",
+          "lineNumber": 1120
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "CREDS.filter",
+          "lineNumber": 1124
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "filtered.every",
+          "lineNumber": 1130
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "selectedCreds.has",
+          "lineNumber": 1130
+        },
+        {
+          "caller": "toggleAll",
+          "callee": "setSelectedCreds",
+          "lineNumber": 1133
+        },
+        {
+          "caller": "toggleAll",
+          "callee": "setSelectedCreds",
+          "lineNumber": 1134
+        },
+        {
+          "caller": "toggleAll",
+          "callee": "filtered.map",
+          "lineNumber": 1134
+        },
+        {
+          "caller": "toggleCred",
+          "callee": "setSelectedCreds",
+          "lineNumber": 1138
+        },
+        {
+          "caller": "toggleCred",
+          "callee": "next.has",
+          "lineNumber": 1140
+        },
+        {
+          "caller": "toggleCred",
+          "callee": "next.delete",
+          "lineNumber": 1140
+        },
+        {
+          "caller": "toggleCred",
+          "callee": "next.add",
+          "lineNumber": 1141
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "setRevealedRows",
+          "lineNumber": 1147
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "next.has",
+          "lineNumber": 1149
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "next.delete",
+          "lineNumber": 1149
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "next.add",
+          "lineNumber": 1150
+        },
+        {
+          "caller": "copyToClipboard",
+          "callee": "navigator.clipboard.writeText(text).catch",
+          "lineNumber": 1156
+        },
+        {
+          "caller": "copyToClipboard",
+          "callee": "navigator.clipboard.writeText",
+          "lineNumber": 1156
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "setOpenDropdown",
+          "lineNumber": 1161
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "[\n          { label: 'Credentials Captured', value: 18, color: '#DC2626', bg: '#FEF2F2', border: '#FCA5A5' },\n          { label: 'Active Sessions', value: 7, color: '#16A34A', bg: '#DCFCE7', border: '#86EFAC' },\n          { label: 'Domain Admin Hashes', value: 3, color: '#D97706', bg: '#FEF3C7', border: '#FCD34D' },\n        ].map",
+          "lineNumber": 1164
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "filterPills.map",
+          "lineNumber": 1178
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "setCredFilter",
+          "lineNumber": 1181
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "['Identity / Username', 'Type', 'Linked Asset', 'Secret Value', 'Status', 'Actions'].map",
+          "lineNumber": 1204
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "h.toUpperCase",
+          "lineNumber": 1205
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "filtered.map",
+          "lineNumber": 1210
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "revealedRows.has",
+          "lineNumber": 1211
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "setSelectedCred",
+          "lineNumber": 1215
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "selectedCreds.has",
+          "lineNumber": 1216
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "e.stopPropagation",
+          "lineNumber": 1218
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "selectedCreds.has",
+          "lineNumber": 1219
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "toggleCred",
+          "lineNumber": 1219
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "toggleReveal",
+          "lineNumber": 1238
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "copyToClipboard",
+          "lineNumber": 1241
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "e.stopPropagation",
+          "lineNumber": 1247
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "navigate",
+          "lineNumber": 1250
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "e.stopPropagation",
+          "lineNumber": 1256
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "setOpenDropdown",
+          "lineNumber": 1256
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "e.stopPropagation",
+          "lineNumber": 1263
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "['Run Credential Spray', 'Add to Dictionary', 'Export to Hashcat'].map",
+          "lineNumber": 1270
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "setOpenDropdown",
+          "lineNumber": 1273
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "navigate",
+          "lineNumber": 1309
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "setSelectedCreds",
+          "lineNumber": 1317
+        },
+        {
+          "caller": "CredentialsVault",
+          "callee": "setSelectedCred",
+          "lineNumber": 1324
+        },
+        {
+          "caller": "InfrastructureData",
+          "callee": "navigate",
+          "lineNumber": 1343
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 27,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Logs.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 541,
+      "nonEmptyLines": 518,
+      "functions": [
+        {
+          "name": "Select",
+          "startLine": 62,
+          "endLine": 76,
+          "params": [
+            "{ value, onChange, options }"
+          ]
+        },
+        {
+          "name": "Logs",
+          "startLine": 78,
+          "endLine": 380,
+          "params": []
+        },
+        {
+          "name": "LogModal",
+          "startLine": 382,
+          "endLine": 501,
+          "params": [
+            "{ log, onClose }"
+          ]
+        },
+        {
+          "name": "TerminalView",
+          "startLine": 503,
+          "endLine": 541,
+          "params": [
+            "{ logs }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Logs",
+          "line": 78,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Select",
+          "callee": "onChange",
+          "lineNumber": 66
+        },
+        {
+          "caller": "Select",
+          "callee": "options.map",
+          "lineNumber": 73
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 79
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 80
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 81
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 82
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 83
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 84
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 85
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 87
+        },
+        {
+          "caller": "Logs",
+          "callee": "useState",
+          "lineNumber": 88
+        },
+        {
+          "caller": "Logs",
+          "callee": "LOGS.filter",
+          "lineNumber": 90
+        },
+        {
+          "caller": "Logs",
+          "callee": "l.message.toLowerCase().includes",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "l.message.toLowerCase",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "search.toLowerCase",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "l.agent.toLowerCase().includes",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "l.agent.toLowerCase",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "search.toLowerCase",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "l.tool?.toLowerCase().includes",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "l.tool?.toLowerCase",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "search.toLowerCase",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Logs",
+          "callee": "LOGS.filter",
+          "lineNumber": 107
+        },
+        {
+          "caller": "Logs",
+          "callee": "(['table', 'terminal'] as const).map",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Logs",
+          "callee": "setView",
+          "lineNumber": 117
+        },
+        {
+          "caller": "Logs",
+          "callee": "setAutoScroll",
+          "lineNumber": 131
+        },
+        {
+          "caller": "Logs",
+          "callee": "setSearch",
+          "lineNumber": 162
+        },
+        {
+          "caller": "Logs",
+          "callee": "(['all', 'critical', 'error', 'warn', 'info', 'debug'] as const).map",
+          "lineNumber": 177
+        },
+        {
+          "caller": "Logs",
+          "callee": "setLevelFilter",
+          "lineNumber": 183
+        },
+        {
+          "caller": "Logs",
+          "callee": "(['all', 'success', 'warning', 'error', 'info'] as const).map",
+          "lineNumber": 201
+        },
+        {
+          "caller": "Logs",
+          "callee": "setStatusFilter",
+          "lineNumber": 206
+        },
+        {
+          "caller": "Logs",
+          "callee": "filtered.map",
+          "lineNumber": 248
+        },
+        {
+          "caller": "Logs",
+          "callee": "setSelected",
+          "lineNumber": 254
+        },
+        {
+          "caller": "Logs",
+          "callee": "setSelectedItem",
+          "lineNumber": 254
+        },
+        {
+          "caller": "Logs",
+          "callee": "log.timestamp.split",
+          "lineNumber": 267
+        },
+        {
+          "caller": "Logs",
+          "callee": "setSelected",
+          "lineNumber": 322
+        },
+        {
+          "caller": "Logs",
+          "callee": "[\n                    { label: 'Timestamp', value: selected.timestamp },\n                    { label: 'Agent', value: selected.agent, red: true },\n                    { label: 'Phase', value: selected.phase },\n                    { label: 'Tool', value: selected.tool ?? '—', mono: true },\n                    { label: 'Action', value: selected.action, mono: true },\n                  ].map",
+          "lineNumber": 330
+        },
+        {
+          "caller": "Logs",
+          "callee": "setSelectedItem",
+          "lineNumber": 376
+        },
+        {
+          "caller": "LogModal",
+          "callee": "e.stopPropagation",
+          "lineNumber": 400
+        },
+        {
+          "caller": "LogModal",
+          "callee": "log.action.replace(/_/g, ' ').replace",
+          "lineNumber": 415
+        },
+        {
+          "caller": "LogModal",
+          "callee": "log.action.replace",
+          "lineNumber": 415
+        },
+        {
+          "caller": "LogModal",
+          "callee": "c.toUpperCase",
+          "lineNumber": 415
+        },
+        {
+          "caller": "LogModal",
+          "callee": "[\n              { label: 'Agent Name', value: log.agent, red: true },\n              { label: 'Action Taken', value: log.action, mono: true },\n              { label: 'Target', value: log.tool ?? log.phase },\n              { label: 'Phase', value: log.phase },\n            ].map",
+          "lineNumber": 430
+        },
+        {
+          "caller": "LogModal",
+          "callee": "log.status.charAt(0).toUpperCase",
+          "lineNumber": 455
+        },
+        {
+          "caller": "LogModal",
+          "callee": "log.status.charAt",
+          "lineNumber": 455
+        },
+        {
+          "caller": "LogModal",
+          "callee": "log.status.slice",
+          "lineNumber": 455
+        },
+        {
+          "caller": "TerminalView",
+          "callee": "logs.map",
+          "lineNumber": 521
+        },
+        {
+          "caller": "TerminalView",
+          "callee": "log.timestamp.split",
+          "lineNumber": 526
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Members.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 500,
+      "nonEmptyLines": 468,
+      "functions": [
+        {
+          "name": "Members",
+          "startLine": 51,
+          "endLine": 339,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "AddMemberModal",
+          "startLine": 341,
+          "endLine": 500,
+          "params": [
+            "{\n  onClose,\n  onAdd,\n}"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Members",
+          "line": 51,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Members",
+          "callee": "useState",
+          "lineNumber": 52
+        },
+        {
+          "caller": "Members",
+          "callee": "useState",
+          "lineNumber": 53
+        },
+        {
+          "caller": "Members",
+          "callee": "useState",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Members",
+          "callee": "useState",
+          "lineNumber": 55
+        },
+        {
+          "caller": "removeMember",
+          "callee": "setMembers",
+          "lineNumber": 61
+        },
+        {
+          "caller": "removeMember",
+          "callee": "prev.filter",
+          "lineNumber": 61
+        },
+        {
+          "caller": "removeMember",
+          "callee": "setMenuOpen",
+          "lineNumber": 62
+        },
+        {
+          "caller": "changeRole",
+          "callee": "setMembers",
+          "lineNumber": 66
+        },
+        {
+          "caller": "changeRole",
+          "callee": "prev.map",
+          "lineNumber": 66
+        },
+        {
+          "caller": "changeRole",
+          "callee": "setRoleMenuOpen",
+          "lineNumber": 67
+        },
+        {
+          "caller": "changeRole",
+          "callee": "setMenuOpen",
+          "lineNumber": 68
+        },
+        {
+          "caller": "Members",
+          "callee": "setMenuOpen",
+          "lineNumber": 74
+        },
+        {
+          "caller": "Members",
+          "callee": "setRoleMenuOpen",
+          "lineNumber": 74
+        },
+        {
+          "caller": "Members",
+          "callee": "members.filter",
+          "lineNumber": 81
+        },
+        {
+          "caller": "Members",
+          "callee": "e.stopPropagation",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Members",
+          "callee": "setShowAdd",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Members",
+          "callee": "(Object.entries(ROLE_CONFIG) as [MemberRole, typeof ROLE_CONFIG[MemberRole]][]).map",
+          "lineNumber": 100
+        },
+        {
+          "caller": "Members",
+          "callee": "Object.entries",
+          "lineNumber": 100
+        },
+        {
+          "caller": "Members",
+          "callee": "cfg.capabilities.map",
+          "lineNumber": 123
+        },
+        {
+          "caller": "Members",
+          "callee": "members.map",
+          "lineNumber": 156
+        },
+        {
+          "caller": "Members",
+          "callee": "e.stopPropagation",
+          "lineNumber": 173
+        },
+        {
+          "caller": "Members",
+          "callee": "e.stopPropagation",
+          "lineNumber": 230
+        },
+        {
+          "caller": "Members",
+          "callee": "removeMember",
+          "lineNumber": 230
+        },
+        {
+          "caller": "Members",
+          "callee": "e.stopPropagation",
+          "lineNumber": 244
+        },
+        {
+          "caller": "Members",
+          "callee": "setMenuOpen",
+          "lineNumber": 244
+        },
+        {
+          "caller": "Members",
+          "callee": "setRoleMenuOpen",
+          "lineNumber": 244
+        },
+        {
+          "caller": "Members",
+          "callee": "e.stopPropagation",
+          "lineNumber": 260
+        },
+        {
+          "caller": "Members",
+          "callee": "setRoleMenuOpen",
+          "lineNumber": 264
+        },
+        {
+          "caller": "Members",
+          "callee": "(Object.keys(ROLE_CONFIG) as MemberRole[]).map",
+          "lineNumber": 279
+        },
+        {
+          "caller": "Members",
+          "callee": "Object.keys",
+          "lineNumber": 279
+        },
+        {
+          "caller": "Members",
+          "callee": "changeRole",
+          "lineNumber": 282
+        },
+        {
+          "caller": "Members",
+          "callee": "removeMember",
+          "lineNumber": 302
+        },
+        {
+          "caller": "Members",
+          "callee": "setShowAdd",
+          "lineNumber": 324
+        },
+        {
+          "caller": "Members",
+          "callee": "name.split(' ').map(n => n[0]).join('').toUpperCase().slice",
+          "lineNumber": 326
+        },
+        {
+          "caller": "Members",
+          "callee": "name.split(' ').map(n => n[0]).join('').toUpperCase",
+          "lineNumber": 326
+        },
+        {
+          "caller": "Members",
+          "callee": "name.split(' ').map(n => n[0]).join",
+          "lineNumber": 326
+        },
+        {
+          "caller": "Members",
+          "callee": "name.split(' ').map",
+          "lineNumber": 326
+        },
+        {
+          "caller": "Members",
+          "callee": "name.split",
+          "lineNumber": 326
+        },
+        {
+          "caller": "Members",
+          "callee": "setMembers",
+          "lineNumber": 327
+        },
+        {
+          "caller": "Members",
+          "callee": "Date.now().toString",
+          "lineNumber": 328
+        },
+        {
+          "caller": "Members",
+          "callee": "Date.now",
+          "lineNumber": 328
+        },
+        {
+          "caller": "Members",
+          "callee": "setShowAdd",
+          "lineNumber": 333
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "useState",
+          "lineNumber": 348
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "useState",
+          "lineNumber": 349
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "useState",
+          "lineNumber": 350
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "useState",
+          "lineNumber": 351
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "name.trim",
+          "lineNumber": 354
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "email.includes",
+          "lineNumber": 354
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "e.stopPropagation",
+          "lineNumber": 376
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "setName",
+          "lineNumber": 395
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "setEmail",
+          "lineNumber": 406
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "setRoleOpen",
+          "lineNumber": 417
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "(Object.entries(ROLE_CONFIG) as [MemberRole, typeof ROLE_CONFIG[MemberRole]][]).map",
+          "lineNumber": 439
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "Object.entries",
+          "lineNumber": 439
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "setRole",
+          "lineNumber": 442
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "setRoleOpen",
+          "lineNumber": 442
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "onAdd",
+          "lineNumber": 484
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "name.trim",
+          "lineNumber": 484
+        },
+        {
+          "caller": "AddMemberModal",
+          "callee": "email.trim",
+          "lineNumber": 484
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/ProjectSettings.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 1106,
+      "nonEmptyLines": 1022,
+      "functions": [
+        {
+          "name": "Field",
+          "startLine": 34,
+          "endLine": 49,
+          "params": [
+            "{\n  label,\n  children,\n}"
+          ]
+        },
+        {
+          "name": "SelectWrapper",
+          "startLine": 51,
+          "endLine": 61,
+          "params": [
+            "{ children }"
+          ]
+        },
+        {
+          "name": "SaveButton",
+          "startLine": 63,
+          "endLine": 79,
+          "params": [
+            "{ label = 'Save Changes' }"
+          ]
+        },
+        {
+          "name": "SectionCard",
+          "startLine": 81,
+          "endLine": 96,
+          "params": [
+            "{\n  title,\n  children,\n}"
+          ]
+        },
+        {
+          "name": "Modal",
+          "startLine": 100,
+          "endLine": 121,
+          "params": [
+            "{\n  onClose,\n  children,\n}"
+          ]
+        },
+        {
+          "name": "TabGeneral",
+          "startLine": 138,
+          "endLine": 228,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "SliderField",
+          "startLine": 232,
+          "endLine": 279,
+          "params": [
+            "{\n  label,\n  min,\n  max,\n  step,\n  value,\n  onChange,\n  leftLabel,\n  rightLabel,\n  format,\n}"
+          ]
+        },
+        {
+          "name": "TabAI",
+          "startLine": 281,
+          "endLine": 376,
+          "params": []
+        },
+        {
+          "name": "ApiKeyRow",
+          "startLine": 382,
+          "endLine": 463,
+          "params": [
+            "{\n  service,\n  color,\n  fields,\n}"
+          ]
+        },
+        {
+          "name": "TabIntegrations",
+          "startLine": 465,
+          "endLine": 547,
+          "params": []
+        },
+        {
+          "name": "Toggle",
+          "startLine": 551,
+          "endLine": 564,
+          "params": [
+            "{ enabled, onChange }"
+          ]
+        },
+        {
+          "name": "TabNotifications",
+          "startLine": 566,
+          "endLine": 664,
+          "params": []
+        },
+        {
+          "name": "TabReportTemplates",
+          "startLine": 668,
+          "endLine": 812,
+          "params": []
+        },
+        {
+          "name": "TabDanger",
+          "startLine": 816,
+          "endLine": 1030,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "ProjectSettings",
+          "startLine": 1045,
+          "endLine": 1106,
+          "params": [
+            "{ project }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ProjectSettings",
+          "line": 1045,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "SaveButton",
+          "callee": "useState",
+          "lineNumber": 64
+        },
+        {
+          "caller": "handleClick",
+          "callee": "setSaved",
+          "lineNumber": 66
+        },
+        {
+          "caller": "handleClick",
+          "callee": "setTimeout",
+          "lineNumber": 67
+        },
+        {
+          "caller": "handleClick",
+          "callee": "setSaved",
+          "lineNumber": 67
+        },
+        {
+          "caller": "Modal",
+          "callee": "e.stopPropagation",
+          "lineNumber": 115
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "useState",
+          "lineNumber": 139
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "useState",
+          "lineNumber": 140
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "useState",
+          "lineNumber": 141
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "useState",
+          "lineNumber": 142
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "useState",
+          "lineNumber": 143
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "setProjectName",
+          "lineNumber": 160
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "setClientName",
+          "lineNumber": 168
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "setDescription",
+          "lineNumber": 178
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "setIndustry",
+          "lineNumber": 187
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "STATUS_OPTIONS.map",
+          "lineNumber": 201
+        },
+        {
+          "caller": "TabGeneral",
+          "callee": "setStatus",
+          "lineNumber": 206
+        },
+        {
+          "caller": "SliderField",
+          "callee": "onChange",
+          "lineNumber": 263
+        },
+        {
+          "caller": "SliderField",
+          "callee": "Number",
+          "lineNumber": 263
+        },
+        {
+          "caller": "SliderField",
+          "callee": "format",
+          "lineNumber": 267
+        },
+        {
+          "caller": "TabAI",
+          "callee": "useState",
+          "lineNumber": 282
+        },
+        {
+          "caller": "TabAI",
+          "callee": "useState",
+          "lineNumber": 283
+        },
+        {
+          "caller": "TabAI",
+          "callee": "useState",
+          "lineNumber": 284
+        },
+        {
+          "caller": "TabAI",
+          "callee": "useState",
+          "lineNumber": 285
+        },
+        {
+          "caller": "TabAI",
+          "callee": "useState",
+          "lineNumber": 286
+        },
+        {
+          "caller": "TabAI",
+          "callee": "setProvider",
+          "lineNumber": 304
+        },
+        {
+          "caller": "TabAI",
+          "callee": "v.toFixed",
+          "lineNumber": 333
+        },
+        {
+          "caller": "TabAI",
+          "callee": "setCostCap",
+          "lineNumber": 346
+        },
+        {
+          "caller": "TabAI",
+          "callee": "Number",
+          "lineNumber": 346
+        },
+        {
+          "caller": "TabAI",
+          "callee": "setThrottle",
+          "lineNumber": 360
+        },
+        {
+          "caller": "TabAI",
+          "callee": "Number",
+          "lineNumber": 360
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "useState",
+          "lineNumber": 391
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "Object.fromEntries",
+          "lineNumber": 392
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "fields.map",
+          "lineNumber": 392
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "useState",
+          "lineNumber": 394
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "Object.fromEntries",
+          "lineNumber": 395
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "fields.map",
+          "lineNumber": 395
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "useState",
+          "lineNumber": 397
+        },
+        {
+          "caller": "handleTest",
+          "callee": "setStatus",
+          "lineNumber": 400
+        },
+        {
+          "caller": "handleTest",
+          "callee": "setTimeout",
+          "lineNumber": 401
+        },
+        {
+          "caller": "handleTest",
+          "callee": "setStatus",
+          "lineNumber": 401
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "fields.map",
+          "lineNumber": 422
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "setValues",
+          "lineNumber": 430
+        },
+        {
+          "caller": "ApiKeyRow",
+          "callee": "setVisible",
+          "lineNumber": 437
+        },
+        {
+          "caller": "TabIntegrations",
+          "callee": "useState",
+          "lineNumber": 466
+        },
+        {
+          "caller": "TabIntegrations",
+          "callee": "useState",
+          "lineNumber": 467
+        },
+        {
+          "caller": "TabIntegrations",
+          "callee": "useState",
+          "lineNumber": 468
+        },
+        {
+          "caller": "TabIntegrations",
+          "callee": "setIssueTracker",
+          "lineNumber": 497
+        },
+        {
+          "caller": "TabIntegrations",
+          "callee": "setWebhookUrl",
+          "lineNumber": 511
+        },
+        {
+          "caller": "TabIntegrations",
+          "callee": "(\n                [\n                  ['newFinding', 'New Finding'],\n                  ['statusChange', 'Status Change'],\n                  ['reportGenerated', 'Report Generated'],\n                ] as const\n              ).map",
+          "lineNumber": 518
+        },
+        {
+          "caller": "TabIntegrations",
+          "callee": "setWebhookEvents",
+          "lineNumber": 531
+        },
+        {
+          "caller": "Toggle",
+          "callee": "onChange",
+          "lineNumber": 554
+        },
+        {
+          "caller": "TabNotifications",
+          "callee": "useState",
+          "lineNumber": 567
+        },
+        {
+          "caller": "TabNotifications",
+          "callee": "useState",
+          "lineNumber": 573
+        },
+        {
+          "caller": "TabNotifications",
+          "callee": "CHANNEL_LIST.map",
+          "lineNumber": 606
+        },
+        {
+          "caller": "TabNotifications",
+          "callee": "setChannels",
+          "lineNumber": 615
+        },
+        {
+          "caller": "TabNotifications",
+          "callee": "setChannels",
+          "lineNumber": 624
+        },
+        {
+          "caller": "TabNotifications",
+          "callee": "EVENT_LIST.map",
+          "lineNumber": 637
+        },
+        {
+          "caller": "TabNotifications",
+          "callee": "setEvents",
+          "lineNumber": 647
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "useState",
+          "lineNumber": 669
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "useState",
+          "lineNumber": 674
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "useState",
+          "lineNumber": 675
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "useState",
+          "lineNumber": 676
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "e.preventDefault",
+          "lineNumber": 679
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "setDragging",
+          "lineNumber": 680
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "Array.from",
+          "lineNumber": 681
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "files.map",
+          "lineNumber": 682
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "Date.now().toString",
+          "lineNumber": 683
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "Date.now",
+          "lineNumber": 683
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "(f.size / 1024 / 1024).toFixed",
+          "lineNumber": 685
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "f.name.split('.').pop()?.toUpperCase",
+          "lineNumber": 686
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "f.name.split('.').pop",
+          "lineNumber": 686
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "f.name.split",
+          "lineNumber": 686
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "new Date().toISOString().split",
+          "lineNumber": 687
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "new Date().toISOString",
+          "lineNumber": 687
+        },
+        {
+          "caller": "handleDrop",
+          "callee": "setTemplates",
+          "lineNumber": 689
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "Array.from",
+          "lineNumber": 693
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "files.map",
+          "lineNumber": 694
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "Date.now().toString",
+          "lineNumber": 695
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "Date.now",
+          "lineNumber": 695
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "(f.size / 1024 / 1024).toFixed",
+          "lineNumber": 697
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "f.name.split('.').pop()?.toUpperCase",
+          "lineNumber": 698
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "f.name.split('.').pop",
+          "lineNumber": 698
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "f.name.split",
+          "lineNumber": 698
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "new Date().toISOString().split",
+          "lineNumber": 699
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "new Date().toISOString",
+          "lineNumber": 699
+        },
+        {
+          "caller": "handleFileInput",
+          "callee": "setTemplates",
+          "lineNumber": 701
+        },
+        {
+          "caller": "removeTemplate",
+          "callee": "setTemplates",
+          "lineNumber": 705
+        },
+        {
+          "caller": "removeTemplate",
+          "callee": "prev.filter",
+          "lineNumber": 705
+        },
+        {
+          "caller": "handleSaveInstructions",
+          "callee": "setSaved",
+          "lineNumber": 709
+        },
+        {
+          "caller": "handleSaveInstructions",
+          "callee": "setTimeout",
+          "lineNumber": 710
+        },
+        {
+          "caller": "handleSaveInstructions",
+          "callee": "setSaved",
+          "lineNumber": 710
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "e.preventDefault",
+          "lineNumber": 725
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "setDragging",
+          "lineNumber": 725
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "setDragging",
+          "lineNumber": 726
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "document.getElementById('template-file-input')?.click",
+          "lineNumber": 733
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "document.getElementById",
+          "lineNumber": 733
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "templates.map",
+          "lineNumber": 755
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "removeTemplate",
+          "lineNumber": 771
+        },
+        {
+          "caller": "TabReportTemplates",
+          "callee": "setInstructions",
+          "lineNumber": 792
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "useState",
+          "lineNumber": 817
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "useState",
+          "lineNumber": 818
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "useState",
+          "lineNumber": 819
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "useState",
+          "lineNumber": 820
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmPurge",
+          "lineNumber": 854
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmDestruct",
+          "lineNumber": 874
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmDelete",
+          "lineNumber": 894
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmPurge",
+          "lineNumber": 905
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmPurge",
+          "lineNumber": 921
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmPurge",
+          "lineNumber": 927
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmDestruct",
+          "lineNumber": 940
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmDestruct",
+          "lineNumber": 959
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmDestruct",
+          "lineNumber": 965
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmDelete",
+          "lineNumber": 978
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setDeleteInput",
+          "lineNumber": 978
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setDeleteInput",
+          "lineNumber": 1003
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmDelete",
+          "lineNumber": 1008
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setDeleteInput",
+          "lineNumber": 1008
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setConfirmDelete",
+          "lineNumber": 1015
+        },
+        {
+          "caller": "TabDanger",
+          "callee": "setDeleteInput",
+          "lineNumber": 1015
+        },
+        {
+          "caller": "ProjectSettings",
+          "callee": "useState",
+          "lineNumber": 1046
+        },
+        {
+          "caller": "ProjectSettings",
+          "callee": "NAV_ITEMS.map",
+          "lineNumber": 1066
+        },
+        {
+          "caller": "ProjectSettings",
+          "callee": "setActiveTab",
+          "lineNumber": 1072
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 15,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/Reports.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 704,
+      "nonEmptyLines": 651,
+      "functions": [
+        {
+          "name": "getInitials",
+          "startLine": 45,
+          "endLine": 47,
+          "params": [
+            "name"
+          ]
+        },
+        {
+          "name": "getAvatarColor",
+          "startLine": 49,
+          "endLine": 54,
+          "params": [
+            "author"
+          ]
+        },
+        {
+          "name": "getTypeStyle",
+          "startLine": 56,
+          "endLine": 63,
+          "params": [
+            "type"
+          ]
+        },
+        {
+          "name": "getStatusStyle",
+          "startLine": 65,
+          "endLine": 72,
+          "params": [
+            "status"
+          ]
+        },
+        {
+          "name": "Reports",
+          "startLine": 74,
+          "endLine": 704,
+          "params": [
+            "{ project }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Reports",
+          "line": 74,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getInitials",
+          "callee": "name.split(' ').map(w => w[0]).join('').toUpperCase().slice",
+          "lineNumber": 46
+        },
+        {
+          "caller": "getInitials",
+          "callee": "name.split(' ').map(w => w[0]).join('').toUpperCase",
+          "lineNumber": 46
+        },
+        {
+          "caller": "getInitials",
+          "callee": "name.split(' ').map(w => w[0]).join",
+          "lineNumber": 46
+        },
+        {
+          "caller": "getInitials",
+          "callee": "name.split(' ').map",
+          "lineNumber": 46
+        },
+        {
+          "caller": "getInitials",
+          "callee": "name.split",
+          "lineNumber": 46
+        },
+        {
+          "caller": "Reports",
+          "callee": "useState",
+          "lineNumber": 75
+        },
+        {
+          "caller": "Reports",
+          "callee": "useState",
+          "lineNumber": 76
+        },
+        {
+          "caller": "Reports",
+          "callee": "useState",
+          "lineNumber": 77
+        },
+        {
+          "caller": "Reports",
+          "callee": "useState",
+          "lineNumber": 78
+        },
+        {
+          "caller": "Reports",
+          "callee": "useState",
+          "lineNumber": 79
+        },
+        {
+          "caller": "Reports",
+          "callee": "useState",
+          "lineNumber": 80
+        },
+        {
+          "caller": "Reports",
+          "callee": "useState",
+          "lineNumber": 81
+        },
+        {
+          "caller": "Reports",
+          "callee": "useState",
+          "lineNumber": 82
+        },
+        {
+          "caller": "showToast",
+          "callee": "setToast",
+          "lineNumber": 85
+        },
+        {
+          "caller": "showToast",
+          "callee": "setTimeout",
+          "lineNumber": 86
+        },
+        {
+          "caller": "showToast",
+          "callee": "setToast",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Reports",
+          "callee": "REPORTS.filter",
+          "lineNumber": 89
+        },
+        {
+          "caller": "Reports",
+          "callee": "r.title.toLowerCase().includes",
+          "lineNumber": 95
+        },
+        {
+          "caller": "Reports",
+          "callee": "r.title.toLowerCase",
+          "lineNumber": 95
+        },
+        {
+          "caller": "Reports",
+          "callee": "search.toLowerCase",
+          "lineNumber": 95
+        },
+        {
+          "caller": "Reports",
+          "callee": "r.author.toLowerCase().includes",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Reports",
+          "callee": "r.author.toLowerCase",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Reports",
+          "callee": "search.toLowerCase",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Reports",
+          "callee": "r.framework.toLowerCase().includes",
+          "lineNumber": 97
+        },
+        {
+          "caller": "Reports",
+          "callee": "r.framework.toLowerCase",
+          "lineNumber": 97
+        },
+        {
+          "caller": "Reports",
+          "callee": "search.toLowerCase",
+          "lineNumber": 97
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "aiInput.trim",
+          "lineNumber": 102
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "aiInput.trim",
+          "lineNumber": 103
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "setAiInput",
+          "lineNumber": 104
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "setAiMessages",
+          "lineNumber": 105
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "setTimeout",
+          "lineNumber": 106
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "userMsg.toLowerCase",
+          "lineNumber": 108
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "lower.includes",
+          "lineNumber": 109
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "lower.includes",
+          "lineNumber": 109
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "lower.includes",
+          "lineNumber": 111
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "lower.includes",
+          "lineNumber": 111
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "lower.includes",
+          "lineNumber": 113
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "lower.includes",
+          "lineNumber": 113
+        },
+        {
+          "caller": "sendAiMessage",
+          "callee": "setAiMessages",
+          "lineNumber": 116
+        },
+        {
+          "caller": "Reports",
+          "callee": "setView",
+          "lineNumber": 127
+        },
+        {
+          "caller": "Reports",
+          "callee": "getStatusStyle",
+          "lineNumber": 134
+        },
+        {
+          "caller": "Reports",
+          "callee": "showToast",
+          "lineNumber": 141
+        },
+        {
+          "caller": "Reports",
+          "callee": "showToast",
+          "lineNumber": 146
+        },
+        {
+          "caller": "Reports",
+          "callee": "showToast",
+          "lineNumber": 152
+        },
+        {
+          "caller": "Reports",
+          "callee": "TOC.map",
+          "lineNumber": 168
+        },
+        {
+          "caller": "Reports",
+          "callee": "setActiveSection",
+          "lineNumber": 171
+        },
+        {
+          "caller": "Reports",
+          "callee": "section.sub.map",
+          "lineNumber": 183
+        },
+        {
+          "caller": "Reports",
+          "callee": "['H1', 'H2', 'Bold', 'Code', 'Table', 'Insert Map'].map",
+          "lineNumber": 201
+        },
+        {
+          "caller": "Reports",
+          "callee": "[\n                          { sev: 'Critical', count: 2, pct: '18%', color: '#DC2626' },\n                          { sev: 'High', count: 3, pct: '27%', color: '#D97706' },\n                          { sev: 'Medium', count: 4, pct: '36%', color: '#CA8A04' },\n                          { sev: 'Low', count: 2, pct: '18%', color: '#16A34A' },\n                        ].map",
+          "lineNumber": 256
+        },
+        {
+          "caller": "Reports",
+          "callee": "['ID', 'Severity', 'Title', 'CVSS', 'Asset', 'Status'].map",
+          "lineNumber": 343
+        },
+        {
+          "caller": "Reports",
+          "callee": "[\n                          { id: 'F-001', sev: 'Critical', title: 'Unauthenticated RCE — AdminLite', cvss: '9.8', asset: 'WEB-01', status: 'Open', color: '#DC2626' },\n                          { id: 'F-002', sev: 'Critical', title: 'NTLM Relay → Domain Admin', cvss: '9.1', asset: 'CORP-NET', status: 'In Progress', color: '#DC2626' },\n                          { id: 'F-003', sev: 'High', title: 'SMB Signing Disabled', cvss: '7.5', asset: 'All Hosts', status: 'Open', color: '#D97706' },\n                        ].map",
+          "lineNumber": 349
+        },
+        {
+          "caller": "Reports",
+          "callee": "[\n                      { priority: '1', action: 'Patch AdminLite to v2.4.0 or later (CVE-2024-49113)', effort: 'Low', impact: 'Critical' },\n                      { priority: '2', action: 'Enable SMB Signing on all domain-joined hosts via GPO', effort: 'Low', impact: 'High' },\n                      { priority: '3', action: 'Segment WEB-01 from internal corporate network', effort: 'Medium', impact: 'Critical' },\n                    ].map",
+          "lineNumber": 374
+        },
+        {
+          "caller": "Reports",
+          "callee": "[\n                { label: '⚡ Summarize for Executives', response: 'Executive Summary draft: The engagement identified 2 critical, 3 high, 4 medium, and 2 low-severity vulnerabilities. Immediate remediation of CVE-2024-49113 is strongly recommended.' },\n                { label: '🛡 Cross-reference MITRE ATT&CK', response: 'MITRE ATT&CK mapping complete: T1190, T1557.001, T1078, T1003.003 identified across Initial Access, Credential Access, and Lateral Movement tactics.' },\n                { label: '📝 Formalize tone', response: 'Tone revised to professional passive-voice suitable for executive and legal audiences. Technical jargon replaced with industry-standard terminology.' },\n              ].map",
+          "lineNumber": 404
+        },
+        {
+          "caller": "Reports",
+          "callee": "setAiMessages",
+          "lineNumber": 412
+        },
+        {
+          "caller": "Reports",
+          "callee": "aiMessages.map",
+          "lineNumber": 428
+        },
+        {
+          "caller": "Reports",
+          "callee": "setAiInput",
+          "lineNumber": 451
+        },
+        {
+          "caller": "Reports",
+          "callee": "e.preventDefault",
+          "lineNumber": 452
+        },
+        {
+          "caller": "Reports",
+          "callee": "sendAiMessage",
+          "lineNumber": 452
+        },
+        {
+          "caller": "Reports",
+          "callee": "showToast",
+          "lineNumber": 471
+        },
+        {
+          "caller": "Reports",
+          "callee": "showToast",
+          "lineNumber": 502
+        },
+        {
+          "caller": "Reports",
+          "callee": "([\n          { key: 'all', label: 'All Deliverables (4)' },\n          { key: 'technical', label: 'Technical Reports' },\n          { key: 'executive', label: 'Executive Summaries' },\n          { key: 'attestation', label: 'Attestation Letters' },\n        ] as const).map",
+          "lineNumber": 511
+        },
+        {
+          "caller": "Reports",
+          "callee": "setActiveTab",
+          "lineNumber": 519
+        },
+        {
+          "caller": "Reports",
+          "callee": "setSearch",
+          "lineNumber": 541
+        },
+        {
+          "caller": "Reports",
+          "callee": "['DOCUMENT', 'TYPE', 'STATUS', 'FRAMEWORK', 'AUTHOR', 'MODIFIED', 'ACTIONS'].map",
+          "lineNumber": 563
+        },
+        {
+          "caller": "Reports",
+          "callee": "filteredReports.map",
+          "lineNumber": 569
+        },
+        {
+          "caller": "Reports",
+          "callee": "getTypeStyle",
+          "lineNumber": 570
+        },
+        {
+          "caller": "Reports",
+          "callee": "getStatusStyle",
+          "lineNumber": 571
+        },
+        {
+          "caller": "Reports",
+          "callee": "getAvatarColor",
+          "lineNumber": 572
+        },
+        {
+          "caller": "Reports",
+          "callee": "getInitials",
+          "lineNumber": 573
+        },
+        {
+          "caller": "Reports",
+          "callee": "report.words.toLocaleString",
+          "lineNumber": 605
+        },
+        {
+          "caller": "Reports",
+          "callee": "setStudioDoc",
+          "lineNumber": 658
+        },
+        {
+          "caller": "Reports",
+          "callee": "setView",
+          "lineNumber": 658
+        },
+        {
+          "caller": "Reports",
+          "callee": "showToast",
+          "lineNumber": 667
+        },
+        {
+          "caller": "Reports",
+          "callee": "showToast",
+          "lineNumber": 676
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/screens/VectorCampaigns.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 528,
+      "nonEmptyLines": 492,
+      "functions": [
+        {
+          "name": "VectorCampaigns",
+          "startLine": 4,
+          "endLine": 528,
+          "params": [
+            "{ project }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "VectorCampaigns",
+          "line": 4,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 5
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 6
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 7
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 8
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 9
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 10
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 11
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 12
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 13
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 14
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useState",
+          "lineNumber": 15
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useEffect",
+          "lineNumber": 19
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setTimeout",
+          "lineNumber": 21
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setToast",
+          "lineNumber": 21
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "clearTimeout",
+          "lineNumber": 22
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "useEffect",
+          "lineNumber": 26
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setTimeout",
+          "lineNumber": 28
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setGenerating",
+          "lineNumber": 29
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setCampaignGenerated",
+          "lineNumber": 30
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "clearTimeout",
+          "lineNumber": 32
+        },
+        {
+          "caller": "handleGenerate",
+          "callee": "setGenerating",
+          "lineNumber": 37
+        },
+        {
+          "caller": "handleEditDraft",
+          "callee": "setToastCounter",
+          "lineNumber": 42
+        },
+        {
+          "caller": "handleEditDraft",
+          "callee": "setToast",
+          "lineNumber": 43
+        },
+        {
+          "caller": "handleDeploy",
+          "callee": "setToastCounter",
+          "lineNumber": 48
+        },
+        {
+          "caller": "handleDeploy",
+          "callee": "setToast",
+          "lineNumber": 49
+        },
+        {
+          "caller": "toggleLure",
+          "callee": "setLureTypes",
+          "lineNumber": 53
+        },
+        {
+          "caller": "toggleLure",
+          "callee": "next.has",
+          "lineNumber": 55
+        },
+        {
+          "caller": "toggleLure",
+          "callee": "next.delete",
+          "lineNumber": 55
+        },
+        {
+          "caller": "toggleLure",
+          "callee": "next.add",
+          "lineNumber": 56
+        },
+        {
+          "caller": "handlePushToC2",
+          "callee": "setToastCounter",
+          "lineNumber": 63
+        },
+        {
+          "caller": "handlePushToC2",
+          "callee": "setToast",
+          "lineNumber": 64
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "vectors.map",
+          "lineNumber": 143
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setSelectedVector",
+          "lineNumber": 148
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "v.stats.map",
+          "lineNumber": 162
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "employeeCount.toLocaleString",
+          "lineNumber": 197
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setEmployeeCount",
+          "lineNumber": 201
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "Number",
+          "lineNumber": 201
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "(['basic', 'advanced', 'nation-state'] as const).map",
+          "lineNumber": 209
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setSophistication",
+          "lineNumber": 213
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "s.charAt(0).toUpperCase",
+          "lineNumber": 216
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "s.charAt",
+          "lineNumber": 216
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "s.slice",
+          "lineNumber": 216
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setScenario",
+          "lineNumber": 226
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "[\n                  { key: 'email-attachment', label: 'Email Attachment' },\n                  { key: 'credential-harvest', label: 'Credential Harvest Page' },\n                  { key: 'mfa-phishing', label: 'MFA Phishing' },\n                  { key: 'qr-code', label: 'QR Code' },\n                ].map",
+          "lineNumber": 247
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "lureTypes.has",
+          "lineNumber": 253
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "toggleLure",
+          "lineNumber": 257
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setDomainSpoofing",
+          "lineNumber": 276
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "setTrackingPixels",
+          "lineNumber": 303
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "funnelStages.map",
+          "lineNumber": 405
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "['Target Email', 'Type', 'Time', 'Status', ''].map",
+          "lineNumber": 469
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "credentials.map",
+          "lineNumber": 475
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "statusBadge",
+          "lineNumber": 476
+        },
+        {
+          "caller": "VectorCampaigns",
+          "callee": "handlePushToC2",
+          "lineNumber": 487
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/shared/api/errors.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 112,
+      "nonEmptyLines": 94,
+      "functions": [
+        {
+          "name": "isKnownApiErrorCode",
+          "startLine": 15,
+          "endLine": 17,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isRecord",
+          "startLine": 92,
+          "endLine": 94,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "parseApiStatusError",
+          "startLine": 101,
+          "endLine": 112,
+          "params": [
+            "statusCode",
+            "body"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ApiClientError",
+          "startLine": 21,
+          "endLine": 29,
+          "methods": [
+            "constructor"
+          ],
+          "properties": [
+            "kind"
+          ]
+        },
+        {
+          "name": "ApiStatusError",
+          "startLine": 32,
+          "endLine": 48,
+          "methods": [
+            "constructor",
+            "isValidationError",
+            "isNotFound",
+            "isConflict"
+          ],
+          "properties": [
+            "statusCode",
+            "code",
+            "field"
+          ]
+        },
+        {
+          "name": "ApiTimeoutError",
+          "startLine": 51,
+          "endLine": 58,
+          "methods": [
+            "constructor"
+          ],
+          "properties": [
+            "timeoutMs"
+          ]
+        },
+        {
+          "name": "ApiCanceledError",
+          "startLine": 61,
+          "endLine": 65,
+          "methods": [
+            "constructor"
+          ],
+          "properties": []
+        },
+        {
+          "name": "ApiNetworkError",
+          "startLine": 68,
+          "endLine": 75,
+          "methods": [
+            "constructor"
+          ],
+          "properties": [
+            "underlying"
+          ]
+        },
+        {
+          "name": "ApiInvalidResponseError",
+          "startLine": 78,
+          "endLine": 85,
+          "methods": [
+            "constructor"
+          ],
+          "properties": [
+            "underlying"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "API_ERROR_CODES",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "ApiErrorCode",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "isKnownApiErrorCode",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "ApiClientError",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "ApiStatusError",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "ApiTimeoutError",
+          "line": 51,
+          "isDefault": false
+        },
+        {
+          "name": "ApiCanceledError",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "ApiNetworkError",
+          "line": 68,
+          "isDefault": false
+        },
+        {
+          "name": "ApiInvalidResponseError",
+          "line": 78,
+          "isDefault": false
+        },
+        {
+          "name": "parseApiStatusError",
+          "line": 101,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isKnownApiErrorCode",
+          "callee": "(API_ERROR_CODES as readonly string[]).includes",
+          "lineNumber": 16
+        },
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 25
+        },
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 39
+        },
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 55
+        },
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 63
+        },
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 72
+        },
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 82
+        },
+        {
+          "caller": "isRecord",
+          "callee": "Array.isArray",
+          "lineNumber": 93
+        },
+        {
+          "caller": "parseApiStatusError",
+          "callee": "isRecord",
+          "lineNumber": 103
+        },
+        {
+          "caller": "parseApiStatusError",
+          "callee": "isRecord",
+          "lineNumber": 103
+        },
+        {
+          "caller": "parseApiStatusError",
+          "callee": "isRecord",
+          "lineNumber": 108
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 10,
+        "functionCount": 3,
+        "classCount": 6
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/shared/api/http.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 111,
+      "nonEmptyLines": 103,
+      "functions": [
+        {
+          "name": "encodePathSegment",
+          "startLine": 26,
+          "endLine": 28,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "joinApiPath",
+          "startLine": 30,
+          "endLine": 33,
+          "params": [
+            "baseUrl",
+            "path"
+          ]
+        },
+        {
+          "name": "isAbortLike",
+          "startLine": 45,
+          "endLine": 47,
+          "params": [
+            "error"
+          ]
+        },
+        {
+          "name": "classifyAbort",
+          "startLine": 50,
+          "endLine": 54,
+          "params": [
+            "scope",
+            "timeoutMs",
+            "error"
+          ]
+        },
+        {
+          "name": "fetchOnce",
+          "startLine": 56,
+          "endLine": 96,
+          "params": [
+            "url",
+            "options",
+            "timeoutMs"
+          ]
+        },
+        {
+          "name": "requestJson",
+          "startLine": 98,
+          "endLine": 111,
+          "params": [
+            "baseUrl",
+            "path",
+            "options"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "DEFAULT_TIMEOUT_MS",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "MUTATION_TIMEOUT_MS",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "encodePathSegment",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "joinApiPath",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "requestJson",
+          "line": 98,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "encodePathSegment",
+          "callee": "encodeURIComponent",
+          "lineNumber": 27
+        },
+        {
+          "caller": "joinApiPath",
+          "callee": "baseUrl.replace",
+          "lineNumber": 31
+        },
+        {
+          "caller": "joinApiPath",
+          "callee": "path.startsWith",
+          "lineNumber": 32
+        },
+        {
+          "caller": "classifyAbort",
+          "callee": "isAbortLike",
+          "lineNumber": 53
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "setTimeout",
+          "lineNumber": 61
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "controller.abort",
+          "lineNumber": 63
+        },
+        {
+          "caller": "onExternalAbort",
+          "callee": "controller.abort",
+          "lineNumber": 65
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "signal?.addEventListener",
+          "lineNumber": 66
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "JSON.stringify",
+          "lineNumber": 68
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "fetch",
+          "lineNumber": 71
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "response.text().catch",
+          "lineNumber": 74
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "response.text",
+          "lineNumber": 74
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "isAbortLike",
+          "lineNumber": 75
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "JSON.parse",
+          "lineNumber": 79
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "parseApiStatusError",
+          "lineNumber": 80
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "response.json",
+          "lineNumber": 83
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "classifyAbort",
+          "lineNumber": 85
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "classifyAbort",
+          "lineNumber": 90
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "clearTimeout",
+          "lineNumber": 93
+        },
+        {
+          "caller": "fetchOnce",
+          "callee": "signal?.removeEventListener",
+          "lineNumber": 94
+        },
+        {
+          "caller": "requestJson",
+          "callee": "Math.min",
+          "lineNumber": 101
+        },
+        {
+          "caller": "requestJson",
+          "callee": "Math.max",
+          "lineNumber": 101
+        },
+        {
+          "caller": "requestJson",
+          "callee": "joinApiPath",
+          "lineNumber": 102
+        },
+        {
+          "caller": "requestJson",
+          "callee": "await fetchOnce",
+          "lineNumber": 105
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 5,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/shared/hooks/useNarrowViewport.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "functions": [
+        {
+          "name": "subscribe",
+          "startLine": 4,
+          "endLine": 8,
+          "params": [
+            "listener"
+          ]
+        },
+        {
+          "name": "useNarrowViewport",
+          "startLine": 10,
+          "endLine": 12,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "useNarrowViewport",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "subscribe",
+          "callee": "window.matchMedia",
+          "lineNumber": 5
+        },
+        {
+          "caller": "subscribe",
+          "callee": "media.addEventListener",
+          "lineNumber": 6
+        },
+        {
+          "caller": "subscribe",
+          "callee": "media.removeEventListener",
+          "lineNumber": 7
+        },
+        {
+          "caller": "useNarrowViewport",
+          "callee": "useSyncExternalStore",
+          "lineNumber": 11
+        },
+        {
+          "caller": "useNarrowViewport",
+          "callee": "window.matchMedia",
+          "lineNumber": 11
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 94,
+      "nonEmptyLines": 88,
+      "functions": [
+        {
+          "name": "Dialog",
+          "startLine": 16,
+          "endLine": 94,
+          "params": [
+            "{\n  onClose,\n  labelId,\n  describedById,\n  panelClassName,\n  panelStyle,\n  children,\n}"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Dialog",
+          "line": 16,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Dialog",
+          "callee": "useRef",
+          "lineNumber": 24
+        },
+        {
+          "caller": "Dialog",
+          "callee": "useEffect",
+          "lineNumber": 26
+        },
+        {
+          "caller": "Dialog",
+          "callee": "panel?.querySelector",
+          "lineNumber": 29
+        },
+        {
+          "caller": "Dialog",
+          "callee": "target?.focus",
+          "lineNumber": 30
+        },
+        {
+          "caller": "Dialog",
+          "callee": "previous?.focus",
+          "lineNumber": 31
+        },
+        {
+          "caller": "Dialog",
+          "callee": "useEffect",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "onClose",
+          "lineNumber": 39
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "Array.from(\n        panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),\n      ).filter",
+          "lineNumber": 43
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "Array.from",
+          "lineNumber": 43
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "panel.querySelectorAll",
+          "lineNumber": 44
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "e.preventDefault",
+          "lineNumber": 47
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "panel.contains",
+          "lineNumber": 53
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "e.preventDefault",
+          "lineNumber": 55
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "(e.shiftKey ? last : first).focus",
+          "lineNumber": 56
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "e.preventDefault",
+          "lineNumber": 58
+        },
+        {
+          "caller": "handleKeyDown",
+          "callee": "first.focus",
+          "lineNumber": 59
+        },
+        {
+          "caller": "Dialog",
+          "callee": "document.addEventListener",
+          "lineNumber": 62
+        },
+        {
+          "caller": "Dialog",
+          "callee": "document.removeEventListener",
+          "lineNumber": 63
+        },
+        {
+          "caller": "Dialog",
+          "callee": "onClose",
+          "lineNumber": 70
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/src/types.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 48,
+      "nonEmptyLines": 44,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/console-view.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 54,
+      "nonEmptyLines": 49,
+      "functions": [
+        {
+          "name": "event",
+          "startLine": 9,
+          "endLine": 11,
+          "params": [
+            "eventId",
+            "payload",
+            "source"
+          ]
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/findings-view.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 45,
+      "nonEmptyLines": 39,
+      "functions": [
+        {
+          "name": "view",
+          "startLine": 14,
+          "endLine": 14,
+          "params": [
+            "findings"
+          ]
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/graph-view.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 38,
+      "nonEmptyLines": 33,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/history-merge.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 75,
+      "nonEmptyLines": 67,
+      "functions": [
+        {
+          "name": "snapshot",
+          "startLine": 9,
+          "endLine": 9,
+          "params": [
+            "overrides"
+          ]
+        },
+        {
+          "name": "run",
+          "startLine": 10,
+          "endLine": 12,
+          "params": [
+            "runId",
+            "payload",
+            "source"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "run",
+          "callee": "Math.random().toString(36).slice",
+          "lineNumber": 11
+        },
+        {
+          "caller": "run",
+          "callee": "Math.random().toString",
+          "lineNumber": 11
+        },
+        {
+          "caller": "run",
+          "callee": "Math.random",
+          "lineNumber": 11
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/logs-view.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 48,
+      "nonEmptyLines": 44,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/observe-stream.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 24,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/projects-real.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 356,
+      "nonEmptyLines": 321,
+      "functions": [
+        {
+          "name": "jsonResponse",
+          "startLine": 22,
+          "endLine": 27,
+          "params": [
+            "status",
+            "body"
+          ]
+        },
+        {
+          "name": "projectDto",
+          "startLine": 29,
+          "endLine": 47,
+          "params": [
+            "overrides"
+          ]
+        },
+        {
+          "name": "stubFetch",
+          "startLine": 51,
+          "endLine": 58,
+          "params": [
+            "handler"
+          ]
+        },
+        {
+          "name": "stubPendingFetch",
+          "startLine": 60,
+          "endLine": 68,
+          "params": []
+        },
+        {
+          "name": "flush",
+          "startLine": 70,
+          "endLine": 72,
+          "params": []
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "jsonResponse",
+          "callee": "JSON.stringify",
+          "lineNumber": 23
+        },
+        {
+          "caller": "stubFetch",
+          "callee": "vi.stubGlobal",
+          "lineNumber": 53
+        },
+        {
+          "caller": "stubFetch",
+          "callee": "vi.fn",
+          "lineNumber": 53
+        },
+        {
+          "caller": "stubFetch",
+          "callee": "String",
+          "lineNumber": 54
+        },
+        {
+          "caller": "stubFetch",
+          "callee": "calls.push",
+          "lineNumber": 55
+        },
+        {
+          "caller": "stubFetch",
+          "callee": "handler",
+          "lineNumber": 56
+        },
+        {
+          "caller": "stubPendingFetch",
+          "callee": "vi.stubGlobal",
+          "lineNumber": 63
+        },
+        {
+          "caller": "stubPendingFetch",
+          "callee": "vi.fn",
+          "lineNumber": 63
+        },
+        {
+          "caller": "stubPendingFetch",
+          "callee": "calls.push",
+          "lineNumber": 64
+        },
+        {
+          "caller": "stubPendingFetch",
+          "callee": "String",
+          "lineNumber": 64
+        },
+        {
+          "caller": "stubPendingFetch",
+          "callee": "resolvers.push",
+          "lineNumber": 65
+        },
+        {
+          "caller": "flush",
+          "callee": "setTimeout",
+          "lineNumber": 71
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 0,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/projects.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 32,
+      "nonEmptyLines": 30,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/real-app.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 40,
+      "nonEmptyLines": 36,
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/real-project-types.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 105,
+      "nonEmptyLines": 93,
+      "functions": [
+        {
+          "name": "project",
+          "startLine": 11,
+          "endLine": 28,
+          "params": [
+            "overrides"
+          ]
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/router.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 21,
+      "nonEmptyLines": 20,
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/tests/contracts/stream-reducer.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 46,
+      "nonEmptyLines": 46,
+      "functions": [
+        {
+          "name": "event",
+          "startLine": 5,
+          "endLine": 7,
+          "params": [
+            "payload",
+            "eventId",
+            "source"
+          ]
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    }
+  ]
+}

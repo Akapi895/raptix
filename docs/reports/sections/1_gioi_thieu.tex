@@ -1,0 +1,47 @@
+% =====================================================================
+%  File: sections/1_gioi_thieu.tex
+%  Mục đích: Phần I - Giới thiệu chung
+% =====================================================================
+
+\section{Giới thiệu chung}
+\label{sec:gioi-thieu-chung}
+
+% ---------------------------------------------------------------
+\subsection{Giới thiệu đơn vị thực tập}
+\label{sec:don-vi-thuc-tap}
+
+Tổng công ty Mạng lưới Viettel (Viettel Networks - VTNet) là đơn vị thuộc Tập đoàn Công nghiệp - Viễn thông Quân đội, gắn với nhiệm vụ quản lý, vận hành và bảo đảm chất lượng hạ tầng mạng viễn thông. Trong các báo cáo chất lượng dịch vụ công khai của Viettel, VTNet được nêu là đơn vị đầu mối về quản lý chất lượng dịch vụ viễn thông~\cite{vtnet}. Đặc thù vận hành hạ tầng quy mô lớn đặt ra yêu cầu cao về tính ổn định, khả năng quan sát, tự động hóa và an toàn thông tin.
+
+Trong bối cảnh các hệ thống mạng và dịch vụ ngày càng phức tạp, hoạt động đánh giá an toàn thông tin không chỉ dừng ở việc quét lỗ hổng đơn lẻ. Một đợt kiểm thử xâm nhập thực tế thường bao gồm nhiều giai đoạn: thu thập thông tin, nhận diện bề mặt tấn công, xác minh lỗ hổng, khai thác trong phạm vi cho phép, nâng quyền, di chuyển ngang, tổng hợp bằng chứng và lập báo cáo. Đây là một chuỗi công việc có nhiều quyết định phụ thuộc ngữ cảnh, vì vậy phù hợp để nghiên cứu khả năng hỗ trợ của mô hình ngôn ngữ lớn và AI Agent.
+
+Trong thời gian thực tập tại VTNet, ngoài việc nghiên cứu và phát triển hệ thống AI Agent, em còn được đào tạo bài bản về quy trình red team thực chiến - từ trinh sát, thiết lập foothold, leo thang đặc quyền, di chuyển ngang cho đến duy trì hiện diện trong mạng mục tiêu. Song song với đó, em có cơ hội được tiếp cận các giải pháp an toàn thông tin doanh nghiệp tiên tiến đến từ các đối tác hàng đầu như Cisco cùng nhiều nhà cung cấp khác trên cả nước, qua đó có cái nhìn toàn diện hơn về bối cảnh mà một hệ thống AI Agent Red Team cần phải đối mặt và thích ứng.
+
+% ---------------------------------------------------------------
+\subsection{Giới thiệu công việc}
+\label{sec:gioi-thieu-cong-viec}
+
+Nội dung thực tập của em tập trung vào việc nghiên cứu và xây dựng định hướng cho một hệ thống AI Agent hỗ trợ tự động hóa quy trình red team trong môi trường được cấp quyền. Khác với pentest truyền thống vốn thường dừng ở việc phát hiện và xác minh lỗ hổng trên một mục tiêu đơn lẻ, red team đòi hỏi khả năng thực thi một chuỗi tấn công hoàn chỉnh trên nhiều host: từ trinh sát, thiết lập foothold, leo thang đặc quyền, di chuyển ngang cho đến duy trì hiện diện và đạt mục tiêu cuối cùng. Đây là bài toán có độ phức tạp cao hơn hẳn về mặt quản lý trạng thái, lập kế hoạch và phối hợp hành động.
+
+Để có cơ sở thiết kế, em đã khảo sát ba hệ thống pentest mã nguồn mở là CyberStrikeAI~\cite{cyberstrike}, Strix~\cite{strix} và Pentest-AI~\cite{pentestai} nhằm rút ra các pattern kiến trúc về orchestration, tool execution, sandbox và verification. Tuy nhiên, trọng tâm nghiên cứu của em là hai hệ thống red team tiên tiến: \textbf{Decepticon}~\cite{decepticon} --- framework red team tự động đa tác tử của BitterSecurity, và \textbf{Incalmo}~\cite{incalmo} --- hệ thống red team đa host do LLM hỗ trợ đến từ Carnegie Mellon và Anthropic.
+
+Phân tích chi tiết kiến trúc và điểm mạnh/hạn chế của hai hệ thống này được trình bày ở phần~\ref{sec:khao-sat-he-thong}. Trên cơ sở đó, em xác định hai hướng cải tiến chính cho prototype \textbf{Raptix} - hệ thống được em xây dựng kế thừa từ Decepticon, sử dụng kiến trúc đa tác tử và sandbox biệt lập của Decepticon làm nền tảng, đồng thời tiếp thu các bài học về tách planning/execution và quản lý state ngoài context từ Incalmo.
+
+Thứ nhất, \textbf{thiết kế lại lớp lưu trữ trạng thái dưới dạng đồ thị tri thức tấn công (Attack Knowledge Graph - AKG)}. Cả Decepticon lẫn Incalmo đều nhận ra hạn chế của việc lưu trữ state phẳng hoặc nhồi toàn bộ vào context LLM; trong khi Decepticon dùng knowledge graph cho findings và Incalmo dùng attack-graph service để off-load knowledge, thì AKG của Raptix hợp nhất tất cả các thực thể (asset, identity, credential, vulnerability, finding, action, evidence) và quan hệ giữa chúng vào một đồ thị duy nhất, đóng vai trò nguồn sự thật cho mọi tác tử. Cách tiếp cận này cho phép truy vấn đường đi tấn công (attack path reasoning), tái sử dụng credential, và loại trừ các nhánh đã thất bại - những khả năng mà knowledge graph của Decepticon và attack-graph service của Incalmo chỉ đáp ứng một phần.
+
+Thứ hai, \textbf{phân tách quy trình khai thác thành hai pha với đặc trưng lan truyền khác nhau}: pha Initial Foothold (khai thác theo chiều ngang, breadth-first) tập trung vào độ phủ bề mặt tấn công để giành điểm truy cập đầu tiên; và pha Network Propagation (khai thác theo chiều sâu, depth-first) tập trung vào việc đi sâu vào mạng từ foothold hiện tại để đạt mục tiêu cuối. Sự phân tách này lấy cảm hứng từ cách Incalmo mô hình hóa các declarative task theo kill chain~\cite{incalmo} và cách Decepticon phân chia sub-agent theo pha (recon, exploit, post-exploit)~\cite{decepticon}, nhưng bổ sung cơ chế chuyển pha tường minh dựa trên trạng thái của AKG - điều mà cả hai hệ thống tham chiếu đều chưa có.
+
+Song song với thiết kế hệ thống, em xây dựng khung benchmark để tránh việc tối ưu theo cảm tính, dựa trên ba trục Effectiveness, Efficiency và Reliability. Mỗi thay đổi kiến trúc cần được đánh giá không chỉ bằng solve rate mà còn bằng token cost, thời gian thực thi và độ ổn định qua nhiều lần chạy, nhằm đảm bảo các cải tiến thực sự mang lại giá trị thay vì chỉ dịch chuyển chi phí từ trục này sang trục khác.
+
+
+% ---------------------------------------------------------------
+\subsection{Giới thiệu bài toán}
+\label{sec:gioi-thieu-bai-toan}
+
+Bài toán tổng quát là xây dựng một tác nhân AI có khả năng nhận mục tiêu kiểm thử ở mức cao, tự lập kế hoạch, lựa chọn và gọi các công cụ an toàn thông tin, đọc kết quả, cập nhật hiểu biết về mục tiêu và quyết định bước tiếp theo. Khác với chatbot chỉ trả lời hướng dẫn, hệ thống agentic phải duy trì vòng lặp hành động - quan sát - suy luận - cập nhật trạng thái trong thời gian dài.
+
+Khó khăn chính xuất phát từ tính không xác định của môi trường red team. Một lệnh có thể thất bại vì công cụ thiếu, timeout, đầu ra quá dài, thông tin xác thực không đúng hoặc mục tiêu thay đổi trạng thái. Nếu agent chỉ dựa vào context hội thoại, sau nhiều bước nó dễ quên bằng chứng cũ, lặp lại thao tác hoặc đưa ra giả định không còn đúng. Vì vậy, bài toán cần một lớp trạng thái bền vững và có cấu trúc thay vì coi toàn bộ lịch sử chat là ``bộ nhớ''.
+
+Mặt khác, kết quả red team không thể chỉ là một nhận định ngôn ngữ. Mỗi finding cần gắn với asset, thao tác xác minh, bằng chứng đầu ra, tác động và mức độ tin cậy. Đây là điểm mà Pentest-AI nhấn mạnh thông qua cơ chế kiểm chứng lại finding bằng các oracle~\cite{pentestai}, trong khi CyberStrikeAI chú trọng workspace có thể audit, knowledge và attack-chain~\cite{cyberstrike}, còn Strix chú trọng sandbox, skill và graph of agents~\cite{strix}. Với các hệ thống red team, Decepticon nhấn mạnh vào việc lưu findings vào knowledge graph và vận hành trong sandbox biệt lập~\cite{decepticon}, còn Incalmo tách biệt planning và execution với các auxiliary services để duy trì state ngoài context LLM~\cite{incalmo}. Các hướng này bổ sung cho nhau và là cơ sở cho giải pháp được đề xuất.
+
+Trong phạm vi thực tập, mục tiêu không phải thay thế hoàn toàn red teamer. Hệ thống được định hướng như một nền tảng tự động hóa có kiểm soát: con người xác định scope và mục tiêu, agent chịu trách nhiệm lập kế hoạch và thực thi trong ranh giới đó, còn mọi thao tác quan trọng phải để lại bằng chứng có thể xem lại. Môi trường đánh giá được giới hạn trong lab/benchmark được cấp quyền; không áp dụng cho mục tiêu ngoài phạm vi.
+

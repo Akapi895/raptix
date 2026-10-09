@@ -1,0 +1,216 @@
+{
+  "projectRoot": "D:\\\\.VTNet\\\\redteam\\\\raptix",
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/tools/research/cve.py",
+      "language": "python",
+      "sizeLines": 480,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/web/__init__.py",
+      "language": "python",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/web/graphql.py",
+      "language": "python",
+      "sizeLines": 317,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/web/http.py",
+      "language": "python",
+      "sizeLines": 303,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/web/jwt.py",
+      "language": "python",
+      "sizeLines": 331,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/web/oauth.py",
+      "language": "python",
+      "sizeLines": 242,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/web/session.py",
+      "language": "python",
+      "sizeLines": 205,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/web/tools.py",
+      "language": "python",
+      "sizeLines": 260,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/research/test_cve.py",
+      "language": "python",
+      "sizeLines": 133,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/research/test_cve_extended.py",
+      "language": "python",
+      "sizeLines": 533,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/research/test_dependency_enrichment_evidence.py",
+      "language": "python",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/research/test_tools.py",
+      "language": "python",
+      "sizeLines": 333,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/web/test_http_request.py",
+      "language": "python",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_graphql.py",
+      "language": "python",
+      "sizeLines": 205,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_graphql_introspection.py",
+      "language": "python",
+      "sizeLines": 331,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_http.py",
+      "language": "python",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_http_branches.py",
+      "language": "python",
+      "sizeLines": 651,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_http_timeout.py",
+      "language": "python",
+      "sizeLines": 80,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_jwt.py",
+      "language": "python",
+      "sizeLines": 101,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_jwt_jku_x5u_flagging.py",
+      "language": "python",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_jwt_nonstring_headers.py",
+      "language": "python",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_oauth_detections.py",
+      "language": "python",
+      "sizeLines": 159,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/web/test_oauth_session.py",
+      "language": "python",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "packages/raptix/raptix/tools/research/cve.py": [],
+    "packages/raptix/raptix/tools/web/__init__.py": [
+      "packages/raptix/raptix/tools/web/graphql.py",
+      "packages/raptix/raptix/tools/web/http.py",
+      "packages/raptix/raptix/tools/web/jwt.py",
+      "packages/raptix/raptix/tools/web/oauth.py",
+      "packages/raptix/raptix/tools/web/session.py",
+      "packages/raptix/raptix/tools/web/tools.py"
+    ],
+    "packages/raptix/raptix/tools/web/graphql.py": [],
+    "packages/raptix/raptix/tools/web/http.py": [],
+    "packages/raptix/raptix/tools/web/jwt.py": [],
+    "packages/raptix/raptix/tools/web/oauth.py": [],
+    "packages/raptix/raptix/tools/web/session.py": [],
+    "packages/raptix/raptix/tools/web/tools.py": [
+      "packages/raptix/raptix/tools/web/graphql.py",
+      "packages/raptix/raptix/tools/web/http.py",
+      "packages/raptix/raptix/tools/web/jwt.py",
+      "packages/raptix/raptix/tools/web/oauth.py",
+      "packages/raptix/raptix/tools/web/search.py",
+      "packages/raptix/raptix/tools/web/session.py"
+    ],
+    "packages/raptix/tests/unit/research/test_cve.py": [
+      "packages/raptix/raptix/tools/research/cve.py"
+    ],
+    "packages/raptix/tests/unit/research/test_cve_extended.py": [
+      "packages/raptix/raptix/tools/research/cve.py"
+    ],
+    "packages/raptix/tests/unit/research/test_dependency_enrichment_evidence.py": [
+      "packages/raptix/raptix/tools/research/__init__.py",
+      "packages/raptix/raptix/tools/research/cve.py"
+    ],
+    "packages/raptix/tests/unit/research/test_tools.py": [
+      "packages/raptix/raptix/tools/research/__init__.py",
+      "packages/raptix/raptix/tools/research/cve.py",
+      "packages/raptix/raptix/tools/web/jwt.py"
+    ],
+    "packages/raptix/tests/unit/tools/web/test_http_request.py": [
+      "packages/raptix/raptix/tools/web/tools.py"
+    ],
+    "packages/raptix/tests/unit/web/test_graphql.py": [
+      "packages/raptix/raptix/tools/web/graphql.py"
+    ],
+    "packages/raptix/tests/unit/web/test_graphql_introspection.py": [
+      "packages/raptix/raptix/tools/web/graphql.py"
+    ],
+    "packages/raptix/tests/unit/web/test_http.py": [
+      "packages/raptix/raptix/tools/web/http.py"
+    ],
+    "packages/raptix/tests/unit/web/test_http_branches.py": [
+      "packages/raptix/raptix/tools/web/http.py"
+    ],
+    "packages/raptix/tests/unit/web/test_http_timeout.py": [
+      "packages/raptix/raptix/tools/web/http.py"
+    ],
+    "packages/raptix/tests/unit/web/test_jwt.py": [
+      "packages/raptix/raptix/tools/web/jwt.py"
+    ],
+    "packages/raptix/tests/unit/web/test_jwt_jku_x5u_flagging.py": [
+      "packages/raptix/raptix/tools/web/jwt.py"
+    ],
+    "packages/raptix/tests/unit/web/test_jwt_nonstring_headers.py": [
+      "packages/raptix/raptix/tools/web/jwt.py"
+    ],
+    "packages/raptix/tests/unit/web/test_oauth_detections.py": [
+      "packages/raptix/raptix/tools/web/oauth.py"
+    ],
+    "packages/raptix/tests/unit/web/test_oauth_session.py": [
+      "packages/raptix/raptix/tools/web/oauth.py",
+      "packages/raptix/raptix/tools/web/session.py"
+    ]
+  }
+}

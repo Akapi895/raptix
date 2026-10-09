@@ -1,0 +1,85 @@
+% =====================================================================
+%  File: sections/3_4_3_mo_hinh_hai_pha.tex
+%  Mục đích: Phần 3.4.3 - Mô hình khai thác hai pha
+% =====================================================================
+
+\subsubsection{Mô hình khai thác hai pha}
+\label{sec:mo-hinh-hai-pha}
+
+Điểm khác biệt quan trọng thứ hai của Raptix so với Decepticon gốc là việc phân tách quy trình khai thác thành hai pha với \emph{chiến lược lan truyền} khác nhau. Sự tách biệt này phản ánh đúng thực tế tác chiến red team: giai đoạn đầu cần \emph{độ phủ} (breadth) để tìm điểm vào, giai đoạn sau cần \emph{độ sâu} (depth) để đạt mục tiêu cuối.
+
+\paragraph{Pha 1 - Initial Foothold}
+
+Agent quét bề mặt tấn công theo chiều ngang (breadth-first, song song hóa cao) để liệt kê asset, service và điểm vào tiềm năng. AKG ghi các node Asset, Service, Vulnerability (candidate), Credential qua cạnh \texttt{EXPOSES}, \texttt{HOSTS}, \texttt{RUNS\_ON}. Pha kết thúc khi có ít nhất một foothold được xác minh và bề mặt đủ để lập kế hoạch pha sau.
+
+\paragraph{Pha 2 - Network Propagation}
+
+Từ foothold, agent chuyển sang depth-first (song song hóa thấp, tuần tự theo attack path) để leo thang đặc quyền, thu credential và di chuyển ngang. AKG ghi node Credential, Identity (đặc quyền được biểu diễn qua cạnh \texttt{HAS\_PRIVILEGE}) qua cạnh \texttt{CAN\_AUTH\_AS}, \texttt{MEMBER\_OF}, \texttt{HAS\_PRIVILEGE}, \texttt{PIVOT\_VIA}. Pha kết thúc khi đạt mục tiêu cuối hoặc hết ngân sách tài nguyên.
+
+\paragraph{Cơ chế chuyển pha}
+
+Điểm cốt lõi của mô hình hai pha là \textbf{cơ chế chuyển pha tường minh dựa trên trạng thái của AKG}. Cụ thể, Raptix duy trì một tập các điều kiện chuyển pha được đánh giá liên tục sau mỗi bước hành động:
+
+\begin{itemize}
+    \item \textbf{Điều kiện chuyển từ pha 1 sang pha 2:} AKG chứa ít nhất một node Finding thuộc loại foothold đã đạt trạng thái \texttt{verified}, đồng thời bề mặt tấn công đã được liệt kê tới mức đủ để planner có thể đề xuất ít nhất một attack path khả thi tới mục tiêu cuối.
+    \item \textbf{Điều kiện quay lại pha 1:} trong pha 2, nếu agent gặp một subnet mới chưa được liệt kê (thể hiện bằng node Asset không có cạnh \texttt{HOSTS} hoặc \texttt{CONNECTS\_TO} tới các node đã biết), planner có thể tạm thời chuyển sang chế độ breadth-first để mở rộng bề mặt, sau đó quay lại depth-first.
+    \item \textbf{Điều kiện kết thúc:} mục tiêu cuối đã đạt được, hoặc ngân sách token/thời gian đã hết, hoặc operator ra lệnh dừng.
+\end{itemize}
+
+Mọi chuyển pha đều được ghi lại trong AKG như một event có timestamp, lý do chuyển pha và trạng thái đồ thị tại thời điểm chuyển. Điều này cho phép audit và replay toàn bộ quá trình chuyển pha.
+
+\paragraph{Tận dụng AKG cho attack vector reasoning}
+
+Trong pha 2, AKG đóng vai trò công cụ suy luận chủ động: (i) truy vấn đường đi từ foothold tới mục tiêu bằng weighted shortest-path (các thuộc tính chi phí, rủi ro OPSEC và confidence được chuẩn hóa thành một trọng số tổng hợp $w(e)$ trước khi chạy Dijkstra); (ii) phát hiện credential reuse path qua \texttt{HAS\_CREDENTIAL} và \texttt{CAN\_AUTH\_AS}; (iii) phát hiện privilege escalation path qua \texttt{MEMBER\_OF} và \texttt{HAS\_PRIVILEGE}; (iv) loại trừ nhánh đã thất bại (đánh dấu \texttt{status: failed}); (v) ưu tiên hóa theo chi phí và rủi ro OPSEC.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=8mm and 12mm,
+    n/.style={draw, rounded corners, align=center, inner sep=3pt, font=\scriptsize, minimum height=8mm},
+    e/.style={-{Latex[length=1.6mm]}, thick},
+    e2/.style={-{Latex[length=1.6mm]}, dashed, gray}
+]
+\node[n, fill=orange!20] (foothold) {Foothold\\web01};
+\node[n, fill=blue!15, right=of foothold] (cred1) {Cred\\svc\_web};
+\node[n, fill=blue!15, right=of cred1] (fs) {Host\\fs01};
+\node[n, fill=blue!15, right=of fs] (da) {DA\\dc01};
+\node[n, fill=green!20, above=of fs] (goal) {Goal\\Domain Admin};
+
+\draw[e] (foothold) -- node[above]{\texttt{PIVOT\_VIA}} (cred1);
+\draw[e] (cred1) -- node[above]{\texttt{CAN\_AUTH\_AS}} (fs);
+\draw[e] (fs) -- node[above]{\texttt{HAS\_PRIVILEGE}} (da);
+\draw[e] (da) -- (goal);
+
+\node[n, fill=gray!20, below=of fs] (fail) {Đã thử -- thất bại};
+\draw[e2] (cred1) -- (fail);
+\end{tikzpicture}
+\caption{Ví dụ attack path depth-first trong pha Network Propagation; nhánh thất bại được đánh dấu để tránh lặp lại}
+\label{fig:attack-path-example}
+\end{figure}
+
+\paragraph{So sánh hai pha}
+
+\begin{table}[H]
+\centering
+\caption{So sánh đặc trưng của hai pha khai thác}
+\label{tab:so-sanh-hai-pha}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.2cm}|p{6cm}|p{6cm}|}
+\hline
+\textbf{Tiêu chí} & \textbf{Initial Foothold} & \textbf{Network Propagation} \\
+\hline
+Chiến lược & Breadth-first, ưu tiên độ phủ & Depth-first, ưu tiên đường tới mục tiêu \\
+\hline
+Mục tiêu & Điểm vào đầu tiên + bản đồ bề mặt & Mục tiêu cuối (DA, data, flag) \\
+\hline
+Song song hóa & Cao, nhiều target cùng lúc & Thấp, phụ thuộc tuần tự theo attack path \\
+\hline
+Vai trò AKG & Ghi nhận asset, service, vuln & Ghi nhận credential, privilege, pivot \\
+\hline
+Rủi ro chính & Bỏ sót bề mặt tấn công & Đi sai nhánh, tốn tài nguyên \\
+\hline
+\end{tabular}
+\end{table}
+

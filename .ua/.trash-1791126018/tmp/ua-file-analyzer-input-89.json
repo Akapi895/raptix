@@ -1,0 +1,115 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "docs/adr/0021-b0-session-isolation-gate.md",
+                           "language":  "markdown",
+                           "sizeLines":  116,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0022-sequential-surface-exploit-dispatch.md",
+                           "language":  "markdown",
+                           "sizeLines":  49,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0023-bounded-iterative-surface-reexpansion.md",
+                           "language":  "markdown",
+                           "sizeLines":  61,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0024-code-owned-surface-reexpansion-bounds.md",
+                           "language":  "markdown",
+                           "sizeLines":  42,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0025-surface-exploit-chained-surface-provenance.md",
+                           "language":  "markdown",
+                           "sizeLines":  47,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0026-bounded-parallel-surface-fanout.md",
+                           "language":  "markdown",
+                           "sizeLines":  49,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0033-control-plane-audit-integration.md",
+                           "language":  "markdown",
+                           "sizeLines":  82,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0034-local-runtime-durability.md",
+                           "language":  "markdown",
+                           "sizeLines":  71,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0035-campaign-provider-preparation.md",
+                           "language":  "markdown",
+                           "sizeLines":  55,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/0036-sliver-c2-bridge.md",
+                           "language":  "markdown",
+                           "sizeLines":  70,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/README.md",
+                           "language":  "markdown",
+                           "sizeLines":  92,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/adr/template.md",
+                           "language":  "markdown",
+                           "sizeLines":  34,
+                           "fileCategory":  "docs"
+                       }
+                   ],
+    "batchImportData":  {
+                            "docs/adr/0021-b0-session-isolation-gate.md":  [
+
+                                                                           ],
+                            "docs/adr/0022-sequential-surface-exploit-dispatch.md":  [
+
+                                                                                     ],
+                            "docs/adr/0023-bounded-iterative-surface-reexpansion.md":  [
+
+                                                                                       ],
+                            "docs/adr/0024-code-owned-surface-reexpansion-bounds.md":  [
+
+                                                                                       ],
+                            "docs/adr/0025-surface-exploit-chained-surface-provenance.md":  [
+
+                                                                                            ],
+                            "docs/adr/0026-bounded-parallel-surface-fanout.md":  [
+
+                                                                                 ],
+                            "docs/adr/0033-control-plane-audit-integration.md":  [
+
+                                                                                 ],
+                            "docs/adr/0034-local-runtime-durability.md":  [
+
+                                                                          ],
+                            "docs/adr/0035-campaign-provider-preparation.md":  [
+
+                                                                               ],
+                            "docs/adr/0036-sliver-c2-bridge.md":  [
+
+                                                                  ],
+                            "docs/adr/README.md":  [
+
+                                                   ],
+                            "docs/adr/template.md":  [
+
+                                                     ]
+                        }
+}

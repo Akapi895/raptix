@@ -1,0 +1,70 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "language": "yaml",
+      "sizeLines": 765,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/pin-digests.yml",
+      "language": "yaml",
+      "sizeLines": 49,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/promote-stable.yml",
+      "language": "yaml",
+      "sizeLines": 126,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/release-recover.yml",
+      "language": "yaml",
+      "sizeLines": 100,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "language": "yaml",
+      "sizeLines": 566,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/scorecard.yml",
+      "language": "yaml",
+      "sizeLines": 39,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/security-scan-example.yml",
+      "language": "yaml",
+      "sizeLines": 41,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/security.yml",
+      "language": "yaml",
+      "sizeLines": 194,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/todo-to-issue.yml",
+      "language": "yaml",
+      "sizeLines": 78,
+      "fileCategory": "infra"
+    }
+  ],
+  "batchImportData": {
+    ".github/workflows/ci.yml": [],
+    ".github/workflows/pin-digests.yml": [],
+    ".github/workflows/promote-stable.yml": [],
+    ".github/workflows/release-recover.yml": [],
+    ".github/workflows/release.yml": [],
+    ".github/workflows/scorecard.yml": [],
+    ".github/workflows/security-scan-example.yml": [],
+    ".github/workflows/security.yml": [],
+    ".github/workflows/todo-to-issue.yml": []
+  }
+}

@@ -1,0 +1,45 @@
+% =====================================================================
+%  File: sections/5_danh_gia_ket_qua.tex
+%  Mục đích: Phần V - Kết quả đạt được, hướng phát triển
+% =====================================================================
+
+\section{Kết quả đạt được và hướng phát triển}
+\label{sec:ket-qua-huong-phat-trien}
+
+
+% ---------------------------------------------------------------
+\subsection{Kết quả và kỹ năng thu được}
+\label{sec:ket-qua-ky-nang}
+
+\subsubsection*{Kết quả nghiên cứu và thiết kế}
+
+Kết quả lớn nhất của kỳ thực tập là xây dựng được cách tiếp cận có hệ thống cho bài toán AI Agent Red Team, thay vì bắt đầu bằng việc thêm prompt hoặc tool một cách rời rạc. Em đã hoàn thành khảo sát hai hệ thống red team tiên tiến là Decepticon và Incalmo, đồng thời tham chiếu các hệ thống pentest mã nguồn mở (CyberStrikeAI, Strix, Pentest-AI) để rút ra các pattern kiến trúc có giá trị. Trên cơ sở đó, em xác định hướng phát triển prototype \textbf{Raptix} kế thừa Decepticon làm nền tảng.
+
+Các kết quả kỹ thuật cụ thể bao gồm:
+
+\begin{itemize}
+    \item \textbf{Kiến trúc tổng thể Raptix:} xác định năm lớp chức năng (Mission \& Policy, Planner \& Orchestrator, Specialist Agent, Tool Executor \& Sandbox, Knowledge \& Verification) với ranh giới trách nhiệm rõ ràng và sáu nguyên tắc thiết kế xuyên suốt.
+    \item \textbf{Attack Knowledge Graph (AKG):} thiết kế đồ thị hợp nhất với bảy loại node (Asset, Identity, Credential, Vulnerability, Finding, Action, Evidence), mười ba loại cạnh chính, ba invariant (schema, provenance, scope), và cơ chế versioning dựa trên event stream.
+    \item \textbf{Mô hình khai thác hai pha:} phân tách quy trình khai thác thành pha Initial Foothold (breadth-first, ưu tiên độ phủ) và pha Network Propagation (depth-first, ưu tiên đường tới mục tiêu), với cơ chế chuyển pha tường minh dựa trên trạng thái của AKG.
+    \item \textbf{Attack vector reasoning trên AKG:} xác định năm loại suy luận chính (truy vấn đường đi, phát hiện credential reuse path, phát hiện privilege escalation path, loại trừ nhánh đã thất bại, ưu tiên hóa theo chi phí và rủi ro OPSEC).
+    \item \textbf{Khung benchmark ba trục:} thiết kế khung đánh giá theo Effectiveness, Efficiency và Reliability, kèm theo các chỉ số bổ trợ cho mô hình hai pha (thời điểm chuyển pha, số attack path đã thử, tỷ lệ credential reuse thành công).
+    \item \textbf{Quy trình phát triển có kỷ luật:} chuẩn hóa quy trình sáu bước cho một vòng thử nghiệm, bao gồm pin baseline, chạy lặp, so sánh theo ba trục và phân tích failure mode.
+\end{itemize}
+
+
+\subsubsection*{Kỹ năng và kiến thức thu nhận được}
+
+Kỳ thực tập giúp em thu nhận bốn nhóm kỹ năng: (i) phân tích codebase lớn để rút ra pattern kiến trúc tái sử dụng; (ii) thiết kế AI Agent với multi-agent orchestration và graph-based state; (iii) đánh giá định lượng với baseline pin và phân loại failure mode; (iv) quy trình red team thực chiến và tư duy an toàn (scope, authorization, audit, reproducibility). Quan trọng hơn là chuyển biến tư duy từ prompt engineering sang system engineering, và từ tối ưu cảm tính sang tối ưu có kiểm soát theo ba trục.
+
+% ---------------------------------------------------------------
+\subsection{Hạn chế và hướng phát triển}
+\label{sec:han-che-huong-phat-trien}
+
+\subsubsection*{Hạn chế hiện tại}
+
+Năm hạn chế chính cần giải quyết trong giai đoạn tiếp theo: (i) \textbf{benchmark thiếu số liệu chạy lặp} — khung đã thiết kế xong nhưng chưa có đủ run thống kê, đặc biệt trên GOAD và Nilgiri; (ii) \textbf{verifier chưa chuẩn hóa} — web finding kiểm tra được bằng HTTP control, nhưng privilege escalation và lateral movement cần verifier theo lớp (deterministic → heuristic → human review); (iii) \textbf{multi-agent chưa chứng minh lợi thế} — coordination overhead chưa được đo, chưa có ngưỡng task complexity cho delegation; (iv) \textbf{AKG mới ở mức thiết kế} --- Neo4j kế thừa từ Decepticon làm prototype backend, schema hợp nhất mới chưa được triển khai đầy đủ, chưa có transaction cho ghi song song; (v) \textbf{cơ chế chuyển pha chưa được kiểm chứng thực nghiệm} — ngưỡng tối ưu, chiến lược quay lại pha 1 và cách đánh giá quality của attack path đề xuất đều còn là câu hỏi mở.
+
+\subsubsection*{Hướng phát triển tiếp theo}
+
+Bốn hướng phát triển ưu tiên: (i) hoàn thiện schema AKG và triển khai đầy đủ trên Neo4j (xây transaction cho ghi song song, migration từ schema Decepticon sang AKG hợp nhất); (ii) xây verifier theo lớp (deterministic → heuristic → human review, tích hợp vào finding lifecycle); (iii) kiểm chứng thực nghiệm cơ chế chuyển pha và ngưỡng tối ưu; (iv) mở rộng benchmark sang GOAD, Nilgiri và InfraGauntlet để kiểm chứng mô hình hai pha trong mission dài đa host.
+

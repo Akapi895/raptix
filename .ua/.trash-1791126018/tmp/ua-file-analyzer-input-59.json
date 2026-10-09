@@ -1,0 +1,42 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "benchmark/configs/buttercup-smoke.yaml",
+      "language": "yaml",
+      "sizeLines": 24,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/configs/cybergym-subset.yaml",
+      "language": "yaml",
+      "sizeLines": 45,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/configs/decepticon-bench-v1.yaml",
+      "language": "yaml",
+      "sizeLines": 34,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/configs/exploitbench-smoke.yaml",
+      "language": "yaml",
+      "sizeLines": 27,
+      "fileCategory": "config"
+    },
+    {
+      "path": "benchmark/configs/exploitbench-v8-small.yaml",
+      "language": "yaml",
+      "sizeLines": 72,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "benchmark/configs/buttercup-smoke.yaml": [],
+    "benchmark/configs/cybergym-subset.yaml": [],
+    "benchmark/configs/decepticon-bench-v1.yaml": [],
+    "benchmark/configs/exploitbench-smoke.yaml": [],
+    "benchmark/configs/exploitbench-v8-small.yaml": []
+  }
+}

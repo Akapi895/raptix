@@ -1,0 +1,142 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+  "batchFiles": [
+    {
+      "path": "raptix/cli/telemetry.py",
+      "language": "python",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/__init__.py",
+      "language": "python",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/config.py",
+      "language": "python",
+      "sizeLines": 220,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/exporter.py",
+      "language": "python",
+      "sizeLines": 122,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/otel.py",
+      "language": "python",
+      "sizeLines": 262,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/redact.py",
+      "language": "python",
+      "sizeLines": 288,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/sanitizer.py",
+      "language": "python",
+      "sizeLines": 221,
+      "fileCategory": "code"
+    },
+    {
+      "path": "raptix/telemetry/sink.py",
+      "language": "python",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_otel.py",
+      "language": "python",
+      "sizeLines": 231,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_behavioral.py",
+      "language": "python",
+      "sizeLines": 234,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_config.py",
+      "language": "python",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_exporter.py",
+      "language": "python",
+      "sizeLines": 102,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_redact.py",
+      "language": "python",
+      "sizeLines": 183,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_sanitizer.py",
+      "language": "python",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/unit/telemetry/test_telemetry_sink.py",
+      "language": "python",
+      "sizeLines": 233,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "raptix/cli/telemetry.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/sink.py"
+    ],
+    "raptix/telemetry/__init__.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/otel.py",
+      "raptix/telemetry/sink.py"
+    ],
+    "raptix/telemetry/config.py": [],
+    "raptix/telemetry/exporter.py": [],
+    "raptix/telemetry/otel.py": [],
+    "raptix/telemetry/redact.py": [],
+    "raptix/telemetry/sanitizer.py": [],
+    "raptix/telemetry/sink.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/exporter.py",
+      "raptix/telemetry/redact.py",
+      "raptix/telemetry/sanitizer.py"
+    ],
+    "tests/unit/telemetry/test_otel.py": [
+      "raptix/telemetry/__init__.py",
+      "raptix/telemetry/otel.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_behavioral.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/sink.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_config.py": [
+      "raptix/telemetry/config.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_exporter.py": [
+      "raptix/telemetry/__init__.py",
+      "raptix/telemetry/exporter.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_redact.py": [
+      "raptix/telemetry/redact.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_sanitizer.py": [
+      "raptix/telemetry/sanitizer.py"
+    ],
+    "tests/unit/telemetry/test_telemetry_sink.py": [
+      "raptix/telemetry/config.py",
+      "raptix/telemetry/sink.py"
+    ]
+  }
+}

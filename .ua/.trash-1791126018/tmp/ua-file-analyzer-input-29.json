@@ -1,0 +1,187 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix",
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/tools/ad/__init__.py",
+   "language": "python",
+   "sizeLines": 43,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/adcs.py",
+   "language": "python",
+   "sizeLines": 304,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/adcs_post.py",
+   "language": "python",
+   "sizeLines": 646,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/bh_tools.py",
+   "language": "python",
+   "sizeLines": 242,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/bhce_client.py",
+   "language": "python",
+   "sizeLines": 349,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/bloodhound.py",
+   "language": "python",
+   "sizeLines": 1229,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/dcsync.py",
+   "language": "python",
+   "sizeLines": 54,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/delegation.py",
+   "language": "python",
+   "sizeLines": 132,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/gpo.py",
+   "language": "python",
+   "sizeLines": 119,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/kerberos.py",
+   "language": "python",
+   "sizeLines": 142,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/shadow_creds.py",
+   "language": "python",
+   "sizeLines": 88,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/ad/tools.py",
+   "language": "python",
+   "sizeLines": 248,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/tools/research/graph.py",
+   "language": "python",
+   "sizeLines": 36,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/ad/test_ad.py",
+   "language": "python",
+   "sizeLines": 92,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/ad/test_ad_tools.py",
+   "language": "python",
+   "sizeLines": 638,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/ad/test_adcs_post.py",
+   "language": "python",
+   "sizeLines": 691,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/ad/test_bh_tools.py",
+   "language": "python",
+   "sizeLines": 205,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/ad/test_bhce_client.py",
+   "language": "python",
+   "sizeLines": 150,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/tests/unit/ad/test_bloodhound_kgstore.py",
+   "language": "python",
+   "sizeLines": 1098,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "packages/raptix/raptix/tools/ad/__init__.py": [
+   "packages/raptix/raptix/tools/ad/adcs.py",
+   "packages/raptix/raptix/tools/ad/bloodhound.py",
+   "packages/raptix/raptix/tools/ad/dcsync.py",
+   "packages/raptix/raptix/tools/ad/delegation.py",
+   "packages/raptix/raptix/tools/ad/gpo.py",
+   "packages/raptix/raptix/tools/ad/kerberos.py",
+   "packages/raptix/raptix/tools/ad/shadow_creds.py"
+  ],
+  "packages/raptix/raptix/tools/ad/adcs.py": [],
+  "packages/raptix/raptix/tools/ad/adcs_post.py": [
+   "packages/raptix/raptix/middleware/kg_internal/store.py"
+  ],
+  "packages/raptix/raptix/tools/ad/bh_tools.py": [
+   "packages/raptix/raptix/tools/ad/bhce_client.py"
+  ],
+  "packages/raptix/raptix/tools/ad/bhce_client.py": [],
+  "packages/raptix/raptix/tools/ad/bloodhound.py": [
+   "packages/raptix/raptix/middleware/kg_internal/store.py"
+  ],
+  "packages/raptix/raptix/tools/ad/dcsync.py": [],
+  "packages/raptix/raptix/tools/ad/delegation.py": [
+   "packages/raptix/raptix/tools/research/graph.py"
+  ],
+  "packages/raptix/raptix/tools/ad/gpo.py": [
+   "packages/raptix/raptix/tools/research/graph.py"
+  ],
+  "packages/raptix/raptix/tools/ad/kerberos.py": [],
+  "packages/raptix/raptix/tools/ad/shadow_creds.py": [
+   "packages/raptix/raptix/tools/research/graph.py"
+  ],
+  "packages/raptix/raptix/tools/ad/tools.py": [
+   "packages/raptix/raptix/tools/ad/adcs.py",
+   "packages/raptix/raptix/tools/ad/adcs_post.py",
+   "packages/raptix/raptix/tools/ad/bh_tools.py",
+   "packages/raptix/raptix/tools/ad/bloodhound.py",
+   "packages/raptix/raptix/tools/ad/dcsync.py",
+   "packages/raptix/raptix/tools/ad/delegation.py",
+   "packages/raptix/raptix/tools/ad/gpo.py",
+   "packages/raptix/raptix/tools/ad/kerberos.py",
+   "packages/raptix/raptix/tools/ad/shadow_creds.py",
+   "packages/raptix/raptix/tools/research/_engagement_scope.py",
+   "packages/raptix/raptix/tools/research/_state.py"
+  ],
+  "packages/raptix/raptix/tools/research/graph.py": [],
+  "packages/raptix/tests/unit/ad/test_ad.py": [
+   "packages/raptix/raptix/tools/ad/adcs.py",
+   "packages/raptix/raptix/tools/ad/kerberos.py"
+  ],
+  "packages/raptix/tests/unit/ad/test_ad_tools.py": [
+   "packages/raptix/raptix/tools/ad/delegation.py",
+   "packages/raptix/raptix/tools/ad/gpo.py",
+   "packages/raptix/raptix/tools/ad/shadow_creds.py"
+  ],
+  "packages/raptix/tests/unit/ad/test_adcs_post.py": [
+   "packages/raptix/raptix/tools/ad/adcs_post.py"
+  ],
+  "packages/raptix/tests/unit/ad/test_bh_tools.py": [
+   "packages/raptix/raptix/tools/ad/bh_tools.py"
+  ],
+  "packages/raptix/tests/unit/ad/test_bhce_client.py": [
+   "packages/raptix/raptix/tools/ad/bhce_client.py"
+  ],
+  "packages/raptix/tests/unit/ad/test_bloodhound_kgstore.py": [
+   "packages/raptix/raptix/tools/ad/bloodhound.py"
+  ]
+ }
+}

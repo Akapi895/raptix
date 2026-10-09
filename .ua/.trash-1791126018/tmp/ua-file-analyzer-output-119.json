@@ -1,0 +1,2778 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 22,
+  "filesSkipped": [
+    "clients/instruction.raptix.txt",
+    "clients/launcher/internal/config/env.example",
+    "clients/web-raptix/.gitattributes"
+  ],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 22,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 18,
+      "failed": 0,
+      "skipped": 4
+    }
+  },
+  "results": [
+    {
+      "path": "clients/cli/vitest.config.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 13,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/desktop/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 14,
+      "nonEmptyLines": 11,
+      "sections": [
+        {
+          "heading": "Raptix Desktop (deprecated)",
+          "level": 1,
+          "line": 1
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 1
+      }
+    },
+    {
+      "path": "clients/desktop/package.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 15,
+      "nonEmptyLines": 15,
+      "sections": [
+        {
+          "heading": "name",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "version",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "private",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "description",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "type",
+          "level": 1,
+          "line": 6
+        },
+        {
+          "heading": "main",
+          "level": 1,
+          "line": 7
+        },
+        {
+          "heading": "scripts",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "devDependencies",
+          "level": 1,
+          "line": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "clients/desktop/src/preload.cjs",
+      "language": "javascript",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 22,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/streaming/src/constants.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 13,
+      "exports": [
+        {
+          "name": "STREAM_OPTIONS",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/streaming/src/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 29,
+      "nonEmptyLines": 24,
+      "exports": [
+        {
+          "name": "SubagentCustomEvent",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "SubagentEventType",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "StreamEvent",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "NormalizedSubagentEvent",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "SubagentToolPhase",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "normalizeSubagentEvent",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "normalizedEventKey",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "normalizedGroupKey",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "STREAM_OPTIONS",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "extractText",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "stripResultTags",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "SubAgentSession",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "deriveSubAgentSessions",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "SseDecoder",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "SseFrameError",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "decodeSse",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "SseFrame",
+          "line": 29,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 17,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/streaming/src/sse.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 55,
+      "nonEmptyLines": 54,
+      "classes": [
+        {
+          "name": "SseFrameError",
+          "startLine": 3,
+          "endLine": 5,
+          "methods": [
+            "constructor"
+          ],
+          "properties": []
+        },
+        {
+          "name": "SseDecoder",
+          "startLine": 6,
+          "endLine": 42,
+          "methods": [
+            "constructor",
+            "push"
+          ],
+          "properties": [
+            "buffer",
+            "lines",
+            "event",
+            "id",
+            "size",
+            "started"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "SseFrameError",
+          "line": 3,
+          "isDefault": false
+        },
+        {
+          "name": "SseDecoder",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "constructor",
+          "callee": "super",
+          "lineNumber": 4
+        },
+        {
+          "caller": "push",
+          "callee": "text.replace",
+          "lineNumber": 15
+        },
+        {
+          "caller": "push",
+          "callee": "/[\\r\\n]/.exec",
+          "lineNumber": 19
+        },
+        {
+          "caller": "push",
+          "callee": "this.buffer.slice",
+          "lineNumber": 21
+        },
+        {
+          "caller": "push",
+          "callee": "this.buffer.slice",
+          "lineNumber": 23
+        },
+        {
+          "caller": "push",
+          "callee": "frames.push",
+          "lineNumber": 25
+        },
+        {
+          "caller": "push",
+          "callee": "this.lines.join",
+          "lineNumber": 25
+        },
+        {
+          "caller": "push",
+          "callee": "line.startsWith",
+          "lineNumber": 31
+        },
+        {
+          "caller": "push",
+          "callee": "line.indexOf",
+          "lineNumber": 32
+        },
+        {
+          "caller": "push",
+          "callee": "line.slice",
+          "lineNumber": 33
+        },
+        {
+          "caller": "push",
+          "callee": "line.slice(colon + 1).replace",
+          "lineNumber": 34
+        },
+        {
+          "caller": "push",
+          "callee": "line.slice",
+          "lineNumber": 34
+        },
+        {
+          "caller": "push",
+          "callee": "this.lines.push",
+          "lineNumber": 35
+        },
+        {
+          "caller": "push",
+          "callee": "value.includes",
+          "lineNumber": 37
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "clients/shared/streaming/src/utils.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 32,
+      "nonEmptyLines": 30,
+      "functions": [
+        {
+          "name": "extractText",
+          "startLine": 11,
+          "endLine": 24,
+          "params": [
+            "content"
+          ]
+        },
+        {
+          "name": "stripResultTags",
+          "startLine": 30,
+          "endLine": 32,
+          "params": [
+            "text"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "extractText",
+          "line": 11,
+          "isDefault": false
+        },
+        {
+          "name": "stripResultTags",
+          "line": 30,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "extractText",
+          "callee": "Array.isArray",
+          "lineNumber": 13
+        },
+        {
+          "caller": "extractText",
+          "callee": "content\n      .map((block) =>\n        typeof block === \"string\"\n          ? block\n          : (block as { text?: string }).text ?? \"\"\n      )\n      .join(\"\")\n      .trim",
+          "lineNumber": 14
+        },
+        {
+          "caller": "extractText",
+          "callee": "content\n      .map((block) =>\n        typeof block === \"string\"\n          ? block\n          : (block as { text?: string }).text ?? \"\"\n      )\n      .join",
+          "lineNumber": 14
+        },
+        {
+          "caller": "extractText",
+          "callee": "content\n      .map",
+          "lineNumber": 14
+        },
+        {
+          "caller": "stripResultTags",
+          "callee": "text.replace(/<\\/?result>/g, \"\").trim",
+          "lineNumber": 31
+        },
+        {
+          "caller": "stripResultTags",
+          "callee": "text.replace",
+          "lineNumber": 31
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/streaming/tests/normalize.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 296,
+      "nonEmptyLines": 274,
+      "functions": [
+        {
+          "name": "rawStart",
+          "startLine": 24,
+          "endLine": 32,
+          "params": [
+            "sessionId"
+          ]
+        },
+        {
+          "name": "rawEnd",
+          "startLine": 34,
+          "endLine": 44,
+          "params": [
+            "sessionId",
+            "flags"
+          ]
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/streaming/tests/sse.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 20,
+      "callGraph": [
+        {
+          "caller": "start",
+          "callee": "controller.enqueue",
+          "lineNumber": 12
+        },
+        {
+          "caller": "start",
+          "callee": "controller.close",
+          "lineNumber": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/index.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 18,
+      "nonEmptyLines": 17,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/tests/contracts.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 368,
+      "nonEmptyLines": 338,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/pasted_text/project-workspace-updates.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 307,
+      "nonEmptyLines": 207,
+      "sections": [
+        {
+          "heading": "1. Improve Project Cards",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "2. Add Project Members / Role Management",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "Owner",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Member / Pentester",
+          "level": 3,
+          "line": 104
+        },
+        {
+          "heading": "Viewer / Reviewer",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "3. Members Page",
+          "level": 2,
+          "line": 130
+        },
+        {
+          "heading": "4. Add Member Flow",
+          "level": 2,
+          "line": 194
+        },
+        {
+          "heading": "5. Show Members on Project Cards",
+          "level": 2,
+          "line": 232
+        },
+        {
+          "heading": "6. Project Overview Integration",
+          "level": 2,
+          "line": 264
+        },
+        {
+          "heading": "7. Important Product Rule",
+          "level": 2,
+          "line": 293
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/imports/pasted_text/raptix-dashboard-design.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 269,
+      "nonEmptyLines": 219,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/AgentRun.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 811,
+      "nonEmptyLines": 773,
+      "functions": [
+        {
+          "name": "AgentRun",
+          "startLine": 26,
+          "endLine": 744,
+          "params": [
+            "{ project, threadId, onThreadSelect }"
+          ]
+        },
+        {
+          "name": "MobileDrawer",
+          "startLine": 748,
+          "endLine": 811,
+          "params": [
+            "{ side, open, title, onClose, children }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AgentRun",
+          "line": 26,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "AgentRun",
+          "callee": "useRunSnapshot",
+          "lineNumber": 27
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useNarrowViewport",
+          "lineNumber": 28
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useState",
+          "lineNumber": 29
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useState",
+          "lineNumber": 30
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useState",
+          "lineNumber": 31
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useState",
+          "lineNumber": 32
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useState",
+          "lineNumber": 33
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useState",
+          "lineNumber": 34
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useRef",
+          "lineNumber": 35
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "snap.threads.find",
+          "lineNumber": 38
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "snap.threads.find",
+          "lineNumber": 41
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "snap.pendingThreadIds.includes",
+          "lineNumber": 44
+        },
+        {
+          "caller": "setInput",
+          "callee": "setDrafts",
+          "lineNumber": 52
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "snap.agents.slice",
+          "lineNumber": 56
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "snap.agents.find",
+          "lineNumber": 58
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "snap.agents.filter",
+          "lineNumber": 60
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useEffect",
+          "lineNumber": 63
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "bottomRef.current?.scrollIntoView",
+          "lineNumber": 64
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "useEffect",
+          "lineNumber": 67
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "selectThread",
+          "lineNumber": 69
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "selectThread",
+          "lineNumber": 101
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "onThreadSelect",
+          "lineNumber": 102
+        },
+        {
+          "caller": "newChat",
+          "callee": "createThread",
+          "lineNumber": 118
+        },
+        {
+          "caller": "newChat",
+          "callee": "onThreadSelect",
+          "lineNumber": 119
+        },
+        {
+          "caller": "selectSession",
+          "callee": "selectThread",
+          "lineNumber": 123
+        },
+        {
+          "caller": "selectSession",
+          "callee": "onThreadSelect",
+          "lineNumber": 124
+        },
+        {
+          "caller": "send",
+          "callee": "input.trim",
+          "lineNumber": 128
+        },
+        {
+          "caller": "send",
+          "callee": "submitMessage",
+          "lineNumber": 129
+        },
+        {
+          "caller": "send",
+          "callee": "setInput",
+          "lineNumber": 129
+        },
+        {
+          "caller": "toggleExpand",
+          "callee": "setExpandedAgents",
+          "lineNumber": 133
+        },
+        {
+          "caller": "toggleExpand",
+          "callee": "next.has",
+          "lineNumber": 135
+        },
+        {
+          "caller": "toggleExpand",
+          "callee": "next.delete",
+          "lineNumber": 136
+        },
+        {
+          "caller": "toggleExpand",
+          "callee": "next.add",
+          "lineNumber": 138
+        },
+        {
+          "caller": "selectAgent",
+          "callee": "setSelectedAgentId",
+          "lineNumber": 145
+        },
+        {
+          "caller": "selectAgent",
+          "callee": "setMobileSessionsOpen",
+          "lineNumber": 147
+        },
+        {
+          "caller": "selectAgent",
+          "callee": "setMobileDetailOpen",
+          "lineNumber": 148
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "snap.threads.map",
+          "lineNumber": 175
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "selectSession",
+          "lineNumber": 180
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "selectAgent",
+          "lineNumber": 240
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "subAgents.map",
+          "lineNumber": 276
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "expandedAgents.has",
+          "lineNumber": 278
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "toggleExpand",
+          "lineNumber": 305
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "selectAgent",
+          "lineNumber": 325
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "agent.children?.map",
+          "lineNumber": 350
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "selectAgent",
+          "lineNumber": 355
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "decideApproval",
+          "lineNumber": 385
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "setRunState",
+          "lineNumber": 440
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "setRunState",
+          "lineNumber": 468
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "setMobileSessionsOpen",
+          "lineNumber": 489
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "setMobileDetailOpen",
+          "lineNumber": 502
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "setShowPanel",
+          "lineNumber": 549
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "activeThread.messages.map",
+          "lineNumber": 566
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "msg.toolCalls.map",
+          "lineNumber": 627
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "setInput",
+          "lineNumber": 670
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "e.preventDefault",
+          "lineNumber": 673
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "send",
+          "lineNumber": 674
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "input.trim",
+          "lineNumber": 689
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "input.trim",
+          "lineNumber": 692
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "input.trim",
+          "lineNumber": 697
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "setMobileSessionsOpen",
+          "lineNumber": 728
+        },
+        {
+          "caller": "AgentRun",
+          "callee": "setMobileDetailOpen",
+          "lineNumber": 736
+        },
+        {
+          "caller": "MobileDrawer",
+          "callee": "useRef",
+          "lineNumber": 755
+        },
+        {
+          "caller": "MobileDrawer",
+          "callee": "useEffect",
+          "lineNumber": 757
+        },
+        {
+          "caller": "MobileDrawer",
+          "callee": "panelRef.current?.querySelector<HTMLButtonElement>('button')?.focus",
+          "lineNumber": 759
+        },
+        {
+          "caller": "MobileDrawer",
+          "callee": "panelRef.current?.querySelector",
+          "lineNumber": 759
+        },
+        {
+          "caller": "onKey",
+          "callee": "onClose",
+          "lineNumber": 761
+        },
+        {
+          "caller": "MobileDrawer",
+          "callee": "window.addEventListener",
+          "lineNumber": 763
+        },
+        {
+          "caller": "MobileDrawer",
+          "callee": "window.removeEventListener",
+          "lineNumber": 764
+        },
+        {
+          "caller": "MobileDrawer",
+          "callee": "title.toLowerCase",
+          "lineNumber": 800
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Assets.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 828,
+      "nonEmptyLines": 794,
+      "functions": [
+        {
+          "name": "TypeIcon",
+          "startLine": 326,
+          "endLine": 331,
+          "params": [
+            "{ type, size = 14 }"
+          ]
+        },
+        {
+          "name": "Assets",
+          "startLine": 333,
+          "endLine": 558,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "AssetDrawer",
+          "startLine": 560,
+          "endLine": 814,
+          "params": [
+            "{ asset, onClose }"
+          ]
+        },
+        {
+          "name": "DrawerRow",
+          "startLine": 816,
+          "endLine": 828,
+          "params": [
+            "{ label, value, mono }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Assets",
+          "line": 333,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Assets",
+          "callee": "useState",
+          "lineNumber": 334
+        },
+        {
+          "caller": "Assets",
+          "callee": "useState",
+          "lineNumber": 335
+        },
+        {
+          "caller": "Assets",
+          "callee": "useState",
+          "lineNumber": 336
+        },
+        {
+          "caller": "Assets",
+          "callee": "MOCK_ASSETS.filter",
+          "lineNumber": 338
+        },
+        {
+          "caller": "Assets",
+          "callee": "a.name.toLowerCase().includes",
+          "lineNumber": 340
+        },
+        {
+          "caller": "Assets",
+          "callee": "a.name.toLowerCase",
+          "lineNumber": 340
+        },
+        {
+          "caller": "Assets",
+          "callee": "search.toLowerCase",
+          "lineNumber": 340
+        },
+        {
+          "caller": "Assets",
+          "callee": "a.source.toLowerCase().includes",
+          "lineNumber": 340
+        },
+        {
+          "caller": "Assets",
+          "callee": "a.source.toLowerCase",
+          "lineNumber": 340
+        },
+        {
+          "caller": "Assets",
+          "callee": "search.toLowerCase",
+          "lineNumber": 340
+        },
+        {
+          "caller": "Assets",
+          "callee": "MOCK_ASSETS.filter",
+          "lineNumber": 345
+        },
+        {
+          "caller": "Assets",
+          "callee": "MOCK_ASSETS.filter",
+          "lineNumber": 346
+        },
+        {
+          "caller": "Assets",
+          "callee": "MOCK_ASSETS.filter",
+          "lineNumber": 347
+        },
+        {
+          "caller": "Assets",
+          "callee": "MOCK_ASSETS.filter",
+          "lineNumber": 348
+        },
+        {
+          "caller": "Assets",
+          "callee": "setSearch",
+          "lineNumber": 373
+        },
+        {
+          "caller": "Assets",
+          "callee": "TYPE_FILTERS.map",
+          "lineNumber": 385
+        },
+        {
+          "caller": "Assets",
+          "callee": "setTypeFilter",
+          "lineNumber": 388
+        },
+        {
+          "caller": "Assets",
+          "callee": "filtered.map",
+          "lineNumber": 448
+        },
+        {
+          "caller": "Assets",
+          "callee": "setDrawer",
+          "lineNumber": 451
+        },
+        {
+          "caller": "Assets",
+          "callee": "setDrawer",
+          "lineNumber": 554
+        },
+        {
+          "caller": "AssetDrawer",
+          "callee": "String",
+          "lineNumber": 639
+        },
+        {
+          "caller": "AssetDrawer",
+          "callee": "asset.ports.map",
+          "lineNumber": 652
+        },
+        {
+          "caller": "AssetDrawer",
+          "callee": "asset.tags.map",
+          "lineNumber": 672
+        },
+        {
+          "caller": "AssetDrawer",
+          "callee": "asset.linkedFindings.map",
+          "lineNumber": 701
+        },
+        {
+          "caller": "AssetDrawer",
+          "callee": "asset.recentActivity.map",
+          "lineNumber": 779
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/AttackGraph.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 615,
+      "nonEmptyLines": 575,
+      "functions": [
+        {
+          "name": "calcEdge",
+          "startLine": 54,
+          "endLine": 67,
+          "params": [
+            "x1",
+            "y1",
+            "x2",
+            "y2",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "name": "renderTermLine",
+          "startLine": 92,
+          "endLine": 112,
+          "params": [
+            "line"
+          ]
+        },
+        {
+          "name": "AttackGraph",
+          "startLine": 114,
+          "endLine": 119,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "AttackGraphCanvas",
+          "startLine": 121,
+          "endLine": 549,
+          "params": []
+        },
+        {
+          "name": "EmptyGraphState",
+          "startLine": 553,
+          "endLine": 588,
+          "params": [
+            "{ projectName, note }"
+          ]
+        },
+        {
+          "name": "Row",
+          "startLine": 590,
+          "endLine": 597,
+          "params": [
+            "{ label, value, mono, color }"
+          ]
+        },
+        {
+          "name": "DetailRow",
+          "startLine": 599,
+          "endLine": 615,
+          "params": [
+            "{\n  label, value, mono, highlight, small,\n}"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AttackGraph",
+          "line": 114,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "calcEdge",
+          "callee": "Math.sqrt",
+          "lineNumber": 57
+        },
+        {
+          "caller": "renderTermLine",
+          "callee": "line\n    /* eslint-disable no-control-regex -- parsing ANSI-like escape sequences */\n    .replace(/\\x1b\\[32m/g, '\\0green\\0')\n    .replace(/\\x1b\\[33m/g, '\\0yellow\\0')\n    .replace(/\\x1b\\[31m/g, '\\0red\\0')\n    .replace",
+          "lineNumber": 94
+        },
+        {
+          "caller": "renderTermLine",
+          "callee": "line\n    /* eslint-disable no-control-regex -- parsing ANSI-like escape sequences */\n    .replace(/\\x1b\\[32m/g, '\\0green\\0')\n    .replace(/\\x1b\\[33m/g, '\\0yellow\\0')\n    .replace",
+          "lineNumber": 94
+        },
+        {
+          "caller": "renderTermLine",
+          "callee": "line\n    /* eslint-disable no-control-regex -- parsing ANSI-like escape sequences */\n    .replace(/\\x1b\\[32m/g, '\\0green\\0')\n    .replace",
+          "lineNumber": 94
+        },
+        {
+          "caller": "renderTermLine",
+          "callee": "line\n    /* eslint-disable no-control-regex -- parsing ANSI-like escape sequences */\n    .replace",
+          "lineNumber": 94
+        },
+        {
+          "caller": "renderTermLine",
+          "callee": "raw.split",
+          "lineNumber": 101
+        },
+        {
+          "caller": "renderTermLine",
+          "callee": "segments.push",
+          "lineNumber": 108
+        },
+        {
+          "caller": "renderTermLine",
+          "callee": "segments.map",
+          "lineNumber": 111
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 122
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 123
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 124
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 125
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 126
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 127
+        },
+        {
+          "caller": "handleNodeClick",
+          "callee": "visibleIds.has",
+          "lineNumber": 130
+        },
+        {
+          "caller": "handleNodeClick",
+          "callee": "setSelectedNode",
+          "lineNumber": 131
+        },
+        {
+          "caller": "handleNodeClick",
+          "callee": "setActiveTab",
+          "lineNumber": 132
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "NODES.filter(n => {\n      if (typeFilter !== 'all' && n.type !== typeFilter) return false\n      if (stateFilter !== 'all' && n.state !== stateFilter) return false\n      if (search) {\n        const q = search.toLowerCase()\n        if (!n.label.toLowerCase().includes(q) && !(n.ip ?? '').includes(q)) return false\n      }\n      return true\n    }).map",
+          "lineNumber": 136
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "NODES.filter",
+          "lineNumber": 136
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "search.toLowerCase",
+          "lineNumber": 140
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "n.label.toLowerCase().includes",
+          "lineNumber": 141
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "n.label.toLowerCase",
+          "lineNumber": 141
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "(n.ip ?? '').includes",
+          "lineNumber": 141
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "setSearch",
+          "lineNumber": 175
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "TYPE_FILTERS.map",
+          "lineNumber": 187
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "setTypeFilter",
+          "lineNumber": 190
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "STATE_FILTERS.map",
+          "lineNumber": 206
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "setStateFilter",
+          "lineNumber": 209
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "(['Zoom In', 'Zoom Out', 'Fit'] as const).map",
+          "lineNumber": 222
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "(['active', 'discovered', 'targeting', 'unknown'] as const).map",
+          "lineNumber": 246
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "ZONES.map",
+          "lineNumber": 260
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "z.label.toUpperCase",
+          "lineNumber": 265
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "EDGES.map",
+          "lineNumber": 271
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "NODES.find",
+          "lineNumber": 272
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "NODES.find",
+          "lineNumber": 273
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "visibleIds.has",
+          "lineNumber": 275
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "visibleIds.has",
+          "lineNumber": 275
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "calcEdge",
+          "lineNumber": 278
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "NODES.map",
+          "lineNumber": 294
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "visibleIds.has",
+          "lineNumber": 297
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "handleNodeClick",
+          "lineNumber": 304
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "setHoveredNode",
+          "lineNumber": 305
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "setHoveredNode",
+          "lineNumber": 306
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "(() => {\n              const n = hoveredNode\n              const sc = STATE_COLORS[n.state]\n              const tipX = n.x > SVG_W * 0.7 ? n.x - 240 : n.x + 34\n              const tipY = Math.max(10, Math.min(n.y - 20, SVG_H - 150))\n              return (\n                <foreignObject x={tipX} y={tipY} width={222} height={148} style={{ pointerEvents: 'none' }}>\n                  <div\n                    style={{\n                      background: '#F1F5F9',\n                      border: `1px solid ${sc.border}`,\n                      borderRadius: 8,\n                      padding: '10px 13px',\n                      fontSize: 11,\n                      fontFamily: 'system-ui, -apple-system, sans-serif',\n                      boxShadow: '0 4px 20px rgba(0,0,0,0.6)',\n                    }}\n                  >\n                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>\n                      <span style={{ color: '#0F172A', fontWeight: 700, fontSize: 12 }}>{n.label}</span>\n                      <span style={{ color: sc.text, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{n.state}</span>\n                    </div>\n                    {n.ip && <Row label=\"IP\" value={n.ip} mono />}\n                    {n.os && <Row label=\"OS\" value={n.os} />}\n                    {n.user && <Row label=\"User\" value={n.user} mono color=\"#22C55E\" />}\n                    {n.privilege && <Row label=\"Priv\" value={n.privilege} color={sc.text} />}\n                    {n.session && (\n                      <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>\n                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />\n                        <span style={{ color: '#22C55E', fontSize: 9, fontWeight: 600 }}>Session (metadata only)</span>\n                      </div>\n                    )}\n                  </div>\n                </foreignObject>\n              )\n            })",
+          "lineNumber": 356
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "Math.max",
+          "lineNumber": 360
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "Math.min",
+          "lineNumber": 360
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "LEGEND_ITEMS.map",
+          "lineNumber": 401
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "setSelectedNode",
+          "lineNumber": 459
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "selectedNode.privilege.includes",
+          "lineNumber": 485
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "selectedNode.privilege.includes",
+          "lineNumber": 486
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "selectedNode.privilege.includes",
+          "lineNumber": 487
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "selectedNode.terminalTabs.map",
+          "lineNumber": 515
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "setActiveTab",
+          "lineNumber": 518
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "(selectedNode.terminalOutputs[activeTab] ?? []).map",
+          "lineNumber": 536
+        },
+        {
+          "caller": "AttackGraphCanvas",
+          "callee": "renderTermLine",
+          "lineNumber": 538
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Chat.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 575,
+      "nonEmptyLines": 546,
+      "functions": [
+        {
+          "name": "Chat",
+          "startLine": 187,
+          "endLine": 483,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "AgentTreeNode",
+          "startLine": 485,
+          "endLine": 544,
+          "params": [
+            "{\n  agent, selected, expanded, onSelect, onToggle, depth,\n}"
+          ]
+        },
+        {
+          "name": "StatusBadge",
+          "startLine": 546,
+          "endLine": 553,
+          "params": [
+            "{ status }"
+          ]
+        },
+        {
+          "name": "MessageContent",
+          "startLine": 555,
+          "endLine": 575,
+          "params": [
+            "{ content, isUser }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Chat",
+          "line": 187,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Chat",
+          "callee": "useState",
+          "lineNumber": 188
+        },
+        {
+          "caller": "Chat",
+          "callee": "useState",
+          "lineNumber": 189
+        },
+        {
+          "caller": "Chat",
+          "callee": "useState",
+          "lineNumber": 190
+        },
+        {
+          "caller": "Chat",
+          "callee": "useState",
+          "lineNumber": 191
+        },
+        {
+          "caller": "Chat",
+          "callee": "useState",
+          "lineNumber": 192
+        },
+        {
+          "caller": "Chat",
+          "callee": "useState",
+          "lineNumber": 193
+        },
+        {
+          "caller": "Chat",
+          "callee": "useRef",
+          "lineNumber": 194
+        },
+        {
+          "caller": "Chat",
+          "callee": "sessions.find",
+          "lineNumber": 196
+        },
+        {
+          "caller": "Chat",
+          "callee": "useEffect",
+          "lineNumber": 198
+        },
+        {
+          "caller": "Chat",
+          "callee": "bottomRef.current?.scrollIntoView",
+          "lineNumber": 199
+        },
+        {
+          "caller": "newChat",
+          "callee": "new Date().toLocaleTimeString",
+          "lineNumber": 208
+        },
+        {
+          "caller": "newChat",
+          "callee": "new Date().toLocaleTimeString",
+          "lineNumber": 215
+        },
+        {
+          "caller": "newChat",
+          "callee": "setSessions",
+          "lineNumber": 219
+        },
+        {
+          "caller": "newChat",
+          "callee": "setActiveId",
+          "lineNumber": 220
+        },
+        {
+          "caller": "newChat",
+          "callee": "setInput",
+          "lineNumber": 221
+        },
+        {
+          "caller": "send",
+          "callee": "input.trim",
+          "lineNumber": 225
+        },
+        {
+          "caller": "send",
+          "callee": "new Date().toLocaleTimeString",
+          "lineNumber": 226
+        },
+        {
+          "caller": "send",
+          "callee": "Date.now().toString",
+          "lineNumber": 228
+        },
+        {
+          "caller": "send",
+          "callee": "Date.now",
+          "lineNumber": 228
+        },
+        {
+          "caller": "send",
+          "callee": "setInput",
+          "lineNumber": 234
+        },
+        {
+          "caller": "send",
+          "callee": "setSessions",
+          "lineNumber": 236
+        },
+        {
+          "caller": "send",
+          "callee": "prev.map",
+          "lineNumber": 236
+        },
+        {
+          "caller": "send",
+          "callee": "setTimeout",
+          "lineNumber": 242
+        },
+        {
+          "caller": "send",
+          "callee": "(Date.now() + 1).toString",
+          "lineNumber": 244
+        },
+        {
+          "caller": "send",
+          "callee": "Date.now",
+          "lineNumber": 244
+        },
+        {
+          "caller": "send",
+          "callee": "new Date().toLocaleTimeString",
+          "lineNumber": 248
+        },
+        {
+          "caller": "send",
+          "callee": "setSessions",
+          "lineNumber": 250
+        },
+        {
+          "caller": "send",
+          "callee": "prev.map",
+          "lineNumber": 250
+        },
+        {
+          "caller": "toggleExpand",
+          "callee": "setExpandedAgents",
+          "lineNumber": 257
+        },
+        {
+          "caller": "toggleExpand",
+          "callee": "next.has",
+          "lineNumber": 259
+        },
+        {
+          "caller": "toggleExpand",
+          "callee": "next.delete",
+          "lineNumber": 260
+        },
+        {
+          "caller": "toggleExpand",
+          "callee": "next.add",
+          "lineNumber": 262
+        },
+        {
+          "caller": "Chat",
+          "callee": "sessions.map",
+          "lineNumber": 287
+        },
+        {
+          "caller": "Chat",
+          "callee": "setActiveId",
+          "lineNumber": 290
+        },
+        {
+          "caller": "Chat",
+          "callee": "setShowPanel",
+          "lineNumber": 337
+        },
+        {
+          "caller": "Chat",
+          "callee": "activeSession.messages.map",
+          "lineNumber": 346
+        },
+        {
+          "caller": "Chat",
+          "callee": "msg.toolCalls.map",
+          "lineNumber": 374
+        },
+        {
+          "caller": "Chat",
+          "callee": "setInput",
+          "lineNumber": 395
+        },
+        {
+          "caller": "Chat",
+          "callee": "e.preventDefault",
+          "lineNumber": 396
+        },
+        {
+          "caller": "Chat",
+          "callee": "send",
+          "lineNumber": 396
+        },
+        {
+          "caller": "Chat",
+          "callee": "input.trim",
+          "lineNumber": 403
+        },
+        {
+          "caller": "Chat",
+          "callee": "input.trim",
+          "lineNumber": 406
+        },
+        {
+          "caller": "Chat",
+          "callee": "subagents.map",
+          "lineNumber": 430
+        },
+        {
+          "caller": "Chat",
+          "callee": "expandedAgents.has",
+          "lineNumber": 435
+        },
+        {
+          "caller": "Chat",
+          "callee": "setSelectedAgent",
+          "lineNumber": 436
+        },
+        {
+          "caller": "Chat",
+          "callee": "toggleExpand",
+          "lineNumber": 437
+        },
+        {
+          "caller": "Chat",
+          "callee": "selectedAgent.skills.map",
+          "lineNumber": 455
+        },
+        {
+          "caller": "Chat",
+          "callee": "selectedAgent.tools.map",
+          "lineNumber": 463
+        },
+        {
+          "caller": "AgentTreeNode",
+          "callee": "onSelect",
+          "lineNumber": 504
+        },
+        {
+          "caller": "AgentTreeNode",
+          "callee": "e.stopPropagation",
+          "lineNumber": 514
+        },
+        {
+          "caller": "AgentTreeNode",
+          "callee": "onToggle",
+          "lineNumber": 514
+        },
+        {
+          "caller": "AgentTreeNode",
+          "callee": "e.stopPropagation",
+          "lineNumber": 515
+        },
+        {
+          "caller": "AgentTreeNode",
+          "callee": "onToggle",
+          "lineNumber": 515
+        },
+        {
+          "caller": "AgentTreeNode",
+          "callee": "agent.children?.map",
+          "lineNumber": 531
+        },
+        {
+          "caller": "MessageContent",
+          "callee": "content.split",
+          "lineNumber": 556
+        },
+        {
+          "caller": "MessageContent",
+          "callee": "parts.map",
+          "lineNumber": 559
+        },
+        {
+          "caller": "MessageContent",
+          "callee": "part.startsWith",
+          "lineNumber": 560
+        },
+        {
+          "caller": "MessageContent",
+          "callee": "part.endsWith",
+          "lineNumber": 560
+        },
+        {
+          "caller": "MessageContent",
+          "callee": "part.slice",
+          "lineNumber": 561
+        },
+        {
+          "caller": "MessageContent",
+          "callee": "part.startsWith",
+          "lineNumber": 563
+        },
+        {
+          "caller": "MessageContent",
+          "callee": "part.endsWith",
+          "lineNumber": 563
+        },
+        {
+          "caller": "MessageContent",
+          "callee": "part.slice",
+          "lineNumber": 566
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Credentials.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 545,
+      "nonEmptyLines": 516,
+      "functions": [
+        {
+          "name": "Credentials",
+          "startLine": 216,
+          "endLine": 545,
+          "params": [
+            "{ project: _project }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Credentials",
+          "line": 216,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Credentials",
+          "callee": "useState",
+          "lineNumber": 217
+        },
+        {
+          "caller": "Credentials",
+          "callee": "useState",
+          "lineNumber": 218
+        },
+        {
+          "caller": "Credentials",
+          "callee": "useState",
+          "lineNumber": 219
+        },
+        {
+          "caller": "Credentials",
+          "callee": "useState",
+          "lineNumber": 220
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "e.stopPropagation",
+          "lineNumber": 223
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "setRevealed",
+          "lineNumber": 224
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "next.has",
+          "lineNumber": 226
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "next.delete",
+          "lineNumber": 227
+        },
+        {
+          "caller": "toggleReveal",
+          "callee": "next.add",
+          "lineNumber": 229
+        },
+        {
+          "caller": "Credentials",
+          "callee": "CREDS.filter",
+          "lineNumber": 235
+        },
+        {
+          "caller": "Credentials",
+          "callee": "c.name.toLowerCase().includes",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "c.name.toLowerCase",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "search.toLowerCase",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "c.linkedAsset.toLowerCase().includes",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "c.linkedAsset.toLowerCase",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "search.toLowerCase",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "c.username.toLowerCase().includes",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "c.username.toLowerCase",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "search.toLowerCase",
+          "lineNumber": 237
+        },
+        {
+          "caller": "Credentials",
+          "callee": "CREDS.filter",
+          "lineNumber": 241
+        },
+        {
+          "caller": "Credentials",
+          "callee": "setSearch",
+          "lineNumber": 277
+        },
+        {
+          "caller": "Credentials",
+          "callee": "TYPE_FILTERS.map",
+          "lineNumber": 287
+        },
+        {
+          "caller": "Credentials",
+          "callee": "setTypeFilter",
+          "lineNumber": 293
+        },
+        {
+          "caller": "Credentials",
+          "callee": "filtered.map",
+          "lineNumber": 334
+        },
+        {
+          "caller": "Credentials",
+          "callee": "revealed.has",
+          "lineNumber": 337
+        },
+        {
+          "caller": "Credentials",
+          "callee": "setSelected",
+          "lineNumber": 344
+        },
+        {
+          "caller": "Credentials",
+          "callee": "cred.secret.slice",
+          "lineNumber": 381
+        },
+        {
+          "caller": "Credentials",
+          "callee": "toggleReveal",
+          "lineNumber": 384
+        },
+        {
+          "caller": "Credentials",
+          "callee": "(() => {\n                    const tc = TYPE_CONFIG[selected.type]\n                    const Icon = tc.icon\n                    return (\n                      <div style={{ width: 32, height: 32, borderRadius: 8, background: tc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>\n                        <Icon size={15} style={{ color: tc.text }} />\n                      </div>\n                    )\n                  })",
+          "lineNumber": 426
+        },
+        {
+          "caller": "Credentials",
+          "callee": "setSelected",
+          "lineNumber": 442
+        },
+        {
+          "caller": "Credentials",
+          "callee": "[\n                { label: 'Username', value: selected.username, mono: true },\n                { label: 'Linked Asset', value: selected.linkedAsset, mono: true },\n                { label: 'Source', value: selected.source },\n                { label: 'Last Updated', value: selected.lastUpdated },\n              ].map",
+          "lineNumber": 451
+        },
+        {
+          "caller": "Credentials",
+          "callee": "revealed.has",
+          "lineNumber": 488
+        },
+        {
+          "caller": "Credentials",
+          "callee": "toggleReveal",
+          "lineNumber": 491
+        },
+        {
+          "caller": "Credentials",
+          "callee": "revealed.has",
+          "lineNumber": 494
+        },
+        {
+          "caller": "Credentials",
+          "callee": "selected.rotationHistory.map",
+          "lineNumber": 512
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Evidence.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 586,
+      "nonEmptyLines": 552,
+      "functions": [
+        {
+          "name": "Evidence",
+          "startLine": 54,
+          "endLine": 221,
+          "params": [
+            "{ project, evidencePath, onEvidenceSelect, onCloseEvidence, onFindingSelect }"
+          ]
+        },
+        {
+          "name": "EvidenceEmptyState",
+          "startLine": 223,
+          "endLine": 254,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "EvidenceCard",
+          "startLine": 256,
+          "endLine": 362,
+          "params": [
+            "{ item, onClick }"
+          ]
+        },
+        {
+          "name": "EvidenceDrawer",
+          "startLine": 364,
+          "endLine": 572,
+          "params": [
+            "{\n  item, onClose, onFindingSelect,\n}"
+          ]
+        },
+        {
+          "name": "DrawerRow",
+          "startLine": 574,
+          "endLine": 586,
+          "params": [
+            "{ label, value, mono }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Evidence",
+          "line": 54,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Evidence",
+          "callee": "useState",
+          "lineNumber": 55
+        },
+        {
+          "caller": "Evidence",
+          "callee": "useState",
+          "lineNumber": 56
+        },
+        {
+          "caller": "Evidence",
+          "callee": "useState",
+          "lineNumber": 57
+        },
+        {
+          "caller": "Evidence",
+          "callee": "useState",
+          "lineNumber": 58
+        },
+        {
+          "caller": "Evidence",
+          "callee": "useEffect",
+          "lineNumber": 63
+        },
+        {
+          "caller": "Evidence",
+          "callee": "setDrawer",
+          "lineNumber": 65
+        },
+        {
+          "caller": "Evidence",
+          "callee": "setDrawer",
+          "lineNumber": 68
+        },
+        {
+          "caller": "Evidence",
+          "callee": "EVIDENCE_FIXTURES.find",
+          "lineNumber": 68
+        },
+        {
+          "caller": "Evidence",
+          "callee": "EVIDENCE_FIXTURES.some",
+          "lineNumber": 71
+        },
+        {
+          "caller": "openEvidence",
+          "callee": "setDrawer",
+          "lineNumber": 74
+        },
+        {
+          "caller": "openEvidence",
+          "callee": "onEvidenceSelect",
+          "lineNumber": 75
+        },
+        {
+          "caller": "closeEvidence",
+          "callee": "setDrawer",
+          "lineNumber": 79
+        },
+        {
+          "caller": "closeEvidence",
+          "callee": "onCloseEvidence",
+          "lineNumber": 80
+        },
+        {
+          "caller": "Evidence",
+          "callee": "evidence.filter",
+          "lineNumber": 83
+        },
+        {
+          "caller": "Evidence",
+          "callee": "e.findingIds.includes",
+          "lineNumber": 85
+        },
+        {
+          "caller": "Evidence",
+          "callee": "e.title.toLowerCase().includes",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Evidence",
+          "callee": "e.title.toLowerCase",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Evidence",
+          "callee": "search.toLowerCase",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Evidence",
+          "callee": "e.sourceAgent.toLowerCase().includes",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Evidence",
+          "callee": "e.sourceAgent.toLowerCase",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Evidence",
+          "callee": "search.toLowerCase",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Evidence",
+          "callee": "setSearch",
+          "lineNumber": 113
+        },
+        {
+          "caller": "Evidence",
+          "callee": "setFindingFilter",
+          "lineNumber": 121
+        },
+        {
+          "caller": "Evidence",
+          "callee": "FINDINGS_FIXTURES.map",
+          "lineNumber": 130
+        },
+        {
+          "caller": "Evidence",
+          "callee": "TYPE_FILTERS.map",
+          "lineNumber": 168
+        },
+        {
+          "caller": "Evidence",
+          "callee": "evidence.filter",
+          "lineNumber": 171
+        },
+        {
+          "caller": "Evidence",
+          "callee": "setTypeFilter",
+          "lineNumber": 177
+        },
+        {
+          "caller": "Evidence",
+          "callee": "filtered.map",
+          "lineNumber": 208
+        },
+        {
+          "caller": "Evidence",
+          "callee": "openEvidence",
+          "lineNumber": 209
+        },
+        {
+          "caller": "EvidenceCard",
+          "callee": "linkedFindingsFor",
+          "lineNumber": 259
+        },
+        {
+          "caller": "EvidenceCard",
+          "callee": "item.preview.map",
+          "lineNumber": 302
+        },
+        {
+          "caller": "EvidenceCard",
+          "callee": "linked.map",
+          "lineNumber": 338
+        },
+        {
+          "caller": "EvidenceCard",
+          "callee": "f.title.slice",
+          "lineNumber": 349
+        },
+        {
+          "caller": "EvidenceDrawer",
+          "callee": "linkedFindingsFor",
+          "lineNumber": 373
+        },
+        {
+          "caller": "EvidenceDrawer",
+          "callee": "item.preview.map",
+          "lineNumber": 447
+        },
+        {
+          "caller": "EvidenceDrawer",
+          "callee": "item.tags.map",
+          "lineNumber": 484
+        },
+        {
+          "caller": "EvidenceDrawer",
+          "callee": "linked.map",
+          "lineNumber": 510
+        },
+        {
+          "caller": "EvidenceDrawer",
+          "callee": "onFindingSelect",
+          "lineNumber": 526
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 1,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/KnowledgeGraph.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 595,
+      "nonEmptyLines": 557,
+      "functions": [
+        {
+          "name": "calcEdge",
+          "startLine": 74,
+          "endLine": 89,
+          "params": [
+            "x1",
+            "y1",
+            "x2",
+            "y2",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "name": "KnowledgeGraph",
+          "startLine": 91,
+          "endLine": 96,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "KnowledgeGraphCanvas",
+          "startLine": 98,
+          "endLine": 547,
+          "params": []
+        },
+        {
+          "name": "EmptyGraphState",
+          "startLine": 549,
+          "endLine": 584,
+          "params": [
+            "{ projectName, note }"
+          ]
+        },
+        {
+          "name": "StatTile",
+          "startLine": 586,
+          "endLine": 595,
+          "params": [
+            "{ label, value, highlight }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "KnowledgeGraph",
+          "line": 91,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "calcEdge",
+          "callee": "Math.sqrt",
+          "lineNumber": 77
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 99
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 100
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 101
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 102
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "useState",
+          "lineNumber": 103
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "NODES.filter(n => {\n      if (catFilter !== 'all' && n.category !== catFilter) return false\n      if (search) {\n        const q = search.toLowerCase()\n        if (!n.label.toLowerCase().includes(q) && !(n.sublabel ?? '').toLowerCase().includes(q)) return false\n      }\n      return true\n    }).map",
+          "lineNumber": 106
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "NODES.filter",
+          "lineNumber": 106
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "search.toLowerCase",
+          "lineNumber": 109
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "n.label.toLowerCase().includes",
+          "lineNumber": 110
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "n.label.toLowerCase",
+          "lineNumber": 110
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "(n.sublabel ?? '').toLowerCase().includes",
+          "lineNumber": 110
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "(n.sublabel ?? '').toLowerCase",
+          "lineNumber": 110
+        },
+        {
+          "caller": "handleNodeClick",
+          "callee": "visibleIds.has",
+          "lineNumber": 117
+        },
+        {
+          "caller": "handleNodeClick",
+          "callee": "setSelectedNode",
+          "lineNumber": 118
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "setSearch",
+          "lineNumber": 146
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "CAT_FILTERS.map",
+          "lineNumber": 158
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "setCatFilter",
+          "lineNumber": 164
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "GROUP_OPTIONS.map",
+          "lineNumber": 184
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "setGroupBy",
+          "lineNumber": 187
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "EDGES.map",
+          "lineNumber": 257
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "NODES.find",
+          "lineNumber": 258
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "NODES.find",
+          "lineNumber": 259
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "visibleIds.has",
+          "lineNumber": 261
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "visibleIds.has",
+          "lineNumber": 261
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "calcEdge",
+          "lineNumber": 265
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "NODES.map",
+          "lineNumber": 303
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "visibleIds.has",
+          "lineNumber": 306
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "handleNodeClick",
+          "lineNumber": 314
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "setHoveredNode",
+          "lineNumber": 315
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "setHoveredNode",
+          "lineNumber": 316
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "node.label.slice",
+          "lineNumber": 355
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "(() => {\n              const n = hoveredNode\n              const cc = CAT_COLORS[n.category]\n              const tipX = n.x > W * 0.65 ? n.x - 228 : n.x + NODE_R[n.ring] + 12\n              const tipY = Math.max(8, Math.min(n.y - 25, H - 140))\n              return (\n                <foreignObject x={tipX} y={tipY} width={215} height={135} style={{ pointerEvents: 'none' }}>\n                  <div\n                    style={{\n                      background: '#161D27',\n                      border: `1px solid ${cc.border}`,\n                      borderRadius: 8,\n                      padding: '9px 12px',\n                      fontSize: 11,\n                      fontFamily: 'system-ui, sans-serif',\n                      boxShadow: '0 4px 20px rgba(0,0,0,0.7)',\n                    }}\n                  >\n                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>\n                      <span style={{ color: '#F3F4F6', fontWeight: 700, fontSize: 12, maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.label}</span>\n                      <span style={{ color: cc.text, fontSize: 9, fontWeight: 700, background: cc.bg, padding: '1px 6px', borderRadius: 4, border: `1px solid ${cc.border}` }}>{n.category}</span>\n                    </div>\n                    {n.sublabel && <div style={{ color: '#9CA3AF', fontSize: 10, marginBottom: 5 }}>{n.sublabel}</div>}\n                    <div style={{ display: 'flex', gap: 12, fontSize: 10 }}>\n                      <div>\n                        <span style={{ color: '#4B5563' }}>Relations </span>\n                        <span style={{ color: '#9CA3AF', fontWeight: 600 }}>{n.relationships}</span>\n                      </div>\n                      <div>\n                        <span style={{ color: '#4B5563' }}>Findings </span>\n                        <span style={{ color: n.findings > 0 ? '#EE0033' : '#9CA3AF', fontWeight: 600 }}>{n.findings}</span>\n                      </div>\n                    </div>\n                    {n.tags && n.tags.length > 0 && (\n                      <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 3 }}>\n                        {n.tags.slice(0, 3).map(t => (\n                          <span key={t} style={{ fontSize: 8, color: '#6B7280', background: '#1A2332', border: '1px solid #273142', padding: '1px 5px', borderRadius: 3 }}>{t}</span>\n                        ))}\n                      </div>\n                    )}\n                  </div>\n                </foreignObject>\n              )\n            })",
+          "lineNumber": 368
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "Math.max",
+          "lineNumber": 372
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "Math.min",
+          "lineNumber": 372
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "n.tags.slice(0, 3).map",
+          "lineNumber": 403
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "n.tags.slice",
+          "lineNumber": 403
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "LEGEND_CATS.map",
+          "lineNumber": 422
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "setSelectedNode",
+          "lineNumber": 474
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "Object.entries(selectedNode.details).map",
+          "lineNumber": 494
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "Object.entries",
+          "lineNumber": 494
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "selectedNode.tags.map",
+          "lineNumber": 504
+        },
+        {
+          "caller": "KnowledgeGraphCanvas",
+          "callee": "[\n                { label: 'View in Attack Graph', Icon: NetworkIcon },\n                { label: 'View Findings', Icon: AlertTriangleIcon, badge: selectedNode.findings > 0 ? selectedNode.findings : undefined },\n                { label: 'View Evidence', Icon: DatabaseIcon },\n              ].map",
+          "lineNumber": 519
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 1,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/web-raptix/docs/design-reference/pre-web-correct/screens/Orchestrator.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 327,
+      "nonEmptyLines": 304,
+      "functions": [
+        {
+          "name": "getChildren",
+          "startLine": 107,
+          "endLine": 109,
+          "params": [
+            "parentId"
+          ]
+        },
+        {
+          "name": "Orchestrator",
+          "startLine": 111,
+          "endLine": 271,
+          "params": [
+            "{ project }"
+          ]
+        },
+        {
+          "name": "AgentCard",
+          "startLine": 273,
+          "endLine": 315,
+          "params": [
+            "{ agent, selected, onSelect, compact }"
+          ]
+        },
+        {
+          "name": "StatusPill",
+          "startLine": 317,
+          "endLine": 327,
+          "params": [
+            "{ status }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Orchestrator",
+          "line": 111,
+          "isDefault": true
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getChildren",
+          "callee": "agents.filter",
+          "lineNumber": 108
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "useState",
+          "lineNumber": 112
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "agents.find",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "getChildren",
+          "lineNumber": 115
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "agents.filter",
+          "lineNumber": 119
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "agents.filter",
+          "lineNumber": 120
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "agents.reduce",
+          "lineNumber": 121
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "stats.map",
+          "lineNumber": 139
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "setSelected",
+          "lineNumber": 151
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "topLevelChildren.map",
+          "lineNumber": 154
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "setSelected",
+          "lineNumber": 159
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "getChildren(agent.id).map",
+          "lineNumber": 161
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "getChildren",
+          "lineNumber": 161
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "setSelected",
+          "lineNumber": 165
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "selected.skills.map",
+          "lineNumber": 214
+        },
+        {
+          "caller": "Orchestrator",
+          "callee": "selected.tools.map",
+          "lineNumber": 228
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 4,
+        "classCount": 0
+      }
+    }
+  ]
+}

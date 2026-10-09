@@ -1,0 +1,232 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/oauth/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  167,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/open-redirect/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  115,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/php-type-juggling/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  199,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/proxy-misconfig/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  160,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/race-condition/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  139,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/saml/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  145,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/smuggling/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  656,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/sqli/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  263,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/ssrf/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  157,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/ssti/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  316,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/verb-tampering/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  184,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/waf-bypass/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  239,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/web-cache-poisoning/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  111,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/xpath-xslt/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  92,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/xs-leaks/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  118,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/xss/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  301,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/exploit/web/xxe/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  144,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/ics/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  88,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/iot/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  65,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/iot/binwalk-extract/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  251,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/iot/ble-gatt/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  225,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/iot/bootloader-uboot/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  342,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/iot/dev-mem/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  319,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/iot/firmware-acquisition/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  273,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/skills/defs/standard/iot/hardcoded-creds/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  257,
+                           "fileCategory":  "docs"
+                       }
+                   ],
+    "batchImportData":  {
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/oauth/SKILL.md":  [
+
+                                                                                                       ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/open-redirect/SKILL.md":  [
+
+                                                                                                               ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/php-type-juggling/SKILL.md":  [
+
+                                                                                                                   ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/proxy-misconfig/SKILL.md":  [
+
+                                                                                                                 ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/race-condition/SKILL.md":  [
+
+                                                                                                                ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/saml/SKILL.md":  [
+
+                                                                                                      ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/smuggling/SKILL.md":  [
+
+                                                                                                           ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/sqli/SKILL.md":  [
+
+                                                                                                      ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/ssrf/SKILL.md":  [
+
+                                                                                                      ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/ssti/SKILL.md":  [
+
+                                                                                                      ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/verb-tampering/SKILL.md":  [
+
+                                                                                                                ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/waf-bypass/SKILL.md":  [
+
+                                                                                                            ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/web-cache-poisoning/SKILL.md":  [
+
+                                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/xpath-xslt/SKILL.md":  [
+
+                                                                                                            ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/xs-leaks/SKILL.md":  [
+
+                                                                                                          ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/xss/SKILL.md":  [
+
+                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/exploit/web/xxe/SKILL.md":  [
+
+                                                                                                     ],
+                            "packages/raptix/raptix/skills/defs/standard/ics/SKILL.md":  [
+
+                                                                                         ],
+                            "packages/raptix/raptix/skills/defs/standard/iot/SKILL.md":  [
+
+                                                                                         ],
+                            "packages/raptix/raptix/skills/defs/standard/iot/binwalk-extract/SKILL.md":  [
+
+                                                                                                         ],
+                            "packages/raptix/raptix/skills/defs/standard/iot/ble-gatt/SKILL.md":  [
+
+                                                                                                  ],
+                            "packages/raptix/raptix/skills/defs/standard/iot/bootloader-uboot/SKILL.md":  [
+
+                                                                                                          ],
+                            "packages/raptix/raptix/skills/defs/standard/iot/dev-mem/SKILL.md":  [
+
+                                                                                                 ],
+                            "packages/raptix/raptix/skills/defs/standard/iot/firmware-acquisition/SKILL.md":  [
+
+                                                                                                              ],
+                            "packages/raptix/raptix/skills/defs/standard/iot/hardcoded-creds/SKILL.md":  [
+
+                                                                                                         ]
+                        }
+}

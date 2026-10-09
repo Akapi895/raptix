@@ -1,0 +1,303 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix",
+  "batchFiles": [
+    {
+      "path": "benchmark/__init__.py",
+      "language": "python",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/__main__.py",
+      "language": "python",
+      "sizeLines": 4,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/config.py",
+      "language": "python",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/harness.py",
+      "language": "python",
+      "sizeLines": 976,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/provenance.py",
+      "language": "python",
+      "sizeLines": 264,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/__init__.py",
+      "language": "python",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/base.py",
+      "language": "python",
+      "sizeLines": 63,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/buttercup.py",
+      "language": "python",
+      "sizeLines": 286,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/cybench.py",
+      "language": "python",
+      "sizeLines": 356,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/cybergym.py",
+      "language": "python",
+      "sizeLines": 248,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/exploitbench.py",
+      "language": "python",
+      "sizeLines": 793,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/exploitbench_capabilities.py",
+      "language": "python",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/mhbench.py",
+      "language": "python",
+      "sizeLines": 1339,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/providers/xbow.py",
+      "language": "python",
+      "sizeLines": 277,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/reporter.py",
+      "language": "python",
+      "sizeLines": 244,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/runner.py",
+      "language": "python",
+      "sizeLines": 330,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/schemas.py",
+      "language": "python",
+      "sizeLines": 252,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/scorer.py",
+      "language": "python",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "benchmark/state.py",
+      "language": "python",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_cybench_provider.py",
+      "language": "python",
+      "sizeLines": 167,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py",
+      "language": "python",
+      "sizeLines": 207,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_harness.py",
+      "language": "python",
+      "sizeLines": 420,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_harness_cost.py",
+      "language": "python",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py",
+      "language": "python",
+      "sizeLines": 714,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_provenance.py",
+      "language": "python",
+      "sizeLines": 366,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_schemas.py",
+      "language": "python",
+      "sizeLines": 207,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_scorer.py",
+      "language": "python",
+      "sizeLines": 175,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/test_xbow_provider.py",
+      "language": "python",
+      "sizeLines": 172,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "benchmark/__init__.py": [
+      "benchmark/config.py",
+      "benchmark/schemas.py"
+    ],
+    "benchmark/__main__.py": [
+      "benchmark/runner.py"
+    ],
+    "benchmark/config.py": [],
+    "benchmark/harness.py": [
+      "benchmark/config.py",
+      "benchmark/provenance.py",
+      "benchmark/providers/base.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "benchmark/provenance.py": [
+      "benchmark/schemas.py"
+    ],
+    "benchmark/providers/__init__.py": [
+      "benchmark/providers/base.py",
+      "benchmark/providers/buttercup.py",
+      "benchmark/providers/cybench.py",
+      "benchmark/providers/cybergym.py"
+    ],
+    "benchmark/providers/base.py": [],
+    "benchmark/providers/buttercup.py": [
+      "benchmark/providers/base.py"
+    ],
+    "benchmark/providers/cybench.py": [
+      "benchmark/providers/base.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "benchmark/providers/cybergym.py": [
+      "benchmark/providers/base.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "benchmark/providers/exploitbench.py": [
+      "benchmark/providers/base.py",
+      "benchmark/providers/exploitbench_capabilities.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "benchmark/providers/exploitbench_capabilities.py": [
+      "benchmark/schemas.py"
+    ],
+    "benchmark/providers/mhbench.py": [
+      "benchmark/providers/base.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "benchmark/providers/xbow.py": [
+      "benchmark/providers/base.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "benchmark/reporter.py": [
+      "benchmark/schemas.py"
+    ],
+    "benchmark/runner.py": [
+      "benchmark/config.py",
+      "benchmark/harness.py",
+      "benchmark/provenance.py",
+      "benchmark/providers/base.py",
+      "benchmark/providers/cybench.py",
+      "benchmark/providers/cybergym.py",
+      "benchmark/providers/exploitbench.py",
+      "benchmark/providers/mhbench.py",
+      "benchmark/providers/xbow.py",
+      "benchmark/reporter.py",
+      "benchmark/schemas.py",
+      "benchmark/scorer.py"
+    ],
+    "benchmark/schemas.py": [],
+    "benchmark/scorer.py": [
+      "benchmark/schemas.py"
+    ],
+    "benchmark/state.py": [],
+    "packages/raptix/tests/unit/benchmark/test_cybench_provider.py": [
+      "benchmark/providers/cybench.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "packages/raptix/tests/unit/benchmark/test_cybergym_provider.py": [
+      "benchmark/harness.py",
+      "benchmark/providers/__init__.py",
+      "benchmark/providers/cybergym.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "packages/raptix/tests/unit/benchmark/test_harness.py": [
+      "benchmark/config.py",
+      "benchmark/harness.py",
+      "benchmark/provenance.py",
+      "benchmark/schemas.py"
+    ],
+    "packages/raptix/tests/unit/benchmark/test_harness_cost.py": [
+      "benchmark/config.py",
+      "benchmark/harness.py",
+      "benchmark/providers/base.py",
+      "benchmark/schemas.py"
+    ],
+    "packages/raptix/tests/unit/benchmark/test_mhbench_provider.py": [
+      "benchmark/providers/__init__.py",
+      "benchmark/providers/mhbench.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ],
+    "packages/raptix/tests/unit/benchmark/test_provenance.py": [
+      "benchmark/config.py",
+      "benchmark/provenance.py",
+      "benchmark/reporter.py",
+      "benchmark/runner.py",
+      "benchmark/schemas.py"
+    ],
+    "packages/raptix/tests/unit/benchmark/test_schemas.py": [
+      "benchmark/schemas.py"
+    ],
+    "packages/raptix/tests/unit/benchmark/test_scorer.py": [
+      "benchmark/schemas.py",
+      "benchmark/scorer.py"
+    ],
+    "packages/raptix/tests/unit/benchmark/test_xbow_provider.py": [
+      "benchmark/providers/xbow.py",
+      "benchmark/schemas.py",
+      "benchmark/state.py"
+    ]
+  }
+}

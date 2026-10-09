@@ -1,0 +1,149 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 1,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 1,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 1
+    }
+  },
+  "results": [
+    {
+      "path": "containers/sliver-bridge/Dockerfile",
+      "language": "dockerfile",
+      "fileCategory": "infra",
+      "totalLines": 27,
+      "nonEmptyLines": 26,
+      "services": [
+        {
+          "name": "native",
+          "image": "python:3.13-slim@sha256:bb2988715db2cf7ace7b53f38f3cffbef7c7046a656bee66245eb0ed386e2e81",
+          "ports": [],
+          "startLine": 2,
+          "endLine": 15
+        },
+        {
+          "name": "python",
+          "image": "python:3.13-slim@sha256:bb2988715db2cf7ace7b53f38f3cffbef7c7046a656bee66245eb0ed386e2e81",
+          "ports": [
+            9000
+          ],
+          "startLine": 16,
+          "endLine": 28
+        }
+      ],
+      "steps": [
+        {
+          "name": "FROM python:3.13-slim@sha256:bb2988715db2cf7ace7b53f38f3cffbef7c7",
+          "startLine": 2,
+          "endLine": 2
+        },
+        {
+          "name": "RUN apt-get update && apt-get install -y --no-install-recommends",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "name": "RUN curl -fL https://github.com/BishopFox/sliver/releases/downlo",
+          "startLine": 4,
+          "endLine": 4
+        },
+        {
+          "name": "RUN git clone --depth 1 --branch v1.7.7 --filter=blob:none --spa",
+          "startLine": 7,
+          "endLine": 7
+        },
+        {
+          "name": "RUN pip install --no-cache-dir grpcio-tools==1.71.0 grpcio==1.71",
+          "startLine": 10,
+          "endLine": 10
+        },
+        {
+          "name": "WORKDIR /src/protobuf",
+          "startLine": 11,
+          "endLine": 11
+        },
+        {
+          "name": "RUN mkdir /gen && python -m grpc_tools.protoc -I. --python_out=/",
+          "startLine": 12,
+          "endLine": 12
+        },
+        {
+          "name": "FROM python:3.13-slim@sha256:bb2988715db2cf7ace7b53f38f3cffbef7c7",
+          "startLine": 16,
+          "endLine": 16
+        },
+        {
+          "name": "RUN useradd --uid 10001 --create-home c2bridge && mkdir /state /",
+          "startLine": 17,
+          "endLine": 17
+        },
+        {
+          "name": "RUN pip install --no-cache-dir grpcio==1.71.0 protobuf==5.29.4",
+          "startLine": 18,
+          "endLine": 18
+        },
+        {
+          "name": "COPY --from=native /sliver-server /usr/local/bin/sliver-server",
+          "startLine": 19,
+          "endLine": 19
+        },
+        {
+          "name": "COPY --from=native /gen /app/gen",
+          "startLine": 20,
+          "endLine": 20
+        },
+        {
+          "name": "COPY --from=native /src/LICENSE /app/SLIVER_LICENSE",
+          "startLine": 21,
+          "endLine": 21
+        },
+        {
+          "name": "COPY containers/sliver-bridge/sliver_bridge.py containers/sliver-",
+          "startLine": 22,
+          "endLine": 22
+        },
+        {
+          "name": "RUN sed -i 's/\\r$//' /app/entrypoint.sh && chmod +x /app/entrypo",
+          "startLine": 23,
+          "endLine": 23
+        },
+        {
+          "name": "USER c2bridge",
+          "startLine": 24,
+          "endLine": 24
+        },
+        {
+          "name": "ENV HOME=/state",
+          "startLine": 25,
+          "endLine": 25
+        },
+        {
+          "name": "EXPOSE 9000",
+          "startLine": 26,
+          "endLine": 26
+        },
+        {
+          "name": "CMD [\"/app/entrypoint.sh\"]",
+          "startLine": 27,
+          "endLine": 27
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "serviceCount": 2,
+        "stepCount": 19
+      }
+    }
+  ]
+}

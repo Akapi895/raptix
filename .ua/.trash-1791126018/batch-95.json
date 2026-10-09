@@ -1,0 +1,134 @@
+{
+  "batchIndex": 95,
+  "batchFiles": [
+    {
+      "path": "integrations/agent-skills/decepticon/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 129,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "integrations/agent-skills/decepticon/examples.md",
+      "language": "markdown",
+      "sizeLines": 124,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "integrations/agent-skills/decepticon/reference.md",
+      "language": "markdown",
+      "sizeLines": 137,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "type": "document",
+      "name": "SKILL.md",
+      "filePath": "integrations/agent-skills/decepticon/SKILL.md",
+      "lineRange": [1, 129],
+      "summary": "Skill AgentSkill bundling (frontmatter name: raptix, version 2.0.0, Apache-2.0, hermes tags + related_skills) dùng chung cho OpenClaw và Hermes — điều khiển Raptix qua MCP như đang dùng CLI trong chat: mental model cốt lõi — engagement là một thread, thread_id là handle duy nhất cho mọi tool (không juggling run id), orchestrator graph raptix lập OPPLAN rồi task() delegate cho specialist, engagement dài và asynchronous nên phải poll không block; mục Authorization non-negotiable — chỉ attack asset user xác nhận in scope, luôn truyền in-scope + out-of-scope trong instruction, từ chối target không phải của user; bảng 10 tool raptix_* với args/returns chính; core loop 6 bước (pick graph raptix/recon/soundwave → start → poll transcript với cursor next_index → steer send_message hoặc /model → pull findings SARIF → resume); polling cadence 15-30s một dòng update; guide diễn giải transcript (task(recon) = dispatch specialist), status 7 giá trị, level_counts (error=critical/high, warning=medium, note=low); error recovery.",
+      "tags": ["skill", "mcp", "agent-skill", "red-team", "progressive-disclosure"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:integrations/agent-skills/decepticon/examples.md",
+      "type": "document",
+      "name": "examples.md",
+      "filePath": "integrations/agent-skills/decepticon/examples.md",
+      "lineRange": [1, 124],
+      "summary": "6 worked examples cho raptix MCP skill, mỗi cái kèm lời thoại mẫu cho user: (1) bug bounty từ điện thoại — start_engagement với targets + instruction scope đầy đủ (không DoS, không exfil, rate-limit), poll transcript mỗi ~20s advance cursor after_index, check status → findings include_sarif=true, trình bày severity + URL + repro từ sarif.runs[0].results[]; (2) recon only — dùng graph recon + instruction no-exploit tường minh; (3) steering live — send_message refocus sang /api/v2 (authz/IDOR + injection) hoặc /model switch mid-run; (4) check status/resume ngày hôm sau qua list_engagements; (5) live burst raptix_watch max_seconds 15; (6) xử lý failure — đọc last transcript messages, đề nghị send_message fix hoặc start fresh, connection error nghĩa là server down; kết bằng 4 nguyên tắc narration — 1-2 câu mỗi update, nêu phase/specialist, findings kèm severity + repro, không paste dump thô.",
+      "tags": ["skill", "examples", "mcp", "narration", "documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:integrations/agent-skills/decepticon/reference.md",
+      "type": "document",
+      "name": "reference.md",
+      "filePath": "integrations/agent-skills/decepticon/reference.md",
+      "lineRange": [1, 137],
+      "summary": "Tham chiếu chính xác params/defaults/clamps/return schemas cho 10 tool raptix_* (tất cả async, target LangGraph server tại RAPTIX_API_URL): conventions — thread_id là engagement handle (run được resolve tự động), engagement_name là slug cho workspace + findings (~/.raptix/workspace/<name>/); từng tool: list_graphs trả assistants (graph_id raptix/recon/soundwave), list_engagements limit clamp 1-100, start_engagement (targets bắt buộc, instruction scope+RoE, scan_mode quick/standard/deep, engagement_name mặc định mcp-<UTC timestamp>), transcript (after_index + limit clamp 1-200, messages role user/assistant/tool/system, tool_calls dạng task(recon), next_index làm cursor), watch (max_seconds clamp 1-45, max_events 1-100, events custom/updates/messages, data clipped ~600 chars), send_message (enqueue sau run active, /model <provider/model-id> switch model), engagement_state (values nén placeholder <N chars omitted>), engagement_status (7 status + findings_available khi graph.json tồn tại), engagement_findings (level_counts, SARIF v2.1.0 khi include_sarif), cancel; notes — start/send_message không block, luôn cursor, findings lag run.",
+      "tags": ["skill", "reference", "mcp", "api-schema", "documentation"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "file:packages/raptix/raptix/mcp_server/server.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "file:packages/raptix/raptix/mcp_server/tools_lifecycle.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "file:packages/raptix/raptix/mcp_server/tools_interactive.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "file:packages/raptix/raptix/mcp_server/conversation.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "file:packages/raptix/raptix/mcp_server/findings.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "document:docs/integrations/external-agents.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "document:integrations/agent-skills/decepticon/reference.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/SKILL.md",
+      "target": "document:integrations/agent-skills/decepticon/examples.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/reference.md",
+      "target": "file:packages/raptix/raptix/mcp_server/models.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:integrations/agent-skills/decepticon/reference.md",
+      "target": "document:integrations/agent-skills/decepticon/examples.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

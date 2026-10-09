@@ -1,0 +1,13 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix",
+  "batchFiles": [
+    { "path": "clients/web-raptix/tests/fixtures/w00/http/021-graph.json", "language": "json", "sizeLines": 10, "fileCategory": "config" },
+    { "path": "clients/web-raptix/tests/fixtures/w00/http/022-threads.json", "language": "json", "sizeLines": 8, "fileCategory": "config" },
+    { "path": "clients/web-raptix/tests/fixtures/w00/http/index.json", "language": "json", "sizeLines": 261, "fileCategory": "config" }
+  ],
+  "batchImportData": {
+    "clients/web-raptix/tests/fixtures/w00/http/021-graph.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/022-threads.json": [],
+    "clients/web-raptix/tests/fixtures/w00/http/index.json": []
+  }
+}

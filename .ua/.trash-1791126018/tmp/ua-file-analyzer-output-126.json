@@ -1,0 +1,2252 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 24,
+  "filesSkipped": [
+    "packages/raptix-sdk/raptix_sdk/py.typed"
+  ],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 24,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 11,
+      "failed": 0,
+      "skipped": 13
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix-sdk/examples/middleware/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 23,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "raptix-example-middleware",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Build + install",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Test",
+          "level": 2,
+          "line": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/middleware/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.entry-points.\"raptix.middleware\"",
+          "level": 4,
+          "line": 13
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/prompt/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 23,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "raptix-example-prompt",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Build + install",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Test",
+          "level": 2,
+          "line": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/prompt/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.entry-points.\"raptix.prompts\"",
+          "level": 4,
+          "line": 13
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/skill/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 23,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "raptix-example-skill",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Build + install",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Test",
+          "level": 2,
+          "line": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/skill/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.entry-points.\"raptix.skills\"",
+          "level": 4,
+          "line": 13
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/skill/src/raptix_example_skill/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 14,
+      "nonEmptyLines": 10,
+      "functions": [
+        {
+          "name": "get_skill_sources",
+          "startLine": 11,
+          "endLine": 14,
+          "params": [
+            "role"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "get_skill_sources",
+          "line": 11,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/tool/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 23,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "raptix-example-tool",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Build + install",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Test",
+          "level": 2,
+          "line": 15
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/examples/tool/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 21,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.entry-points.\"raptix.tools\"",
+          "level": 4,
+          "line": 13
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 61,
+      "nonEmptyLines": 52,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.optional-dependencies",
+          "level": 2,
+          "line": 36
+        },
+        {
+          "heading": "project.scripts",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "project.urls",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 56
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 60
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/raptix_sdk/testing/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 114,
+      "nonEmptyLines": 87,
+      "classes": [
+        {
+          "name": "FakeBackend",
+          "startLine": 26,
+          "endLine": 61,
+          "methods": [
+            "__init__",
+            "read",
+            "write",
+            "list",
+            "exists"
+          ],
+          "properties": []
+        },
+        {
+          "name": "FakeLLM",
+          "startLine": 64,
+          "endLine": 87,
+          "methods": [
+            "__init__",
+            "invoke"
+          ],
+          "properties": []
+        },
+        {
+          "name": "FakeSandbox",
+          "startLine": 90,
+          "endLine": 111,
+          "methods": [
+            "__init__",
+            "execute_command"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FakeBackend",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "FakeLLM",
+          "line": 64,
+          "isDefault": false
+        },
+        {
+          "name": "FakeSandbox",
+          "line": 90,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "dict",
+          "lineNumber": 36
+        },
+        {
+          "caller": "read",
+          "callee": "kwargs.get",
+          "lineNumber": 45
+        },
+        {
+          "caller": "read",
+          "callee": "kwargs.get",
+          "lineNumber": 46
+        },
+        {
+          "caller": "list",
+          "callee": "path.endswith",
+          "lineNumber": 57
+        },
+        {
+          "caller": "list",
+          "callee": "sorted",
+          "lineNumber": 58
+        },
+        {
+          "caller": "list",
+          "callee": "p.startswith",
+          "lineNumber": 58
+        },
+        {
+          "caller": "__init__",
+          "callee": "list",
+          "lineNumber": 73
+        },
+        {
+          "caller": "invoke",
+          "callee": "self.calls.append",
+          "lineNumber": 79
+        },
+        {
+          "caller": "invoke",
+          "callee": "len",
+          "lineNumber": 80
+        },
+        {
+          "caller": "invoke",
+          "callee": "IndexError",
+          "lineNumber": 81
+        },
+        {
+          "caller": "__init__",
+          "callee": "list",
+          "lineNumber": 100
+        },
+        {
+          "caller": "execute_command",
+          "callee": "self.commands.append",
+          "lineNumber": 106
+        },
+        {
+          "caller": "execute_command",
+          "callee": "len",
+          "lineNumber": 107
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 0,
+        "classCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_compat_shim_identity.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 98,
+      "nonEmptyLines": 74,
+      "functions": [
+        {
+          "name": "test_schemas_identity_preservation",
+          "startLine": 16,
+          "endLine": 25,
+          "params": []
+        },
+        {
+          "name": "test_llm_models_identity_preservation",
+          "startLine": 28,
+          "endLine": 34,
+          "params": []
+        },
+        {
+          "name": "test_plugin_loader_identity_preservation",
+          "startLine": 37,
+          "endLine": 43,
+          "params": []
+        },
+        {
+          "name": "test_research_graph_identity_preservation",
+          "startLine": 46,
+          "endLine": 52,
+          "params": []
+        },
+        {
+          "name": "test_dunder_lookup_does_not_warn",
+          "startLine": 55,
+          "endLine": 78,
+          "params": []
+        },
+        {
+          "name": "test_explicit_warning_on_legacy_attribute",
+          "startLine": 81,
+          "endLine": 98,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_schemas_identity_preservation",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "test_llm_models_identity_preservation",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "test_plugin_loader_identity_preservation",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "test_research_graph_identity_preservation",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "test_dunder_lookup_does_not_warn",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "test_explicit_warning_on_legacy_attribute",
+          "line": 81,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_schemas_identity_preservation",
+          "callee": "warnings.catch_warnings",
+          "lineNumber": 18
+        },
+        {
+          "caller": "test_schemas_identity_preservation",
+          "callee": "warnings.simplefilter",
+          "lineNumber": 19
+        },
+        {
+          "caller": "test_llm_models_identity_preservation",
+          "callee": "warnings.catch_warnings",
+          "lineNumber": 29
+        },
+        {
+          "caller": "test_llm_models_identity_preservation",
+          "callee": "warnings.simplefilter",
+          "lineNumber": 30
+        },
+        {
+          "caller": "test_plugin_loader_identity_preservation",
+          "callee": "warnings.catch_warnings",
+          "lineNumber": 38
+        },
+        {
+          "caller": "test_plugin_loader_identity_preservation",
+          "callee": "warnings.simplefilter",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_research_graph_identity_preservation",
+          "callee": "warnings.catch_warnings",
+          "lineNumber": 47
+        },
+        {
+          "caller": "test_research_graph_identity_preservation",
+          "callee": "warnings.simplefilter",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_dunder_lookup_does_not_warn",
+          "callee": "warnings.catch_warnings",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_dunder_lookup_does_not_warn",
+          "callee": "warnings.simplefilter",
+          "lineNumber": 61
+        },
+        {
+          "caller": "test_dunder_lookup_does_not_warn",
+          "callee": "issubclass",
+          "lineNumber": 73
+        },
+        {
+          "caller": "test_dunder_lookup_does_not_warn",
+          "callee": "str",
+          "lineNumber": 73
+        },
+        {
+          "caller": "test_dunder_lookup_does_not_warn",
+          "callee": "str",
+          "lineNumber": 77
+        },
+        {
+          "caller": "test_explicit_warning_on_legacy_attribute",
+          "callee": "schemas_shim._seen.clear",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_explicit_warning_on_legacy_attribute",
+          "callee": "warnings.catch_warnings",
+          "lineNumber": 88
+        },
+        {
+          "caller": "test_explicit_warning_on_legacy_attribute",
+          "callee": "warnings.simplefilter",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_explicit_warning_on_legacy_attribute",
+          "callee": "issubclass",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_explicit_warning_on_legacy_attribute",
+          "callee": "str",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_explicit_warning_on_legacy_attribute",
+          "callee": "len",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_explicit_warning_on_legacy_attribute",
+          "callee": "len",
+          "lineNumber": 97
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_examples.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 71,
+      "nonEmptyLines": 58,
+      "functions": [
+        {
+          "name": "test_example_layout",
+          "startLine": 31,
+          "endLine": 39,
+          "params": [
+            "kind"
+          ]
+        },
+        {
+          "name": "test_example_declares_correct_entry_point_group",
+          "startLine": 43,
+          "endLine": 58,
+          "params": [
+            "kind"
+          ]
+        },
+        {
+          "name": "test_example_module_is_importable_syntactically",
+          "startLine": 62,
+          "endLine": 71,
+          "params": [
+            "kind"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_example_layout",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "test_example_declares_correct_entry_point_group",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "test_example_module_is_importable_syntactically",
+          "line": 61,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_example_layout",
+          "callee": "example.is_dir",
+          "lineNumber": 34
+        },
+        {
+          "caller": "test_example_layout",
+          "callee": "(example / \"pyproject.toml\").is_file",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_example_layout",
+          "callee": "(example / \"README.md\").is_file",
+          "lineNumber": 36
+        },
+        {
+          "caller": "test_example_layout",
+          "callee": "init.is_file",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_example_declares_correct_entry_point_group",
+          "callee": "tomllib.loads",
+          "lineNumber": 46
+        },
+        {
+          "caller": "test_example_declares_correct_entry_point_group",
+          "callee": "(example / \"pyproject.toml\").read_text",
+          "lineNumber": 46
+        },
+        {
+          "caller": "test_example_declares_correct_entry_point_group",
+          "callee": "data.get(\"project\", {}).get",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_example_declares_correct_entry_point_group",
+          "callee": "data.get",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_example_declares_correct_entry_point_group",
+          "callee": "sorted",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_example_declares_correct_entry_point_group",
+          "callee": "sorted",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_example_module_is_importable_syntactically",
+          "callee": "init.read_text",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_example_module_is_importable_syntactically",
+          "callee": "ast.parse",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_example_module_is_importable_syntactically",
+          "callee": "str",
+          "lineNumber": 71
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_extra_routes.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 137,
+      "nonEmptyLines": 102,
+      "functions": [
+        {
+          "name": "test_extra_routes_adds_caller_supplied_prefix",
+          "startLine": 21,
+          "endLine": 29,
+          "params": []
+        },
+        {
+          "name": "test_longest_prefix_wins",
+          "startLine": 32,
+          "endLine": 48,
+          "params": []
+        },
+        {
+          "name": "test_baseline_without_extra_routes",
+          "startLine": 51,
+          "endLine": 55,
+          "params": []
+        },
+        {
+          "name": "test_reserved_prefix_skills_root_rejected",
+          "startLine": 58,
+          "endLine": 70,
+          "params": []
+        },
+        {
+          "name": "test_reserved_prefix_root_rejected",
+          "startLine": 73,
+          "endLine": 82,
+          "params": []
+        },
+        {
+          "name": "test_path_traversal_rejected",
+          "startLine": 85,
+          "endLine": 92,
+          "params": []
+        },
+        {
+          "name": "test_missing_slash_rejected",
+          "startLine": 95,
+          "endLine": 103,
+          "params": []
+        },
+        {
+          "name": "test_valid_subprefix_passes",
+          "startLine": 106,
+          "endLine": 111,
+          "params": []
+        },
+        {
+          "name": "test_extra_routes_actually_serves_content",
+          "startLine": 114,
+          "endLine": 137,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_extra_routes_adds_caller_supplied_prefix",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "test_longest_prefix_wins",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "test_baseline_without_extra_routes",
+          "line": 51,
+          "isDefault": false
+        },
+        {
+          "name": "test_reserved_prefix_skills_root_rejected",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "test_reserved_prefix_root_rejected",
+          "line": 73,
+          "isDefault": false
+        },
+        {
+          "name": "test_path_traversal_rejected",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "test_missing_slash_rejected",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "test_valid_subprefix_passes",
+          "line": 106,
+          "isDefault": false
+        },
+        {
+          "name": "test_extra_routes_actually_serves_content",
+          "line": 114,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_extra_routes_adds_caller_supplied_prefix",
+          "callee": "FakeSandbox",
+          "lineNumber": 23
+        },
+        {
+          "caller": "test_extra_routes_adds_caller_supplied_prefix",
+          "callee": "FakeBackend",
+          "lineNumber": 24
+        },
+        {
+          "caller": "test_extra_routes_adds_caller_supplied_prefix",
+          "callee": "make_agent_backend",
+          "lineNumber": 26
+        },
+        {
+          "caller": "test_longest_prefix_wins",
+          "callee": "FakeSandbox",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_longest_prefix_wins",
+          "callee": "FakeBackend",
+          "lineNumber": 40
+        },
+        {
+          "caller": "test_longest_prefix_wins",
+          "callee": "make_agent_backend",
+          "lineNumber": 42
+        },
+        {
+          "caller": "test_longest_prefix_wins",
+          "callee": "list",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_longest_prefix_wins",
+          "callee": "backend.routes.keys",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_baseline_without_extra_routes",
+          "callee": "FakeSandbox",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_baseline_without_extra_routes",
+          "callee": "make_agent_backend",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_baseline_without_extra_routes",
+          "callee": "list",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_baseline_without_extra_routes",
+          "callee": "backend.routes.keys",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_reserved_prefix_skills_root_rejected",
+          "callee": "FakeSandbox",
+          "lineNumber": 67
+        },
+        {
+          "caller": "test_reserved_prefix_skills_root_rejected",
+          "callee": "FakeBackend",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_reserved_prefix_skills_root_rejected",
+          "callee": "pytest.raises",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_reserved_prefix_skills_root_rejected",
+          "callee": "make_agent_backend",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_reserved_prefix_root_rejected",
+          "callee": "FakeSandbox",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_reserved_prefix_root_rejected",
+          "callee": "FakeBackend",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_reserved_prefix_root_rejected",
+          "callee": "pytest.raises",
+          "lineNumber": 81
+        },
+        {
+          "caller": "test_reserved_prefix_root_rejected",
+          "callee": "make_agent_backend",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_path_traversal_rejected",
+          "callee": "FakeSandbox",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_path_traversal_rejected",
+          "callee": "FakeBackend",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_path_traversal_rejected",
+          "callee": "pytest.raises",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_path_traversal_rejected",
+          "callee": "make_agent_backend",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_missing_slash_rejected",
+          "callee": "FakeSandbox",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_missing_slash_rejected",
+          "callee": "FakeBackend",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_missing_slash_rejected",
+          "callee": "pytest.raises",
+          "lineNumber": 102
+        },
+        {
+          "caller": "test_missing_slash_rejected",
+          "callee": "make_agent_backend",
+          "lineNumber": 103
+        },
+        {
+          "caller": "test_valid_subprefix_passes",
+          "callee": "FakeSandbox",
+          "lineNumber": 108
+        },
+        {
+          "caller": "test_valid_subprefix_passes",
+          "callee": "FakeBackend",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_valid_subprefix_passes",
+          "callee": "make_agent_backend",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_extra_routes_actually_serves_content",
+          "callee": "FakeSandbox",
+          "lineNumber": 129
+        },
+        {
+          "caller": "test_extra_routes_actually_serves_content",
+          "callee": "FakeBackend",
+          "lineNumber": 130
+        },
+        {
+          "caller": "test_extra_routes_actually_serves_content",
+          "callee": "make_agent_backend",
+          "lineNumber": 131
+        },
+        {
+          "caller": "test_extra_routes_actually_serves_content",
+          "callee": "backend.read",
+          "lineNumber": 136
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 9,
+        "functionCount": 9,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_framework_import_smoke.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 163,
+      "nonEmptyLines": 134,
+      "functions": [
+        {
+          "name": "test_all_16_agent_factories_importable",
+          "startLine": 18,
+          "endLine": 61,
+          "params": []
+        },
+        {
+          "name": "test_framework_backends_importable",
+          "startLine": 64,
+          "endLine": 76,
+          "params": []
+        },
+        {
+          "name": "test_framework_middleware_importable",
+          "startLine": 79,
+          "endLine": 94,
+          "params": []
+        },
+        {
+          "name": "test_framework_llm_importable",
+          "startLine": 97,
+          "endLine": 102,
+          "params": []
+        },
+        {
+          "name": "test_compat_register_legacy_imports_idempotent",
+          "startLine": 105,
+          "endLine": 123,
+          "params": []
+        },
+        {
+          "name": "test_role_registry_seeded_with_16_oss_roles",
+          "startLine": 126,
+          "endLine": 137,
+          "params": []
+        },
+        {
+          "name": "test_plugin_registry_finds_oss_subagents",
+          "startLine": 140,
+          "endLine": 163,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_all_16_agent_factories_importable",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "test_framework_backends_importable",
+          "line": 64,
+          "isDefault": false
+        },
+        {
+          "name": "test_framework_middleware_importable",
+          "line": 79,
+          "isDefault": false
+        },
+        {
+          "name": "test_framework_llm_importable",
+          "line": 97,
+          "isDefault": false
+        },
+        {
+          "name": "test_compat_register_legacy_imports_idempotent",
+          "line": 105,
+          "isDefault": false
+        },
+        {
+          "name": "test_role_registry_seeded_with_16_oss_roles",
+          "line": 126,
+          "isDefault": false
+        },
+        {
+          "name": "test_plugin_registry_finds_oss_subagents",
+          "line": 140,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_all_16_agent_factories_importable",
+          "callee": "len",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_all_16_agent_factories_importable",
+          "callee": "all",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_all_16_agent_factories_importable",
+          "callee": "callable",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_all_16_agent_factories_importable",
+          "callee": "callable",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_all_16_agent_factories_importable",
+          "callee": "callable",
+          "lineNumber": 61
+        },
+        {
+          "caller": "test_framework_backends_importable",
+          "callee": "isinstance",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_framework_backends_importable",
+          "callee": "callable",
+          "lineNumber": 75
+        },
+        {
+          "caller": "test_framework_backends_importable",
+          "callee": "callable",
+          "lineNumber": 76
+        },
+        {
+          "caller": "test_framework_middleware_importable",
+          "callee": "isinstance",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_framework_llm_importable",
+          "callee": "isinstance",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_framework_llm_importable",
+          "callee": "callable",
+          "lineNumber": 102
+        },
+        {
+          "caller": "test_compat_register_legacy_imports_idempotent",
+          "callee": "warnings.catch_warnings",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_compat_register_legacy_imports_idempotent",
+          "callee": "warnings.simplefilter",
+          "lineNumber": 113
+        },
+        {
+          "caller": "test_compat_register_legacy_imports_idempotent",
+          "callee": "register_legacy_imports",
+          "lineNumber": 114
+        },
+        {
+          "caller": "test_compat_register_legacy_imports_idempotent",
+          "callee": "register_legacy_imports",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_compat_register_legacy_imports_idempotent",
+          "callee": "str",
+          "lineNumber": 120
+        },
+        {
+          "caller": "test_compat_register_legacy_imports_idempotent",
+          "callee": "len",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_role_registry_seeded_with_16_oss_roles",
+          "callee": "RoleRegistry.get",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_plugin_registry_finds_oss_subagents",
+          "callee": "PluginRegistry.reset",
+          "lineNumber": 152
+        },
+        {
+          "caller": "test_plugin_registry_finds_oss_subagents",
+          "callee": "PluginRegistry.load",
+          "lineNumber": 153
+        },
+        {
+          "caller": "test_plugin_registry_finds_oss_subagents",
+          "callee": "reg.list_plugins",
+          "lineNumber": 154
+        },
+        {
+          "caller": "test_plugin_registry_finds_oss_subagents",
+          "callee": "len",
+          "lineNumber": 158
+        },
+        {
+          "caller": "test_plugin_registry_finds_oss_subagents",
+          "callee": "len",
+          "lineNumber": 160
+        },
+        {
+          "caller": "test_plugin_registry_finds_oss_subagents",
+          "callee": "reg.detect_collisions",
+          "lineNumber": 163
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_sdk_api_stability.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 76,
+      "nonEmptyLines": 66,
+      "functions": [
+        {
+          "name": "test_sdk_public_name_importable",
+          "startLine": 60,
+          "endLine": 66,
+          "params": [
+            "module_name",
+            "attr"
+          ]
+        },
+        {
+          "name": "test_sdk_manifest_count_unchanged",
+          "startLine": 69,
+          "endLine": 76,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_sdk_public_name_importable",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "test_sdk_manifest_count_unchanged",
+          "line": 69,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_sdk_public_name_importable",
+          "callee": "importlib.import_module",
+          "lineNumber": 61
+        },
+        {
+          "caller": "test_sdk_public_name_importable",
+          "callee": "getattr",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_sdk_manifest_count_unchanged",
+          "callee": "len",
+          "lineNumber": 72
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix-sdk/tests/test_sdk_surface.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 125,
+      "nonEmptyLines": 98,
+      "functions": [
+        {
+          "name": "test_protocols_importable",
+          "startLine": 12,
+          "endLine": 36,
+          "params": []
+        },
+        {
+          "name": "test_contributions_importable",
+          "startLine": 39,
+          "endLine": 71,
+          "params": []
+        },
+        {
+          "name": "test_fake_backend_satisfies_protocol",
+          "startLine": 74,
+          "endLine": 82,
+          "params": []
+        },
+        {
+          "name": "test_fake_llm_satisfies_protocol",
+          "startLine": 85,
+          "endLine": 92,
+          "params": []
+        },
+        {
+          "name": "test_fake_sandbox_satisfies_protocol",
+          "startLine": 95,
+          "endLine": 103,
+          "params": []
+        },
+        {
+          "name": "test_role_registry_idempotent",
+          "startLine": 106,
+          "endLine": 114,
+          "params": []
+        },
+        {
+          "name": "test_skill_source_registry_validates",
+          "startLine": 117,
+          "endLine": 125,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_protocols_importable",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "test_contributions_importable",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "test_fake_backend_satisfies_protocol",
+          "line": 74,
+          "isDefault": false
+        },
+        {
+          "name": "test_fake_llm_satisfies_protocol",
+          "line": 85,
+          "isDefault": false
+        },
+        {
+          "name": "test_fake_sandbox_satisfies_protocol",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "test_role_registry_idempotent",
+          "line": 106,
+          "isDefault": false
+        },
+        {
+          "name": "test_skill_source_registry_validates",
+          "line": 117,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_protocols_importable",
+          "callee": "proto.__name__.endswith",
+          "lineNumber": 36
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "pytest.raises",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "cls",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "pytest.raises",
+          "lineNumber": 61
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "SubAgentContribution",
+          "lineNumber": 62
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "SafetyDeclaration",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "PromptContribution",
+          "lineNumber": 68
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "ToolContribution",
+          "lineNumber": 69
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "MiddlewareContribution",
+          "lineNumber": 70
+        },
+        {
+          "caller": "test_contributions_importable",
+          "callee": "SubAgentContribution",
+          "lineNumber": 71
+        },
+        {
+          "caller": "test_fake_backend_satisfies_protocol",
+          "callee": "FakeBackend",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_fake_backend_satisfies_protocol",
+          "callee": "isinstance",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_fake_backend_satisfies_protocol",
+          "callee": "fb.read",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_fake_backend_satisfies_protocol",
+          "callee": "fb.exists",
+          "lineNumber": 81
+        },
+        {
+          "caller": "test_fake_backend_satisfies_protocol",
+          "callee": "fb.exists",
+          "lineNumber": 82
+        },
+        {
+          "caller": "test_fake_llm_satisfies_protocol",
+          "callee": "FakeLLM",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_fake_llm_satisfies_protocol",
+          "callee": "isinstance",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_fake_llm_satisfies_protocol",
+          "callee": "flm.invoke",
+          "lineNumber": 91
+        },
+        {
+          "caller": "test_fake_llm_satisfies_protocol",
+          "callee": "flm.invoke",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_fake_sandbox_satisfies_protocol",
+          "callee": "FakeSandbox",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_fake_sandbox_satisfies_protocol",
+          "callee": "isinstance",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_fake_sandbox_satisfies_protocol",
+          "callee": "fsb.execute_command",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_role_registry_idempotent",
+          "callee": "RoleRegistry.register",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_role_registry_idempotent",
+          "callee": "frozenset",
+          "lineNumber": 110
+        },
+        {
+          "caller": "test_role_registry_idempotent",
+          "callee": "RoleRegistry.register",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_role_registry_idempotent",
+          "callee": "frozenset",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_role_registry_idempotent",
+          "callee": "RoleRegistry.get",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_skill_source_registry_validates",
+          "callee": "SkillSourceRegistry.register",
+          "lineNumber": 120
+        },
+        {
+          "caller": "test_skill_source_registry_validates",
+          "callee": "SkillSourceRegistry.register",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_skill_source_registry_validates",
+          "callee": "AssertionError",
+          "lineNumber": 125
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 19,
+      "nonEmptyLines": 14,
+      "sections": [
+        {
+          "heading": "raptix",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Install",
+          "level": 2,
+          "line": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix/pyproject.toml",
+      "language": "toml",
+      "fileCategory": "config",
+      "totalLines": 204,
+      "nonEmptyLines": 190,
+      "sections": [
+        {
+          "heading": "project",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "project.optional-dependencies",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "project.scripts",
+          "level": 2,
+          "line": 110
+        },
+        {
+          "heading": "tool.raptix.plugins",
+          "level": 3,
+          "line": 158
+        },
+        {
+          "heading": "project.entry-points.\"raptix.subagents\"",
+          "level": 4,
+          "line": 161
+        },
+        {
+          "heading": "project.urls",
+          "level": 2,
+          "line": 188
+        },
+        {
+          "heading": "build-system",
+          "level": 1,
+          "line": 192
+        },
+        {
+          "heading": "tool.hatch.build.targets.wheel",
+          "level": 5,
+          "line": 196
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 8
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/_boot.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 161,
+      "nonEmptyLines": 136,
+      "functions": [
+        {
+          "name": "_oss_skill_sources_for",
+          "startLine": 36,
+          "endLine": 46,
+          "params": [
+            "role"
+          ]
+        },
+        {
+          "name": "_register_oss_roles",
+          "startLine": 49,
+          "endLine": 63,
+          "params": []
+        },
+        {
+          "name": "_register_plugin_roles",
+          "startLine": 66,
+          "endLine": 89,
+          "params": []
+        },
+        {
+          "name": "_push_role_resolutions",
+          "startLine": 92,
+          "endLine": 145,
+          "params": []
+        },
+        {
+          "name": "run",
+          "startLine": 148,
+          "endLine": 158,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_oss_skill_sources_for",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "_register_oss_roles",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "_register_plugin_roles",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "_push_role_resolutions",
+          "line": 92,
+          "isDefault": false
+        },
+        {
+          "name": "run",
+          "line": 148,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_register_oss_roles",
+          "callee": "SLOTS_PER_ROLE.items",
+          "lineNumber": 58
+        },
+        {
+          "caller": "_register_oss_roles",
+          "callee": "RoleRegistry.register",
+          "lineNumber": 59
+        },
+        {
+          "caller": "_register_oss_roles",
+          "callee": "_oss_skill_sources_for",
+          "lineNumber": 62
+        },
+        {
+          "caller": "_register_plugin_roles",
+          "callee": "load_plugin_role_specs",
+          "lineNumber": 76
+        },
+        {
+          "caller": "_register_plugin_roles",
+          "callee": "RoleRegistry.register",
+          "lineNumber": 78
+        },
+        {
+          "caller": "_register_plugin_roles",
+          "callee": "getattr",
+          "lineNumber": 81
+        },
+        {
+          "caller": "_register_plugin_roles",
+          "callee": "getattr",
+          "lineNumber": 82
+        },
+        {
+          "caller": "_register_plugin_roles",
+          "callee": "logger.exception",
+          "lineNumber": 85
+        },
+        {
+          "caller": "_register_plugin_roles",
+          "callee": "getattr",
+          "lineNumber": 88
+        },
+        {
+          "caller": "_push_role_resolutions",
+          "callee": "SLOTS_PER_ROLE.items",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_push_role_resolutions",
+          "callee": "tuple",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_push_role_resolutions",
+          "callee": "MiddlewareInfo",
+          "lineNumber": 126
+        },
+        {
+          "caller": "_push_role_resolutions",
+          "callee": "tuple",
+          "lineNumber": 136
+        },
+        {
+          "caller": "_push_role_resolutions",
+          "callee": "_osss",
+          "lineNumber": 136
+        },
+        {
+          "caller": "_push_role_resolutions",
+          "callee": "RoleResolution",
+          "lineNumber": 137
+        },
+        {
+          "caller": "_push_role_resolutions",
+          "callee": "PluginRegistry.set_role_resolution",
+          "lineNumber": 145
+        },
+        {
+          "caller": "run",
+          "callee": "_register_oss_roles",
+          "lineNumber": 150
+        },
+        {
+          "caller": "run",
+          "callee": "_register_plugin_roles",
+          "lineNumber": 151
+        },
+        {
+          "caller": "run",
+          "callee": "PluginRegistry.load",
+          "lineNumber": 152
+        },
+        {
+          "caller": "run",
+          "callee": "_push_role_resolutions",
+          "lineNumber": 153
+        },
+        {
+          "caller": "run",
+          "callee": "logger.debug",
+          "lineNumber": 154
+        },
+        {
+          "caller": "run",
+          "callee": "len",
+          "lineNumber": 156
+        },
+        {
+          "caller": "run",
+          "callee": "len",
+          "lineNumber": 157
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 5,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/plugins/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 11,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/claude4_compat.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 209,
+      "nonEmptyLines": 171,
+      "functions": [
+        {
+          "name": "_load_term_map",
+          "startLine": 108,
+          "endLine": 121,
+          "params": []
+        },
+        {
+          "name": "is_claude4_family",
+          "startLine": 124,
+          "endLine": 128,
+          "params": [
+            "model"
+          ]
+        },
+        {
+          "name": "substitute_trigger_terms",
+          "startLine": 131,
+          "endLine": 147,
+          "params": [
+            "prompt",
+            "term_map"
+          ]
+        },
+        {
+          "name": "prepend_neutral_persona",
+          "startLine": 150,
+          "endLine": 156,
+          "params": [
+            "prompt"
+          ]
+        },
+        {
+          "name": "_compat_disabled",
+          "startLine": 159,
+          "endLine": 163,
+          "params": []
+        },
+        {
+          "name": "apply_claude4_compat",
+          "startLine": 166,
+          "endLine": 174,
+          "params": [
+            "prompt",
+            "model"
+          ]
+        },
+        {
+          "name": "_resolve_model_for_role",
+          "startLine": 177,
+          "endLine": 189,
+          "params": [
+            "role"
+          ]
+        },
+        {
+          "name": "apply_compat_for_role",
+          "startLine": 192,
+          "endLine": 200,
+          "params": [
+            "prompt",
+            "role"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "_load_term_map",
+          "line": 107,
+          "isDefault": false
+        },
+        {
+          "name": "is_claude4_family",
+          "line": 124,
+          "isDefault": false
+        },
+        {
+          "name": "substitute_trigger_terms",
+          "line": 131,
+          "isDefault": false
+        },
+        {
+          "name": "prepend_neutral_persona",
+          "line": 150,
+          "isDefault": false
+        },
+        {
+          "name": "_compat_disabled",
+          "line": 159,
+          "isDefault": false
+        },
+        {
+          "name": "apply_claude4_compat",
+          "line": 166,
+          "isDefault": false
+        },
+        {
+          "name": "_resolve_model_for_role",
+          "line": 177,
+          "isDefault": false
+        },
+        {
+          "name": "apply_compat_for_role",
+          "line": 192,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_load_term_map",
+          "callee": "dict",
+          "lineNumber": 111
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "yaml.safe_load",
+          "lineNumber": 113
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "_CONFIG_PATH.read_text",
+          "lineNumber": 113
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "(data or {}).get",
+          "lineNumber": 114
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "isinstance",
+          "lineNumber": 115
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "dict",
+          "lineNumber": 116
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "dict",
+          "lineNumber": 117
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "merged.update",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "str",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "str",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "terms.items",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_load_term_map",
+          "callee": "dict",
+          "lineNumber": 121
+        },
+        {
+          "caller": "is_claude4_family",
+          "callee": "bool",
+          "lineNumber": 128
+        },
+        {
+          "caller": "is_claude4_family",
+          "callee": "_CLAUDE4_MODEL_RE.search",
+          "lineNumber": 128
+        },
+        {
+          "caller": "substitute_trigger_terms",
+          "callee": "_load_term_map",
+          "lineNumber": 139
+        },
+        {
+          "caller": "substitute_trigger_terms",
+          "callee": "sorted",
+          "lineNumber": 142
+        },
+        {
+          "caller": "substitute_trigger_terms",
+          "callee": "terms.items",
+          "lineNumber": 142
+        },
+        {
+          "caller": "substitute_trigger_terms",
+          "callee": "len",
+          "lineNumber": 142
+        },
+        {
+          "caller": "substitute_trigger_terms",
+          "callee": "re.compile",
+          "lineNumber": 145
+        },
+        {
+          "caller": "substitute_trigger_terms",
+          "callee": "re.escape",
+          "lineNumber": 145
+        },
+        {
+          "caller": "substitute_trigger_terms",
+          "callee": "pattern.sub",
+          "lineNumber": 146
+        },
+        {
+          "caller": "prepend_neutral_persona",
+          "callee": "_NEUTRAL_PERSONA_PREFIX.rstrip",
+          "lineNumber": 153
+        },
+        {
+          "caller": "prepend_neutral_persona",
+          "callee": "len",
+          "lineNumber": 154
+        },
+        {
+          "caller": "_compat_disabled",
+          "callee": "os.environ.get",
+          "lineNumber": 160
+        },
+        {
+          "caller": "_compat_disabled",
+          "callee": "val.strip().lower",
+          "lineNumber": 163
+        },
+        {
+          "caller": "_compat_disabled",
+          "callee": "val.strip",
+          "lineNumber": 163
+        },
+        {
+          "caller": "apply_claude4_compat",
+          "callee": "_compat_disabled",
+          "lineNumber": 172
+        },
+        {
+          "caller": "apply_claude4_compat",
+          "callee": "is_claude4_family",
+          "lineNumber": 172
+        },
+        {
+          "caller": "apply_claude4_compat",
+          "callee": "prepend_neutral_persona",
+          "lineNumber": 174
+        },
+        {
+          "caller": "apply_claude4_compat",
+          "callee": "substitute_trigger_terms",
+          "lineNumber": 174
+        },
+        {
+          "caller": "_resolve_model_for_role",
+          "callee": "ModelRouter().get_assignment",
+          "lineNumber": 187
+        },
+        {
+          "caller": "_resolve_model_for_role",
+          "callee": "ModelRouter",
+          "lineNumber": 187
+        },
+        {
+          "caller": "apply_compat_for_role",
+          "callee": "_resolve_model_for_role",
+          "lineNumber": 199
+        },
+        {
+          "caller": "apply_compat_for_role",
+          "callee": "apply_claude4_compat",
+          "lineNumber": 200
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 8,
+        "functionCount": 8,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/language.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 13,
+      "nonEmptyLines": 12,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/agents/prompts/standard/wireless_operator.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 74,
+      "nonEmptyLines": 63,
+      "sections": [
+        {
+          "heading": "Hardware mode — confirm first",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "Loop",
+          "level": 1,
+          "line": 21
+        },
+        {
+          "heading": "Scope rules — never violate",
+          "level": 1,
+          "line": 39
+        },
+        {
+          "heading": "Skills tree",
+          "level": 1,
+          "line": 50
+        },
+        {
+          "heading": "Handoff format",
+          "level": 1,
+          "line": 63
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "batchIndex": 74,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md",
+      "language": "markdown",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/decisions/0002-brand-token.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/decisions/0004-fresh-thread-context-bootstrap.md",
+      "language": "markdown",
+      "sizeLines": 45,
+      "fileCategory": "docs"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "document:clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md",
+      "type": "document",
+      "name": "0001-single-user-scope-and-canonical-screens.md",
+      "filePath": "clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md",
+      "lineRange": [1, 28],
+      "summary": "ADR 0001 (P0, Accepted): scope release web-raptix là single-user hoàn chỉnh (project → planning → run → outcomes → report); Members/RBAC và Credentials Vault deferred vào backlog, không mount như capability active, không dùng members giả trong real mode; chốt canonical screens (Home cho project list, AgentRun cho chat/run, OperatorConsole, InfrastructureData tách theo feature; Chat/ProjectList/Orchestrator/Phases/Assets/Credentials chỉ design-ref); Vector Campaigns và C2 & Sessions chưa phải capability real vì chưa có backend contract — bỏ badge '3 Live' hardcode; screens không mount không xóa ở Phase 0/1; hệ quả: Phase 2 giữ 23 nguồn design nhưng 16 route active, NewProjectModal giảm fields về contract backend thật, myRole/members/counters hardcode loại khỏi ProjectViewModel real mode.",
+      "tags": ["adr", "single-user", "canonical-screens", "scope", "web-raptix"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/decisions/0002-brand-token.md",
+      "type": "document",
+      "name": "0002-brand-token.md",
+      "filePath": "clients/web-raptix/docs/decisions/0002-brand-token.md",
+      "lineRange": [1, 20],
+      "summary": "ADR 0002 (P0, Accepted): giữ #DC2626 làm brand chính light UI theo bản render người dùng đã hoàn thiện (trái design brief #EE0033); palette dark riêng của HitlModal (#121821/#273142/#EE0033, hover #CC002B) được giữ như 'alarm surface' có chủ đích — modal HITL là critical-risk surface nên khác biệt màu là thiết kế, không phải inconsistency; tokens được centralize vào styles/tokens.css ở Phase 2 với --color-brand (light) và --color-danger-strong (#EE0033) nhưng không đổi giá trị màu đang render, không 'đồng bộ' #EE0033 → #DC2626 trong HitlModal khi refactor.",
+      "tags": ["adr", "brand", "design-tokens", "web-raptix"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:clients/web-raptix/docs/decisions/0004-fresh-thread-context-bootstrap.md",
+      "type": "document",
+      "name": "0004-fresh-thread-context-bootstrap.md",
+      "filePath": "clients/web-raptix/docs/decisions/0004-fresh-thread-context-bootstrap.md",
+      "lineRange": [1, 45],
+      "summary": "ADR accepted W07 (2026-10-02): bootstrap context cho thread runtime mới sau khi một run Soundwave thực tế persist authorization_confirmed=false dù configurable nhận true — channel boolean khởi tạo false và hydration của EngagementContext chỉ copy authorization khi giá trị là None, khiến default-false không phân biệt được với false đã persist, strict reuse check của web từ chối checkpoint; quyết định: tạo thread mới qua supersteps của API/SDK, khởi tạo __start__ chỉ với trusted engagement state lấy từ project metadata owner-scoped và server topology, không bao giờ từ browser input; operation gắn liền create thread với candidate ID do server sinh và if_exists:raise, không update state thread sẵn có; ACK-loss reconciliation kiểm tra metadata + full context proof thay vì replay create/update; threat model: HTTP allowlist chặn browser submit state/config, recheck authorization và context hash khi bind, duplicate ID bị reject — không disable RoE/SafeCommand/egress/HITL; evidence w07-hydration-failure.json và w07-live.json.",
+      "tags": ["adr", "thread-bootstrap", "langgraph", "security", "web-raptix"],
+      "complexity": "complex",
+      "languageNotes": "Không migration nâng authority thread cũ — chỉ áp dụng cho thread mới; sandbox_url giữ config-only vì không phải hydration state channel."
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:clients/web-raptix/docs/decisions/0001-single-user-scope-and-canonical-screens.md",
+      "target": "document:clients/web-raptix/docs/decisions/0002-brand-token.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

@@ -1,0 +1,337 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+ "batchFiles": [
+  {
+   "path": "raptix/agents/standard/postexploit.py",
+   "language": "python",
+   "sizeLines": 184,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/recon.py",
+   "language": "python",
+   "sizeLines": 183,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/reverser.py",
+   "language": "python",
+   "sizeLines": 181,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/soundwave.py",
+   "language": "python",
+   "sizeLines": 145,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/supply_chain_operator.py",
+   "language": "python",
+   "sizeLines": 141,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/surface_exploit.py",
+   "language": "python",
+   "sizeLines": 103,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/wireless_operator.py",
+   "language": "python",
+   "sizeLines": 149,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/backends/__init__.py",
+   "language": "python",
+   "sizeLines": 122,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/backends/factory.py",
+   "language": "python",
+   "sizeLines": 142,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/llm/__init__.py",
+   "language": "python",
+   "sizeLines": 24,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/bash/__init__.py",
+   "language": "python",
+   "sizeLines": 18,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/bash/bash.py",
+   "language": "python",
+   "sizeLines": 670,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/bash/prompt.py",
+   "language": "python",
+   "sizeLines": 361,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/research/sarif.py",
+   "language": "python",
+   "sizeLines": 240,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/research/tools.py",
+   "language": "python",
+   "sizeLines": 2574,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/verification.py",
+   "language": "python",
+   "sizeLines": 78,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/web/search.py",
+   "language": "python",
+   "sizeLines": 204,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/agents/standard/test_specialist_skill_sources.py",
+   "language": "python",
+   "sizeLines": 81,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/agents/test_blue_cell_agent.py",
+   "language": "python",
+   "sizeLines": 74,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/agents/test_reporting_tools_wired.py",
+   "language": "python",
+   "sizeLines": 66,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/backends/test_factory.py",
+   "language": "python",
+   "sizeLines": 188,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/backends/test_skills_path.py",
+   "language": "python",
+   "sizeLines": 15,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/research/test_dependency_evidence.py",
+   "language": "python",
+   "sizeLines": 51,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/research/test_sarif.py",
+   "language": "python",
+   "sizeLines": 145,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/bash/test_passive_read_bounds.py",
+   "language": "python",
+   "sizeLines": 96,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/bash/test_sandbox_routing.py",
+   "language": "python",
+   "sizeLines": 81,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/test_verification.py",
+   "language": "python",
+   "sizeLines": 57,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "raptix/agents/standard/postexploit.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py"
+  ],
+  "raptix/agents/standard/recon.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/web/search.py"
+  ],
+  "raptix/agents/standard/reverser.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/reversing/tools.py"
+  ],
+  "raptix/agents/standard/soundwave.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/interaction/__init__.py"
+  ],
+  "raptix/agents/standard/supply_chain_operator.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py"
+  ],
+  "raptix/agents/standard/surface_exploit.py": [
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/proxy/__init__.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/research/tools.py",
+   "raptix/tools/web/tools.py"
+  ],
+  "raptix/agents/standard/wireless_operator.py": [
+   "raptix/agents/_benchmark_mode.py",
+   "raptix/agents/build.py",
+   "raptix/agents/prompts/__init__.py",
+   "raptix/backends/__init__.py",
+   "raptix/llm/__init__.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/references/tools.py"
+  ],
+  "raptix/backends/__init__.py": [
+   "raptix/backends/factory.py",
+   "raptix/backends/http_sandbox.py"
+  ],
+  "raptix/backends/factory.py": [
+   "raptix/backends/http_sandbox.py"
+  ],
+  "raptix/llm/__init__.py": [
+   "raptix/llm/factory.py",
+   "raptix/llm/router.py"
+  ],
+  "raptix/tools/bash/__init__.py": [
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/bash/prompt.py"
+  ],
+  "raptix/tools/bash/bash.py": [
+   "raptix/backends/http_sandbox.py",
+   "raptix/sandbox_kernel/base.py",
+   "raptix/sandbox_kernel/tmux.py"
+  ],
+  "raptix/tools/bash/prompt.py": [],
+  "raptix/tools/research/sarif.py": [],
+  "raptix/tools/research/tools.py": [
+   "raptix/tools/contracts/patterns.py",
+   "raptix/tools/contracts/slither.py",
+   "raptix/tools/research/__init__.py",
+   "raptix/tools/research/_state.py",
+   "raptix/tools/research/chain.py",
+   "raptix/tools/research/dedupe.py",
+   "raptix/tools/research/health.py",
+   "raptix/tools/research/osint.py",
+   "raptix/tools/research/patch.py",
+   "raptix/tools/research/sarif.py",
+   "raptix/tools/research/scanner_tools.py",
+   "raptix/tools/research/secret_scanner.py",
+   "raptix/tools/research/tech_detection.py",
+   "raptix/tools/reversing/binary.py",
+   "raptix/tools/reversing/packer.py",
+   "raptix/tools/reversing/strings.py",
+   "raptix/tools/reversing/symbols.py",
+   "raptix/tools/web/jwt.py",
+   "raptix/tools/web/oauth.py",
+   "raptix/tools/web/session.py"
+  ],
+  "raptix/tools/verification.py": [
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/research/poc.py"
+  ],
+  "raptix/tools/web/search.py": [
+   "raptix/tools/bash/bash.py"
+  ],
+  "tests/unit/agents/standard/test_specialist_skill_sources.py": [
+   "raptix/agents/standard/__init__.py",
+   "raptix/agents/standard/ad_operator.py",
+   "raptix/agents/standard/contract_auditor.py",
+   "raptix/agents/standard/forensicator.py",
+   "raptix/agents/standard/ics_operator.py",
+   "raptix/agents/standard/iot_operator.py",
+   "raptix/agents/standard/mobile_operator.py",
+   "raptix/agents/standard/osint_operator.py",
+   "raptix/agents/standard/phisher.py",
+   "raptix/agents/standard/supply_chain_operator.py",
+   "raptix/agents/standard/wireless_operator.py",
+   "raptix/backends/__init__.py"
+  ],
+  "tests/unit/agents/test_blue_cell_agent.py": [
+   "raptix/agents/__init__.py",
+   "raptix/agents/build.py",
+   "raptix/agents/standard/__init__.py"
+  ],
+  "tests/unit/agents/test_reporting_tools_wired.py": [
+   "raptix/agents/prompts/__init__.py",
+   "raptix/agents/standard/__init__.py",
+   "raptix/agents/standard/analyst.py",
+   "raptix/tools/reporting/tools.py"
+  ],
+  "tests/unit/backends/test_factory.py": [
+   "raptix/backends/__init__.py",
+   "raptix/backends/factory.py"
+  ],
+  "tests/unit/backends/test_skills_path.py": [
+   "raptix/backends/__init__.py"
+  ],
+  "tests/unit/research/test_dependency_evidence.py": [
+   "raptix/tools/research/tools.py"
+  ],
+  "tests/unit/research/test_sarif.py": [
+   "raptix/tools/research/sarif.py"
+  ],
+  "tests/unit/tools/bash/test_passive_read_bounds.py": [
+   "raptix/tools/bash/bash.py"
+  ],
+  "tests/unit/tools/bash/test_sandbox_routing.py": [
+   "raptix/backends/__init__.py",
+   "raptix/backends/factory.py",
+   "raptix/tools/bash/bash.py"
+  ],
+  "tests/unit/tools/test_verification.py": [
+   "raptix/tools/verification.py"
+  ]
+ }
+}

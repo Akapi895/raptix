@@ -1,0 +1,3466 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 25,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 1,
+      "failed": 0,
+      "skipped": 24
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 410,
+      "nonEmptyLines": 330,
+      "sections": [
+        {
+          "heading": "Sliver C2 Framework",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Raptix Setup",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "1. Listener Configuration",
+          "level": 2,
+          "line": 44
+        },
+        {
+          "heading": "HTTPS Listener",
+          "level": 3,
+          "line": 48
+        },
+        {
+          "heading": "DNS Listener",
+          "level": 3,
+          "line": 62
+        },
+        {
+          "heading": "mTLS Listener",
+          "level": 3,
+          "line": 71
+        },
+        {
+          "heading": "WireGuard Listener",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "2. Implant Generation",
+          "level": 2,
+          "line": 86
+        },
+        {
+          "heading": "Beacon (Async)",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "Session (Interactive)",
+          "level": 3,
+          "line": 126
+        },
+        {
+          "heading": "Stager (Small Initial Payload)",
+          "level": 3,
+          "line": 139
+        },
+        {
+          "heading": "Shellcode (For Custom Loaders)",
+          "level": 3,
+          "line": 147
+        },
+        {
+          "heading": "Output Formats",
+          "level": 3,
+          "line": 155
+        },
+        {
+          "heading": "OPSEC: Implant Hardening",
+          "level": 3,
+          "line": 163
+        },
+        {
+          "heading": "3. Session & Beacon Management",
+          "level": 2,
+          "line": 172
+        },
+        {
+          "heading": "4. Post-Implant Operations",
+          "level": 2,
+          "line": 195
+        },
+        {
+          "heading": "Host Reconnaissance",
+          "level": 3,
+          "line": 197
+        },
+        {
+          "heading": "File Operations",
+          "level": 3,
+          "line": 219
+        },
+        {
+          "heading": "Process Operations",
+          "level": 3,
+          "line": 231
+        },
+        {
+          "heading": "Credential Operations",
+          "level": 3,
+          "line": 252
+        },
+        {
+          "heading": "5. BOF / Armory (In-Memory Extensions)",
+          "level": 2,
+          "line": 267
+        },
+        {
+          "heading": "Armory (Package Manager)",
+          "level": 3,
+          "line": 271
+        },
+        {
+          "heading": "BOF Execution",
+          "level": 3,
+          "line": 286
+        },
+        {
+          "heading": "Why BOFs Over execute-assembly",
+          "level": 3,
+          "line": 302
+        },
+        {
+          "heading": "6. Network & Pivot Operations",
+          "level": 2,
+          "line": 311
+        },
+        {
+          "heading": "SOCKS5 Proxy",
+          "level": 3,
+          "line": 313
+        },
+        {
+          "heading": "Port Forwarding",
+          "level": 3,
+          "line": 322
+        },
+        {
+          "heading": "Reverse Port Forwarding",
+          "level": 3,
+          "line": 334
+        },
+        {
+          "heading": "Pivot Listener",
+          "level": 3,
+          "line": 340
+        },
+        {
+          "heading": "WireGuard Pivot",
+          "level": 3,
+          "line": 349
+        },
+        {
+          "heading": "7. HTTP C2 Profile",
+          "level": 2,
+          "line": 355
+        },
+        {
+          "heading": "8. Detection Signatures (Sliver-Specific)",
+          "level": 2,
+          "line": 383
+        },
+        {
+          "heading": "9. Validation Criteria",
+          "level": 2,
+          "line": 394
+        },
+        {
+          "heading": "Bundled Resources",
+          "level": 2,
+          "line": 407
+        },
+        {
+          "heading": "References",
+          "level": 3,
+          "line": 409
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 35
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2-sliver/references/sliver-quickstart.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 148,
+      "nonEmptyLines": 118,
+      "sections": [
+        {
+          "heading": "Sliver C2 Quick Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Architecture (Raptix)",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Server Setup",
+          "level": 2,
+          "line": 18
+        },
+        {
+          "heading": "Listener Configuration",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "HTTPS Listener",
+          "level": 3,
+          "line": 37
+        },
+        {
+          "heading": "mTLS Listener",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "DNS Listener",
+          "level": 3,
+          "line": 47
+        },
+        {
+          "heading": "WireGuard Listener",
+          "level": 3,
+          "line": 52
+        },
+        {
+          "heading": "Implant Generation",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "Session (Interactive)",
+          "level": 3,
+          "line": 63
+        },
+        {
+          "heading": "Beacon (Async)",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "Output Formats",
+          "level": 3,
+          "line": 76
+        },
+        {
+          "heading": "Post-Implant Operations",
+          "level": 2,
+          "line": 84
+        },
+        {
+          "heading": "Session Management",
+          "level": 3,
+          "line": 86
+        },
+        {
+          "heading": "Common Operations",
+          "level": 3,
+          "line": 94
+        },
+        {
+          "heading": "Pivoting",
+          "level": 3,
+          "line": 107
+        },
+        {
+          "heading": "Credential Operations",
+          "level": 3,
+          "line": 119
+        },
+        {
+          "heading": "OPSEC Configuration",
+          "level": 2,
+          "line": 126
+        },
+        {
+          "heading": "Jitter & Sleep",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "Process Migration",
+          "level": 3,
+          "line": 134
+        },
+        {
+          "heading": "Evasion",
+          "level": 3,
+          "line": 140
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 21
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 216,
+      "nonEmptyLines": 183,
+      "sections": [
+        {
+          "heading": "Command & Control (C2) Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Raptix C2 Architecture",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "1. C2 Channel Types",
+          "level": 2,
+          "line": 41
+        },
+        {
+          "heading": "Multi-Channel Strategy",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "2. Implant Modes",
+          "level": 2,
+          "line": 58
+        },
+        {
+          "heading": "Jitter Recommendations",
+          "level": 3,
+          "line": 66
+        },
+        {
+          "heading": "Output Formats",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "3. Redirector Architecture",
+          "level": 2,
+          "line": 82
+        },
+        {
+          "heading": "NGINX Reverse Proxy Redirector",
+          "level": 3,
+          "line": 97
+        },
+        {
+          "heading": "Redirector OPSEC",
+          "level": 3,
+          "line": 123
+        },
+        {
+          "heading": "4. Malleable Profiles",
+          "level": 2,
+          "line": 129
+        },
+        {
+          "heading": "Concept",
+          "level": 3,
+          "line": 131
+        },
+        {
+          "heading": "Profile Design Principles",
+          "level": 3,
+          "line": 134
+        },
+        {
+          "heading": "5. Detection Signatures",
+          "level": 2,
+          "line": 141
+        },
+        {
+          "heading": "6. Decision Gate",
+          "level": 2,
+          "line": 155
+        },
+        {
+          "heading": "C2 Established — Next Steps",
+          "level": 3,
+          "line": 157
+        },
+        {
+          "heading": "Pre-Lateral-Movement Checklist",
+          "level": 3,
+          "line": 183
+        },
+        {
+          "heading": "7. Tools & Resources",
+          "level": 2,
+          "line": 191
+        },
+        {
+          "heading": "8. Output Files",
+          "level": 2,
+          "line": 203
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 20
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/havoc/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 156,
+      "nonEmptyLines": 123,
+      "sections": [
+        {
+          "heading": "Havoc C2 Operator Skill",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Setup",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Architecture",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Configure a profile",
+          "level": 2,
+          "line": 43
+        },
+        {
+          "heading": "Build a Demon",
+          "level": 2,
+          "line": 80
+        },
+        {
+          "heading": "What makes Havoc's OPSEC strong",
+          "level": 2,
+          "line": 95
+        },
+        {
+          "heading": "Sleep obfuscation (3 options)",
+          "level": 3,
+          "line": 97
+        },
+        {
+          "heading": "Indirect syscalls",
+          "level": 3,
+          "line": 104
+        },
+        {
+          "heading": "No static strings",
+          "level": 3,
+          "line": 109
+        },
+        {
+          "heading": "Module stomping",
+          "level": 3,
+          "line": 112
+        },
+        {
+          "heading": "Common commands",
+          "level": 2,
+          "line": 115
+        },
+        {
+          "heading": "Comparison: Havoc vs Sliver vs Mythic vs Cobalt Strike",
+          "level": 2,
+          "line": 128
+        },
+        {
+          "heading": "When to pick Havoc",
+          "level": 2,
+          "line": 139
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 151
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/c2/mythic/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 144,
+      "nonEmptyLines": 119,
+      "sections": [
+        {
+          "heading": "Mythic C2 Operator Skill",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Setup (one-time, on the operator server)",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Agent matrix",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "Profile matrix",
+          "level": 2,
+          "line": 45
+        },
+        {
+          "heading": "Build a payload (Apollo + http profile)",
+          "level": 2,
+          "line": 64
+        },
+        {
+          "heading": "Tasking from the operator",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "OPSEC defaults",
+          "level": 2,
+          "line": 106
+        },
+        {
+          "heading": "Common workflow",
+          "level": 2,
+          "line": 114
+        },
+        {
+          "heading": "Comparison vs Sliver / Cobalt Strike / Havoc",
+          "level": 2,
+          "line": 128
+        },
+        {
+          "heading": "References",
+          "level": 2,
+          "line": 139
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 377,
+      "nonEmptyLines": 289,
+      "sections": [
+        {
+          "heading": "Credential Access Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "1. LSASS Memory Dumping",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "Mimikatz — sekurlsa Module",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "nanodump (Stealthier LSASS Dump)",
+          "level": 3,
+          "line": 65
+        },
+        {
+          "heading": "comsvcs.dll MiniDump (LOLBin)",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "HandleKatz (Handle Duplication)",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "2. SAM/SECURITY/SYSTEM Hive Extraction",
+          "level": 2,
+          "line": 102
+        },
+        {
+          "heading": "Registry Save (Local Admin Required)",
+          "level": 3,
+          "line": 104
+        },
+        {
+          "heading": "Remote Extraction with secretsdump.py",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "3. DPAPI Secrets",
+          "level": 2,
+          "line": 131
+        },
+        {
+          "heading": "SharpDPAPI — Browser & Credential Vault",
+          "level": 3,
+          "line": 133
+        },
+        {
+          "heading": "Browser Password Extraction",
+          "level": 3,
+          "line": 151
+        },
+        {
+          "heading": "4. NTLM Hash Capture — Responder",
+          "level": 2,
+          "line": 160
+        },
+        {
+          "heading": "LLMNR/NBT-NS/mDNS Poisoning",
+          "level": 3,
+          "line": 162
+        },
+        {
+          "heading": "Responder Captured Hash Format",
+          "level": 3,
+          "line": 180
+        },
+        {
+          "heading": "5. NTLM Relay Attacks",
+          "level": 2,
+          "line": 189
+        },
+        {
+          "heading": "ntlmrelayx.py — Multi-Protocol Relay",
+          "level": 3,
+          "line": 191
+        },
+        {
+          "heading": "PetitPotam — Authentication Coercion",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "Relay Target Discovery",
+          "level": 3,
+          "line": 223
+        },
+        {
+          "heading": "6. Password Spraying",
+          "level": 2,
+          "line": 232
+        },
+        {
+          "heading": "CrackMapExec / NetExec",
+          "level": 3,
+          "line": 234
+        },
+        {
+          "heading": "DomainPasswordSpray (PowerShell)",
+          "level": 3,
+          "line": 252
+        },
+        {
+          "heading": "Lockout Awareness",
+          "level": 3,
+          "line": 262
+        },
+        {
+          "heading": "7. Offline Hash Cracking — Hashcat",
+          "level": 2,
+          "line": 273
+        },
+        {
+          "heading": "Common Hash Modes",
+          "level": 3,
+          "line": 275
+        },
+        {
+          "heading": "Cracking Commands",
+          "level": 3,
+          "line": 286
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 310
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 326
+        },
+        {
+          "heading": "Key Detection Rules",
+          "level": 3,
+          "line": 341
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 356
+        },
+        {
+          "heading": "Bundled Resources",
+          "level": 2,
+          "line": 374
+        },
+        {
+          "heading": "References",
+          "level": 3,
+          "line": 376
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 34
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/credential-access/references/lsass-techniques.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 126,
+      "nonEmptyLines": 96,
+      "sections": [
+        {
+          "heading": "LSASS Credential Dumping Techniques — Deep Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Method Comparison",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Techniques by Stealth Level",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "Tier 1: Lowest Detection (Recommended)",
+          "level": 3,
+          "line": 17
+        },
+        {
+          "heading": "nanodump (Direct Syscalls)",
+          "level": 4,
+          "line": 19
+        },
+        {
+          "heading": "comsvcs.dll (LOLBAS)",
+          "level": 4,
+          "line": 31
+        },
+        {
+          "heading": "Tier 2: Moderate Detection",
+          "level": 3,
+          "line": 40
+        },
+        {
+          "heading": "ProcDump (Signed Microsoft Binary)",
+          "level": 4,
+          "line": 42
+        },
+        {
+          "heading": "Mimikatz (In-Memory)",
+          "level": 4,
+          "line": 51
+        },
+        {
+          "heading": "Tier 3: Offline Analysis (Safest)",
+          "level": 3,
+          "line": 64
+        },
+        {
+          "heading": "SAM/SECURITY Hive Extraction",
+          "level": 2,
+          "line": 77
+        },
+        {
+          "heading": "DPAPI Secrets",
+          "level": 2,
+          "line": 93
+        },
+        {
+          "heading": "Pypykatz (Offline Parsing)",
+          "level": 2,
+          "line": 104
+        },
+        {
+          "heading": "Detection Indicators",
+          "level": 2,
+          "line": 118
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/lateral-movement/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 460,
+      "nonEmptyLines": 353,
+      "sections": [
+        {
+          "heading": "Lateral Movement Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 38
+        },
+        {
+          "heading": "1. Pass-the-Hash (PtH)",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "CrackMapExec / NetExec",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Impacket PtH Suite",
+          "level": 3,
+          "line": 72
+        },
+        {
+          "heading": "PtH Method Comparison",
+          "level": 3,
+          "line": 87
+        },
+        {
+          "heading": "2. Pass-the-Ticket (PtT)",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Rubeus — Ticket Import & Use",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "Mimikatz — Ticket Operations",
+          "level": 3,
+          "line": 121
+        },
+        {
+          "heading": "Linux .ccache Ticket Import",
+          "level": 3,
+          "line": 136
+        },
+        {
+          "heading": "3. WMI Execution",
+          "level": 2,
+          "line": 150
+        },
+        {
+          "heading": "wmiexec.py — Semi-Interactive Shell",
+          "level": 3,
+          "line": 152
+        },
+        {
+          "heading": "Why WMI?",
+          "level": 3,
+          "line": 171
+        },
+        {
+          "heading": "4. WinRM — Evil-WinRM",
+          "level": 2,
+          "line": 177
+        },
+        {
+          "heading": "Evil-WinRM Sessions",
+          "level": 3,
+          "line": 179
+        },
+        {
+          "heading": "Evil-WinRM In-Session Commands",
+          "level": 3,
+          "line": 197
+        },
+        {
+          "heading": "WinRM Prerequisites",
+          "level": 3,
+          "line": 217
+        },
+        {
+          "heading": "5. PsExec — Impacket",
+          "level": 2,
+          "line": 225
+        },
+        {
+          "heading": "psexec.py — Service-Based Execution",
+          "level": 3,
+          "line": 227
+        },
+        {
+          "heading": "PsExec Artifacts",
+          "level": 3,
+          "line": 245
+        },
+        {
+          "heading": "6. RDP — Remote Desktop",
+          "level": 2,
+          "line": 254
+        },
+        {
+          "heading": "SharpRDP (Programmatic RDP — No GUI)",
+          "level": 3,
+          "line": 256
+        },
+        {
+          "heading": "xfreerdp — CLI RDP Client",
+          "level": 3,
+          "line": 264
+        },
+        {
+          "heading": "7. SMB Lateral — File Operations",
+          "level": 2,
+          "line": 279
+        },
+        {
+          "heading": "smbexec.py — Command Execution via SMB",
+          "level": 3,
+          "line": 281
+        },
+        {
+          "heading": "smbclient.py — File Operations",
+          "level": 3,
+          "line": 289
+        },
+        {
+          "heading": "NetExec SMB Operations",
+          "level": 3,
+          "line": 307
+        },
+        {
+          "heading": "8. Network Tunneling & Pivoting",
+          "level": 2,
+          "line": 322
+        },
+        {
+          "heading": "Ligolo-ng — Modern Tunneling",
+          "level": 3,
+          "line": 324
+        },
+        {
+          "heading": "Chisel — HTTP Tunnel",
+          "level": 3,
+          "line": 354
+        },
+        {
+          "heading": "Proxychains Configuration",
+          "level": 3,
+          "line": 374
+        },
+        {
+          "heading": "Tunnel Method Comparison",
+          "level": 3,
+          "line": 386
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 395
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 412
+        },
+        {
+          "heading": "Key Detection Patterns",
+          "level": 3,
+          "line": 427
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 445
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 37
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/linux-privesc-enum/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 410,
+      "nonEmptyLines": 324,
+      "sections": [
+        {
+          "heading": "Linux Privilege Escalation — Systematic Enumeration Methodology",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Phase 0 — Situational Awareness (always first)",
+          "level": 2,
+          "line": 20
+        },
+        {
+          "heading": "Phase 1 — Sudo (highest yield, lowest noise)",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "GTFOBins lookup workflow",
+          "level": 3,
+          "line": 69
+        },
+        {
+          "heading": "Sudo env_keep abuse",
+          "level": 3,
+          "line": 72
+        },
+        {
+          "heading": "Phase 2 — SUID / SGID Binaries",
+          "level": 2,
+          "line": 89
+        },
+        {
+          "heading": "Common SUID exploitation patterns",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "Phase 3 — Linux Capabilities",
+          "level": 2,
+          "line": 142
+        },
+        {
+          "heading": "Capability exploitation",
+          "level": 3,
+          "line": 158
+        },
+        {
+          "heading": "Phase 4 — Cron Jobs and Scheduled Tasks",
+          "level": 2,
+          "line": 189
+        },
+        {
+          "heading": "Cron exploitation patterns",
+          "level": 3,
+          "line": 214
+        },
+        {
+          "heading": "Phase 5 — Writable Files and Path Injection",
+          "level": 2,
+          "line": 240
+        },
+        {
+          "heading": "Phase 6 — NFS No-Root-Squash",
+          "level": 2,
+          "line": 269
+        },
+        {
+          "heading": "Phase 7 — Kernel and Polkit CVEs",
+          "level": 2,
+          "line": 289
+        },
+        {
+          "heading": "Automated Enumeration (supplement, do not replace manual phases)",
+          "level": 2,
+          "line": 316
+        },
+        {
+          "heading": "Enumeration State Tracking (hackingBuddyGPT methodology)",
+          "level": 2,
+          "line": 344
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 365
+        },
+        {
+          "heading": "Decision Flow",
+          "level": 2,
+          "line": 378
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 18
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/macos/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 85,
+      "nonEmptyLines": 74,
+      "sections": [
+        {
+          "heading": "macOS post-exploitation",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Discovery (T1087.001 / T1518 / T1647)",
+          "level": 2,
+          "line": 23
+        },
+        {
+          "heading": "Privilege escalation",
+          "level": 2,
+          "line": 30
+        },
+        {
+          "heading": "Persistence",
+          "level": 2,
+          "line": 40
+        },
+        {
+          "heading": "Defense evasion",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "Credential access (T1555.001)",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "Collection, C2 & exfil",
+          "level": 2,
+          "line": 70
+        },
+        {
+          "heading": "Detection & defense (blue-cell notes)",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "See also",
+          "level": 2,
+          "line": 83
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 9
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/network-replay/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 264,
+      "nonEmptyLines": 205,
+      "sections": [
+        {
+          "heading": "Network Replay Attack Playbook",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Overview",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Tool inventory",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Phase 1 — Traffic Capture",
+          "level": 2,
+          "line": 35
+        },
+        {
+          "heading": "Passive capture on a local segment",
+          "level": 3,
+          "line": 37
+        },
+        {
+          "heading": "Capture via MITM (ARP poisoning prerequisite)",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Phase 2 — Extract Replayable Material",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "HTTP session tokens and cookies",
+          "level": 3,
+          "line": 64
+        },
+        {
+          "heading": "JWT tokens",
+          "level": 3,
+          "line": 77
+        },
+        {
+          "heading": "Kerberos TGT / TGS ticket replay (Pass-the-Ticket)",
+          "level": 3,
+          "line": 97
+        },
+        {
+          "heading": "NTLM Net-NTLMv2 capture for relay (not crack)",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "Phase 3 — Replay Execution",
+          "level": 2,
+          "line": 126
+        },
+        {
+          "heading": "Raw PCAP replay with tcpreplay",
+          "level": 3,
+          "line": 128
+        },
+        {
+          "heading": "Scapy session token injection",
+          "level": 3,
+          "line": 147
+        },
+        {
+          "heading": "HTTP cookie / Bearer token replay with curl",
+          "level": 3,
+          "line": 165
+        },
+        {
+          "heading": "MQTT frame replay (IoT / OT context)",
+          "level": 3,
+          "line": 178
+        },
+        {
+          "heading": "Phase 4 — TCP Session Hijacking",
+          "level": 2,
+          "line": 191
+        },
+        {
+          "heading": "ATT&CK Mapping",
+          "level": 2,
+          "line": 216
+        },
+        {
+          "heading": "Evidence collection",
+          "level": 2,
+          "line": 227
+        },
+        {
+          "heading": "Anti-replay controls to document in findings",
+          "level": 2,
+          "line": 244
+        },
+        {
+          "heading": "OPSEC",
+          "level": 2,
+          "line": 255
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 21
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/privilege-escalation/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 499,
+      "nonEmptyLines": 392,
+      "sections": [
+        {
+          "heading": "Privilege Escalation Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "1. Windows Token Impersonation — Potato Family",
+          "level": 2,
+          "line": 47
+        },
+        {
+          "heading": "GodPotato (Most Versatile)",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "PrintSpoofer (Print Spooler Named Pipe)",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "SigmaPotato (Extended GodPotato Fork)",
+          "level": 3,
+          "line": 91
+        },
+        {
+          "heading": "Choosing the Right Potato",
+          "level": 3,
+          "line": 108
+        },
+        {
+          "heading": "Check Prerequisites",
+          "level": 3,
+          "line": 118
+        },
+        {
+          "heading": "2. UAC Bypass Techniques",
+          "level": 2,
+          "line": 130
+        },
+        {
+          "heading": "fodhelper.exe Bypass",
+          "level": 3,
+          "line": 132
+        },
+        {
+          "heading": "eventvwr.exe Bypass",
+          "level": 3,
+          "line": 145
+        },
+        {
+          "heading": "CMSTPLUA COM Object Bypass",
+          "level": 3,
+          "line": 157
+        },
+        {
+          "heading": "UAC Bypass Prerequisites",
+          "level": 3,
+          "line": 164
+        },
+        {
+          "heading": "3. Windows Service Abuse",
+          "level": 2,
+          "line": 174
+        },
+        {
+          "heading": "Unquoted Service Paths",
+          "level": 3,
+          "line": 176
+        },
+        {
+          "heading": "Weak Service Permissions",
+          "level": 3,
+          "line": 192
+        },
+        {
+          "heading": "DLL Hijacking",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "4. Linux Privilege Escalation",
+          "level": 2,
+          "line": 230
+        },
+        {
+          "heading": "SUID/SGID Binaries",
+          "level": 3,
+          "line": 232
+        },
+        {
+          "heading": "Sudo Misconfigurations",
+          "level": 3,
+          "line": 258
+        },
+        {
+          "heading": "Linux Capabilities",
+          "level": 3,
+          "line": 295
+        },
+        {
+          "heading": "Cron Job Exploitation",
+          "level": 3,
+          "line": 314
+        },
+        {
+          "heading": "Kernel Exploits",
+          "level": 3,
+          "line": 345
+        },
+        {
+          "heading": "5. Automated Enumeration Tools",
+          "level": 2,
+          "line": 370
+        },
+        {
+          "heading": "winPEAS (Windows)",
+          "level": 3,
+          "line": 372
+        },
+        {
+          "heading": "linPEAS (Linux)",
+          "level": 3,
+          "line": 388
+        },
+        {
+          "heading": "SharpUp (Windows .NET)",
+          "level": 3,
+          "line": 406
+        },
+        {
+          "heading": "BeRoot (Cross-Platform)",
+          "level": 3,
+          "line": 419
+        },
+        {
+          "heading": "Tools & Resources",
+          "level": 2,
+          "line": 430
+        },
+        {
+          "heading": "Detection Signatures",
+          "level": 2,
+          "line": 446
+        },
+        {
+          "heading": "Key Detection Rules",
+          "level": 3,
+          "line": 461
+        },
+        {
+          "heading": "Decision Gate",
+          "level": 2,
+          "line": 483
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 33
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/post-exploit/reporting/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 549,
+      "nonEmptyLines": 424,
+      "sections": [
+        {
+          "heading": "Post-Exploitation Reporting Knowledge Base",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "1. Phase-Specific Finding Templates",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "A. Credential Access Finding (TA0006)",
+          "level": 3,
+          "line": 23
+        },
+        {
+          "heading": "B. Privilege Escalation Finding (TA0004)",
+          "level": 3,
+          "line": 110
+        },
+        {
+          "heading": "C. Lateral Movement Finding (TA0008)",
+          "level": 3,
+          "line": 187
+        },
+        {
+          "heading": "D. Data Collection / Exfiltration Finding (TA0009/TA0010)",
+          "level": 3,
+          "line": 270
+        },
+        {
+          "heading": "2. Detection Gap Analysis",
+          "level": 2,
+          "line": 350
+        },
+        {
+          "heading": "Per-Finding Detection Table",
+          "level": 3,
+          "line": 354
+        },
+        {
+          "heading": "Detection Gap Summary (Cross-Finding)",
+          "level": 3,
+          "line": 375
+        },
+        {
+          "heading": "3. Attack Path Documentation",
+          "level": 2,
+          "line": 394
+        },
+        {
+          "heading": "Attack Path Template",
+          "level": 3,
+          "line": 398
+        },
+        {
+          "heading": "Chain Severity Escalation Rules",
+          "level": 3,
+          "line": 448
+        },
+        {
+          "heading": "4. Common Post-Exploit CVSS v4.0 Scores",
+          "level": 2,
+          "line": 459
+        },
+        {
+          "heading": "5. MITRE ATT&CK Mapping — Post-Exploitation",
+          "level": 2,
+          "line": 473
+        },
+        {
+          "heading": "Credential Access (TA0006)",
+          "level": 3,
+          "line": 475
+        },
+        {
+          "heading": "Privilege Escalation (TA0004)",
+          "level": 3,
+          "line": 487
+        },
+        {
+          "heading": "Lateral Movement (TA0008)",
+          "level": 3,
+          "line": 495
+        },
+        {
+          "heading": "6. Evidence Collection Checklist",
+          "level": 2,
+          "line": 505
+        },
+        {
+          "heading": "7. File Organization",
+          "level": 2,
+          "line": 519
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 19
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/active-recon/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 399,
+      "nonEmptyLines": 310,
+      "sections": [
+        {
+          "heading": "Active Reconnaissance Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference — Common Scan Patterns",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "1. OPSEC Principles for Active Scanning",
+          "level": 2,
+          "line": 37
+        },
+        {
+          "heading": "Detection Avoidance",
+          "level": 3,
+          "line": 39
+        },
+        {
+          "heading": "Scan Justification",
+          "level": 3,
+          "line": 46
+        },
+        {
+          "heading": "2. Port Scanning with Nmap",
+          "level": 2,
+          "line": 52
+        },
+        {
+          "heading": "Stealth SYN Scan (Default for Recon)",
+          "level": 3,
+          "line": 54
+        },
+        {
+          "heading": "Service Version Detection",
+          "level": 3,
+          "line": 69
+        },
+        {
+          "heading": "Scan Types Reference",
+          "level": 3,
+          "line": 81
+        },
+        {
+          "heading": "Timing Templates",
+          "level": 3,
+          "line": 93
+        },
+        {
+          "heading": "Nmap Output Formats",
+          "level": 3,
+          "line": 105
+        },
+        {
+          "heading": "3. Service-Specific Enumeration",
+          "level": 2,
+          "line": 115
+        },
+        {
+          "heading": "Web Services (80/443)",
+          "level": 3,
+          "line": 117
+        },
+        {
+          "heading": "SSH (22)",
+          "level": 3,
+          "line": 136
+        },
+        {
+          "heading": "DNS (53)",
+          "level": 3,
+          "line": 143
+        },
+        {
+          "heading": "SMTP (25/587)",
+          "level": 3,
+          "line": 149
+        },
+        {
+          "heading": "SMB (445)",
+          "level": 3,
+          "line": 155
+        },
+        {
+          "heading": "SNMP (161/UDP)",
+          "level": 3,
+          "line": 161
+        },
+        {
+          "heading": "4. Web Directory & Content Discovery",
+          "level": 2,
+          "line": 166
+        },
+        {
+          "heading": "ffuf (Fast Web Fuzzer)",
+          "level": 3,
+          "line": 168
+        },
+        {
+          "heading": "gobuster (Alternative)",
+          "level": 3,
+          "line": 186
+        },
+        {
+          "heading": "5. Vulnerability Scanning",
+          "level": 2,
+          "line": 192
+        },
+        {
+          "heading": "nuclei (Template-Based Scanner)",
+          "level": 3,
+          "line": 194
+        },
+        {
+          "heading": "nikto (Web Server Scanner)",
+          "level": 3,
+          "line": 213
+        },
+        {
+          "heading": "6. SSL/TLS Analysis",
+          "level": 2,
+          "line": 223
+        },
+        {
+          "heading": "testssl.sh",
+          "level": 3,
+          "line": 225
+        },
+        {
+          "heading": "Key TLS Findings",
+          "level": 3,
+          "line": 237
+        },
+        {
+          "heading": "7. Banner Grabbing",
+          "level": 2,
+          "line": 243
+        },
+        {
+          "heading": "Netcat",
+          "level": 3,
+          "line": 245
+        },
+        {
+          "heading": "curl for HTTP Services",
+          "level": 3,
+          "line": 257
+        },
+        {
+          "heading": "8. Authentication & Directory Service Enumeration",
+          "level": 2,
+          "line": 266
+        },
+        {
+          "heading": "LDAP (389/636)",
+          "level": 3,
+          "line": 268
+        },
+        {
+          "heading": "Kerberos (88)",
+          "level": 3,
+          "line": 278
+        },
+        {
+          "heading": "RDP (3389)",
+          "level": 3,
+          "line": 284
+        },
+        {
+          "heading": "FTP (21)",
+          "level": 3,
+          "line": 289
+        },
+        {
+          "heading": "Redis (6379) / MongoDB (27017) / Elasticsearch (9200)",
+          "level": 3,
+          "line": 295
+        },
+        {
+          "heading": "9. IPv6 Scanning",
+          "level": 2,
+          "line": 304
+        },
+        {
+          "heading": "10. Parallel Execution Strategy",
+          "level": 2,
+          "line": 320
+        },
+        {
+          "heading": "Scan Orchestration",
+          "level": 3,
+          "line": 322
+        },
+        {
+          "heading": "Rate Distribution",
+          "level": 3,
+          "line": 339
+        },
+        {
+          "heading": "11. Network Topology Mapping",
+          "level": 2,
+          "line": 344
+        },
+        {
+          "heading": "Traceroute",
+          "level": 3,
+          "line": 346
+        },
+        {
+          "heading": "Network Sweep (Use Sparingly)",
+          "level": 3,
+          "line": 355
+        },
+        {
+          "heading": "12. Workflow: Active Recon Sequence",
+          "level": 2,
+          "line": 364
+        },
+        {
+          "heading": "13. Error Handling",
+          "level": 2,
+          "line": 378
+        },
+        {
+          "heading": "14. Common Pitfalls",
+          "level": 2,
+          "line": 389
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 46
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 264,
+      "nonEmptyLines": 209,
+      "sections": [
+        {
+          "heading": "Cloud Infrastructure Reconnaissance Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Cloud Provider Detection",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Fingerprinting via DNS/Headers",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "Cloud Service Indicators",
+          "level": 3,
+          "line": 43
+        },
+        {
+          "heading": "2. AWS Enumeration",
+          "level": 2,
+          "line": 54
+        },
+        {
+          "heading": "S3 Bucket Discovery",
+          "level": 3,
+          "line": 56
+        },
+        {
+          "heading": "S3 Bucket Takeover Detection",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "AWS Service Enumeration",
+          "level": 3,
+          "line": 81
+        },
+        {
+          "heading": "3. Azure Enumeration",
+          "level": 2,
+          "line": 97
+        },
+        {
+          "heading": "Azure Blob Storage",
+          "level": 3,
+          "line": 99
+        },
+        {
+          "heading": "Azure Service Discovery",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "Azure Subdomain Patterns",
+          "level": 3,
+          "line": 130
+        },
+        {
+          "heading": "4. GCP Enumeration",
+          "level": 2,
+          "line": 144
+        },
+        {
+          "heading": "GCP Storage Buckets",
+          "level": 3,
+          "line": 146
+        },
+        {
+          "heading": "GCP Service Discovery",
+          "level": 3,
+          "line": 159
+        },
+        {
+          "heading": "5. Multi-Cloud Tools",
+          "level": 2,
+          "line": 174
+        },
+        {
+          "heading": "cloud_enum (Automated Discovery)",
+          "level": 3,
+          "line": 176
+        },
+        {
+          "heading": "Manual Multi-Cloud Checklist",
+          "level": 3,
+          "line": 185
+        },
+        {
+          "heading": "6. CDN & Origin Detection",
+          "level": 2,
+          "line": 203
+        },
+        {
+          "heading": "Finding Origin IPs Behind CDN",
+          "level": 3,
+          "line": 205
+        },
+        {
+          "heading": "7. Serverless & Container Enumeration",
+          "level": 2,
+          "line": 217
+        },
+        {
+          "heading": "Lambda/Functions URL Patterns",
+          "level": 3,
+          "line": 219
+        },
+        {
+          "heading": "Container Registry Exposure",
+          "level": 3,
+          "line": 231
+        },
+        {
+          "heading": "8. Workflow: Cloud Recon Sequence",
+          "level": 2,
+          "line": 244
+        },
+        {
+          "heading": "9. Output Files",
+          "level": 2,
+          "line": 255
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 25
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-ip-ranges.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 111,
+      "nonEmptyLines": 98,
+      "sections": [
+        {
+          "heading": "Cloud Provider IP Range Sources",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Live IP Range Endpoints",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "Quick IP Check Script",
+          "level": 2,
+          "line": 15
+        },
+        {
+          "heading": "CNAME → Provider Mapping",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "Response Header → Provider Mapping",
+          "level": 2,
+          "line": 95
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 5
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/cloud-recon/references/cloud-naming-patterns.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 136,
+      "nonEmptyLines": 122,
+      "sections": [
+        {
+          "heading": "Cloud Resource Naming Pattern Dictionary",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "S3 / GCS / Azure Blob Bucket Names",
+          "level": 2,
+          "line": 5
+        },
+        {
+          "heading": "High-Priority Patterns",
+          "level": 3,
+          "line": 7
+        },
+        {
+          "heading": "Medium-Priority Patterns",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "Infrastructure Patterns",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Prefix/Suffix Variations",
+          "level": 3,
+          "line": 72
+        },
+        {
+          "heading": "Azure Storage Account Names",
+          "level": 2,
+          "line": 88
+        },
+        {
+          "heading": "Container / Registry Names",
+          "level": 2,
+          "line": 107
+        },
+        {
+          "heading": "Docker Hub",
+          "level": 3,
+          "line": 109
+        },
+        {
+          "heading": "ECR / ACR / GCR",
+          "level": 3,
+          "line": 116
+        },
+        {
+          "heading": "Serverless Function Names",
+          "level": 2,
+          "line": 124
+        },
+        {
+          "heading": "Common Function Naming",
+          "level": 3,
+          "line": 126
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 12
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/iot-security/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 363,
+      "nonEmptyLines": 279,
+      "sections": [
+        {
+          "heading": "IoT Device Security Reconnaissance Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Device Discovery and Identification",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Network Scanning",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "Protocol Identification",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "Device Fingerprinting",
+          "level": 3,
+          "line": 45
+        },
+        {
+          "heading": "2. Firmware Extraction",
+          "level": 2,
+          "line": 55
+        },
+        {
+          "heading": "From Device",
+          "level": 3,
+          "line": 57
+        },
+        {
+          "heading": "From Manufacturer",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "Firmware Archive Sources",
+          "level": 3,
+          "line": 79
+        },
+        {
+          "heading": "3. Firmware Analysis",
+          "level": 2,
+          "line": 85
+        },
+        {
+          "heading": "File System Extraction",
+          "level": 3,
+          "line": 87
+        },
+        {
+          "heading": "Binary Analysis",
+          "level": 3,
+          "line": 102
+        },
+        {
+          "heading": "4. Default Credential Checking",
+          "level": 2,
+          "line": 117
+        },
+        {
+          "heading": "Common Default Credentials",
+          "level": 3,
+          "line": 119
+        },
+        {
+          "heading": "Vendor-Specific Credentials",
+          "level": 3,
+          "line": 132
+        },
+        {
+          "heading": "Credential Databases",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "5. Protocol-Specific Analysis",
+          "level": 2,
+          "line": 146
+        },
+        {
+          "heading": "MQTT (Message Queuing Telemetry Transport)",
+          "level": 3,
+          "line": 148
+        },
+        {
+          "heading": "CoAP (Constrained Application Protocol)",
+          "level": 3,
+          "line": 160
+        },
+        {
+          "heading": "Modbus",
+          "level": 3,
+          "line": 170
+        },
+        {
+          "heading": "HTTP/REST APIs",
+          "level": 3,
+          "line": 179
+        },
+        {
+          "heading": "UPnP",
+          "level": 3,
+          "line": 192
+        },
+        {
+          "heading": "6. Vulnerability Scanning",
+          "level": 2,
+          "line": 201
+        },
+        {
+          "heading": "Common IoT Vulnerabilities",
+          "level": 3,
+          "line": 203
+        },
+        {
+          "heading": "Automated Scanning",
+          "level": 3,
+          "line": 213
+        },
+        {
+          "heading": "Manual Verification",
+          "level": 3,
+          "line": 225
+        },
+        {
+          "heading": "7. Wireless IoT Analysis",
+          "level": 2,
+          "line": 240
+        },
+        {
+          "heading": "Zigbee",
+          "level": 3,
+          "line": 242
+        },
+        {
+          "heading": "Z-Wave",
+          "level": 3,
+          "line": 251
+        },
+        {
+          "heading": "BLE (Bluetooth Low Energy)",
+          "level": 3,
+          "line": 260
+        },
+        {
+          "heading": "8. Cloud IoT Analysis",
+          "level": 2,
+          "line": 273
+        },
+        {
+          "heading": "AWS IoT",
+          "level": 3,
+          "line": 275
+        },
+        {
+          "heading": "Azure IoT Hub",
+          "level": 3,
+          "line": 287
+        },
+        {
+          "heading": "9. Security Hardening Checks",
+          "level": 2,
+          "line": 293
+        },
+        {
+          "heading": "Password Complexity",
+          "level": 3,
+          "line": 295
+        },
+        {
+          "heading": "Network Segmentation",
+          "level": 3,
+          "line": 300
+        },
+        {
+          "heading": "Update Mechanism",
+          "level": 3,
+          "line": 305
+        },
+        {
+          "heading": "Logging and Monitoring",
+          "level": 3,
+          "line": 310
+        },
+        {
+          "heading": "10. Exploitation and Post-Exploitation",
+          "level": 2,
+          "line": 315
+        },
+        {
+          "heading": "Note: Only perform with explicit authorization",
+          "level": 3,
+          "line": 317
+        },
+        {
+          "heading": "Gaining Access",
+          "level": 3,
+          "line": 319
+        },
+        {
+          "heading": "Privilege Escalation",
+          "level": 3,
+          "line": 331
+        },
+        {
+          "heading": "Persistence",
+          "level": 3,
+          "line": 336
+        },
+        {
+          "heading": "Lateral Movement",
+          "level": 3,
+          "line": 341
+        },
+        {
+          "heading": "Tools Summary",
+          "level": 2,
+          "line": 346
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 45
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/mobile-security/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 233,
+      "nonEmptyLines": 179,
+      "sections": [
+        {
+          "heading": "Mobile Application Security Reconnaissance Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. APK Analysis",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "Package Information Extraction",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "Decompilation",
+          "level": 3,
+          "line": 27
+        },
+        {
+          "heading": "Resource Extraction",
+          "level": 3,
+          "line": 39
+        },
+        {
+          "heading": "2. iOS IPA Analysis",
+          "level": 2,
+          "line": 49
+        },
+        {
+          "heading": "Package Information",
+          "level": 3,
+          "line": 51
+        },
+        {
+          "heading": "Binary Analysis",
+          "level": 3,
+          "line": 60
+        },
+        {
+          "heading": "3. Certificate and Signature Validation",
+          "level": 2,
+          "line": 72
+        },
+        {
+          "heading": "Android",
+          "level": 3,
+          "line": 74
+        },
+        {
+          "heading": "iOS",
+          "level": 3,
+          "line": 83
+        },
+        {
+          "heading": "4. Hardcoded Secret Detection",
+          "level": 2,
+          "line": 92
+        },
+        {
+          "heading": "String Extraction",
+          "level": 3,
+          "line": 94
+        },
+        {
+          "heading": "Common Secret Patterns",
+          "level": 3,
+          "line": 106
+        },
+        {
+          "heading": "5. Insecure Storage Identification",
+          "level": 2,
+          "line": 113
+        },
+        {
+          "heading": "Android",
+          "level": 3,
+          "line": 115
+        },
+        {
+          "heading": "iOS",
+          "level": 3,
+          "line": 127
+        },
+        {
+          "heading": "6. Network Security Configuration Analysis",
+          "level": 2,
+          "line": 139
+        },
+        {
+          "heading": "Android",
+          "level": 3,
+          "line": 141
+        },
+        {
+          "heading": "iOS",
+          "level": 3,
+          "line": 150
+        },
+        {
+          "heading": "7. Third-Party Library Vulnerability Scanning",
+          "level": 2,
+          "line": 156
+        },
+        {
+          "heading": "Library Identification",
+          "level": 3,
+          "line": 158
+        },
+        {
+          "heading": "Version Checking",
+          "level": 3,
+          "line": 167
+        },
+        {
+          "heading": "8. WebView Security Checks",
+          "level": 2,
+          "line": 172
+        },
+        {
+          "heading": "Android",
+          "level": 3,
+          "line": 174
+        },
+        {
+          "heading": "9. Deep Link Analysis",
+          "level": 2,
+          "line": 186
+        },
+        {
+          "heading": "Android",
+          "level": 3,
+          "line": 188
+        },
+        {
+          "heading": "iOS",
+          "level": 3,
+          "line": 197
+        },
+        {
+          "heading": "10. Mobile-Specific Security Checks",
+          "level": 2,
+          "line": 203
+        },
+        {
+          "heading": "Android",
+          "level": 3,
+          "line": 205
+        },
+        {
+          "heading": "iOS",
+          "level": 3,
+          "line": 211
+        },
+        {
+          "heading": "Tools Summary",
+          "level": 2,
+          "line": 217
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 32
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/open-web/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 102,
+      "nonEmptyLines": 82,
+      "sections": [
+        {
+          "heading": "Open-Web Acquisition — web_search / web_fetch",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "How web_fetch escalates (you do NOT drive this — the engine does)",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "R2 — HTTP 200 is NOT success",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "R6 — a give-up is NOT exhaustion (the discipline that matters)",
+          "level": 2,
+          "line": 57
+        },
+        {
+          "heading": "RoE & OSINT boundary",
+          "level": 2,
+          "line": 76
+        },
+        {
+          "heading": "Platform fast-paths (handled by Phase 0 — just pass the URL)",
+          "level": 2,
+          "line": 86
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/osint/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 235,
+      "nonEmptyLines": 191,
+      "sections": [
+        {
+          "heading": "Open Source Intelligence (OSINT) Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "1. Email Harvesting",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "theHarvester",
+          "level": 3,
+          "line": 18
+        },
+        {
+          "heading": "Manual Email Pattern Discovery",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "Email Analysis Points",
+          "level": 3,
+          "line": 42
+        },
+        {
+          "heading": "2. Employee & Organization Enumeration",
+          "level": 2,
+          "line": 48
+        },
+        {
+          "heading": "LinkedIn Intelligence",
+          "level": 3,
+          "line": 50
+        },
+        {
+          "heading": "Organizational Mapping",
+          "level": 3,
+          "line": 55
+        },
+        {
+          "heading": "Tech Stack from Job Postings",
+          "level": 3,
+          "line": 70
+        },
+        {
+          "heading": "3. GitHub & Code Repository OSINT",
+          "level": 2,
+          "line": 78
+        },
+        {
+          "heading": "Organization Discovery",
+          "level": 3,
+          "line": 80
+        },
+        {
+          "heading": "Secret Detection Patterns",
+          "level": 3,
+          "line": 92
+        },
+        {
+          "heading": "Key Findings from Code Repos",
+          "level": 3,
+          "line": 104
+        },
+        {
+          "heading": "4. Domain & IP Intelligence",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "Threat Intelligence",
+          "level": 3,
+          "line": 113
+        },
+        {
+          "heading": "Domain Reputation",
+          "level": 3,
+          "line": 127
+        },
+        {
+          "heading": "Wayback Machine",
+          "level": 3,
+          "line": 133
+        },
+        {
+          "heading": "5. Breach & Credential Data",
+          "level": 2,
+          "line": 143
+        },
+        {
+          "heading": "Approach (Ethical Boundaries)",
+          "level": 3,
+          "line": 145
+        },
+        {
+          "heading": "HIBP API Check",
+          "level": 3,
+          "line": 151
+        },
+        {
+          "heading": "Credential Intelligence (What to Document)",
+          "level": 3,
+          "line": 163
+        },
+        {
+          "heading": "6. Social Media Intelligence",
+          "level": 2,
+          "line": 169
+        },
+        {
+          "heading": "Platform-Specific Searches",
+          "level": 3,
+          "line": 171
+        },
+        {
+          "heading": "Metadata from Social Media",
+          "level": 3,
+          "line": 179
+        },
+        {
+          "heading": "7. Google Dorking (Advanced)",
+          "level": 2,
+          "line": 184
+        },
+        {
+          "heading": "Target-Specific Dorks",
+          "level": 3,
+          "line": 186
+        },
+        {
+          "heading": "8. Workflow: OSINT Sequence",
+          "level": 2,
+          "line": 205
+        },
+        {
+          "heading": "9. Output Files",
+          "level": 2,
+          "line": 217
+        },
+        {
+          "heading": "10. Ethical Boundaries",
+          "level": 2,
+          "line": 229
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 29
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 311,
+      "nonEmptyLines": 252,
+      "sections": [
+        {
+          "heading": "Passive Reconnaissance Knowledge Base",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "Quick Reference — Copy-Paste Commands",
+          "level": 2,
+          "line": 16
+        },
+        {
+          "heading": "1. WHOIS Intelligence",
+          "level": 2,
+          "line": 28
+        },
+        {
+          "heading": "Domain WHOIS",
+          "level": 3,
+          "line": 30
+        },
+        {
+          "heading": "IP WHOIS (ASN Mapping)",
+          "level": 3,
+          "line": 36
+        },
+        {
+          "heading": "BGP/ASN Enumeration",
+          "level": 3,
+          "line": 43
+        },
+        {
+          "heading": "Key Analysis Points",
+          "level": 3,
+          "line": 55
+        },
+        {
+          "heading": "2. DNS Reconnaissance",
+          "level": 2,
+          "line": 62
+        },
+        {
+          "heading": "Comprehensive Record Queries",
+          "level": 3,
+          "line": 64
+        },
+        {
+          "heading": "DNS Zone Transfer Attempt",
+          "level": 3,
+          "line": 82
+        },
+        {
+          "heading": "DNS Analysis Patterns",
+          "level": 3,
+          "line": 92
+        },
+        {
+          "heading": "3. Subdomain Enumeration",
+          "level": 2,
+          "line": 100
+        },
+        {
+          "heading": "subfinder (Primary Tool)",
+          "level": 3,
+          "line": 102
+        },
+        {
+          "heading": "amass (Comprehensive)",
+          "level": 3,
+          "line": 117
+        },
+        {
+          "heading": "DNS Brute Force (Secondary)",
+          "level": 3,
+          "line": 130
+        },
+        {
+          "heading": "Subdomain Analysis",
+          "level": 3,
+          "line": 138
+        },
+        {
+          "heading": "4. Certificate Transparency (CT) Logs",
+          "level": 2,
+          "line": 144
+        },
+        {
+          "heading": "Using crt.sh",
+          "level": 3,
+          "line": 146
+        },
+        {
+          "heading": "Analysis Value",
+          "level": 3,
+          "line": 153
+        },
+        {
+          "heading": "5. Web Fingerprinting (Passive)",
+          "level": 2,
+          "line": 159
+        },
+        {
+          "heading": "HTTP Headers Analysis",
+          "level": 3,
+          "line": 161
+        },
+        {
+          "heading": "httpx — Bulk Probing & Tech Detection",
+          "level": 3,
+          "line": 172
+        },
+        {
+          "heading": "Technology Stack Detection",
+          "level": 3,
+          "line": 188
+        },
+        {
+          "heading": "6. Tool Chaining & Output Normalization",
+          "level": 2,
+          "line": 193
+        },
+        {
+          "heading": "Piping Between Tools",
+          "level": 3,
+          "line": 195
+        },
+        {
+          "heading": "Output Normalization",
+          "level": 3,
+          "line": 210
+        },
+        {
+          "heading": "7. Passive DNS & Historical Analysis",
+          "level": 2,
+          "line": 219
+        },
+        {
+          "heading": "Passive DNS Sources",
+          "level": 3,
+          "line": 221
+        },
+        {
+          "heading": "Historical DNS Value",
+          "level": 3,
+          "line": 238
+        },
+        {
+          "heading": "8. OSINT Handoff",
+          "level": 2,
+          "line": 244
+        },
+        {
+          "heading": "9. Error Handling & Edge Cases",
+          "level": 2,
+          "line": 256
+        },
+        {
+          "heading": "When Tools Fail",
+          "level": 3,
+          "line": 258
+        },
+        {
+          "heading": "False Positive Reduction",
+          "level": 3,
+          "line": 267
+        },
+        {
+          "heading": "10. Workflow: Passive Recon Sequence",
+          "level": 2,
+          "line": 281
+        },
+        {
+          "heading": "11. Decision Gate: Passive → Active Transition",
+          "level": 2,
+          "line": 293
+        },
+        {
+          "heading": "Bundled Resources",
+          "level": 2,
+          "line": 305
+        },
+        {
+          "heading": "References",
+          "level": 3,
+          "line": 307
+        },
+        {
+          "heading": "Scripts",
+          "level": 3,
+          "line": 310
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 38
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/references/dns-techniques.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 99,
+      "nonEmptyLines": 78,
+      "sections": [
+        {
+          "heading": "DNS Reconnaissance Techniques — Deep Reference",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "DNS Record Types for Recon",
+          "level": 2,
+          "line": 3
+        },
+        {
+          "heading": "Subdomain Enumeration Tool Comparison",
+          "level": 2,
+          "line": 17
+        },
+        {
+          "heading": "Subfinder Configuration",
+          "level": 2,
+          "line": 27
+        },
+        {
+          "heading": "Certificate Transparency Deep Dive",
+          "level": 2,
+          "line": 39
+        },
+        {
+          "heading": "Sources",
+          "level": 3,
+          "line": 41
+        },
+        {
+          "heading": "crt.sh Advanced Queries",
+          "level": 3,
+          "line": 49
+        },
+        {
+          "heading": "Passive DNS Databases",
+          "level": 2,
+          "line": 61
+        },
+        {
+          "heading": "ASN/BGP Intelligence",
+          "level": 2,
+          "line": 71
+        },
+        {
+          "heading": "Tool Chaining Pattern",
+          "level": 2,
+          "line": 87
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 10
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/passive-recon/scripts/parse_subdomains.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 71,
+      "nonEmptyLines": 56,
+      "functions": [
+        {
+          "name": "extract_subdomains",
+          "startLine": 16,
+          "endLine": 19,
+          "params": [
+            "text"
+          ]
+        },
+        {
+          "name": "main",
+          "startLine": 22,
+          "endLine": 67,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "extract_subdomains",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "main",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "extract_subdomains",
+          "callee": "m.lower",
+          "lineNumber": 19
+        },
+        {
+          "caller": "extract_subdomains",
+          "callee": "re.findall",
+          "lineNumber": 19
+        },
+        {
+          "caller": "main",
+          "callee": "argparse.ArgumentParser",
+          "lineNumber": 23
+        },
+        {
+          "caller": "main",
+          "callee": "parser.add_argument",
+          "lineNumber": 24
+        },
+        {
+          "caller": "main",
+          "callee": "parser.add_argument",
+          "lineNumber": 25
+        },
+        {
+          "caller": "main",
+          "callee": "parser.add_argument",
+          "lineNumber": 26
+        },
+        {
+          "caller": "main",
+          "callee": "parser.add_argument",
+          "lineNumber": 27
+        },
+        {
+          "caller": "main",
+          "callee": "parser.parse_args",
+          "lineNumber": 28
+        },
+        {
+          "caller": "main",
+          "callee": "set",
+          "lineNumber": 30
+        },
+        {
+          "caller": "main",
+          "callee": "Path",
+          "lineNumber": 34
+        },
+        {
+          "caller": "main",
+          "callee": "path.exists",
+          "lineNumber": 35
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 36
+        },
+        {
+          "caller": "main",
+          "callee": "path.read_text",
+          "lineNumber": 39
+        },
+        {
+          "caller": "main",
+          "callee": "extract_subdomains",
+          "lineNumber": 40
+        },
+        {
+          "caller": "main",
+          "callee": "all_subs.update",
+          "lineNumber": 41
+        },
+        {
+          "caller": "main",
+          "callee": "sorted",
+          "lineNumber": 42
+        },
+        {
+          "caller": "main",
+          "callee": "args.domain.lower().lstrip",
+          "lineNumber": 46
+        },
+        {
+          "caller": "main",
+          "callee": "args.domain.lower",
+          "lineNumber": 46
+        },
+        {
+          "caller": "main",
+          "callee": "s.endswith",
+          "lineNumber": 47
+        },
+        {
+          "caller": "main",
+          "callee": "sorted",
+          "lineNumber": 49
+        },
+        {
+          "caller": "main",
+          "callee": "json.dumps",
+          "lineNumber": 52
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 54
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 56
+        },
+        {
+          "caller": "main",
+          "callee": "source_map.items",
+          "lineNumber": 56
+        },
+        {
+          "caller": "main",
+          "callee": "\"\\n\".join",
+          "lineNumber": 61
+        },
+        {
+          "caller": "main",
+          "callee": "Path(args.output).write_text",
+          "lineNumber": 64
+        },
+        {
+          "caller": "main",
+          "callee": "Path",
+          "lineNumber": 64
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 65
+        },
+        {
+          "caller": "main",
+          "callee": "len",
+          "lineNumber": 65
+        },
+        {
+          "caller": "main",
+          "callee": "print",
+          "lineNumber": 67
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/defs/standard/recon/reporting/SKILL.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 495,
+      "nonEmptyLines": 386,
+      "sections": [
+        {
+          "heading": "Reconnaissance Reporting Knowledge Base",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "1. Report Structure",
+          "level": 2,
+          "line": 19
+        },
+        {
+          "heading": "Executive Summary",
+          "level": 3,
+          "line": 23
+        },
+        {
+          "heading": "Target Overview",
+          "level": 3,
+          "line": 26
+        },
+        {
+          "heading": "2. Finding Document Template",
+          "level": 2,
+          "line": 34
+        },
+        {
+          "heading": "3. Finding Categories",
+          "level": 2,
+          "line": 111
+        },
+        {
+          "heading": "A. Domain & Subdomain Inventory",
+          "level": 3,
+          "line": 113
+        },
+        {
+          "heading": "B. DNS & Infrastructure Map",
+          "level": 3,
+          "line": 124
+        },
+        {
+          "heading": "C. Open Ports & Services",
+          "level": 3,
+          "line": 136
+        },
+        {
+          "heading": "D. Technology Stack",
+          "level": 3,
+          "line": 147
+        },
+        {
+          "heading": "E. Vulnerability Scan Results",
+          "level": 3,
+          "line": 160
+        },
+        {
+          "heading": "4. CVSS Scoring",
+          "level": 2,
+          "line": 170
+        },
+        {
+          "heading": "CVSS 4.0 (Primary)",
+          "level": 3,
+          "line": 172
+        },
+        {
+          "heading": "Score Ranges",
+          "level": 4,
+          "line": 176
+        },
+        {
+          "heading": "CVSS 4.0 Metric Groups",
+          "level": 4,
+          "line": 186
+        },
+        {
+          "heading": "Common Recon Finding CVSS 4.0 Scores",
+          "level": 4,
+          "line": 211
+        },
+        {
+          "heading": "Dual Reporting (when client requires CVSS 3.1 as well)",
+          "level": 4,
+          "line": 224
+        },
+        {
+          "heading": "5. Evidence Management",
+          "level": 2,
+          "line": 235
+        },
+        {
+          "heading": "Storage Layout",
+          "level": 3,
+          "line": 237
+        },
+        {
+          "heading": "Evidence File Rules",
+          "level": 3,
+          "line": 260
+        },
+        {
+          "heading": "Evidence Table Format",
+          "level": 3,
+          "line": 267
+        },
+        {
+          "heading": "6. Detection Gap Analysis (Purple Team / TIBER-EU)",
+          "level": 2,
+          "line": 280
+        },
+        {
+          "heading": "Purpose",
+          "level": 3,
+          "line": 284
+        },
+        {
+          "heading": "Detection Gap Table",
+          "level": 3,
+          "line": 291
+        },
+        {
+          "heading": "Detection Status Line",
+          "level": 3,
+          "line": 309
+        },
+        {
+          "heading": "7. MITRE ATT&CK Mapping",
+          "level": 2,
+          "line": 323
+        },
+        {
+          "heading": "Reconnaissance Tactics (TA0043)",
+          "level": 3,
+          "line": 325
+        },
+        {
+          "heading": "8. Finding Prioritization",
+          "level": 2,
+          "line": 342
+        },
+        {
+          "heading": "Priority Levels",
+          "level": 3,
+          "line": 344
+        },
+        {
+          "heading": "Prioritized Findings List Format",
+          "level": 3,
+          "line": 353
+        },
+        {
+          "heading": "9. Attack Chain Analysis",
+          "level": 2,
+          "line": 379
+        },
+        {
+          "heading": "Identifying Exploit Chains",
+          "level": 3,
+          "line": 381
+        },
+        {
+          "heading": "Chain Severity Escalation",
+          "level": 3,
+          "line": 401
+        },
+        {
+          "heading": "10. File Management",
+          "level": 2,
+          "line": 410
+        },
+        {
+          "heading": "Directory Layout",
+          "level": 3,
+          "line": 412
+        },
+        {
+          "heading": "Naming and Persistence Rules",
+          "level": 3,
+          "line": 439
+        },
+        {
+          "heading": "11. OPPLAN Feedback Loop",
+          "level": 2,
+          "line": 448
+        },
+        {
+          "heading": "Update Completed Objectives",
+          "level": 3,
+          "line": 452
+        },
+        {
+          "heading": "Create Follow-Up Objectives",
+          "level": 3,
+          "line": 459
+        },
+        {
+          "heading": "Report → OPPLAN Mapping",
+          "level": 3,
+          "line": 467
+        },
+        {
+          "heading": "12. Handoff Checklist",
+          "level": 2,
+          "line": 476
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 41
+      }
+    }
+  ]
+}

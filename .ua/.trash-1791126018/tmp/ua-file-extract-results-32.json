@@ -1,0 +1,3505 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 16,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 16,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 16,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "clients/shared/web-contracts/src/c2.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 37,
+      "nonEmptyLines": 36,
+      "functions": [
+        {
+          "name": "text",
+          "startLine": 16,
+          "endLine": 16,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "count",
+          "startLine": 17,
+          "endLine": 17,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isC2Session",
+          "startLine": 18,
+          "endLine": 21,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isC2Listener",
+          "startLine": 22,
+          "endLine": 24,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isC2Profile",
+          "startLine": 25,
+          "endLine": 27,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isC2View",
+          "startLine": 28,
+          "endLine": 31,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isC2CommandView",
+          "startLine": 32,
+          "endLine": 37,
+          "params": [
+            "v"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "isC2Session",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "isC2Listener",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "isC2Profile",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "isC2View",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "isC2CommandView",
+          "line": 32,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "count",
+          "callee": "Number.isSafeInteger",
+          "lineNumber": 17
+        },
+        {
+          "caller": "isC2Session",
+          "callee": "isRecord",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isC2Session",
+          "callee": "['id','name','hostname','username','os','arch','transport','remoteAddress','activeC2','version'].every",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isC2Session",
+          "callee": "text",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isC2Session",
+          "callee": "['pid','lastCheckin','listenerPort'].every",
+          "lineNumber": 20
+        },
+        {
+          "caller": "isC2Session",
+          "callee": "count",
+          "lineNumber": 20
+        },
+        {
+          "caller": "isC2Listener",
+          "callee": "isRecord",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isC2Listener",
+          "callee": "text",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isC2Listener",
+          "callee": "['mtls','http'].includes",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isC2Listener",
+          "callee": "String",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isC2Listener",
+          "callee": "count",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isC2Listener",
+          "callee": "count",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isC2Profile",
+          "callee": "isRecord",
+          "lineNumber": 26
+        },
+        {
+          "caller": "isC2Profile",
+          "callee": "text",
+          "lineNumber": 26
+        },
+        {
+          "caller": "isC2Profile",
+          "callee": "text",
+          "lineNumber": 26
+        },
+        {
+          "caller": "isC2Profile",
+          "callee": "['created','headerCount','cookieCount','parameterCount','pathSegmentCount'].every",
+          "lineNumber": 26
+        },
+        {
+          "caller": "isC2Profile",
+          "callee": "count",
+          "lineNumber": 26
+        },
+        {
+          "caller": "isC2View",
+          "callee": "isRecord",
+          "lineNumber": 29
+        },
+        {
+          "caller": "isC2View",
+          "callee": "text",
+          "lineNumber": 29
+        },
+        {
+          "caller": "isC2View",
+          "callee": "Array.isArray",
+          "lineNumber": 29
+        },
+        {
+          "caller": "isC2View",
+          "callee": "v.sessions.every",
+          "lineNumber": 29
+        },
+        {
+          "caller": "isC2View",
+          "callee": "Array.isArray",
+          "lineNumber": 30
+        },
+        {
+          "caller": "isC2View",
+          "callee": "v.listeners.every",
+          "lineNumber": 30
+        },
+        {
+          "caller": "isC2View",
+          "callee": "Array.isArray",
+          "lineNumber": 30
+        },
+        {
+          "caller": "isC2View",
+          "callee": "v.profiles.every",
+          "lineNumber": 30
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "isRecord",
+          "lineNumber": 33
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "['id','engagementId','sessionId','requestId','path','createdAt'].every",
+          "lineNumber": 33
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "text",
+          "lineNumber": 33
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "['creating','succeeded','failed','uncertain'].includes",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "String",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "Array.isArray",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "v.args.every",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "count",
+          "lineNumber": 35
+        },
+        {
+          "caller": "isC2CommandView",
+          "callee": "count",
+          "lineNumber": 35
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 5,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/capabilities.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 41,
+      "nonEmptyLines": 37,
+      "functions": [
+        {
+          "name": "isCapability",
+          "startLine": 18,
+          "endLine": 24,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isCapabilitiesDocument",
+          "startLine": 33,
+          "endLine": 41,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "isCapability",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "isCapabilitiesDocument",
+          "line": 33,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isCapability",
+          "callee": "isRecord",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isCapability",
+          "callee": "isNonEmptyString",
+          "lineNumber": 22
+        },
+        {
+          "caller": "isCapabilitiesDocument",
+          "callee": "isRecord",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isCapabilitiesDocument",
+          "callee": "Number.isInteger",
+          "lineNumber": 35
+        },
+        {
+          "caller": "isCapabilitiesDocument",
+          "callee": "isNonEmptyString",
+          "lineNumber": 38
+        },
+        {
+          "caller": "isCapabilitiesDocument",
+          "callee": "isRecord",
+          "lineNumber": 39
+        },
+        {
+          "caller": "isCapabilitiesDocument",
+          "callee": "Object.values(value.capabilities).every",
+          "lineNumber": 40
+        },
+        {
+          "caller": "isCapabilitiesDocument",
+          "callee": "Object.values",
+          "lineNumber": 40
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/engagements.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 154,
+      "nonEmptyLines": 138,
+      "functions": [
+        {
+          "name": "isEngagementStatus",
+          "startLine": 15,
+          "endLine": 17,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isEngagementTargetType",
+          "startLine": 21,
+          "endLine": 23,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isEngagement",
+          "startLine": 41,
+          "endLine": 51,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isCreateEngagementRequest",
+          "startLine": 61,
+          "endLine": 66,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isMetadataState",
+          "startLine": 77,
+          "endLine": 79,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isProjectSource",
+          "startLine": 83,
+          "endLine": 85,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isWorkspaceSlug",
+          "startLine": 108,
+          "endLine": 110,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isPublicCount",
+          "startLine": 118,
+          "endLine": 120,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isProjectViewModel",
+          "startLine": 122,
+          "endLine": 138,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isApprovalAction",
+          "startLine": 142,
+          "endLine": 144,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isApprovalDecisionRequest",
+          "startLine": 152,
+          "endLine": 154,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ENGAGEMENT_STATUSES",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "isEngagementStatus",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "ENGAGEMENT_TARGET_TYPES",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "isEngagementTargetType",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "isEngagement",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "isCreateEngagementRequest",
+          "line": 61,
+          "isDefault": false
+        },
+        {
+          "name": "METADATA_STATES",
+          "line": 75,
+          "isDefault": false
+        },
+        {
+          "name": "isMetadataState",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "PROJECT_SOURCES",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "isProjectSource",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "isWorkspaceSlug",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "isProjectViewModel",
+          "line": 122,
+          "isDefault": false
+        },
+        {
+          "name": "APPROVAL_ACTIONS",
+          "line": 140,
+          "isDefault": false
+        },
+        {
+          "name": "isApprovalAction",
+          "line": 142,
+          "isDefault": false
+        },
+        {
+          "name": "isApprovalDecisionRequest",
+          "line": 152,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isEngagementStatus",
+          "callee": "(ENGAGEMENT_STATUSES as readonly string[]).includes",
+          "lineNumber": 16
+        },
+        {
+          "caller": "isEngagementTargetType",
+          "callee": "(ENGAGEMENT_TARGET_TYPES as readonly string[]).includes",
+          "lineNumber": 22
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isRecord",
+          "lineNumber": 42
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isNonEmptyString",
+          "lineNumber": 44
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isNonEmptyString",
+          "lineNumber": 44
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isEngagementTargetType",
+          "lineNumber": 45
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isNonEmptyString",
+          "lineNumber": 45
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isEngagementStatus",
+          "lineNumber": 46
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isNonEmptyString",
+          "lineNumber": 47
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isNonEmptyString",
+          "lineNumber": 47
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isNonEmptyString",
+          "lineNumber": 48
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 49
+        },
+        {
+          "caller": "isEngagement",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 49
+        },
+        {
+          "caller": "isCreateEngagementRequest",
+          "callee": "isRecord",
+          "lineNumber": 63
+        },
+        {
+          "caller": "isCreateEngagementRequest",
+          "callee": "isNonEmptyString",
+          "lineNumber": 63
+        },
+        {
+          "caller": "isCreateEngagementRequest",
+          "callee": "isEngagementTargetType",
+          "lineNumber": 63
+        },
+        {
+          "caller": "isCreateEngagementRequest",
+          "callee": "isNonEmptyString",
+          "lineNumber": 64
+        },
+        {
+          "caller": "isMetadataState",
+          "callee": "(METADATA_STATES as readonly string[]).includes",
+          "lineNumber": 78
+        },
+        {
+          "caller": "isProjectSource",
+          "callee": "(PROJECT_SOURCES as readonly string[]).includes",
+          "lineNumber": 84
+        },
+        {
+          "caller": "isWorkspaceSlug",
+          "callee": "isNonEmptyString",
+          "lineNumber": 109
+        },
+        {
+          "caller": "isWorkspaceSlug",
+          "callee": "value.includes",
+          "lineNumber": 109
+        },
+        {
+          "caller": "isWorkspaceSlug",
+          "callee": "value.includes",
+          "lineNumber": 109
+        },
+        {
+          "caller": "isPublicCount",
+          "callee": "Number.isInteger",
+          "lineNumber": 119
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isRecord",
+          "lineNumber": 123
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "Object.keys",
+          "lineNumber": 124
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "(PROJECT_VIEW_KEYS as readonly string[]).includes",
+          "lineNumber": 125
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isNonEmptyString",
+          "lineNumber": 128
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isWorkspaceSlug",
+          "lineNumber": 128
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isNonEmptyString",
+          "lineNumber": 129
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isEngagementTargetType",
+          "lineNumber": 129
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isNonEmptyString",
+          "lineNumber": 130
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isMetadataState",
+          "lineNumber": 131
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isEngagementStatus",
+          "lineNumber": 131
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isPublicCount",
+          "lineNumber": 132
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isPublicCount",
+          "lineNumber": 133
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isPublicCount",
+          "lineNumber": 134
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 135
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 135
+        },
+        {
+          "caller": "isProjectViewModel",
+          "callee": "isProjectSource",
+          "lineNumber": 136
+        },
+        {
+          "caller": "isApprovalAction",
+          "callee": "(APPROVAL_ACTIONS as readonly string[]).includes",
+          "lineNumber": 143
+        },
+        {
+          "caller": "isApprovalDecisionRequest",
+          "callee": "isRecord",
+          "lineNumber": 153
+        },
+        {
+          "caller": "isApprovalDecisionRequest",
+          "callee": "isNonEmptyString",
+          "lineNumber": 153
+        },
+        {
+          "caller": "isApprovalDecisionRequest",
+          "callee": "isApprovalAction",
+          "lineNumber": 153
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 15,
+        "functionCount": 11,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/errors.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 31,
+      "nonEmptyLines": 26,
+      "functions": [
+        {
+          "name": "isApiErrorCode",
+          "startLine": 18,
+          "endLine": 20,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isApiError",
+          "startLine": 29,
+          "endLine": 31,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "API_ERROR_CODES",
+          "line": 11,
+          "isDefault": false
+        },
+        {
+          "name": "isApiErrorCode",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "isApiError",
+          "line": 29,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isApiErrorCode",
+          "callee": "(API_ERROR_CODES as readonly string[]).includes",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isApiError",
+          "callee": "isRecord",
+          "lineNumber": 30
+        },
+        {
+          "caller": "isApiError",
+          "callee": "isApiErrorCode",
+          "lineNumber": 30
+        },
+        {
+          "caller": "isApiError",
+          "callee": "isNonEmptyString",
+          "lineNumber": 30
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/guards.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 15,
+      "functions": [
+        {
+          "name": "isRecord",
+          "startLine": 6,
+          "endLine": 8,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isNonEmptyString",
+          "startLine": 10,
+          "endLine": 12,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isIsoUtcTimestamp",
+          "startLine": 17,
+          "endLine": 19,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "isRecord",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "isNonEmptyString",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "isIsoUtcTimestamp",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isRecord",
+          "callee": "Array.isArray",
+          "lineNumber": 7
+        },
+        {
+          "caller": "isIsoUtcTimestamp",
+          "callee": "ISO_UTC.test",
+          "lineNumber": 18
+        },
+        {
+          "caller": "isIsoUtcTimestamp",
+          "callee": "Number.isNaN",
+          "lineNumber": 18
+        },
+        {
+          "caller": "isIsoUtcTimestamp",
+          "callee": "Date.parse",
+          "lineNumber": 18
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/ownership.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 24,
+      "functions": [
+        {
+          "name": "isThreadBindingView",
+          "startLine": 14,
+          "endLine": 17,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isRequestRecoveryView",
+          "startLine": 18,
+          "endLine": 25,
+          "params": [
+            "v"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "isThreadBindingView",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "isRequestRecoveryView",
+          "line": 18,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isThreadBindingView",
+          "callee": "isRecord",
+          "lineNumber": 15
+        },
+        {
+          "caller": "isThreadBindingView",
+          "callee": "['engagementId', 'threadId', 'assistantId'].every",
+          "lineNumber": 15
+        },
+        {
+          "caller": "isThreadBindingView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 15
+        },
+        {
+          "caller": "isThreadBindingView",
+          "callee": "['planning', 'execution'].includes",
+          "lineNumber": 16
+        },
+        {
+          "caller": "isThreadBindingView",
+          "callee": "String",
+          "lineNumber": 16
+        },
+        {
+          "caller": "isThreadBindingView",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 16
+        },
+        {
+          "caller": "isThreadBindingView",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 16
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "isRecord",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "['create_thread', 'create_run', 'resume'].includes",
+          "lineNumber": 20
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "String",
+          "lineNumber": 20
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "['creating', 'accepted', 'uncertain', 'rejected'].includes",
+          "lineNumber": 20
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "String",
+          "lineNumber": 20
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 21
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 21
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 24
+        },
+        {
+          "caller": "isRequestRecoveryView",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 24
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/planning.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 70,
+      "nonEmptyLines": 66,
+      "functions": [
+        {
+          "name": "strings",
+          "startLine": 37,
+          "endLine": 37,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "fields",
+          "startLine": 38,
+          "endLine": 38,
+          "params": [
+            "v",
+            "names"
+          ]
+        },
+        {
+          "name": "optional",
+          "startLine": 39,
+          "endLine": 39,
+          "params": [
+            "v",
+            "name",
+            "check"
+          ]
+        },
+        {
+          "name": "rows",
+          "startLine": 40,
+          "endLine": 40,
+          "params": [
+            "check"
+          ]
+        },
+        {
+          "name": "isPlanningContent",
+          "startLine": 42,
+          "endLine": 56,
+          "params": [
+            "name",
+            "value"
+          ]
+        },
+        {
+          "name": "isPlanningView",
+          "startLine": 58,
+          "endLine": 70,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "PLANNING_DOCUMENTS",
+          "line": 3,
+          "isDefault": false
+        },
+        {
+          "name": "isPlanningContent",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "isPlanningView",
+          "line": 58,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "strings",
+          "callee": "Array.isArray",
+          "lineNumber": 37
+        },
+        {
+          "caller": "strings",
+          "callee": "v.every",
+          "lineNumber": 37
+        },
+        {
+          "caller": "fields",
+          "callee": "isRecord",
+          "lineNumber": 38
+        },
+        {
+          "caller": "fields",
+          "callee": "names.every",
+          "lineNumber": 38
+        },
+        {
+          "caller": "optional",
+          "callee": "check",
+          "lineNumber": 39
+        },
+        {
+          "caller": "rows",
+          "callee": "Array.isArray",
+          "lineNumber": 40
+        },
+        {
+          "caller": "rows",
+          "callee": "v.every",
+          "lineNumber": 40
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "isRecord",
+          "lineNumber": 43
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "fields",
+          "lineNumber": 44
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "['authorization_reference'].every",
+          "lineNumber": 45
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 45
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "['in_scope', 'out_of_scope'].every",
+          "lineNumber": 46
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 46
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "rows",
+          "lineNumber": 46
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "fields",
+          "lineNumber": 46
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "isRecord",
+          "lineNumber": 46
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 46
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "['prohibited_actions', 'permitted_actions'].every",
+          "lineNumber": 47
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 47
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "fields",
+          "lineNumber": 48
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "['attack_narrative', 'methodology'].every",
+          "lineNumber": 49
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 49
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 50
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 50
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "rows",
+          "lineNumber": 50
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "fields",
+          "lineNumber": 50
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "['notification_procedure', 'soc_contact'].every",
+          "lineNumber": 51
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 51
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 52
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "rows",
+          "lineNumber": 52
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "fields",
+          "lineNumber": 52
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "isRecord",
+          "lineNumber": 52
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 52
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "fields",
+          "lineNumber": 53
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 53
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "rows",
+          "lineNumber": 53
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "fields",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "isRecord",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isPlanningContent",
+          "callee": "optional",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "isRecord",
+          "lineNumber": 59
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "isRecord",
+          "lineNumber": 59
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "isRecord",
+          "lineNumber": 59
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "isRecord",
+          "lineNumber": 59
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "PLANNING_DOCUMENTS.every",
+          "lineNumber": 61
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "states.includes",
+          "lineNumber": 61
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "String",
+          "lineNumber": 61
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "PLANNING_DOCUMENTS.filter(n => n !== 'opplan').every",
+          "lineNumber": 62
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "PLANNING_DOCUMENTS.filter",
+          "lineNumber": 62
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "isRecord",
+          "lineNumber": 65
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "isPlanningContent",
+          "lineNumber": 66
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "states.includes",
+          "lineNumber": 66
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "String",
+          "lineNumber": 66
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "['ready', 'blocked'].includes",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "String",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isPlanningView",
+          "callee": "strings",
+          "lineNumber": 68
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 3,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/run-api.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 341,
+      "nonEmptyLines": 341,
+      "functions": [
+        {
+          "name": "isScopedRunView",
+          "startLine": 53,
+          "endLine": 55,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isScopedThreadView",
+          "startLine": 56,
+          "endLine": 63,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isScopedThreadListView",
+          "startLine": 64,
+          "endLine": 66,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isPendingInterruptView",
+          "startLine": 67,
+          "endLine": 69,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isApprovalRequestView",
+          "startLine": 70,
+          "endLine": 75,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isApprovalsView",
+          "startLine": 76,
+          "endLine": 78,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isFindingView",
+          "startLine": 103,
+          "endLine": 115,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isFindingsView",
+          "startLine": 116,
+          "endLine": 118,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isArtifactsView",
+          "startLine": 119,
+          "endLine": 122,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isArtifactContentView",
+          "startLine": 123,
+          "endLine": 125,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isGraphPropertyValue",
+          "startLine": 128,
+          "endLine": 128,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isGraphNodeView",
+          "startLine": 151,
+          "endLine": 154,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isGraphEdgeView",
+          "startLine": 155,
+          "endLine": 158,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isGraphView",
+          "startLine": 159,
+          "endLine": 161,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isAssetSummaryView",
+          "startLine": 163,
+          "endLine": 169,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isAssetsView",
+          "startLine": 170,
+          "endLine": 172,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isTimelineEntryView",
+          "startLine": 189,
+          "endLine": 196,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isTimelineView",
+          "startLine": 197,
+          "endLine": 199,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isEngagementSettingsView",
+          "startLine": 212,
+          "endLine": 218,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isCampaignProviderCapabilities",
+          "startLine": 231,
+          "endLine": 235,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isCampaignJobView",
+          "startLine": 258,
+          "endLine": 270,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isCampaignView",
+          "startLine": 271,
+          "endLine": 278,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isCampaignsView",
+          "startLine": 279,
+          "endLine": 281,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isVaultSecretView",
+          "startLine": 303,
+          "endLine": 308,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isVaultView",
+          "startLine": 309,
+          "endLine": 311,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isVaultRevealView",
+          "startLine": 312,
+          "endLine": 315,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isMemberView",
+          "startLine": 331,
+          "endLine": 333,
+          "params": [
+            "v"
+          ]
+        },
+        {
+          "name": "isMembersView",
+          "startLine": 334,
+          "endLine": 341,
+          "params": [
+            "v"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "isScopedRunView",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "isScopedThreadView",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "isScopedThreadListView",
+          "line": 64,
+          "isDefault": false
+        },
+        {
+          "name": "isPendingInterruptView",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "isApprovalRequestView",
+          "line": 70,
+          "isDefault": false
+        },
+        {
+          "name": "isApprovalsView",
+          "line": 76,
+          "isDefault": false
+        },
+        {
+          "name": "isFindingView",
+          "line": 103,
+          "isDefault": false
+        },
+        {
+          "name": "isFindingsView",
+          "line": 116,
+          "isDefault": false
+        },
+        {
+          "name": "isArtifactsView",
+          "line": 119,
+          "isDefault": false
+        },
+        {
+          "name": "isArtifactContentView",
+          "line": 123,
+          "isDefault": false
+        },
+        {
+          "name": "isGraphNodeView",
+          "line": 151,
+          "isDefault": false
+        },
+        {
+          "name": "isGraphEdgeView",
+          "line": 155,
+          "isDefault": false
+        },
+        {
+          "name": "isGraphView",
+          "line": 159,
+          "isDefault": false
+        },
+        {
+          "name": "isAssetSummaryView",
+          "line": 163,
+          "isDefault": false
+        },
+        {
+          "name": "isAssetsView",
+          "line": 170,
+          "isDefault": false
+        },
+        {
+          "name": "isTimelineEntryView",
+          "line": 189,
+          "isDefault": false
+        },
+        {
+          "name": "isTimelineView",
+          "line": 197,
+          "isDefault": false
+        },
+        {
+          "name": "isEngagementSettingsView",
+          "line": 212,
+          "isDefault": false
+        },
+        {
+          "name": "isCampaignProviderCapabilities",
+          "line": 231,
+          "isDefault": false
+        },
+        {
+          "name": "isCampaignJobView",
+          "line": 258,
+          "isDefault": false
+        },
+        {
+          "name": "isCampaignView",
+          "line": 271,
+          "isDefault": false
+        },
+        {
+          "name": "isCampaignsView",
+          "line": 279,
+          "isDefault": false
+        },
+        {
+          "name": "isVaultSecretView",
+          "line": 303,
+          "isDefault": false
+        },
+        {
+          "name": "isVaultView",
+          "line": 309,
+          "isDefault": false
+        },
+        {
+          "name": "isVaultRevealView",
+          "line": 312,
+          "isDefault": false
+        },
+        {
+          "name": "isMemberView",
+          "line": 331,
+          "isDefault": false
+        },
+        {
+          "name": "isMembersView",
+          "line": 334,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isScopedRunView",
+          "callee": "isRecord",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isScopedRunView",
+          "callee": "['engagementId', 'threadId', 'runId', 'requestId', 'rawStatus'].every",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isScopedRunView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isScopedRunView",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isScopedRunView",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 54
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isRecord",
+          "lineNumber": 57
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isThreadBindingView",
+          "lineNumber": 57
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 57
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "Array.isArray",
+          "lineNumber": 57
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "v.messages.every",
+          "lineNumber": 58
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isRecord",
+          "lineNumber": 58
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "['user', 'assistant'].includes",
+          "lineNumber": 58
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 58
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isPendingInterruptView",
+          "lineNumber": 59
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "Array.isArray",
+          "lineNumber": 61
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "v.transcripts.every",
+          "lineNumber": 62
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isRecord",
+          "lineNumber": 62
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 62
+        },
+        {
+          "caller": "isScopedThreadView",
+          "callee": "isPublicStreamPayload",
+          "lineNumber": 62
+        },
+        {
+          "caller": "isScopedThreadListView",
+          "callee": "isRecord",
+          "lineNumber": 65
+        },
+        {
+          "caller": "isScopedThreadListView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 65
+        },
+        {
+          "caller": "isScopedThreadListView",
+          "callee": "Array.isArray",
+          "lineNumber": 65
+        },
+        {
+          "caller": "isScopedThreadListView",
+          "callee": "v.threads.every",
+          "lineNumber": 65
+        },
+        {
+          "caller": "isPendingInterruptView",
+          "callee": "isRecord",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isPendingInterruptView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isPendingInterruptView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isPendingInterruptView",
+          "callee": "Array.isArray",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isPendingInterruptView",
+          "callee": "v.options.every",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isPendingInterruptView",
+          "callee": "isRecord",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isPendingInterruptView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isRecord",
+          "lineNumber": 71
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 71
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 71
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 71
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 71
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isRecord",
+          "lineNumber": 71
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isRecord",
+          "lineNumber": 71
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 73
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 73
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "Number.isFinite",
+          "lineNumber": 73
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 73
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 74
+        },
+        {
+          "caller": "isApprovalRequestView",
+          "callee": "Number.isFinite",
+          "lineNumber": 74
+        },
+        {
+          "caller": "isApprovalsView",
+          "callee": "isRecord",
+          "lineNumber": 77
+        },
+        {
+          "caller": "isApprovalsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 77
+        },
+        {
+          "caller": "isApprovalsView",
+          "callee": "Array.isArray",
+          "lineNumber": 77
+        },
+        {
+          "caller": "isApprovalsView",
+          "callee": "v.approvals.every",
+          "lineNumber": 77
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "isRecord",
+          "lineNumber": 104
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 104
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 104
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "FINDING_SEVERITIES.includes",
+          "lineNumber": 104
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 105
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 105
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "Array.isArray",
+          "lineNumber": 105
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "v.affectedAssets.every",
+          "lineNumber": 105
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "Number.isFinite",
+          "lineNumber": 106
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "Array.isArray",
+          "lineNumber": 109
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "(v[list] as unknown[]).every",
+          "lineNumber": 109
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 109
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "isRecord",
+          "lineNumber": 113
+        },
+        {
+          "caller": "isFindingView",
+          "callee": "Number.isFinite",
+          "lineNumber": 114
+        },
+        {
+          "caller": "isFindingsView",
+          "callee": "isRecord",
+          "lineNumber": 117
+        },
+        {
+          "caller": "isFindingsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 117
+        },
+        {
+          "caller": "isFindingsView",
+          "callee": "Array.isArray",
+          "lineNumber": 117
+        },
+        {
+          "caller": "isFindingsView",
+          "callee": "v.findings.every",
+          "lineNumber": 117
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "isRecord",
+          "lineNumber": 120
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 120
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "Array.isArray",
+          "lineNumber": 120
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "v.folders.every",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "isRecord",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "Array.isArray",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "folder.files.every",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "isRecord",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactsView",
+          "callee": "Number.isFinite",
+          "lineNumber": 121
+        },
+        {
+          "caller": "isArtifactContentView",
+          "callee": "isRecord",
+          "lineNumber": 124
+        },
+        {
+          "caller": "isArtifactContentView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 124
+        },
+        {
+          "caller": "isArtifactContentView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 124
+        },
+        {
+          "caller": "isArtifactContentView",
+          "callee": "Number.isFinite",
+          "lineNumber": 124
+        },
+        {
+          "caller": "isGraphNodeView",
+          "callee": "isRecord",
+          "lineNumber": 152
+        },
+        {
+          "caller": "isGraphNodeView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 152
+        },
+        {
+          "caller": "isGraphNodeView",
+          "callee": "Array.isArray",
+          "lineNumber": 152
+        },
+        {
+          "caller": "isGraphNodeView",
+          "callee": "v.labels.every",
+          "lineNumber": 152
+        },
+        {
+          "caller": "isGraphNodeView",
+          "callee": "isRecord",
+          "lineNumber": 152
+        },
+        {
+          "caller": "isGraphNodeView",
+          "callee": "Object.values(v.properties).every",
+          "lineNumber": 153
+        },
+        {
+          "caller": "isGraphNodeView",
+          "callee": "Object.values",
+          "lineNumber": 153
+        },
+        {
+          "caller": "isGraphEdgeView",
+          "callee": "isRecord",
+          "lineNumber": 156
+        },
+        {
+          "caller": "isGraphEdgeView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 156
+        },
+        {
+          "caller": "isGraphEdgeView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 156
+        },
+        {
+          "caller": "isGraphEdgeView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 156
+        },
+        {
+          "caller": "isGraphEdgeView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 156
+        },
+        {
+          "caller": "isGraphEdgeView",
+          "callee": "isRecord",
+          "lineNumber": 156
+        },
+        {
+          "caller": "isGraphEdgeView",
+          "callee": "Object.values(v.properties).every",
+          "lineNumber": 157
+        },
+        {
+          "caller": "isGraphEdgeView",
+          "callee": "Object.values",
+          "lineNumber": 157
+        },
+        {
+          "caller": "isGraphView",
+          "callee": "isRecord",
+          "lineNumber": 160
+        },
+        {
+          "caller": "isGraphView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 160
+        },
+        {
+          "caller": "isGraphView",
+          "callee": "Array.isArray",
+          "lineNumber": 160
+        },
+        {
+          "caller": "isGraphView",
+          "callee": "v.nodes.every",
+          "lineNumber": 160
+        },
+        {
+          "caller": "isGraphView",
+          "callee": "Array.isArray",
+          "lineNumber": 160
+        },
+        {
+          "caller": "isGraphView",
+          "callee": "v.edges.every",
+          "lineNumber": 160
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "isRecord",
+          "lineNumber": 164
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 164
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 166
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "Array.isArray",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "v.ports.every",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "Array.isArray",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "v.services.every",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "Array.isArray",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "v.relatedFindingIds.every",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetSummaryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 168
+        },
+        {
+          "caller": "isAssetsView",
+          "callee": "isRecord",
+          "lineNumber": 171
+        },
+        {
+          "caller": "isAssetsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 171
+        },
+        {
+          "caller": "isAssetsView",
+          "callee": "Array.isArray",
+          "lineNumber": 171
+        },
+        {
+          "caller": "isAssetsView",
+          "callee": "v.assets.every",
+          "lineNumber": 171
+        },
+        {
+          "caller": "isTimelineEntryView",
+          "callee": "isRecord",
+          "lineNumber": 190
+        },
+        {
+          "caller": "isTimelineEntryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 190
+        },
+        {
+          "caller": "isTimelineEntryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 190
+        },
+        {
+          "caller": "isTimelineEntryView",
+          "callee": "Number.isNaN",
+          "lineNumber": 190
+        },
+        {
+          "caller": "isTimelineEntryView",
+          "callee": "Date.parse",
+          "lineNumber": 190
+        },
+        {
+          "caller": "isTimelineEntryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 190
+        },
+        {
+          "caller": "isTimelineEntryView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 193
+        },
+        {
+          "caller": "isTimelineView",
+          "callee": "isRecord",
+          "lineNumber": 198
+        },
+        {
+          "caller": "isTimelineView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 198
+        },
+        {
+          "caller": "isTimelineView",
+          "callee": "Array.isArray",
+          "lineNumber": 198
+        },
+        {
+          "caller": "isTimelineView",
+          "callee": "v.entries.every",
+          "lineNumber": 198
+        },
+        {
+          "caller": "isEngagementSettingsView",
+          "callee": "isRecord",
+          "lineNumber": 213
+        },
+        {
+          "caller": "isEngagementSettingsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 213
+        },
+        {
+          "caller": "isEngagementSettingsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 213
+        },
+        {
+          "caller": "isEngagementSettingsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 214
+        },
+        {
+          "caller": "isEngagementSettingsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 214
+        },
+        {
+          "caller": "isEngagementSettingsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 215
+        },
+        {
+          "caller": "isEngagementSettingsView",
+          "callee": "isRecord",
+          "lineNumber": 216
+        },
+        {
+          "caller": "isEngagementSettingsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 217
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "isRecord",
+          "lineNumber": 232
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "isNonEmptyString",
+          "lineNumber": 232
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "Array.isArray",
+          "lineNumber": 232
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "v.providers.map",
+          "lineNumber": 233
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "isRecord",
+          "lineNumber": 233
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "v.providers.every",
+          "lineNumber": 233
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "isRecord",
+          "lineNumber": 234
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "['gophish', 'evilginx2'].includes",
+          "lineNumber": 234
+        },
+        {
+          "caller": "isCampaignProviderCapabilities",
+          "callee": "String",
+          "lineNumber": 234
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isRecord",
+          "lineNumber": 259
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 259
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 259
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 261
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 262
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 263
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 264
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "['providerId', 'providerStatus'].some",
+          "lineNumber": 265
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 265
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isRecord",
+          "lineNumber": 266
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "['total', 'sent', 'errors'].every",
+          "lineNumber": 266
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "Number.isSafeInteger",
+          "lineNumber": 267
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 269
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "Number.isNaN",
+          "lineNumber": 269
+        },
+        {
+          "caller": "isCampaignJobView",
+          "callee": "Date.parse",
+          "lineNumber": 269
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "isRecord",
+          "lineNumber": 272
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 272
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 272
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 272
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 274
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "Number.isInteger",
+          "lineNumber": 274
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "isRecord",
+          "lineNumber": 275
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "Array.isArray",
+          "lineNumber": 276
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "v.jobs.every",
+          "lineNumber": 276
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 277
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 277
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "Number.isNaN",
+          "lineNumber": 277
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "Date.parse",
+          "lineNumber": 277
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "Number.isNaN",
+          "lineNumber": 277
+        },
+        {
+          "caller": "isCampaignView",
+          "callee": "Date.parse",
+          "lineNumber": 277
+        },
+        {
+          "caller": "isCampaignsView",
+          "callee": "isRecord",
+          "lineNumber": 280
+        },
+        {
+          "caller": "isCampaignsView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 280
+        },
+        {
+          "caller": "isCampaignsView",
+          "callee": "Array.isArray",
+          "lineNumber": 280
+        },
+        {
+          "caller": "isCampaignsView",
+          "callee": "v.campaigns.every",
+          "lineNumber": 280
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isRecord",
+          "lineNumber": 304
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 304
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 304
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 304
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 304
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 305
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "Number.isInteger",
+          "lineNumber": 305
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 306
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "Number.isNaN",
+          "lineNumber": 306
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "Date.parse",
+          "lineNumber": 306
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 307
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 307
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "Number.isNaN",
+          "lineNumber": 307
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "Date.parse",
+          "lineNumber": 307
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "Number.isNaN",
+          "lineNumber": 307
+        },
+        {
+          "caller": "isVaultSecretView",
+          "callee": "Date.parse",
+          "lineNumber": 307
+        },
+        {
+          "caller": "isVaultView",
+          "callee": "isRecord",
+          "lineNumber": 310
+        },
+        {
+          "caller": "isVaultView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 310
+        },
+        {
+          "caller": "isVaultView",
+          "callee": "Array.isArray",
+          "lineNumber": 310
+        },
+        {
+          "caller": "isVaultView",
+          "callee": "v.secrets.every",
+          "lineNumber": 310
+        },
+        {
+          "caller": "isVaultRevealView",
+          "callee": "isRecord",
+          "lineNumber": 313
+        },
+        {
+          "caller": "isVaultRevealView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 313
+        },
+        {
+          "caller": "isVaultRevealView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 313
+        },
+        {
+          "caller": "isVaultRevealView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 313
+        },
+        {
+          "caller": "isVaultRevealView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 314
+        },
+        {
+          "caller": "isVaultRevealView",
+          "callee": "Number.isNaN",
+          "lineNumber": 314
+        },
+        {
+          "caller": "isVaultRevealView",
+          "callee": "Date.parse",
+          "lineNumber": 314
+        },
+        {
+          "caller": "isMemberView",
+          "callee": "isRecord",
+          "lineNumber": 332
+        },
+        {
+          "caller": "isMemberView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 332
+        },
+        {
+          "caller": "isMemberView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 332
+        },
+        {
+          "caller": "isMemberView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 332
+        },
+        {
+          "caller": "isMembersView",
+          "callee": "isRecord",
+          "lineNumber": 335
+        },
+        {
+          "caller": "isMembersView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 335
+        },
+        {
+          "caller": "isMembersView",
+          "callee": "Array.isArray",
+          "lineNumber": 336
+        },
+        {
+          "caller": "isMembersView",
+          "callee": "v.members.every",
+          "lineNumber": 336
+        },
+        {
+          "caller": "isMembersView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 340
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 27,
+        "functionCount": 28,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/runtime-context.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 13,
+      "functions": [
+        {
+          "name": "isRuntimeContextView",
+          "startLine": 8,
+          "endLine": 13,
+          "params": [
+            "v"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "isRuntimeContextView",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isRuntimeContextView",
+          "callee": "isRecord",
+          "lineNumber": 9
+        },
+        {
+          "caller": "isRuntimeContextView",
+          "callee": "['engagementId', 'workspaceSlug', 'assistantId'].every",
+          "lineNumber": 9
+        },
+        {
+          "caller": "isRuntimeContextView",
+          "callee": "isNonEmptyString",
+          "lineNumber": 9
+        },
+        {
+          "caller": "isRuntimeContextView",
+          "callee": "['planning', 'execution'].includes",
+          "lineNumber": 10
+        },
+        {
+          "caller": "isRuntimeContextView",
+          "callee": "String",
+          "lineNumber": 10
+        },
+        {
+          "caller": "isRuntimeContextView",
+          "callee": "['ready', 'blocked'].includes",
+          "lineNumber": 10
+        },
+        {
+          "caller": "isRuntimeContextView",
+          "callee": "String",
+          "lineNumber": 10
+        },
+        {
+          "caller": "isRuntimeContextView",
+          "callee": "['authorizationConfirmed', 'executionReady', 'threadVerified'].every",
+          "lineNumber": 11
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/runtime.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 141,
+      "nonEmptyLines": 123,
+      "functions": [
+        {
+          "name": "isRunEventSource",
+          "startLine": 19,
+          "endLine": 21,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isRunEventKind",
+          "startLine": 35,
+          "endLine": 37,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isRunEventEnvelope",
+          "startLine": 62,
+          "endLine": 75,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isRunViewStatus",
+          "startLine": 89,
+          "endLine": 91,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isRunIdentity",
+          "startLine": 99,
+          "endLine": 104,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isThreadRunRequest",
+          "startLine": 113,
+          "endLine": 120,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isRunSnapshot",
+          "startLine": 133,
+          "endLine": 141,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "RUN_EVENT_SOURCES",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "isRunEventSource",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "RUN_EVENT_KINDS",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "isRunEventKind",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "isRunEventEnvelope",
+          "line": 62,
+          "isDefault": false
+        },
+        {
+          "name": "RUN_VIEW_STATUSES",
+          "line": 82,
+          "isDefault": false
+        },
+        {
+          "name": "isRunViewStatus",
+          "line": 89,
+          "isDefault": false
+        },
+        {
+          "name": "isRunIdentity",
+          "line": 99,
+          "isDefault": false
+        },
+        {
+          "name": "isThreadRunRequest",
+          "line": 113,
+          "isDefault": false
+        },
+        {
+          "name": "isRunSnapshot",
+          "line": 133,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isRunEventSource",
+          "callee": "(RUN_EVENT_SOURCES as readonly string[]).includes",
+          "lineNumber": 20
+        },
+        {
+          "caller": "isRunEventKind",
+          "callee": "(RUN_EVENT_KINDS as readonly string[]).includes",
+          "lineNumber": 36
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isRecord",
+          "lineNumber": 63
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isNonEmptyString",
+          "lineNumber": 63
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isNonEmptyString",
+          "lineNumber": 64
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isNonEmptyString",
+          "lineNumber": 64
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isNonEmptyString",
+          "lineNumber": 65
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isRunEventSource",
+          "lineNumber": 66
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isRunEventKind",
+          "lineNumber": 66
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isNonEmptyString",
+          "lineNumber": 67
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isNonEmptyString",
+          "lineNumber": 68
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isNonEmptyString",
+          "lineNumber": 71
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 72
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 73
+        },
+        {
+          "caller": "isRunEventEnvelope",
+          "callee": "Object.prototype.hasOwnProperty.call",
+          "lineNumber": 74
+        },
+        {
+          "caller": "isRunViewStatus",
+          "callee": "(RUN_VIEW_STATUSES as readonly string[]).includes",
+          "lineNumber": 90
+        },
+        {
+          "caller": "isRunIdentity",
+          "callee": "isRecord",
+          "lineNumber": 101
+        },
+        {
+          "caller": "isRunIdentity",
+          "callee": "isNonEmptyString",
+          "lineNumber": 101
+        },
+        {
+          "caller": "isRunIdentity",
+          "callee": "isNonEmptyString",
+          "lineNumber": 101
+        },
+        {
+          "caller": "isRunIdentity",
+          "callee": "isNonEmptyString",
+          "lineNumber": 102
+        },
+        {
+          "caller": "isThreadRunRequest",
+          "callee": "isRecord",
+          "lineNumber": 114
+        },
+        {
+          "caller": "isThreadRunRequest",
+          "callee": "isNonEmptyString",
+          "lineNumber": 114
+        },
+        {
+          "caller": "isThreadRunRequest",
+          "callee": "isNonEmptyString",
+          "lineNumber": 115
+        },
+        {
+          "caller": "isThreadRunRequest",
+          "callee": "isNonEmptyString",
+          "lineNumber": 116
+        },
+        {
+          "caller": "isRunSnapshot",
+          "callee": "isRecord",
+          "lineNumber": 134
+        },
+        {
+          "caller": "isRunSnapshot",
+          "callee": "isNonEmptyString",
+          "lineNumber": 134
+        },
+        {
+          "caller": "isRunSnapshot",
+          "callee": "isNonEmptyString",
+          "lineNumber": 134
+        },
+        {
+          "caller": "isRunSnapshot",
+          "callee": "isNonEmptyString",
+          "lineNumber": 137
+        },
+        {
+          "caller": "isRunSnapshot",
+          "callee": "isRunViewStatus",
+          "lineNumber": 138
+        },
+        {
+          "caller": "isRunSnapshot",
+          "callee": "isNonEmptyString",
+          "lineNumber": 139
+        },
+        {
+          "caller": "isRunSnapshot",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 140
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 10,
+        "functionCount": 7,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/src/stream-events.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 37,
+      "nonEmptyLines": 37,
+      "functions": [
+        {
+          "name": "isPublicStreamPayload",
+          "startLine": 16,
+          "endLine": 30,
+          "params": [
+            "value"
+          ]
+        },
+        {
+          "name": "isPublicStreamEvent",
+          "startLine": 31,
+          "endLine": 37,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "isPublicStreamPayload",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "isPublicStreamEvent",
+          "line": 31,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "isRecord",
+          "lineNumber": 18
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "isNonEmptyString",
+          "lineNumber": 19
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "isNonEmptyString",
+          "lineNumber": 21
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "['user', 'assistant'].includes",
+          "lineNumber": 21
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "['delta', 'snapshot'].includes",
+          "lineNumber": 21
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "isNonEmptyString",
+          "lineNumber": 22
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "isNonEmptyString",
+          "lineNumber": 22
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "customTypes.includes",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "String",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "isNonEmptyString",
+          "lineNumber": 23
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "Number.isFinite",
+          "lineNumber": 27
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "Number.isFinite",
+          "lineNumber": 28
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "Array.isArray",
+          "lineNumber": 29
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "p.options.every",
+          "lineNumber": 29
+        },
+        {
+          "caller": "isPublicStreamPayload",
+          "callee": "isRecord",
+          "lineNumber": 29
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "isRecord",
+          "lineNumber": 32
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "['eventId', 'engagementId', 'threadId', 'streamRunId'].every",
+          "lineNumber": 32
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "isNonEmptyString",
+          "lineNumber": 32
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "isNonEmptyString",
+          "lineNumber": 32
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "['runtime', 'checkpoint'].includes",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "['upstream', 'domain', 'occurrence'].includes",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "Array.isArray",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "value.namespace.every",
+          "lineNumber": 34
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "isNonEmptyString",
+          "lineNumber": 35
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 35
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "isIsoUtcTimestamp",
+          "lineNumber": 35
+        },
+        {
+          "caller": "isPublicStreamEvent",
+          "callee": "isPublicStreamPayload",
+          "lineNumber": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/tests/ownership.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 25,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/tests/planning.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 17,
+      "nonEmptyLines": 16,
+      "functions": [
+        {
+          "name": "missingView",
+          "startLine": 4,
+          "endLine": 6,
+          "params": []
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "missingView",
+          "callee": "Object.fromEntries",
+          "lineNumber": 5
+        },
+        {
+          "caller": "missingView",
+          "callee": "['roe', 'conops', 'deconfliction', 'opplan'].map",
+          "lineNumber": 5
+        },
+        {
+          "caller": "missingView",
+          "callee": "Object.fromEntries",
+          "lineNumber": 5
+        },
+        {
+          "caller": "missingView",
+          "callee": "PLANNING_DOCUMENTS.map",
+          "lineNumber": 5
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/tests/run-api.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 142,
+      "nonEmptyLines": 142,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/tests/runtime-context.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 9,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "clients/shared/web-contracts/tests/stream-events.test.ts",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 12,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

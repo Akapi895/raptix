@@ -1,0 +1,729 @@
+{
+ "batchIndex": 133,
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/cloud/gcp-svc-account-impersonation/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 133,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/cloud/imds-pivot/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 179,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/cloud/k8s-pivot/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 166,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/cloud/m365-mailbox-compromise/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 313,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/cloud/s3-takeover/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 138,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/cloud/terraform-state-leak/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 189,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 51,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/access-control/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 203,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/bridge-exploit/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 114,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/flash-loan/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 194,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/governance-attack/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 122,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/mev-sandwich/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 116,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/oracle-manipulation/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 155,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/reentrancy/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 52,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/signature-replay/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 265,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/contracts/upgradeable-proxy/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 253,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/decepticon/engagement-lifecycle/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 129,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/decepticon/engagement-startup/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 83,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/decepticon/final-report/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 517,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/decepticon/kali-mcp-bridge/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 286,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/decepticon/kill-chain-analysis/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 133,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/decepticon/orchestration/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 183,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/decepticon/pentest-task-tree/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 242,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/dfir/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 75,
+   "fileCategory": "docs"
+  },
+  {
+   "path": "packages/raptix/raptix/skills/defs/standard/exploit/ad/SKILL.md",
+   "language": "markdown",
+   "sizeLines": 427,
+   "fileCategory": "docs"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/cloud/gcp-svc-account-impersonation/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/cloud/gcp-svc-account-impersonation/SKILL.md",
+   "lineRange": [
+    1,
+    133
+   ],
+   "summary": "Skill chuỗi impersonation service account GCP: vai trò iam.serviceAccountTokenCreator và serviceAccountUser, actAs trên Cloud Functions/Cloud Run/Compute Engine; pivot từ tài khoản ít đặc quyền lên SA quản trị dự án.",
+   "tags": [
+    "gcp",
+    "service-account",
+    "impersonation",
+    "privesc"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/cloud/imds-pivot/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/cloud/imds-pivot/SKILL.md",
+   "lineRange": [
+    1,
+    179
+   ],
+   "summary": "Skill pivot từ SSRF hoặc RCE tới Instance Metadata Service (IMDS): trích IAM role credential, instance identity và secret trong user-data của instance cloud.",
+   "tags": [
+    "imds",
+    "ssrf",
+    "cloud-metadata",
+    "credentials"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/cloud/k8s-pivot/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/cloud/k8s-pivot/SKILL.md",
+   "lineRange": [
+    1,
+    166
+   ],
+   "summary": "Playbook tấn công Kubernetes: đánh cắp service-account token, RBAC abuse, pod escape, lạm dụng hostPath mount và pivot qua kube-apiserver.",
+   "tags": [
+    "kubernetes",
+    "pivot",
+    "rbac",
+    "cloud-native"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/cloud/m365-mailbox-compromise/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/cloud/m365-mailbox-compromise/SKILL.md",
+   "lineRange": [
+    1,
+    313
+   ],
+   "summary": "Skill chuỗi chiếm hộp thư Microsoft 365: consent phishing OAuth, lạm dụng delegate access, duy trì bằng mail rule và đánh cắp token qua device-code phishing; kill chain hoàn chỉnh từ initial access tới đọc thư liên tục.",
+   "tags": [
+    "m365",
+    "oauth",
+    "mailbox",
+    "persistence"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/cloud/s3-takeover/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/cloud/s3-takeover/SKILL.md",
+   "lineRange": [
+    1,
+    138
+   ],
+   "summary": "Skill phát hiện và nhận quyền dangling S3 bucket được subdomain tham chiếu (CNAME trỏ hostname S3 nhưng bucket đã không còn tồn tại) để chiếm route và thu dữ liệu.",
+   "tags": [
+    "s3",
+    "subdomain-takeover",
+    "dangling-dns",
+    "aws"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/cloud/terraform-state-leak/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/cloud/terraform-state-leak/SKILL.md",
+   "lineRange": [
+    1,
+    189
+   ],
+   "summary": "Skill khai thác file Terraform state bị lộ: secret, cloud credential, mật khẩu RDS, IAM key và topology hạ tầng dạng JSON thô.",
+   "tags": [
+    "terraform",
+    "state-file",
+    "secrets",
+    "infrastructure-as-code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "lineRange": [
+    1,
+    51
+   ],
+   "summary": "Skill điều hướng lane audit smart contract: pattern scanner Solidity/EVM, nạp kết quả Slither, sinh PoC Foundry và playbook tấn công DeFi; đọc trước để chọn sub-skill theo lớp lỗi.",
+   "tags": [
+    "smart-contracts",
+    "solidity",
+    "routing",
+    "defi"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/access-control/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/access-control/SKILL.md",
+   "lineRange": [
+    1,
+    203
+   ],
+   "summary": "Skill audit kiểm soát truy cập smart contract: thiếu modifier, check msg.sender sai, hàm mặc định public, thiếu onlyOwner/onlyRole/onlyDAO.",
+   "tags": [
+    "access-control",
+    "solidity",
+    "authorization",
+    "audit"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/bridge-exploit/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/bridge-exploit/SKILL.md",
+   "lineRange": [
+    1,
+    114
+   ],
+   "summary": "Skill tấn công cross-chain bridge: bypass kiểm tra message (kiểu Wormhole), đánh cắp validator key (kiểu Ronin/Harmony), reentrancy khi claim token-bridge và forge Merkle-proof trên optimistic bridge.",
+   "tags": [
+    "bridge",
+    "cross-chain",
+    "validator",
+    "defi"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/flash-loan/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/flash-loan/SKILL.md",
+   "lineRange": [
+    1,
+    194
+   ],
+   "summary": "Skill các mẫu khai thác flash loan: callback reentrancy, khuếch đại qua oracle, governance attack và callback handler không xác thực.",
+   "tags": [
+    "flash-loan",
+    "defi",
+    "reentrancy",
+    "oracle"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/governance-attack/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/governance-attack/SKILL.md",
+   "lineRange": [
+    1,
+    122
+   ],
+   "summary": "Skill tấn công governance DAO: thao túng phiếu nhờ flash loan, hijack delegation, pha loãng quorum, spam proposal DoS, bypass time-lock qua emergency multisig và lệch giữa snapshot vote và on-chain vote.",
+   "tags": [
+    "governance",
+    "dao",
+    "flash-loan",
+    "defi"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/mev-sandwich/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/mev-sandwich/SKILL.md",
+   "lineRange": [
+    1,
+    116
+   ],
+   "summary": "Skill tấn công MEV sandwich: front-run + back-run lệnh swap của nạn nhân trên Uniswap V2/V3, Curve, Balancer; giám sát mempool qua Flashbots/private RPC, khai thác slippage tolerance, JIT liquidity và các biến thể khác.",
+   "tags": [
+    "mev",
+    "sandwich-attack",
+    "uniswap",
+    "defi"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/oracle-manipulation/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/oracle-manipulation/SKILL.md",
+   "lineRange": [
+    1,
+    155
+   ],
+   "summary": "Skill săn thao túng oracle trong một block: oracle spot-price từ AMM, TWAP có thể thao túng, phép tính phụ thuộc giá và thiếu kiểm tra staleness.",
+   "tags": [
+    "oracle",
+    "defi",
+    "twap",
+    "price-manipulation"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/reentrancy/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/reentrancy/SKILL.md",
+   "lineRange": [
+    1,
+    52
+   ],
+   "summary": "Skill săn và xác thực lỗi reentrancy: biến thể kinh điển cross-function, same-function, read-only và cross-contract.",
+   "tags": [
+    "reentrancy",
+    "solidity",
+    "defi",
+    "audit"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/signature-replay/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/signature-replay/SKILL.md",
+   "lineRange": [
+    1,
+    265
+   ],
+   "summary": "Skill tấn công replay chữ ký: thiếu nonce, thiếu chain ID, ecrecover trả zero address, signature malleability và replay chéo chain.",
+   "tags": [
+    "signature-replay",
+    "ecrecover",
+    "solidity",
+    "audit"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/contracts/upgradeable-proxy/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/contracts/upgradeable-proxy/SKILL.md",
+   "lineRange": [
+    1,
+    253
+   ],
+   "summary": "Skill các mẫu proxy upgrade và lỗi của chúng: implementation chưa khởi tạo, va chạm storage slot, xung đột selector, xác thực nâng cấp không được bảo vệ.",
+   "tags": [
+    "proxy",
+    "upgradeable",
+    "storage-collision",
+    "solidity"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/decepticon/engagement-lifecycle/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/decepticon/engagement-lifecycle/SKILL.md",
+   "lineRange": [
+    1,
+    129
+   ],
+   "summary": "Skill quản lý vòng đời engagement red team: khởi tạo, chuyển phase, cổng go/no-go, deconfliction với blue team, quy trình dừng khẩn cấp và hoàn tất engagement kèm checklist bảo toàn evidence.",
+   "tags": [
+    "engagement",
+    "lifecycle",
+    "orchestration",
+    "deconfliction"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/decepticon/engagement-startup/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/decepticon/engagement-startup/SKILL.md",
+   "lineRange": [
+    1,
+    83
+   ],
+   "summary": "Quy trình startup bắt buộc ở lượt đầu của orchestrator: kiểm tra engagement hiện có, chọn resume/tạo mới và khởi tạo workspace.",
+   "tags": [
+    "engagement",
+    "startup",
+    "orchestration",
+    "bootstrap"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/decepticon/final-report/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/decepticon/final-report/SKILL.md",
+   "lineRange": [
+    1,
+    517
+   ],
+   "summary": "Skill sinh báo cáo cuối engagement: executive summary, báo cáo kỹ thuật, tổng hợp findings, tường thuật attack path, ma trận detection gap và lộ trình remediation.",
+   "tags": [
+    "reporting",
+    "final-report",
+    "findings",
+    "remediation"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/decepticon/kali-mcp-bridge/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/decepticon/kali-mcp-bridge/SKILL.md",
+   "lineRange": [
+    1,
+    286
+   ],
+   "summary": "Skill triển khai và điều khiển công cụ Kali Linux qua MCP-Kali-Server: giao diện tool-call có cấu trúc, thiết lập SSH tunnel và vệ sinh prompt-injection khi dùng AI hỗ trợ engagement.",
+   "tags": [
+    "kali",
+    "mcp",
+    "tooling",
+    "opsec"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/decepticon/kill-chain-analysis/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/decepticon/kill-chain-analysis/SKILL.md",
+   "lineRange": [
+    1,
+    133
+   ],
+   "summary": "Skill phân tích kill chain và ra quyết định attack path: phân tích findings, chọn vector tấn công, ưu tiên mục tiêu và chuyển phase.",
+   "tags": [
+    "kill-chain",
+    "attack-path",
+    "orchestration",
+    "planning"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/decepticon/orchestration/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/decepticon/orchestration/SKILL.md",
+   "lineRange": [
+    1,
+    183
+   ],
+   "summary": "Skill các pattern orchestrator Raptix: ủy quyền sub-agent, quản lý state, re-planning thích ứng và giao thức bàn giao context.",
+   "tags": [
+    "orchestration",
+    "delegation",
+    "state-management",
+    "planning"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/decepticon/pentest-task-tree/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/decepticon/pentest-task-tree/SKILL.md",
+   "lineRange": [
+    1,
+    242
+   ],
+   "summary": "Skill suy luận phiên pentest qua cây nhiệm vụ PTT lặp: dựng, cập nhật và duyệt cây nhiệm vụ có đánh số để dẫn dắt quyết định LGUID pentest xuyên suốt phiên; tham chiếu kill-chain-analysis và final-report.",
+   "tags": [
+    "pentest-task-tree",
+    "decision-tree",
+    "orchestration",
+    "planning"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/dfir/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/dfir/SKILL.md",
+   "lineRange": [
+    1,
+    75
+   ],
+   "summary": "Skill catalog DFIR khép vòng Offensive Vaccine phía phòng thủ: xác thực rule Sigma/YARA do Detector sinh bằng Volatility 3, plaso và sigma-cli trên memory dump, event log, forensic artifact thật; kèm workflow đóng vòng và danh mục tool sandbox.",
+   "tags": [
+    "dfir",
+    "sigma",
+    "yara",
+    "volatility",
+    "blue-team"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "document:packages/raptix/raptix/skills/defs/standard/exploit/ad/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": "packages/raptix/raptix/skills/defs/standard/exploit/ad/SKILL.md",
+   "lineRange": [
+    1,
+    427
+   ],
+   "summary": "Skill điều hướng khai thác Active Directory: phân tích BloodHound, Kerberoasting, AS-REP Roasting, lạm dụng AD CS, DCSync, Golden Ticket, Constrained Delegation; đọc trước để chọn sub-skill theo kỹ thuật.",
+   "tags": [
+    "active-directory",
+    "kerberos",
+    "routing",
+    "bloodhound"
+   ],
+   "complexity": "complex"
+  }
+ ],
+ "edges": [
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/cloud/gcp-svc-account-impersonation/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/cloud/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/cloud/imds-pivot/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/cloud/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/cloud/k8s-pivot/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/cloud/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/cloud/m365-mailbox-compromise/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/cloud/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/cloud/s3-takeover/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/cloud/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/cloud/terraform-state-leak/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/cloud/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/access-control/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/bridge-exploit/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/flash-loan/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/governance-attack/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/mev-sandwich/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/oracle-manipulation/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/reentrancy/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/signature-replay/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/contracts/upgradeable-proxy/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/contracts/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/decepticon/pentest-task-tree/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/decepticon/kill-chain-analysis/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  },
+  {
+   "source": "document:packages/raptix/raptix/skills/defs/standard/decepticon/pentest-task-tree/SKILL.md",
+   "target": "document:packages/raptix/raptix/skills/defs/standard/decepticon/final-report/SKILL.md",
+   "type": "related",
+   "direction": "forward",
+   "weight": 0.5
+  }
+ ]
+}

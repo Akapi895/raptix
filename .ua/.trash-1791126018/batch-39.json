@@ -1,0 +1,3342 @@
+{
+  "batchIndex": 39,
+  "batchFiles": [
+    {
+      "path": "packages/raptix/raptix/tools/defense/__init__.py",
+      "language": "python",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/conops.py",
+      "language": "python",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/edr.py",
+      "language": "python",
+      "sizeLines": 222,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/elastic.py",
+      "language": "python",
+      "sizeLines": 178,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "language": "python",
+      "sizeLines": 216,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/splunk.py",
+      "language": "python",
+      "sizeLines": 186,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/defense/tools.py",
+      "language": "python",
+      "sizeLines": 208,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_defense.py",
+      "language": "python",
+      "sizeLines": 293,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "language": "python",
+      "sizeLines": 434,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "language": "python",
+      "sizeLines": 1096,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:packages/raptix/raptix/tools/defense/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "packages/raptix/raptix/tools/defense/__init__.py",
+      "summary": "Bundle tool defense — đẩy Sigma/YARA rule do pipeline Offensive Vaccine sinh ra tới SIEM/EDR thật (Splunk HEC, Sentinel ARM, Elastic Kibana, Defender XDR, CrowdStrike Falcon); mọi push đều bắt buộc endpoint được khai trong ConOps, gắn tag raptix-eng-<slug> và idempotent theo rule_id.",
+      "tags": [
+        "defense",
+        "siem",
+        "tools",
+        "sigma"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "type": "file",
+      "name": "conops.py",
+      "filePath": "packages/raptix/raptix/tools/defense/conops.py",
+      "summary": "Đọc endpoint blue-team từ ConOps (/workspace/conops.json, nhiều tên file được thử): resolve_siem_target tra blue_team.<name>, resolve_auth_value luôn lấy secret qua env var (không bao giờ inline), engagement_slug cho tag prefix và list_targets liệt kê target có sẵn.",
+      "tags": [
+        "conops",
+        "siem",
+        "config",
+        "security"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "type": "file",
+      "name": "edr.py",
+      "filePath": "packages/raptix/raptix/tools/defense/edr.py",
+      "summary": "Đẩy YARA rule tới EDR: Defender XDR nhận custom detection qua Graph Security API với KQL dựng từ sha256 trong meta block; CrowdStrike Falcon nhận IOA-style indicator trích từ meta (indicator_type/value) — YARA byte-pattern thuần không express được thì trả structured error.",
+      "tags": [
+        "edr",
+        "yara",
+        "defender",
+        "crowdstrike"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "type": "file",
+      "name": "elastic.py",
+      "filePath": "packages/raptix/raptix/tools/defense/elastic.py",
+      "summary": "Chuyển Sigma rule sang Lucene query (clause contains/startswith/endswith/equals, list→OR, condition token AND/OR/NOT/paren) và POST JSON rule lên Elastic Detection Engine qua Kibana API với index patterns mặc định logs-*/filebeat-*/winlogbeat-*.",
+      "tags": [
+        "sigma",
+        "elastic",
+        "lucene",
+        "siem"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "type": "file",
+      "name": "sentinel.py",
+      "filePath": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "summary": "Chuyển Sigma sang KQL với bảng theo logsource (SecurityEvent, Syslog, AzureDiagnostics, DnsEvents…), rồi PUT ARM resource scheduledAlertRules lên Azure Sentinel qua Management REST API dùng bearer token operator cấp ngoài.",
+      "tags": [
+        "sigma",
+        "sentinel",
+        "kql",
+        "azure"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "type": "file",
+      "name": "splunk.py",
+      "filePath": "packages/raptix/raptix/tools/defense/splunk.py",
+      "summary": "Chuyển Sigma sang SPL theo phong cách sigma-cli (subset Detector phát: selection + condition and/or, modifier contains|startswith|endswith; construct lạ → SigmaConversionError thay vì SPL sai) rồi POST saved search lên Splunk REST API.",
+      "tags": [
+        "sigma",
+        "splunk",
+        "spl",
+        "siem"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "type": "file",
+      "name": "tools.py",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "summary": "LangChain @tool wrappers cho defense exporters: list_siem_targets đọc-only, 3 tool Sigma push (Splunk saved search, Sentinel analytic rule, Elastic detection rule) và 2 tool YARA push (Defender XDR, CrowdStrike IOA); nhận Sigma dạng dict hoặc YAML string, mọi kết quả trả JSON có khóa error.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense",
+        "siem"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "type": "file",
+      "name": "test_defense.py",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "summary": "Bộ kiểm thử đơn vị cho defense: happy path converter Sigma→SPL/KQL/Lucene (or-condition, list value, unknown modifier/selection raise), YARA meta extraction, ConOps lookup/resolve_auth_value và Defender KQL push từ sha256.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "type": "file",
+      "name": "test_defense_edr.py",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "summary": "Kiểm thử push Defender XDR + CrowdStrike IOA với HTTP mock: success path (KQL từ sha256, IOA theo indicator_type), mọi nhánh lỗi ConOps/auth/HTTP 4xx và chốt hành vi _CROWDSTRIKE_TYPE_MAP.",
+      "tags": [
+        "tests",
+        "edr",
+        "mock"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "type": "file",
+      "name": "test_defense_push.py",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "summary": "Kiểm thử mở rộng cho defense — push functions (HTTP mocked) cho cả 4 exporter, mọi severity-map và logsource-to-table lookup, converter edge cases (startswith/equals, giá trị non-string, nested AND/OR/NOT/parens), ConOps helpers và các nhánh lỗi missing URL/auth, HTTP 4xx, network exception.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/conops.py:_resolve_workspace",
+      "type": "function",
+      "name": "_resolve_workspace",
+      "filePath": "packages/raptix/raptix/tools/defense/conops.py",
+      "lineRange": [
+        35,
+        36
+      ],
+      "summary": "Thư mục engagement từ RAPTIX_ENGAGEMENT_WORKSPACE, mặc định /workspace.",
+      "tags": [
+        "conops",
+        "siem",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/conops.py:_load_conops",
+      "type": "function",
+      "name": "_load_conops",
+      "filePath": "packages/raptix/raptix/tools/defense/conops.py",
+      "lineRange": [
+        39,
+        51
+      ],
+      "summary": "Đọc conops.json (3 tên file được thử lần lượt) và raise ConOpsLookupError khi thiếu file hoặc JSON hỏng.",
+      "tags": [
+        "conops",
+        "siem",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "type": "function",
+      "name": "resolve_siem_target",
+      "filePath": "packages/raptix/raptix/tools/defense/conops.py",
+      "lineRange": [
+        54,
+        69
+      ],
+      "summary": "Hàm `resolve_siem_target`: Return ConOps ``blue_team.<name>`` entry or raise ConOpsLookupError.",
+      "tags": [
+        "conops",
+        "siem",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/conops.py:list_targets",
+      "type": "function",
+      "name": "list_targets",
+      "filePath": "packages/raptix/raptix/tools/defense/conops.py",
+      "lineRange": [
+        72,
+        81
+      ],
+      "summary": "Hàm `list_targets`: Return the names of every blue-team SIEM endpoint declared in ConOps.",
+      "tags": [
+        "conops",
+        "siem",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "type": "function",
+      "name": "resolve_auth_value",
+      "filePath": "packages/raptix/raptix/tools/defense/conops.py",
+      "lineRange": [
+        84,
+        100
+      ],
+      "summary": "Hàm `resolve_auth_value`: Resolve a ConOps auth reference (``<kind>:<env-var-name>``) to its value.",
+      "tags": [
+        "conops",
+        "siem",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "type": "function",
+      "name": "engagement_slug",
+      "filePath": "packages/raptix/raptix/tools/defense/conops.py",
+      "lineRange": [
+        103,
+        113
+      ],
+      "summary": "Hàm `engagement_slug`: Return the engagement slug used to tag pushed rules.",
+      "tags": [
+        "conops",
+        "siem",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/defense/conops.py:ConOpsLookupError",
+      "type": "class",
+      "name": "ConOpsLookupError",
+      "filePath": "packages/raptix/raptix/tools/defense/conops.py",
+      "lineRange": [
+        28,
+        29
+      ],
+      "summary": "Lớp `ConOpsLookupError`: Raised when a tool tries to push to an undeclared SIEM target.",
+      "tags": [
+        "conops",
+        "siem",
+        "config"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/edr.py:_extract_yara_metadata",
+      "type": "function",
+      "name": "_extract_yara_metadata",
+      "filePath": "packages/raptix/raptix/tools/defense/edr.py",
+      "lineRange": [
+        31,
+        37
+      ],
+      "summary": "Hàm `_extract_yara_metadata`: Return a dict of ``meta`` key=value pairs from a YARA rule body.",
+      "tags": [
+        "edr",
+        "yara",
+        "push"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "type": "function",
+      "name": "push_defender_xdr_detection",
+      "filePath": "packages/raptix/raptix/tools/defense/edr.py",
+      "lineRange": [
+        40,
+        117
+      ],
+      "summary": "Hàm `push_defender_xdr_detection`: POST a custom detection to Microsoft Defender XDR (Graph Security API).",
+      "tags": [
+        "edr",
+        "yara",
+        "push"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/edr.py:push_crowdstrike_ioa",
+      "type": "function",
+      "name": "push_crowdstrike_ioa",
+      "filePath": "packages/raptix/raptix/tools/defense/edr.py",
+      "lineRange": [
+        133,
+        222
+      ],
+      "summary": "Hàm `push_crowdstrike_ioa`: POST an IOA-style indicator extracted from a YARA rule to CrowdStrike Falcon.",
+      "tags": [
+        "edr",
+        "yara",
+        "push"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/elastic.py:_field_clause_lucene",
+      "type": "function",
+      "name": "_field_clause_lucene",
+      "filePath": "packages/raptix/raptix/tools/defense/elastic.py",
+      "lineRange": [
+        27,
+        41
+      ],
+      "summary": "Một clause Lucene cho field|modifier (contains/startswith/endswith/equals), construct lạ → SigmaToElasticError.",
+      "tags": [
+        "sigma",
+        "elastic",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/elastic.py:_selection_to_lucene",
+      "type": "function",
+      "name": "_selection_to_lucene",
+      "filePath": "packages/raptix/raptix/tools/defense/elastic.py",
+      "lineRange": [
+        44,
+        53
+      ],
+      "summary": "Gộp các field của một selection thành chuỗi AND, list value → nhóm OR.",
+      "tags": [
+        "sigma",
+        "elastic",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/elastic.py:sigma_to_lucene",
+      "type": "function",
+      "name": "sigma_to_lucene",
+      "filePath": "packages/raptix/raptix/tools/defense/elastic.py",
+      "lineRange": [
+        56,
+        85
+      ],
+      "summary": "Hàm `sigma_to_lucene`: Translate a Sigma rule dict to a Lucene query string.",
+      "tags": [
+        "sigma",
+        "elastic",
+        "converter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/elastic.py:push_detection_rule",
+      "type": "function",
+      "name": "push_detection_rule",
+      "filePath": "packages/raptix/raptix/tools/defense/elastic.py",
+      "lineRange": [
+        97,
+        178
+      ],
+      "summary": "Hàm `push_detection_rule`: POST a custom detection rule to Elastic via Kibana Detection Engine API.",
+      "tags": [
+        "sigma",
+        "elastic",
+        "converter"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/defense/elastic.py:SigmaToElasticError",
+      "type": "class",
+      "name": "SigmaToElasticError",
+      "filePath": "packages/raptix/raptix/tools/defense/elastic.py",
+      "lineRange": [
+        23,
+        24
+      ],
+      "summary": "Lớp `SigmaToElasticError`: Raised on unsupported Sigma constructs.",
+      "tags": [
+        "sigma",
+        "elastic",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/sentinel.py:_table_for_logsource",
+      "type": "function",
+      "name": "_table_for_logsource",
+      "filePath": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "lineRange": [
+        47,
+        50
+      ],
+      "summary": "Map (product, category) của logsource sang bảng Log Analytics (SecurityEvent, Syslog, AzureDiagnostics…), fallback Syslog.",
+      "tags": [
+        "sigma",
+        "sentinel",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/sentinel.py:_field_clause_kql",
+      "type": "function",
+      "name": "_field_clause_kql",
+      "filePath": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "lineRange": [
+        53,
+        67
+      ],
+      "summary": "Một clause KQL cho field|modifier, construct lạ → SigmaToKqlError.",
+      "tags": [
+        "sigma",
+        "sentinel",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/sentinel.py:_selection_to_kql",
+      "type": "function",
+      "name": "_selection_to_kql",
+      "filePath": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "lineRange": [
+        70,
+        79
+      ],
+      "summary": "Gộp selection thành chuỗi KQL AND/OR.",
+      "tags": [
+        "sigma",
+        "sentinel",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "type": "function",
+      "name": "sigma_to_kql",
+      "filePath": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "lineRange": [
+        82,
+        115
+      ],
+      "summary": "Hàm `sigma_to_kql`: Translate a Sigma rule dict to a KQL query string for Sentinel.",
+      "tags": [
+        "sigma",
+        "sentinel",
+        "converter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/sentinel.py:push_analytic_rule",
+      "type": "function",
+      "name": "push_analytic_rule",
+      "filePath": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "lineRange": [
+        127,
+        216
+      ],
+      "summary": "Hàm `push_analytic_rule`: PUT a Scheduled Analytic Rule into Microsoft Sentinel via Azure Management REST.",
+      "tags": [
+        "sigma",
+        "sentinel",
+        "converter"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/defense/sentinel.py:SigmaToKqlError",
+      "type": "class",
+      "name": "SigmaToKqlError",
+      "filePath": "packages/raptix/raptix/tools/defense/sentinel.py",
+      "lineRange": [
+        30,
+        31
+      ],
+      "summary": "Lớp `SigmaToKqlError`: Raised when Sigma → KQL conversion fails on an unsupported construct.",
+      "tags": [
+        "sigma",
+        "sentinel",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/splunk.py:_quote_spl",
+      "type": "function",
+      "name": "_quote_spl",
+      "filePath": "packages/raptix/raptix/tools/defense/splunk.py",
+      "lineRange": [
+        31,
+        35
+      ],
+      "summary": "Quote giá trị SPL với escape backslash + double-quote.",
+      "tags": [
+        "sigma",
+        "splunk",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/splunk.py:_selection_to_spl",
+      "type": "function",
+      "name": "_selection_to_spl",
+      "filePath": "packages/raptix/raptix/tools/defense/splunk.py",
+      "lineRange": [
+        38,
+        50
+      ],
+      "summary": "Gộp selection thành chuỗi SPL, list value → nhóm OR.",
+      "tags": [
+        "sigma",
+        "splunk",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/splunk.py:_field_clause",
+      "type": "function",
+      "name": "_field_clause",
+      "filePath": "packages/raptix/raptix/tools/defense/splunk.py",
+      "lineRange": [
+        53,
+        68
+      ],
+      "summary": "Một clause SPL cho field|modifier (contains/startswith/endswith), construct lạ → SigmaConversionError.",
+      "tags": [
+        "sigma",
+        "splunk",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "function",
+      "name": "sigma_to_spl",
+      "filePath": "packages/raptix/raptix/tools/defense/splunk.py",
+      "lineRange": [
+        71,
+        113
+      ],
+      "summary": "Hàm `sigma_to_spl`: Translate a parsed Sigma rule dict to a Splunk SPL search string.",
+      "tags": [
+        "sigma",
+        "splunk",
+        "converter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/splunk.py:push_savedsearch",
+      "type": "function",
+      "name": "push_savedsearch",
+      "filePath": "packages/raptix/raptix/tools/defense/splunk.py",
+      "lineRange": [
+        116,
+        186
+      ],
+      "summary": "Hàm `push_savedsearch`: POST the saved-search to Splunk via REST.",
+      "tags": [
+        "sigma",
+        "splunk",
+        "converter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/raptix/tools/defense/splunk.py:SigmaConversionError",
+      "type": "class",
+      "name": "SigmaConversionError",
+      "filePath": "packages/raptix/raptix/tools/defense/splunk.py",
+      "lineRange": [
+        27,
+        28
+      ],
+      "summary": "Lớp `SigmaConversionError`: Raised when a Sigma rule contains a construct we can't translate.",
+      "tags": [
+        "sigma",
+        "splunk",
+        "converter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/tools.py:_coerce_sigma",
+      "type": "function",
+      "name": "_coerce_sigma",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "lineRange": [
+        20,
+        32
+      ],
+      "summary": "Nhận Sigma dạng dict hoặc YAML string (PyYAML lazy import), raise khi không parse thành dict.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "function",
+      "name": "_json",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "lineRange": [
+        35,
+        36
+      ],
+      "summary": "Serialize JSON indent=2, default=str cho mọi tool output.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/tools.py:list_siem_targets",
+      "type": "function",
+      "name": "list_siem_targets",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "lineRange": [
+        40,
+        48
+      ],
+      "summary": "Hàm `list_siem_targets`: List SIEM/EDR push targets declared in the engagement's ConOps.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_splunk_savedsearch",
+      "type": "function",
+      "name": "sigma_to_splunk_savedsearch",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "lineRange": [
+        52,
+        80
+      ],
+      "summary": "Hàm `sigma_to_splunk_savedsearch`: Convert a Sigma rule to SPL and push it to Splunk as a saved search.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_sentinel_analyticrule",
+      "type": "function",
+      "name": "sigma_to_sentinel_analyticrule",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "lineRange": [
+        84,
+        114
+      ],
+      "summary": "Hàm `sigma_to_sentinel_analyticrule`: Convert a Sigma rule to KQL and push it to Microsoft Sentinel as a Scheduled Analytic Rule.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_elastic_detection_rule",
+      "type": "function",
+      "name": "sigma_to_elastic_detection_rule",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "lineRange": [
+        118,
+        150
+      ],
+      "summary": "Hàm `sigma_to_elastic_detection_rule`: Convert a Sigma rule to Lucene and push it to Elastic Detection Engine.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_defender_xdr_custom_detection",
+      "type": "function",
+      "name": "yara_to_defender_xdr_custom_detection",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "lineRange": [
+        154,
+        174
+      ],
+      "summary": "Hàm `yara_to_defender_xdr_custom_detection`: Push a YARA rule to Microsoft Defender XDR as a custom advanced-hunting detection.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_crowdstrike_ioa",
+      "type": "function",
+      "name": "yara_to_crowdstrike_ioa",
+      "filePath": "packages/raptix/raptix/tools/defense/tools.py",
+      "lineRange": [
+        178,
+        198
+      ],
+      "summary": "Hàm `yara_to_crowdstrike_ioa`: Extract IOC fields from a YARA rule's meta block and push as CrowdStrike IOA.",
+      "tags": [
+        "langchain",
+        "tools",
+        "defense"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:_basic_sigma",
+      "type": "function",
+      "name": "_basic_sigma",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        27,
+        38
+      ],
+      "summary": "Hàm trợ giúp `_basic_sigma` dựng fixture và rút gọn thiết lập dạng chung cho module kiểm thử.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_basic",
+      "type": "function",
+      "name": "test_sigma_to_spl_basic",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        41,
+        44
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_spl_basic` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_with_or_condition",
+      "type": "function",
+      "name": "test_sigma_to_spl_with_or_condition",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        47,
+        57
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_spl_with_or_condition` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_with_list_value",
+      "type": "function",
+      "name": "test_sigma_to_spl_with_list_value",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        60,
+        69
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_spl_with_list_value` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_unknown_modifier_raises",
+      "type": "function",
+      "name": "test_sigma_to_spl_unknown_modifier_raises",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        72,
+        80
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_spl_unknown_modifier_raises` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_unknown_selection_raises",
+      "type": "function",
+      "name": "test_sigma_to_spl_unknown_selection_raises",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        83,
+        91
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_spl_unknown_selection_raises` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_picks_security_event_for_windows",
+      "type": "function",
+      "name": "test_sigma_to_kql_picks_security_event_for_windows",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        94,
+        98
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_kql_picks_security_event_for_windows` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_unknown_modifier_raises",
+      "type": "function",
+      "name": "test_sigma_to_kql_unknown_modifier_raises",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        101,
+        110
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_kql_unknown_modifier_raises` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_basic",
+      "type": "function",
+      "name": "test_sigma_to_lucene_basic",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        113,
+        116
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_lucene_basic` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_unknown_token_raises",
+      "type": "function",
+      "name": "test_sigma_to_lucene_unknown_token_raises",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        119,
+        127
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_lucene_unknown_token_raises` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_extract_yara_metadata_pulls_meta_kvs",
+      "type": "function",
+      "name": "test_extract_yara_metadata_pulls_meta_kvs",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        130,
+        146
+      ],
+      "summary": "Hàm kiểm thử `test_extract_yara_metadata_pulls_meta_kvs` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_extract_yara_metadata_empty_when_no_meta_block",
+      "type": "function",
+      "name": "test_extract_yara_metadata_empty_when_no_meta_block",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        149,
+        151
+      ],
+      "summary": "Hàm kiểm thử `test_extract_yara_metadata_empty_when_no_meta_block` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_missing_conops_raises",
+      "type": "function",
+      "name": "test_resolve_siem_target_missing_conops_raises",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        154,
+        157
+      ],
+      "summary": "Hàm kiểm thử `test_resolve_siem_target_missing_conops_raises` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_missing_target_raises",
+      "type": "function",
+      "name": "test_resolve_siem_target_missing_target_raises",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        160,
+        164
+      ],
+      "summary": "Hàm kiểm thử `test_resolve_siem_target_missing_target_raises` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_success",
+      "type": "function",
+      "name": "test_resolve_siem_target_success",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        167,
+        179
+      ],
+      "summary": "Hàm kiểm thử `test_resolve_siem_target_success` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_auth_value_missing_env_raises",
+      "type": "function",
+      "name": "test_resolve_auth_value_missing_env_raises",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        182,
+        185
+      ],
+      "summary": "Hàm kiểm thử `test_resolve_auth_value_missing_env_raises` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_auth_value_success",
+      "type": "function",
+      "name": "test_resolve_auth_value_success",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        188,
+        190
+      ],
+      "summary": "Hàm kiểm thử `test_resolve_auth_value_success` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_contains_with_spaces_stays_quoted",
+      "type": "function",
+      "name": "test_sigma_to_spl_contains_with_spaces_stays_quoted",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        193,
+        201
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_spl_contains_with_spaces_stays_quoted` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_contains_with_special_chars_escaped",
+      "type": "function",
+      "name": "test_sigma_to_spl_contains_with_special_chars_escaped",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        204,
+        212
+      ],
+      "summary": "Hàm kiểm thử `test_sigma_to_spl_contains_with_special_chars_escaped` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:_yara_with_sha256",
+      "type": "function",
+      "name": "_yara_with_sha256",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        215,
+        225
+      ],
+      "summary": "Hàm trợ giúp `_yara_with_sha256` dựng fixture và rút gọn thiết lập dạng chung cho module kiểm thử.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:_yara_no_indicator",
+      "type": "function",
+      "name": "_yara_no_indicator",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        228,
+        238
+      ],
+      "summary": "Hàm trợ giúp `_yara_no_indicator` dựng fixture và rút gọn thiết lập dạng chung cho module kiểm thử.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_kql_built_from_sha256",
+      "type": "function",
+      "name": "test_push_defender_xdr_kql_built_from_sha256",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        241,
+        269
+      ],
+      "summary": "Hàm kiểm thử `test_push_defender_xdr_kql_built_from_sha256` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_no_indicator_returns_error",
+      "type": "function",
+      "name": "test_push_defender_xdr_no_indicator_returns_error",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense.py",
+      "lineRange": [
+        272,
+        293
+      ],
+      "summary": "Hàm kiểm thử `test_push_defender_xdr_no_indicator_returns_error` trong module test_defense.py.",
+      "tags": [
+        "tests",
+        "defense",
+        "converters"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense_edr.py:_write_defender_conops",
+      "type": "function",
+      "name": "_write_defender_conops",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "lineRange": [
+        49,
+        51
+      ],
+      "summary": "Hàm trợ giúp `_write_defender_conops` dựng fixture và rút gọn thiết lập dạng chung cho module kiểm thử.",
+      "tags": [
+        "tests",
+        "edr",
+        "mock"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense_edr.py:_write_crowdstrike_conops",
+      "type": "function",
+      "name": "_write_crowdstrike_conops",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "lineRange": [
+        54,
+        56
+      ],
+      "summary": "Hàm trợ giúp `_write_crowdstrike_conops` dựng fixture và rút gọn thiết lập dạng chung cho module kiểm thử.",
+      "tags": [
+        "tests",
+        "edr",
+        "mock"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushDefenderXdrDetectionSuccess",
+      "type": "class",
+      "name": "TestPushDefenderXdrDetectionSuccess",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "lineRange": [
+        59,
+        135
+      ],
+      "summary": "Lớp `TestPushDefenderXdrDetectionSuccess` với 3 phương thức, đảm nhiệm logic TestPushDefenderXdrDetectionSuccess trong module.",
+      "tags": [
+        "tests",
+        "edr",
+        "mock"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushDefenderXdrDetectionErrorBranches",
+      "type": "class",
+      "name": "TestPushDefenderXdrDetectionErrorBranches",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "lineRange": [
+        138,
+        207
+      ],
+      "summary": "Lớp `TestPushDefenderXdrDetectionErrorBranches` với 6 phương thức, đảm nhiệm logic TestPushDefenderXdrDetectionErrorBranches trong module.",
+      "tags": [
+        "tests",
+        "edr",
+        "mock"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushCrowdstrikeIoaSuccess",
+      "type": "class",
+      "name": "TestPushCrowdstrikeIoaSuccess",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "lineRange": [
+        210,
+        306
+      ],
+      "summary": "Lớp `TestPushCrowdstrikeIoaSuccess` với 3 phương thức, đảm nhiệm logic TestPushCrowdstrikeIoaSuccess trong module.",
+      "tags": [
+        "tests",
+        "edr",
+        "mock"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushCrowdstrikeIoaErrorBranches",
+      "type": "class",
+      "name": "TestPushCrowdstrikeIoaErrorBranches",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "lineRange": [
+        309,
+        426
+      ],
+      "summary": "Lớp `TestPushCrowdstrikeIoaErrorBranches` với 10 phương thức, đảm nhiệm logic TestPushCrowdstrikeIoaErrorBranches trong module.",
+      "tags": [
+        "tests",
+        "edr",
+        "mock"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestCrowdstrikeTypeMap",
+      "type": "class",
+      "name": "TestCrowdstrikeTypeMap",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "lineRange": [
+        429,
+        434
+      ],
+      "summary": "Lớp `TestCrowdstrikeTypeMap` với 1 phương thức, đảm nhiệm logic TestCrowdstrikeTypeMap trong module.",
+      "tags": [
+        "tests",
+        "edr",
+        "mock"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense_push.py:_conops_with",
+      "type": "function",
+      "name": "_conops_with",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        59,
+        65
+      ],
+      "summary": "Hàm `_conops_with`: Write a minimal conops.json in tmp_path and return the workspace path.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:packages/raptix/tests/unit/tools/test_defense_push.py:_mock_response",
+      "type": "function",
+      "name": "_mock_response",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        68,
+        72
+      ],
+      "summary": "Hàm trợ giúp `_mock_response` dựng fixture và rút gọn thiết lập dạng chung cho module kiểm thử.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestConOpsHelpers",
+      "type": "class",
+      "name": "TestConOpsHelpers",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        80,
+        150
+      ],
+      "summary": "Lớp `TestConOpsHelpers` với 10 phương thức, đảm nhiệm logic TestConOpsHelpers trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestSplunkConverter",
+      "type": "class",
+      "name": "TestSplunkConverter",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        158,
+        245
+      ],
+      "summary": "Lớp `TestSplunkConverter` với 16 phương thức, đảm nhiệm logic TestSplunkConverter trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestSentinelConverter",
+      "type": "class",
+      "name": "TestSentinelConverter",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        253,
+        346
+      ],
+      "summary": "Lớp `TestSentinelConverter` với 17 phương thức, đảm nhiệm logic TestSentinelConverter trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestElasticConverter",
+      "type": "class",
+      "name": "TestElasticConverter",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        354,
+        423
+      ],
+      "summary": "Lớp `TestElasticConverter` với 14 phương thức, đảm nhiệm logic TestElasticConverter trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestExtractYaraMetadata",
+      "type": "class",
+      "name": "TestExtractYaraMetadata",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        431,
+        451
+      ],
+      "summary": "Lớp `TestExtractYaraMetadata` với 3 phương thức, đảm nhiệm logic TestExtractYaraMetadata trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushSavedsearch",
+      "type": "class",
+      "name": "TestPushSavedsearch",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        459,
+        559
+      ],
+      "summary": "Lớp `TestPushSavedsearch` với 10 phương thức, đảm nhiệm logic TestPushSavedsearch trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushDetectionRule",
+      "type": "class",
+      "name": "TestPushDetectionRule",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        567,
+        697
+      ],
+      "summary": "Lớp `TestPushDetectionRule` với 10 phương thức, đảm nhiệm logic TestPushDetectionRule trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushAnalyticRule",
+      "type": "class",
+      "name": "TestPushAnalyticRule",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        705,
+        828
+      ],
+      "summary": "Lớp `TestPushAnalyticRule` với 10 phương thức, đảm nhiệm logic TestPushAnalyticRule trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushDefenderXdr",
+      "type": "class",
+      "name": "TestPushDefenderXdr",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        836,
+        927
+      ],
+      "summary": "Lớp `TestPushDefenderXdr` với 8 phương thức, đảm nhiệm logic TestPushDefenderXdr trong module.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushCrowdstrikeIoa",
+      "type": "class",
+      "name": "TestPushCrowdstrikeIoa",
+      "filePath": "packages/raptix/tests/unit/tools/test_defense_push.py",
+      "lineRange": [
+        935,
+        1096
+      ],
+      "summary": "Lớp kiểm thử `TestPushCrowdstrikeIoa` — push CrowdStrike IOA với HTTP mock: type mapping, tags merge và mọi nhánh lỗi.",
+      "tags": [
+        "tests",
+        "defense",
+        "push"
+      ],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:_resolve_workspace",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:_resolve_workspace",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:_load_conops",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:_load_conops",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:list_targets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:list_targets",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "class:packages/raptix/raptix/tools/defense/conops.py:ConOpsLookupError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "target": "class:packages/raptix/raptix/tools/defense/conops.py:ConOpsLookupError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:_extract_yara_metadata",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:_extract_yara_metadata",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:push_crowdstrike_ioa",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:push_crowdstrike_ioa",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:_field_clause_lucene",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:_field_clause_lucene",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:_selection_to_lucene",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:_selection_to_lucene",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:sigma_to_lucene",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:sigma_to_lucene",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:push_detection_rule",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:push_detection_rule",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "class:packages/raptix/raptix/tools/defense/elastic.py:SigmaToElasticError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "class:packages/raptix/raptix/tools/defense/elastic.py:SigmaToElasticError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_table_for_logsource",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_table_for_logsource",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_field_clause_kql",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_field_clause_kql",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_selection_to_kql",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_selection_to_kql",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:push_analytic_rule",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:push_analytic_rule",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "class:packages/raptix/raptix/tools/defense/sentinel.py:SigmaToKqlError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "class:packages/raptix/raptix/tools/defense/sentinel.py:SigmaToKqlError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_quote_spl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_quote_spl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_selection_to_spl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_selection_to_spl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_field_clause",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_field_clause",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:push_savedsearch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:push_savedsearch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "class:packages/raptix/raptix/tools/defense/splunk.py:SigmaConversionError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "class:packages/raptix/raptix/tools/defense/splunk.py:SigmaConversionError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_coerce_sigma",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_coerce_sigma",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:list_siem_targets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:list_siem_targets",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_splunk_savedsearch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_splunk_savedsearch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_sentinel_analyticrule",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_sentinel_analyticrule",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_elastic_detection_rule",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_elastic_detection_rule",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_defender_xdr_custom_detection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_defender_xdr_custom_detection",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_crowdstrike_ioa",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_crowdstrike_ioa",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_basic_sigma",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_basic_sigma",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_basic",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_basic",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_with_or_condition",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_with_or_condition",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_with_list_value",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_with_list_value",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_unknown_modifier_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_unknown_modifier_raises",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_unknown_selection_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_unknown_selection_raises",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_picks_security_event_for_windows",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_picks_security_event_for_windows",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_unknown_modifier_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_unknown_modifier_raises",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_basic",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_basic",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_unknown_token_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_unknown_token_raises",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_extract_yara_metadata_pulls_meta_kvs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_extract_yara_metadata_pulls_meta_kvs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_extract_yara_metadata_empty_when_no_meta_block",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_extract_yara_metadata_empty_when_no_meta_block",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_missing_conops_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_missing_conops_raises",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_missing_target_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_missing_target_raises",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_success",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_siem_target_success",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_auth_value_missing_env_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_auth_value_missing_env_raises",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_auth_value_success",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_resolve_auth_value_success",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_contains_with_spaces_stays_quoted",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_contains_with_spaces_stays_quoted",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_contains_with_special_chars_escaped",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_contains_with_special_chars_escaped",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_yara_with_sha256",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_yara_with_sha256",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_yara_no_indicator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_yara_no_indicator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_kql_built_from_sha256",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_kql_built_from_sha256",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_no_indicator_returns_error",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_no_indicator_returns_error",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense_edr.py:_write_defender_conops",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense_edr.py:_write_defender_conops",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense_edr.py:_write_crowdstrike_conops",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense_edr.py:_write_crowdstrike_conops",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushDefenderXdrDetectionSuccess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushDefenderXdrDetectionSuccess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushDefenderXdrDetectionErrorBranches",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushDefenderXdrDetectionErrorBranches",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushCrowdstrikeIoaSuccess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushCrowdstrikeIoaSuccess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushCrowdstrikeIoaErrorBranches",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestPushCrowdstrikeIoaErrorBranches",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestCrowdstrikeTypeMap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_edr.py:TestCrowdstrikeTypeMap",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense_push.py:_conops_with",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense_push.py:_conops_with",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense_push.py:_mock_response",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense_push.py:_mock_response",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestConOpsHelpers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestConOpsHelpers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestSplunkConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestSplunkConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestSentinelConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestSentinelConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestElasticConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestElasticConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestExtractYaraMetadata",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestExtractYaraMetadata",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushSavedsearch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushSavedsearch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushDetectionRule",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushDetectionRule",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushAnalyticRule",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushAnalyticRule",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushDefenderXdr",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushDefenderXdr",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushCrowdstrikeIoa",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "class:packages/raptix/tests/unit/tools/test_defense_push.py:TestPushCrowdstrikeIoa",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/__init__.py",
+      "target": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "file:packages/raptix/raptix/tools/defense/conops.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "file:packages/raptix/raptix/tools/defense/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/tools.py",
+      "target": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "file:packages/raptix/raptix/tools/defense/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "target": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "target": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "file:packages/raptix/raptix/tools/defense/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "target": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/conops.py:_load_conops",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:_resolve_workspace",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/conops.py:_load_conops",
+      "target": "class:packages/raptix/raptix/tools/defense/conops.py:ConOpsLookupError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:_load_conops",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "target": "class:packages/raptix/raptix/tools/defense/conops.py:ConOpsLookupError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/conops.py:list_targets",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:_load_conops",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "target": "class:packages/raptix/raptix/tools/defense/conops.py:ConOpsLookupError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:_load_conops",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:_extract_yara_metadata",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/edr.py:push_crowdstrike_ioa",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/edr.py:push_crowdstrike_ioa",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/edr.py:push_crowdstrike_ioa",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:_extract_yara_metadata",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/edr.py:push_crowdstrike_ioa",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/elastic.py:_field_clause_lucene",
+      "target": "class:packages/raptix/raptix/tools/defense/elastic.py:SigmaToElasticError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/elastic.py:_selection_to_lucene",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:_field_clause_lucene",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/elastic.py:sigma_to_lucene",
+      "target": "class:packages/raptix/raptix/tools/defense/elastic.py:SigmaToElasticError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/elastic.py:sigma_to_lucene",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:_selection_to_lucene",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/elastic.py:push_detection_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/elastic.py:push_detection_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/elastic.py:push_detection_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/sentinel.py:_field_clause_kql",
+      "target": "class:packages/raptix/raptix/tools/defense/sentinel.py:SigmaToKqlError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/sentinel.py:_selection_to_kql",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_field_clause_kql",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "target": "class:packages/raptix/raptix/tools/defense/sentinel.py:SigmaToKqlError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_table_for_logsource",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:_selection_to_kql",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/sentinel.py:push_analytic_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/sentinel.py:push_analytic_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/sentinel.py:push_analytic_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/splunk.py:_selection_to_spl",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_field_clause",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/splunk.py:_field_clause",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_quote_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/splunk.py:_field_clause",
+      "target": "class:packages/raptix/raptix/tools/defense/splunk.py:SigmaConversionError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "target": "class:packages/raptix/raptix/tools/defense/splunk.py:SigmaConversionError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:_selection_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/splunk.py:push_savedsearch",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_siem_target",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/splunk.py:push_savedsearch",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:resolve_auth_value",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/splunk.py:push_savedsearch",
+      "target": "function:packages/raptix/raptix/tools/defense/conops.py:engagement_slug",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:list_siem_targets",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_splunk_savedsearch",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_coerce_sigma",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_splunk_savedsearch",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_splunk_savedsearch",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_splunk_savedsearch",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:push_savedsearch",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_sentinel_analyticrule",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_coerce_sigma",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_sentinel_analyticrule",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_sentinel_analyticrule",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_sentinel_analyticrule",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:push_analytic_rule",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_elastic_detection_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_coerce_sigma",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_elastic_detection_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_elastic_detection_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:sigma_to_lucene",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:sigma_to_elastic_detection_rule",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:push_detection_rule",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_defender_xdr_custom_detection",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_defender_xdr_custom_detection",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_crowdstrike_ioa",
+      "target": "function:packages/raptix/raptix/tools/defense/tools.py:_json",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/raptix/tools/defense/tools.py:yara_to_crowdstrike_ioa",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:push_crowdstrike_ioa",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_basic",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_basic",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_basic_sigma",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_with_or_condition",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_with_list_value",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_unknown_modifier_raises",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_unknown_selection_raises",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_picks_security_event_for_windows",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_picks_security_event_for_windows",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_basic_sigma",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_kql_unknown_modifier_raises",
+      "target": "function:packages/raptix/raptix/tools/defense/sentinel.py:sigma_to_kql",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_basic",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:sigma_to_lucene",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_basic",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_basic_sigma",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_lucene_unknown_token_raises",
+      "target": "function:packages/raptix/raptix/tools/defense/elastic.py:sigma_to_lucene",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_extract_yara_metadata_pulls_meta_kvs",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:_extract_yara_metadata",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_extract_yara_metadata_empty_when_no_meta_block",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:_extract_yara_metadata",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_contains_with_spaces_stays_quoted",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_sigma_to_spl_contains_with_special_chars_escaped",
+      "target": "function:packages/raptix/raptix/tools/defense/splunk.py:sigma_to_spl",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_kql_built_from_sha256",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_yara_with_sha256",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_kql_built_from_sha256",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_no_indicator_returns_error",
+      "target": "function:packages/raptix/tests/unit/tools/test_defense.py:_yara_no_indicator",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:packages/raptix/tests/unit/tools/test_defense.py:test_push_defender_xdr_no_indicator_returns_error",
+      "target": "function:packages/raptix/raptix/tools/defense/edr.py:push_defender_xdr_detection",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/__init__.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense_edr.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/__init__.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/edr.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/elastic.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/sentinel.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:packages/raptix/raptix/tools/defense/splunk.py",
+      "target": "file:packages/raptix/tests/unit/tools/test_defense_push.py",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

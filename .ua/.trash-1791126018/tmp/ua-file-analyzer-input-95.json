@@ -1,0 +1,34 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "integrations/agent-skills/decepticon/SKILL.md",
+                           "language":  "markdown",
+                           "sizeLines":  129,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "integrations/agent-skills/decepticon/examples.md",
+                           "language":  "markdown",
+                           "sizeLines":  124,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "integrations/agent-skills/decepticon/reference.md",
+                           "language":  "markdown",
+                           "sizeLines":  137,
+                           "fileCategory":  "docs"
+                       }
+                   ],
+    "batchImportData":  {
+                            "integrations/agent-skills/decepticon/SKILL.md":  [
+
+                                                                              ],
+                            "integrations/agent-skills/decepticon/examples.md":  [
+
+                                                                                 ],
+                            "integrations/agent-skills/decepticon/reference.md":  [
+
+                                                                                  ]
+                        }
+}

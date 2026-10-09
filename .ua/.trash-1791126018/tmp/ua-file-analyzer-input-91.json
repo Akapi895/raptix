@@ -1,0 +1,34 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "docs/integrations/ci-cd.md",
+                           "language":  "markdown",
+                           "sizeLines":  144,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/integrations/external-agents.md",
+                           "language":  "markdown",
+                           "sizeLines":  176,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "docs/integrations/github-actions.md",
+                           "language":  "markdown",
+                           "sizeLines":  97,
+                           "fileCategory":  "docs"
+                       }
+                   ],
+    "batchImportData":  {
+                            "docs/integrations/ci-cd.md":  [
+
+                                                           ],
+                            "docs/integrations/external-agents.md":  [
+
+                                                                     ],
+                            "docs/integrations/github-actions.md":  [
+
+                                                                    ]
+                        }
+}

@@ -1,0 +1,224 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+ "batchFiles": [
+  {
+   "path": "raptix/agents/standard/_surface_dispatch.py",
+   "language": "python",
+   "sizeLines": 98,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/_surface_reexpand.py",
+   "language": "python",
+   "sizeLines": 89,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/agents/standard/_surface_registry.py",
+   "language": "python",
+   "sizeLines": 304,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg.py",
+   "language": "python",
+   "sizeLines": 303,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_autoingest.py",
+   "language": "python",
+   "sizeLines": 159,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_internal/ai_surface.py",
+   "language": "python",
+   "sizeLines": 230,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_internal/ingest.py",
+   "language": "python",
+   "sizeLines": 970,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_internal/migration_runner.py",
+   "language": "python",
+   "sizeLines": 130,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_internal/operational_state.py",
+   "language": "python",
+   "sizeLines": 72,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_internal/state.py",
+   "language": "python",
+   "sizeLines": 68,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_internal/store.py",
+   "language": "python",
+   "sizeLines": 568,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_internal/summary.py",
+   "language": "python",
+   "sizeLines": 207,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/kg_internal/tools.py",
+   "language": "python",
+   "sizeLines": 242,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/middleware/tried_edges.py",
+   "language": "python",
+   "sizeLines": 237,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/runtime/__init__.py",
+   "language": "python",
+   "sizeLines": 91,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/runtime/cart.py",
+   "language": "python",
+   "sizeLines": 493,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/runtime/recording.py",
+   "language": "python",
+   "sizeLines": 435,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/runtime/task_spec.py",
+   "language": "python",
+   "sizeLines": 88,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/integration/kg/conftest.py",
+   "language": "python",
+   "sizeLines": 109,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/integration/kg/test_kg_ingest_live.py",
+   "language": "python",
+   "sizeLines": 251,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/integration/kg/test_kg_live.py",
+   "language": "python",
+   "sizeLines": 395,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/integration/kg/test_kg_middleware_live.py",
+   "language": "python",
+   "sizeLines": 219,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/integration/kg/test_kg_summary_live.py",
+   "language": "python",
+   "sizeLines": 225,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/integration/kg/test_kg_tools_live.py",
+   "language": "python",
+   "sizeLines": 184,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "raptix/agents/standard/_surface_dispatch.py": [],
+  "raptix/agents/standard/_surface_reexpand.py": [],
+  "raptix/agents/standard/_surface_registry.py": [],
+  "raptix/middleware/kg.py": [
+   "raptix/middleware/kg_internal/operational_state.py",
+   "raptix/middleware/kg_internal/state.py",
+   "raptix/middleware/kg_internal/store.py",
+   "raptix/middleware/kg_internal/summary.py",
+   "raptix/middleware/kg_internal/tools.py"
+  ],
+  "raptix/middleware/kg_autoingest.py": [
+   "raptix/middleware/filesystem.py",
+   "raptix/middleware/kg_internal/ingest.py",
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "raptix/middleware/kg_internal/ai_surface.py": [],
+  "raptix/middleware/kg_internal/ingest.py": [
+   "raptix/middleware/kg_internal/ai_surface.py",
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "raptix/middleware/kg_internal/migration_runner.py": [
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "raptix/middleware/kg_internal/operational_state.py": [
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "raptix/middleware/kg_internal/state.py": [
+   "raptix/middleware/state_reducers.py"
+  ],
+  "raptix/middleware/kg_internal/store.py": [],
+  "raptix/middleware/kg_internal/summary.py": [
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "raptix/middleware/kg_internal/tools.py": [
+   "raptix/agents/standard/_surface_reexpand.py",
+   "raptix/agents/standard/_surface_registry.py",
+   "raptix/middleware/kg_internal/ingest.py",
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "raptix/middleware/tried_edges.py": [
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "raptix/runtime/__init__.py": [],
+  "raptix/runtime/cart.py": [
+   "raptix/runtime/recording.py",
+   "raptix/runtime/task_spec.py"
+  ],
+  "raptix/runtime/recording.py": [],
+  "raptix/runtime/task_spec.py": [],
+  "tests/integration/kg/conftest.py": [
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "tests/integration/kg/test_kg_ingest_live.py": [
+   "raptix/middleware/kg_internal/ingest.py",
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "tests/integration/kg/test_kg_live.py": [
+   "raptix/middleware/kg_internal/migration_runner.py",
+   "raptix/middleware/kg_internal/store.py",
+   "raptix/runtime/cart.py"
+  ],
+  "tests/integration/kg/test_kg_middleware_live.py": [
+   "raptix/middleware/kg.py",
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "tests/integration/kg/test_kg_summary_live.py": [
+   "raptix/middleware/kg_internal/store.py",
+   "raptix/middleware/kg_internal/summary.py"
+  ],
+  "tests/integration/kg/test_kg_tools_live.py": [
+   "raptix/middleware/kg_internal/store.py",
+   "raptix/middleware/kg_internal/tools.py"
+  ]
+ }
+}

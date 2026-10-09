@@ -1,0 +1,4789 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 12,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 12,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 12,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/tools/reversing/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 57,
+      "nonEmptyLines": 51,
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/binary.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 214,
+      "nonEmptyLines": 187,
+      "functions": [
+        {
+          "name": "_detect_format",
+          "startLine": 102,
+          "endLine": 108,
+          "params": [
+            "header"
+          ]
+        },
+        {
+          "name": "_parse_elf",
+          "startLine": 111,
+          "endLine": 158,
+          "params": [
+            "data",
+            "info"
+          ]
+        },
+        {
+          "name": "_parse_pe",
+          "startLine": 161,
+          "endLine": 186,
+          "params": [
+            "data",
+            "info"
+          ]
+        },
+        {
+          "name": "identify_binary",
+          "startLine": 189,
+          "endLine": 214,
+          "params": [
+            "path",
+            "max_read"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "BinaryInfo",
+          "startLine": 26,
+          "endLine": 56,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "path",
+            "format",
+            "architecture",
+            "bitness",
+            "endianness",
+            "entry_point",
+            "nx",
+            "pie",
+            "relro",
+            "canary",
+            "size",
+            "notes"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "BinaryInfo",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "_detect_format",
+          "line": 102,
+          "isDefault": false
+        },
+        {
+          "name": "_parse_elf",
+          "line": 111,
+          "isDefault": false
+        },
+        {
+          "name": "_parse_pe",
+          "line": 161,
+          "isDefault": false
+        },
+        {
+          "name": "identify_binary",
+          "line": 189,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 55
+        },
+        {
+          "caller": "_detect_format",
+          "callee": "sorted",
+          "lineNumber": 105
+        },
+        {
+          "caller": "_detect_format",
+          "callee": "_MAGICS.items",
+          "lineNumber": 105
+        },
+        {
+          "caller": "_detect_format",
+          "callee": "len",
+          "lineNumber": 105
+        },
+        {
+          "caller": "_detect_format",
+          "callee": "header.startswith",
+          "lineNumber": 106
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "len",
+          "lineNumber": 112
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "info.notes.append",
+          "lineNumber": 113
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 121
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "_ELF_MACHINE.get",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "len",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "len",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 126
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "len",
+          "lineNumber": 132
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 133
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 134
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 136
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 137
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "range",
+          "lineNumber": 141
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "min",
+          "lineNumber": 141
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "len",
+          "lineNumber": 143
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 145
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 147
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "len",
+          "lineNumber": 150
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "struct.unpack",
+          "lineNumber": 152
+        },
+        {
+          "caller": "_parse_elf",
+          "callee": "info.notes.append",
+          "lineNumber": 158
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "len",
+          "lineNumber": 162
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "info.notes.append",
+          "lineNumber": 163
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "struct.unpack",
+          "lineNumber": 165
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "len",
+          "lineNumber": 166
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "info.notes.append",
+          "lineNumber": 167
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "struct.unpack",
+          "lineNumber": 169
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "_PE_MACHINE.get",
+          "lineNumber": 170
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "len",
+          "lineNumber": 174
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "struct.unpack",
+          "lineNumber": 175
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "len",
+          "lineNumber": 178
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "struct.unpack",
+          "lineNumber": 179
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "len",
+          "lineNumber": 183
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "struct.unpack",
+          "lineNumber": 184
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "bool",
+          "lineNumber": 185
+        },
+        {
+          "caller": "_parse_pe",
+          "callee": "bool",
+          "lineNumber": 186
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "Path",
+          "lineNumber": 195
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "BinaryInfo",
+          "lineNumber": 196
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "str",
+          "lineNumber": 196
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "p.stat",
+          "lineNumber": 198
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "p.open",
+          "lineNumber": 199
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "f.read",
+          "lineNumber": 200
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "info.notes.append",
+          "lineNumber": 202
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "_detect_format",
+          "lineNumber": 204
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "_parse_elf",
+          "lineNumber": 207
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "_parse_pe",
+          "lineNumber": 209
+        },
+        {
+          "caller": "identify_binary",
+          "callee": "fmt.startswith",
+          "lineNumber": 210
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/ghidra.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 493,
+      "nonEmptyLines": 418,
+      "functions": [
+        {
+          "name": "_mcp_available",
+          "startLine": 117,
+          "endLine": 125,
+          "params": []
+        },
+        {
+          "name": "_mcp_post",
+          "startLine": 128,
+          "endLine": 135,
+          "params": [
+            "endpoint",
+            "payload"
+          ]
+        },
+        {
+          "name": "_mcp_get",
+          "startLine": 138,
+          "endLine": 143,
+          "params": [
+            "endpoint"
+          ]
+        },
+        {
+          "name": "_find_analyze_headless",
+          "startLine": 263,
+          "endLine": 274,
+          "params": []
+        },
+        {
+          "name": "_run_headless",
+          "startLine": 277,
+          "endLine": 353,
+          "params": [
+            "binary",
+            "script_body"
+          ]
+        },
+        {
+          "name": "ghidra_analyze_binary",
+          "startLine": 361,
+          "endLine": 402,
+          "params": [
+            "binary"
+          ]
+        },
+        {
+          "name": "ghidra_decompile_function",
+          "startLine": 405,
+          "endLine": 458,
+          "params": [
+            "binary",
+            "function_name"
+          ]
+        },
+        {
+          "name": "ghidra_get_xrefs",
+          "startLine": 461,
+          "endLine": 483,
+          "params": [
+            "binary",
+            "address"
+          ]
+        },
+        {
+          "name": "ghidra_available",
+          "startLine": 486,
+          "endLine": 493,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "GhidraFunction",
+          "startLine": 44,
+          "endLine": 52,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "name",
+            "address",
+            "size",
+            "calling_convention",
+            "signature"
+          ]
+        },
+        {
+          "name": "GhidraDecompilation",
+          "startLine": 59,
+          "endLine": 66,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "function_name",
+            "address",
+            "source",
+            "return_type"
+          ]
+        },
+        {
+          "name": "GhidraAnalysis",
+          "startLine": 70,
+          "endLine": 98,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "program_name",
+            "language",
+            "image_base",
+            "function_count",
+            "functions",
+            "imports",
+            "exports",
+            "strings_count",
+            "error"
+          ]
+        },
+        {
+          "name": "GhidraXref",
+          "startLine": 102,
+          "endLine": 109,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "from_address",
+            "to_address",
+            "ref_type",
+            "from_function"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "GhidraFunction",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "GhidraDecompilation",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "GhidraAnalysis",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "GhidraXref",
+          "line": 101,
+          "isDefault": false
+        },
+        {
+          "name": "_mcp_available",
+          "line": 117,
+          "isDefault": false
+        },
+        {
+          "name": "_mcp_post",
+          "line": 128,
+          "isDefault": false
+        },
+        {
+          "name": "_mcp_get",
+          "line": 138,
+          "isDefault": false
+        },
+        {
+          "name": "_find_analyze_headless",
+          "line": 263,
+          "isDefault": false
+        },
+        {
+          "name": "_run_headless",
+          "line": 277,
+          "isDefault": false
+        },
+        {
+          "name": "ghidra_analyze_binary",
+          "line": 361,
+          "isDefault": false
+        },
+        {
+          "name": "ghidra_decompile_function",
+          "line": 405,
+          "isDefault": false
+        },
+        {
+          "name": "ghidra_get_xrefs",
+          "line": 461,
+          "isDefault": false
+        },
+        {
+          "name": "ghidra_available",
+          "line": 486,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "to_dict",
+          "callee": "self.__dict__.items",
+          "lineNumber": 52
+        },
+        {
+          "caller": "to_dict",
+          "callee": "self.__dict__.items",
+          "lineNumber": 66
+        },
+        {
+          "caller": "to_dict",
+          "callee": "f.to_dict",
+          "lineNumber": 89
+        },
+        {
+          "caller": "to_dict",
+          "callee": "self.__dict__.items",
+          "lineNumber": 109
+        },
+        {
+          "caller": "_mcp_available",
+          "callee": "Request",
+          "lineNumber": 120
+        },
+        {
+          "caller": "_mcp_available",
+          "callee": "urlopen",
+          "lineNumber": 121
+        },
+        {
+          "caller": "_mcp_available",
+          "callee": "json.loads",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_mcp_available",
+          "callee": "resp.read",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_mcp_available",
+          "callee": "data.get",
+          "lineNumber": 123
+        },
+        {
+          "caller": "_mcp_post",
+          "callee": "json.dumps(payload or {}).encode",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_mcp_post",
+          "callee": "json.dumps",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_mcp_post",
+          "callee": "Request",
+          "lineNumber": 132
+        },
+        {
+          "caller": "_mcp_post",
+          "callee": "req.add_header",
+          "lineNumber": 133
+        },
+        {
+          "caller": "_mcp_post",
+          "callee": "urlopen",
+          "lineNumber": 134
+        },
+        {
+          "caller": "_mcp_post",
+          "callee": "json.loads",
+          "lineNumber": 135
+        },
+        {
+          "caller": "_mcp_post",
+          "callee": "resp.read",
+          "lineNumber": 135
+        },
+        {
+          "caller": "_mcp_get",
+          "callee": "Request",
+          "lineNumber": 141
+        },
+        {
+          "caller": "_mcp_get",
+          "callee": "urlopen",
+          "lineNumber": 142
+        },
+        {
+          "caller": "_mcp_get",
+          "callee": "json.loads",
+          "lineNumber": 143
+        },
+        {
+          "caller": "_mcp_get",
+          "callee": "resp.read",
+          "lineNumber": 143
+        },
+        {
+          "caller": "_find_analyze_headless",
+          "callee": "Path",
+          "lineNumber": 266
+        },
+        {
+          "caller": "_find_analyze_headless",
+          "callee": "Path",
+          "lineNumber": 267
+        },
+        {
+          "caller": "_find_analyze_headless",
+          "callee": "Path",
+          "lineNumber": 268
+        },
+        {
+          "caller": "_find_analyze_headless",
+          "callee": "Path",
+          "lineNumber": 269
+        },
+        {
+          "caller": "_find_analyze_headless",
+          "callee": "c.exists",
+          "lineNumber": 272
+        },
+        {
+          "caller": "_find_analyze_headless",
+          "callee": "str",
+          "lineNumber": 273
+        },
+        {
+          "caller": "_find_analyze_headless",
+          "callee": "shutil.which",
+          "lineNumber": 274
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "_find_analyze_headless",
+          "lineNumber": 290
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "tempfile.TemporaryDirectory",
+          "lineNumber": 298
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "Path",
+          "lineNumber": 299
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "script_path.write_text",
+          "lineNumber": 300
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "Path",
+          "lineNumber": 301
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "project_dir.mkdir",
+          "lineNumber": 302
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "Path",
+          "lineNumber": 303
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "str",
+          "lineNumber": 307
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "str",
+          "lineNumber": 312
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "str",
+          "lineNumber": 317
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "subprocess.run",
+          "lineNumber": 319
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "out_path.exists",
+          "lineNumber": 332
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "json.loads",
+          "lineNumber": 347
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "out_path.read_text",
+          "lineNumber": 347
+        },
+        {
+          "caller": "_run_headless",
+          "callee": "out_path.read_text",
+          "lineNumber": 349
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "_mcp_available",
+          "lineNumber": 364
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "_mcp_post",
+          "lineNumber": 366
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "GhidraAnalysis",
+          "lineNumber": 367
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 368
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 369
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 370
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 371
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "GhidraFunction",
+          "lineNumber": 373
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "f.items",
+          "lineNumber": 373
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 374
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 376
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 377
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "_run_headless",
+          "lineNumber": 382
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "GhidraAnalysis",
+          "lineNumber": 384
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "GhidraAnalysis",
+          "lineNumber": 391
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 392
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 393
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 394
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 395
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "GhidraFunction",
+          "lineNumber": 397
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "f.items",
+          "lineNumber": 397
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 398
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 400
+        },
+        {
+          "caller": "ghidra_analyze_binary",
+          "callee": "data.get",
+          "lineNumber": 401
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "_mcp_available",
+          "lineNumber": 408
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "_mcp_post",
+          "lineNumber": 410
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "GhidraDecompilation",
+          "lineNumber": 417
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "data.get",
+          "lineNumber": 418
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "data.get",
+          "lineNumber": 419
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "data.get",
+          "lineNumber": 420
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "data.get",
+          "lineNumber": 421
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "len",
+          "lineNumber": 432
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "GhidraDecompilation",
+          "lineNumber": 437
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "len",
+          "lineNumber": 442
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "_run_headless",
+          "lineNumber": 446
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "GhidraDecompilation",
+          "lineNumber": 448
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "GhidraDecompilation",
+          "lineNumber": 453
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "data.get",
+          "lineNumber": 454
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "data.get",
+          "lineNumber": 455
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "data.get",
+          "lineNumber": 456
+        },
+        {
+          "caller": "ghidra_decompile_function",
+          "callee": "data.get",
+          "lineNumber": 457
+        },
+        {
+          "caller": "ghidra_get_xrefs",
+          "callee": "_mcp_available",
+          "lineNumber": 463
+        },
+        {
+          "caller": "ghidra_get_xrefs",
+          "callee": "_mcp_post",
+          "lineNumber": 466
+        },
+        {
+          "caller": "ghidra_get_xrefs",
+          "callee": "GhidraXref",
+          "lineNumber": 474
+        },
+        {
+          "caller": "ghidra_get_xrefs",
+          "callee": "x.get",
+          "lineNumber": 475
+        },
+        {
+          "caller": "ghidra_get_xrefs",
+          "callee": "x.get",
+          "lineNumber": 476
+        },
+        {
+          "caller": "ghidra_get_xrefs",
+          "callee": "x.get",
+          "lineNumber": 477
+        },
+        {
+          "caller": "ghidra_get_xrefs",
+          "callee": "x.get",
+          "lineNumber": 478
+        },
+        {
+          "caller": "ghidra_get_xrefs",
+          "callee": "data.get",
+          "lineNumber": 480
+        },
+        {
+          "caller": "ghidra_available",
+          "callee": "_find_analyze_headless",
+          "lineNumber": 489
+        },
+        {
+          "caller": "ghidra_available",
+          "callee": "_mcp_available",
+          "lineNumber": 490
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 13,
+        "functionCount": 9,
+        "classCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/packer.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 100,
+      "nonEmptyLines": 84,
+      "functions": [
+        {
+          "name": "shannon_entropy",
+          "startLine": 35,
+          "endLine": 44,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "detect_packer",
+          "startLine": 72,
+          "endLine": 100,
+          "params": [
+            "data"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "PackerVerdict",
+          "startLine": 18,
+          "endLine": 32,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "likely_packed",
+            "entropy",
+            "packer",
+            "signatures",
+            "notes"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "PackerVerdict",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "shannon_entropy",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "detect_packer",
+          "line": 72,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "to_dict",
+          "callee": "round",
+          "lineNumber": 28
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 30
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 31
+        },
+        {
+          "caller": "shannon_entropy",
+          "callee": "Counter",
+          "lineNumber": 38
+        },
+        {
+          "caller": "shannon_entropy",
+          "callee": "len",
+          "lineNumber": 39
+        },
+        {
+          "caller": "shannon_entropy",
+          "callee": "counts.values",
+          "lineNumber": 41
+        },
+        {
+          "caller": "shannon_entropy",
+          "callee": "math.log2",
+          "lineNumber": 43
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "isinstance",
+          "lineNumber": 74
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "Path(data).read_bytes",
+          "lineNumber": 75
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "Path",
+          "lineNumber": 75
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "PackerVerdict",
+          "lineNumber": 80
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "shannon_entropy",
+          "lineNumber": 82
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "hits.append",
+          "lineNumber": 88
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "PackerVerdict",
+          "lineNumber": 92
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "verdict.notes.append",
+          "lineNumber": 94
+        },
+        {
+          "caller": "detect_packer",
+          "callee": "verdict.notes.append",
+          "lineNumber": 99
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/rop.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 75,
+      "nonEmptyLines": 62,
+      "functions": [
+        {
+          "name": "find_rop_gadgets",
+          "startLine": 39,
+          "endLine": 69,
+          "params": [
+            "data",
+            "max_length",
+            "base"
+          ]
+        },
+        {
+          "name": "filter_gadgets_by_pattern",
+          "startLine": 72,
+          "endLine": 75,
+          "params": [
+            "gadgets",
+            "pattern_hex"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RopGadget",
+          "startLine": 24,
+          "endLine": 36,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "offset",
+            "bytes_",
+            "hex",
+            "ret_opcode"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "RopGadget",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "find_rop_gadgets",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "filter_gadgets_by_pattern",
+          "line": 72,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "to_dict",
+          "callee": "len",
+          "lineNumber": 34
+        },
+        {
+          "caller": "find_rop_gadgets",
+          "callee": "set",
+          "lineNumber": 52
+        },
+        {
+          "caller": "find_rop_gadgets",
+          "callee": "enumerate",
+          "lineNumber": 53
+        },
+        {
+          "caller": "find_rop_gadgets",
+          "callee": "max",
+          "lineNumber": 56
+        },
+        {
+          "caller": "find_rop_gadgets",
+          "callee": "seen.add",
+          "lineNumber": 60
+        },
+        {
+          "caller": "find_rop_gadgets",
+          "callee": "gadgets.append",
+          "lineNumber": 61
+        },
+        {
+          "caller": "find_rop_gadgets",
+          "callee": "RopGadget",
+          "lineNumber": 62
+        },
+        {
+          "caller": "find_rop_gadgets",
+          "callee": "bytes",
+          "lineNumber": 64
+        },
+        {
+          "caller": "find_rop_gadgets",
+          "callee": "candidate.hex",
+          "lineNumber": 65
+        },
+        {
+          "caller": "filter_gadgets_by_pattern",
+          "callee": "bytes.fromhex",
+          "lineNumber": 74
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/scripts.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 79,
+      "nonEmptyLines": 65,
+      "functions": [
+        {
+          "name": "ghidra_recon_script",
+          "startLine": 72,
+          "endLine": 74,
+          "params": [
+            "binary",
+            "script_name"
+          ]
+        },
+        {
+          "name": "r2_recon_script",
+          "startLine": 77,
+          "endLine": 79,
+          "params": [
+            "binary"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ghidra_recon_script",
+          "line": 72,
+          "isDefault": false
+        },
+        {
+          "name": "r2_recon_script",
+          "line": 77,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "ghidra_recon_script",
+          "callee": "_GHIDRA_RECON.replace(\"{binary}\", binary).replace",
+          "lineNumber": 74
+        },
+        {
+          "caller": "ghidra_recon_script",
+          "callee": "_GHIDRA_RECON.replace",
+          "lineNumber": 74
+        },
+        {
+          "caller": "r2_recon_script",
+          "callee": "_R2_RECON.replace",
+          "lineNumber": 79
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 2,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/strings.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 188,
+      "nonEmptyLines": 168,
+      "functions": [
+        {
+          "name": "_classify",
+          "startLine": 110,
+          "endLine": 139,
+          "params": [
+            "s"
+          ]
+        },
+        {
+          "name": "extract_strings",
+          "startLine": 142,
+          "endLine": 180,
+          "params": [
+            "data",
+            "min_length",
+            "include_utf16"
+          ]
+        },
+        {
+          "name": "group_by_category",
+          "startLine": 183,
+          "endLine": 188,
+          "params": [
+            "strings"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ExtractedString",
+          "startLine": 95,
+          "endLine": 107,
+          "methods": [
+            "to_dict"
+          ],
+          "properties": [
+            "offset",
+            "text",
+            "encoding",
+            "category"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ExtractedString",
+          "line": 94,
+          "isDefault": false
+        },
+        {
+          "name": "_classify",
+          "line": 110,
+          "isDefault": false
+        },
+        {
+          "name": "extract_strings",
+          "line": 142,
+          "isDefault": false
+        },
+        {
+          "name": "group_by_category",
+          "line": 183,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_classify",
+          "callee": "_URL_RE.search",
+          "lineNumber": 112
+        },
+        {
+          "caller": "_classify",
+          "callee": "_IP_RE.search",
+          "lineNumber": 114
+        },
+        {
+          "caller": "_classify",
+          "callee": "ip_m.group(0).split",
+          "lineNumber": 116
+        },
+        {
+          "caller": "_classify",
+          "callee": "ip_m.group",
+          "lineNumber": 116
+        },
+        {
+          "caller": "_classify",
+          "callee": "all",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_classify",
+          "callee": "int",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_classify",
+          "callee": "_PEM_RE.search",
+          "lineNumber": 122
+        },
+        {
+          "caller": "_classify",
+          "callee": "_HEX_KEY_RE.search",
+          "lineNumber": 124
+        },
+        {
+          "caller": "_classify",
+          "callee": "len",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_classify",
+          "callee": "m.group",
+          "lineNumber": 125
+        },
+        {
+          "caller": "_classify",
+          "callee": "_SECRET_RE.search",
+          "lineNumber": 127
+        },
+        {
+          "caller": "_classify",
+          "callee": "_EMAIL_RE.search",
+          "lineNumber": 129
+        },
+        {
+          "caller": "_classify",
+          "callee": "_PATH_RE.search",
+          "lineNumber": 131
+        },
+        {
+          "caller": "_classify",
+          "callee": "_FORMAT_RE.search",
+          "lineNumber": 133
+        },
+        {
+          "caller": "_classify",
+          "callee": "_VERSION_RE.search",
+          "lineNumber": 135
+        },
+        {
+          "caller": "_classify",
+          "callee": "any",
+          "lineNumber": 137
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "isinstance",
+          "lineNumber": 149
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "Path(data).read_bytes",
+          "lineNumber": 150
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "Path",
+          "lineNumber": 150
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "re.compile",
+          "lineNumber": 154
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "max",
+          "lineNumber": 154
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "pat.finditer",
+          "lineNumber": 156
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "m.group().decode",
+          "lineNumber": 157
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "m.group",
+          "lineNumber": 157
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "results.append",
+          "lineNumber": 158
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "ExtractedString",
+          "lineNumber": 159
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "m.start",
+          "lineNumber": 160
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "_classify",
+          "lineNumber": 163
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "re.compile",
+          "lineNumber": 168
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "max",
+          "lineNumber": 168
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "utf_pat.finditer",
+          "lineNumber": 169
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "m.group().decode(\"utf-16-le\", errors=\"replace\").rstrip",
+          "lineNumber": 170
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "m.group().decode",
+          "lineNumber": 170
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "m.group",
+          "lineNumber": 170
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "len",
+          "lineNumber": 171
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "results.append",
+          "lineNumber": 172
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "ExtractedString",
+          "lineNumber": 173
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "m.start",
+          "lineNumber": 174
+        },
+        {
+          "caller": "extract_strings",
+          "callee": "_classify",
+          "lineNumber": 177
+        },
+        {
+          "caller": "group_by_category",
+          "callee": "out.setdefault(s.category, []).append",
+          "lineNumber": 187
+        },
+        {
+          "caller": "group_by_category",
+          "callee": "out.setdefault",
+          "lineNumber": 187
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/symbols.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 159,
+      "nonEmptyLines": 149,
+      "functions": [
+        {
+          "name": "summarize_symbols",
+          "startLine": 147,
+          "endLine": 159,
+          "params": [
+            "symbols"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "SymbolReport",
+          "startLine": 113,
+          "endLine": 144,
+          "methods": [
+            "risk_score",
+            "to_dict"
+          ],
+          "properties": [
+            "dangerous_c",
+            "command_exec",
+            "network",
+            "crypto",
+            "dynamic_code",
+            "anti_debug",
+            "sanitizers"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "SymbolReport",
+          "line": 112,
+          "isDefault": false
+        },
+        {
+          "name": "summarize_symbols",
+          "line": 147,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "risk_score",
+          "callee": "len",
+          "lineNumber": 125
+        },
+        {
+          "caller": "risk_score",
+          "callee": "len",
+          "lineNumber": 126
+        },
+        {
+          "caller": "risk_score",
+          "callee": "len",
+          "lineNumber": 127
+        },
+        {
+          "caller": "risk_score",
+          "callee": "len",
+          "lineNumber": 128
+        },
+        {
+          "caller": "risk_score",
+          "callee": "len",
+          "lineNumber": 129
+        },
+        {
+          "caller": "risk_score",
+          "callee": "len",
+          "lineNumber": 130
+        },
+        {
+          "caller": "risk_score",
+          "callee": "len",
+          "lineNumber": 131
+        },
+        {
+          "caller": "risk_score",
+          "callee": "max",
+          "lineNumber": 132
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 136
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 137
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 138
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 139
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 140
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 141
+        },
+        {
+          "caller": "to_dict",
+          "callee": "list",
+          "lineNumber": 142
+        },
+        {
+          "caller": "to_dict",
+          "callee": "self.risk_score",
+          "lineNumber": 143
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "SymbolReport",
+          "lineNumber": 149
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "set",
+          "lineNumber": 150
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "sorted",
+          "lineNumber": 151
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "sorted",
+          "lineNumber": 152
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "sorted",
+          "lineNumber": 153
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "sorted",
+          "lineNumber": 154
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "sorted",
+          "lineNumber": 155
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "sorted",
+          "lineNumber": 156
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "sorted",
+          "lineNumber": 158
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "any",
+          "lineNumber": 158
+        },
+        {
+          "caller": "summarize_symbols",
+          "callee": "s.startswith",
+          "lineNumber": 158
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/reversing/tools.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 187,
+      "nonEmptyLines": 147,
+      "functions": [
+        {
+          "name": "_json",
+          "startLine": 25,
+          "endLine": 26,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "bin_identify",
+          "startLine": 30,
+          "endLine": 33,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "bin_strings",
+          "startLine": 37,
+          "endLine": 63,
+          "params": [
+            "path",
+            "min_length",
+            "category_filter"
+          ]
+        },
+        {
+          "name": "bin_packer",
+          "startLine": 67,
+          "endLine": 73,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "bin_rop",
+          "startLine": 77,
+          "endLine": 92,
+          "params": [
+            "path",
+            "max_length",
+            "limit",
+            "pattern_hex"
+          ]
+        },
+        {
+          "name": "bin_symbols_report",
+          "startLine": 96,
+          "endLine": 103,
+          "params": [
+            "symbols"
+          ]
+        },
+        {
+          "name": "bin_ghidra_script",
+          "startLine": 107,
+          "endLine": 109,
+          "params": [
+            "binary",
+            "script_name"
+          ]
+        },
+        {
+          "name": "bin_r2_script",
+          "startLine": 113,
+          "endLine": 115,
+          "params": [
+            "binary"
+          ]
+        },
+        {
+          "name": "ghidra_analyze",
+          "startLine": 124,
+          "endLine": 132,
+          "params": [
+            "binary"
+          ]
+        },
+        {
+          "name": "ghidra_decompile",
+          "startLine": 136,
+          "endLine": 144,
+          "params": [
+            "binary",
+            "function"
+          ]
+        },
+        {
+          "name": "ghidra_xrefs",
+          "startLine": 148,
+          "endLine": 155,
+          "params": [
+            "binary",
+            "address"
+          ]
+        },
+        {
+          "name": "ghidra_status",
+          "startLine": 159,
+          "endLine": 161,
+          "params": []
+        },
+        {
+          "name": "re_status",
+          "startLine": 165,
+          "endLine": 167,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_json",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "bin_identify",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "bin_strings",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "bin_packer",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "bin_rop",
+          "line": 76,
+          "isDefault": false
+        },
+        {
+          "name": "bin_symbols_report",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "bin_ghidra_script",
+          "line": 106,
+          "isDefault": false
+        },
+        {
+          "name": "bin_r2_script",
+          "line": 112,
+          "isDefault": false
+        },
+        {
+          "name": "ghidra_analyze",
+          "line": 123,
+          "isDefault": false
+        },
+        {
+          "name": "ghidra_decompile",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "ghidra_xrefs",
+          "line": 147,
+          "isDefault": false
+        },
+        {
+          "name": "ghidra_status",
+          "line": 158,
+          "isDefault": false
+        },
+        {
+          "name": "re_status",
+          "line": 164,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_json",
+          "callee": "json.dumps",
+          "lineNumber": 26
+        },
+        {
+          "caller": "bin_identify",
+          "callee": "identify_binary",
+          "lineNumber": 32
+        },
+        {
+          "caller": "bin_identify",
+          "callee": "_json",
+          "lineNumber": 33
+        },
+        {
+          "caller": "bin_identify",
+          "callee": "info.to_dict",
+          "lineNumber": 33
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "extract_strings",
+          "lineNumber": 44
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "_json",
+          "lineNumber": 46
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "str",
+          "lineNumber": 46
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "group_by_category",
+          "lineNumber": 47
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "_json",
+          "lineNumber": 50
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "items.extend",
+          "lineNumber": 56
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "grouped.get",
+          "lineNumber": 56
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "_json",
+          "lineNumber": 57
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "len",
+          "lineNumber": 59
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "len",
+          "lineNumber": 60
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "grouped.items",
+          "lineNumber": 60
+        },
+        {
+          "caller": "bin_strings",
+          "callee": "s.to_dict",
+          "lineNumber": 61
+        },
+        {
+          "caller": "bin_packer",
+          "callee": "detect_packer",
+          "lineNumber": 70
+        },
+        {
+          "caller": "bin_packer",
+          "callee": "_json",
+          "lineNumber": 72
+        },
+        {
+          "caller": "bin_packer",
+          "callee": "str",
+          "lineNumber": 72
+        },
+        {
+          "caller": "bin_packer",
+          "callee": "_json",
+          "lineNumber": 73
+        },
+        {
+          "caller": "bin_packer",
+          "callee": "v.to_dict",
+          "lineNumber": 73
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "Path(path).read_bytes",
+          "lineNumber": 85
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "Path",
+          "lineNumber": 85
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "_json",
+          "lineNumber": 87
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "str",
+          "lineNumber": 87
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 88
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "filter_gadgets_by_pattern",
+          "lineNumber": 90
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "_json",
+          "lineNumber": 92
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "len",
+          "lineNumber": 92
+        },
+        {
+          "caller": "bin_rop",
+          "callee": "g.to_dict",
+          "lineNumber": 92
+        },
+        {
+          "caller": "bin_symbols_report",
+          "callee": "s.strip",
+          "lineNumber": 101
+        },
+        {
+          "caller": "bin_symbols_report",
+          "callee": "symbols.splitlines",
+          "lineNumber": 101
+        },
+        {
+          "caller": "bin_symbols_report",
+          "callee": "s.strip",
+          "lineNumber": 101
+        },
+        {
+          "caller": "bin_symbols_report",
+          "callee": "summarize_symbols",
+          "lineNumber": 102
+        },
+        {
+          "caller": "bin_symbols_report",
+          "callee": "_json",
+          "lineNumber": 103
+        },
+        {
+          "caller": "bin_symbols_report",
+          "callee": "report.to_dict",
+          "lineNumber": 103
+        },
+        {
+          "caller": "bin_ghidra_script",
+          "callee": "_json",
+          "lineNumber": 109
+        },
+        {
+          "caller": "bin_ghidra_script",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 109
+        },
+        {
+          "caller": "bin_r2_script",
+          "callee": "_json",
+          "lineNumber": 115
+        },
+        {
+          "caller": "bin_r2_script",
+          "callee": "r2_recon_script",
+          "lineNumber": 115
+        },
+        {
+          "caller": "ghidra_analyze",
+          "callee": "ghidra_analyze_binary",
+          "lineNumber": 131
+        },
+        {
+          "caller": "ghidra_analyze",
+          "callee": "_json",
+          "lineNumber": 132
+        },
+        {
+          "caller": "ghidra_analyze",
+          "callee": "result.to_dict",
+          "lineNumber": 132
+        },
+        {
+          "caller": "ghidra_decompile",
+          "callee": "ghidra_decompile_function",
+          "lineNumber": 143
+        },
+        {
+          "caller": "ghidra_decompile",
+          "callee": "_json",
+          "lineNumber": 144
+        },
+        {
+          "caller": "ghidra_decompile",
+          "callee": "result.to_dict",
+          "lineNumber": 144
+        },
+        {
+          "caller": "ghidra_xrefs",
+          "callee": "ghidra_get_xrefs",
+          "lineNumber": 154
+        },
+        {
+          "caller": "ghidra_xrefs",
+          "callee": "_json",
+          "lineNumber": 155
+        },
+        {
+          "caller": "ghidra_xrefs",
+          "callee": "len",
+          "lineNumber": 155
+        },
+        {
+          "caller": "ghidra_xrefs",
+          "callee": "x.to_dict",
+          "lineNumber": 155
+        },
+        {
+          "caller": "ghidra_status",
+          "callee": "_json",
+          "lineNumber": 161
+        },
+        {
+          "caller": "ghidra_status",
+          "callee": "ghidra_available",
+          "lineNumber": 161
+        },
+        {
+          "caller": "re_status",
+          "callee": "_json",
+          "lineNumber": 167
+        },
+        {
+          "caller": "re_status",
+          "callee": "ghidra_available",
+          "lineNumber": 167
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 13,
+        "functionCount": 13,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/reversing/test_binary_strings_packer.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 238,
+      "nonEmptyLines": 188,
+      "functions": [
+        {
+          "name": "_minimal_elf64",
+          "startLine": 19,
+          "endLine": 29,
+          "params": [
+            "pie"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "TestIdentifyBinary",
+          "startLine": 32,
+          "endLine": 80,
+          "methods": [
+            "test_elf64",
+            "test_elf64_pie",
+            "test_pe_header",
+            "test_unknown_format",
+            "test_missing_file"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestStringsExtraction",
+          "startLine": 86,
+          "endLine": 127,
+          "methods": [
+            "test_ascii_strings",
+            "test_category_url",
+            "test_category_ip",
+            "test_category_secret",
+            "test_category_format_string",
+            "test_category_path",
+            "test_group_by_category"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPacker",
+          "startLine": 133,
+          "endLine": 167,
+          "methods": [
+            "test_entropy_bounds",
+            "test_detects_upx",
+            "test_detects_vmp",
+            "test_high_entropy_no_sig",
+            "test_low_entropy_text",
+            "test_empty_data"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestRop",
+          "startLine": 173,
+          "endLine": 196,
+          "methods": [
+            "test_finds_simple_ret",
+            "test_filter_by_pattern",
+            "test_base_offset_applied",
+            "test_deduplicates_identical_gadgets"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestSymbols",
+          "startLine": 202,
+          "endLine": 223,
+          "methods": [
+            "test_categorises_known_functions",
+            "test_sanitizer_detection",
+            "test_risk_score_nontrivial",
+            "test_sanitizer_reduces_score"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestScripts",
+          "startLine": 229,
+          "endLine": 238,
+          "methods": [
+            "test_ghidra_template_non_empty",
+            "test_r2_template_non_empty"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_minimal_elf64",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "TestIdentifyBinary",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "TestStringsExtraction",
+          "line": 86,
+          "isDefault": false
+        },
+        {
+          "name": "TestPacker",
+          "line": 133,
+          "isDefault": false
+        },
+        {
+          "name": "TestRop",
+          "line": 173,
+          "isDefault": false
+        },
+        {
+          "name": "TestSymbols",
+          "line": 202,
+          "isDefault": false
+        },
+        {
+          "name": "TestScripts",
+          "line": 229,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_minimal_elf64",
+          "callee": "bytearray",
+          "lineNumber": 21
+        },
+        {
+          "caller": "_minimal_elf64",
+          "callee": "struct.pack",
+          "lineNumber": 23
+        },
+        {
+          "caller": "_minimal_elf64",
+          "callee": "struct.pack",
+          "lineNumber": 24
+        },
+        {
+          "caller": "_minimal_elf64",
+          "callee": "struct.pack",
+          "lineNumber": 25
+        },
+        {
+          "caller": "_minimal_elf64",
+          "callee": "struct.pack",
+          "lineNumber": 26
+        },
+        {
+          "caller": "_minimal_elf64",
+          "callee": "struct.pack",
+          "lineNumber": 27
+        },
+        {
+          "caller": "_minimal_elf64",
+          "callee": "struct.pack",
+          "lineNumber": 28
+        },
+        {
+          "caller": "_minimal_elf64",
+          "callee": "bytes",
+          "lineNumber": 29
+        },
+        {
+          "caller": "test_elf64",
+          "callee": "path.write_bytes",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_elf64",
+          "callee": "_minimal_elf64",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_elf64",
+          "callee": "identify_binary",
+          "lineNumber": 36
+        },
+        {
+          "caller": "test_elf64_pie",
+          "callee": "path.write_bytes",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_elf64_pie",
+          "callee": "_minimal_elf64",
+          "lineNumber": 44
+        },
+        {
+          "caller": "test_elf64_pie",
+          "callee": "identify_binary",
+          "lineNumber": 45
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "bytearray",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "struct.pack",
+          "lineNumber": 55
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "struct.pack",
+          "lineNumber": 57
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "struct.pack",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "struct.pack",
+          "lineNumber": 60
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "struct.pack",
+          "lineNumber": 61
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "path.write_bytes",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "bytes",
+          "lineNumber": 63
+        },
+        {
+          "caller": "test_pe_header",
+          "callee": "identify_binary",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_unknown_format",
+          "callee": "path.write_bytes",
+          "lineNumber": 73
+        },
+        {
+          "caller": "test_unknown_format",
+          "callee": "identify_binary",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_missing_file",
+          "callee": "identify_binary",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_missing_file",
+          "callee": "any",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_ascii_strings",
+          "callee": "extract_strings",
+          "lineNumber": 89
+        },
+        {
+          "caller": "test_ascii_strings",
+          "callee": "any",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_category_url",
+          "callee": "extract_strings",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_category_url",
+          "callee": "any",
+          "lineNumber": 97
+        },
+        {
+          "caller": "test_category_ip",
+          "callee": "extract_strings",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_category_ip",
+          "callee": "any",
+          "lineNumber": 102
+        },
+        {
+          "caller": "test_category_secret",
+          "callee": "extract_strings",
+          "lineNumber": 106
+        },
+        {
+          "caller": "test_category_secret",
+          "callee": "any",
+          "lineNumber": 107
+        },
+        {
+          "caller": "test_category_format_string",
+          "callee": "extract_strings",
+          "lineNumber": 111
+        },
+        {
+          "caller": "test_category_format_string",
+          "callee": "any",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_category_path",
+          "callee": "extract_strings",
+          "lineNumber": 116
+        },
+        {
+          "caller": "test_category_path",
+          "callee": "any",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_group_by_category",
+          "callee": "ExtractedString",
+          "lineNumber": 121
+        },
+        {
+          "caller": "test_group_by_category",
+          "callee": "ExtractedString",
+          "lineNumber": 122
+        },
+        {
+          "caller": "test_group_by_category",
+          "callee": "ExtractedString",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_group_by_category",
+          "callee": "group_by_category",
+          "lineNumber": 125
+        },
+        {
+          "caller": "test_group_by_category",
+          "callee": "len",
+          "lineNumber": 126
+        },
+        {
+          "caller": "test_group_by_category",
+          "callee": "len",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_entropy_bounds",
+          "callee": "shannon_entropy",
+          "lineNumber": 135
+        },
+        {
+          "caller": "test_entropy_bounds",
+          "callee": "shannon_entropy",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_entropy_bounds",
+          "callee": "shannon_entropy",
+          "lineNumber": 137
+        },
+        {
+          "caller": "test_entropy_bounds",
+          "callee": "os.urandom",
+          "lineNumber": 137
+        },
+        {
+          "caller": "test_detects_upx",
+          "callee": "os.urandom",
+          "lineNumber": 141
+        },
+        {
+          "caller": "test_detects_upx",
+          "callee": "detect_packer",
+          "lineNumber": 142
+        },
+        {
+          "caller": "test_detects_vmp",
+          "callee": "os.urandom",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_detects_vmp",
+          "callee": "detect_packer",
+          "lineNumber": 149
+        },
+        {
+          "caller": "test_high_entropy_no_sig",
+          "callee": "os.urandom",
+          "lineNumber": 153
+        },
+        {
+          "caller": "test_high_entropy_no_sig",
+          "callee": "detect_packer",
+          "lineNumber": 154
+        },
+        {
+          "caller": "test_high_entropy_no_sig",
+          "callee": "any",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_low_entropy_text",
+          "callee": "detect_packer",
+          "lineNumber": 161
+        },
+        {
+          "caller": "test_low_entropy_text",
+          "callee": "any",
+          "lineNumber": 163
+        },
+        {
+          "caller": "test_empty_data",
+          "callee": "detect_packer",
+          "lineNumber": 166
+        },
+        {
+          "caller": "test_finds_simple_ret",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 176
+        },
+        {
+          "caller": "test_finds_simple_ret",
+          "callee": "len",
+          "lineNumber": 177
+        },
+        {
+          "caller": "test_filter_by_pattern",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 182
+        },
+        {
+          "caller": "test_filter_by_pattern",
+          "callee": "filter_gadgets_by_pattern",
+          "lineNumber": 183
+        },
+        {
+          "caller": "test_filter_by_pattern",
+          "callee": "len",
+          "lineNumber": 184
+        },
+        {
+          "caller": "test_base_offset_applied",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 188
+        },
+        {
+          "caller": "test_deduplicates_identical_gadgets",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_deduplicates_identical_gadgets",
+          "callee": "len",
+          "lineNumber": 196
+        },
+        {
+          "caller": "test_categorises_known_functions",
+          "callee": "summarize_symbols",
+          "lineNumber": 204
+        },
+        {
+          "caller": "test_sanitizer_detection",
+          "callee": "summarize_symbols",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_sanitizer_detection",
+          "callee": "len",
+          "lineNumber": 212
+        },
+        {
+          "caller": "test_risk_score_nontrivial",
+          "callee": "summarize_symbols",
+          "lineNumber": 215
+        },
+        {
+          "caller": "test_risk_score_nontrivial",
+          "callee": "r.risk_score",
+          "lineNumber": 216
+        },
+        {
+          "caller": "test_sanitizer_reduces_score",
+          "callee": "summarize_symbols([\"system\", \"strcpy\"]).risk_score",
+          "lineNumber": 219
+        },
+        {
+          "caller": "test_sanitizer_reduces_score",
+          "callee": "summarize_symbols",
+          "lineNumber": 219
+        },
+        {
+          "caller": "test_sanitizer_reduces_score",
+          "callee": "summarize_symbols(\n            [\"system\", \"strcpy\", \"__asan_init\", \"__asan_report_load\"]\n        ).risk_score",
+          "lineNumber": 220
+        },
+        {
+          "caller": "test_sanitizer_reduces_score",
+          "callee": "summarize_symbols",
+          "lineNumber": 220
+        },
+        {
+          "caller": "test_ghidra_template_non_empty",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 231
+        },
+        {
+          "caller": "test_ghidra_template_non_empty",
+          "callee": "len",
+          "lineNumber": 233
+        },
+        {
+          "caller": "test_r2_template_non_empty",
+          "callee": "r2_recon_script",
+          "lineNumber": 236
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 7,
+        "functionCount": 1,
+        "classCount": 6
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/reversing/test_reversing_internals.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 852,
+      "nonEmptyLines": 698,
+      "functions": [
+        {
+          "name": "_make_elf32",
+          "startLine": 41,
+          "endLine": 53,
+          "params": [
+            "machine",
+            "big_endian",
+            "pie"
+          ]
+        },
+        {
+          "name": "_make_elf64_with_phdr",
+          "startLine": 56,
+          "endLine": 85,
+          "params": [
+            "nx",
+            "relro",
+            "machine"
+          ]
+        },
+        {
+          "name": "_make_pe",
+          "startLine": 88,
+          "endLine": 101,
+          "params": [
+            "machine",
+            "bitness_magic"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "TestDetectFormat",
+          "startLine": 107,
+          "endLine": 136,
+          "methods": [
+            "test_elf",
+            "test_pe",
+            "test_macho64_le",
+            "test_macho32_le",
+            "test_macho_fat",
+            "test_macho_big_endian",
+            "test_macho_big_endian64",
+            "test_wasm",
+            "test_unknown"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestIdentifyBinaryExtended",
+          "startLine": 142,
+          "endLine": 368,
+          "methods": [
+            "test_elf32_x86",
+            "test_elf32_arm",
+            "test_elf32_mips",
+            "test_elf32_riscv",
+            "test_elf32_powerpc",
+            "test_elf32_unknown_machine",
+            "test_elf32_big_endian",
+            "test_elf32_pie",
+            "test_elf64_nx_enabled",
+            "test_elf64_nx_disabled",
+            "test_elf64_relro_detected",
+            "test_elf64_arm64",
+            "test_elf_truncated_header",
+            "test_pe_x86_32bit",
+            "test_pe_arm",
+            "test_pe_arm64",
+            "test_pe_unknown_machine",
+            "test_pe_nx_off_pie_off",
+            "test_pe_no_signature",
+            "test_pe_truncated_dos_header",
+            "test_macho32",
+            "test_macho64",
+            "test_macho_big_endian_parsed",
+            "test_macho64_big_endian_parsed",
+            "test_macho_architecture_deferred",
+            "test_wasm_format",
+            "test_string_path_accepted",
+            "test_size_recorded",
+            "test_to_dict_structure",
+            "test_to_dict_entry_point_hex",
+            "test_to_dict_entry_point_none_when_absent"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestStringsExtended",
+          "startLine": 374,
+          "endLine": 482,
+          "methods": [
+            "test_utf16le_extracted",
+            "test_utf16le_disabled",
+            "test_min_length_filters_short",
+            "test_category_crypto_hex_key_32",
+            "test_category_crypto_hex_key_64",
+            "test_category_crypto_hex_key_wrong_length_not_crypto",
+            "test_category_crypto_pem",
+            "test_category_email",
+            "test_category_version",
+            "test_category_import_direct",
+            "test_category_import_substring",
+            "test_category_text_fallback",
+            "test_category_windows_path",
+            "test_offset_is_correct",
+            "test_to_dict_fields",
+            "test_to_dict_truncates_long_text",
+            "test_group_by_category_empty_input",
+            "test_path_input",
+            "test_str_path_input"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestPackerExtended",
+          "startLine": 488,
+          "endLine": 599,
+          "methods": [
+            "test_packer_signature",
+            "test_multiple_signatures_captured",
+            "test_first_packer_wins",
+            "test_entropy_above_7_no_sig_no_very_high_note",
+            "test_entropy_exact_maximum",
+            "test_entropy_empty_bytes",
+            "test_entropy_all_same_byte",
+            "test_entropy_two_symbols",
+            "test_file_path_input",
+            "test_str_path_input",
+            "test_to_dict_fields",
+            "test_to_dict_entropy_rounded",
+            "test_empty_data_verdict",
+            "test_low_entropy_note_below_4"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestRopExtended",
+          "startLine": 605,
+          "endLine": 682,
+          "methods": [
+            "test_ret_imm16_0xc2",
+            "test_retf_0xcb",
+            "test_retf_imm16_0xca",
+            "test_all_four_ret_opcodes",
+            "test_empty_data_returns_empty",
+            "test_no_ret_in_data",
+            "test_max_length_respected",
+            "test_gadget_hex_matches_bytes",
+            "test_to_dict_fields",
+            "test_to_dict_ret_opcode_format",
+            "test_dedup_across_different_positions",
+            "test_filter_gadgets_pattern_no_match",
+            "test_filter_gadgets_empty_input",
+            "test_base_address_in_offset"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestSymbolsExtended",
+          "startLine": 688,
+          "endLine": 795,
+          "methods": [
+            "test_empty_list",
+            "test_crypto_bucket",
+            "test_dynamic_code_bucket",
+            "test_network_bucket",
+            "test_dangerous_c_bucket",
+            "test_sanitizer_prefix_variants",
+            "test_sanitizer_reduces_score_to_zero_if_dominant",
+            "test_risk_score_floor_is_zero",
+            "test_risk_score_additive",
+            "test_risk_score_command_exec_weighted_highest",
+            "test_deduplication_via_set",
+            "test_unknown_symbols_ignored",
+            "test_to_dict_structure",
+            "test_to_dict_lists_are_copies",
+            "test_results_sorted"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestScriptsExtended",
+          "startLine": 801,
+          "endLine": 852,
+          "methods": [
+            "test_ghidra_script_contains_binary_name",
+            "test_ghidra_script_custom_script_name",
+            "test_ghidra_script_default_script_name",
+            "test_ghidra_script_has_function_iteration",
+            "test_r2_script_contains_binary_placeholder",
+            "test_r2_script_contains_analysis_command",
+            "test_r2_script_contains_import_check",
+            "test_r2_script_contains_xref_system",
+            "test_r2_script_string_filter_contains_secret_keywords",
+            "test_ghidra_script_minimal_length",
+            "test_r2_script_minimal_length"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_make_elf32",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "_make_elf64_with_phdr",
+          "line": 56,
+          "isDefault": false
+        },
+        {
+          "name": "_make_pe",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "TestDetectFormat",
+          "line": 107,
+          "isDefault": false
+        },
+        {
+          "name": "TestIdentifyBinaryExtended",
+          "line": 142,
+          "isDefault": false
+        },
+        {
+          "name": "TestStringsExtended",
+          "line": 374,
+          "isDefault": false
+        },
+        {
+          "name": "TestPackerExtended",
+          "line": 488,
+          "isDefault": false
+        },
+        {
+          "name": "TestRopExtended",
+          "line": 605,
+          "isDefault": false
+        },
+        {
+          "name": "TestSymbolsExtended",
+          "line": 688,
+          "isDefault": false
+        },
+        {
+          "name": "TestScriptsExtended",
+          "line": 801,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_make_elf32",
+          "callee": "bytearray",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_make_elf32",
+          "callee": "bytes",
+          "lineNumber": 46
+        },
+        {
+          "caller": "_make_elf32",
+          "callee": "struct.pack",
+          "lineNumber": 47
+        },
+        {
+          "caller": "_make_elf32",
+          "callee": "struct.pack",
+          "lineNumber": 48
+        },
+        {
+          "caller": "_make_elf32",
+          "callee": "struct.pack",
+          "lineNumber": 49
+        },
+        {
+          "caller": "_make_elf32",
+          "callee": "struct.pack",
+          "lineNumber": 50
+        },
+        {
+          "caller": "_make_elf32",
+          "callee": "struct.pack",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_make_elf32",
+          "callee": "struct.pack",
+          "lineNumber": 52
+        },
+        {
+          "caller": "_make_elf32",
+          "callee": "bytes",
+          "lineNumber": 53
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "bytearray",
+          "lineNumber": 64
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "struct.pack",
+          "lineNumber": 65
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "struct.pack",
+          "lineNumber": 66
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "struct.pack",
+          "lineNumber": 68
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "struct.pack",
+          "lineNumber": 69
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "struct.pack",
+          "lineNumber": 70
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "int",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "struct.pack",
+          "lineNumber": 73
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "len",
+          "lineNumber": 74
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "struct.pack",
+          "lineNumber": 78
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "struct.pack",
+          "lineNumber": 82
+        },
+        {
+          "caller": "_make_elf64_with_phdr",
+          "callee": "bytes",
+          "lineNumber": 85
+        },
+        {
+          "caller": "_make_pe",
+          "callee": "bytearray",
+          "lineNumber": 91
+        },
+        {
+          "caller": "_make_pe",
+          "callee": "struct.pack",
+          "lineNumber": 93
+        },
+        {
+          "caller": "_make_pe",
+          "callee": "struct.pack",
+          "lineNumber": 95
+        },
+        {
+          "caller": "_make_pe",
+          "callee": "struct.pack",
+          "lineNumber": 97
+        },
+        {
+          "caller": "_make_pe",
+          "callee": "struct.pack",
+          "lineNumber": 98
+        },
+        {
+          "caller": "_make_pe",
+          "callee": "struct.pack",
+          "lineNumber": 100
+        },
+        {
+          "caller": "_make_pe",
+          "callee": "bytes",
+          "lineNumber": 101
+        },
+        {
+          "caller": "test_elf",
+          "callee": "_detect_format",
+          "lineNumber": 109
+        },
+        {
+          "caller": "test_pe",
+          "callee": "_detect_format",
+          "lineNumber": 112
+        },
+        {
+          "caller": "test_macho64_le",
+          "callee": "_detect_format",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_macho32_le",
+          "callee": "_detect_format",
+          "lineNumber": 118
+        },
+        {
+          "caller": "test_macho_fat",
+          "callee": "_detect_format",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_macho_fat",
+          "callee": "_detect_format",
+          "lineNumber": 124
+        },
+        {
+          "caller": "test_macho_big_endian",
+          "callee": "_detect_format",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_macho_big_endian64",
+          "callee": "_detect_format",
+          "lineNumber": 130
+        },
+        {
+          "caller": "test_wasm",
+          "callee": "_detect_format",
+          "lineNumber": 133
+        },
+        {
+          "caller": "test_unknown",
+          "callee": "_detect_format",
+          "lineNumber": 136
+        },
+        {
+          "caller": "test_elf32_x86",
+          "callee": "path.write_bytes",
+          "lineNumber": 147
+        },
+        {
+          "caller": "test_elf32_x86",
+          "callee": "_make_elf32",
+          "lineNumber": 147
+        },
+        {
+          "caller": "test_elf32_x86",
+          "callee": "identify_binary",
+          "lineNumber": 148
+        },
+        {
+          "caller": "test_elf32_arm",
+          "callee": "path.write_bytes",
+          "lineNumber": 156
+        },
+        {
+          "caller": "test_elf32_arm",
+          "callee": "_make_elf32",
+          "lineNumber": 156
+        },
+        {
+          "caller": "test_elf32_arm",
+          "callee": "identify_binary",
+          "lineNumber": 157
+        },
+        {
+          "caller": "test_elf32_mips",
+          "callee": "path.write_bytes",
+          "lineNumber": 162
+        },
+        {
+          "caller": "test_elf32_mips",
+          "callee": "_make_elf32",
+          "lineNumber": 162
+        },
+        {
+          "caller": "test_elf32_mips",
+          "callee": "identify_binary",
+          "lineNumber": 163
+        },
+        {
+          "caller": "test_elf32_riscv",
+          "callee": "path.write_bytes",
+          "lineNumber": 168
+        },
+        {
+          "caller": "test_elf32_riscv",
+          "callee": "_make_elf32",
+          "lineNumber": 168
+        },
+        {
+          "caller": "test_elf32_riscv",
+          "callee": "identify_binary",
+          "lineNumber": 169
+        },
+        {
+          "caller": "test_elf32_powerpc",
+          "callee": "path.write_bytes",
+          "lineNumber": 174
+        },
+        {
+          "caller": "test_elf32_powerpc",
+          "callee": "_make_elf32",
+          "lineNumber": 174
+        },
+        {
+          "caller": "test_elf32_powerpc",
+          "callee": "identify_binary",
+          "lineNumber": 175
+        },
+        {
+          "caller": "test_elf32_unknown_machine",
+          "callee": "path.write_bytes",
+          "lineNumber": 180
+        },
+        {
+          "caller": "test_elf32_unknown_machine",
+          "callee": "_make_elf32",
+          "lineNumber": 180
+        },
+        {
+          "caller": "test_elf32_unknown_machine",
+          "callee": "identify_binary",
+          "lineNumber": 181
+        },
+        {
+          "caller": "test_elf32_big_endian",
+          "callee": "path.write_bytes",
+          "lineNumber": 186
+        },
+        {
+          "caller": "test_elf32_big_endian",
+          "callee": "_make_elf32",
+          "lineNumber": 186
+        },
+        {
+          "caller": "test_elf32_big_endian",
+          "callee": "identify_binary",
+          "lineNumber": 187
+        },
+        {
+          "caller": "test_elf32_pie",
+          "callee": "path.write_bytes",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_elf32_pie",
+          "callee": "_make_elf32",
+          "lineNumber": 192
+        },
+        {
+          "caller": "test_elf32_pie",
+          "callee": "identify_binary",
+          "lineNumber": 193
+        },
+        {
+          "caller": "test_elf64_nx_enabled",
+          "callee": "path.write_bytes",
+          "lineNumber": 198
+        },
+        {
+          "caller": "test_elf64_nx_enabled",
+          "callee": "_make_elf64_with_phdr",
+          "lineNumber": 198
+        },
+        {
+          "caller": "test_elf64_nx_enabled",
+          "callee": "identify_binary",
+          "lineNumber": 199
+        },
+        {
+          "caller": "test_elf64_nx_disabled",
+          "callee": "path.write_bytes",
+          "lineNumber": 204
+        },
+        {
+          "caller": "test_elf64_nx_disabled",
+          "callee": "_make_elf64_with_phdr",
+          "lineNumber": 204
+        },
+        {
+          "caller": "test_elf64_nx_disabled",
+          "callee": "identify_binary",
+          "lineNumber": 205
+        },
+        {
+          "caller": "test_elf64_relro_detected",
+          "callee": "path.write_bytes",
+          "lineNumber": 210
+        },
+        {
+          "caller": "test_elf64_relro_detected",
+          "callee": "_make_elf64_with_phdr",
+          "lineNumber": 210
+        },
+        {
+          "caller": "test_elf64_relro_detected",
+          "callee": "identify_binary",
+          "lineNumber": 211
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "bytearray",
+          "lineNumber": 216
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "struct.pack",
+          "lineNumber": 217
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "struct.pack",
+          "lineNumber": 218
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "struct.pack",
+          "lineNumber": 219
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "struct.pack",
+          "lineNumber": 220
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "struct.pack",
+          "lineNumber": 221
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "struct.pack",
+          "lineNumber": 222
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "path.write_bytes",
+          "lineNumber": 224
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "bytes",
+          "lineNumber": 224
+        },
+        {
+          "caller": "test_elf64_arm64",
+          "callee": "identify_binary",
+          "lineNumber": 225
+        },
+        {
+          "caller": "test_elf_truncated_header",
+          "callee": "path.write_bytes",
+          "lineNumber": 230
+        },
+        {
+          "caller": "test_elf_truncated_header",
+          "callee": "identify_binary",
+          "lineNumber": 231
+        },
+        {
+          "caller": "test_elf_truncated_header",
+          "callee": "any",
+          "lineNumber": 233
+        },
+        {
+          "caller": "test_pe_x86_32bit",
+          "callee": "path.write_bytes",
+          "lineNumber": 239
+        },
+        {
+          "caller": "test_pe_x86_32bit",
+          "callee": "_make_pe",
+          "lineNumber": 239
+        },
+        {
+          "caller": "test_pe_x86_32bit",
+          "callee": "identify_binary",
+          "lineNumber": 240
+        },
+        {
+          "caller": "test_pe_arm",
+          "callee": "path.write_bytes",
+          "lineNumber": 247
+        },
+        {
+          "caller": "test_pe_arm",
+          "callee": "_make_pe",
+          "lineNumber": 247
+        },
+        {
+          "caller": "test_pe_arm",
+          "callee": "identify_binary",
+          "lineNumber": 248
+        },
+        {
+          "caller": "test_pe_arm64",
+          "callee": "path.write_bytes",
+          "lineNumber": 253
+        },
+        {
+          "caller": "test_pe_arm64",
+          "callee": "_make_pe",
+          "lineNumber": 253
+        },
+        {
+          "caller": "test_pe_arm64",
+          "callee": "identify_binary",
+          "lineNumber": 254
+        },
+        {
+          "caller": "test_pe_unknown_machine",
+          "callee": "path.write_bytes",
+          "lineNumber": 259
+        },
+        {
+          "caller": "test_pe_unknown_machine",
+          "callee": "_make_pe",
+          "lineNumber": 259
+        },
+        {
+          "caller": "test_pe_unknown_machine",
+          "callee": "identify_binary",
+          "lineNumber": 260
+        },
+        {
+          "caller": "test_pe_nx_off_pie_off",
+          "callee": "path.write_bytes",
+          "lineNumber": 265
+        },
+        {
+          "caller": "test_pe_nx_off_pie_off",
+          "callee": "_make_pe",
+          "lineNumber": 265
+        },
+        {
+          "caller": "test_pe_nx_off_pie_off",
+          "callee": "identify_binary",
+          "lineNumber": 266
+        },
+        {
+          "caller": "test_pe_no_signature",
+          "callee": "bytearray",
+          "lineNumber": 271
+        },
+        {
+          "caller": "test_pe_no_signature",
+          "callee": "struct.pack",
+          "lineNumber": 273
+        },
+        {
+          "caller": "test_pe_no_signature",
+          "callee": "path.write_bytes",
+          "lineNumber": 276
+        },
+        {
+          "caller": "test_pe_no_signature",
+          "callee": "bytes",
+          "lineNumber": 276
+        },
+        {
+          "caller": "test_pe_no_signature",
+          "callee": "identify_binary",
+          "lineNumber": 277
+        },
+        {
+          "caller": "test_pe_no_signature",
+          "callee": "any",
+          "lineNumber": 278
+        },
+        {
+          "caller": "test_pe_truncated_dos_header",
+          "callee": "path.write_bytes",
+          "lineNumber": 282
+        },
+        {
+          "caller": "test_pe_truncated_dos_header",
+          "callee": "identify_binary",
+          "lineNumber": 283
+        },
+        {
+          "caller": "test_pe_truncated_dos_header",
+          "callee": "any",
+          "lineNumber": 284
+        },
+        {
+          "caller": "test_macho32",
+          "callee": "path.write_bytes",
+          "lineNumber": 290
+        },
+        {
+          "caller": "test_macho32",
+          "callee": "identify_binary",
+          "lineNumber": 291
+        },
+        {
+          "caller": "test_macho64",
+          "callee": "path.write_bytes",
+          "lineNumber": 298
+        },
+        {
+          "caller": "test_macho64",
+          "callee": "identify_binary",
+          "lineNumber": 299
+        },
+        {
+          "caller": "test_macho_big_endian_parsed",
+          "callee": "path.write_bytes",
+          "lineNumber": 306
+        },
+        {
+          "caller": "test_macho_big_endian_parsed",
+          "callee": "identify_binary",
+          "lineNumber": 307
+        },
+        {
+          "caller": "test_macho64_big_endian_parsed",
+          "callee": "path.write_bytes",
+          "lineNumber": 314
+        },
+        {
+          "caller": "test_macho64_big_endian_parsed",
+          "callee": "identify_binary",
+          "lineNumber": 315
+        },
+        {
+          "caller": "test_macho_architecture_deferred",
+          "callee": "path.write_bytes",
+          "lineNumber": 322
+        },
+        {
+          "caller": "test_macho_architecture_deferred",
+          "callee": "identify_binary",
+          "lineNumber": 323
+        },
+        {
+          "caller": "test_wasm_format",
+          "callee": "path.write_bytes",
+          "lineNumber": 330
+        },
+        {
+          "caller": "test_wasm_format",
+          "callee": "identify_binary",
+          "lineNumber": 331
+        },
+        {
+          "caller": "test_string_path_accepted",
+          "callee": "path.write_bytes",
+          "lineNumber": 338
+        },
+        {
+          "caller": "test_string_path_accepted",
+          "callee": "identify_binary",
+          "lineNumber": 339
+        },
+        {
+          "caller": "test_string_path_accepted",
+          "callee": "str",
+          "lineNumber": 339
+        },
+        {
+          "caller": "test_size_recorded",
+          "callee": "path.write_bytes",
+          "lineNumber": 345
+        },
+        {
+          "caller": "test_size_recorded",
+          "callee": "identify_binary",
+          "lineNumber": 346
+        },
+        {
+          "caller": "test_size_recorded",
+          "callee": "len",
+          "lineNumber": 347
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "path.write_bytes",
+          "lineNumber": 351
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "_make_elf32",
+          "lineNumber": 351
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "identify_binary",
+          "lineNumber": 352
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "info.to_dict",
+          "lineNumber": 353
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "set",
+          "lineNumber": 354
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "d.keys",
+          "lineNumber": 354
+        },
+        {
+          "caller": "test_to_dict_entry_point_hex",
+          "callee": "path.write_bytes",
+          "lineNumber": 358
+        },
+        {
+          "caller": "test_to_dict_entry_point_hex",
+          "callee": "_make_elf32",
+          "lineNumber": 358
+        },
+        {
+          "caller": "test_to_dict_entry_point_hex",
+          "callee": "identify_binary",
+          "lineNumber": 359
+        },
+        {
+          "caller": "test_to_dict_entry_point_hex",
+          "callee": "info.to_dict",
+          "lineNumber": 360
+        },
+        {
+          "caller": "test_to_dict_entry_point_hex",
+          "callee": "ep.startswith",
+          "lineNumber": 364
+        },
+        {
+          "caller": "test_to_dict_entry_point_none_when_absent",
+          "callee": "BinaryInfo",
+          "lineNumber": 367
+        },
+        {
+          "caller": "test_to_dict_entry_point_none_when_absent",
+          "callee": "info.to_dict",
+          "lineNumber": 368
+        },
+        {
+          "caller": "test_utf16le_extracted",
+          "callee": "\"hello world\".encode",
+          "lineNumber": 377
+        },
+        {
+          "caller": "test_utf16le_extracted",
+          "callee": "extract_strings",
+          "lineNumber": 378
+        },
+        {
+          "caller": "test_utf16le_extracted",
+          "callee": "bytes",
+          "lineNumber": 378
+        },
+        {
+          "caller": "test_utf16le_extracted",
+          "callee": "any",
+          "lineNumber": 380
+        },
+        {
+          "caller": "test_utf16le_disabled",
+          "callee": "\"hello world\".encode",
+          "lineNumber": 383
+        },
+        {
+          "caller": "test_utf16le_disabled",
+          "callee": "extract_strings",
+          "lineNumber": 384
+        },
+        {
+          "caller": "test_utf16le_disabled",
+          "callee": "bytes",
+          "lineNumber": 384
+        },
+        {
+          "caller": "test_utf16le_disabled",
+          "callee": "len",
+          "lineNumber": 386
+        },
+        {
+          "caller": "test_min_length_filters_short",
+          "callee": "extract_strings",
+          "lineNumber": 391
+        },
+        {
+          "caller": "test_min_length_filters_short",
+          "callee": "any",
+          "lineNumber": 392
+        },
+        {
+          "caller": "test_category_crypto_hex_key_32",
+          "callee": "extract_strings",
+          "lineNumber": 396
+        },
+        {
+          "caller": "test_category_crypto_hex_key_32",
+          "callee": "key.encode",
+          "lineNumber": 396
+        },
+        {
+          "caller": "test_category_crypto_hex_key_32",
+          "callee": "any",
+          "lineNumber": 397
+        },
+        {
+          "caller": "test_category_crypto_hex_key_64",
+          "callee": "extract_strings",
+          "lineNumber": 401
+        },
+        {
+          "caller": "test_category_crypto_hex_key_64",
+          "callee": "key.encode",
+          "lineNumber": 401
+        },
+        {
+          "caller": "test_category_crypto_hex_key_64",
+          "callee": "any",
+          "lineNumber": 402
+        },
+        {
+          "caller": "test_category_crypto_hex_key_wrong_length_not_crypto",
+          "callee": "extract_strings",
+          "lineNumber": 407
+        },
+        {
+          "caller": "test_category_crypto_hex_key_wrong_length_not_crypto",
+          "callee": "key.encode",
+          "lineNumber": 407
+        },
+        {
+          "caller": "test_category_crypto_hex_key_wrong_length_not_crypto",
+          "callee": "len",
+          "lineNumber": 410
+        },
+        {
+          "caller": "test_category_crypto_pem",
+          "callee": "extract_strings",
+          "lineNumber": 414
+        },
+        {
+          "caller": "test_category_crypto_pem",
+          "callee": "any",
+          "lineNumber": 415
+        },
+        {
+          "caller": "test_category_email",
+          "callee": "extract_strings",
+          "lineNumber": 419
+        },
+        {
+          "caller": "test_category_email",
+          "callee": "any",
+          "lineNumber": 420
+        },
+        {
+          "caller": "test_category_version",
+          "callee": "extract_strings",
+          "lineNumber": 424
+        },
+        {
+          "caller": "test_category_version",
+          "callee": "any",
+          "lineNumber": 425
+        },
+        {
+          "caller": "test_category_import_direct",
+          "callee": "extract_strings",
+          "lineNumber": 429
+        },
+        {
+          "caller": "test_category_import_direct",
+          "callee": "any",
+          "lineNumber": 430
+        },
+        {
+          "caller": "test_category_import_substring",
+          "callee": "extract_strings",
+          "lineNumber": 435
+        },
+        {
+          "caller": "test_category_import_substring",
+          "callee": "any",
+          "lineNumber": 436
+        },
+        {
+          "caller": "test_category_text_fallback",
+          "callee": "extract_strings",
+          "lineNumber": 440
+        },
+        {
+          "caller": "test_category_text_fallback",
+          "callee": "any",
+          "lineNumber": 441
+        },
+        {
+          "caller": "test_category_windows_path",
+          "callee": "extract_strings",
+          "lineNumber": 445
+        },
+        {
+          "caller": "test_category_windows_path",
+          "callee": "any",
+          "lineNumber": 446
+        },
+        {
+          "caller": "test_offset_is_correct",
+          "callee": "extract_strings",
+          "lineNumber": 451
+        },
+        {
+          "caller": "test_offset_is_correct",
+          "callee": "any",
+          "lineNumber": 453
+        },
+        {
+          "caller": "test_to_dict_fields",
+          "callee": "ExtractedString",
+          "lineNumber": 456
+        },
+        {
+          "caller": "test_to_dict_fields",
+          "callee": "s.to_dict",
+          "lineNumber": 457
+        },
+        {
+          "caller": "test_to_dict_truncates_long_text",
+          "callee": "ExtractedString",
+          "lineNumber": 464
+        },
+        {
+          "caller": "test_to_dict_truncates_long_text",
+          "callee": "s.to_dict",
+          "lineNumber": 465
+        },
+        {
+          "caller": "test_to_dict_truncates_long_text",
+          "callee": "len",
+          "lineNumber": 466
+        },
+        {
+          "caller": "test_group_by_category_empty_input",
+          "callee": "group_by_category",
+          "lineNumber": 469
+        },
+        {
+          "caller": "test_path_input",
+          "callee": "f.write_bytes",
+          "lineNumber": 474
+        },
+        {
+          "caller": "test_path_input",
+          "callee": "extract_strings",
+          "lineNumber": 475
+        },
+        {
+          "caller": "test_path_input",
+          "callee": "len",
+          "lineNumber": 476
+        },
+        {
+          "caller": "test_str_path_input",
+          "callee": "f.write_bytes",
+          "lineNumber": 480
+        },
+        {
+          "caller": "test_str_path_input",
+          "callee": "extract_strings",
+          "lineNumber": 481
+        },
+        {
+          "caller": "test_str_path_input",
+          "callee": "str",
+          "lineNumber": 481
+        },
+        {
+          "caller": "test_str_path_input",
+          "callee": "len",
+          "lineNumber": 482
+        },
+        {
+          "caller": "test_packer_signature",
+          "callee": "detect_packer",
+          "lineNumber": 514
+        },
+        {
+          "caller": "test_multiple_signatures_captured",
+          "callee": "detect_packer",
+          "lineNumber": 520
+        },
+        {
+          "caller": "test_first_packer_wins",
+          "callee": "detect_packer",
+          "lineNumber": 527
+        },
+        {
+          "caller": "test_entropy_above_7_no_sig_no_very_high_note",
+          "callee": "bytes",
+          "lineNumber": 535
+        },
+        {
+          "caller": "test_entropy_above_7_no_sig_no_very_high_note",
+          "callee": "range",
+          "lineNumber": 535
+        },
+        {
+          "caller": "test_entropy_above_7_no_sig_no_very_high_note",
+          "callee": "detect_packer",
+          "lineNumber": 536
+        },
+        {
+          "caller": "test_entropy_exact_maximum",
+          "callee": "bytes",
+          "lineNumber": 541
+        },
+        {
+          "caller": "test_entropy_exact_maximum",
+          "callee": "range",
+          "lineNumber": 541
+        },
+        {
+          "caller": "test_entropy_exact_maximum",
+          "callee": "shannon_entropy",
+          "lineNumber": 542
+        },
+        {
+          "caller": "test_entropy_exact_maximum",
+          "callee": "abs",
+          "lineNumber": 543
+        },
+        {
+          "caller": "test_entropy_empty_bytes",
+          "callee": "shannon_entropy",
+          "lineNumber": 546
+        },
+        {
+          "caller": "test_entropy_all_same_byte",
+          "callee": "shannon_entropy",
+          "lineNumber": 549
+        },
+        {
+          "caller": "test_entropy_two_symbols",
+          "callee": "shannon_entropy",
+          "lineNumber": 553
+        },
+        {
+          "caller": "test_entropy_two_symbols",
+          "callee": "abs",
+          "lineNumber": 554
+        },
+        {
+          "caller": "test_file_path_input",
+          "callee": "f.write_bytes",
+          "lineNumber": 558
+        },
+        {
+          "caller": "test_file_path_input",
+          "callee": "detect_packer",
+          "lineNumber": 559
+        },
+        {
+          "caller": "test_str_path_input",
+          "callee": "f.write_bytes",
+          "lineNumber": 564
+        },
+        {
+          "caller": "test_str_path_input",
+          "callee": "detect_packer",
+          "lineNumber": 565
+        },
+        {
+          "caller": "test_str_path_input",
+          "callee": "str",
+          "lineNumber": 565
+        },
+        {
+          "caller": "test_to_dict_fields",
+          "callee": "PackerVerdict",
+          "lineNumber": 569
+        },
+        {
+          "caller": "test_to_dict_fields",
+          "callee": "v.to_dict",
+          "lineNumber": 576
+        },
+        {
+          "caller": "test_to_dict_entropy_rounded",
+          "callee": "PackerVerdict",
+          "lineNumber": 584
+        },
+        {
+          "caller": "test_to_dict_entropy_rounded",
+          "callee": "v.to_dict",
+          "lineNumber": 585
+        },
+        {
+          "caller": "test_to_dict_entropy_rounded",
+          "callee": "round",
+          "lineNumber": 587
+        },
+        {
+          "caller": "test_empty_data_verdict",
+          "callee": "detect_packer",
+          "lineNumber": 590
+        },
+        {
+          "caller": "test_empty_data_verdict",
+          "callee": "any",
+          "lineNumber": 593
+        },
+        {
+          "caller": "test_low_entropy_note_below_4",
+          "callee": "detect_packer",
+          "lineNumber": 597
+        },
+        {
+          "caller": "test_low_entropy_note_below_4",
+          "callee": "any",
+          "lineNumber": 598
+        },
+        {
+          "caller": "test_ret_imm16_0xc2",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 609
+        },
+        {
+          "caller": "test_ret_imm16_0xc2",
+          "callee": "any",
+          "lineNumber": 610
+        },
+        {
+          "caller": "test_retf_0xcb",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 614
+        },
+        {
+          "caller": "test_retf_0xcb",
+          "callee": "any",
+          "lineNumber": 615
+        },
+        {
+          "caller": "test_retf_imm16_0xca",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 619
+        },
+        {
+          "caller": "test_retf_imm16_0xca",
+          "callee": "any",
+          "lineNumber": 620
+        },
+        {
+          "caller": "test_all_four_ret_opcodes",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 624
+        },
+        {
+          "caller": "test_empty_data_returns_empty",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 632
+        },
+        {
+          "caller": "test_no_ret_in_data",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 636
+        },
+        {
+          "caller": "test_max_length_respected",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 641
+        },
+        {
+          "caller": "test_max_length_respected",
+          "callee": "len",
+          "lineNumber": 642
+        },
+        {
+          "caller": "test_max_length_respected",
+          "callee": "len",
+          "lineNumber": 643
+        },
+        {
+          "caller": "test_gadget_hex_matches_bytes",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 647
+        },
+        {
+          "caller": "test_gadget_hex_matches_bytes",
+          "callee": "len",
+          "lineNumber": 648
+        },
+        {
+          "caller": "test_gadget_hex_matches_bytes",
+          "callee": "data.hex",
+          "lineNumber": 649
+        },
+        {
+          "caller": "test_to_dict_fields",
+          "callee": "RopGadget",
+          "lineNumber": 652
+        },
+        {
+          "caller": "test_to_dict_fields",
+          "callee": "g.to_dict",
+          "lineNumber": 653
+        },
+        {
+          "caller": "test_to_dict_ret_opcode_format",
+          "callee": "RopGadget",
+          "lineNumber": 660
+        },
+        {
+          "caller": "test_to_dict_ret_opcode_format",
+          "callee": "g.to_dict",
+          "lineNumber": 661
+        },
+        {
+          "caller": "test_dedup_across_different_positions",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 667
+        },
+        {
+          "caller": "test_dedup_across_different_positions",
+          "callee": "len",
+          "lineNumber": 668
+        },
+        {
+          "caller": "test_filter_gadgets_pattern_no_match",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 672
+        },
+        {
+          "caller": "test_filter_gadgets_pattern_no_match",
+          "callee": "filter_gadgets_by_pattern",
+          "lineNumber": 673
+        },
+        {
+          "caller": "test_filter_gadgets_empty_input",
+          "callee": "filter_gadgets_by_pattern",
+          "lineNumber": 677
+        },
+        {
+          "caller": "test_base_address_in_offset",
+          "callee": "find_rop_gadgets",
+          "lineNumber": 681
+        },
+        {
+          "caller": "test_empty_list",
+          "callee": "summarize_symbols",
+          "lineNumber": 690
+        },
+        {
+          "caller": "test_empty_list",
+          "callee": "r.risk_score",
+          "lineNumber": 698
+        },
+        {
+          "caller": "test_crypto_bucket",
+          "callee": "summarize_symbols",
+          "lineNumber": 701
+        },
+        {
+          "caller": "test_dynamic_code_bucket",
+          "callee": "summarize_symbols",
+          "lineNumber": 707
+        },
+        {
+          "caller": "test_network_bucket",
+          "callee": "summarize_symbols",
+          "lineNumber": 714
+        },
+        {
+          "caller": "test_dangerous_c_bucket",
+          "callee": "summarize_symbols",
+          "lineNumber": 719
+        },
+        {
+          "caller": "test_sanitizer_prefix_variants",
+          "callee": "summarize_symbols",
+          "lineNumber": 735
+        },
+        {
+          "caller": "test_sanitizer_prefix_variants",
+          "callee": "len",
+          "lineNumber": 736
+        },
+        {
+          "caller": "test_sanitizer_prefix_variants",
+          "callee": "len",
+          "lineNumber": 736
+        },
+        {
+          "caller": "test_sanitizer_reduces_score_to_zero_if_dominant",
+          "callee": "summarize_symbols",
+          "lineNumber": 741
+        },
+        {
+          "caller": "test_sanitizer_reduces_score_to_zero_if_dominant",
+          "callee": "r.risk_score",
+          "lineNumber": 742
+        },
+        {
+          "caller": "test_risk_score_floor_is_zero",
+          "callee": "summarize_symbols",
+          "lineNumber": 745
+        },
+        {
+          "caller": "test_risk_score_floor_is_zero",
+          "callee": "r.risk_score",
+          "lineNumber": 746
+        },
+        {
+          "caller": "test_risk_score_additive",
+          "callee": "summarize_symbols",
+          "lineNumber": 749
+        },
+        {
+          "caller": "test_risk_score_additive",
+          "callee": "summarize_symbols",
+          "lineNumber": 750
+        },
+        {
+          "caller": "test_risk_score_additive",
+          "callee": "r_more.risk_score",
+          "lineNumber": 751
+        },
+        {
+          "caller": "test_risk_score_additive",
+          "callee": "r_base.risk_score",
+          "lineNumber": 751
+        },
+        {
+          "caller": "test_risk_score_command_exec_weighted_highest",
+          "callee": "summarize_symbols",
+          "lineNumber": 755
+        },
+        {
+          "caller": "test_risk_score_command_exec_weighted_highest",
+          "callee": "summarize_symbols",
+          "lineNumber": 756
+        },
+        {
+          "caller": "test_risk_score_command_exec_weighted_highest",
+          "callee": "r_cmd.risk_score",
+          "lineNumber": 757
+        },
+        {
+          "caller": "test_risk_score_command_exec_weighted_highest",
+          "callee": "r_danger.risk_score",
+          "lineNumber": 757
+        },
+        {
+          "caller": "test_deduplication_via_set",
+          "callee": "summarize_symbols",
+          "lineNumber": 761
+        },
+        {
+          "caller": "test_deduplication_via_set",
+          "callee": "r.dangerous_c.count",
+          "lineNumber": 762
+        },
+        {
+          "caller": "test_deduplication_via_set",
+          "callee": "r.command_exec.count",
+          "lineNumber": 763
+        },
+        {
+          "caller": "test_unknown_symbols_ignored",
+          "callee": "summarize_symbols",
+          "lineNumber": 766
+        },
+        {
+          "caller": "test_unknown_symbols_ignored",
+          "callee": "r.risk_score",
+          "lineNumber": 769
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "summarize_symbols",
+          "lineNumber": 772
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "r.to_dict",
+          "lineNumber": 773
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "set",
+          "lineNumber": 774
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "d.keys",
+          "lineNumber": 774
+        },
+        {
+          "caller": "test_to_dict_structure",
+          "callee": "isinstance",
+          "lineNumber": 784
+        },
+        {
+          "caller": "test_to_dict_lists_are_copies",
+          "callee": "summarize_symbols",
+          "lineNumber": 787
+        },
+        {
+          "caller": "test_to_dict_lists_are_copies",
+          "callee": "r.to_dict",
+          "lineNumber": 788
+        },
+        {
+          "caller": "test_to_dict_lists_are_copies",
+          "callee": "d[\"dangerous_c\"].clear",
+          "lineNumber": 789
+        },
+        {
+          "caller": "test_results_sorted",
+          "callee": "summarize_symbols",
+          "lineNumber": 794
+        },
+        {
+          "caller": "test_results_sorted",
+          "callee": "sorted",
+          "lineNumber": 795
+        },
+        {
+          "caller": "test_ghidra_script_contains_binary_name",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 803
+        },
+        {
+          "caller": "test_ghidra_script_custom_script_name",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 808
+        },
+        {
+          "caller": "test_ghidra_script_default_script_name",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 813
+        },
+        {
+          "caller": "test_ghidra_script_has_function_iteration",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 817
+        },
+        {
+          "caller": "test_r2_script_contains_binary_placeholder",
+          "callee": "r2_recon_script",
+          "lineNumber": 823
+        },
+        {
+          "caller": "test_r2_script_contains_binary_placeholder",
+          "callee": "isinstance",
+          "lineNumber": 827
+        },
+        {
+          "caller": "test_r2_script_contains_binary_placeholder",
+          "callee": "len",
+          "lineNumber": 828
+        },
+        {
+          "caller": "test_r2_script_contains_analysis_command",
+          "callee": "r2_recon_script",
+          "lineNumber": 831
+        },
+        {
+          "caller": "test_r2_script_contains_import_check",
+          "callee": "r2_recon_script",
+          "lineNumber": 835
+        },
+        {
+          "caller": "test_r2_script_contains_xref_system",
+          "callee": "r2_recon_script",
+          "lineNumber": 839
+        },
+        {
+          "caller": "test_r2_script_string_filter_contains_secret_keywords",
+          "callee": "r2_recon_script",
+          "lineNumber": 843
+        },
+        {
+          "caller": "test_ghidra_script_minimal_length",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 847
+        },
+        {
+          "caller": "test_ghidra_script_minimal_length",
+          "callee": "len",
+          "lineNumber": 848
+        },
+        {
+          "caller": "test_r2_script_minimal_length",
+          "callee": "r2_recon_script",
+          "lineNumber": 851
+        },
+        {
+          "caller": "test_r2_script_minimal_length",
+          "callee": "len",
+          "lineNumber": 852
+        }
+      ],
+      "metrics": {
+        "importCount": 6,
+        "exportCount": 10,
+        "functionCount": 3,
+        "classCount": 7
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/reversing/test_reversing_robustness.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 108,
+      "nonEmptyLines": 93,
+      "classes": [
+        {
+          "name": "TestGhidraFunctionExtraKeys",
+          "startLine": 10,
+          "endLine": 59,
+          "methods": [
+            "test_extra_keys_do_not_raise",
+            "test_ghidra_analysis_with_extra_function_fields"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestScriptsBracePath",
+          "startLine": 62,
+          "endLine": 87,
+          "methods": [
+            "test_ghidra_recon_script_brace_in_binary",
+            "test_ghidra_recon_script_brace_in_script_name",
+            "test_r2_recon_script_brace_in_binary",
+            "test_scripts_normal_path_preserved"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestBinR2ScriptNoDeadReturn",
+          "startLine": 90,
+          "endLine": 101,
+          "methods": [
+            "test_returns_json_with_source_key",
+            "test_brace_in_binary_does_not_raise"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestGhidraReconEntryPoint",
+          "startLine": 104,
+          "endLine": 108,
+          "methods": [
+            "test_recon_script_does_not_iterate_single_entry_point"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TestGhidraFunctionExtraKeys",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "TestScriptsBracePath",
+          "line": 62,
+          "isDefault": false
+        },
+        {
+          "name": "TestBinR2ScriptNoDeadReturn",
+          "line": 90,
+          "isDefault": false
+        },
+        {
+          "name": "TestGhidraReconEntryPoint",
+          "line": 104,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_extra_keys_do_not_raise",
+          "callee": "GhidraFunction",
+          "lineNumber": 22
+        },
+        {
+          "caller": "test_extra_keys_do_not_raise",
+          "callee": "extra.items",
+          "lineNumber": 22
+        },
+        {
+          "caller": "test_ghidra_analysis_with_extra_function_fields",
+          "callee": "GhidraAnalysis",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_ghidra_analysis_with_extra_function_fields",
+          "callee": "GhidraFunction",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_ghidra_analysis_with_extra_function_fields",
+          "callee": "f.items",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_ghidra_analysis_with_extra_function_fields",
+          "callee": "len",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_ghidra_recon_script_brace_in_binary",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 65
+        },
+        {
+          "caller": "test_ghidra_recon_script_brace_in_binary",
+          "callee": "src.count",
+          "lineNumber": 67
+        },
+        {
+          "caller": "test_ghidra_recon_script_brace_in_script_name",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 72
+        },
+        {
+          "caller": "test_ghidra_recon_script_brace_in_script_name",
+          "callee": "src.count",
+          "lineNumber": 74
+        },
+        {
+          "caller": "test_r2_recon_script_brace_in_binary",
+          "callee": "r2_recon_script",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_r2_recon_script_brace_in_binary",
+          "callee": "src.count",
+          "lineNumber": 80
+        },
+        {
+          "caller": "test_scripts_normal_path_preserved",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_scripts_normal_path_preserved",
+          "callee": "r2_recon_script",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_returns_json_with_source_key",
+          "callee": "bin_r2_script.invoke",
+          "lineNumber": 92
+        },
+        {
+          "caller": "test_returns_json_with_source_key",
+          "callee": "json.loads",
+          "lineNumber": 93
+        },
+        {
+          "caller": "test_returns_json_with_source_key",
+          "callee": "isinstance",
+          "lineNumber": 95
+        },
+        {
+          "caller": "test_returns_json_with_source_key",
+          "callee": "len",
+          "lineNumber": 96
+        },
+        {
+          "caller": "test_brace_in_binary_does_not_raise",
+          "callee": "bin_r2_script.invoke",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_brace_in_binary_does_not_raise",
+          "callee": "json.loads",
+          "lineNumber": 100
+        },
+        {
+          "caller": "test_recon_script_does_not_iterate_single_entry_point",
+          "callee": "ghidra_recon_script",
+          "lineNumber": 106
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 4,
+        "functionCount": 0,
+        "classCount": 4
+      }
+    }
+  ]
+}

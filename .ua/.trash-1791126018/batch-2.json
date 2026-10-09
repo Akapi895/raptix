@@ -1,0 +1,4744 @@
+{
+ "batchIndex": 2,
+ "batchFiles": [
+  {
+   "path": "packages/raptix/raptix/agents/__init__.py",
+   "language": "python",
+   "sizeLines": 62,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/_benchmark_mode.py",
+   "language": "python",
+   "sizeLines": 8,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/build.py",
+   "language": "python",
+   "sizeLines": 567,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/plugins/detector.py",
+   "language": "python",
+   "sizeLines": 193,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/plugins/exploiter.py",
+   "language": "python",
+   "sizeLines": 197,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/plugins/patcher.py",
+   "language": "python",
+   "sizeLines": 185,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/plugins/scanner.py",
+   "language": "python",
+   "sizeLines": 198,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/plugins/verifier.py",
+   "language": "python",
+   "sizeLines": 191,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "language": "python",
+   "sizeLines": 201,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/prompts/__init__.py",
+   "language": "python",
+   "sizeLines": 77,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/prompts/builder.py",
+   "language": "python",
+   "sizeLines": 409,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/prompts/registry.py",
+   "language": "python",
+   "sizeLines": 138,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/__init__.py",
+   "language": "python",
+   "sizeLines": 9,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/ad_operator.py",
+   "language": "python",
+   "sizeLines": 188,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/analyst.py",
+   "language": "python",
+   "sizeLines": 200,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/autohunt.py",
+   "language": "python",
+   "sizeLines": 76,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/blue_cell.py",
+   "language": "python",
+   "sizeLines": 172,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "language": "python",
+   "sizeLines": 174,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "language": "python",
+   "sizeLines": 188,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/decepticon.py",
+   "language": "python",
+   "sizeLines": 209,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/exploit.py",
+   "language": "python",
+   "sizeLines": 195,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/forensicator.py",
+   "language": "python",
+   "sizeLines": 140,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/ics_operator.py",
+   "language": "python",
+   "sizeLines": 141,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/iot_operator.py",
+   "language": "python",
+   "sizeLines": 140,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "language": "python",
+   "sizeLines": 138,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/osint_operator.py",
+   "language": "python",
+   "sizeLines": 147,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/phisher.py",
+   "language": "python",
+   "sizeLines": 155,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/postexploit.py",
+   "language": "python",
+   "sizeLines": 184,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/recon.py",
+   "language": "python",
+   "sizeLines": 183,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/reverser.py",
+   "language": "python",
+   "sizeLines": 181,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/soundwave.py",
+   "language": "python",
+   "sizeLines": 145,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "language": "python",
+   "sizeLines": 141,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "language": "python",
+   "sizeLines": 103,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "language": "python",
+   "sizeLines": 149,
+   "fileCategory": "code"
+  },
+  {
+   "path": "packages/raptix/raptix/backends/__init__.py",
+   "language": "python",
+   "sizeLines": 122,
+   "fileCategory": "code"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "file:packages/raptix/raptix/agents/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "packages/raptix/raptix/agents/__init__.py",
+   "summary": "Barrel package xuất bản toàn bộ factory tạo agent: 21 agent chuẩn và 6 agent thuộc pipeline vulnresearch. Là điểm truy cập duy nhất để launcher và middleware khám phá các vai trò agent.",
+   "tags": [
+    "barrel",
+    "entry-point",
+    "agent-factory",
+    "tác-nhân-ai"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "file",
+   "name": "_benchmark_mode.py",
+   "filePath": "packages/raptix/raptix/agents/_benchmark_mode.py",
+   "summary": "Helper đọc biến môi trường BENCHMARK_MODE để bổ sung đường dẫn skill khi chạy benchmark. Cung cấp hàm benchmark_skill_sources dùng chung cho các factory agent.",
+   "tags": [
+    "tiện-ích",
+    "cấu-hình",
+    "benchmark",
+    "skill"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "function",
+   "name": "benchmark_skill_sources",
+   "filePath": "packages/raptix/raptix/agents/_benchmark_mode.py",
+   "lineRange": [
+    4,
+    8
+   ],
+   "summary": "Trả về đường dẫn skill bổ sung khi biến môi trường BENCHMARK_MODE bật, ngược lại trả về danh sách rỗng.",
+   "tags": [
+    "tiện-ích",
+    "benchmark",
+    "skill",
+    "cấu-hình"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/build.py",
+   "type": "file",
+   "name": "build.py",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "summary": "Trái tim của quá trình dựng agent: hợp nhất middleware và công cụ theo từng vai trò, áp dụng ghi đè từ PluginBundle và chặn thay đổi nguy hiểm qua cổng an toàn. Cung cấp build_middleware, build_tools cùng các hàm phân giải prompt và model.",
+   "tags": [
+    "factory",
+    "middleware",
+    "plugin",
+    "an-toàn",
+    "cổng-bảo-vệ"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Dùng importlib.metadata entry_points để phát hiện PluginBundle và biến môi trường RAPTIX_ALLOW_SAFETY_OVERRIDES làm cổng mở khóa ghi đè safety-critical."
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/build.py:_iter_override_bundles",
+   "type": "function",
+   "name": "_iter_override_bundles",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    96,
+    137
+   ],
+   "summary": "Duyệt entry-point nhóm raptix.bundles và yield các PluginBundle đang bật phù hợp với vai trò agent.",
+   "tags": [
+    "plugin",
+    "khám-phá",
+    "ghi-đè",
+    "vai-trò"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/build.py:resolve_role_model",
+   "type": "function",
+   "name": "resolve_role_model",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    140,
+    172
+   ],
+   "summary": "Phân giải model LLM cho vai trò từ biến môi trường RAPTIX_MODEL_<ROLE>, ưu tiên bundle ghi đè rồi mới tới mặc định.",
+   "tags": [
+    "llm",
+    "mô-hình",
+    "vai-trò",
+    "cấu-hình"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/build.py:_resolve_overrides",
+   "type": "function",
+   "name": "_resolve_overrides",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    191,
+    284
+   ],
+   "summary": "Hợp nhất ghi đè tường minh của caller với ghi đè khai báo từ plugin thành một _ResolvedOverrides duy nhất cho vai trò.",
+   "tags": [
+    "ghi-đè",
+    "hợp-nhất",
+    "plugin",
+    "vai-trò"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/build.py:_check_safety_gate",
+   "type": "function",
+   "name": "_check_safety_gate",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    287,
+    333
+   ],
+   "summary": "Chặn ghi đè slot và công cụ safety-critical khi thiếu biến môi trường RAPTIX_ALLOW_SAFETY_OVERRIDES bằng cách ném SafetyOverrideViolation.",
+   "tags": [
+    "an-toàn",
+    "cổng-bảo-vệ",
+    "kiểm-tra",
+    "ghi-đè"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "function",
+   "name": "build_middleware",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    341,
+    457
+   ],
+   "summary": "Dựng ngăn xếp middleware cho vai trò từ registry slot, áp dụng ghi đè plugin và cổng an toàn, kể cả cài đặt Skillogy khi bật.",
+   "tags": [
+    "middleware",
+    "factory",
+    "vai-trò",
+    "lắp-ráp"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "function",
+   "name": "build_tools",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    460,
+    511
+   ],
+   "summary": "Dựng danh sách công cụ cho vai trò từ bộ chuẩn, áp dụng thay thế và vô hiệu hóa của plugin sau khi qua cổng an toàn.",
+   "tags": [
+    "công-cụ",
+    "factory",
+    "vai-trò",
+    "ghi-đè"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/build.py:_tool_name",
+   "type": "function",
+   "name": "_tool_name",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    514,
+    524
+   ],
+   "summary": "Trích tên chuẩn của một công cụ LangChain từ thuộc tính name hoặc tên hàm để đối chiếu ghi đè theo tên.",
+   "tags": [
+    "tiện-ích",
+    "công-cụ",
+    "định-danh",
+    "nội-bộ"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/build.py:resolve_prompt_overrides",
+   "type": "function",
+   "name": "resolve_prompt_overrides",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    527,
+    567
+   ],
+   "summary": "Hợp nhất prompt ghi đè tường minh với prompt của plugin thành cấu hình prepend, append hoặc thay thế hoàn toàn cho vai trò.",
+   "tags": [
+    "prompt",
+    "ghi-đè",
+    "hợp-nhất",
+    "vai-trò"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/raptix/raptix/agents/build.py:SafetyOverrideViolation",
+   "type": "class",
+   "name": "SafetyOverrideViolation",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    85,
+    88
+   ],
+   "summary": "Ngoại lệ báo khi plugin hoặc caller cố tắt hay thay thế slot và công cụ safety-critical mà thiếu cổng môi trường cho phép.",
+   "tags": [
+    "ngoại-lệ",
+    "an-toàn",
+    "cổng-bảo-vệ"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/raptix/raptix/agents/build.py:_ResolvedOverrides",
+   "type": "class",
+   "name": "_ResolvedOverrides",
+   "filePath": "packages/raptix/raptix/agents/build.py",
+   "lineRange": [
+    181,
+    188
+   ],
+   "summary": "Dataclass nội bộ gom kết quả hợp nhất ghi đè middleware, công cụ và prompt cho một vai trò agent.",
+   "tags": [
+    "dữ-liệu",
+    "ghi-đè",
+    "hợp-nhất",
+    "nội-bộ"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "type": "file",
+   "name": "detector.py",
+   "filePath": "packages/raptix/raptix/agents/plugins/detector.py",
+   "summary": "Agent giai đoạn 2 của pipeline vulnresearch: đọc mã nguồn quanh các node CANDIDATE do Scanner sinh ra và quyết định candidate nào là lỗ hổng thật để thăng cấp thành VULNERABILITY.",
+   "tags": [
+    "tác-nhân-ai",
+    "phân-tích",
+    "lỗ-hổng",
+    "pipeline"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/plugins/detector.py:create_detector_agent",
+   "type": "function",
+   "name": "create_detector_agent",
+   "filePath": "packages/raptix/raptix/agents/plugins/detector.py",
+   "lineRange": [
+    88,
+    173
+   ],
+   "summary": "Factory dựng agent Detector giai đoạn 2: đọc mã nguồn quanh CANDIDATE và thăng cấp lỗ hổng thật thành VULNERABILITY.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "phân-tích",
+    "lỗ-hổng"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "type": "file",
+   "name": "exploiter.py",
+   "filePath": "packages/raptix/raptix/agents/plugins/exploiter.py",
+   "summary": "Agent giai đoạn 5 của pipeline vulnresearch: biến các primitive đã kiểm chứng thành chuỗi khai thác có khả năng vũ khí hóa, với bề mặt công cụ rộng gồm reversing, tra cứu CVE và lập kế hoạch chuỗi tấn công.",
+   "tags": [
+    "tác-nhân-ai",
+    "khai-thác",
+    "chuỗi-tấn-công",
+    "pipeline"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/plugins/exploiter.py:create_exploiter_agent",
+   "type": "function",
+   "name": "create_exploiter_agent",
+   "filePath": "packages/raptix/raptix/agents/plugins/exploiter.py",
+   "lineRange": [
+    96,
+    177
+   ],
+   "summary": "Factory dựng agent Exploiter giai đoạn 5: weaponize primitive đã kiểm chứng thành chuỗi khai thác với bề mặt reversing và CVE.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "khai-thác",
+    "weaponize"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "type": "file",
+   "name": "patcher.py",
+   "filePath": "packages/raptix/raptix/agents/plugins/patcher.py",
+   "summary": "Agent giai đoạn 4 của pipeline vulnresearch: sinh diff vá tối thiểu cho finding đã kiểm chứng và chứng minh bản vá hiệu lực bằng cách chạy lại PoC của Verifier.",
+   "tags": [
+    "tác-nhân-ai",
+    "vá-lỗi",
+    "kiểm-chứng",
+    "pipeline"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/plugins/patcher.py:create_patcher_agent",
+   "type": "function",
+   "name": "create_patcher_agent",
+   "filePath": "packages/raptix/raptix/agents/plugins/patcher.py",
+   "lineRange": [
+    84,
+    165
+   ],
+   "summary": "Factory dựng agent Patcher giai đoạn 4: sinh diff vá tối thiểu và kiểm chứng lại bằng PoC của Verifier.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "vá-lỗi",
+    "kiểm-chứng"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "type": "file",
+   "name": "scanner.py",
+   "filePath": "packages/raptix/raptix/agents/plugins/scanner.py",
+   "summary": "Agent giai đoạn 1 của pipeline vulnresearch: triage diện rộng trên codebase lớn bằng model rẻ với bề mặt công cụ hẹp, sinh ra các node CANDIDATE cho Detector xử lý tiếp.",
+   "tags": [
+    "tác-nhân-ai",
+    "quét-mã",
+    "sàng-lọc",
+    "pipeline"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/plugins/scanner.py:create_scanner_agent",
+   "type": "function",
+   "name": "create_scanner_agent",
+   "filePath": "packages/raptix/raptix/agents/plugins/scanner.py",
+   "lineRange": [
+    87,
+    178
+   ],
+   "summary": "Factory dựng agent Scanner giai đoạn 1: triage diện rộng codebase lớn bằng model rẻ để sinh CANDIDATE.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "quét-mã",
+    "sàng-lọc"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "type": "file",
+   "name": "verifier.py",
+   "filePath": "packages/raptix/raptix/agents/plugins/verifier.py",
+   "summary": "Agent giai đoạn 3 của pipeline vulnresearch: chế PoC tối thiểu cho node VULNERABILITY, chạy trong sandbox và thăng cấp lỗ hổng thành FINDING khi PoC thành công.",
+   "tags": [
+    "tác-nhân-ai",
+    "kiểm-chứng",
+    "poc",
+    "sandbox"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/plugins/verifier.py:create_verifier_agent",
+   "type": "function",
+   "name": "create_verifier_agent",
+   "filePath": "packages/raptix/raptix/agents/plugins/verifier.py",
+   "lineRange": [
+    90,
+    171
+   ],
+   "summary": "Factory dựng agent Verifier giai đoạn 3: chế PoC tối thiểu trong sandbox và thăng cấp vuln thành FINDING.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "kiểm-chứng",
+    "poc"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "type": "file",
+   "name": "vulnresearch.py",
+   "filePath": "packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "summary": "Orchestrator điều phối pipeline 5 giai đoạn scanner, detector, verifier, patcher, exploiter; trạng thái luân chuyển qua KnowledgeGraph và bản thân orchestrator không trực tiếp chạm bash hay PoC.",
+   "tags": [
+    "điều-phối",
+    "tác-nhân-ai",
+    "lỗ-hổng",
+    "knowledge-graph"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "Sub-agent được bọc trong StreamingRunnable để stream tool-call qua cả CLI Python và LangGraph Platform HTTP API."
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/plugins/vulnresearch.py:create_vulnresearch_agent",
+   "type": "function",
+   "name": "create_vulnresearch_agent",
+   "filePath": "packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "lineRange": [
+    81,
+    188
+   ],
+   "summary": "Factory dựng orchestrator vulnresearch 5 giai đoạn, điều phối sub-agent qua KnowledgeGraph mà không trực tiếp chạm bash.",
+   "tags": [
+    "factory",
+    "điều-phối",
+    "tác-nhân-ai",
+    "lỗ-hổng"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "packages/raptix/raptix/agents/prompts/__init__.py",
+   "summary": "Lớp re-export cho pipeline lắp ráp system prompt của agent, giữ tương thích cho cú pháp from raptix.agents.prompts import X. Triển khai thực nằm ở builder và registry.",
+   "tags": [
+    "barrel",
+    "re-export",
+    "prompt",
+    "tương-thích"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "type": "file",
+   "name": "builder.py",
+   "filePath": "packages/raptix/raptix/agents/prompts/builder.py",
+   "summary": "Engine lắp ráp system prompt: đọc fragment theo vai trò, lớp PromptBuilder ghép section công cụ và dùng chung, hàm load_prompt tương thích ngược. Tách section tĩnh và động bằng cache boundary cho prompt caching.",
+   "tags": [
+    "prompt",
+    "builder",
+    "mẫu-section",
+    "bộ-nhớ-đệm"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Phân tách section tĩnh/động bằng hằng CACHE_BOUNDARY để Anthropic prompt caching tái sử dụng prefix ổn định qua các lượt gọi."
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/prompts/builder.py:_read_fragment",
+   "type": "function",
+   "name": "_read_fragment",
+   "filePath": "packages/raptix/raptix/agents/prompts/builder.py",
+   "lineRange": [
+    122,
+    130
+   ],
+   "summary": "Đọc fragment prompt dạng markdown theo tên qua thứ tự tìm kiếm, báo lỗi FileNotFoundError khi thiếu.",
+   "tags": [
+    "prompt",
+    "đọc-file",
+    "fragment",
+    "nội-bộ"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/prompts/builder.py:_read_workflow_for_role",
+   "type": "function",
+   "name": "_read_workflow_for_role",
+   "filePath": "packages/raptix/raptix/agents/prompts/builder.py",
+   "lineRange": [
+    153,
+    166
+   ],
+   "summary": "Đọc tài liệu workflow đặc thù vai trò để chèn vào system prompt của agent tương ứng.",
+   "tags": [
+    "prompt",
+    "vai-trò",
+    "workflow",
+    "đọc-file"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/prompts/builder.py:_format_workflow_block",
+   "type": "function",
+   "name": "_format_workflow_block",
+   "filePath": "packages/raptix/raptix/agents/prompts/builder.py",
+   "lineRange": [
+    169,
+    179
+   ],
+   "summary": "Định dạng khối workflow của vai trò thành đoạn prompt có thẻ bao bọc trước khi chèn vào system prompt.",
+   "tags": [
+    "prompt",
+    "định-dạng",
+    "workflow",
+    "nội-bộ"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/prompts/builder.py:_get_tool_prompt",
+   "type": "function",
+   "name": "_get_tool_prompt",
+   "filePath": "packages/raptix/raptix/agents/prompts/builder.py",
+   "lineRange": [
+    182,
+    195
+   ],
+   "summary": "Lấy prompt của công cụ kèm biến thể theo vai trò, ưu tiên định nghĩa cùng mã công cụ rồi mới tới fragment dùng chung.",
+   "tags": [
+    "prompt",
+    "công-cụ",
+    "vai-trò",
+    "tra-cứu"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "function",
+   "name": "load_prompt",
+   "filePath": "packages/raptix/raptix/agents/prompts/builder.py",
+   "lineRange": [
+    319,
+    409
+   ],
+   "summary": "Điểm vào tương thích ngược để tải system prompt theo tên agent, tự động gắn chính sách ngôn ngữ và ghi đè prompt của plugin.",
+   "tags": [
+    "prompt",
+    "tải",
+    "tương-thích",
+    "điểm-vào"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/raptix/raptix/agents/prompts/builder.py:PromptBuilder",
+   "type": "class",
+   "name": "PromptBuilder",
+   "filePath": "packages/raptix/raptix/agents/prompts/builder.py",
+   "lineRange": [
+    213,
+    316
+   ],
+   "summary": "API builder lắp ráp system prompt có cấu trúc: gắn prompt công cụ, fragment dùng chung và section động rồi build thành chuỗi hoàn chỉnh.",
+   "tags": [
+    "builder",
+    "prompt",
+    "lắp-ráp",
+    "mẫu-thiết-kế"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/prompts/registry.py",
+   "type": "file",
+   "name": "registry.py",
+   "filePath": "packages/raptix/raptix/agents/prompts/registry.py",
+   "summary": "Registry ngôn ngữ và locale: bảng ánh xạ mã quốc gia sang ISO 639-1 cùng hàm build_language_policy dựng khối LANGUAGE_POLICY chèn vào mọi system prompt của agent.",
+   "tags": [
+    "đa-ngôn-ngữ",
+    "locale",
+    "chính-sách",
+    "prompt"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/prompts/registry.py:build_language_policy",
+   "type": "function",
+   "name": "build_language_policy",
+   "filePath": "packages/raptix/raptix/agents/prompts/registry.py",
+   "lineRange": [
+    86,
+    138
+   ],
+   "summary": "Dựng khối LANGUAGE_POLICY cho mã ngôn ngữ ISO 639-1, trả về None khi là tiếng Anh hoặc rỗng vì fragment mặc định đã đủ.",
+   "tags": [
+    "đa-ngôn-ngữ",
+    "chính-sách",
+    "prompt",
+    "locale"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "packages/raptix/raptix/agents/standard/__init__.py",
+   "summary": "Docstring bundle chuẩn của OSS, mô tả agent chính raptix cùng các subagent và agent planning soundwave. File chỉ chứa tài liệu, không khai báo hay re-export symbol.",
+   "tags": [
+    "tài-liệu",
+    "package",
+    "bundle-chuẩn",
+    "gói-oss"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "type": "file",
+   "name": "ad_operator.py",
+   "filePath": "packages/raptix/raptix/agents/standard/ad_operator.py",
+   "summary": "Agent tấn công Active Directory và Windows: kiểm tra DCSync, Kerberos, ADCS, delegation, GPO và shadow credentials qua bộ công cụ AD chuyên biệt.",
+   "tags": [
+    "tác-nhân-ai",
+    "active-directory",
+    "windows",
+    "leo-thang"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/ad_operator.py:create_ad_operator_agent",
+   "type": "function",
+   "name": "create_ad_operator_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/ad_operator.py",
+   "lineRange": [
+    86,
+    167
+   ],
+   "summary": "Factory dựng agent tấn công Active Directory và Windows với bộ công cụ AD gồm DCSync, Kerberos, ADCS và GPO.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "active-directory",
+    "windows"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "type": "file",
+   "name": "analyst.py",
+   "filePath": "packages/raptix/raptix/agents/standard/analyst.py",
+   "summary": "Làn discovery giá trị cao của Raptix: review mã nguồn, phân tích tĩnh, tương quan CVE, fuzzing và dựng chuỗi khai thác, khác với recon và exploit vốn làm việc black-box.",
+   "tags": [
+    "tác-nhân-ai",
+    "phân-tích",
+    "nghiên-cứu",
+    "báo-cáo"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/analyst.py:create_analyst_agent",
+   "type": "function",
+   "name": "create_analyst_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/analyst.py",
+   "lineRange": [
+    96,
+    176
+   ],
+   "summary": "Factory dựng agent Analyst: làn discovery giá trị cao gồm review code, phân tích tĩnh, CVE và fuzzing.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "phân-tích",
+    "nghiên-cứu"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "type": "file",
+   "name": "autohunt.py",
+   "filePath": "packages/raptix/raptix/agents/standard/autohunt.py",
+   "summary": "Làn planning bổ sung để bootstrap engagement đơn mục tiêu một cách tự động. Tái dùng contract công cụ và middleware dạng tài liệu của soundwave nhưng dùng prompt và định danh graph riêng.",
+   "tags": [
+    "tác-nhân-ai",
+    "lập-kế-hoạch",
+    "tự-động",
+    "khởi-tạo"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/autohunt.py:create_autohunt_agent",
+   "type": "function",
+   "name": "create_autohunt_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/autohunt.py",
+   "lineRange": [
+    25,
+    72
+   ],
+   "summary": "Factory dựng agent Autohunt: bootstrap engagement đơn mục tiêu, tái dùng contract tài liệu của soundwave với graph riêng.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "lập-kế-hoạch",
+    "tự-động"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "type": "file",
+   "name": "blue_cell.py",
+   "filePath": "packages/raptix/raptix/agents/standard/blue_cell.py",
+   "summary": "Agent phòng thủ khép vòng Offensive Vaccine: replay hoạt động của engagement qua blue_cell_scan, kiểm chứng rule Sigma có thực sự kích hoạt và ghi nhận kết quả phát hiện.",
+   "tags": [
+    "tác-nhân-ai",
+    "phòng-thủ",
+    "phát-hiện",
+    "sigma"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/blue_cell.py:create_blue_cell_agent",
+   "type": "function",
+   "name": "create_blue_cell_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/blue_cell.py",
+   "lineRange": [
+    70,
+    150
+   ],
+   "summary": "Factory dựng agent Blue Cell phòng thủ: replay hoạt động engagement để kiểm chứng rule Sigma kích hoạt.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "phòng-thủ",
+    "phát-hiện"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "type": "file",
+   "name": "cloud_hunter.py",
+   "filePath": "packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "summary": "Agent khai thác đám mây và hạ tầng container: bao phủ AWS, Azure, GCP và Kubernetes qua bộ công cụ cloud chuyên biệt.",
+   "tags": [
+    "tác-nhân-ai",
+    "đám-mây",
+    "kubernetes",
+    "khai-thác"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/cloud_hunter.py:create_cloud_hunter_agent",
+   "type": "function",
+   "name": "create_cloud_hunter_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "lineRange": [
+    74,
+    154
+   ],
+   "summary": "Factory dựng agent săn mục tiêu đám mây AWS, Azure, GCP và Kubernetes.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "đám-mây",
+    "kubernetes"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "type": "file",
+   "name": "contract_auditor.py",
+   "filePath": "packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "summary": "Agent kiểm toán smart contract Solidity và EVM: duyệt repo Foundry/Hardhat, chạy quét pattern offline, ingest JSON Slither, sinh test PoC và đẩy finding đã xác nhận vào KnowledgeGraph.",
+   "tags": [
+    "tác-nhân-ai",
+    "smart-contract",
+    "kiểm-toán",
+    "solidity"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/contract_auditor.py:create_contract_auditor_agent",
+   "type": "function",
+   "name": "create_contract_auditor_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "lineRange": [
+    86,
+    167
+   ],
+   "summary": "Factory dựng agent kiểm toán smart contract Solidity và EVM với quét offline, Slither và PoC Foundry.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "smart-contract",
+    "kiểm-toán"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "type": "file",
+   "name": "decepticon.py",
+   "filePath": "packages/raptix/raptix/agents/standard/decepticon.py",
+   "summary": "Agent điều phối red-team tự động: dựng OPPLAN từ tài liệu RoE và CONOPS có sẵn rồi thực thi kill chain bằng cách ủy thác cho các sub-agent chuyên biệt.",
+   "tags": [
+    "điều-phối",
+    "tác-nhân-ai",
+    "red-team",
+    "opplan"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/decepticon.py:create_decepticon_agent",
+   "type": "function",
+   "name": "create_decepticon_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/decepticon.py",
+   "lineRange": [
+    77,
+    198
+   ],
+   "summary": "Factory dựng orchestrator red-team: dựng OPPLAN từ RoE và CONOPS rồi ủy thác cho sub-agent chuyên biệt.",
+   "tags": [
+    "factory",
+    "điều-phối",
+    "red-team",
+    "opplan"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "type": "file",
+   "name": "exploit.py",
+   "filePath": "packages/raptix/raptix/agents/standard/exploit.py",
+   "summary": "Agent chiếm quyền truy cập ban đầu và khai thác lỗ hổng, kiểm soát chặt ngăn xếp middleware và bề mặt công cụ gồm bash, tham chiếu và nghiên cứu.",
+   "tags": [
+    "tác-nhân-ai",
+    "khai-thác",
+    "truy-cập-ban-đầu",
+    "red-team"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/exploit.py:create_exploit_agent",
+   "type": "function",
+   "name": "create_exploit_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/exploit.py",
+   "lineRange": [
+    95,
+    175
+   ],
+   "summary": "Factory dựng agent chiếm quyền truy cập ban đầu và khai thác lỗ hổng với middleware được kiểm soát chặt.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "khai-thác",
+    "truy-cập-ban-đầu"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "type": "file",
+   "name": "forensicator.py",
+   "filePath": "packages/raptix/raptix/agents/standard/forensicator.py",
+   "summary": "Agent pháp y số DFIR và kiểm chứng purple-team, bóc tách bề mặt điều phối còn thiếu để tiêu thụ các skill DFIR có sẵn trong repo.",
+   "tags": [
+    "tác-nhân-ai",
+    "pháp-y-số",
+    "purple-team",
+    "điều-tra"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/forensicator.py:create_forensicator_agent",
+   "type": "function",
+   "name": "create_forensicator_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/forensicator.py",
+   "lineRange": [
+    67,
+    118
+   ],
+   "summary": "Factory dựng agent pháp y số DFIR và kiểm chứng purple-team trên nền skill dfir có sẵn.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "pháp-y-số",
+    "điều-tra"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "type": "file",
+   "name": "ics_operator.py",
+   "filePath": "packages/raptix/raptix/agents/standard/ics_operator.py",
+   "summary": "Agent tấn công ICS, OT và SCADA có cổng RoE, bóc tách bề mặt điều phối để tiêu thụ các skill ICS có sẵn trong repo.",
+   "tags": [
+    "tác-nhân-ai",
+    "ics",
+    "scada",
+    "hạ-tầng-trọng-yếu"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/ics_operator.py:create_ics_operator_agent",
+   "type": "function",
+   "name": "create_ics_operator_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/ics_operator.py",
+   "lineRange": [
+    68,
+    119
+   ],
+   "summary": "Factory dựng agent tấn công ICS, OT và SCADA có cổng RoE trên nền skill ICS có sẵn.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "ics",
+    "scada"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "type": "file",
+   "name": "iot_operator.py",
+   "filePath": "packages/raptix/raptix/agents/standard/iot_operator.py",
+   "summary": "Agent tấn công IoT và thiết bị nhúng như firmware, BLE, Zigbee, Z-Wave, sub-GHz, LoRaWAN, U-Boot và bộ nhớ thiết bị.",
+   "tags": [
+    "tác-nhân-ai",
+    "iot",
+    "firmware",
+    "thiết-bị-nhúng"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/iot_operator.py:create_iot_operator_agent",
+   "type": "function",
+   "name": "create_iot_operator_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/iot_operator.py",
+   "lineRange": [
+    67,
+    118
+   ],
+   "summary": "Factory dựng agent tấn công IoT và thiết bị nhúng từ firmware tới radio BLE và Zigbee.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "iot",
+    "firmware"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "type": "file",
+   "name": "mobile_operator.py",
+   "filePath": "packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "summary": "Agent tấn công ứng dụng Android và iOS, bóc tách bề mặt điều phối để tiêu thụ các skill mobile có sẵn trong repo.",
+   "tags": [
+    "tác-nhân-ai",
+    "di-động",
+    "android",
+    "ios"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/mobile_operator.py:create_mobile_operator_agent",
+   "type": "function",
+   "name": "create_mobile_operator_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "lineRange": [
+    62,
+    113
+   ],
+   "summary": "Factory dựng agent tấn công ứng dụng Android và iOS trên nền skill mobile có sẵn.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "di-động",
+    "android"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "type": "file",
+   "name": "osint_operator.py",
+   "filePath": "packages/raptix/raptix/agents/standard/osint_operator.py",
+   "summary": "Agent tình báo nguồn mở thụ động, thu thập thông tin trinh sát phục vụ OPPLAN mà không chạm trực tiếp vào mục tiêu.",
+   "tags": [
+    "tác-nhân-ai",
+    "osint",
+    "trinh-sát",
+    "tình-báo"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/osint_operator.py:create_osint_operator_agent",
+   "type": "function",
+   "name": "create_osint_operator_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/osint_operator.py",
+   "lineRange": [
+    73,
+    124
+   ],
+   "summary": "Factory dựng agent tình báo nguồn mở thụ động phục vụ trinh sát và OPPLAN.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "osint",
+    "trinh-sát"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "type": "file",
+   "name": "phisher.py",
+   "filePath": "packages/raptix/raptix/agents/standard/phisher.py",
+   "summary": "Agent chuyên truy cập ban đầu qua phishing và social engineering cho giai đoạn INITIAL_ACCESS của kill chain theo kỹ thuật T1566.",
+   "tags": [
+    "tác-nhân-ai",
+    "phishing",
+    "social-engineering",
+    "truy-cập-ban-đầu"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/phisher.py:create_phisher_agent",
+   "type": "function",
+   "name": "create_phisher_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/phisher.py",
+   "lineRange": [
+    74,
+    131
+   ],
+   "summary": "Factory dựng agent phishing cho truy cập ban đầu theo kỹ thuật T1566 của kill chain.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "phishing",
+    "truy-cập-ban-đầu"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "type": "file",
+   "name": "postexploit.py",
+   "filePath": "packages/raptix/raptix/agents/standard/postexploit.py",
+   "summary": "Agent vận hành hậu khai thác: chiếm đoạt credential, leo thang đặc quyền, di chuyển ngang và quản lý C2 từ foothold ban đầu tới khi đạt mọi mục tiêu.",
+   "tags": [
+    "tác-nhân-ai",
+    "hậu-khai-thác",
+    "leo-thang",
+    "c2"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/postexploit.py:create_postexploit_agent",
+   "type": "function",
+   "name": "create_postexploit_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/postexploit.py",
+   "lineRange": [
+    84,
+    164
+   ],
+   "summary": "Factory dựng agent hậu khai thác: credential, leo thang, di chuyển ngang và quản lý C2.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "hậu-khai-thác",
+    "c2"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "type": "file",
+   "name": "recon.py",
+   "filePath": "packages/raptix/raptix/agents/standard/recon.py",
+   "summary": "Agent trinh sát tự động: thu thập tình báo, tra cứu killchain và oneliner, tìm kiếm web mở có kiểm soát RoE rồi ghi finding ra file để middleware KG ingest sau.",
+   "tags": [
+    "tác-nhân-ai",
+    "trinh-sát",
+    "thu-thập",
+    "tình-báo"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/recon.py:create_recon_agent",
+   "type": "function",
+   "name": "create_recon_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/recon.py",
+   "lineRange": [
+    83,
+    163
+   ],
+   "summary": "Factory dựng agent trinh sát tự động: killchain, oneliner, tìm kiếm web mở và ghi finding ra file.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "trinh-sát",
+    "thu-thập"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "type": "file",
+   "name": "reverser.py",
+   "filePath": "packages/raptix/raptix/agents/standard/reverser.py",
+   "summary": "Agent phân tích binary và firmware: biến file thực thi mờ thành finding có cấu trúc gồm import nguy hiểm, secret nhúng, dấu packer và kho ROP gadget.",
+   "tags": [
+    "tác-nhân-ai",
+    "dịch-ngược",
+    "phân-tích-binary",
+    "firmware"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/reverser.py:create_reverser_agent",
+   "type": "function",
+   "name": "create_reverser_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/reverser.py",
+   "lineRange": [
+    78,
+    158
+   ],
+   "summary": "Factory dựng agent dịch ngược binary và firmware thành finding gồm secret, packer và ROP gadget.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "dịch-ngược",
+    "firmware"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "type": "file",
+   "name": "soundwave.py",
+   "filePath": "packages/raptix/raptix/agents/standard/soundwave.py",
+   "summary": "Agent viết tài liệu engagement: sinh 8 tài liệu planning như RoE, CONOPS và deconfliction; không sinh OPPLAN mà để orchestrator đảm nhiệm.",
+   "tags": [
+    "tác-nhân-ai",
+    "lập-kế-hoạch",
+    "tài-liệu",
+    "roe"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/soundwave.py:create_soundwave_agent",
+   "type": "function",
+   "name": "create_soundwave_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/soundwave.py",
+   "lineRange": [
+    69,
+    140
+   ],
+   "summary": "Factory dựng agent Soundwave viết 8 tài liệu planning engagement, không sinh OPPLAN.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "lập-kế-hoạch",
+    "tài-liệu"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "type": "file",
+   "name": "supply_chain_operator.py",
+   "filePath": "packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "summary": "Agent tấn công chuỗi cung ứng phần mềm, bóc tách bề mặt điều phối để tiêu thụ các skill supply-chain có sẵn trong repo.",
+   "tags": [
+    "tác-nhân-ai",
+    "chuỗi-cung-ứng",
+    "phụ-thuộc",
+    "tấn-công"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/supply_chain_operator.py:create_supply_chain_operator_agent",
+   "type": "function",
+   "name": "create_supply_chain_operator_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "lineRange": [
+    67,
+    118
+   ],
+   "summary": "Factory dựng agent tấn công chuỗi cung ứng phần mềm trên nền skill supply-chain có sẵn.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "chuỗi-cung-ứng",
+    "tấn-công"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "type": "file",
+   "name": "surface_exploit.py",
+   "filePath": "packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "summary": "Chuyên gia khai thác bề mặt web và API có tham số hóa, kết hợp proxy, công cụ web và nghiên cứu để tấn công bề mặt đã xác định.",
+   "tags": [
+    "tác-nhân-ai",
+    "web",
+    "api",
+    "khai-thác"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/surface_exploit.py:create_surface_exploit_agent",
+   "type": "function",
+   "name": "create_surface_exploit_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "lineRange": [
+    38,
+    84
+   ],
+   "summary": "Factory dựng chuyên gia khai thác bề mặt web và API có tham số hóa.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "web",
+    "khai-thác"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "type": "file",
+   "name": "wireless_operator.py",
+   "filePath": "packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "summary": "Agent tấn công Wi-Fi, BLE, Zigbee và sub-GHz; yêu cầu phần cứng radio thật nên hỗ trợ hai mô hình triển khai gồm USB passthrough và thực thi ngoài sandbox.",
+   "tags": [
+    "tác-nhân-ai",
+    "không-dây",
+    "wifi",
+    "phần-cứng"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/raptix/raptix/agents/standard/wireless_operator.py:create_wireless_operator_agent",
+   "type": "function",
+   "name": "create_wireless_operator_agent",
+   "filePath": "packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "lineRange": [
+    73,
+    124
+   ],
+   "summary": "Factory dựng agent tấn công không dây Wi-Fi, BLE, Zigbee và sub-GHz cần phần cứng radio thật.",
+   "tags": [
+    "factory",
+    "tác-nhân-ai",
+    "không-dây",
+    "phần-cứng"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "packages/raptix/raptix/backends/__init__.py",
+   "summary": "Dựng backend runtime cho agent: CompositeBackend định tuyến /skills/ đọc tại chỗ và mọi đường dẫn còn lại qua sandbox, kèm kiểm chứng extra_routes chống che khuất cây skill OSS.",
+   "tags": [
+    "backend",
+    "sandbox",
+    "skill",
+    "định-tuyến"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "Sắp xếp route theo độ dài prefix giảm dần để longest-prefix-wins có ngữ nghĩa ghi đè確定 (deterministic) cho tenant và plugin."
+  },
+  {
+   "id": "function:packages/raptix/raptix/backends/__init__.py:_validate_extra_route_key",
+   "type": "function",
+   "name": "_validate_extra_route_key",
+   "filePath": "packages/raptix/raptix/backends/__init__.py",
+   "lineRange": [
+    28,
+    56
+   ],
+   "summary": "Từ chối khóa extra_routes có thể che khuất cây skill OSS hoặc chứa traversal, gồm chuỗi rỗng, slash đơn, prefix /skills/ và khóa thiếu định dạng.",
+   "tags": [
+    "kiểm-chứng",
+    "bảo-mật",
+    "định-tuyến",
+    "backend"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "function",
+   "name": "make_agent_backend",
+   "filePath": "packages/raptix/raptix/backends/__init__.py",
+   "lineRange": [
+    59,
+    114
+   ],
+   "summary": "Ghép backend runtime cho agent từ transport sandbox và backend đọc skill tại chỗ, hợp nhất extra_routes của caller theo longest-prefix-wins.",
+   "tags": [
+    "backend",
+    "factory",
+    "sandbox",
+    "skill"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:_iter_override_bundles",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:_iter_override_bundles",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:resolve_role_model",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:resolve_role_model",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:_resolve_overrides",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:_resolve_overrides",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:_check_safety_gate",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:_check_safety_gate",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:_tool_name",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:_tool_name",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:resolve_prompt_overrides",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "function:packages/raptix/raptix/agents/build.py:resolve_prompt_overrides",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "class:packages/raptix/raptix/agents/build.py:SafetyOverrideViolation",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "class:packages/raptix/raptix/agents/build.py:SafetyOverrideViolation",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "class:packages/raptix/raptix/agents/build.py:_ResolvedOverrides",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "class:packages/raptix/raptix/agents/build.py:_ResolvedOverrides",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/detector.py:create_detector_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/detector.py:create_detector_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/exploiter.py:create_exploiter_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/exploiter.py:create_exploiter_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/patcher.py:create_patcher_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/patcher.py:create_patcher_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/scanner.py:create_scanner_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/scanner.py:create_scanner_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/verifier.py:create_verifier_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/verifier.py:create_verifier_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/vulnresearch.py:create_vulnresearch_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "target": "function:packages/raptix/raptix/agents/plugins/vulnresearch.py:create_vulnresearch_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:_read_fragment",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:_read_fragment",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:_read_workflow_for_role",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:_read_workflow_for_role",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:_format_workflow_block",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:_format_workflow_block",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:_get_tool_prompt",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:_get_tool_prompt",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "class:packages/raptix/raptix/agents/prompts/builder.py:PromptBuilder",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "class:packages/raptix/raptix/agents/prompts/builder.py:PromptBuilder",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/registry.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/registry.py:build_language_policy",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/registry.py",
+   "target": "function:packages/raptix/raptix/agents/prompts/registry.py:build_language_policy",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/ad_operator.py:create_ad_operator_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/ad_operator.py:create_ad_operator_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "function:packages/raptix/raptix/agents/standard/analyst.py:create_analyst_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "function:packages/raptix/raptix/agents/standard/analyst.py:create_analyst_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "target": "function:packages/raptix/raptix/agents/standard/autohunt.py:create_autohunt_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "target": "function:packages/raptix/raptix/agents/standard/autohunt.py:create_autohunt_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "function:packages/raptix/raptix/agents/standard/blue_cell.py:create_blue_cell_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "function:packages/raptix/raptix/agents/standard/blue_cell.py:create_blue_cell_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "function:packages/raptix/raptix/agents/standard/cloud_hunter.py:create_cloud_hunter_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "function:packages/raptix/raptix/agents/standard/cloud_hunter.py:create_cloud_hunter_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "function:packages/raptix/raptix/agents/standard/contract_auditor.py:create_contract_auditor_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "function:packages/raptix/raptix/agents/standard/contract_auditor.py:create_contract_auditor_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "target": "function:packages/raptix/raptix/agents/standard/decepticon.py:create_decepticon_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "target": "function:packages/raptix/raptix/agents/standard/decepticon.py:create_decepticon_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "function:packages/raptix/raptix/agents/standard/exploit.py:create_exploit_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "function:packages/raptix/raptix/agents/standard/exploit.py:create_exploit_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/forensicator.py:create_forensicator_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/forensicator.py:create_forensicator_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/ics_operator.py:create_ics_operator_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/ics_operator.py:create_ics_operator_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/iot_operator.py:create_iot_operator_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/iot_operator.py:create_iot_operator_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/mobile_operator.py:create_mobile_operator_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/mobile_operator.py:create_mobile_operator_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/osint_operator.py:create_osint_operator_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/osint_operator.py:create_osint_operator_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "function:packages/raptix/raptix/agents/standard/phisher.py:create_phisher_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "function:packages/raptix/raptix/agents/standard/phisher.py:create_phisher_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "function:packages/raptix/raptix/agents/standard/postexploit.py:create_postexploit_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "function:packages/raptix/raptix/agents/standard/postexploit.py:create_postexploit_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "function:packages/raptix/raptix/agents/standard/recon.py:create_recon_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "function:packages/raptix/raptix/agents/standard/recon.py:create_recon_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "function:packages/raptix/raptix/agents/standard/reverser.py:create_reverser_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "function:packages/raptix/raptix/agents/standard/reverser.py:create_reverser_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "target": "function:packages/raptix/raptix/agents/standard/soundwave.py:create_soundwave_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "target": "function:packages/raptix/raptix/agents/standard/soundwave.py:create_soundwave_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/supply_chain_operator.py:create_supply_chain_operator_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/supply_chain_operator.py:create_supply_chain_operator_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "function:packages/raptix/raptix/agents/standard/surface_exploit.py:create_surface_exploit_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "function:packages/raptix/raptix/agents/standard/surface_exploit.py:create_surface_exploit_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/wireless_operator.py:create_wireless_operator_agent",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "function:packages/raptix/raptix/agents/standard/wireless_operator.py:create_wireless_operator_agent",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/backends/__init__.py",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:_validate_extra_route_key",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/backends/__init__.py",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:_validate_extra_route_key",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/backends/__init__.py",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "contains",
+   "direction": "forward",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/raptix/raptix/backends/__init__.py",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "exports",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "file:packages/raptix/raptix/agents/middleware_slots.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/build.py",
+   "target": "file:packages/raptix/raptix/middleware/skillogy.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/detector.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/exploiter.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/patcher.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/scanner.py",
+   "target": "file:packages/raptix/raptix/tools/research/scanner_tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/verifier.py",
+   "target": "file:packages/raptix/raptix/tools/verification.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "target": "file:packages/raptix/raptix/core/subagent_streaming.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/plugins/vulnresearch.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/registry.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/prompts/builder.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/registry.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/tools/ad/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ad_operator.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/tools/reporting/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/analyst.py",
+   "target": "file:packages/raptix/raptix/tools/web/search.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "target": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/autohunt.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "file:packages/raptix/raptix/tools/defense/blue_cell.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "file:packages/raptix/raptix/tools/defense/brief.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/blue_cell.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "file:packages/raptix/raptix/tools/cloud/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/cloud_hunter.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/contract_auditor.py",
+   "target": "file:packages/raptix/raptix/tools/contracts/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "target": "file:packages/raptix/raptix/core/subagent_streaming.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/decepticon.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/exploit.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/forensicator.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/ics_operator.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/iot_operator.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/mobile_operator.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/osint_operator.py",
+   "target": "file:packages/raptix/raptix/tools/web/search.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/phisher.py",
+   "target": "file:packages/raptix/raptix/tools/web/search.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/postexploit.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/recon.py",
+   "target": "file:packages/raptix/raptix/tools/web/search.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/reverser.py",
+   "target": "file:packages/raptix/raptix/tools/reversing/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/soundwave.py",
+   "target": "file:packages/raptix/raptix/tools/interaction/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/supply_chain_operator.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/tools/proxy/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/tools/research/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/surface_exploit.py",
+   "target": "file:packages/raptix/raptix/tools/web/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "file:packages/raptix/raptix/agents/_benchmark_mode.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "file:packages/raptix/raptix/agents/build.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "file:packages/raptix/raptix/agents/prompts/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "file:packages/raptix/raptix/backends/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "file:packages/raptix/raptix/llm/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "file:packages/raptix/raptix/tools/bash/bash.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/agents/standard/wireless_operator.py",
+   "target": "file:packages/raptix/raptix/tools/references/tools.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/backends/__init__.py",
+   "target": "file:packages/raptix/raptix/backends/factory.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/raptix/raptix/backends/__init__.py",
+   "target": "file:packages/raptix/raptix/backends/http_sandbox.py",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/detector.py:create_detector_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/detector.py:create_detector_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/detector.py:create_detector_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/detector.py:create_detector_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/exploiter.py:create_exploiter_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/exploiter.py:create_exploiter_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/exploiter.py:create_exploiter_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/exploiter.py:create_exploiter_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/patcher.py:create_patcher_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/patcher.py:create_patcher_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/patcher.py:create_patcher_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/patcher.py:create_patcher_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/scanner.py:create_scanner_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/scanner.py:create_scanner_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/scanner.py:create_scanner_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/scanner.py:create_scanner_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/verifier.py:create_verifier_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/verifier.py:create_verifier_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/verifier.py:create_verifier_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/verifier.py:create_verifier_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/vulnresearch.py:create_vulnresearch_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/vulnresearch.py:create_vulnresearch_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/vulnresearch.py:create_vulnresearch_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/vulnresearch.py:create_vulnresearch_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/plugins/vulnresearch.py:create_vulnresearch_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "target": "function:packages/raptix/raptix/agents/prompts/registry.py:build_language_policy",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ad_operator.py:create_ad_operator_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ad_operator.py:create_ad_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ad_operator.py:create_ad_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ad_operator.py:create_ad_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ad_operator.py:create_ad_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/analyst.py:create_analyst_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/analyst.py:create_analyst_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/analyst.py:create_analyst_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/analyst.py:create_analyst_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/autohunt.py:create_autohunt_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/autohunt.py:create_autohunt_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/autohunt.py:create_autohunt_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/autohunt.py:create_autohunt_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/blue_cell.py:create_blue_cell_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/blue_cell.py:create_blue_cell_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/blue_cell.py:create_blue_cell_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/blue_cell.py:create_blue_cell_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/cloud_hunter.py:create_cloud_hunter_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/cloud_hunter.py:create_cloud_hunter_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/cloud_hunter.py:create_cloud_hunter_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/cloud_hunter.py:create_cloud_hunter_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/contract_auditor.py:create_contract_auditor_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/contract_auditor.py:create_contract_auditor_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/contract_auditor.py:create_contract_auditor_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/contract_auditor.py:create_contract_auditor_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/contract_auditor.py:create_contract_auditor_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/decepticon.py:create_decepticon_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/decepticon.py:create_decepticon_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/decepticon.py:create_decepticon_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/decepticon.py:create_decepticon_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/exploit.py:create_exploit_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/exploit.py:create_exploit_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/exploit.py:create_exploit_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/exploit.py:create_exploit_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/forensicator.py:create_forensicator_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/forensicator.py:create_forensicator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/forensicator.py:create_forensicator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/forensicator.py:create_forensicator_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/forensicator.py:create_forensicator_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ics_operator.py:create_ics_operator_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ics_operator.py:create_ics_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ics_operator.py:create_ics_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ics_operator.py:create_ics_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/ics_operator.py:create_ics_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/iot_operator.py:create_iot_operator_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/iot_operator.py:create_iot_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/iot_operator.py:create_iot_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/iot_operator.py:create_iot_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/iot_operator.py:create_iot_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/mobile_operator.py:create_mobile_operator_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/mobile_operator.py:create_mobile_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/mobile_operator.py:create_mobile_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/mobile_operator.py:create_mobile_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/mobile_operator.py:create_mobile_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/osint_operator.py:create_osint_operator_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/osint_operator.py:create_osint_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/osint_operator.py:create_osint_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/osint_operator.py:create_osint_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/osint_operator.py:create_osint_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/phisher.py:create_phisher_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/phisher.py:create_phisher_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/phisher.py:create_phisher_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/phisher.py:create_phisher_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/phisher.py:create_phisher_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/postexploit.py:create_postexploit_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/postexploit.py:create_postexploit_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/postexploit.py:create_postexploit_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/postexploit.py:create_postexploit_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/recon.py:create_recon_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/recon.py:create_recon_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/recon.py:create_recon_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/recon.py:create_recon_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/reverser.py:create_reverser_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/reverser.py:create_reverser_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/reverser.py:create_reverser_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/reverser.py:create_reverser_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/soundwave.py:create_soundwave_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/soundwave.py:create_soundwave_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/soundwave.py:create_soundwave_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/soundwave.py:create_soundwave_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/supply_chain_operator.py:create_supply_chain_operator_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/supply_chain_operator.py:create_supply_chain_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/supply_chain_operator.py:create_supply_chain_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/supply_chain_operator.py:create_supply_chain_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/supply_chain_operator.py:create_supply_chain_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/surface_exploit.py:create_surface_exploit_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/surface_exploit.py:create_surface_exploit_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/surface_exploit.py:create_surface_exploit_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/surface_exploit.py:create_surface_exploit_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/wireless_operator.py:create_wireless_operator_agent",
+   "target": "function:packages/raptix/raptix/backends/__init__.py:make_agent_backend",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/wireless_operator.py:create_wireless_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_tools",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/wireless_operator.py:create_wireless_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/build.py:build_middleware",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/wireless_operator.py:create_wireless_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/_benchmark_mode.py:benchmark_skill_sources",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  },
+  {
+   "source": "function:packages/raptix/raptix/agents/standard/wireless_operator.py:create_wireless_operator_agent",
+   "target": "function:packages/raptix/raptix/agents/prompts/builder.py:load_prompt",
+   "type": "calls",
+   "direction": "forward",
+   "weight": 0.8
+  }
+ ]
+}

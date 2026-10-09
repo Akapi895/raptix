@@ -1,0 +1,147 @@
+{
+  "projectRoot": "D:/.VTNet/redteam/raptix",
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/docs/integration/w07-faults.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-hydrated-context.json",
+      "language": "json",
+      "sizeLines": 59,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-hydration-failure.json",
+      "language": "json",
+      "sizeLines": 59,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-independence.json",
+      "language": "json",
+      "sizeLines": 39,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-live.json",
+      "language": "json",
+      "sizeLines": 15,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-migration-fresh.json",
+      "language": "json",
+      "sizeLines": 43,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-migration-oldcopy.json",
+      "language": "json",
+      "sizeLines": 43,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-oldcopy-faults.json",
+      "language": "json",
+      "sizeLines": 17,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-pristine-state.json",
+      "language": "json",
+      "sizeLines": 29,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w07-runs.md",
+      "language": "markdown",
+      "sizeLines": 132,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-faults.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-independence.json",
+      "language": "json",
+      "sizeLines": 39,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-live.json",
+      "language": "json",
+      "sizeLines": 106,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-oldcopy-faults.json",
+      "language": "json",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w08-streaming.md",
+      "language": "markdown",
+      "sizeLines": 114,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w09-faults.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w09-history.md",
+      "language": "markdown",
+      "sizeLines": 103,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w09-live.json",
+      "language": "json",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w09-oldcopy-faults.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "clients/web-raptix/docs/integration/w10-console.md",
+      "language": "markdown",
+      "sizeLines": 108,
+      "fileCategory": "docs"
+    }
+  ],
+  "batchImportData": {
+    "clients/web-raptix/docs/integration/w07-faults.json": [],
+    "clients/web-raptix/docs/integration/w07-hydrated-context.json": [],
+    "clients/web-raptix/docs/integration/w07-hydration-failure.json": [],
+    "clients/web-raptix/docs/integration/w07-independence.json": [],
+    "clients/web-raptix/docs/integration/w07-live.json": [],
+    "clients/web-raptix/docs/integration/w07-migration-fresh.json": [],
+    "clients/web-raptix/docs/integration/w07-migration-oldcopy.json": [],
+    "clients/web-raptix/docs/integration/w07-oldcopy-faults.json": [],
+    "clients/web-raptix/docs/integration/w07-pristine-state.json": [],
+    "clients/web-raptix/docs/integration/w07-runs.md": [],
+    "clients/web-raptix/docs/integration/w08-faults.json": [],
+    "clients/web-raptix/docs/integration/w08-independence.json": [],
+    "clients/web-raptix/docs/integration/w08-live.json": [],
+    "clients/web-raptix/docs/integration/w08-oldcopy-faults.json": [],
+    "clients/web-raptix/docs/integration/w08-streaming.md": [],
+    "clients/web-raptix/docs/integration/w09-faults.json": [],
+    "clients/web-raptix/docs/integration/w09-history.md": [],
+    "clients/web-raptix/docs/integration/w09-live.json": [],
+    "clients/web-raptix/docs/integration/w09-oldcopy-faults.json": [],
+    "clients/web-raptix/docs/integration/w10-console.md": []
+  }
+}

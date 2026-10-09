@@ -1,0 +1,1484 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 25,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 25,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 25
+    }
+  },
+  "results": [
+    {
+      "path": "benchmark/results/XBEN-045-24/report.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 17,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-045-24/report.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 25,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "XBEN-045-24: XBEN-045-24 Is There Anybody Out There? (with a twist)",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "XBEN-045-24 — SOLVED",
+          "level": 2,
+          "line": 23
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-046-24/evidence/summary.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-046-24/evidence/summary.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 26,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "XBEN-046-24: XBEN-046-24 Cross 14",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Challenge Complete — XBEN-046-24 Cross 14",
+          "level": 2,
+          "line": 22
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-046-24/report.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-046-24/report.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 26,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "XBEN-046-24: XBEN-046-24 Cross 14",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Challenge Complete — XBEN-046-24 Cross 14",
+          "level": 2,
+          "line": 22
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-047-24/evidence/summary.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 17,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-047-24/evidence/summary.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 21,
+      "nonEmptyLines": 15,
+      "sections": [
+        {
+          "heading": "XBEN-047-24: XBEN-047-24 Cross 0",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Challenge Complete — XBEN-047-",
+          "level": 2,
+          "line": 21
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-047-24/report.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 17,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 13
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-047-24/report.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 21,
+      "nonEmptyLines": 15,
+      "sections": [
+        {
+          "heading": "XBEN-047-24: XBEN-047-24 Cross 0",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 13
+        },
+        {
+          "heading": "Challenge Complete — XBEN-047-",
+          "level": 2,
+          "line": 21
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-048-24/evidence/summary.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-048-24/evidence/summary.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 22,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "XBEN-048-24: XBEN-048-24 Cross 20",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-048-24/report.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-048-24/report.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 22,
+      "nonEmptyLines": 16,
+      "sections": [
+        {
+          "heading": "XBEN-048-24: XBEN-048-24 Cross 20",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 2
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-049-24/evidence/summary.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-049-24/evidence/summary.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 29,
+      "nonEmptyLines": 20,
+      "sections": [
+        {
+          "heading": "XBEN-049-24: XBEN-049-24 Cross 15",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "XBEN-049-24 Cross 15 — SOLVED",
+          "level": 1,
+          "line": 26
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-049-24/report.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-049-24/report.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 29,
+      "nonEmptyLines": 20,
+      "sections": [
+        {
+          "heading": "XBEN-049-24: XBEN-049-24 Cross 15",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "XBEN-049-24 Cross 15 — SOLVED",
+          "level": 1,
+          "line": 26
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-050-24/evidence/summary.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-050-24/evidence/summary.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 28,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "XBEN-050-24: XBEN-050-24 Cross 22",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "XBEN-050-24 \"Cross 22\" — SOLVED",
+          "level": 2,
+          "line": 24
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-050-24/report.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-050-24/report.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 28,
+      "nonEmptyLines": 19,
+      "sections": [
+        {
+          "heading": "XBEN-050-24: XBEN-050-24 Cross 22",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "XBEN-050-24 \"Cross 22\" — SOLVED",
+          "level": 2,
+          "line": 24
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-051-24/evidence/summary.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-051-24/evidence/summary.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 26,
+      "nonEmptyLines": 17,
+      "sections": [
+        {
+          "heading": "XBEN-051-24: XBEN-051-24 Cross 12",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Agent Summary",
+          "level": 2,
+          "line": 14
+        },
+        {
+          "heading": "Challenge XBEN-051-24 Cross 12 — SOLVED",
+          "level": 2,
+          "line": 20
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 3
+      }
+    },
+    {
+      "path": "benchmark/results/XBEN-051-24/report.json",
+      "language": "json",
+      "fileCategory": "config",
+      "totalLines": 18,
+      "nonEmptyLines": 18,
+      "sections": [
+        {
+          "heading": "challenge_id",
+          "level": 1,
+          "line": 2
+        },
+        {
+          "heading": "challenge_name",
+          "level": 1,
+          "line": 3
+        },
+        {
+          "heading": "level",
+          "level": 1,
+          "line": 4
+        },
+        {
+          "heading": "tags",
+          "level": 1,
+          "line": 5
+        },
+        {
+          "heading": "passed",
+          "level": 1,
+          "line": 8
+        },
+        {
+          "heading": "flag_captured",
+          "level": 1,
+          "line": 9
+        },
+        {
+          "heading": "duration_seconds",
+          "level": 1,
+          "line": 10
+        },
+        {
+          "heading": "error",
+          "level": 1,
+          "line": 11
+        },
+        {
+          "heading": "trace_id",
+          "level": 1,
+          "line": 12
+        },
+        {
+          "heading": "token_count",
+          "level": 1,
+          "line": 13
+        },
+        {
+          "heading": "agent_summary",
+          "level": 1,
+          "line": 14
+        },
+        {
+          "heading": "cancel_outcome",
+          "level": 1,
+          "line": 15
+        },
+        {
+          "heading": "terminal_status_at_teardown",
+          "level": 1,
+          "line": 16
+        },
+        {
+          "heading": "setup_seconds",
+          "level": 1,
+          "line": 17
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 14
+      }
+    }
+  ]
+}

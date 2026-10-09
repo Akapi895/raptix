@@ -1,0 +1,325 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+ "batchFiles": [
+  {
+   "path": "tests/unit/cli/test_zip.py",
+   "language": "python",
+   "sizeLines": 218,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_audit_sink.py",
+   "language": "python",
+   "sizeLines": 235,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_budget.py",
+   "language": "python",
+   "sizeLines": 209,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_budget_internals.py",
+   "language": "python",
+   "sizeLines": 401,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_command_targets.py",
+   "language": "python",
+   "sizeLines": 195,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_command_targets_scope_bypass.py",
+   "language": "python",
+   "sizeLines": 185,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_engagement.py",
+   "language": "python",
+   "sizeLines": 775,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_event_logging.py",
+   "language": "python",
+   "sizeLines": 491,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_filesystem.py",
+   "language": "python",
+   "sizeLines": 718,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_hitl.py",
+   "language": "python",
+   "sizeLines": 369,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_injection_detector.py",
+   "language": "python",
+   "sizeLines": 376,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_opplan_inject_format.py",
+   "language": "python",
+   "sizeLines": 343,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_opplan_persistence.py",
+   "language": "python",
+   "sizeLines": 436,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_prompt_injection_shield.py",
+   "language": "python",
+   "sizeLines": 298,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_roe.py",
+   "language": "python",
+   "sizeLines": 1450,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_skillogy.py",
+   "language": "python",
+   "sizeLines": 572,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_skills.py",
+   "language": "python",
+   "sizeLines": 141,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_summarization_fallback.py",
+   "language": "python",
+   "sizeLines": 146,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_untrusted_output.py",
+   "language": "python",
+   "sizeLines": 364,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/middleware/test_untrusted_output_envelope.py",
+   "language": "python",
+   "sizeLines": 140,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/ops/test_client.py",
+   "language": "python",
+   "sizeLines": 153,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/ops/test_tools.py",
+   "language": "python",
+   "sizeLines": 192,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/runtime/test_event_log.py",
+   "language": "python",
+   "sizeLines": 156,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/runtime/test_event_log_retry_lock.py",
+   "language": "python",
+   "sizeLines": 86,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/runtime/test_event_log_winlock.py",
+   "language": "python",
+   "sizeLines": 108,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/skillogy/test_acl.py",
+   "language": "python",
+   "sizeLines": 232,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/skillogy/test_middleware.py",
+   "language": "python",
+   "sizeLines": 155,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/test_foothold_shadow.py",
+   "language": "python",
+   "sizeLines": 103,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/test_opplan_tool.py",
+   "language": "python",
+   "sizeLines": 310,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/test_skills.py",
+   "language": "python",
+   "sizeLines": 145,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/test_skills_loader.py",
+   "language": "python",
+   "sizeLines": 459,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/test_skills_registry.py",
+   "language": "python",
+   "sizeLines": 222,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/web/test_search.py",
+   "language": "python",
+   "sizeLines": 167,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "tests/unit/cli/test_zip.py": [
+   "raptix/cli/__main__.py",
+   "raptix/cli/zip.py"
+  ],
+  "tests/unit/middleware/test_audit_sink.py": [
+   "raptix/middleware/_audit_sink.py"
+  ],
+  "tests/unit/middleware/test_budget.py": [
+   "raptix/middleware/budget.py"
+  ],
+  "tests/unit/middleware/test_budget_internals.py": [
+   "raptix/middleware/__init__.py",
+   "raptix/middleware/budget.py"
+  ],
+  "tests/unit/middleware/test_command_targets.py": [
+   "raptix/middleware/_command_targets.py"
+  ],
+  "tests/unit/middleware/test_command_targets_scope_bypass.py": [
+   "raptix/middleware/_command_targets.py"
+  ],
+  "tests/unit/middleware/test_engagement.py": [
+   "raptix/middleware/engagement.py",
+   "raptix/middleware/opplan.py"
+  ],
+  "tests/unit/middleware/test_event_logging.py": [
+   "raptix/middleware/event_logging.py",
+   "raptix/runtime/event_log.py"
+  ],
+  "tests/unit/middleware/test_filesystem.py": [
+   "raptix/backends/http_sandbox.py",
+   "raptix/middleware/filesystem.py"
+  ],
+  "tests/unit/middleware/test_hitl.py": [
+   "raptix/middleware/hitl.py"
+  ],
+  "tests/unit/middleware/test_injection_detector.py": [
+   "raptix/middleware/_injection_detector.py"
+  ],
+  "tests/unit/middleware/test_opplan_inject_format.py": [
+   "raptix/middleware/__init__.py",
+   "raptix/middleware/opplan.py"
+  ],
+  "tests/unit/middleware/test_opplan_persistence.py": [
+   "raptix/middleware/__init__.py",
+   "raptix/middleware/filesystem.py",
+   "raptix/middleware/opplan.py",
+   "raptix/tools/opplan.py"
+  ],
+  "tests/unit/middleware/test_prompt_injection_shield.py": [
+   "raptix/middleware/prompt_injection_shield.py"
+  ],
+  "tests/unit/middleware/test_roe.py": [
+   "raptix/middleware/__init__.py",
+   "raptix/middleware/_audit_sink.py",
+   "raptix/middleware/_command_targets.py",
+   "raptix/middleware/roe.py"
+  ],
+  "tests/unit/middleware/test_skillogy.py": [
+   "raptix/middleware/__init__.py",
+   "raptix/middleware/skillogy.py"
+  ],
+  "tests/unit/middleware/test_skills.py": [
+   "raptix/middleware/skills.py"
+  ],
+  "tests/unit/middleware/test_summarization_fallback.py": [
+   "raptix/agents/middleware_slots.py"
+  ],
+  "tests/unit/middleware/test_untrusted_output.py": [
+   "raptix/middleware/_injection_detector.py",
+   "raptix/middleware/untrusted_output.py"
+  ],
+  "tests/unit/middleware/test_untrusted_output_envelope.py": [
+   "raptix/middleware/untrusted_output.py"
+  ],
+  "tests/unit/ops/test_client.py": [
+   "raptix/tools/ops/client.py"
+  ],
+  "tests/unit/ops/test_tools.py": [
+   "raptix/tools/ops/__init__.py",
+   "raptix/tools/ops/client.py"
+  ],
+  "tests/unit/runtime/test_event_log.py": [
+   "raptix/runtime/event_log.py"
+  ],
+  "tests/unit/runtime/test_event_log_retry_lock.py": [
+   "raptix/runtime/event_log.py"
+  ],
+  "tests/unit/runtime/test_event_log_winlock.py": [
+   "raptix/runtime/event_log.py"
+  ],
+  "tests/unit/skillogy/test_acl.py": [
+   "raptix/middleware/skillogy.py",
+   "raptix/middleware/skills.py"
+  ],
+  "tests/unit/skillogy/test_middleware.py": [
+   "raptix/middleware/skillogy.py",
+   "raptix/middleware/skills.py"
+  ],
+  "tests/unit/tools/test_foothold_shadow.py": [
+   "raptix/tools/opplan.py"
+  ],
+  "tests/unit/tools/test_opplan_tool.py": [
+   "raptix/tools/opplan.py"
+  ],
+  "tests/unit/tools/test_skills.py": [
+   "raptix/tools/skills.py",
+   "raptix/tools/skills_registry.py"
+  ],
+  "tests/unit/tools/test_skills_loader.py": [
+   "raptix/tools/skills.py"
+  ],
+  "tests/unit/tools/test_skills_registry.py": [
+   "raptix/tools/skills_registry.py"
+  ],
+  "tests/unit/tools/web/test_search.py": [
+   "raptix/middleware/roe.py",
+   "raptix/middleware/untrusted_output.py",
+   "raptix/tools/web/__init__.py",
+   "raptix/tools/web/search.py"
+  ]
+ }
+}

@@ -1,0 +1,57 @@
+\begin{titlepage}
+
+% ----- KHUNG VIỀN KÉP (2 VIỀN) -----
+\AddToShipoutPictureBG*{
+    \begin{tikzpicture}[overlay,remember picture]
+        % Viền ngoài (nét đậm hơn)
+        \draw[line width=2.25pt]
+            ($(current page.north west) + (2cm,-1.5cm)$)
+            rectangle
+            ($(current page.south east) + (-1.5cm,1.5cm)$);
+        
+        % Viền trong (nét thanh)
+        \draw[line width=1pt]
+            ($(current page.north west) + (2.15cm,-1.65cm)$)
+            rectangle
+            ($(current page.south east) + (-1.65cm,1.65cm)$);
+    \end{tikzpicture}
+}
+
+\begin{center} % Bắt đầu căn giữa toàn bộ trang
+
+\vspace*{0.2cm}
+% --- HEADER ---
+{\bfseries\large VIETNAM NATIONAL UNIVERSITY, HANOI}\\[0.2cm]
+{\bfseries UNIVERSITY OF ENGINEERING AND TECHNOLOGY}\\[2cm]
+
+% --- LOGO ---
+\includegraphics[scale=0.12]{images/uet_logo.png}\\[2cm]
+
+% --- TITLE ---
+{\fontsize{22pt}{24pt}\selectfont\bfseries BÁO CÁO THỰC TẬP}\\[0.3cm]
+{\fontsize{16pt}{20pt}\selectfont\bfseries NGÀNH: KHOA HỌC MÁY TÍNH}\\[1cm]
+
+{\fontsize{16pt}{20pt}\selectfont\bfseries
+\textbf{ĐỀ TÀI:\\
+NGHIÊN CỨU VÀ ỨNG DỤNG AI AGENT TRONG \\
+TỰ ĐỘNG HÓA QUY TRÌNH RED TEAMING}
+}\\[2cm]
+
+% --- TABLE INFO ---
+\fontsize{14pt}{18pt}\selectfont
+\begin{spacing}{1.2}
+\begin{tabular}{l l}
+Cán bộ hướng dẫn: & Trần Quang Tài \\[1ex]
+Giảng viên đánh giá: & TS. Lê Khánh Trình \\[1ex]
+Sinh viên: & Phạm Anh Tuấn \\[1ex]
+Mã sinh viên: & 23021709 \\[1ex]
+Lớp học phần: & QH-2023-I/CQ-I-CS3 \\[1ex]
+\end{tabular}
+\end{spacing}
+
+\vfill
+
+{\bfseries Hanoi, 2026}
+
+\end{center}
+\end{titlepage}

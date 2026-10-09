@@ -1,0 +1,1727 @@
+{
+  "batchIndex": 8,
+  "files": [
+    {
+      "path": "packages/raptix/raptix/runtime/event_log.py",
+      "language": "python",
+      "sizeLines": 296,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/evidence/__init__.py",
+      "language": "python",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/evidence/asciicast.py",
+      "language": "python",
+      "sizeLines": 179,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/evidence/tools.py",
+      "language": "python",
+      "sizeLines": 256,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/filesystem.py",
+      "language": "python",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/opplan.py",
+      "language": "python",
+      "sizeLines": 1244,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/ops/__init__.py",
+      "language": "python",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/ops/client.py",
+      "language": "python",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/ops/tools.py",
+      "language": "python",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/skills.py",
+      "language": "python",
+      "sizeLines": 296,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/raptix/tools/skills_registry.py",
+      "language": "python",
+      "sizeLines": 248,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/agents/test_build.py",
+      "language": "python",
+      "sizeLines": 688,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/agents/test_if_skill_contract.py",
+      "language": "python",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/cli/test_audit.py",
+      "language": "python",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/cli/test_auth.py",
+      "language": "python",
+      "sizeLines": 151,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/cli/test_auth_branches.py",
+      "language": "python",
+      "sizeLines": 347,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/cli/test_export_transcript.py",
+      "language": "python",
+      "sizeLines": 117,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/cli/test_scan.py",
+      "language": "python",
+      "sizeLines": 188,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/cli/test_scan_extra.py",
+      "language": "python",
+      "sizeLines": 632,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/cli/test_zip.py",
+      "language": "python",
+      "sizeLines": 218,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/core/test_dispatch_boundary.py",
+      "language": "python",
+      "sizeLines": 197,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/core/test_subagent_streaming.py",
+      "language": "python",
+      "sizeLines": 294,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/core/test_subagent_streaming_guard.py",
+      "language": "python",
+      "sizeLines": 157,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/core/test_subagent_transcript_state.py",
+      "language": "python",
+      "sizeLines": 211,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_factory.py",
+      "language": "python",
+      "sizeLines": 1528,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_factory_attribution.py",
+      "language": "python",
+      "sizeLines": 121,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_factory_classify_errors.py",
+      "language": "python",
+      "sizeLines": 276,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_factory_fallback_execution.py",
+      "language": "python",
+      "sizeLines": 169,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_factory_url_redaction.py",
+      "language": "python",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_provider_controls.py",
+      "language": "python",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_role_model_override.py",
+      "language": "python",
+      "sizeLines": 82,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/llm/test_router.py",
+      "language": "python",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/middleware/test_audit_sink.py",
+      "language": "python",
+      "sizeLines": 235,
+      "fileCategory": "code"
+    },
+    {
+      "path": "packages/raptix/tests/unit/middleware/test_budget.py",
+      "language": "python",
+      "sizeLines": 209,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "packages/raptix/raptix/runtime/event_log.py": [],
+    "packages/raptix/raptix/tools/evidence/__init__.py": [
+      "packages/raptix/raptix/tools/evidence/tools.py"
+    ],
+    "packages/raptix/raptix/tools/evidence/asciicast.py": [],
+    "packages/raptix/raptix/tools/evidence/tools.py": [
+      "packages/raptix/raptix/middleware/_audit_sink.py",
+      "packages/raptix/raptix/tools/evidence/asciicast.py"
+    ],
+    "packages/raptix/raptix/tools/filesystem.py": [],
+    "packages/raptix/raptix/tools/opplan.py": [],
+    "packages/raptix/raptix/tools/ops/__init__.py": [
+      "packages/raptix/raptix/tools/ops/client.py",
+      "packages/raptix/raptix/tools/ops/tools.py"
+    ],
+    "packages/raptix/raptix/tools/ops/client.py": [],
+    "packages/raptix/raptix/tools/ops/tools.py": [
+      "packages/raptix/raptix/tools/ops/client.py"
+    ],
+    "packages/raptix/raptix/tools/skills.py": [
+      "packages/raptix/raptix/tools/skills_registry.py"
+    ],
+    "packages/raptix/raptix/tools/skills_registry.py": [],
+    "packages/raptix/tests/unit/agents/test_build.py": [
+      "packages/raptix/raptix/agents/__init__.py",
+      "packages/raptix/raptix/agents/middleware_slots.py",
+      "packages/raptix/raptix/middleware/budget.py",
+      "packages/raptix/raptix/middleware/event_logging.py",
+      "packages/raptix/raptix/middleware/hitl.py",
+      "packages/raptix/raptix/middleware/prompt_injection_shield.py",
+      "packages/raptix/raptix/middleware/untrusted_output.py"
+    ],
+    "packages/raptix/tests/unit/agents/test_if_skill_contract.py": [
+      "packages/raptix/raptix/agents/middleware_slots.py"
+    ],
+    "packages/raptix/tests/unit/cli/test_audit.py": [
+      "packages/raptix/raptix/cli/__main__.py",
+      "packages/raptix/raptix/cli/audit.py",
+      "packages/raptix/raptix/middleware/_audit_sink.py"
+    ],
+    "packages/raptix/tests/unit/cli/test_auth.py": [
+      "packages/raptix/raptix/cli/auth.py",
+      "packages/raptix/raptix/llm/__init__.py",
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/cli/test_auth_branches.py": [
+      "packages/raptix/raptix/cli/__init__.py",
+      "packages/raptix/raptix/cli/auth.py",
+      "packages/raptix/raptix/llm/__init__.py",
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/cli/test_export_transcript.py": [
+      "packages/raptix/raptix/cli/__main__.py",
+      "packages/raptix/raptix/cli/export_transcript.py",
+      "packages/raptix/raptix/runtime/event_log.py"
+    ],
+    "packages/raptix/tests/unit/cli/test_scan.py": [
+      "packages/raptix/raptix/cli/scan.py"
+    ],
+    "packages/raptix/tests/unit/cli/test_scan_extra.py": [
+      "packages/raptix/raptix/cli/scan.py"
+    ],
+    "packages/raptix/tests/unit/cli/test_zip.py": [
+      "packages/raptix/raptix/cli/__main__.py",
+      "packages/raptix/raptix/cli/zip.py"
+    ],
+    "packages/raptix/tests/unit/core/test_dispatch_boundary.py": [
+      "packages/raptix/raptix/core/subagent_streaming.py",
+      "packages/raptix/raptix/middleware/dispatch.py"
+    ],
+    "packages/raptix/tests/unit/core/test_subagent_streaming.py": [
+      "packages/raptix/raptix/core/subagent_streaming.py"
+    ],
+    "packages/raptix/tests/unit/core/test_subagent_streaming_guard.py": [
+      "packages/raptix/raptix/core/subagent_streaming.py"
+    ],
+    "packages/raptix/tests/unit/core/test_subagent_transcript_state.py": [
+      "packages/raptix/raptix/core/subagent_streaming.py",
+      "packages/raptix/raptix/middleware/state_reducers.py",
+      "packages/raptix/raptix/middleware/subagent_transcript_state.py"
+    ],
+    "packages/raptix/tests/unit/llm/test_factory.py": [
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/llm/test_factory_attribution.py": [
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/llm/test_factory_classify_errors.py": [
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/llm/test_factory_fallback_execution.py": [
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/llm/test_factory_url_redaction.py": [
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/llm/test_provider_controls.py": [
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/llm/test_role_model_override.py": [
+      "packages/raptix/raptix/agents/build.py",
+      "packages/raptix/raptix/llm/factory.py"
+    ],
+    "packages/raptix/tests/unit/llm/test_router.py": [
+      "packages/raptix/raptix/llm/router.py"
+    ],
+    "packages/raptix/tests/unit/middleware/test_audit_sink.py": [
+      "packages/raptix/raptix/middleware/_audit_sink.py"
+    ],
+    "packages/raptix/tests/unit/middleware/test_budget.py": [
+      "packages/raptix/raptix/middleware/budget.py"
+    ]
+  },
+  "neighborMap": {
+    "packages/raptix/raptix/runtime/event_log.py": [
+      {
+        "path": "packages/raptix/raptix/cli/export_transcript.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_build_parser",
+          "_resolve_workspace",
+          "_events_path",
+          "_format_ts",
+          "_as_json_block",
+          "_payload",
+          "_render_engagement_start",
+          "_render_engagement_end",
+          "_render_agent_turn",
+          "_render_tool_call",
+          "_render_tool_result",
+          "_render_generic",
+          "render_transcript",
+          "_write_stdout",
+          "main"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/event_logging.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_summarize_value",
+          "_redact_args",
+          "_is_finding_tool",
+          "_content_length",
+          "_msg_text",
+          "_last_human_text",
+          "_user_text",
+          "_ai_message",
+          "_reasoning_text",
+          "_model_name",
+          "_session_id",
+          "_roe_literal_targets",
+          "_engagement_identity_terms",
+          "EventLogMiddleware"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/middleware/test_event_logging.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_Model",
+          "_Runtime",
+          "_ModelRequest",
+          "_Tool",
+          "_ToolRequest",
+          "_events_path",
+          "test_summarize_value_describes_shape_without_contents",
+          "test_redact_args_never_persists_value_contents",
+          "test_model_call_writes_llm_call_then_response_pair",
+          "test_tool_call_writes_call_then_result_pair",
+          "test_finding_tool_writes_finding_after_successful_result",
+          "test_failed_finding_tool_does_not_write_finding_created",
+          "test_finding_tool_command_result_does_not_write_finding_created",
+          "test_non_finding_tool_does_not_write_finding_created",
+          "test_append_failure_is_swallowed",
+          "test_event_log_cached_per_scope",
+          "test_async_hooks_write_events",
+          "test_reasoning_text_reads_thinking_and_reasoning_content",
+          "test_reasoning_survives_a_tool_calling_turn_with_no_visible_text",
+          "test_user_text_strips_harness_injected_reminders",
+          "test_agent_name_comes_from_the_role_not_the_runtime",
+          "test_reader_and_broadcast_tools_are_not_findings",
+          "_model_response",
+          "test_ai_message_is_unwrapped_from_the_model_response_wrapper",
+          "test_llm_response_records_tokens_through_the_wrapper",
+          "test_research_trajectory_ships_agent_reasoning_end_to_end",
+          "test_tool_call_binds_the_session_for_tool_side_emits",
+          "test_engagement_identity_terms_come_only_from_declarations",
+          "test_declared_org_is_masked_in_the_trajectory"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/runtime/test_event_log.py",
+        "batchIndex": 9,
+        "symbols": [
+          "test_append_writes_one_jsonl_line_per_event",
+          "test_read_returns_events_in_order",
+          "test_append_returns_rendered_event",
+          "test_event_type_accepts_str",
+          "test_read_events_skips_malformed_lines",
+          "test_read_events_handles_missing_file",
+          "test_engagement_event_from_json_line_round_trips",
+          "test_engagement_event_from_invalid_json_returns_none",
+          "test_path_lives_under_engagement_id",
+          "test_concurrent_threads_do_not_interleave",
+          "test_event_log_appends_to_existing_file",
+          "test_for_workspace_writes_at_workspace_root",
+          "test_for_workspace_defaults_engagement_id_to_empty"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/runtime/test_event_log_retry_lock.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_FailNTimes",
+          "_FakeClock",
+          "test_retry_lock_returns_when_acquire_eventually_succeeds",
+          "test_retry_lock_raises_timeout_when_deadline_exceeded",
+          "test_retry_lock_bounded_sleeps_with_backoff",
+          "test_retry_lock_succeeds_on_first_try_without_sleeping",
+          "test_lock_acquire_timeout_default_is_sane"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/runtime/test_event_log_winlock.py",
+        "batchIndex": 9,
+        "symbols": [
+          "test_release_lock_seeks_to_byte_zero_before_unlock",
+          "test_acquire_lock_seeks_to_byte_zero_before_locking",
+          "test_acquire_and_release_same_fixed_offset_repeated",
+          "test_append_is_atomic_across_multiple_eventlog_instances"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/evidence/__init__.py": [
+      {
+        "path": "packages/raptix/raptix/tools/__init__.py",
+        "batchIndex": 3,
+        "symbols": []
+      },
+      {
+        "path": "packages/raptix/tests/unit/tools/test_evidence_tools.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_seed_evidence",
+          "test_workspace_default_when_env_unset",
+          "test_workspace_returns_path_from_env",
+          "test_evidence_dir_is_workspace_subpath",
+          "test_json_helper_round_trips_dict",
+          "test_export_session_asciicast_explicit_log_path_success",
+          "test_export_session_asciicast_fallback_tmux_log_path",
+          "test_export_session_asciicast_error_when_log_missing",
+          "test_list_session_recordings_empty_when_evidence_dir_absent",
+          "test_list_session_recordings_returns_manifests",
+          "test_seal_evidence_error_when_dir_missing",
+          "test_seal_evidence_writes_manifest_for_each_file",
+          "test_verify_evidence_ok_after_seal",
+          "test_verify_evidence_flags_drift_when_file_tampered",
+          "test_verify_evidence_flags_missing_file",
+          "test_verify_evidence_error_when_manifest_absent",
+          "test_verify_evidence_flags_hmac_chain_break"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/evidence/asciicast.py": [
+      {
+        "path": "packages/raptix/tests/unit/tools/test_evidence.py",
+        "batchIndex": 9,
+        "symbols": [
+          "test_segments_split_on_ps1_markers",
+          "test_segments_handles_no_markers",
+          "test_segments_drops_empty",
+          "test_load_sidecar_missing_returns_none",
+          "test_load_sidecar_relative_timestamps",
+          "test_load_sidecar_skips_malformed_lines",
+          "test_export_asciicast_missing_log_raises",
+          "test_export_asciicast_synthetic_timing",
+          "test_export_asciicast_measured_timing",
+          "test_export_asciicast_writes_manifest_sidecar",
+          "test_list_recordings_empty_dir_returns_empty",
+          "test_list_recordings_collects_manifests",
+          "test_list_recordings_skips_malformed"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/evidence/tools.py": [
+      {
+        "path": "packages/raptix/raptix/middleware/_audit_sink.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_canonical",
+          "_record_hash",
+          "_record_hmac",
+          "AuditChainState",
+          "RoEAuditSink",
+          "VerifyResult",
+          "verify_ledger",
+          "iter_records"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/tools/test_evidence_tools.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_seed_evidence",
+          "test_workspace_default_when_env_unset",
+          "test_workspace_returns_path_from_env",
+          "test_evidence_dir_is_workspace_subpath",
+          "test_json_helper_round_trips_dict",
+          "test_export_session_asciicast_explicit_log_path_success",
+          "test_export_session_asciicast_fallback_tmux_log_path",
+          "test_export_session_asciicast_error_when_log_missing",
+          "test_list_session_recordings_empty_when_evidence_dir_absent",
+          "test_list_session_recordings_returns_manifests",
+          "test_seal_evidence_error_when_dir_missing",
+          "test_seal_evidence_writes_manifest_for_each_file",
+          "test_verify_evidence_ok_after_seal",
+          "test_verify_evidence_flags_drift_when_file_tampered",
+          "test_verify_evidence_flags_missing_file",
+          "test_verify_evidence_error_when_manifest_absent",
+          "test_verify_evidence_flags_hmac_chain_break"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/filesystem.py": [
+      {
+        "path": "packages/raptix/raptix/middleware/filesystem.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_normalize_engagement_workspace",
+          "EngagementFilesystemBackend",
+          "_workspace_from_runtime",
+          "_rebind_sandbox_per_run",
+          "FilesystemMiddleware"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/opplan.py": [
+      {
+        "path": "packages/raptix/raptix/middleware/opplan.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_reduce_engagement_name",
+          "_reduce_workspace_path",
+          "OPPLANState",
+          "_format_opplan_status",
+          "OPPLANMiddleware"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/middleware/test_opplan_hierarchy.py",
+        "batchIndex": 23,
+        "symbols": [
+          "_objective",
+          "TestSchemaHierarchy",
+          "_ToolBag",
+          "_state_from",
+          "_last_message",
+          "_call_tool",
+          "bag",
+          "initial_state",
+          "_add",
+          "_expand",
+          "TestAddObjectiveWithParent",
+          "TestObjectiveExpand",
+          "TestParentCompletionGuard",
+          "TestObjectiveCollapse",
+          "TestListWithTree"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/middleware/test_opplan_persistence.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_obj_dict",
+          "_backend",
+          "_opplan_path",
+          "test_build_opplan_payload_emits_versioned_envelope",
+          "test_persist_writes_payload_under_workspace_plan",
+          "test_persist_overwrites_existing_opplan_through_backend",
+          "test_persist_skips_when_workspace_path_missing",
+          "test_persist_swallows_filesystem_error",
+          "test_loaded_opplan_ignores_persistence_metadata",
+          "test_load_opplan_reads_through_backend",
+          "test_load_opplan_binds_workspace_when_plan_is_missing",
+          "_tool",
+          "_call",
+          "test_add_objective_auto_persists",
+          "test_update_objective_auto_persists",
+          "test_objective_collapse_auto_persists",
+          "test_objective_collapse_survives_parent_id_cycle",
+          "test_format_opplan_for_agent_survives_parent_id_cycle",
+          "test_after_model_blocks_two_opplan_tools_in_same_step",
+          "test_after_model_allows_single_opplan_tool",
+          "test_after_model_allows_opplan_alongside_non_opplan_tool",
+          "test_opplan_tool_names_constant_matches_registered_tools",
+          "test_format_opplan_status_empty_does_not_say_all_complete",
+          "test_format_opplan_for_agent_empty_does_not_say_all_complete"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/tools/test_foothold_shadow.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_Verifier",
+          "_observation",
+          "_start",
+          "test_access_requires_independent_fresh_live_observation",
+          "test_shadow_mode_does_not_gate_preparation_or_lateral_work",
+          "test_opt_in_verifier_evidence_does_not_become_model_auth",
+          "test_default_mode_keeps_existing_objective_semantics"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/tools/test_opplan_tool.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_obj",
+          "_row",
+          "test_pending_can_only_start_or_cancel",
+          "test_in_progress_can_complete_block_or_cancel",
+          "test_blocked_can_retry_complete_or_cancel",
+          "test_terminal_states_allow_no_transition",
+          "test_unknown_source_state_is_never_valid",
+          "test_no_state_transitions_to_itself",
+          "test_valid_next_is_sorted_and_comma_joined",
+          "test_transition_table_only_references_known_statuses",
+          "test_payload_summary_counts_each_status",
+          "test_payload_sorts_objectives_by_id_for_stable_diffs",
+          "test_payload_empty_plan_has_zeroed_summary",
+          "test_payload_round_trips_back_into_opplan_model",
+          "test_format_header_and_progress_line",
+          "test_format_table_is_sorted_by_priority",
+          "test_format_blocked_by_joined_and_owner_fallback",
+          "test_format_has_no_task_tree_when_flat",
+          "test_format_renders_task_tree_when_hierarchical",
+          "test_format_tree_status_markers",
+          "test_format_tree_cycle_guard_terminates_on_duplicate_id",
+          "test_format_next_picks_lowest_priority_actionable",
+          "test_format_all_complete_message",
+          "test_format_no_actionable_when_only_blocked",
+          "test_format_empty_plan_is_safe"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/ops/__init__.py": [
+      {
+        "path": "packages/raptix/tests/unit/ops/test_tools.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_FakeClient",
+          "patch_client",
+          "test_ops_start_returns_envelope",
+          "test_ops_start_pulls_engagement_from_env",
+          "test_ops_start_config_wins_over_env",
+          "test_ops_start_unreachable_diagnostic",
+          "test_ops_start_http_error_propagates",
+          "test_ops_stop_returns_envelope",
+          "test_ops_status_merges_health_and_profiles",
+          "test_ops_cleanup_engagement_returns_envelope",
+          "test_ops_cleanup_engagement_pulls_from_env",
+          "test_ops_cleanup_engagement_requires_engagement",
+          "test_tools_registered_in_OPS_TOOLS"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/ops/client.py": [
+      {
+        "path": "packages/raptix/raptix/middleware/opscontrol_notifications.py",
+        "batchIndex": 7,
+        "symbols": [
+          "OpsControlNotificationMiddleware"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/ops/test_client.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_client_with_mock",
+          "test_health_returns_envelope",
+          "test_start_propagates_engagement_query_param",
+          "test_start_omits_query_when_engagement_blank",
+          "test_stop_hits_stop_endpoint",
+          "test_list_profiles_returns_list",
+          "test_http_error_is_raised",
+          "test_unreachable_when_socket_missing",
+          "test_resolve_socket_path_default_and_env",
+          "test_ops_available_false_when_socket_absent",
+          "test_ops_available_false_when_socket_node_but_no_daemon",
+          "test_ops_available_true_when_daemon_accepting"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/ops/test_tools.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_FakeClient",
+          "patch_client",
+          "test_ops_start_returns_envelope",
+          "test_ops_start_pulls_engagement_from_env",
+          "test_ops_start_config_wins_over_env",
+          "test_ops_start_unreachable_diagnostic",
+          "test_ops_start_http_error_propagates",
+          "test_ops_stop_returns_envelope",
+          "test_ops_status_merges_health_and_profiles",
+          "test_ops_cleanup_engagement_returns_envelope",
+          "test_ops_cleanup_engagement_pulls_from_env",
+          "test_ops_cleanup_engagement_requires_engagement",
+          "test_tools_registered_in_OPS_TOOLS"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/skills.py": [
+      {
+        "path": "packages/raptix/raptix/middleware/skills.py",
+        "batchIndex": 7,
+        "symbols": [
+          "SkillsMiddleware",
+          "_parse_comma_field"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/tools/test_skills.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_BackendResult",
+          "_Backend",
+          "_record",
+          "_skill_body",
+          "_invoke",
+          "test_load_skill_accepts_exact_path",
+          "test_load_skill_resolves_unique_slug",
+          "test_load_skill_resolves_relative_path",
+          "test_load_skill_reports_ambiguous_slug_without_reading",
+          "test_load_skill_rejects_slug_outside_allowed_sources",
+          "test_load_skill_rejects_unsafe_short_path",
+          "test_load_skill_lists_references_and_siblings_for_resolved_slug"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/tools/test_skills_loader.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_make_backend",
+          "_ok_read",
+          "_err_read",
+          "_ok_ls",
+          "TestStripFrontmatter",
+          "TestReadViaBackend",
+          "TestListDirViaBackend",
+          "TestValidateSkillPath",
+          "TestFormatSkillBody",
+          "TestBuildLoadSkillTool"
+        ]
+      }
+    ],
+    "packages/raptix/raptix/tools/skills_registry.py": [
+      {
+        "path": "packages/raptix/tests/unit/tools/test_skills.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_BackendResult",
+          "_Backend",
+          "_record",
+          "_skill_body",
+          "_invoke",
+          "test_load_skill_accepts_exact_path",
+          "test_load_skill_resolves_unique_slug",
+          "test_load_skill_resolves_relative_path",
+          "test_load_skill_reports_ambiguous_slug_without_reading",
+          "test_load_skill_rejects_slug_outside_allowed_sources",
+          "test_load_skill_rejects_unsafe_short_path",
+          "test_load_skill_lists_references_and_siblings_for_resolved_slug"
+        ]
+      },
+      {
+        "path": "packages/raptix/tests/unit/tools/test_skills_registry.py",
+        "batchIndex": 9,
+        "symbols": [
+          "_make_record",
+          "small_registry",
+          "TestNormalizeSlug",
+          "TestIsSafeSkillPath",
+          "TestResolveSkill",
+          "TestListSkillStrings",
+          "TestIterSkillRecords"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/agents/test_build.py": [
+      {
+        "path": "packages/raptix/raptix/agents/__init__.py",
+        "batchIndex": 2,
+        "symbols": []
+      },
+      {
+        "path": "packages/raptix/raptix/agents/middleware_slots.py",
+        "batchIndex": 7,
+        "symbols": [
+          "skills_sources_for",
+          "_make_engagement_context",
+          "_make_tried_edges",
+          "_make_roe_guardrail",
+          "_make_untrusted_output",
+          "_make_skills",
+          "_make_filesystem",
+          "_make_subagent",
+          "_make_opplan",
+          "_make_kg",
+          "_make_kg_autoingest",
+          "_make_sandbox_notification",
+          "_make_opscontrol_notification",
+          "_make_model_override",
+          "_make_proxy_key_override",
+          "_make_model_fallback",
+          "_SafeSummarizationProxy",
+          "_make_summarization",
+          "_make_prompt_caching",
+          "_make_patch_tool_calls",
+          "_make_record",
+          "_make_event_log",
+          "_make_budget",
+          "_make_prompt_injection_shield",
+          "_make_hitl"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/budget.py",
+        "batchIndex": 7,
+        "symbols": [
+          "BudgetExceeded",
+          "_env_float",
+          "_SpendCache",
+          "_emit_warning_event",
+          "BudgetEnforcementMiddleware",
+          "_default_litellm_spend_provider"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/event_logging.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_summarize_value",
+          "_redact_args",
+          "_is_finding_tool",
+          "_content_length",
+          "_msg_text",
+          "_last_human_text",
+          "_user_text",
+          "_ai_message",
+          "_reasoning_text",
+          "_model_name",
+          "_session_id",
+          "_roe_literal_targets",
+          "_engagement_identity_terms",
+          "EventLogMiddleware"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/hitl.py",
+        "batchIndex": 7,
+        "symbols": [
+          "ApprovalPolicyRule",
+          "ApprovalRequest",
+          "ApprovalDecision",
+          "ApprovalTransport",
+          "InProcessApprovalTransport",
+          "FileBackedApprovalTransport",
+          "_redact",
+          "HITLApprovalMiddleware"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/prompt_injection_shield.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_detect_injections",
+          "_build_warning_banner",
+          "_wrap_untrusted",
+          "_extract_text",
+          "_emit_stream_event",
+          "_skill_tool_names",
+          "_is_trusted_internal_tool",
+          "_untrusted_tool_names",
+          "PromptInjectionShieldMiddleware"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/untrusted_output.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_format_envelope",
+          "UntrustedOutputMiddleware",
+          "_to_text",
+          "_maybe_truncate",
+          "_short_hash"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/agents/test_if_skill_contract.py": [
+      {
+        "path": "packages/raptix/raptix/agents/middleware_slots.py",
+        "batchIndex": 7,
+        "symbols": [
+          "skills_sources_for",
+          "_make_engagement_context",
+          "_make_tried_edges",
+          "_make_roe_guardrail",
+          "_make_untrusted_output",
+          "_make_skills",
+          "_make_filesystem",
+          "_make_subagent",
+          "_make_opplan",
+          "_make_kg",
+          "_make_kg_autoingest",
+          "_make_sandbox_notification",
+          "_make_opscontrol_notification",
+          "_make_model_override",
+          "_make_proxy_key_override",
+          "_make_model_fallback",
+          "_SafeSummarizationProxy",
+          "_make_summarization",
+          "_make_prompt_caching",
+          "_make_patch_tool_calls",
+          "_make_record",
+          "_make_event_log",
+          "_make_budget",
+          "_make_prompt_injection_shield",
+          "_make_hitl"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/cli/test_audit.py": [
+      {
+        "path": "packages/raptix/raptix/cli/__main__.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_print_help",
+          "main"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/cli/audit.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_build_parser",
+          "_hmac_key",
+          "_render_text",
+          "_render_json",
+          "main"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/_audit_sink.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_canonical",
+          "_record_hash",
+          "_record_hmac",
+          "AuditChainState",
+          "RoEAuditSink",
+          "VerifyResult",
+          "verify_ledger",
+          "iter_records"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/cli/test_auth.py": [
+      {
+        "path": "packages/raptix/raptix/cli/auth.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_build_parser",
+          "_default_env_path",
+          "_load_env_file",
+          "_glyph",
+          "_render_text",
+          "_render_json",
+          "main"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/llm/__init__.py",
+        "batchIndex": 3,
+        "symbols": []
+      },
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/cli/test_auth_branches.py": [
+      {
+        "path": "packages/raptix/raptix/cli/__init__.py",
+        "batchIndex": 7,
+        "symbols": []
+      },
+      {
+        "path": "packages/raptix/raptix/cli/auth.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_build_parser",
+          "_default_env_path",
+          "_load_env_file",
+          "_glyph",
+          "_render_text",
+          "_render_json",
+          "main"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/llm/__init__.py",
+        "batchIndex": 3,
+        "symbols": []
+      },
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/cli/test_export_transcript.py": [
+      {
+        "path": "packages/raptix/raptix/cli/__main__.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_print_help",
+          "main"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/cli/export_transcript.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_build_parser",
+          "_resolve_workspace",
+          "_events_path",
+          "_format_ts",
+          "_as_json_block",
+          "_payload",
+          "_render_engagement_start",
+          "_render_engagement_end",
+          "_render_agent_turn",
+          "_render_tool_call",
+          "_render_tool_result",
+          "_render_generic",
+          "render_transcript",
+          "_write_stdout",
+          "main"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/cli/test_scan.py": [
+      {
+        "path": "packages/raptix/raptix/cli/scan.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_build_parser",
+          "_validate_targets",
+          "_git_diff_files",
+          "_resolve_engagement_name",
+          "_emit_jsonl_event",
+          "_instruction_text",
+          "_dispatch_scan_via_sdk",
+          "_load_findings_graph",
+          "_write_sarif_and_gate",
+          "main"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/cli/test_scan_extra.py": [
+      {
+        "path": "packages/raptix/raptix/cli/scan.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_build_parser",
+          "_validate_targets",
+          "_git_diff_files",
+          "_resolve_engagement_name",
+          "_emit_jsonl_event",
+          "_instruction_text",
+          "_dispatch_scan_via_sdk",
+          "_load_findings_graph",
+          "_write_sarif_and_gate",
+          "main"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/cli/test_zip.py": [
+      {
+        "path": "packages/raptix/raptix/cli/__main__.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_print_help",
+          "main"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/cli/zip.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_default_workspace",
+          "_build_parser",
+          "_resolve_workspace",
+          "export_engagement",
+          "_safe_members",
+          "import_engagement",
+          "main"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/core/test_dispatch_boundary.py": [
+      {
+        "path": "packages/raptix/raptix/core/subagent_streaming.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_bind_per_run_sandbox",
+          "_transcript_result_cap",
+          "_persisted_tool_result_event",
+          "set_subagent_renderer",
+          "clear_subagent_renderer",
+          "_get_writer",
+          "StreamingRunnable"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/dispatch.py",
+        "batchIndex": 7,
+        "symbols": [
+          "merge_dispatch_ledger",
+          "DispatchState",
+          "DispatchTaskSchema",
+          "_reply",
+          "DispatchMiddleware"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/core/test_subagent_streaming.py": [
+      {
+        "path": "packages/raptix/raptix/core/subagent_streaming.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_bind_per_run_sandbox",
+          "_transcript_result_cap",
+          "_persisted_tool_result_event",
+          "set_subagent_renderer",
+          "clear_subagent_renderer",
+          "_get_writer",
+          "StreamingRunnable"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/core/test_subagent_streaming_guard.py": [
+      {
+        "path": "packages/raptix/raptix/core/subagent_streaming.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_bind_per_run_sandbox",
+          "_transcript_result_cap",
+          "_persisted_tool_result_event",
+          "set_subagent_renderer",
+          "clear_subagent_renderer",
+          "_get_writer",
+          "StreamingRunnable"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/core/test_subagent_transcript_state.py": [
+      {
+        "path": "packages/raptix/raptix/core/subagent_streaming.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_bind_per_run_sandbox",
+          "_transcript_result_cap",
+          "_persisted_tool_result_event",
+          "set_subagent_renderer",
+          "clear_subagent_renderer",
+          "_get_writer",
+          "StreamingRunnable"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/state_reducers.py",
+        "batchIndex": 7,
+        "symbols": [
+          "reduce_converging_value",
+          "reduce_concat_transcript"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/middleware/subagent_transcript_state.py",
+        "batchIndex": 7,
+        "symbols": [
+          "SubagentTranscriptState"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/llm/test_factory.py": [
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/llm/test_factory_attribution.py": [
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/llm/test_factory_classify_errors.py": [
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/llm/test_factory_fallback_execution.py": [
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/llm/test_factory_url_redaction.py": [
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/llm/test_provider_controls.py": [
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/llm/test_role_model_override.py": [
+      {
+        "path": "packages/raptix/raptix/agents/build.py",
+        "batchIndex": 2,
+        "symbols": [
+          "SafetyOverrideViolation",
+          "_iter_override_bundles",
+          "resolve_role_model",
+          "_ResolvedOverrides",
+          "_resolve_overrides",
+          "_check_safety_gate",
+          "build_middleware",
+          "build_tools",
+          "_tool_name",
+          "resolve_prompt_overrides"
+        ]
+      },
+      {
+        "path": "packages/raptix/raptix/llm/factory.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_model_max_output_tokens",
+          "_resolve_max_tokens",
+          "LLMTimeoutError",
+          "_resolve_llm_timeout_seconds",
+          "_resolve_extra_headers",
+          "_resolve_disable_streaming",
+          "call_with_timeout",
+          "_ollama_cloud_configured",
+          "_ollama_local_configured",
+          "_lmstudio_local_configured",
+          "_llamacpp_local_configured",
+          "_custom_openai_configured",
+          "_is_real_key",
+          "_oauth_credentials_present",
+          "_oauth_env_credentials_present",
+          "_is_truthy",
+          "_parse_auth_priority",
+          "_method_is_configured",
+          "_detect_available_methods",
+          "_fallback_credentials",
+          "_resolve_credentials",
+          "_method_kind",
+          "_method_env_var",
+          "_method_detail",
+          "AuthMethodStatus",
+          "AuthInventory",
+          "auth_inventory",
+          "_ProxiedChatOpenAI",
+          "_log_served_model",
+          "_model_drops_temperature",
+          "_model_is_kimi_coding",
+          "_model_is_deepseek_thinking",
+          "_model_is_nvidia_nim",
+          "_DeepSeekThinkingChatOpenAI",
+          "_NvidiaNIMChatOpenAI",
+          "_redact_url_credentials",
+          "_redact_secrets",
+          "_provider_status_code",
+          "_classify_provider_error",
+          "_reraise_if_connection_error",
+          "_reraise_with_actionable_message",
+          "_tiers_required",
+          "_validate_chain_coverage",
+          "LLMFactory",
+          "create_llm"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/llm/test_router.py": [
+      {
+        "path": "packages/raptix/raptix/llm/router.py",
+        "batchIndex": 7,
+        "symbols": [
+          "ModelRouter"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/middleware/test_audit_sink.py": [
+      {
+        "path": "packages/raptix/raptix/middleware/_audit_sink.py",
+        "batchIndex": 7,
+        "symbols": [
+          "_canonical",
+          "_record_hash",
+          "_record_hmac",
+          "AuditChainState",
+          "RoEAuditSink",
+          "VerifyResult",
+          "verify_ledger",
+          "iter_records"
+        ]
+      }
+    ],
+    "packages/raptix/tests/unit/middleware/test_budget.py": [
+      {
+        "path": "packages/raptix/raptix/middleware/budget.py",
+        "batchIndex": 7,
+        "symbols": [
+          "BudgetExceeded",
+          "_env_float",
+          "_SpendCache",
+          "_emit_warning_event",
+          "BudgetEnforcementMiddleware",
+          "_default_litellm_spend_provider"
+        ]
+      }
+    ]
+  }
+}

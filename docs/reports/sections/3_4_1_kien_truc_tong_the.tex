@@ -1,0 +1,63 @@
+% =====================================================================
+%  File: sections/3_4_1_kien_truc_tong_the.tex
+%  Mục đích: Phần 3.4.1 - Kiến trúc tổng thể Raptix
+% =====================================================================
+
+\subsubsection{Kiến trúc tổng thể Raptix}
+\label{sec:kien-truc-tong-the}
+
+Raptix được tổ chức thành năm lớp chức năng có ranh giới rõ ràng, giao tiếp với nhau qua các interface được định nghĩa tường minh. Việc tách lớp này giúp hệ thống dễ kiểm thử, dễ mở rộng và cho phép thay thế từng thành phần (ví dụ: đổi LLM provider, đổi graph backend) mà không ảnh hưởng đến các lớp khác.
+
+\paragraph{Năm lớp chức năng}
+
+\begin{itemize}
+    \item \textbf{Lớp Mission và Policy:} chịu trách nhiệm nhận mission từ operator, kiểm tra scope và policy, nạp thông tin ban đầu vào AKG, và duy trì ranh giới mục tiêu trong suốt phiên làm việc. Đây là lớp bảo vệ đầu tiên, đảm bảo mọi hành động tiếp theo đều nằm trong phạm vi được cấp quyền.
+    \item \textbf{Lớp Planner và Orchestrator:} thực hiện phân rã nhiệm vụ, chọn chiến lược khai thác theo pha hiện tại, và điều phối các sub-agent chuyên biệt. Planner chỉ thao tác ở mức trừu tượng cao — chọn \emph{làm gì} — chứ không sinh ra lệnh shell cấp thấp.
+    \item \textbf{Lớp Specialist Agent:} gồm các sub-agent chuyên biệt theo domain (recon, web, AD, cloud, post-exploit...). Mỗi agent chỉ được khởi tạo khi cần, với context window sạch và nhiệm vụ được định nghĩa rõ ràng. Agent \emph{không} giữ state riêng ngoài context tạm thời — mọi state đều đọc/ghi qua AKG.
+    \item \textbf{Lớp Tool Executor và Sandbox:} chịu trách nhiệm thực thi lệnh trong sandbox Kali Linux biệt lập. Mọi tool call phải đi qua scope guard và audit logger trước khi được đưa xuống sandbox. Tầng này hỗ trợ các phiên tương tác dài thông qua tmux sessions, cho phép làm việc với các công cụ như \texttt{msfconsole} hay \texttt{sliver-client}.
+    \item \textbf{Lớp Knowledge và Verification:} bao gồm AKG (lưu trữ tri thức tấn công), event stream (audit và replay), verifier (xác minh finding độc lập), và reporting engine (sinh báo cáo cuối cùng dựa trên bằng chứng).
+\end{itemize}
+
+\paragraph{Sơ đồ luồng xử lý}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=8mm and 12mm,
+    box/.style={draw, rounded corners, align=center, minimum height=9mm, inner sep=4pt, font=\small},
+    graph/.style={draw, rounded corners, fill=blue!10, align=center, minimum height=12mm, inner sep=5pt, font=\small\bfseries},
+    arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[box, fill=gray!15] (mission) {Mission\\+ Scope\\+ Policy};
+\node[box, right=of mission] (planner) {Planner /\\Orchestrator};
+\node[box, right=of planner] (agent) {Specialist\\Agent};
+\node[box, right=of agent] (executor) {Tool Executor\\+ Sandbox};
+\node[graph, below=14mm of executor] (akg) {Attack Knowledge Graph\\(assets, identities, credentials,\\findings, actions, evidence)};
+\node[box, left=of akg] (verifier) {Verifier\\+ Reporting};
+\node[box, left=of verifier] (bench) {Benchmark\\Harness};
+
+\draw[arrow] (mission) -- (planner);
+\draw[arrow] (planner) -- (agent);
+\draw[arrow] (agent) -- (executor);
+\draw[arrow] (executor) -- (akg);
+\draw[arrow] (akg) -- (verifier);
+\draw[arrow] (verifier) -- (bench);
+\draw[arrow] (akg.west) -- ++(-5mm,0) |- (planner.south);
+\end{tikzpicture}
+\caption{Luồng xử lý logic của Raptix với AKG ở trung tâm}
+\label{fig:raptix-architecture}
+\end{figure}
+
+\paragraph{Nguyên tắc thiết kế}
+
+Sáu nguyên tắc thiết kế định hình toàn bộ kiến trúc Raptix:
+
+\begin{itemize}
+    \item \textbf{Scope là dữ liệu hạng nhất:} mọi tool call phải được kiểm tra theo scope và policy trước khi chạy. Scope không phải là ràng buộc ngầm trong prompt mà là dữ liệu có cấu trúc được lưu trong AKG và được enforce ở tầng executor.
+    \item \textbf{LLM context là cache làm việc, không phải nguồn sự thật:} nguồn sự thật duy nhất là AKG. Điều này cho phép agent khởi động lại, thay đổi model, hoặc chạy song song mà vẫn giữ tính nhất quán của state.
+    \item \textbf{Tool execution có định danh và vòng đời rõ ràng:} mỗi tool call có execution\_id, trạng thái (pending, running, completed, failed, cancelled), timeout và output cap, cho phép mission dài có thể resume sau sự cố.
+    \item \textbf{Agent specialization chỉ dùng khi có lợi ích rõ:} multi-agent chỉ được kích hoạt khi việc phân tách nhiệm vụ giảm complexity hoặc tăng parallelism đủ để bù đắp coordination overhead. Không mặc định multi-agent cho mọi task.
+    \item \textbf{Finding có lifecycle chặt chẽ:} mỗi finding đi qua các trạng thái candidate $\rightarrow$ validated $\rightarrow$ verified $\rightarrow$ reported. Không sinh finding ``chắc chắn'' chỉ từ suy luận của LLM.
+    \item \textbf{Graph là nguồn sự thật duy nhất:} mọi agent đọc/ghi qua AKG; không agent nào giữ state riêng ngoài context tạm thời. Điều này đảm bảo tính nhất quán khi nhiều agent chạy song song.
+\end{itemize}
+

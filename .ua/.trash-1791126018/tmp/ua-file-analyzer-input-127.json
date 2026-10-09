@@ -1,0 +1,232 @@
+{
+    "projectRoot":  "D:\\.VTNet\\redteam\\raptix",
+    "batchFiles":  [
+                       {
+                           "path":  "packages/raptix/raptix/agents/task_spec.py",
+                           "language":  "python",
+                           "sizeLines":  152,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/blue_cell/sample_rules.jsonl",
+                           "language":  "jsonl",
+                           "sizeLines":  10,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/compat/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  73,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/core/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  1,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/core/config.py",
+                           "language":  "python",
+                           "sizeLines":  36,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/core/schemas.py",
+                           "language":  "python",
+                           "sizeLines":  39,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/llm/models.py",
+                           "language":  "python",
+                           "sizeLines":  36,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/middleware/kg_internal/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  11,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/middleware/kg_internal/migrations/V001__initial_schema.cypher",
+                           "language":  "cypher",
+                           "sizeLines":  82,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes_and_provenance.cypher",
+                           "language":  "cypher",
+                           "sizeLines":  36,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher",
+                           "language":  "cypher",
+                           "sizeLines":  68,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/middleware/kg_internal/migrations/V004__technology_node.cypher",
+                           "language":  "cypher",
+                           "sizeLines":  22,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher",
+                           "language":  "cypher",
+                           "sizeLines":  9,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/middleware/kg_internal/migrations/V006__engagement_revision_counter.cypher",
+                           "language":  "cypher",
+                           "sizeLines":  2,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/middleware/kg_internal/migrations/__init__.py",
+                           "language":  "python",
+                           "sizeLines":  12,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/plugin_loader.py",
+                           "language":  "python",
+                           "sizeLines":  36,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/py.typed",
+                           "language":  "typed",
+                           "sizeLines":  0,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/runtime/shutdown.py",
+                           "language":  "python",
+                           "sizeLines":  495,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/sandbox_web/INSANE_SEARCH_LICENSE",
+                           "language":  "unknown",
+                           "sizeLines":  21,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/sandbox_web/NOTICE.md",
+                           "language":  "markdown",
+                           "sizeLines":  14,
+                           "fileCategory":  "docs"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/sandbox_web/learning.py",
+                           "language":  "python",
+                           "sizeLines":  175,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/sandbox_web/phase0.py",
+                           "language":  "python",
+                           "sizeLines":  564,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/sandbox_web/templates/package.json",
+                           "language":  "json",
+                           "sizeLines":  13,
+                           "fileCategory":  "config"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js",
+                           "language":  "javascript",
+                           "sizeLines":  177,
+                           "fileCategory":  "code"
+                       },
+                       {
+                           "path":  "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js",
+                           "language":  "javascript",
+                           "sizeLines":  234,
+                           "fileCategory":  "code"
+                       }
+                   ],
+    "batchImportData":  {
+                            "packages/raptix/raptix/agents/task_spec.py":  [
+
+                                                                           ],
+                            "packages/raptix/raptix/blue_cell/sample_rules.jsonl":  [
+
+                                                                                    ],
+                            "packages/raptix/raptix/compat/__init__.py":  [
+
+                                                                          ],
+                            "packages/raptix/raptix/core/__init__.py":  [
+
+                                                                        ],
+                            "packages/raptix/raptix/core/config.py":  [
+
+                                                                      ],
+                            "packages/raptix/raptix/core/schemas.py":  [
+
+                                                                       ],
+                            "packages/raptix/raptix/llm/models.py":  [
+
+                                                                     ],
+                            "packages/raptix/raptix/middleware/kg_internal/__init__.py":  [
+
+                                                                                          ],
+                            "packages/raptix/raptix/middleware/kg_internal/migrations/V001__initial_schema.cypher":  [
+
+                                                                                                                     ],
+                            "packages/raptix/raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes_and_provenance.cypher":  [
+
+                                                                                                                                                  ],
+                            "packages/raptix/raptix/middleware/kg_internal/migrations/V003__bloodhound_and_slither_schema.cypher":  [
+
+                                                                                                                                    ],
+                            "packages/raptix/raptix/middleware/kg_internal/migrations/V004__technology_node.cypher":  [
+
+                                                                                                                      ],
+                            "packages/raptix/raptix/middleware/kg_internal/migrations/V005__surface_inventory_schema.cypher":  [
+
+                                                                                                                               ],
+                            "packages/raptix/raptix/middleware/kg_internal/migrations/V006__engagement_revision_counter.cypher":  [
+
+                                                                                                                                  ],
+                            "packages/raptix/raptix/middleware/kg_internal/migrations/__init__.py":  [
+
+                                                                                                     ],
+                            "packages/raptix/raptix/plugin_loader.py":  [
+
+                                                                        ],
+                            "packages/raptix/raptix/py.typed":  [
+
+                                                                ],
+                            "packages/raptix/raptix/runtime/shutdown.py":  [
+
+                                                                           ],
+                            "packages/raptix/raptix/sandbox_web/INSANE_SEARCH_LICENSE":  [
+
+                                                                                         ],
+                            "packages/raptix/raptix/sandbox_web/NOTICE.md":  [
+
+                                                                             ],
+                            "packages/raptix/raptix/sandbox_web/learning.py":  [
+
+                                                                               ],
+                            "packages/raptix/raptix/sandbox_web/phase0.py":  [
+
+                                                                             ],
+                            "packages/raptix/raptix/sandbox_web/templates/package.json":  [
+
+                                                                                          ],
+                            "packages/raptix/raptix/sandbox_web/templates/playwright_mobile_chrome.js":  [
+
+                                                                                                         ],
+                            "packages/raptix/raptix/sandbox_web/templates/playwright_real_chrome.js":  [
+
+                                                                                                       ]
+                        }
+}

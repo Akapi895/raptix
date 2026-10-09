@@ -1,0 +1,276 @@
+{
+ "projectRoot": "D:/.VTNet/redteam/raptix/packages/raptix",
+ "batchFiles": [
+  {
+   "path": "raptix/tools/__init__.py",
+   "language": "python",
+   "sizeLines": 39,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/cloud/__init__.py",
+   "language": "python",
+   "sizeLines": 44,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/cloud/aws.py",
+   "language": "python",
+   "sizeLines": 269,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/cloud/k8s.py",
+   "language": "python",
+   "sizeLines": 300,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/cloud/metadata.py",
+   "language": "python",
+   "sizeLines": 97,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/cloud/terraform.py",
+   "language": "python",
+   "sizeLines": 151,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/cloud/tools.py",
+   "language": "python",
+   "sizeLines": 91,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/contracts/__init__.py",
+   "language": "python",
+   "sizeLines": 37,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/contracts/foundry.py",
+   "language": "python",
+   "sizeLines": 157,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/contracts/patterns.py",
+   "language": "python",
+   "sizeLines": 235,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/contracts/slither.py",
+   "language": "python",
+   "sizeLines": 496,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/contracts/tools.py",
+   "language": "python",
+   "sizeLines": 114,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/evidence/__init__.py",
+   "language": "python",
+   "sizeLines": 19,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/evidence/asciicast.py",
+   "language": "python",
+   "sizeLines": 179,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/evidence/tools.py",
+   "language": "python",
+   "sizeLines": 256,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/research/patch.py",
+   "language": "python",
+   "sizeLines": 298,
+   "fileCategory": "code"
+  },
+  {
+   "path": "raptix/tools/research/poc.py",
+   "language": "python",
+   "sizeLines": 431,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cloud/test_cloud.py",
+   "language": "python",
+   "sizeLines": 215,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cloud/test_cloud_tools.py",
+   "language": "python",
+   "sizeLines": 139,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/cloud/test_k8s_branches.py",
+   "language": "python",
+   "sizeLines": 500,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/contracts/test_contract_tools.py",
+   "language": "python",
+   "sizeLines": 116,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/contracts/test_patterns_slither.py",
+   "language": "python",
+   "sizeLines": 84,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/contracts/test_slither_kgstore.py",
+   "language": "python",
+   "sizeLines": 430,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/research/test_patch.py",
+   "language": "python",
+   "sizeLines": 269,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/research/test_poc.py",
+   "language": "python",
+   "sizeLines": 173,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/research/test_poc_runner_timeout.py",
+   "language": "python",
+   "sizeLines": 73,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/test_evidence.py",
+   "language": "python",
+   "sizeLines": 151,
+   "fileCategory": "code"
+  },
+  {
+   "path": "tests/unit/tools/test_evidence_tools.py",
+   "language": "python",
+   "sizeLines": 203,
+   "fileCategory": "code"
+  }
+ ],
+ "batchImportData": {
+  "raptix/tools/__init__.py": [
+   "raptix/tools/ad/tools.py",
+   "raptix/tools/bash/__init__.py",
+   "raptix/tools/bash/bash.py",
+   "raptix/tools/cloud/tools.py",
+   "raptix/tools/contracts/tools.py",
+   "raptix/tools/defense/__init__.py",
+   "raptix/tools/evidence/__init__.py",
+   "raptix/tools/references/tools.py",
+   "raptix/tools/reporting/tools.py",
+   "raptix/tools/research/patch.py",
+   "raptix/tools/research/scanner_tools.py",
+   "raptix/tools/research/tools.py",
+   "raptix/tools/reversing/tools.py",
+   "raptix/tools/web/tools.py"
+  ],
+  "raptix/tools/cloud/__init__.py": [
+   "raptix/tools/cloud/aws.py",
+   "raptix/tools/cloud/k8s.py",
+   "raptix/tools/cloud/metadata.py",
+   "raptix/tools/cloud/terraform.py"
+  ],
+  "raptix/tools/cloud/aws.py": [],
+  "raptix/tools/cloud/k8s.py": [],
+  "raptix/tools/cloud/metadata.py": [],
+  "raptix/tools/cloud/terraform.py": [],
+  "raptix/tools/cloud/tools.py": [
+   "raptix/tools/cloud/aws.py",
+   "raptix/tools/cloud/k8s.py",
+   "raptix/tools/cloud/metadata.py",
+   "raptix/tools/cloud/terraform.py"
+  ],
+  "raptix/tools/contracts/__init__.py": [
+   "raptix/tools/contracts/foundry.py",
+   "raptix/tools/contracts/patterns.py",
+   "raptix/tools/contracts/slither.py"
+  ],
+  "raptix/tools/contracts/foundry.py": [],
+  "raptix/tools/contracts/patterns.py": [],
+  "raptix/tools/contracts/slither.py": [
+   "raptix/middleware/kg_internal/store.py"
+  ],
+  "raptix/tools/contracts/tools.py": [
+   "raptix/tools/contracts/foundry.py",
+   "raptix/tools/contracts/patterns.py",
+   "raptix/tools/contracts/slither.py",
+   "raptix/tools/research/_engagement_scope.py"
+  ],
+  "raptix/tools/evidence/__init__.py": [
+   "raptix/tools/evidence/tools.py"
+  ],
+  "raptix/tools/evidence/asciicast.py": [],
+  "raptix/tools/evidence/tools.py": [
+   "raptix/middleware/_audit_sink.py",
+   "raptix/tools/evidence/asciicast.py"
+  ],
+  "raptix/tools/research/patch.py": [
+   "raptix/tools/research/_state.py",
+   "raptix/tools/research/poc.py"
+  ],
+  "raptix/tools/research/poc.py": [],
+  "tests/unit/cloud/test_cloud.py": [
+   "raptix/tools/cloud/aws.py",
+   "raptix/tools/cloud/k8s.py",
+   "raptix/tools/cloud/metadata.py",
+   "raptix/tools/cloud/terraform.py"
+  ],
+  "tests/unit/cloud/test_cloud_tools.py": [
+   "raptix/tools/cloud/__init__.py",
+   "raptix/tools/cloud/metadata.py"
+  ],
+  "tests/unit/cloud/test_k8s_branches.py": [
+   "raptix/tools/cloud/k8s.py"
+  ],
+  "tests/unit/contracts/test_contract_tools.py": [
+   "raptix/tools/contracts/tools.py"
+  ],
+  "tests/unit/contracts/test_patterns_slither.py": [
+   "raptix/tools/contracts/foundry.py",
+   "raptix/tools/contracts/patterns.py"
+  ],
+  "tests/unit/contracts/test_slither_kgstore.py": [
+   "raptix/tools/contracts/slither.py"
+  ],
+  "tests/unit/research/test_patch.py": [
+   "raptix/tools/research/patch.py"
+  ],
+  "tests/unit/research/test_poc.py": [
+   "raptix/tools/research/poc.py"
+  ],
+  "tests/unit/research/test_poc_runner_timeout.py": [
+   "raptix/tools/research/__init__.py",
+   "raptix/tools/research/poc.py"
+  ],
+  "tests/unit/tools/test_evidence.py": [
+   "raptix/tools/evidence/asciicast.py"
+  ],
+  "tests/unit/tools/test_evidence_tools.py": [
+   "raptix/tools/evidence/__init__.py",
+   "raptix/tools/evidence/tools.py"
+  ]
+ }
+}

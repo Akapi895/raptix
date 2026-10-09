@@ -1,0 +1,60 @@
+This is BibTeX, Version 0.99e
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+Reallocating 'name_of_file' (item size: 1) to 26 items.
+A level-1 auxiliary file: sections/0_loi_cam_on.aux
+Reallocating 'name_of_file' (item size: 1) to 26 items.
+A level-1 auxiliary file: sections/1_gioi_thieu.aux
+Reallocating 'name_of_file' (item size: 1) to 32 items.
+A level-1 auxiliary file: sections/2_yeu_cau_bai_toan.aux
+Reallocating 'name_of_file' (item size: 1) to 33 items.
+A level-1 auxiliary file: sections/3_kien_truc_mo_hinh.aux
+Reallocating 'name_of_file' (item size: 1) to 38 items.
+A level-1 auxiliary file: sections/4_trien_khai_thuc_nghiem.aux
+Reallocating 'name_of_file' (item size: 1) to 32 items.
+A level-1 auxiliary file: sections/5_danh_gia_ket_qua.aux
+Reallocating 'name_of_file' (item size: 1) to 6 items.
+The style file: unsrt.bst
+Reallocating 'name_of_file' (item size: 1) to 11 items.
+Database file #1: references.bib
+You've used 10 entries,
+            1791 wiz_defined-function locations,
+            499 strings with 5834 characters,
+and the built_in function-call counts, 1720 in all, are:
+= -- 157
+> -- 60
+< -- 1
++ -- 26
+- -- 16
+* -- 40
+:= -- 268
+add.period$ -- 38
+call.type$ -- 10
+change.case$ -- 10
+chr.to.int$ -- 0
+cite$ -- 10
+duplicate$ -- 68
+empty$ -- 204
+format.name$ -- 16
+if$ -- 408
+int.to.chr$ -- 0
+int.to.str$ -- 10
+missing$ -- 1
+newline$ -- 61
+num.names$ -- 10
+pop$ -- 60
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 38
+stack$ -- 0
+substring$ -- 40
+swap$ -- 22
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 13
+width$ -- 12
+write$ -- 119

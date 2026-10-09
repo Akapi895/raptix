@@ -1,0 +1,2150 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 24,
+  "filesSkipped": [
+    "packages/raptix/tests/fixtures/capabilities/held-out.jsonl"
+  ],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 24,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 21,
+      "failed": 0,
+      "skipped": 3
+    }
+  },
+  "results": [
+    {
+      "path": "packages/raptix/raptix/skills/engine/client/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 7,
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/client/rest.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 184,
+      "nonEmptyLines": 155,
+      "functions": [
+        {
+          "name": "from_env",
+          "startLine": 175,
+          "endLine": 184,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "SkillogyClientError",
+          "startLine": 24,
+          "endLine": 25,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "RestSkillogyClient",
+          "startLine": 28,
+          "endLine": 169,
+          "methods": [
+            "__init__",
+            "_http",
+            "close",
+            "_post",
+            "_get",
+            "health",
+            "find_skill",
+            "load_skill",
+            "traverse",
+            "query_moc_summary"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "SkillogyClientError",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "RestSkillogyClient",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "from_env",
+          "line": 175,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "base_url.rstrip",
+          "lineNumber": 51
+        },
+        {
+          "caller": "_http",
+          "callee": "SkillogyClientError",
+          "lineNumber": 65
+        },
+        {
+          "caller": "_http",
+          "callee": "httpx.Client",
+          "lineNumber": 66
+        },
+        {
+          "caller": "close",
+          "callee": "self._client.close",
+          "lineNumber": 72
+        },
+        {
+          "caller": "_post",
+          "callee": "self._http().post",
+          "lineNumber": 77
+        },
+        {
+          "caller": "_post",
+          "callee": "self._http",
+          "lineNumber": 77
+        },
+        {
+          "caller": "_post",
+          "callee": "resp.json().get",
+          "lineNumber": 79
+        },
+        {
+          "caller": "_post",
+          "callee": "resp.json",
+          "lineNumber": 79
+        },
+        {
+          "caller": "_post",
+          "callee": "SkillogyClientError",
+          "lineNumber": 81
+        },
+        {
+          "caller": "_post",
+          "callee": "resp.json",
+          "lineNumber": 84
+        },
+        {
+          "caller": "_get",
+          "callee": "self._http().get",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_get",
+          "callee": "self._http",
+          "lineNumber": 87
+        },
+        {
+          "caller": "_get",
+          "callee": "SkillogyClientError",
+          "lineNumber": 89
+        },
+        {
+          "caller": "_get",
+          "callee": "resp.json",
+          "lineNumber": 92
+        },
+        {
+          "caller": "health",
+          "callee": "self._get",
+          "lineNumber": 97
+        },
+        {
+          "caller": "find_skill",
+          "callee": "list",
+          "lineNumber": 125
+        },
+        {
+          "caller": "find_skill",
+          "callee": "self._post",
+          "lineNumber": 127
+        },
+        {
+          "caller": "find_skill",
+          "callee": "str",
+          "lineNumber": 132
+        },
+        {
+          "caller": "find_skill",
+          "callee": "ValueError",
+          "lineNumber": 133
+        },
+        {
+          "caller": "find_skill",
+          "callee": "str",
+          "lineNumber": 133
+        },
+        {
+          "caller": "find_skill",
+          "callee": "list",
+          "lineNumber": 135
+        },
+        {
+          "caller": "find_skill",
+          "callee": "data.get",
+          "lineNumber": 135
+        },
+        {
+          "caller": "load_skill",
+          "callee": "list",
+          "lineNumber": 145
+        },
+        {
+          "caller": "load_skill",
+          "callee": "self._post",
+          "lineNumber": 146
+        },
+        {
+          "caller": "load_skill",
+          "callee": "data.get",
+          "lineNumber": 147
+        },
+        {
+          "caller": "load_skill",
+          "callee": "dict",
+          "lineNumber": 149
+        },
+        {
+          "caller": "load_skill",
+          "callee": "data.get",
+          "lineNumber": 149
+        },
+        {
+          "caller": "traverse",
+          "callee": "list",
+          "lineNumber": 163
+        },
+        {
+          "caller": "traverse",
+          "callee": "self._post",
+          "lineNumber": 164
+        },
+        {
+          "caller": "traverse",
+          "callee": "list",
+          "lineNumber": 165
+        },
+        {
+          "caller": "traverse",
+          "callee": "data.get",
+          "lineNumber": 165
+        },
+        {
+          "caller": "query_moc_summary",
+          "callee": "self._post",
+          "lineNumber": 168
+        },
+        {
+          "caller": "query_moc_summary",
+          "callee": "list",
+          "lineNumber": 169
+        },
+        {
+          "caller": "query_moc_summary",
+          "callee": "data.get",
+          "lineNumber": 169
+        },
+        {
+          "caller": "from_env",
+          "callee": "RestSkillogyClient",
+          "lineNumber": 181
+        },
+        {
+          "caller": "from_env",
+          "callee": "os.environ.get",
+          "lineNumber": 182
+        },
+        {
+          "caller": "from_env",
+          "callee": "os.environ.get",
+          "lineNumber": 183
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 1,
+        "classCount": 2
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/skills/engine/proto/skillogy.proto",
+      "language": "protobuf",
+      "fileCategory": "data",
+      "totalLines": 98,
+      "nonEmptyLines": 85,
+      "definitions": [
+        {
+          "name": "SkillMeta",
+          "kind": "message",
+          "fields": [
+            "name",
+            "description",
+            "subdomain",
+            "tags",
+            "mitre_attack",
+            "path",
+            "content_sha256",
+            "size_bytes",
+            "safety_critical",
+            "gated_by_conops"
+          ],
+          "startLine": 21,
+          "endLine": 32
+        },
+        {
+          "name": "SkillEnvelope",
+          "kind": "message",
+          "fields": [
+            "meta",
+            "body"
+          ],
+          "startLine": 35,
+          "endLine": 40
+        },
+        {
+          "name": "SkillListRequest",
+          "kind": "message",
+          "fields": [
+            "subdomain_filter",
+            "tag_filter",
+            "mitre_filter",
+            "include_safety_critical",
+            "include_gated",
+            "page_size",
+            "page_token"
+          ],
+          "startLine": 43,
+          "endLine": 51
+        },
+        {
+          "name": "SkillListResponse",
+          "kind": "message",
+          "fields": [
+            "skills",
+            "next_page_token",
+            "total_count"
+          ],
+          "startLine": 53,
+          "endLine": 57
+        },
+        {
+          "name": "SkillLoadRequest",
+          "kind": "message",
+          "fields": [
+            "path",
+            "include_references",
+            "include_scripts"
+          ],
+          "startLine": 60,
+          "endLine": 64
+        },
+        {
+          "name": "SkillLoadResponse",
+          "kind": "message",
+          "fields": [
+            "skill"
+          ],
+          "startLine": 66,
+          "endLine": 68
+        },
+        {
+          "name": "SkillIngestRequest",
+          "kind": "message",
+          "fields": [
+            "path",
+            "body"
+          ],
+          "startLine": 72,
+          "endLine": 77
+        },
+        {
+          "name": "SkillIngestResponse",
+          "kind": "message",
+          "fields": [
+            "path",
+            "content_sha256",
+            "created"
+          ],
+          "startLine": 79,
+          "endLine": 83
+        },
+        {
+          "name": "HealthRequest",
+          "kind": "message",
+          "fields": [],
+          "startLine": 86,
+          "endLine": 86
+        },
+        {
+          "name": "HealthResponse",
+          "kind": "message",
+          "fields": [
+            "status",
+            "skill_count",
+            "uptime_seconds"
+          ],
+          "startLine": 87,
+          "endLine": 91
+        }
+      ],
+      "endpoints": [
+        {
+          "method": "rpc",
+          "path": "Skillogy.ListSkills",
+          "startLine": 94,
+          "endLine": 94
+        },
+        {
+          "method": "rpc",
+          "path": "Skillogy.LoadSkill",
+          "startLine": 95,
+          "endLine": 95
+        },
+        {
+          "method": "rpc",
+          "path": "Skillogy.IngestSkill",
+          "startLine": 96,
+          "endLine": 96
+        },
+        {
+          "method": "rpc",
+          "path": "Skillogy.Health",
+          "startLine": 97,
+          "endLine": 97
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "definitionCount": 10,
+        "endpointCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/README.md",
+      "language": "markdown",
+      "fileCategory": "docs",
+      "totalLines": 43,
+      "nonEmptyLines": 36,
+      "sections": [
+        {
+          "heading": "`raptix.tools` — tool catalog",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "Domain groups",
+          "level": 2,
+          "line": 9
+        },
+        {
+          "heading": "Framework plumbing (not attack-surface tools)",
+          "level": 2,
+          "line": 29
+        },
+        {
+          "heading": "Conventions",
+          "level": 2,
+          "line": 36
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 4
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/references/killchain.yaml",
+      "language": "yaml",
+      "fileCategory": "config",
+      "totalLines": 361,
+      "nonEmptyLines": 293,
+      "sections": [
+        {
+          "heading": "nmap",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "masscan",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "rustscan",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "subfinder",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "amass",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "httpx",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "katana",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "dnsx",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "whatweb",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "wafw00f",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "theharvester",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "shodan",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "fierce",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "nuclei",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "sqlmap",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "ffuf",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "gobuster",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "dirsearch",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "nikto",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "testssl",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "sliver",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "hashcat",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "john",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "hydra",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "medusa",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "patator",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "impacket-GetNPUsers",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "impacket-GetUserSPNs",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "crackmapexec",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "netexec",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "kerbrute",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "certipy",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "bloodhound",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "sharphound",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "ldapsearch",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "enum4linux-ng",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "adidnsdump",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "evil-winrm",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "psexec.py",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "wmiexec.py",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "smbexec.py",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "dcomexec.py",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "chisel",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "ligolo-ng",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "linpeas",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "winpeas",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "linux-exploit-suggester",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "windows-exploit-suggester",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "rubeus",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "ad-miner",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "sharppersist",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "pspy",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "obfuscator-llvm",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "donut",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "freeze",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "threadless-inject",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "sliver",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "mythic",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "havoc",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "villain",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "rclone",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "dnsexfil",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "msfvenom",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "gophish",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "evilginx2",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "lazagne",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "mimikatz",
+          "level": 1,
+          "line": 1
+        },
+        {
+          "heading": "diskshadow",
+          "level": 1,
+          "line": 1
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0,
+        "sectionCount": 68
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/research/_apoc_safety.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 145,
+      "nonEmptyLines": 128,
+      "functions": [
+        {
+          "name": "_two_segment_prefix",
+          "startLine": 116,
+          "endLine": 120,
+          "params": [
+            "proc"
+          ]
+        },
+        {
+          "name": "find_violations",
+          "startLine": 123,
+          "endLine": 138,
+          "params": [
+            "cypher"
+          ]
+        },
+        {
+          "name": "ensure_safe",
+          "startLine": 141,
+          "endLine": 145,
+          "params": [
+            "cypher"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "CypherSafetyError",
+          "startLine": 104,
+          "endLine": 113,
+          "methods": [
+            "__init__"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "CypherSafetyError",
+          "line": 104,
+          "isDefault": false
+        },
+        {
+          "name": "_two_segment_prefix",
+          "line": 116,
+          "isDefault": false
+        },
+        {
+          "name": "find_violations",
+          "line": 123,
+          "isDefault": false
+        },
+        {
+          "name": "ensure_safe",
+          "line": 141,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "__init__",
+          "callee": "list",
+          "lineNumber": 108
+        },
+        {
+          "caller": "__init__",
+          "callee": "super().__init__",
+          "lineNumber": 110
+        },
+        {
+          "caller": "__init__",
+          "callee": "super",
+          "lineNumber": 110
+        },
+        {
+          "caller": "_two_segment_prefix",
+          "callee": "proc.split",
+          "lineNumber": 117
+        },
+        {
+          "caller": "_two_segment_prefix",
+          "callee": "len",
+          "lineNumber": 118
+        },
+        {
+          "caller": "_two_segment_prefix",
+          "callee": "\".\".join",
+          "lineNumber": 120
+        },
+        {
+          "caller": "find_violations",
+          "callee": "_APOC_INVOKE_RE.findall",
+          "lineNumber": 127
+        },
+        {
+          "caller": "find_violations",
+          "callee": "p.lower",
+          "lineNumber": 128
+        },
+        {
+          "caller": "find_violations",
+          "callee": "p.lower",
+          "lineNumber": 129
+        },
+        {
+          "caller": "find_violations",
+          "callee": "raw.lower",
+          "lineNumber": 132
+        },
+        {
+          "caller": "find_violations",
+          "callee": "violations.append",
+          "lineNumber": 134
+        },
+        {
+          "caller": "find_violations",
+          "callee": "_two_segment_prefix",
+          "lineNumber": 136
+        },
+        {
+          "caller": "find_violations",
+          "callee": "violations.append",
+          "lineNumber": 137
+        },
+        {
+          "caller": "ensure_safe",
+          "callee": "find_violations",
+          "lineNumber": 143
+        },
+        {
+          "caller": "ensure_safe",
+          "callee": "CypherSafetyError",
+          "lineNumber": 145
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "packages/raptix/raptix/tools/research/fuzz.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 357,
+      "nonEmptyLines": 297,
+      "functions": [
+        {
+          "name": "classify_target",
+          "startLine": 91,
+          "endLine": 137,
+          "params": [
+            "root",
+            "max_files"
+          ]
+        },
+        {
+          "name": "harness_for",
+          "startLine": 247,
+          "endLine": 252,
+          "params": [
+            "engine",
+            "target",
+            "entry"
+          ]
+        },
+        {
+          "name": "parse_asan",
+          "startLine": 293,
+          "endLine": 326,
+          "params": [
+            "log"
+          ]
+        },
+        {
+          "name": "record_crash",
+          "startLine": 329,
+          "endLine": 357,
+          "params": [
+            "graph",
+            "crash",
+            "engine"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "Engine",
+          "startLine": 34,
+          "endLine": 42,
+          "methods": [],
+          "properties": []
+        },
+        {
+          "name": "TargetProfile",
+          "startLine": 81,
+          "endLine": 88,
+          "methods": [],
+          "properties": [
+            "root",
+            "language",
+            "engine",
+            "entry_candidates",
+            "notes"
+          ]
+        },
+        {
+          "name": "Crash",
+          "startLine": 259,
+          "endLine": 269,
+          "methods": [],
+          "properties": [
+            "sanitizer",
+            "kind",
+            "summary",
+            "severity",
+            "stack",
+            "file",
+            "line",
+            "raw"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Engine",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "TargetProfile",
+          "line": 80,
+          "isDefault": false
+        },
+        {
+          "name": "classify_target",
+          "line": 91,
+          "isDefault": false
+        },
+        {
+          "name": "harness_for",
+          "line": 247,
+          "isDefault": false
+        },
+        {
+          "name": "Crash",
+          "line": 258,
+          "isDefault": false
+        },
+        {
+          "name": "parse_asan",
+          "line": 293,
+          "isDefault": false
+        },
+        {
+          "name": "record_crash",
+          "line": 329,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "classify_target",
+          "callee": "Path(root).resolve",
+          "lineNumber": 99
+        },
+        {
+          "caller": "classify_target",
+          "callee": "Path",
+          "lineNumber": 99
+        },
+        {
+          "caller": "classify_target",
+          "callee": "root_path.exists",
+          "lineNumber": 100
+        },
+        {
+          "caller": "classify_target",
+          "callee": "TargetProfile",
+          "lineNumber": 101
+        },
+        {
+          "caller": "classify_target",
+          "callee": "root_path.iterdir",
+          "lineNumber": 104
+        },
+        {
+          "caller": "classify_target",
+          "callee": "p.is_file",
+          "lineNumber": 104
+        },
+        {
+          "caller": "classify_target",
+          "callee": "re.compile",
+          "lineNumber": 112
+        },
+        {
+          "caller": "classify_target",
+          "callee": "enumerate",
+          "lineNumber": 115
+        },
+        {
+          "caller": "classify_target",
+          "callee": "root_path.rglob",
+          "lineNumber": 115
+        },
+        {
+          "caller": "classify_target",
+          "callee": "path.is_file",
+          "lineNumber": 118
+        },
+        {
+          "caller": "classify_target",
+          "callee": "path.suffix.lower",
+          "lineNumber": 120
+        },
+        {
+          "caller": "classify_target",
+          "callee": "_LANG_EXTENSIONS.items",
+          "lineNumber": 121
+        },
+        {
+          "caller": "classify_target",
+          "callee": "counts.get",
+          "lineNumber": 123
+        },
+        {
+          "caller": "classify_target",
+          "callee": "interesting.search",
+          "lineNumber": 124
+        },
+        {
+          "caller": "classify_target",
+          "callee": "entries.append",
+          "lineNumber": 125
+        },
+        {
+          "caller": "classify_target",
+          "callee": "max",
+          "lineNumber": 128
+        },
+        {
+          "caller": "classify_target",
+          "callee": "_DEFAULT_ENGINE.get",
+          "lineNumber": 130
+        },
+        {
+          "caller": "classify_target",
+          "callee": "TargetProfile",
+          "lineNumber": 131
+        },
+        {
+          "caller": "classify_target",
+          "callee": "sorted",
+          "lineNumber": 135
+        },
+        {
+          "caller": "harness_for",
+          "callee": "_TEMPLATES.get",
+          "lineNumber": 249
+        },
+        {
+          "caller": "harness_for",
+          "callee": "ValueError",
+          "lineNumber": 251
+        },
+        {
+          "caller": "harness_for",
+          "callee": "tmpl.format",
+          "lineNumber": 252
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "_ASAN_SUMMARY.search",
+          "lineNumber": 295
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "m.group(\"kind\").lower",
+          "lineNumber": 297
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "m.group",
+          "lineNumber": 297
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "m.group(\"summary\").strip().splitlines",
+          "lineNumber": 298
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "m.group(\"summary\").strip",
+          "lineNumber": 298
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "m.group",
+          "lineNumber": 298
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "mm.group(\"frame\").strip",
+          "lineNumber": 299
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "mm.group",
+          "lineNumber": 299
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "_STACK_FRAME.finditer",
+          "lineNumber": 299
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "_KIND_SEVERITY.get",
+          "lineNumber": 300
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "_LOC_HINT.search",
+          "lineNumber": 301
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "Crash",
+          "lineNumber": 302
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "loc.group",
+          "lineNumber": 308
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "int",
+          "lineNumber": 309
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "loc.group",
+          "lineNumber": 309
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "_UBSAN_LINE.search",
+          "lineNumber": 312
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "mm.group(\"frame\").strip",
+          "lineNumber": 314
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "mm.group",
+          "lineNumber": 314
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "_STACK_FRAME.finditer",
+          "lineNumber": 314
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "_LOC_HINT.search",
+          "lineNumber": 315
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "Crash",
+          "lineNumber": 316
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "m.group",
+          "lineNumber": 319
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "loc.group",
+          "lineNumber": 322
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "int",
+          "lineNumber": 323
+        },
+        {
+          "caller": "parse_asan",
+          "callee": "loc.group",
+          "lineNumber": 323
+        },
+        {
+          "caller": "record_crash",
+          "callee": "Node.make",
+          "lineNumber": 334
+        },
+        {
+          "caller": "record_crash",
+          "callee": "graph.upsert_node",
+          "lineNumber": 346
+        },
+        {
+          "caller": "record_crash",
+          "callee": "Node.make",
+          "lineNumber": 348
+        },
+        {
+          "caller": "record_crash",
+          "callee": "graph.upsert_node",
+          "lineNumber": 355
+        },
+        {
+          "caller": "record_crash",
+          "callee": "graph.upsert_edge",
+          "lineNumber": 356
+        },
+        {
+          "caller": "record_crash",
+          "callee": "Edge.make",
+          "lineNumber": 356
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 4,
+        "classCount": 3
+      }
+    },
+    {
+      "path": "packages/raptix/tests/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/integration/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 7,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/integration/kg/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 10,
+      "nonEmptyLines": 8,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/ad/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/agents/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/agents/standard/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/agents/test_reverser_workload_fallback.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 64,
+      "nonEmptyLines": 43,
+      "functions": [
+        {
+          "name": "test_orchestrator_dispatches_reverser_for_no_workload_triage",
+          "startLine": 16,
+          "endLine": 21,
+          "params": []
+        },
+        {
+          "name": "test_reverser_prompt_has_radare2_fallback_path",
+          "startLine": 24,
+          "endLine": 29,
+          "params": []
+        },
+        {
+          "name": "test_reverser_spec_advertises_basic_triage_without_workload",
+          "startLine": 32,
+          "endLine": 35,
+          "params": []
+        },
+        {
+          "name": "test_reverser_skill_catalog_names_radare2_fallback",
+          "startLine": 38,
+          "endLine": 42,
+          "params": []
+        },
+        {
+          "name": "test_reverser_routes_vmprotect_vmp2_themida_workflow",
+          "startLine": 45,
+          "endLine": 51,
+          "params": []
+        },
+        {
+          "name": "test_virtualized_protectors_skill_captures_backengineering_workflow",
+          "startLine": 54,
+          "endLine": 64,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "test_orchestrator_dispatches_reverser_for_no_workload_triage",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "test_reverser_prompt_has_radare2_fallback_path",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "test_reverser_spec_advertises_basic_triage_without_workload",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "test_reverser_skill_catalog_names_radare2_fallback",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "test_reverser_routes_vmprotect_vmp2_themida_workflow",
+          "line": 45,
+          "isDefault": false
+        },
+        {
+          "name": "test_virtualized_protectors_skill_captures_backengineering_workflow",
+          "line": 54,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_orchestrator_dispatches_reverser_for_no_workload_triage",
+          "callee": "(_PROMPTS / \"raptix.md\").read_text",
+          "lineNumber": 17
+        },
+        {
+          "caller": "test_reverser_prompt_has_radare2_fallback_path",
+          "callee": "(_PROMPTS / \"reverser.md\").read_text",
+          "lineNumber": 25
+        },
+        {
+          "caller": "test_reverser_spec_advertises_basic_triage_without_workload",
+          "callee": "_REVERSER_AGENT.read_text",
+          "lineNumber": 33
+        },
+        {
+          "caller": "test_reverser_skill_catalog_names_radare2_fallback",
+          "callee": "_REVERSER_SKILL.read_text",
+          "lineNumber": 39
+        },
+        {
+          "caller": "test_reverser_routes_vmprotect_vmp2_themida_workflow",
+          "callee": "(_PROMPTS / \"reverser.md\").read_text",
+          "lineNumber": 46
+        },
+        {
+          "caller": "test_reverser_routes_vmprotect_vmp2_themida_workflow",
+          "callee": "_REVERSER_SKILL.read_text",
+          "lineNumber": 47
+        },
+        {
+          "caller": "test_virtualized_protectors_skill_captures_backengineering_workflow",
+          "callee": "_VIRTUALIZED_SKILL.read_text",
+          "lineNumber": 55
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/agents/test_task_spec.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 135,
+      "nonEmptyLines": 104,
+      "functions": [
+        {
+          "name": "_full_spec",
+          "startLine": 16,
+          "endLine": 31,
+          "params": []
+        },
+        {
+          "name": "test_render_includes_objective_engagement_dispatcher",
+          "startLine": 34,
+          "endLine": 39,
+          "params": []
+        },
+        {
+          "name": "test_render_uses_sorted_json_for_dicts",
+          "startLine": 42,
+          "endLine": 54,
+          "params": []
+        },
+        {
+          "name": "test_render_is_deterministic_across_identical_specs",
+          "startLine": 57,
+          "endLine": 60,
+          "params": []
+        },
+        {
+          "name": "test_render_lists_expected_outputs_and_artifacts",
+          "startLine": 63,
+          "endLine": 68,
+          "params": []
+        },
+        {
+          "name": "test_render_with_no_expected_outputs_shows_placeholder",
+          "startLine": 71,
+          "endLine": 74,
+          "params": []
+        },
+        {
+          "name": "test_render_with_no_artifacts_shows_placeholder",
+          "startLine": 77,
+          "endLine": 80,
+          "params": []
+        },
+        {
+          "name": "test_scoped_dispatch_payload_has_two_messages",
+          "startLine": 83,
+          "endLine": 90,
+          "params": []
+        },
+        {
+          "name": "test_scoped_dispatch_is_smaller_than_full_history",
+          "startLine": 93,
+          "endLine": 101,
+          "params": []
+        },
+        {
+          "name": "test_dataclass_is_frozen",
+          "startLine": 104,
+          "endLine": 111,
+          "params": []
+        },
+        {
+          "name": "test_task_spec_is_serializable_via_render",
+          "startLine": 114,
+          "endLine": 119,
+          "params": []
+        },
+        {
+          "name": "test_path_objects_render_as_posix",
+          "startLine": 122,
+          "endLine": 128,
+          "params": []
+        },
+        {
+          "name": "test_empty_engagement_and_parent_agent_are_omitted",
+          "startLine": 131,
+          "endLine": 135,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "_full_spec",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "test_render_includes_objective_engagement_dispatcher",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "test_render_uses_sorted_json_for_dicts",
+          "line": 42,
+          "isDefault": false
+        },
+        {
+          "name": "test_render_is_deterministic_across_identical_specs",
+          "line": 57,
+          "isDefault": false
+        },
+        {
+          "name": "test_render_lists_expected_outputs_and_artifacts",
+          "line": 63,
+          "isDefault": false
+        },
+        {
+          "name": "test_render_with_no_expected_outputs_shows_placeholder",
+          "line": 71,
+          "isDefault": false
+        },
+        {
+          "name": "test_render_with_no_artifacts_shows_placeholder",
+          "line": 77,
+          "isDefault": false
+        },
+        {
+          "name": "test_scoped_dispatch_payload_has_two_messages",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "test_scoped_dispatch_is_smaller_than_full_history",
+          "line": 93,
+          "isDefault": false
+        },
+        {
+          "name": "test_dataclass_is_frozen",
+          "line": 104,
+          "isDefault": false
+        },
+        {
+          "name": "test_task_spec_is_serializable_via_render",
+          "line": 114,
+          "isDefault": false
+        },
+        {
+          "name": "test_path_objects_render_as_posix",
+          "line": 122,
+          "isDefault": false
+        },
+        {
+          "name": "test_empty_engagement_and_parent_agent_are_omitted",
+          "line": 131,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "_full_spec",
+          "callee": "SubAgentTaskSpec",
+          "lineNumber": 17
+        },
+        {
+          "caller": "_full_spec",
+          "callee": "Path",
+          "lineNumber": 26
+        },
+        {
+          "caller": "_full_spec",
+          "callee": "Path",
+          "lineNumber": 27
+        },
+        {
+          "caller": "test_render_includes_objective_engagement_dispatcher",
+          "callee": "_full_spec().render",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_render_includes_objective_engagement_dispatcher",
+          "callee": "_full_spec",
+          "lineNumber": 35
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "SubAgentTaskSpec",
+          "lineNumber": 43
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "spec.render",
+          "lineNumber": 48
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "body.split(\"## Scope\\n```json\\n\", 1)[1].split",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "body.split",
+          "lineNumber": 49
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "json.loads",
+          "lineNumber": 50
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "list",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "parsed.keys",
+          "lineNumber": 51
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "body.split(\"## Inputs\\n```json\\n\", 1)[1].split",
+          "lineNumber": 52
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "body.split",
+          "lineNumber": 52
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "json.loads",
+          "lineNumber": 53
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "list",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_render_uses_sorted_json_for_dicts",
+          "callee": "parsed_inputs.keys",
+          "lineNumber": 54
+        },
+        {
+          "caller": "test_render_is_deterministic_across_identical_specs",
+          "callee": "_full_spec().render",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_render_is_deterministic_across_identical_specs",
+          "callee": "_full_spec",
+          "lineNumber": 58
+        },
+        {
+          "caller": "test_render_is_deterministic_across_identical_specs",
+          "callee": "_full_spec().render",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_render_is_deterministic_across_identical_specs",
+          "callee": "_full_spec",
+          "lineNumber": 59
+        },
+        {
+          "caller": "test_render_lists_expected_outputs_and_artifacts",
+          "callee": "_full_spec().render",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_render_lists_expected_outputs_and_artifacts",
+          "callee": "_full_spec",
+          "lineNumber": 64
+        },
+        {
+          "caller": "test_render_with_no_expected_outputs_shows_placeholder",
+          "callee": "SubAgentTaskSpec",
+          "lineNumber": 72
+        },
+        {
+          "caller": "test_render_with_no_expected_outputs_shows_placeholder",
+          "callee": "spec.render",
+          "lineNumber": 73
+        },
+        {
+          "caller": "test_render_with_no_artifacts_shows_placeholder",
+          "callee": "SubAgentTaskSpec",
+          "lineNumber": 78
+        },
+        {
+          "caller": "test_render_with_no_artifacts_shows_placeholder",
+          "callee": "spec.render",
+          "lineNumber": 79
+        },
+        {
+          "caller": "test_scoped_dispatch_payload_has_two_messages",
+          "callee": "_full_spec",
+          "lineNumber": 84
+        },
+        {
+          "caller": "test_scoped_dispatch_payload_has_two_messages",
+          "callee": "scoped_dispatch_payload",
+          "lineNumber": 85
+        },
+        {
+          "caller": "test_scoped_dispatch_payload_has_two_messages",
+          "callee": "len",
+          "lineNumber": 86
+        },
+        {
+          "caller": "test_scoped_dispatch_payload_has_two_messages",
+          "callee": "spec.render",
+          "lineNumber": 90
+        },
+        {
+          "caller": "test_scoped_dispatch_is_smaller_than_full_history",
+          "callee": "_full_spec",
+          "lineNumber": 94
+        },
+        {
+          "caller": "test_scoped_dispatch_is_smaller_than_full_history",
+          "callee": "estimate_token_savings",
+          "lineNumber": 97
+        },
+        {
+          "caller": "test_scoped_dispatch_is_smaller_than_full_history",
+          "callee": "len",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_scoped_dispatch_is_smaller_than_full_history",
+          "callee": "len",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_scoped_dispatch_is_smaller_than_full_history",
+          "callee": "spec.render",
+          "lineNumber": 99
+        },
+        {
+          "caller": "test_dataclass_is_frozen",
+          "callee": "_full_spec",
+          "lineNumber": 105
+        },
+        {
+          "caller": "test_task_spec_is_serializable_via_render",
+          "callee": "_full_spec",
+          "lineNumber": 115
+        },
+        {
+          "caller": "test_task_spec_is_serializable_via_render",
+          "callee": "spec.render",
+          "lineNumber": 116
+        },
+        {
+          "caller": "test_task_spec_is_serializable_via_render",
+          "callee": "isinstance",
+          "lineNumber": 117
+        },
+        {
+          "caller": "test_task_spec_is_serializable_via_render",
+          "callee": "body.startswith",
+          "lineNumber": 118
+        },
+        {
+          "caller": "test_task_spec_is_serializable_via_render",
+          "callee": "body.endswith",
+          "lineNumber": 119
+        },
+        {
+          "caller": "test_path_objects_render_as_posix",
+          "callee": "SubAgentTaskSpec",
+          "lineNumber": 123
+        },
+        {
+          "caller": "test_path_objects_render_as_posix",
+          "callee": "Path",
+          "lineNumber": 125
+        },
+        {
+          "caller": "test_path_objects_render_as_posix",
+          "callee": "spec.render",
+          "lineNumber": 127
+        },
+        {
+          "caller": "test_empty_engagement_and_parent_agent_are_omitted",
+          "callee": "SubAgentTaskSpec",
+          "lineNumber": 132
+        },
+        {
+          "caller": "test_empty_engagement_and_parent_agent_are_omitted",
+          "callee": "spec.render",
+          "lineNumber": 133
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 13,
+        "functionCount": 13,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/backends/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/benchmark/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/blue_cell/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/cli/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/cloud/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/contracts/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/core/__init__.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 1,
+      "nonEmptyLines": 0,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "packages/raptix/tests/unit/core/test_config.py",
+      "language": "python",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 18,
+      "classes": [
+        {
+          "name": "TestRaptixConfig",
+          "startLine": 6,
+          "endLine": 19,
+          "methods": [
+            "test_default_values",
+            "test_llm_defaults",
+            "test_env_override"
+          ],
+          "properties": []
+        },
+        {
+          "name": "TestLoadConfig",
+          "startLine": 22,
+          "endLine": 25,
+          "methods": [
+            "test_returns_defaults"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TestRaptixConfig",
+          "line": 6,
+          "isDefault": false
+        },
+        {
+          "name": "TestLoadConfig",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "test_default_values",
+          "callee": "RaptixConfig",
+          "lineNumber": 8
+        },
+        {
+          "caller": "test_llm_defaults",
+          "callee": "RaptixConfig",
+          "lineNumber": 12
+        },
+        {
+          "caller": "test_env_override",
+          "callee": "monkeypatch.setenv",
+          "lineNumber": 17
+        },
+        {
+          "caller": "test_env_override",
+          "callee": "RaptixConfig",
+          "lineNumber": 18
+        },
+        {
+          "caller": "test_returns_defaults",
+          "callee": "load_config",
+          "lineNumber": 24
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 0,
+        "classCount": 2
+      }
+    }
+  ]
+}

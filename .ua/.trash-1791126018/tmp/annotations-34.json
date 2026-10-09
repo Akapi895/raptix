@@ -1,0 +1,833 @@
+{
+  "files": {
+    "packages/raptix/raptix/tools/reporting/__init__.py": {
+      "summary": "Barrel của gói reporting: re-export các renderer HackerOne/Bugcrowd/executive/timeline/SARIF và bộ CVSS tools để cùng một KnowledgeGraph nuôi mọi định dạng báo cáo.",
+      "tags": [
+        "barrel",
+        "reporting",
+        "entry-point",
+        "exports"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/bugcrowd.py": {
+      "summary": "Renderer CSV nộp hàng loạt lên Bugcrowd: cột title/severity/cwe/url/description/recommendation/poc từ danh sách node vulnerability của graph.",
+      "tags": [
+        "reporting",
+        "csv",
+        "bugcrowd",
+        "exporter"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py": {
+      "summary": "Chấm điểm CVSS 3.1 deterministic theo công thức FIRST.org: base + environmental (CR/IR/AR, modified metrics), severity band, chuẩn hóa vector và @tool cvss_score cho validator/drafter — thay cho việc đoán severity bằng LLM.",
+      "tags": [
+        "cvss",
+        "scoring",
+        "severity",
+        "reporting",
+        "deterministic"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/raptix/tools/reporting/executive.py": {
+      "summary": "Soạn executive summary markdown đọc trong 90 giây: đếm findings theo severity, top-N critical chains với impact, top CVE theo composite score và coverage gaps.",
+      "tags": [
+        "reporting",
+        "executive-summary",
+        "markdown",
+        "aggregation"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/hackerone.py": {
+      "summary": "Renderer markdown chuẩn HackerOne: HackerOneReport in-memory (title, severity, CVSS, steps, impact, PoC, remediation, references) và render thành báo cáo một file có placeholder cho phần thiếu.",
+      "tags": [
+        "reporting",
+        "hackerone",
+        "markdown",
+        "exporter"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/kg_adapter.py": {
+      "summary": "Adapter đọc dữ liệu KG theo engagement từ KGStore mới và dựng KnowledgeGraph in-memory cho các renderer, giữ deterministic Node/Edge ID — seam để reporting bỏ shim legacy mà không đụng renderer.",
+      "tags": [
+        "adapter",
+        "knowledge-graph",
+        "reporting",
+        "persistence"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py": {
+      "summary": "Renderer SARIF v2.1.0 cho GitHub code scanning/DefectDojo: rules từ finding duy nhất, mapping severity, location URI, result tags, partial fingerprints ổn định qua hash.",
+      "tags": [
+        "reporting",
+        "sarif",
+        "exporter",
+        "ci"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/raptix/tools/reporting/timeline.py": {
+      "summary": "Trích timeline thời gian từ created_at/updated_at của KnowledgeGraph thành danh sách TimelineEvent xếp thời gian cho báo cáo/dashboard.",
+      "tags": [
+        "reporting",
+        "timeline",
+        "extraction"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/tools.py": {
+      "summary": "Bộ @tool LangChain cho reporting: report_hackerone/bugcrowd_csv/executive/timeline/sarif đọc KG theo engagement từ contextvar; thiếu engagement context trả cấu trúc graph rỗng để agent tự phục hồi.",
+      "tags": [
+        "langchain-tools",
+        "reporting",
+        "agent",
+        "facade"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py": {
+      "summary": "Test CVSS: đối chiếu base score với reference, chấp nhận prefix 3.0/3.1, environmental hạ điểm theo security requirements, biên severity band, chuẩn hóa vector và hành vi @tool trả dict lỗi thay vì raise.",
+      "tags": [
+        "test",
+        "cvss",
+        "scoring",
+        "unit-test"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_hackerone.py": {
+      "summary": "Test HackerOneReport.to_markdown và render_hackerone_markdown: placeholder cho summary/impact/PoC rỗng, references, chain id footer, CVSS số hợp lệ, fallback title/severity từ props và edge dangling không crash.",
+      "tags": [
+        "test",
+        "hackerone",
+        "reporting",
+        "unit-test"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting.py": {
+      "summary": "Test tổng hợp các renderer trên graph seed chung: cấu trúc full report, in-memory markdown, CSV header + filter severity, executive có counts và timeline non-empty.",
+      "tags": [
+        "test",
+        "reporting",
+        "unit-test"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py": {
+      "summary": "Test lớn nhất của reporting: _count_by_severity/_top_chains/_top_cves chi tiết, render_executive_summary đủ section, và 5 report tools qua asyncio chạy đúng JSON payload, filter severity, timeline count.",
+      "tags": [
+        "test",
+        "executive",
+        "langchain-tools",
+        "unit-test"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/tests/unit/reporting/test_sarif.py": {
+      "summary": "Test SARIF: cấu trúc 2.1.0, chỉ phát node vulnerability/finding, rules dedupe, mapping severity→level, result fields, stable rule id, URI fallback và tool report_sarif ghi đĩa kèm metadata.",
+      "tags": [
+        "test",
+        "sarif",
+        "reporting",
+        "unit-test"
+      ],
+      "complexity": "complex"
+    }
+  },
+  "symbols": {
+    "packages/raptix/raptix/tools/reporting/bugcrowd.py::render_bugcrowd_csv": {
+      "summary": "Render danh sách node vulnerability thành CSV đúng schema Bugcrowd (header cố định, escaping qua csv module, min_severity filter).",
+      "tags": [
+        "reporting",
+        "csv",
+        "bugcrowd"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::CVSSError": {
+      "summary": "Ngoại lệ cho vector CVSS không hợp lệ, thừa kế ValueError.",
+      "tags": [
+        "exception",
+        "cvss",
+        "scoring"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::severity_band": {
+      "summary": "Map điểm số sang band theo bảng CVSS chính thức (None/Low/Medium/High/Critical).",
+      "tags": [
+        "cvss",
+        "severity",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::_roundup": {
+      "summary": "Làm tròn lên 1 chữ số thập phân đúng spec CVSS (tránh lỗi float binary).",
+      "tags": [
+        "cvss",
+        "math",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::parse_vector": {
+      "summary": "Parse vector string thành dict metric, chuẩn hóa thứ tự, chấp nhận prefix CVSS:3.0/3.1; metric sai/trùng raise CVSSError.",
+      "tags": [
+        "cvss",
+        "parser",
+        "validation"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::_impact_subscore": {
+      "summary": "Tính impact subscore theo công thức CVSS 3.1 (scope changed/unchanged).",
+      "tags": [
+        "cvss",
+        "math",
+        "scoring"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::base_score": {
+      "summary": "Tính base score từ 8 metric cơ bản theo công thức chính thức, trả score + breakdown từng metric.",
+      "tags": [
+        "cvss",
+        "math",
+        "scoring"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::environmental_score": {
+      "summary": "Tính environmental score đầy đủ với security requirements CR/IR/AR và modified metrics theo §8.2 FIRST.",
+      "tags": [
+        "cvss",
+        "math",
+        "scoring"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::score_vector": {
+      "summary": "Điểm vào tổng hợp: parse vector, tính base + environmental, trả normalized vector, hai score, severity band và breakdown; vector rỗng chỉ có base metrics vẫn tính được.",
+      "tags": [
+        "cvss",
+        "scoring",
+        "facade"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/cvss.py::cvss_score_tool": {
+      "summary": "@tool cvss_score cho agent: nhận vector string, trả dict {vector, base_score, environmental_score, severity bands, breakdown} hoặc dict lỗi — không bao giờ raise qua ranh giới tool.",
+      "tags": [
+        "langchain-tool",
+        "cvss",
+        "agent"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/executive.py::_count_by_severity": {
+      "summary": "Đếm node vulnerability theo severity (mặc định 'info' khi thiếu).",
+      "tags": [
+        "aggregation",
+        "severity",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/executive.py::_top_chains": {
+      "summary": "Rút top-N attack path từ graph, sắp theo tổng cost tăng dần, trả (label, cost, length) với default an toàn khi thiếu field.",
+      "tags": [
+        "aggregation",
+        "attack-path",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/executive.py::_top_cves": {
+      "summary": "Rút top-N CVE theo composite score giảm dần từ node có cve id.",
+      "tags": [
+        "aggregation",
+        "cve",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/executive.py::render_executive_summary": {
+      "summary": "Soạn markdown executive: tiêu đề engagement, bảng đếm severity, section chains (cost + hops), top CVE, validated findings (cap 15) và graph stats — luôn là markdown hợp lệ kể cả graph rỗng.",
+      "tags": [
+        "reporting",
+        "executive-summary",
+        "markdown"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/hackerone.py::HackerOneReport": {
+      "summary": "Dataclass in-memory của báo cáo H1 với to_markdown(): dựng steps từ stdout excerpt, derived impact theo severity, placeholder 'Pending' cho phần trống và footer chain id.",
+      "tags": [
+        "data-model",
+        "hackerone",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/hackerone.py::render_hackerone_markdown": {
+      "summary": "Từ vulnerability node của KnowledgeGraph: fallback title/severity, từ chối CVSS không số, thu references, chain id qua edge chain, rồi render HackerOneReport thành markdown.",
+      "tags": [
+        "hackerone",
+        "reporting",
+        "knowledge-graph"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/kg_adapter.py::_coerce_props": {
+      "summary": "Ép kiểu props từ KGStore (JSON/Neo4j) về dạng an toàn cho model Pydantic KnowledgeGraph.",
+      "tags": [
+        "adapter",
+        "utility",
+        "normalization"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/kg_adapter.py::load_engagement_graph": {
+      "summary": "Đọc toàn bộ node/edge theo engagement từ KGStore và dựng KnowledgeGraph với ID deterministic — nguồn dữ liệu chung cho mọi renderer.",
+      "tags": [
+        "adapter",
+        "knowledge-graph",
+        "reporting",
+        "persistence"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::render_sarif": {
+      "summary": "Dựng SARIF log 2.1.0 từ KnowledgeGraph: driver/rules từ finding duy nhất, results mapping, artifact URI — string JSON hoàn chỉnh cho aggregator.",
+      "tags": [
+        "sarif",
+        "reporting",
+        "exporter"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_build_rules": {
+      "summary": "Dựng danh sách rules dedupe (mỗi rule id một entry) từ tập finding.",
+      "tags": [
+        "sarif",
+        "rules",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_result_for": {
+      "summary": "Map một finding node thành SARIF result: ruleId, level, message, location và partial fingerprints.",
+      "tags": [
+        "sarif",
+        "mapping",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_sarif_level": {
+      "summary": "Chọn level SARIF (error/warning/note): severity explicit thắng CVSS score, fallback note cho giá trị lạ/không số.",
+      "tags": [
+        "sarif",
+        "severity",
+        "mapping"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_node_title": {
+      "summary": "Lấy tiêu đề hiển thị của node (prop title hoặc label).",
+      "tags": [
+        "utility",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_node_description": {
+      "summary": "Lấy mô tả node cho message của result.",
+      "tags": [
+        "utility",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_stable_rule_id": {
+      "summary": "Sinh rule id ổn định: Ưu tiên CWE đầu tiên, fallback title normalized, cuối cùng node id — giúp GitHub gộp alert đúng qua các run.",
+      "tags": [
+        "sarif",
+        "deterministic",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_normalize_rule_id": {
+      "summary": "Chuẩn hóa rule id về ký tự hợp lệ SARIF (alphanumeric/dash/underscore).",
+      "tags": [
+        "utility",
+        "sarif",
+        "normalization"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_location_for": {
+      "summary": "Dựng physicalLocation từ file/line của finding, fallback URL khi không có file.",
+      "tags": [
+        "sarif",
+        "location",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_location_uri": {
+      "summary": "Chuẩn hóa URI artifact (file path tương đối, URI giữ nguyên) cho location.",
+      "tags": [
+        "utility",
+        "sarif",
+        "uri"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_result_tags": {
+      "summary": "Gom tags của result: severity, CWE, nguồn/phát hiện từ props — giúp filter bên aggregator.",
+      "tags": [
+        "sarif",
+        "metadata",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/sarif.py::_partial_fingerprints": {
+      "summary": "Sinh partialFingerprint ổn định từ hash (engagement/node/rule) để GitHub match finding giữa các lần upload.",
+      "tags": [
+        "sarif",
+        "deterministic",
+        "hash"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/timeline.py::TimelineEvent": {
+      "summary": "Dataclass một event timeline: ts, kind node/edge, type_name, label, severity và to_dict() cho serializer.",
+      "tags": [
+        "data-model",
+        "timeline",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/timeline.py::extract_timeline": {
+      "summary": "Duyệt node/edge của KnowledgeGraph theo created_at/updated_at, dựng TimelineEvent rồi sort theo thời gian tăng dần.",
+      "tags": [
+        "timeline",
+        "extraction",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/tools.py::_load": {
+      "summary": "Resolve engagement từ contextvar (fallback default) rồi load_engagement_graph; trả KnowledgeGraph in-memory cho tool.",
+      "tags": [
+        "utility",
+        "knowledge-graph",
+        "langchain-tools"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/raptix/tools/reporting/tools.py::_json": {
+      "summary": "Serialize kết quả tool thành chuỗi JSON (hợp đồng trả về của @tool).",
+      "tags": [
+        "utility",
+        "serialization",
+        "langchain-tools"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/tools.py::report_hackerone": {
+      "summary": "@tool báo cáo HackerOne: load graph theo node_id, render markdown, trả JSON {markdown} hoặc {error}.",
+      "tags": [
+        "langchain-tool",
+        "hackerone",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/tools.py::report_bugcrowd_csv": {
+      "summary": "@tool xuất CSV Bugcrowd với min_severity filter, trả JSON {csv}.",
+      "tags": [
+        "langchain-tool",
+        "bugcrowd",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/tools.py::report_executive": {
+      "summary": "@tool executive summary: render markdown tóm tắt engagement, trả JSON {markdown}.",
+      "tags": [
+        "langchain-tool",
+        "executive-summary",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/tools.py::report_timeline": {
+      "summary": "@tool timeline: extract_timeline và trả JSON {count, events}.",
+      "tags": [
+        "langchain-tool",
+        "timeline",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/raptix/tools/reporting/tools.py::report_sarif": {
+      "summary": "@tool xuất SARIF: render, tùy chọn ghi file ra disk (mkdir cha) và trả metadata + SARIF string.",
+      "tags": [
+        "langchain-tool",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_base_score_matches_reference": {
+      "summary": "Base score khớp giá trị tham chiếu official cho vector mẫu.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_30_prefix_is_accepted": {
+      "summary": "Vector prefix CVSS:3.0/3.1 được parse chấp nhận.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_environmental_security_requirements_lower_score": {
+      "summary": "CR/IR/AR cao làm environmental score khác base theo đúng công thức.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_environmental_neutral_when_requirements_medium_and_low_impact": {
+      "summary": "Requirements trung tính không đổi score so với base.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_severity_band_boundaries": {
+      "summary": "Biên band 0.1/3.9/4.0/6.9/7.0/8.9/9.0… map đúng severity.",
+      "tags": [
+        "test",
+        "cvss",
+        "severity"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_normalized_vector_orders_metrics": {
+      "summary": "Vector trả về có thứ tự metric chuẩn của spec.",
+      "tags": [
+        "test",
+        "cvss",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_parse_rejects_malformed": {
+      "summary": "Parse từ chối vector malformed hoặc metric bị khai trùng bằng CVSSError.",
+      "tags": [
+        "test",
+        "cvss",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_tool_returns_error_dict_not_raise": {
+      "summary": "@tool cvss_score với vector xấu trả dict lỗi thay vì raise qua ranh giới tool.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "cvss"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_cvss.py::test_tool_happy_path": {
+      "summary": "@tool cvss_score happy path trả đủ score/band/breakdown.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "cvss"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_hackerone.py::TestHackerOneReportToMarkdown": {
+      "summary": "Suite test HackerOneReport.to_markdown: CVSS thiếu/empty steps/PoC/summary, references và chain id footer.",
+      "tags": [
+        "test",
+        "hackerone",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_hackerone.py::TestRenderHackeroneMarkdown": {
+      "summary": "Suite test render_hackerone_markdown trên graph seed: fallback title/severity, CVSS hợp lệ/không hợp lệ, references coercion, steps explicit thắng auto-build, edge dangling an toàn.",
+      "tags": [
+        "test",
+        "hackerone",
+        "knowledge-graph"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting.py::_seeded_graph": {
+      "summary": "Fixture dựng KnowledgeGraph seed (host + vulnerability + chain) dùng chung cho các test renderer.",
+      "tags": [
+        "test",
+        "fixture",
+        "knowledge-graph"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting.py::TestHackerOne": {
+      "summary": "Test HackerOne trên graph seed: cấu trúc report đầy đủ và render in-memory.",
+      "tags": [
+        "test",
+        "hackerone",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting.py::TestBugcrowd": {
+      "summary": "Test CSV Bugcrowd: header + rows đúng và min_severity filter hoạt động.",
+      "tags": [
+        "test",
+        "bugcrowd",
+        "csv"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting.py::TestExecutive": {
+      "summary": "Test executive summary: có counts trên graph seed và markdown sạch trên graph rỗng.",
+      "tags": [
+        "test",
+        "executive",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting.py::TestTimeline": {
+      "summary": "Test extract_timeline trả event non-empty cho graph seed.",
+      "tags": [
+        "test",
+        "timeline",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::_empty_graph": {
+      "summary": "Fixture KnowledgeGraph rỗng cho test edge-case.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::_graph_all_severities": {
+      "summary": "Fixture graph chứa finding cho đủ mọi mức severity.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::_graph_with_chains": {
+      "summary": "Fixture graph có attack path với cost/length đa dạng.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::_graph_with_cves": {
+      "summary": "Fixture graph chứa node CVE với score khác nhau.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::_graph_with_validated": {
+      "summary": "Fixture graph có findings validated/unvalidated cho section validated.",
+      "tags": [
+        "test",
+        "fixture",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::_rich_graph": {
+      "summary": "Fixture graph giàu dữ liệu (host + vulnerability) cho test tools end-to-end.",
+      "tags": [
+        "test",
+        "fixture",
+        "knowledge-graph"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestCountBySeverity": {
+      "summary": "Suite _count_by_severity: graph rỗng, đơn/multi severity, node non-vuln không đếm, default 'info'.",
+      "tags": [
+        "test",
+        "aggregation",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestTopChains": {
+      "summary": "Suite _top_chains: sắp theo cost, limit, tuple (label, cost, length), default cost/length an toàn.",
+      "tags": [
+        "test",
+        "attack-path",
+        "reporting"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestTopCves": {
+      "summary": "Suite _top_cves: sắp score giảm dần, limit, node non-CVE loại bỏ, default score 0.",
+      "tags": [
+        "test",
+        "cve",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestRenderExecutiveSummary": {
+      "summary": "Suite render_executive_summary: header tên engagement, thứ tự severity, section chains/CVE/validated, graph stats và markdown hợp lệ.",
+      "tags": [
+        "test",
+        "executive-summary",
+        "reporting"
+      ],
+      "complexity": "complex"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestReportHackerOneTool": {
+      "summary": "Suite @tool report_hackerone: markdown cho node hợp lệ, error cho node thiếu và giá trị JSON string.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "hackerone"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestReportBugcrowdCsvTool": {
+      "summary": "Suite @tool report_bugcrowd_csv: default severity medium, filter low/critical, header CSV và graph rỗng.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "bugcrowd"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestReportExecutiveTool": {
+      "summary": "Suite @tool report_executive: key markdown, tên engagement xuất hiện, graph rỗng và default engagement name.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "executive"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestReportTimelineTool": {
+      "summary": "Suite @tool report_timeline: key count/events, count khớp, event là list, graph rỗng → 0 events.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "timeline"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_reporting_tools_and_executive.py::TestReportingToolsList": {
+      "summary": "Suite kiểm chứng danh sách reporting tools export là list non-empty.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "reporting"
+      ],
+      "complexity": "simple"
+    },
+    "packages/raptix/tests/unit/reporting/test_sarif.py::_seeded_graph": {
+      "summary": "Fixture graph seed SARIF với host + vulnerability có file/line/CWE/score đa dạng.",
+      "tags": [
+        "test",
+        "fixture",
+        "sarif"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_sarif.py::TestRenderSarifShape": {
+      "summary": "Suite cấu trúc SARIF: version 2.1.0, chỉ node vulnerability/finding, rules dedupe theo rule id.",
+      "tags": [
+        "test",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_sarif.py::TestSarifLevelMapping": {
+      "summary": "Suite _sarif_level: severity map đúng, CVSS fallback, severity ưu tiên hơn CVSS, unknown → note.",
+      "tags": [
+        "test",
+        "sarif",
+        "severity"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_sarif.py::TestResultMapping": {
+      "summary": "Suite result: fields populate từ props, URI fallback khi thiếu file, fingerprints deterministic.",
+      "tags": [
+        "test",
+        "sarif",
+        "reporting"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_sarif.py::TestStableRuleId": {
+      "summary": "Suite _stable_rule_id: CWE đầu tiên thắng, fallback title, fallback node id khi title rỗng.",
+      "tags": [
+        "test",
+        "sarif",
+        "deterministic"
+      ],
+      "complexity": "moderate"
+    },
+    "packages/raptix/tests/unit/reporting/test_sarif.py::TestReportSarifTool": {
+      "summary": "Suite @tool report_sarif: ghi file ra disk + metadata, tự tạo thư mục cha.",
+      "tags": [
+        "test",
+        "langchain-tool",
+        "sarif"
+      ],
+      "complexity": "moderate"
+    }
+  },
+  "aliases": {},
+  "extraImports": {},
+  "extraEdges": []
+}

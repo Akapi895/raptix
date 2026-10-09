@@ -1,0 +1,3516 @@
+{
+  "batchIndex": 11,
+  "batchFiles": [
+    {
+      "path": "clients/web-raptix/src/features/infrastructure/use-real-graph.ts",
+      "language": "typescript",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/members/RealMembers.tsx",
+      "language": "typescript",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/members/real-members-api.ts",
+      "language": "typescript",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "language": "typescript",
+      "sizeLines": 145,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "language": "typescript",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "language": "typescript",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/operations-log/use-real-logs.ts",
+      "language": "typescript",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "language": "typescript",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/planning/styles.ts",
+      "language": "typescript",
+      "sizeLines": 67,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/planning/types.ts",
+      "language": "typescript",
+      "sizeLines": 85,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/planning/ui.tsx",
+      "language": "typescript",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/projects/api/projects-api.ts",
+      "language": "typescript",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "language": "typescript",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "language": "typescript",
+      "sizeLines": 252,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "language": "typescript",
+      "sizeLines": 280,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "language": "typescript",
+      "sizeLines": 211,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "language": "typescript",
+      "sizeLines": 165,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/projects/summary.ts",
+      "language": "typescript",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/RealReports.tsx",
+      "language": "typescript",
+      "sizeLines": 140,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "language": "typescript",
+      "sizeLines": 192,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "language": "typescript",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/export.ts",
+      "language": "typescript",
+      "sizeLines": 155,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "language": "typescript",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/styles.ts",
+      "language": "typescript",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/types.ts",
+      "language": "typescript",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/reports/ui.tsx",
+      "language": "typescript",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/settings/RealSettings.tsx",
+      "language": "typescript",
+      "sizeLines": 138,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "language": "typescript",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "language": "typescript",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/vault/RealVault.tsx",
+      "language": "typescript",
+      "sizeLines": 164,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "language": "typescript",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/main.tsx",
+      "language": "typescript",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "clients/web-raptix/src/mocks/adapters/projects.ts",
+      "language": "typescript",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "file:clients/web-raptix/src/features/infrastructure/use-real-graph.ts",
+      "type": "file",
+      "name": "use-real-graph.ts",
+      "filePath": "clients/web-raptix/src/features/infrastructure/use-real-graph.ts",
+      "summary": "Hook trang thai trang Infrastructure & Assets che do real (W13): tai dong thoi GraphView va AssetsView theo project.id qua real-graph-api, phan biet loi 503 unavailable voi do thi rong va ho tro refresh thu cong.",
+      "tags": [
+        "hook",
+        "infrastructure",
+        "do-thi-tan-cong",
+        "real-mode",
+        "react"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Hook React dung AbortController + Promise.all de tai song song va tranh race khi unmount."
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/infrastructure/use-real-graph.ts:useRealGraph",
+      "type": "function",
+      "name": "useRealGraph",
+      "filePath": "clients/web-raptix/src/features/infrastructure/use-real-graph.ts",
+      "lineRange": [
+        20,
+        53
+      ],
+      "summary": "Hook tai GraphView/AssetsView theo project.id qua loadGraph/loadAssets, theo doi loading/error/unavailable (503) va refresh thu cong. Duoc export de trang Infrastructure dung truc tiep.",
+      "tags": [
+        "hook",
+        "do-thi",
+        "tai-du-lieu"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/members/RealMembers.tsx",
+      "type": "file",
+      "name": "RealMembers.tsx",
+      "filePath": "clients/web-raptix/src/features/members/RealMembers.tsx",
+      "summary": "Man hinh thanh vien che do real (W19): hien thi topology don nguoi van hanh that tu API moi, kem the moi/RBAC ghi ro ly do vang mat, khong dung du lieu demo gia lap phan quyen.",
+      "tags": [
+        "react",
+        "thanh-vien",
+        "real-mode",
+        "giao-dien"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/members/RealMembers.tsx:RealMembers",
+      "type": "function",
+      "name": "RealMembers",
+      "filePath": "clients/web-raptix/src/features/members/RealMembers.tsx",
+      "lineRange": [
+        19,
+        84
+      ],
+      "summary": "Component trang Members real: mot hang operator that, the invite/RBAC ghi ro ly do vang mat, khong dropdown gia. Duoc export lam trang.",
+      "tags": [
+        "component",
+        "thanh-vien",
+        "giao-dien"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/members/real-members-api.ts",
+      "type": "file",
+      "name": "real-members-api.ts",
+      "filePath": "clients/web-raptix/src/features/members/real-members-api.ts",
+      "summary": "Lop API thanh vien che do real (W19): doc members view don nguoi dung qua contract guard, chu y khong co helper moi/doi vai tro vi server khong ton tai API do.",
+      "tags": [
+        "api-client",
+        "thanh-vien",
+        "real-mode",
+        "contract-guard"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/members/real-members-api.ts:loadMembers",
+      "type": "function",
+      "name": "loadMembers",
+      "filePath": "clients/web-raptix/src/features/members/real-members-api.ts",
+      "lineRange": [
+        12,
+        18
+      ],
+      "summary": "Tai members view don nguoi dung qua GET co kiem chung isMembersView, nem ApiError khi sai envelope. Duoc export cho RealMembers.",
+      "tags": [
+        "api-client",
+        "tai-du-lieu",
+        "thanh-vien"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "type": "file",
+      "name": "RealLogs.tsx",
+      "filePath": "clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "summary": "Man hinh nhat ky van hanh che do real (W14): giu ngon ngu visual cua man hinh goc (bo dem so luong, bo loc, bang, modal chi tiet) nhung gan voi timeline hop nhat tu server, khong chi bao Live gia.",
+      "tags": [
+        "react",
+        "nhat-ky-van-hanh",
+        "real-mode",
+        "timeline"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:RealLogs",
+      "type": "function",
+      "name": "RealLogs",
+      "filePath": "clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "lineRange": [
+        25,
+        111
+      ],
+      "summary": "Component trang Operations Log real: header dem, bo loc, bang timeline va EntryModal chi tiet tu server. Duoc export lam trang.",
+      "tags": [
+        "component",
+        "nhat-ky",
+        "giao-dien"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:EntryModal",
+      "type": "function",
+      "name": "EntryModal",
+      "filePath": "clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "lineRange": [
+        113,
+        145
+      ],
+      "summary": "Modal chi tiet muc timeline trong RealLogs: hien thi provenance, thoi gian va thuoc tinh entry. Ham noi bo cua mo-dun.",
+      "tags": [
+        "component",
+        "modal",
+        "chi-tiet"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "type": "file",
+      "name": "logs-view.ts",
+      "filePath": "clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "summary": "Anh xa thuan tuy cho nhat ky van hanh (W14): suy ra tuy chon loc tu payload timeline thuc, giu nhan source, tim kiem khong phan biet hoa thuong va tom tat tinh day du mot cach trung thuc.",
+      "tags": [
+        "anh-xa",
+        "bo-loc",
+        "timeline",
+        "pure-function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterOptions",
+      "type": "function",
+      "name": "filterOptions",
+      "filePath": "clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "lineRange": [
+        35,
+        37
+      ],
+      "summary": "Suy ra tuy chon loc tu payload voi 'all' dau cho operations-log. Duoc export dung chung.",
+      "tags": [
+        "bo-loc",
+        "timeline",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterTimeline",
+      "type": "function",
+      "name": "filterTimeline",
+      "filePath": "clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "lineRange": [
+        39,
+        49
+      ],
+      "summary": "Loc muc theo source/agent/tool/status/search cho operations-log. Duoc export dung chung.",
+      "tags": [
+        "bo-loc",
+        "timeline",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:entrySearchText",
+      "type": "function",
+      "name": "entrySearchText",
+      "filePath": "clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "lineRange": [
+        51,
+        56
+      ],
+      "summary": "Ghep van ban tim kiem chu thuong tu label/kind/agent/tool/runId cho operations-log. Duoc export dung chung.",
+      "tags": [
+        "dinh-dang",
+        "timeline",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:timelineSummary",
+      "type": "function",
+      "name": "timelineSummary",
+      "filePath": "clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "lineRange": [
+        58,
+        61
+      ],
+      "summary": "Tom tat so muc va trang thai bounded cho operations-log. Duoc export dung chung.",
+      "tags": [
+        "dinh-dang",
+        "timeline",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:entryProvenance",
+      "type": "function",
+      "name": "entryProvenance",
+      "filePath": "clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "lineRange": [
+        63,
+        71
+      ],
+      "summary": "Giai thich nguon goc runtime/checkpoint/workspace cho operations-log. Duoc export dung chung.",
+      "tags": [
+        "dinh-dang",
+        "timeline",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:formatEntryTime",
+      "type": "function",
+      "name": "formatEntryTime",
+      "filePath": "clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "lineRange": [
+        73,
+        76
+      ],
+      "summary": "Dinh dang ISO sang chuoi dia phuong cho operations-log. Duoc export dung chung.",
+      "tags": [
+        "dinh-dang",
+        "timeline",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "type": "file",
+      "name": "real-logs-api.ts",
+      "filePath": "clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "summary": "Lop API nhat ky che do real (W14): chi goi server moi, kiem chung timeline hop nhat bang contract guard, moi muc giu nhan source phan biet runtime/checkpoint/workspace.",
+      "tags": [
+        "api-client",
+        "nhat-ky-van-hanh",
+        "contract-guard",
+        "real-mode"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/real-logs-api.ts:loadTimeline",
+      "type": "function",
+      "name": "loadTimeline",
+      "filePath": "clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "lineRange": [
+        13,
+        17
+      ],
+      "summary": "Tai timeline hop nhat co kiem chung contract, giu nhan source runtime/checkpoint/workspace. Duoc export cho useRealLogs.",
+      "tags": [
+        "api-client",
+        "tai-du-lieu",
+        "timeline"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/operations-log/use-real-logs.ts",
+      "type": "file",
+      "name": "use-real-logs.ts",
+      "filePath": "clients/web-raptix/src/features/operations-log/use-real-logs.ts",
+      "summary": "Hook trang thai trang Operations Log che do real (W14): tai timeline hop nhat bi gioi han tu API moi, khong sinh telemetry gia trong trinh duyet va hien thi dung trang thai bounded.",
+      "tags": [
+        "hook",
+        "nhat-ky-van-hanh",
+        "real-mode",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/operations-log/use-real-logs.ts:useRealLogs",
+      "type": "function",
+      "name": "useRealLogs",
+      "filePath": "clients/web-raptix/src/features/operations-log/use-real-logs.ts",
+      "lineRange": [
+        17,
+        45
+      ],
+      "summary": "Hook tai timeline hop nhat qua loadTimeline, giu loading/error/unavailable va refresh; chi dung API that, khong sinh telemetry gia. Duoc export cho trang Operations Log.",
+      "tags": [
+        "hook",
+        "nhat-ky",
+        "tai-du-lieu"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "type": "file",
+      "name": "RealPlanning.tsx",
+      "filePath": "clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "summary": "Man hinh lap ke hoach che do real: tai PlanningView qua API co kiem chung isPlanningView, hien thi tai lieu RoE/CONOPS/deconfliction/OPPLAN va bao loi phan hoi khong hop le thay vi ep kieu.",
+      "tags": [
+        "react",
+        "lap-ke-hoach",
+        "real-mode",
+        "contract-guard"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/RealPlanning.tsx:RealPlanning",
+      "type": "function",
+      "name": "RealPlanning",
+      "filePath": "clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "lineRange": [
+        24,
+        67
+      ],
+      "summary": "Component trang Planning real: tai PlanningView co kiem chung va render RoE/CONOPS/deconfliction/OPPLAN. Duoc export lam trang.",
+      "tags": [
+        "component",
+        "lap-ke-hoach",
+        "giao-dien"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "type": "file",
+      "name": "styles.ts",
+      "filePath": "clients/web-raptix/src/features/planning/styles.ts",
+      "summary": "Bang style tap trung cho cum lap ke hoach: nhan kill-chain, huy hieu OPSEC/opplan-status, quyen pham vi va loai muc tieu, dung chung cho DocCard va cac chip mock.",
+      "tags": [
+        "style",
+        "lap-ke-hoach",
+        "giao-dien",
+        "kill-chain"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/styles.ts:opsecBadgeStyle",
+      "type": "function",
+      "name": "opsecBadgeStyle",
+      "filePath": "clients/web-raptix/src/features/planning/styles.ts",
+      "lineRange": [
+        30,
+        34
+      ],
+      "summary": "Thuc hien nghiep vu `opsecBadgeStyle` (5 dong) trong styles.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/styles.ts:opplanStatusStyle",
+      "type": "function",
+      "name": "opplanStatusStyle",
+      "filePath": "clients/web-raptix/src/features/planning/styles.ts",
+      "lineRange": [
+        36,
+        44
+      ],
+      "summary": "Thuc hien nghiep vu `opplanStatusStyle` (9 dong) trong styles.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/styles.ts:permissionBadgeStyle",
+      "type": "function",
+      "name": "permissionBadgeStyle",
+      "filePath": "clients/web-raptix/src/features/planning/styles.ts",
+      "lineRange": [
+        52,
+        56
+      ],
+      "summary": "Thuc hien nghiep vu `permissionBadgeStyle` (5 dong) trong styles.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/styles.ts:targetTypeBadgeStyle",
+      "type": "function",
+      "name": "targetTypeBadgeStyle",
+      "filePath": "clients/web-raptix/src/features/planning/styles.ts",
+      "lineRange": [
+        62,
+        67
+      ],
+      "summary": "Thuc hien nghiep vu `targetTypeBadgeStyle` (6 dong) trong styles.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/planning/types.ts",
+      "type": "file",
+      "name": "types.ts",
+      "filePath": "clients/web-raptix/src/features/planning/types.ts",
+      "summary": "Mo hinh kieu cho lat cat lap ke hoach (Charter & ScopeBoundaries): RoEDoc, ConopsDoc, DeconflictionDoc, OpplanObjective/Doc va ScopeTarget/Fixture theo goi planning cua engagement.",
+      "tags": [
+        "kieu-du-lieu",
+        "lap-ke-hoach",
+        "roe",
+        "opplan"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "type": "file",
+      "name": "ui.tsx",
+      "filePath": "clients/web-raptix/src/features/planning/ui.tsx",
+      "summary": "Bo khoi UI dung chung cho lap ke hoach: chip nguon mock, banner canh bao, the tai lieu va trang thai thieu tai lieu, tai xuat CapabilityButton dung chung.",
+      "tags": [
+        "component",
+        "lap-ke-hoach",
+        "giao-dien",
+        "tai-su-dung"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/ui.tsx:MockSourceChip",
+      "type": "function",
+      "name": "MockSourceChip",
+      "filePath": "clients/web-raptix/src/features/planning/ui.tsx",
+      "lineRange": [
+        6,
+        8
+      ],
+      "summary": "Component MockSourceChip dung giao dien cho ui.tsx. Duoc export dung chung.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/ui.tsx:PlanningNotice",
+      "type": "function",
+      "name": "PlanningNotice",
+      "filePath": "clients/web-raptix/src/features/planning/ui.tsx",
+      "lineRange": [
+        10,
+        32
+      ],
+      "summary": "Component PlanningNotice dung giao dien cho ui.tsx. Duoc export dung chung.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/ui.tsx:DocCard",
+      "type": "function",
+      "name": "DocCard",
+      "filePath": "clients/web-raptix/src/features/planning/ui.tsx",
+      "lineRange": [
+        34,
+        53
+      ],
+      "summary": "Component DocCard dung giao dien cho ui.tsx. Duoc export dung chung.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/planning/ui.tsx:MissingDocsState",
+      "type": "function",
+      "name": "MissingDocsState",
+      "filePath": "clients/web-raptix/src/features/planning/ui.tsx",
+      "lineRange": [
+        55,
+        108
+      ],
+      "summary": "Component MissingDocsState dung giao dien cho ui.tsx. Duoc export dung chung.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/projects/api/projects-api.ts",
+      "type": "file",
+      "name": "projects-api.ts",
+      "filePath": "clients/web-raptix/src/features/projects/api/projects-api.ts",
+      "summary": "Hop dong API du an cong khai (W03): be mat duy nhat UI duoc goi o che do real, ban mock va real chia se chu ky, yeu cau authorizationConfirmed la literal true khi tao.",
+      "tags": [
+        "hop-dong-api",
+        "du-an",
+        "real-mode",
+        "kieu-du-lieu"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "type": "file",
+      "name": "projects-real.ts",
+      "filePath": "clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "summary": "Cai dat ProjectsApi che do real qua API moi (qua proxy /api): kiem chung moi phan hoi bang isProjectViewModel, truyen so dem nullable dung nhu server tra, khong chuan hoa gia.",
+      "tags": [
+        "api-client",
+        "du-an",
+        "real-mode",
+        "contract-guard"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/api/projects-real.ts:createRealProjectsApi",
+      "type": "function",
+      "name": "createRealProjectsApi",
+      "filePath": "clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "lineRange": [
+        28,
+        67
+      ],
+      "summary": "Dung ProjectsApi real: CRUD qua proxy /api voi isProjectViewModel o bien, khong chuan hoa gia. Duoc export lam singleton realProjectsApi.",
+      "tags": [
+        "api-client",
+        "du-an",
+        "factory"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "type": "file",
+      "name": "RealNewProjectModal.tsx",
+      "filePath": "clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "summary": "Modal tao du an che do real: form nhap lieu co validateCreateProjectDraft, chon loai muc tieu engagement, giu focus input va bao loi truong, dong qua Dialog dung chung.",
+      "tags": [
+        "react",
+        "du-an",
+        "bieu-mau",
+        "real-mode",
+        "validation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx:TextField",
+      "type": "function",
+      "name": "TextField",
+      "filePath": "clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "lineRange": [
+        39,
+        69
+      ],
+      "summary": "Component TextField dung giao dien cho RealNewProjectModal.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx:RealNewProjectModal",
+      "type": "function",
+      "name": "RealNewProjectModal",
+      "filePath": "clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "lineRange": [
+        77,
+        252
+      ],
+      "summary": "Modal tao du an real voi validation draft, chon target type va bao loi truong. Duoc export dung chung.",
+      "tags": [
+        "component",
+        "bieu-mau",
+        "du-an"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "type": "file",
+      "name": "RealProjectsHome.tsx",
+      "filePath": "clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "summary": "Trang chu du an che do real: the du an, hang danh sach, huy hieu trang thai, chip so dem va hop metric, tim kiem/loc theo lifecycle, khong dung fixture demo.",
+      "tags": [
+        "react",
+        "du-an",
+        "trang-chu",
+        "real-mode"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:MetricBox",
+      "type": "function",
+      "name": "MetricBox",
+      "filePath": "clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "lineRange": [
+        40,
+        53
+      ],
+      "summary": "Component MetricBox dung giao dien cho RealProjectsHome.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:ProjectCard",
+      "type": "function",
+      "name": "ProjectCard",
+      "filePath": "clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "lineRange": [
+        55,
+        89
+      ],
+      "summary": "Man hinh/khoi demo ProjectCard: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:ListRow",
+      "type": "function",
+      "name": "ListRow",
+      "filePath": "clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "lineRange": [
+        91,
+        109
+      ],
+      "summary": "Man hinh/khoi demo ListRow: render tu fixture/types cuc bo, giu tuong tac demo (loc/modal/tab). Duoc export lam khoi con.",
+      "tags": [
+        "component",
+        "man-hinh",
+        "demo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:RealProjectsHome",
+      "type": "function",
+      "name": "RealProjectsHome",
+      "filePath": "clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "lineRange": [
+        111,
+        280
+      ],
+      "summary": "Component trang chu du an real: the/hang du an, huy hieu lifecycle, tim kiem/loc va tao moi. Duoc export lam trang.",
+      "tags": [
+        "component",
+        "du-an",
+        "trang-chu"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "type": "file",
+      "name": "use-real-projects.ts",
+      "filePath": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "summary": "Store nhe che do real cho du an (W03, khong dung thu vien query): dong bo qua useSyncExternalStore theo mau mock-adapter, cache snapshot list/detail, mutate tao/cap nhat va tai lai co dedup.",
+      "tags": [
+        "hook",
+        "du-an",
+        "store",
+        "real-mode",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:startRead",
+      "type": "function",
+      "name": "startRead",
+      "filePath": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "lineRange": [
+        86,
+        114
+      ],
+      "summary": "Thuc hien nghiep vu `startRead` (29 dong) trong use-real-projects.ts. Ham noi bo cua mo-dun.",
+      "tags": [
+        "ham",
+        "use-real-projects",
+        "noi-bo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:createProjectReal",
+      "type": "function",
+      "name": "createProjectReal",
+      "filePath": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "lineRange": [
+        143,
+        145
+      ],
+      "summary": "Thuc hien nghiep vu `createProjectReal` (3 dong) trong use-real-projects.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "use-real-projects",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:updateProjectReal",
+      "type": "function",
+      "name": "updateProjectReal",
+      "filePath": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "lineRange": [
+        147,
+        149
+      ],
+      "summary": "Thuc hien nghiep vu `updateProjectReal` (3 dong) trong use-real-projects.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "use-real-projects",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:reloadProjects",
+      "type": "function",
+      "name": "reloadProjects",
+      "filePath": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "lineRange": [
+        155,
+        155
+      ],
+      "summary": "Thuc hien nghiep vu `reloadProjects` (1 dong) trong use-real-projects.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "use-real-projects",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:reloadProject",
+      "type": "function",
+      "name": "reloadProject",
+      "filePath": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "lineRange": [
+        157,
+        157
+      ],
+      "summary": "Thuc hien nghiep vu `reloadProject` (1 dong) trong use-real-projects.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "use-real-projects",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:useRealProjects",
+      "type": "function",
+      "name": "useRealProjects",
+      "filePath": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "lineRange": [
+        168,
+        181
+      ],
+      "summary": "Hook doc snapshot du an real qua store useSyncExternalStore (list/detail), tu dong subscribe/unsubscribe. Duoc export cho Home/modal.",
+      "tags": [
+        "hook",
+        "du-an",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:useRealProject",
+      "type": "function",
+      "name": "useRealProject",
+      "filePath": "clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "lineRange": [
+        183,
+        194
+      ],
+      "summary": "Hook doc snapshot du an real qua store useSyncExternalStore (list/detail), tu dong subscribe/unsubscribe. Duoc export cho Home/modal.",
+      "tags": [
+        "hook",
+        "du-an",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "type": "file",
+      "name": "real-project.types.ts",
+      "filePath": "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "summary": "Module kieu dung chung cho du an real (W03, thuan tuy): hop dong props Home/New Project, helper dinh dang so dem/thoi gian, dem theo lifecycle, loc du an va validate ban nhap tao.",
+      "tags": [
+        "kieu-du-lieu",
+        "du-an",
+        "validation",
+        "helper-thuan-tuy"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatPublicCount",
+      "type": "function",
+      "name": "formatPublicCount",
+      "filePath": "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "lineRange": [
+        56,
+        58
+      ],
+      "summary": "Dinh dang so dem cong khai (thuan tuy, khong React/fetch). Duoc export dung chung.",
+      "tags": [
+        "helper",
+        "du-an",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatUpdatedAt",
+      "type": "function",
+      "name": "formatUpdatedAt",
+      "filePath": "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "lineRange": [
+        60,
+        65
+      ],
+      "summary": "Dinh dang thoi gian cap nhat (thuan tuy, khong React/fetch). Duoc export dung chung.",
+      "tags": [
+        "helper",
+        "du-an",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/real-project.types.ts:countByLifecycle",
+      "type": "function",
+      "name": "countByLifecycle",
+      "filePath": "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "lineRange": [
+        67,
+        69
+      ],
+      "summary": "Dem du an theo lifecycle (thuan tuy, khong React/fetch). Duoc export dung chung.",
+      "tags": [
+        "helper",
+        "du-an",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/real-project.types.ts:filterRealProjects",
+      "type": "function",
+      "name": "filterRealProjects",
+      "filePath": "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "lineRange": [
+        71,
+        85
+      ],
+      "summary": "Loc du an real theo tu khoa/lifecycle (thuan tuy, khong React/fetch). Duoc export dung chung.",
+      "tags": [
+        "helper",
+        "du-an",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/real-project.types.ts:validateCreateProjectDraft",
+      "type": "function",
+      "name": "validateCreateProjectDraft",
+      "filePath": "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "lineRange": [
+        123,
+        139
+      ],
+      "summary": "Kiem tra ban nhap tao (slug/target/authorization) (thuan tuy, khong React/fetch). Duoc export dung chung.",
+      "tags": [
+        "helper",
+        "du-an",
+        "thuan-tuy"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/real-project.types.ts:targetValueError",
+      "type": "function",
+      "name": "targetValueError",
+      "filePath": "clients/web-raptix/src/features/projects/real-project.types.ts",
+      "lineRange": [
+        141,
+        165
+      ],
+      "summary": "Bao loi gia tri target (thuan tuy, khong React/fetch). Ham noi bo.",
+      "tags": [
+        "helper",
+        "du-an",
+        "thuan-tuy"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/projects/summary.ts",
+      "type": "file",
+      "name": "summary.ts",
+      "filePath": "clients/web-raptix/src/features/projects/summary.ts",
+      "summary": "Helper tom tat trang thai chay theo du an: rut ra needsAttention va danh sach agent cho phe duyet tu RunSnapshot de Home hien thi canh bao.",
+      "tags": [
+        "tom-tat",
+        "du-an",
+        "giam-sat-chay",
+        "helper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/projects/summary.ts:getProjectRunSummary",
+      "type": "function",
+      "name": "getProjectRunSummary",
+      "filePath": "clients/web-raptix/src/features/projects/summary.ts",
+      "lineRange": [
+        10,
+        18
+      ],
+      "summary": "Rut tom tat chay theo du an (thuan tuy, khong React/fetch). Duoc export dung chung.",
+      "tags": [
+        "helper",
+        "du-an",
+        "thuan-tuy"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/reports/RealReports.tsx",
+      "type": "file",
+      "name": "RealReports.tsx",
+      "filePath": "clients/web-raptix/src/features/reports/RealReports.tsx",
+      "summary": "Man hinh bao cao che do real (W14): preview dung tu DTO engagement/findings that, chi cung cap JSON/Markdown vi server chi kiem chung hai dinh dang nay, khong dung deliverable gia.",
+      "tags": [
+        "react",
+        "bao-cao",
+        "real-mode",
+        "xuat-ban"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/RealReports.tsx:RealReports",
+      "type": "function",
+      "name": "RealReports",
+      "filePath": "clients/web-raptix/src/features/reports/RealReports.tsx",
+      "lineRange": [
+        27,
+        140
+      ],
+      "summary": "Component trang Reports real tu DTO that, chi cho xuat JSON/Markdown kem attachment that. Duoc export lam trang.",
+      "tags": [
+        "component",
+        "bao-cao",
+        "giao-dien"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "type": "file",
+      "name": "ReportDocument.tsx",
+      "filePath": "clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "summary": "Trinh ket xuat tai lieu bao cao: render tung SectionBlock (doan van, ghi chu, diem rui ro, bang, giai doan, code, buoc) thanh BlockView co mau severity nhat quan.",
+      "tags": [
+        "react",
+        "bao-cao",
+        "render",
+        "tai-lieu"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:RiskScoreBlock",
+      "type": "function",
+      "name": "RiskScoreBlock",
+      "filePath": "clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "lineRange": [
+        41,
+        53
+      ],
+      "summary": "Component RiskScoreBlock dung giao dien cho ReportDocument.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:TableBlock",
+      "type": "function",
+      "name": "TableBlock",
+      "filePath": "clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "lineRange": [
+        55,
+        105
+      ],
+      "summary": "Component TableBlock dung giao dien cho ReportDocument.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:PhasesBlock",
+      "type": "function",
+      "name": "PhasesBlock",
+      "filePath": "clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "lineRange": [
+        107,
+        126
+      ],
+      "summary": "Component PhasesBlock dung giao dien cho ReportDocument.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:StepsBlock",
+      "type": "function",
+      "name": "StepsBlock",
+      "filePath": "clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "lineRange": [
+        136,
+        160
+      ],
+      "summary": "Component StepsBlock dung giao dien cho ReportDocument.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:BlockView",
+      "type": "function",
+      "name": "BlockView",
+      "filePath": "clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "lineRange": [
+        162,
+        179
+      ],
+      "summary": "Component BlockView dung giao dien cho ReportDocument.tsx. Khoi con noi bo.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:ReportSectionView",
+      "type": "function",
+      "name": "ReportSectionView",
+      "filePath": "clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "lineRange": [
+        181,
+        192
+      ],
+      "summary": "View mot section bao cao: render cac BlockView theo SectionBlock voi mau severity. Duoc export dung chung.",
+      "tags": [
+        "component",
+        "bao-cao",
+        "render"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "type": "file",
+      "name": "ReportsTable.tsx",
+      "filePath": "clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "summary": "Bang danh sach bao cao ban demo: doc REPORT_FIXTURES, hien thi avatar viet tat, style loai/trang thai, gioi han nang luc xuat va mo modal chi tiet.",
+      "tags": [
+        "react",
+        "bao-cao",
+        "bang-du-lieu",
+        "demo"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/ReportsTable.tsx:ReportsTable",
+      "type": "function",
+      "name": "ReportsTable",
+      "filePath": "clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "lineRange": [
+        55,
+        230
+      ],
+      "summary": "Bang bao cao demo tu REPORT_FIXTURES voi avatar, style loai/trang thai va gioi han xuat. Duoc export lam bang.",
+      "tags": [
+        "component",
+        "bang-du-lieu",
+        "bao-cao"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/reports/export.ts",
+      "type": "file",
+      "name": "export.ts",
+      "filePath": "clients/web-raptix/src/features/reports/export.ts",
+      "summary": "Xuat bao cao demo: tao ten file slug, dung JSON co watermark mock/notice va Markdown co header DEMO EXPORT, chi ho tro json/markdown, tai xuong qua Blob URL.",
+      "tags": [
+        "xuat-ban",
+        "bao-cao",
+        "json",
+        "markdown",
+        "demo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/export.ts:slugify",
+      "type": "function",
+      "name": "slugify",
+      "filePath": "clients/web-raptix/src/features/reports/export.ts",
+      "lineRange": [
+        23,
+        29
+      ],
+      "summary": "Chuan hoa ten thanh slug (rong thi 'report'). Duoc export dung chung.",
+      "tags": [
+        "xuat-ban",
+        "bao-cao",
+        "json"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/export.ts:buildExportFilename",
+      "type": "function",
+      "name": "buildExportFilename",
+      "filePath": "clients/web-raptix/src/features/reports/export.ts",
+      "lineRange": [
+        31,
+        34
+      ],
+      "summary": "Ghep ten file bao cao demo theo dinh dang. Duoc export dung chung.",
+      "tags": [
+        "xuat-ban",
+        "bao-cao",
+        "json"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/export.ts:buildReportJson",
+      "type": "function",
+      "name": "buildReportJson",
+      "filePath": "clients/web-raptix/src/features/reports/export.ts",
+      "lineRange": [
+        36,
+        68
+      ],
+      "summary": "Dung payload JSON co watermark mock/notice va sections. Duoc export dung chung.",
+      "tags": [
+        "xuat-ban",
+        "bao-cao",
+        "json"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/export.ts:blockToMarkdown",
+      "type": "function",
+      "name": "blockToMarkdown",
+      "filePath": "clients/web-raptix/src/features/reports/export.ts",
+      "lineRange": [
+        70,
+        97
+      ],
+      "summary": "Chuyen SectionBlock thanh Markdown theo kind. Ham noi bo.",
+      "tags": [
+        "xuat-ban",
+        "bao-cao",
+        "markdown"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/export.ts:buildReportMarkdown",
+      "type": "function",
+      "name": "buildReportMarkdown",
+      "filePath": "clients/web-raptix/src/features/reports/export.ts",
+      "lineRange": [
+        99,
+        132
+      ],
+      "summary": "Dung tai lieu Markdown co header DEMO EXPORT. Duoc export dung chung.",
+      "tags": [
+        "xuat-ban",
+        "bao-cao",
+        "markdown"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/export.ts:exportReport",
+      "type": "function",
+      "name": "exportReport",
+      "filePath": "clients/web-raptix/src/features/reports/export.ts",
+      "lineRange": [
+        134,
+        155
+      ],
+      "summary": "Tai xuong bao cao qua Blob URL theo dinh dang. Duoc export dung chung.",
+      "tags": [
+        "xuat-ban",
+        "bao-cao",
+        "json"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "type": "file",
+      "name": "real-reports-api.ts",
+      "filePath": "clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "summary": "API xuat bao cao che do real (W14): goi endpoint attachment da kiem chung cua server, chi ton tai json/markdown, doc ten file tu Content-Disposition va chi bao thanh cong khi body ve den noi.",
+      "tags": [
+        "api-client",
+        "bao-cao",
+        "xuat-ban",
+        "real-mode"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/real-reports-api.ts:isExportFormat",
+      "type": "function",
+      "name": "isExportFormat",
+      "filePath": "clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "lineRange": [
+        19,
+        21
+      ],
+      "summary": "Thuc hien nghiep vu `isExportFormat` (3 dong) trong real-reports-api.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/real-reports-api.ts:exportEngagement",
+      "type": "function",
+      "name": "exportEngagement",
+      "filePath": "clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "lineRange": [
+        23,
+        54
+      ],
+      "summary": "Thuc hien nghiep vu `exportEngagement` (32 dong) trong real-reports-api.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "tien-ich",
+        "exported"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/reports/styles.ts",
+      "type": "file",
+      "name": "styles.ts",
+      "filePath": "clients/web-raptix/src/features/reports/styles.ts",
+      "summary": "Chip kieu demo cho bao cao: DEMO_CHIP tim va disabledStyle mo, dung de danh dau du lieu gia trong preview.",
+      "tags": [
+        "style",
+        "bao-cao",
+        "demo",
+        "giao-dien"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/reports/types.ts",
+      "type": "file",
+      "name": "types.ts",
+      "filePath": "clients/web-raptix/src/features/reports/types.ts",
+      "summary": "Kieu bao cao: ReportType/Status, ReportMeta va dinh nghia tai lieu/section/block lam nen cho fixture, preview va xuat JSON/Markdown.",
+      "tags": [
+        "kieu-du-lieu",
+        "bao-cao",
+        "tai-lieu"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/reports/ui.tsx",
+      "type": "file",
+      "name": "ui.tsx",
+      "filePath": "clients/web-raptix/src/features/reports/ui.tsx",
+      "summary": "Thong bao nang luc bao cao: CapabilityNotice canh bao gioi han PDF/DOCX/AI, tai xuat CapabilityButton dung chung toan trang.",
+      "tags": [
+        "component",
+        "bao-cao",
+        "giao-dien",
+        "canh-bao"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/reports/ui.tsx:CapabilityNotice",
+      "type": "function",
+      "name": "CapabilityNotice",
+      "filePath": "clients/web-raptix/src/features/reports/ui.tsx",
+      "lineRange": [
+        5,
+        20
+      ],
+      "summary": "Component CapabilityNotice dung giao dien cho ui.tsx. Duoc export dung chung.",
+      "tags": [
+        "component",
+        "giao-dien",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/settings/RealSettings.tsx",
+      "type": "file",
+      "name": "RealSettings.tsx",
+      "filePath": "clients/web-raptix/src/features/settings/RealSettings.tsx",
+      "summary": "Man hinh cai dat che do real (W15): chi hien thi truong server thuc su luu tru, luu qua PATCH co kiem chung kem xac nhan save/reload, vung nguy hiem ghi ro pham vi xoa.",
+      "tags": [
+        "react",
+        "cai-dat",
+        "real-mode",
+        "bieu-mau"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/settings/RealSettings.tsx:RealSettings",
+      "type": "function",
+      "name": "RealSettings",
+      "filePath": "clients/web-raptix/src/features/settings/RealSettings.tsx",
+      "lineRange": [
+        27,
+        138
+      ],
+      "summary": "Component trang Settings real: form truong persisted, luu PATCH co xac nhan va vung nguy hiem ghi ro pham vi. Duoc export lam trang.",
+      "tags": [
+        "component",
+        "cai-dat",
+        "giao-dien"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "type": "file",
+      "name": "real-settings-api.ts",
+      "filePath": "clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "summary": "API cai dat che do real (W15): doc persisted settings view, luu bang PATCH tren route engagement hien co, xoa engagement, caller luon tai lai view de chi hien thi state server da ACK.",
+      "tags": [
+        "api-client",
+        "cai-dat",
+        "real-mode",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:loadSettings",
+      "type": "function",
+      "name": "loadSettings",
+      "filePath": "clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "lineRange": [
+        21,
+        25
+      ],
+      "summary": "Doc persisted settings view qua API moi, caller tai lai view sau luu. Duoc export dung chung.",
+      "tags": [
+        "api-client",
+        "cai-dat",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:saveSettings",
+      "type": "function",
+      "name": "saveSettings",
+      "filePath": "clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "lineRange": [
+        27,
+        33
+      ],
+      "summary": "Luu PATCH tren route engagement qua API moi, caller tai lai view sau luu. Duoc export dung chung.",
+      "tags": [
+        "api-client",
+        "cai-dat",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:deleteEngagement",
+      "type": "function",
+      "name": "deleteEngagement",
+      "filePath": "clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "lineRange": [
+        35,
+        41
+      ],
+      "summary": "Xoa engagement qua API moi, caller tai lai view sau luu. Duoc export dung chung.",
+      "tags": [
+        "api-client",
+        "cai-dat",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "type": "file",
+      "name": "use-real-settings.ts",
+      "filePath": "clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "summary": "Hook trang thai trang Settings che do real (W15): tai persisted view, luu qua PATCH co kiem chung va reload lai, chi bao da luu khi server xac nhan va reload tra ve dung gia tri.",
+      "tags": [
+        "hook",
+        "cai-dat",
+        "real-mode",
+        "react"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/settings/use-real-settings.ts:useRealSettings",
+      "type": "function",
+      "name": "useRealSettings",
+      "filePath": "clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "lineRange": [
+        27,
+        103
+      ],
+      "summary": "Hook tai/luu/cai dat persisted view qua loadSettings/saveSettings roi reload, chi bao da luu sau ACK server. Duoc export cho trang Settings.",
+      "tags": [
+        "hook",
+        "cai-dat",
+        "luu-tru"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/vault/RealVault.tsx",
+      "type": "file",
+      "name": "RealVault.tsx",
+      "filePath": "clients/web-raptix/src/features/vault/RealVault.tsx",
+      "summary": "Ket sat thong tin che do real (W18): mac dinh chi hien metadata da che, tiet lo co canh bao xac nhan (plaintext hien mot lan, khong luu state), thu hoi co audit, moi gia tri tu API that.",
+      "tags": [
+        "react",
+        "ket-sat",
+        "bi-mat",
+        "real-mode"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/vault/RealVault.tsx:RealVault",
+      "type": "function",
+      "name": "RealVault",
+      "filePath": "clients/web-raptix/src/features/vault/RealVault.tsx",
+      "lineRange": [
+        27,
+        164
+      ],
+      "summary": "Component Ket sat real: metadata che mat dinh, reveal co canh bao mot lan, thu hoi audit. Duoc export lam trang.",
+      "tags": [
+        "component",
+        "ket-sat",
+        "giao-dien"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "type": "file",
+      "name": "real-vault-api.ts",
+      "filePath": "clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "summary": "API ket sat che do real (W18): goi scoped vault endpoints, danh sach metadata do server che (khong ciphertext/plaintext), plaintext chi ton tai trong response reveal va khong luu client.",
+      "tags": [
+        "api-client",
+        "ket-sat",
+        "bi-mat",
+        "real-mode"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:listVaultSecrets",
+      "type": "function",
+      "name": "listVaultSecrets",
+      "filePath": "clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "lineRange": [
+        19,
+        25
+      ],
+      "summary": "Liet ke metadata da che qua scoped vault endpoints. Duoc export dung chung.",
+      "tags": [
+        "api-client",
+        "ket-sat",
+        "bi-mat"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:createVaultSecret",
+      "type": "function",
+      "name": "createVaultSecret",
+      "filePath": "clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "lineRange": [
+        27,
+        33
+      ],
+      "summary": "Tao secret moi qua scoped vault endpoints. Duoc export dung chung.",
+      "tags": [
+        "api-client",
+        "ket-sat",
+        "bi-mat"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:revealVaultSecret",
+      "type": "function",
+      "name": "revealVaultSecret",
+      "filePath": "clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "lineRange": [
+        35,
+        41
+      ],
+      "summary": "Tiet lo plaintext mot lan qua scoped vault endpoints. Duoc export dung chung.",
+      "tags": [
+        "api-client",
+        "ket-sat",
+        "bi-mat"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:revokeVaultSecret",
+      "type": "function",
+      "name": "revokeVaultSecret",
+      "filePath": "clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "lineRange": [
+        43,
+        45
+      ],
+      "summary": "Thu hoi secret co audit qua scoped vault endpoints. Duoc export dung chung.",
+      "tags": [
+        "api-client",
+        "ket-sat",
+        "bi-mat"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/main.tsx",
+      "type": "file",
+      "name": "main.tsx",
+      "filePath": "clients/web-raptix/src/main.tsx",
+      "summary": "Diem vao trinh duyet: mount App vao #root kem index.css, cau noi giua index.html va cay React.",
+      "tags": [
+        "entry-point",
+        "khoi-dong",
+        "react",
+        "vite"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "type": "file",
+      "name": "projects.ts",
+      "filePath": "clients/web-raptix/src/mocks/adapters/projects.ts",
+      "summary": "Adapter du an che do mock: store useSyncExternalStore tren PROJECTS fixture voi localStorage, tao/cap nhat mock project va bao loi persistence.",
+      "tags": [
+        "mock",
+        "du-an",
+        "adapter",
+        "store"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/mocks/adapters/projects.ts:initialProjects",
+      "type": "function",
+      "name": "initialProjects",
+      "filePath": "clients/web-raptix/src/mocks/adapters/projects.ts",
+      "lineRange": [
+        22,
+        31
+      ],
+      "summary": "Thuc hien nghiep vu `initialProjects` (10 dong) trong projects.ts. Ham noi bo cua mo-dun.",
+      "tags": [
+        "ham",
+        "projects",
+        "noi-bo"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/mocks/adapters/projects.ts:useMockProjects",
+      "type": "function",
+      "name": "useMockProjects",
+      "filePath": "clients/web-raptix/src/mocks/adapters/projects.ts",
+      "lineRange": [
+        45,
+        50
+      ],
+      "summary": "Hook store mock du an qua useSyncExternalStore tren fixture, dong bo localStorage va publish thay doi. Duoc export cho man hinh demo.",
+      "tags": [
+        "hook",
+        "mock",
+        "store"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/mocks/adapters/projects.ts:getProjectPersistenceError",
+      "type": "function",
+      "name": "getProjectPersistenceError",
+      "filePath": "clients/web-raptix/src/mocks/adapters/projects.ts",
+      "lineRange": [
+        52,
+        54
+      ],
+      "summary": "Thuc hien nghiep vu `getProjectPersistenceError` (3 dong) trong projects.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "projects",
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:clients/web-raptix/src/mocks/adapters/projects.ts:createMockProject",
+      "type": "function",
+      "name": "createMockProject",
+      "filePath": "clients/web-raptix/src/mocks/adapters/projects.ts",
+      "lineRange": [
+        56,
+        77
+      ],
+      "summary": "Thuc hien nghiep vu `createMockProject` (22 dong) trong projects.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "projects",
+        "exported"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:clients/web-raptix/src/mocks/adapters/projects.ts:updateMockProject",
+      "type": "function",
+      "name": "updateMockProject",
+      "filePath": "clients/web-raptix/src/mocks/adapters/projects.ts",
+      "lineRange": [
+        79,
+        83
+      ],
+      "summary": "Thuc hien nghiep vu `updateMockProject` (5 dong) trong projects.ts. Duoc export dung chung.",
+      "tags": [
+        "ham",
+        "projects",
+        "exported"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:clients/web-raptix/src/features/infrastructure/use-real-graph.ts",
+      "target": "function:clients/web-raptix/src/features/infrastructure/use-real-graph.ts:useRealGraph",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/infrastructure/use-real-graph.ts",
+      "target": "function:clients/web-raptix/src/features/infrastructure/use-real-graph.ts:useRealGraph",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/members/RealMembers.tsx",
+      "target": "function:clients/web-raptix/src/features/members/RealMembers.tsx:RealMembers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/members/RealMembers.tsx",
+      "target": "function:clients/web-raptix/src/features/members/RealMembers.tsx:RealMembers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/members/real-members-api.ts",
+      "target": "function:clients/web-raptix/src/features/members/real-members-api.ts:loadMembers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/members/real-members-api.ts",
+      "target": "function:clients/web-raptix/src/features/members/real-members-api.ts:loadMembers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "target": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:RealLogs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "target": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:RealLogs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "target": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:EntryModal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterOptions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterOptions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterTimeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterTimeline",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:entrySearchText",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:entrySearchText",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:timelineSummary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:timelineSummary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:entryProvenance",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:entryProvenance",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:formatEntryTime",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:formatEntryTime",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/real-logs-api.ts:loadTimeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/real-logs-api.ts:loadTimeline",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/use-real-logs.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/use-real-logs.ts:useRealLogs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/use-real-logs.ts",
+      "target": "function:clients/web-raptix/src/features/operations-log/use-real-logs.ts:useRealLogs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/RealPlanning.tsx:RealPlanning",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/RealPlanning.tsx:RealPlanning",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "function:clients/web-raptix/src/features/planning/styles.ts:opsecBadgeStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "function:clients/web-raptix/src/features/planning/styles.ts:opsecBadgeStyle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "function:clients/web-raptix/src/features/planning/styles.ts:opplanStatusStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "function:clients/web-raptix/src/features/planning/styles.ts:opplanStatusStyle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "function:clients/web-raptix/src/features/planning/styles.ts:permissionBadgeStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "function:clients/web-raptix/src/features/planning/styles.ts:permissionBadgeStyle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "function:clients/web-raptix/src/features/planning/styles.ts:targetTypeBadgeStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "function:clients/web-raptix/src/features/planning/styles.ts:targetTypeBadgeStyle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/ui.tsx:MockSourceChip",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/ui.tsx:MockSourceChip",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/ui.tsx:PlanningNotice",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/ui.tsx:PlanningNotice",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/ui.tsx:DocCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/ui.tsx:DocCard",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/ui.tsx:MissingDocsState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/planning/ui.tsx:MissingDocsState",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "target": "function:clients/web-raptix/src/features/projects/api/projects-real.ts:createRealProjectsApi",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "target": "function:clients/web-raptix/src/features/projects/api/projects-real.ts:createRealProjectsApi",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "target": "function:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx:TextField",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "target": "function:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx:RealNewProjectModal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "target": "function:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx:RealNewProjectModal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "target": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:MetricBox",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "target": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:ProjectCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "target": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:ListRow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "target": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:RealProjectsHome",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "target": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:RealProjectsHome",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:startRead",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:createProjectReal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:createProjectReal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:updateProjectReal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:updateProjectReal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:reloadProjects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:reloadProjects",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:reloadProject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:reloadProject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:useRealProjects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:useRealProjects",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:useRealProject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:useRealProject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatPublicCount",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatPublicCount",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatUpdatedAt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatUpdatedAt",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:countByLifecycle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:countByLifecycle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:filterRealProjects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:filterRealProjects",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:validateCreateProjectDraft",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:validateCreateProjectDraft",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:targetValueError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/summary.ts",
+      "target": "function:clients/web-raptix/src/features/projects/summary.ts:getProjectRunSummary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/summary.ts",
+      "target": "function:clients/web-raptix/src/features/projects/summary.ts:getProjectRunSummary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/RealReports.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/RealReports.tsx:RealReports",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/RealReports.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/RealReports.tsx:RealReports",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:RiskScoreBlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:TableBlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:PhasesBlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:StepsBlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:BlockView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:ReportSectionView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportDocument.tsx:ReportSectionView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportsTable.tsx:ReportsTable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ReportsTable.tsx:ReportsTable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:slugify",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:slugify",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildExportFilename",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildExportFilename",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildReportJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildReportJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:blockToMarkdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildReportMarkdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildReportMarkdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:exportReport",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:exportReport",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "target": "function:clients/web-raptix/src/features/reports/real-reports-api.ts:isExportFormat",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "target": "function:clients/web-raptix/src/features/reports/real-reports-api.ts:isExportFormat",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "target": "function:clients/web-raptix/src/features/reports/real-reports-api.ts:exportEngagement",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "target": "function:clients/web-raptix/src/features/reports/real-reports-api.ts:exportEngagement",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ui.tsx:CapabilityNotice",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ui.tsx",
+      "target": "function:clients/web-raptix/src/features/reports/ui.tsx:CapabilityNotice",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/RealSettings.tsx",
+      "target": "function:clients/web-raptix/src/features/settings/RealSettings.tsx:RealSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/RealSettings.tsx",
+      "target": "function:clients/web-raptix/src/features/settings/RealSettings.tsx:RealSettings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:loadSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:loadSettings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:saveSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:saveSettings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:deleteEngagement",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:deleteEngagement",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "target": "function:clients/web-raptix/src/features/settings/use-real-settings.ts:useRealSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "target": "function:clients/web-raptix/src/features/settings/use-real-settings.ts:useRealSettings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/RealVault.tsx",
+      "target": "function:clients/web-raptix/src/features/vault/RealVault.tsx:RealVault",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/RealVault.tsx",
+      "target": "function:clients/web-raptix/src/features/vault/RealVault.tsx:RealVault",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:listVaultSecrets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:listVaultSecrets",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:createVaultSecret",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:createVaultSecret",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:revealVaultSecret",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:revealVaultSecret",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:revokeVaultSecret",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:revokeVaultSecret",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:initialProjects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:useMockProjects",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:useMockProjects",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:getProjectPersistenceError",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:getProjectPersistenceError",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:createMockProject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:createMockProject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:updateMockProject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "function:clients/web-raptix/src/mocks/adapters/projects.ts:updateMockProject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/infrastructure/use-real-graph.ts",
+      "target": "file:clients/web-raptix/src/features/infrastructure/real-graph-api.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/infrastructure/use-real-graph.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/members/RealMembers.tsx",
+      "target": "file:clients/web-raptix/src/features/members/real-members-api.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/members/real-members-api.ts",
+      "target": "file:clients/web-raptix/src/app/config.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/members/real-members-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/members/real-members-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/http.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "target": "file:clients/web-raptix/src/features/operations-log/logs-view.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/RealLogs.tsx",
+      "target": "file:clients/web-raptix/src/features/operations-log/use-real-logs.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "target": "file:clients/web-raptix/src/app/config.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/http.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/operations-log/use-real-logs.ts",
+      "target": "file:clients/web-raptix/src/features/operations-log/real-logs-api.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "target": "file:clients/web-raptix/src/app/config.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/RealPlanning.tsx",
+      "target": "file:clients/web-raptix/src/shared/api/http.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "target": "file:clients/web-raptix/src/features/planning/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/planning/ui.tsx",
+      "target": "file:clients/web-raptix/src/features/planning/styles.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "target": "file:clients/web-raptix/src/app/config.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "target": "file:clients/web-raptix/src/features/projects/api/projects-api.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "target": "file:clients/web-raptix/src/shared/api/http.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "target": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealNewProjectModal.tsx",
+      "target": "file:clients/web-raptix/src/shared/ui/Dialog.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx",
+      "target": "file:clients/web-raptix/src/features/projects/real-project.types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "file:clients/web-raptix/src/features/projects/api/projects-api.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "file:clients/web-raptix/src/features/projects/api/projects-real.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/projects/summary.ts",
+      "target": "file:clients/web-raptix/src/features/agent-runs/model.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/RealReports.tsx",
+      "target": "file:clients/web-raptix/src/features/findings-evidence/findings-view.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/RealReports.tsx",
+      "target": "file:clients/web-raptix/src/features/findings-evidence/use-real-findings.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/RealReports.tsx",
+      "target": "file:clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportDocument.tsx",
+      "target": "file:clients/web-raptix/src/features/reports/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "target": "file:clients/web-raptix/src/features/reports/export.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "target": "file:clients/web-raptix/src/features/reports/styles.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "target": "file:clients/web-raptix/src/features/reports/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "target": "file:clients/web-raptix/src/features/reports/ui.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ReportsTable.tsx",
+      "target": "file:clients/web-raptix/src/mocks/fixtures/reports.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "file:clients/web-raptix/src/features/reports/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/export.ts",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "target": "file:clients/web-raptix/src/app/config.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/real-reports-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/reports/ui.tsx",
+      "target": "file:clients/web-raptix/src/components/Icons.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/RealSettings.tsx",
+      "target": "file:clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "file:clients/web-raptix/src/app/config.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/http.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "target": "file:clients/web-raptix/src/features/settings/real-settings-api.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/settings/use-real-settings.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/RealVault.tsx",
+      "target": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/RealVault.tsx",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "file:clients/web-raptix/src/app/config.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/errors.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/features/vault/real-vault-api.ts",
+      "target": "file:clients/web-raptix/src/shared/api/http.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/main.tsx",
+      "target": "file:clients/web-raptix/src/App.tsx",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/main.tsx",
+      "target": "file:clients/web-raptix/src/index.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "file:clients/web-raptix/src/mocks/fixtures/projects.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:clients/web-raptix/src/mocks/adapters/projects.ts",
+      "target": "file:clients/web-raptix/src/types.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/members/RealMembers.tsx:RealMembers",
+      "target": "function:clients/web-raptix/src/features/members/real-members-api.ts:loadMembers",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:RealLogs",
+      "target": "function:clients/web-raptix/src/features/operations-log/use-real-logs.ts:useRealLogs",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:RealLogs",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterTimeline",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:RealLogs",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterOptions",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:RealLogs",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:timelineSummary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:RealLogs",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:formatEntryTime",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:EntryModal",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:formatEntryTime",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/RealLogs.tsx:EntryModal",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:entryProvenance",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:filterTimeline",
+      "target": "function:clients/web-raptix/src/features/operations-log/logs-view.ts:entrySearchText",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/operations-log/use-real-logs.ts:useRealLogs",
+      "target": "function:clients/web-raptix/src/features/operations-log/real-logs-api.ts:loadTimeline",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:ProjectCard",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatUpdatedAt",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:ListRow",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatPublicCount",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:ListRow",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:formatUpdatedAt",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:RealProjectsHome",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:countByLifecycle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/projects/components/RealProjectsHome.tsx:RealProjectsHome",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:filterRealProjects",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:useRealProject",
+      "target": "function:clients/web-raptix/src/features/projects/hooks/use-real-projects.ts:reloadProject",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/projects/real-project.types.ts:validateCreateProjectDraft",
+      "target": "function:clients/web-raptix/src/features/projects/real-project.types.ts:targetValueError",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/reports/export.ts:buildExportFilename",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:slugify",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/reports/export.ts:buildReportMarkdown",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:blockToMarkdown",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/reports/export.ts:exportReport",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildExportFilename",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/reports/export.ts:exportReport",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildReportJson",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/reports/export.ts:exportReport",
+      "target": "function:clients/web-raptix/src/features/reports/export.ts:buildReportMarkdown",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/settings/RealSettings.tsx:RealSettings",
+      "target": "function:clients/web-raptix/src/features/settings/use-real-settings.ts:useRealSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/settings/use-real-settings.ts:useRealSettings",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:loadSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/settings/use-real-settings.ts:useRealSettings",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:saveSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/settings/use-real-settings.ts:useRealSettings",
+      "target": "function:clients/web-raptix/src/features/settings/real-settings-api.ts:deleteEngagement",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:clients/web-raptix/src/features/vault/RealVault.tsx:RealVault",
+      "target": "function:clients/web-raptix/src/features/vault/real-vault-api.ts:listVaultSecrets",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}
