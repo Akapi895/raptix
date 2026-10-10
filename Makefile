@@ -50,6 +50,12 @@ endef
 # here before any subprocess inherits the env.
 export RAPTIX_HOME ?= $(HOME)/.raptix
 
+# Host port the compose stack publishes LangGraph on. Compose reads .env
+# directly; plain Make does not, so extract it here (CRLF-safe) and forward it
+# in dev recipes. Keeps `make cli-dev` pointed at the started stack instead of
+# silently dialing the 2024 default.
+LANGGRAPH_HOST_PORT := $(or $(shell sed -n 's/^LANGGRAPH_PORT=[[:space:]]*//p' .env 2>/dev/null | tr -d '\r' | tail -1),2024)
+
 # Mirror the launcher's start.go credential mount logic so `make dev` (and any
 # other target that calls `docker compose`) populates the litellm container's
 # Claude Code + Codex CLI OAuth tokens without requiring users to run
@@ -194,7 +200,7 @@ cli-dev: infra
 	cd apps/cli && npm run build
 	cd apps/cli && npm run dev & TSC_PID=$$!; \
 	  trap "kill $$TSC_PID 2>/dev/null" EXIT INT TERM; \
-	  cd apps/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:2024} node --watch dist/index.js
+	  cd apps/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:$(LANGGRAPH_HOST_PORT)} node --watch dist/index.js
 
 ## New-stack web dashboard dev server (W20 replaces the retired legacy
 ## web-dev): build shared workspaces then run UI + API locally.
@@ -210,7 +216,7 @@ webraptix-dev: node-install
 # (smoke + dogfood) keeps ``$(COMPOSE)`` to mirror what end users run.
 infra:
 	@echo "[infra] Ensuring backend services are running..."
-	@$(COMPOSE_DEV) up -d --build postgres neo4j litellm langgraph sandbox
+	@$(COMPOSE_DEV) up -d --build postgres neo4j litellm langgraph sandbox skillogy
 
 # ── Quality gates ────────────────────────────────────────────────
 
@@ -387,6 +393,13 @@ health:
 	curl -sf http://localhost:$${WEB_PORT:-3000}/api/health >/dev/null 2>&1 \
 		&& echo "web:   OK (web-raptix stack on http://localhost:$${WEB_PORT:-3000})" \
 		|| echo "web:   SKIP (web-raptix stack not running — use make webraptix-up)"
+
+## Hydrate the reference corpus (PayloadsAllTheThings, trickest/cve, HackerOne
+## reports, ...) so research_cve / search_security_references return results
+## instead of an empty cache. Nothing else in the stack does this
+## automatically — run once per deployment, or after a reference repo moves.
+hydrate-references:
+	$(COMPOSE) exec -T langgraph python -m raptix.execution.tools.references.hydrate
 
 ## Full teardown: containers + volumes + .dogfood/. Destructive — also
 ## wipes the dogfood .env (API keys) so the next `make dogfood` starts

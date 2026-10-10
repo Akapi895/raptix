@@ -137,6 +137,7 @@ all = ["raptix[neo4j,telemetry,mcp]"]
 
 [project.scripts]
 raptix-cli = "raptix.cli.__main__:main"
+raptix-hydrate-references = "raptix.execution.tools.references.hydrate:main"
 raptix-kg-health = "raptix.execution.tools.research.health:main"
 raptix-mcp = "raptix.interfaces.mcp.__main__:main"
 
