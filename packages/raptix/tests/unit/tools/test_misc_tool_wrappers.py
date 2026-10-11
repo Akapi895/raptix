@@ -255,6 +255,7 @@ class TestListSessionRecordingsService:
 
         assert {t.name for t in EVIDENCE_TOOLS} == {
             "inspect_evidence",
+            "recheck_workspace_verification",
             "seal_evidence",
             "export_session_asciicast",
             "list_session_recordings",

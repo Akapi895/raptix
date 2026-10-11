@@ -641,3 +641,83 @@ async def test_workspace_finding_retains_pair_that_inspect_reports(monkeypatch) 
     )
     assert result["verification"]["outcome"] == "supported"
     assert "validated" not in node.props
+
+
+def _persisted_verification(remote):
+    from raptix.execution.tools.evidence.artifacts import record_verification, retain_capture
+
+    pr = retain_capture(
+        b"PROOF-MARKER body",
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+        producer="v",
+    )
+    cr = retain_capture(
+        b"baseline-ok body",
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+        producer="v",
+    )
+    return record_verification(
+        proof_ref=pr,
+        control_ref=cr,
+        success_patterns=["PROOF-MARKER"],
+        negative_patterns=["baseline-ok"],
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+        producer="v",
+    )
+
+
+def test_recheck_workspace_verification_rederives_from_persisted_file(monkeypatch) -> None:
+    from raptix.execution.tools.evidence.tools import recheck_workspace_verification
+
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    vref = _persisted_verification(remote)
+    transport.files["/workspace/acme/findings/evidence/FIND-001_verification.json"] = json.dumps(
+        {"validated": True, "verification_ref": vref}
+    ).encode()
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    config = {"configurable": {"sandbox_url": "http://x", "workspace_path": "/workspace/acme"}}
+    result = json.loads(
+        recheck_workspace_verification.invoke(
+            {
+                "finding_id": "FIND-001",
+                "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+            },
+            config=config,
+        )
+    )
+    assert result["verification"]["outcome"] == "supported"
+    assert result["finding_id"] == "FIND-001"
+
+
+def test_recheck_workspace_verification_reports_missing_ref(monkeypatch) -> None:
+    from raptix.execution.tools.evidence.tools import recheck_workspace_verification
+
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    transport.files["/workspace/acme/findings/evidence/FIND-002_verification.json"] = b"{}"
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    config = {"configurable": {"sandbox_url": "http://x", "workspace_path": "/workspace/acme"}}
+    result = json.loads(
+        recheck_workspace_verification.invoke(
+            {"finding_id": "FIND-002", "state": {"kg_engagement": "acme"}}, config=config
+        )
+    )
+    assert result["error"] == "no_verification_ref"
+
+
+def test_recheck_workspace_verification_rejects_unsafe_id() -> None:
+    from raptix.execution.tools.evidence.tools import recheck_workspace_verification
+
+    result = json.loads(recheck_workspace_verification.invoke({"finding_id": "../etc/passwd"}))
+    assert result["error"] == "invalid finding_id"
