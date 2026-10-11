@@ -8,7 +8,10 @@
   (observational tried-edge ledger), ADR-0037 (UKC phase is runtime state),
   ADR-0040 (mission context ownership), ADR-0041 (middleware cross-cutting only),
   `packages/raptix-core/raptix_core/types/capability.py`,
-  `docs/tool-optimization-implementation-plan.md`
+  `docs/tool-optimization-implementation-plan.md`,
+  `docs/architecture/state-ownership-inventory.md` (P0 state inventory,
+  added 2026-10-11 as a follow-up to this ADR — found a third and fourth
+  "Evidence"-shaped concept this ADR did not account for)
 
 ## Context
 
@@ -135,6 +138,10 @@ each document's claims against the current code (2026-10-11):
    is fixed on that frozen contract itself, with the
    `test_public_api_stability.py` manifest/count update and CHANGELOG entry
    the frozen-contract process already requires — not via a new module.
+   `docs/architecture/state-ownership-inventory.md` §A additionally found
+   `specialist_contracts/evidence.py`'s `validate_evidence` — reuse its
+   positive-proof-vs-negative-control verification technique for the
+   "supported vs. contradicted" step rather than inventing a second one.
 
 3. **No RoE test-coverage PR.** Finding 6 shows the delegation path is
    already covered by `test_roe.py::TestSlotRegistration` plus the
