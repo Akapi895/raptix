@@ -46,6 +46,9 @@ every downstream decision.
    proof and rejection reason so the next agent can distinguish a false
    hypothesis from an environment fault.
 6. Return a terse ledger: ``verified N/M; rejected M; evidence: <paths>``.
+7. Any persisted verification can be re-checked later with
+   ``recheck_workspace_verification(finding_id)``: it re-derives the differential
+   outcome from the retained proof/control captures without re-running the PoC.
 </OPERATING_LOOP>
 
 <PROOF_QUALITY>

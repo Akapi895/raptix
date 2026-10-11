@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Any
@@ -421,8 +422,86 @@ def _inspect_captured_source(
     return captured_source
 
 
+_VERIFICATION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
+
+
+@tool
+def recheck_workspace_verification(
+    finding_id: str,
+    config: RunnableConfig,
+    state: Annotated[dict | None, InjectedState] = None,
+) -> str:
+    """Re-derive a persisted differential verification from retained captures.
+
+    The verifier persists ``validate_workspace_finding``'s result (including
+    ``verification_ref``) at ``findings/evidence/<finding>_verification.json``.
+    This re-resolves that reference and re-runs the proof/control differential
+    over the retained captures, so the outcome survives even if the original
+    response output was overwritten. Read-only: it never sets ``Finding.validated``
+    and never promotes a security claim.
+
+    Args:
+        finding_id: The id used for the verification file (e.g. ``FIND-001``).
+    """
+    from raptix.execution.backends.factory import build_sandbox_backend
+    from raptix.execution.tools.evidence.artifacts import (
+        MAX_DESCRIPTOR_BYTES,
+        resolve_verification,
+        verify_capture_pair,
+    )
+    from raptix.middleware.filesystem import _normalize_engagement_workspace
+
+    if not _VERIFICATION_ID.fullmatch(finding_id or ""):
+        return _json({"error": "invalid finding_id"})
+    configurable = (config or {}).get("configurable") or {}
+    scope = state or {}
+    workspace = _normalize_engagement_workspace(
+        configurable.get("workspace_path") or scope.get("workspace_path")
+    )
+    engagement = scope.get("kg_engagement") or scope.get("engagement_name")
+    url = configurable.get("sandbox_url")
+    if not workspace or not url or not engagement:
+        return _json({"error": "missing_run_context"})
+
+    run_config = {**(config or {}), "configurable": {**configurable, "sandbox_url": url}}
+    sandbox = build_sandbox_backend(run_config)
+    path = f"{workspace}/findings/evidence/{finding_id}_verification.json"
+    files = sandbox.download_files([path], workspace_path=workspace, max_bytes=MAX_DESCRIPTOR_BYTES)
+    if len(files) != 1 or files[0].error:
+        reason = files[0].error if files else "transfer_failed"
+        return _json({"finding_id": finding_id, "error": reason})
+    try:
+        payload = json.loads(files[0].content or b"")
+    except (TypeError, ValueError):
+        return _json({"finding_id": finding_id, "error": "invalid_verification_json"})
+    reference = payload.get("verification_ref") if isinstance(payload, dict) else None
+    if not isinstance(reference, str) or not reference:
+        return _json({"finding_id": finding_id, "error": "no_verification_ref"})
+    record = resolve_verification(
+        reference, sandbox=sandbox, workspace=workspace, engagement=engagement
+    )
+    if "error" in record:
+        return _json(
+            {
+                "finding_id": finding_id,
+                "verification": {"outcome": "inconclusive", "reason": record["error"]},
+            }
+        )
+    outcome = verify_capture_pair(
+        proof_ref=record["proof_ref"],
+        control_ref=record["control_ref"],
+        success_patterns=record.get("success_patterns") or [],
+        negative_patterns=record.get("negative_patterns") or [],
+        sandbox=sandbox,
+        workspace=workspace,
+        engagement=engagement,
+    )
+    return _json({"finding_id": finding_id, "verification": outcome})
+
+
 EVIDENCE_TOOLS = [
     inspect_evidence,
+    recheck_workspace_verification,
     seal_evidence,
     export_session_asciicast,
     list_session_recordings,
