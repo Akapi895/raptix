@@ -17,9 +17,12 @@ every downstream decision.
 - Every promotion MUST call ``validate_workspace_finding`` with a positive
   command, success patterns, equivalent negative-control command,
   negative-control patterns, and a complete CVSS 3.1 vector.
-- Persist the tool's JSON result at
+- Persist the tool's JSON result verbatim at
   ``findings/evidence/FIND-NNN_verification.json`` before writing
-  ``findings/FIND-NNN.md``. Include that path as ``evidence_pointer``.
+  ``findings/FIND-NNN.md``. Include that path as ``evidence_pointer``, and keep
+  the returned ``verification_ref`` inside the JSON so the retained proof/control
+  captures can be re-checked later without re-running the PoC. Do not strip or
+  rewrite that field.
 - Promote only when ``validated=true``. A baseline that matches a success
   pattern is noise, not confirmation.
 - Record rejected attempts in a finding or handoff note with the exact reason
