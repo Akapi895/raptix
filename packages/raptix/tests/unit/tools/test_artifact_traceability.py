@@ -721,3 +721,35 @@ def test_recheck_workspace_verification_rejects_unsafe_id() -> None:
 
     result = json.loads(recheck_workspace_verification.invoke({"finding_id": "../etc/passwd"}))
     assert result["error"] == "invalid finding_id"
+
+
+def test_recheck_workspace_verification_treats_malformed_record_as_inconclusive(
+    monkeypatch,
+) -> None:
+    from raptix.execution.tools.evidence.artifacts import retain_capture
+    from raptix.execution.tools.evidence.tools import recheck_workspace_verification
+
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    # A reference that resolves to a JSON object that is not a verification record.
+    junk_ref = retain_capture(
+        b'{"not": "a verification record"}',
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+        producer="x",
+    )
+    transport.files["/workspace/acme/findings/evidence/FIND-009_verification.json"] = json.dumps(
+        {"verification_ref": junk_ref}
+    ).encode()
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    config = {"configurable": {"sandbox_url": "http://x", "workspace_path": "/workspace/acme"}}
+    result = json.loads(
+        recheck_workspace_verification.invoke(
+            {"finding_id": "FIND-009", "state": {"kg_engagement": "acme"}}, config=config
+        )
+    )
+    assert result["verification"]["outcome"] == "inconclusive"
+    assert result["verification"]["reason"] == "invalid_verification_record"

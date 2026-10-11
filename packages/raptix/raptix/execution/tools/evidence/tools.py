@@ -340,6 +340,68 @@ def inspect_evidence(
     return _json(result)
 
 
+def _evidence_scope(state: dict | None, configurable: dict) -> tuple[str | None, str | None]:
+    """Resolve the scoped (workspace, sandbox_url) from run config / state."""
+    from raptix.middleware.filesystem import _normalize_engagement_workspace
+
+    workspace = _normalize_engagement_workspace(
+        configurable.get("workspace_path") or (state or {}).get("workspace_path")
+    )
+    return workspace, configurable.get("sandbox_url")
+
+
+def _scoped_sandbox(config: RunnableConfig, configurable: dict, url: str) -> Any:
+    from raptix.execution.backends.factory import build_sandbox_backend
+
+    return build_sandbox_backend(
+        {**(config or {}), "configurable": {**configurable, "sandbox_url": url}}
+    )
+
+
+def _rederive_verification_outcome(
+    reference: Any, *, sandbox: Any, workspace: str, engagement: str
+) -> dict[str, Any]:
+    """Resolve a verification reference and re-derive its differential outcome.
+
+    Shared by the KG consumer (``_inspect_verification``) and the workspace
+    consumer (``recheck_workspace_verification``). References and records are
+    untrusted: anything malformed, missing or drifted is inconclusive, never a
+    promotion.
+    """
+    from raptix.execution.tools.evidence.artifacts import resolve_verification, verify_capture_pair
+
+    def inconclusive(reason: str) -> dict[str, Any]:
+        return {"outcome": "inconclusive", "reason": reason}
+
+    try:
+        record = resolve_verification(
+            reference, sandbox=sandbox, workspace=workspace, engagement=engagement
+        )
+    except Exception as exc:  # noqa: BLE001 — an untrusted reference cannot promote a claim
+        return inconclusive(f"inspection_failed:{type(exc).__name__}")
+    if "error" in record:
+        failure = inconclusive(record["error"])
+        if "integrity" in record:
+            failure["integrity"] = record["integrity"]
+        return failure
+    proof_ref = record.get("proof_ref")
+    control_ref = record.get("control_ref")
+    if not all(isinstance(value, str) and value for value in (proof_ref, control_ref)):
+        return inconclusive("invalid_verification_record")
+    try:
+        return verify_capture_pair(
+            proof_ref=proof_ref,
+            control_ref=control_ref,
+            success_patterns=record.get("success_patterns") or [],
+            negative_patterns=record.get("negative_patterns") or [],
+            sandbox=sandbox,
+            workspace=workspace,
+            engagement=engagement,
+        )
+    except Exception as exc:  # noqa: BLE001 — an untrusted reference cannot promote a claim
+        return inconclusive(f"inspection_failed:{type(exc).__name__}")
+
+
 def _inspect_verification(
     reference: str,
     config: RunnableConfig,
@@ -347,38 +409,16 @@ def _inspect_verification(
     configurable: dict,
     engagement: str | None,
 ) -> dict[str, Any]:
-    from raptix.execution.backends.factory import build_sandbox_backend
-    from raptix.execution.tools.evidence.artifacts import resolve_verification, verify_capture_pair
-    from raptix.middleware.filesystem import _normalize_engagement_workspace
-
-    workspace = _normalize_engagement_workspace(
-        configurable.get("workspace_path") or (state or {}).get("workspace_path")
-    )
-    url = configurable.get("sandbox_url")
+    workspace, url = _evidence_scope(state, configurable)
     if not workspace or not url or not engagement:
         return {"outcome": "inconclusive", "reason": "missing_run_context"}
     try:
-        run_config = {**(config or {}), "configurable": {**configurable, "sandbox_url": url}}
-        sandbox = build_sandbox_backend(run_config)
-        record = resolve_verification(
-            reference, sandbox=sandbox, workspace=workspace, engagement=engagement
-        )
-        if "error" in record:
-            failure: dict[str, Any] = {"outcome": "inconclusive", "reason": record["error"]}
-            if "integrity" in record:
-                failure["integrity"] = record["integrity"]
-            return failure
-        return verify_capture_pair(
-            proof_ref=record["proof_ref"],
-            control_ref=record["control_ref"],
-            success_patterns=record.get("success_patterns") or [],
-            negative_patterns=record.get("negative_patterns") or [],
-            sandbox=sandbox,
-            workspace=workspace,
-            engagement=engagement,
-        )
+        sandbox = _scoped_sandbox(config, configurable, url)
     except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
         return {"outcome": "inconclusive", "reason": f"inspection_failed:{type(exc).__name__}"}
+    return _rederive_verification_outcome(
+        reference, sandbox=sandbox, workspace=workspace, engagement=engagement
+    )
 
 
 def _inspect_captured_source(
@@ -423,6 +463,9 @@ def _inspect_captured_source(
 
 
 _VERIFICATION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
+# The verifier persists validate_workspace_finding's result under this directory
+# (see intelligence/prompts/plugins/verifier.md); keep reader and prompt in step.
+_VERIFICATION_EVIDENCE_DIR = "findings/evidence"
 
 
 @tool
@@ -443,30 +486,27 @@ def recheck_workspace_verification(
     Args:
         finding_id: The id used for the verification file (e.g. ``FIND-001``).
     """
-    from raptix.execution.backends.factory import build_sandbox_backend
-    from raptix.execution.tools.evidence.artifacts import (
-        MAX_DESCRIPTOR_BYTES,
-        resolve_verification,
-        verify_capture_pair,
-    )
-    from raptix.middleware.filesystem import _normalize_engagement_workspace
+    from raptix.execution.tools.evidence.artifacts import MAX_DESCRIPTOR_BYTES
 
     if not _VERIFICATION_ID.fullmatch(finding_id or ""):
         return _json({"error": "invalid finding_id"})
     configurable = (config or {}).get("configurable") or {}
     scope = state or {}
-    workspace = _normalize_engagement_workspace(
-        configurable.get("workspace_path") or scope.get("workspace_path")
-    )
+    workspace, url = _evidence_scope(scope, configurable)
     engagement = scope.get("kg_engagement") or scope.get("engagement_name")
-    url = configurable.get("sandbox_url")
     if not workspace or not url or not engagement:
         return _json({"error": "missing_run_context"})
-
-    run_config = {**(config or {}), "configurable": {**configurable, "sandbox_url": url}}
-    sandbox = build_sandbox_backend(run_config)
-    path = f"{workspace}/findings/evidence/{finding_id}_verification.json"
-    files = sandbox.download_files([path], workspace_path=workspace, max_bytes=MAX_DESCRIPTOR_BYTES)
+    try:
+        sandbox = _scoped_sandbox(config, configurable, url)
+    except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
+        return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
+    path = f"{workspace}/{_VERIFICATION_EVIDENCE_DIR}/{finding_id}_verification.json"
+    try:
+        files = sandbox.download_files(
+            [path], workspace_path=workspace, max_bytes=MAX_DESCRIPTOR_BYTES
+        )
+    except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
+        return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
     if len(files) != 1 or files[0].error:
         reason = files[0].error if files else "transfer_failed"
         return _json({"finding_id": finding_id, "error": reason})
@@ -477,24 +517,8 @@ def recheck_workspace_verification(
     reference = payload.get("verification_ref") if isinstance(payload, dict) else None
     if not isinstance(reference, str) or not reference:
         return _json({"finding_id": finding_id, "error": "no_verification_ref"})
-    record = resolve_verification(
+    outcome = _rederive_verification_outcome(
         reference, sandbox=sandbox, workspace=workspace, engagement=engagement
-    )
-    if "error" in record:
-        return _json(
-            {
-                "finding_id": finding_id,
-                "verification": {"outcome": "inconclusive", "reason": record["error"]},
-            }
-        )
-    outcome = verify_capture_pair(
-        proof_ref=record["proof_ref"],
-        control_ref=record["control_ref"],
-        success_patterns=record.get("success_patterns") or [],
-        negative_patterns=record.get("negative_patterns") or [],
-        sandbox=sandbox,
-        workspace=workspace,
-        engagement=engagement,
     )
     return _json({"finding_id": finding_id, "verification": outcome})
 
