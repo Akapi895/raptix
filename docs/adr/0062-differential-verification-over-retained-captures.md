@@ -42,15 +42,22 @@ and proof/control completion and exit status. A1 checks the requested ID against
 both the persisted JSON's `vuln_id` and the retained record. Legacy unbound
 records remain readable but cannot support a finding-specific A1 verdict.
 
-`inspect_evidence` remains an optional consumer for KG nodes already carrying a
-reference; no automatic workspace-to-KG copy or KG dependency is added.
+A second deterministic consumer, `record_workspace_finding(finding_id)`, bridges
+the workspace artifact to the graph when a caller asks for it: it reads the
+persisted JSON, confirms the finding binding, then upserts a `Finding` node whose
+props carry `verification_ref` and the current outcome snapshot. It writes
+nothing for a missing, foreign, malformed or unbound verification, or an
+unavailable store, and it never sets `Finding.validated`. This activates the KG
+consumer (`inspect_evidence`) deterministically instead of relying on the agent
+to hand-copy the reference. `plumbing/verification.py` stays graph-free; the
+graph write lives on the evidence surface.
 
 The verdict is scoped to this one differential observation. It never sets
 `Finding.validated`, changes the recorded-claims summary, or claims
 exploitability, CVSS, target liveness, or independent corroboration. Integrity
-is reported per side and is separate from the verdict. A1 adds a workspace
-recheck tool; it reuses capture storage and the strict validator rather than
-introducing another store or graph node model.
+is reported per side and is separate from the verdict. A1 and the promoter reuse
+capture storage and the strict validator rather than introducing another store
+or graph node model.
 
 ## Threat model
 
@@ -81,7 +88,9 @@ Provider coverage remains limited to `validate_workspace_finding`; the
 
 - Reuse only the existing boolean: loses the supported/contradicted/inconclusive
   distinction and the re-derivation over retained bytes.
-- Force the workspace verifier to write KG nodes: conflicts with its live
-  no-graph boundary. A1 rechecks the workspace artifact directly.
+- Make `validate_workspace_finding` itself write the graph: conflicts with its
+  live no-graph boundary; the deterministic promoter is a separate consumer.
+- Let the agent copy `verification_ref` onto a KG node by hand: model-dependent
+  and silently skipped; the promoter is deterministic.
 - Bind the pair directly on a new node type: expands the graph model for one
   relationship a props reference already carries.

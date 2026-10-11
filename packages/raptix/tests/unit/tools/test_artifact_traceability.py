@@ -944,3 +944,104 @@ def test_malformed_verification_fields_do_not_produce_a_verdict(monkeypatch, bad
     )
     assert result["verification"]["outcome"] == "inconclusive"
     assert result["verification"]["reason"] == "invalid_verification_record"
+
+
+def _fake_kgstore(monkeypatch):
+    from raptix_core.types.kg import KnowledgeGraph
+
+    graph = KnowledgeGraph()
+
+    class _Store:
+        def record_observations(self, observations, **scope):
+            for observation in observations:
+                graph.upsert_node(
+                    Node.make(
+                        NodeKind(observation["kind"]),
+                        observation["label"],
+                        key=observation["key"],
+                        **observation.get("props", {}),
+                    )
+                )
+            return {"created": len(observations), "merged": 0, "edges": 0, "revision": "r"}
+
+        def close(self) -> None:
+            return None
+
+    import raptix.knowledge.graph.store as store_module
+
+    monkeypatch.setattr(store_module.KGStore, "from_env", classmethod(lambda cls: _Store()))
+    return graph
+
+
+def test_record_workspace_finding_promotes_verification_into_kg(monkeypatch) -> None:
+    from raptix.execution.tools.evidence.tools import inspect_evidence, record_workspace_finding
+
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    vref = _persisted_verification(remote, finding_id="FIND-001")
+    transport.files["/workspace/acme/findings/evidence/FIND-001_verification.json"] = json.dumps(
+        {"vuln_id": "FIND-001", "verification_ref": vref}
+    ).encode()
+    graph = _fake_kgstore(monkeypatch)
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    config = {"configurable": {"sandbox_url": "http://x"}}
+    state = {"kg_engagement": "acme", "workspace_path": "/workspace/acme"}
+    result = json.loads(
+        record_workspace_finding.invoke({"finding_id": "FIND-001", "state": state}, config=config)
+    )
+    assert result["verification_outcome"] == "supported"
+    (node,) = graph.nodes.values()
+    assert node.kind == NodeKind.FINDING
+    assert node.props["verification_ref"] == vref
+    assert "validated" not in node.props
+    assert node.id == result["node_id"]
+
+    # The KG consumer now fires on the promoted node.
+    monkeypatch.setattr(
+        "raptix.execution.tools.reporting.kg_adapter.load_engagement_graph", lambda _: graph
+    )
+    inspected = json.loads(
+        inspect_evidence.invoke({"finding_id": node.id, "state": state}, config=config)
+    )
+    assert inspected["verification"]["outcome"] == "supported"
+
+
+@pytest.mark.parametrize(
+    "finding,payload",
+    [
+        ("FIND-404", None),
+        (
+            "FIND-002",
+            {"vuln_id": "FIND-001", "verification_ref": "workspace-evidence://" + "0" * 64},
+        ),
+        ("FIND-003", {"vuln_id": "FIND-003"}),
+    ],
+)
+def test_record_workspace_finding_writes_nothing_on_bad_input(
+    monkeypatch, finding, payload
+) -> None:
+    from raptix.execution.tools.evidence.tools import record_workspace_finding
+
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    if payload is not None:
+        transport.files[f"/workspace/acme/findings/evidence/{finding}_verification.json"] = (
+            json.dumps(payload).encode()
+        )
+    graph = _fake_kgstore(monkeypatch)
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    result = json.loads(
+        record_workspace_finding.invoke(
+            {
+                "finding_id": finding,
+                "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+            },
+            config={"configurable": {"sandbox_url": "http://x"}},
+        )
+    )
+    assert "error" in result
+    assert not graph.nodes
