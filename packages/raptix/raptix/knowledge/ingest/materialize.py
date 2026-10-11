@@ -13,6 +13,18 @@ understand:
 Both consumers skip ``parse.summary`` observations; neither mutates the
 input. Edges reference peers by ``to_key`` and are resolved after every
 node observation is upserted, so emit order never matters.
+
+``ParserRegistry`` stamps every observation with ``source_artifact_id``
+and ``parser_id`` (see ``registry.py``'s ``_stamp``) so a node written
+through either path carries a pointer back to the artifact and parser
+that produced it — the capability layer's provenance chain, not the
+KG's own ``created_by``/``source_episode_id`` fields that
+``KGStore.record_observations`` injects separately.
+``Observation.confidence`` is deliberately NOT propagated here: at
+least one parser (``slither_json``) already writes a domain-specific
+``props["confidence"]`` string (Slither's own Low/Medium/High rating),
+and overwriting that with the parser-confidence float would be a
+silent regression, not a provenance improvement.
 """
 
 from __future__ import annotations
@@ -25,6 +37,16 @@ from raptix_core.types.capability import Observation
 from raptix_core.types.kg import Edge, EdgeKind, KnowledgeGraph, Node, NodeKind
 
 _EDGE_RESERVED = {"to_key", "kind", "weight"}
+
+
+def _props_with_provenance(observation: Observation) -> dict[str, Any]:
+    """Observation ``props`` plus the parser-stamped artifact/parser pointers."""
+    props = dict(observation.data.get("props") or {})
+    if observation.source_artifact_id is not None:
+        props["source_artifact_id"] = observation.source_artifact_id
+    if observation.parser_id is not None:
+        props["parser_id"] = observation.parser_id
+    return props
 
 
 def apply_observations(graph: KnowledgeGraph, observations: Iterable[Observation]) -> None:
@@ -46,7 +68,7 @@ def apply_observations(graph: KnowledgeGraph, observations: Iterable[Observation
             NodeKind(observation.kind),
             str(data.get("label") or key),
             key=key,
-            **dict(data.get("props") or {}),
+            **_props_with_provenance(observation),
         )
         graph.upsert_node(node)
         key_to_id[key] = node.id
@@ -72,7 +94,9 @@ def apply_observations(graph: KnowledgeGraph, observations: Iterable[Observation
 
 def observations_to_records(observations: Iterable[Observation]) -> list[dict[str, Any]]:
     """Convert node observations into ``KGStore.record_observations`` dicts."""
-    return [
-        dict(observation.data, kind=observation.kind)
-        for observation in iter_node_observations(observations)
-    ]
+    records = []
+    for observation in iter_node_observations(observations):
+        record = dict(observation.data, kind=observation.kind)
+        record["props"] = _props_with_provenance(observation)
+        records.append(record)
+    return records

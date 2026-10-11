@@ -110,3 +110,18 @@ provenance chain from a reported `Finding` (#5) back to the `Observation`/
 `Artifact` that supports it (#7) and the tool-version chain that produced it
 (#9) does not exist end-to-end yet — that is the gap worth scoping next, not
 a new node type.
+
+**Update (2026-10-11):** the first leg of that chain is closed — see
+ADR-0049 finding 9 / decision 7. `knowledge/ingest/registry.py`'s
+`ParserRegistry` already stamps every `Observation` with
+`source_artifact_id`/`parser_id`; `knowledge/ingest/materialize.py` now
+carries both onto the materialized KG node's `props` (both the in-memory
+`apply_observations` path and the `KGStore.record_observations` path), so
+a `Finding`/`Vulnerability`/etc. node written through the Wave-T3
+auto-ingest path (#5) can be traced back to the `Artifact` (#7) that
+produced it. The second leg — `Artifact`→tool-version chain (#9) — is
+**not** closed: `capabilities/provenance.py`'s `build_execution_provenance`
+is still never called from either `Artifact` construction site
+(`middleware/kg_autoingest.py`, `execution/tools/research/ingest_services.py`
+— both checked directly), so an `Artifact` today carries `producer` (the
+agent role) but no tool/adapter/parser-version chain. That remains open.

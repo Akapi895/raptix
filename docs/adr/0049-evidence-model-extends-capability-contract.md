@@ -11,7 +11,11 @@
   `docs/tool-optimization-implementation-plan.md`,
   `docs/architecture/state-ownership-inventory.md` (P0 state inventory,
   added 2026-10-11 as a follow-up to this ADR — found a third and fourth
-  "Evidence"-shaped concept this ADR did not account for)
+  "Evidence"-shaped concept this ADR did not account for),
+  `packages/raptix/raptix/knowledge/ingest/materialize.py`,
+  `packages/raptix/raptix/knowledge/ingest/registry.py`,
+  `packages/raptix/tests/unit/knowledge/ingest/test_materialize.py` (P1
+  provenance-linking fix, added 2026-10-11, finding 9 / decision 7)
 
 ## Context
 
@@ -119,6 +123,23 @@ each document's claims against the current code (2026-10-11):
    failure edge traversable by the attack-chain planner." This was initially
    flagged as a schema smell during this review; re-reading ADR-0014 showed
    it is intentional and already justified. No action needed here.
+9. **A real provenance-linking gap, found while scoping
+   `docs/architecture/state-ownership-inventory.md`'s P1 follow-up.**
+   `knowledge/ingest/registry.py`'s `ParserRegistry._run` already stamps
+   every `Observation` with `source_artifact_id` and `parser_id` (via
+   `_stamp`) for the live Wave-T3 auto-ingest path
+   (`middleware/kg_autoingest.py` → `subfinder`/`dnsx`/`ffuf`/`masscan`/
+   `gobuster`). But `knowledge/ingest/materialize.py`'s two materializers —
+   `apply_observations` (in-memory `KnowledgeGraph`) and
+   `observations_to_records` (`KGStore.record_observations`, the real
+   write path) — both discarded `source_artifact_id`/`parser_id` before
+   the KG node was written: `apply_observations` only read
+   `data.get("props")`, and `observations_to_records` returned
+   `dict(observation.data, kind=observation.kind)`, neither of which
+   touches the `Observation` dataclass's own provenance fields. This is
+   not the legacy pre-T3 `knowledge/graph/ingest.py` adapter path
+   (nmap/httpx/nuclei/katana/arjun) — that path never constructs
+   `Observation` instances at all and is out of scope here.
 
 ## Decision
 
@@ -172,15 +193,38 @@ each document's claims against the current code (2026-10-11):
 6. **No change to `middleware/tried_edges.py`.** Finding 8 shows its
    `Candidate`-label reuse is deliberate and already governed by ADR-0014.
 
+7. **Implemented: propagate `source_artifact_id`/`parser_id` from
+   `Observation` into both materializers (finding 9).**
+   `knowledge/ingest/materialize.py` now builds node `props` through a
+   shared `_props_with_provenance` helper that copies the two fields onto
+   the node when the `Observation` carries them, in both
+   `apply_observations` and `observations_to_records`.
+   `Observation.confidence` is deliberately NOT propagated — at least one
+   parser (`slither_json`) already writes a domain-specific
+   `props["confidence"]` string (Low/Medium/High), and overwriting it with
+   the parser's float confidence would be a silent regression, not a
+   provenance improvement. Covered by
+   `packages/raptix/tests/unit/knowledge/ingest/test_materialize.py`
+   (10 cases: propagation on both materializers, the `confidence`
+   non-propagation + existing-value-preserved regression guard, omission
+   when unstamped, and non-mutation of the input `Observation`). Verified
+   against the existing suites that exercise this path end to end:
+   `test_registry.py`, `test_adapter_output_parsers.py`, and
+   `test_kg_autoingest.py` (87 tests total, all passing, no regressions).
+
 ## Threat model
 
 No guard rail is weakened and none is touched. This ADR makes no changes to
 `SafeCommand`, `EngagementContext`, `RoEGuardrailMiddleware`, egress
 enforcement, or any `.semgrep/raptix-no-*` rule — finding 6 confirms the
 existing RoE guard rail already covers the delegation path by construction,
-so no new test or code was needed there. Decisions 1, 2, 4, and 6 touch
+so no new test or code was needed there. Decisions 1, 2, 4, 6, and 7 touch
 knowledge-representation and middleware-adapter code only, not RoE/scope
-enforcement.
+enforcement. Decision 7's change is additive (two new optional `props`
+keys on nodes written through the Wave-T3 auto-ingest path) — it does not
+change `KGStore.record_observations`'s reserved-key stripping, which still
+only covers `engagement`/`firstseen`/`lastupdated`/`created_by`/
+`source_episode_id`.
 
 ## Consequences
 
@@ -203,10 +247,10 @@ enforcement.
   `Finding.status` lifecycle field are also not pursued — not deferred for
   later, but found during this ADR's own implementation pass to already be
   satisfied (PR1) or to lack any current consumer (`Finding.status`).
-- **Migration:** none. No code changes as a result of this ADR — both
-  decisions that looked like small implementation work (3, 4) resolved to
-  "already true" and "not yet justified" once checked against the live
-  code, not to new PRs.
+- **Migration:** none for decisions 1–6. Decision 7 is a small, additive
+  code change (see below) — no migration, since it only adds optional
+  `props` keys going forward; existing KG nodes written before this change
+  simply lack them.
 
 ## Alternatives considered
 
@@ -243,6 +287,15 @@ enforcement.
    `docs/graph-recommendation.md`,
    `docs/design/2026-10-11-exploitation-reasoning-epistemic-core.md`, and
    `docs/structure-review.md` (done alongside this ADR; see those files).
-3. No open action items. Decisions 3 and 4 closed as "already satisfied" /
-   "no current consumer" during this ADR's own implementation pass — see
-   findings 6 and 7.
+3. Decisions 3 and 4 closed as "already satisfied" / "no current consumer"
+   during this ADR's own implementation pass — see findings 6 and 7.
+4. [x] Propagate `Observation.source_artifact_id`/`parser_id` through
+   `knowledge/ingest/materialize.py` (finding 9 / decision 7) — done;
+   `docs/architecture/state-ownership-inventory.md`'s P1 follow-up
+   ("provenance linking") item is closed by this change for the
+   Finding/Artifact/parser-version leg. The remaining leg of that
+   follow-up — linking a `Finding`'s `source_artifact_id` forward to
+   `capabilities/provenance.py`'s tool/adapter/parser-version chain — is
+   not yet wired (that chain is built per-execution and not currently
+   attached to the `Artifact`/`Observation` it produced) and is left open
+   for a future pass, not claimed as done here.
