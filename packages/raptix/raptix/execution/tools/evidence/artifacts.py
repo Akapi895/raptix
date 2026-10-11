@@ -63,10 +63,16 @@ def retain_artifact(
     sandbox: Any,
     workspace: str,
     engagement: str,
-    parser_id: str,
-    parser_version: str,
+    parser_id: str | None = None,
+    parser_version: str | None = None,
 ) -> Artifact:
-    """Copy exact bytes and context; the descriptor digest is the opaque reference."""
+    """Copy exact bytes and context; the descriptor digest is the opaque reference.
+
+    ``parser_id``/``parser_version`` identify a deterministic re-parser when one
+    exists (the T3 registry). Legacy adapter producers pass ``None``: their
+    capture is retained and integrity-checked, but membership is not re-derived
+    here because the adapter and registry use different node identities.
+    """
     if not engagement or len(content) > MAX_CAPTURE_BYTES:
         raise EvidenceCaptureError("invalid_scope_or_oversized")
     retained = replace(artifact, sha256=hashlib.sha256(content).hexdigest())
@@ -113,35 +119,59 @@ def inspect_artifact_source(
             raise EvidenceCaptureError("descriptor_drift", integrity="drift")
         data = json.loads(descriptor)
         artifact = Artifact(artifact_ref=reference, **data["artifact"])
+        recorded_parser = node.props.get("parser_id")
         if (
             data["engagement"] != engagement
             or artifact.id != node.props.get("source_artifact_id")
-            or data["parser_id"] != node.props.get("parser_id")
+            or (
+                recorded_parser is not None and data.get("parser_id") not in (None, recorded_parser)
+            )
         ):
             raise EvidenceCaptureError("scope_or_artifact_mismatch")
         content = _read(sandbox, content_path, workspace, MAX_CAPTURE_BYTES)
         if hashlib.sha256(content).hexdigest() != artifact.sha256:
             raise EvidenceCaptureError("content_drift", integrity="drift")
         result.update(integrity="ok", sha256=artifact.sha256, size=len(content))
-        registry = default_registry()
-        # Bytes are verified intact (integrity stays "ok"); only the recorded
-        # parser version is gone, so the source check is inconclusive rather
-        # than reinterpreted under a newer parser.
-        parser = registry.get(data["parser_id"])
-        if parser is None or parser.parser_version != data["parser_version"]:
-            raise EvidenceCaptureError("parser_version_unavailable", integrity="ok")
-        outcome = registry.parse(artifact, content, expected_formats=(data["parser_id"],))
-        matched = any(
-            observation.kind == node.kind.value
-            and observation.data.get("key") == node.props.get("key")
-            for observation in outcome.observations
-        )
-        result["assessment"]["outcome"] = "supported" if matched else "contradicted"
-        result["assessment"]["parser_id"] = outcome.format_id
-        result["assessment"]["parser_version"] = outcome.parser_version
+        _assess_source(result, node, artifact, content, data)
     except EvidenceCaptureError as exc:
         result["integrity"] = exc.integrity
         result["assessment"]["reason"] = str(exc)
     except Exception as exc:  # noqa: BLE001 — inspection returns uncertainty, never promotes on failure
         result["assessment"]["reason"] = f"inspection_failed:{type(exc).__name__}"
     return result
+
+
+def _assess_source(
+    result: dict[str, Any], node: Node, artifact: Artifact, content: bytes, data: dict[str, Any]
+) -> None:
+    """Re-derive the recorded node identity from the retained bytes, or say why not.
+
+    Only a deterministic registry parser can re-derive identity. When the
+    capture's producer has none (legacy adapters), the capture is reported as
+    retained/integrity-checked but not source-assessed — never silently promoted.
+    """
+    parser_id = data.get("parser_id")
+    registry = default_registry()
+    parser = registry.get(parser_id) if isinstance(parser_id, str) and parser_id else None
+    if parser is None:
+        result["assessment"] = {
+            "scope": "capture_retention",
+            "outcome": "not_assessed",
+            "reason": "no_registered_parser",
+        }
+        return
+    if parser.parser_version != data.get("parser_version"):
+        # Bytes verified intact; only the recorded parser version is gone, so the
+        # source check is inconclusive rather than reinterpreted under a newer parser.
+        raise EvidenceCaptureError("parser_version_unavailable", integrity="ok")
+    outcome = registry.parse(artifact, content, expected_formats=(parser_id,))
+    matched = any(
+        observation.kind == node.kind.value and observation.data.get("key") == node.props.get("key")
+        for observation in outcome.observations
+    )
+    result["assessment"] = {
+        "scope": "scanner_output_membership",
+        "outcome": "supported" if matched else "contradicted",
+        "parser_id": outcome.format_id,
+        "parser_version": outcome.parser_version,
+    }

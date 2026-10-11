@@ -50,10 +50,13 @@ RoE, SafeCommand, HITL and egress are unchanged.
 
 Captures remain usable after the original scanner file is overwritten. They
 follow workspace retention/cleanup policy, add bounded storage per capture and
-are not backfilled for old nodes. Only registry auto-ingest gains capture wiring;
-the legacy graph-ingest path stays unchanged. HTTP scope/size options are additive;
-old servers fail closed for scoped transfers instead of silently ignoring them.
-Enable the flag only with an updated sandbox daemon.
+are not backfilled for old nodes. Both auto-ingest producers gain capture wiring:
+the registry path re-derives node identity from the bytes, while the legacy
+adapter path (nmap/httpx/nuclei/katana/arjun) retains the capture for
+integrity/traceability but reports `capture_retention`/`not_assessed` because the
+adapter and registry use different node identities. HTTP scope/size options are
+additive; old servers fail closed for scoped transfers instead of silently
+ignoring them. Enable the flag only with an updated sandbox daemon.
 
 ## Alternatives considered
 

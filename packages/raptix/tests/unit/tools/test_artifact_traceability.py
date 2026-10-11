@@ -107,27 +107,24 @@ def test_scoped_download_fails_closed_with_old_server() -> None:
         remote.download_files(["/workspace/a.txt"], workspace_path="/workspace", max_bytes=10)
 
 
-def test_server_rejects_download_outside_requested_workspace(monkeypatch, tmp_path) -> None:
+def test_server_rejects_download_outside_requested_workspace(tmp_path) -> None:
+    """The scoped-path guard refuses a path outside the requested workspace root.
+
+    Tested directly (order-independent, no route/backend): the route is a thin
+    call over this guard, and the daemon env may carry an engagement pin.
+    """
     from importlib import import_module
 
-    from fastapi.testclient import TestClient
-
-    from raptix.execution.sandbox.kernel.daemon import DaemonSandbox
+    from fastapi import HTTPException
 
     server = import_module("raptix.execution.sandbox.server.app")
-    # Exercise the explicit-workspace guard deterministically, independent of
-    # any engagement pin another test may leave in the daemon env.
-    monkeypatch.delenv("RAPTIX_ENGAGEMENT", raising=False)
     root = tmp_path / "active"
     root.mkdir()
     outside = tmp_path / "foreign.bin"
     outside.write_bytes(b"foreign evidence")
-    monkeypatch.setattr(server, "_get_backend", lambda: object.__new__(DaemonSandbox))
-    response = TestClient(server.app).post(
-        "/download_files",
-        json={"paths": [str(outside)], "workspace_path": str(root), "max_bytes": 100},
-    )
-    assert response.status_code == 403
+    with pytest.raises(HTTPException) as failure:
+        server._check_file_paths([str(outside)], str(root))
+    assert failure.value.status_code == 403
 
 
 @pytest.fixture
@@ -434,3 +431,92 @@ def test_capture_uses_state_partition_not_configurable_slug(retained_source, mon
         monkeypatch, node, config, {"kg_engagement": "acme", "workspace_path": "/workspace/acme"}
     )
     assert result["captured_source"]["assessment"]["outcome"] == "supported"
+
+
+_NMAP_XML = (
+    b'<nmaprun><host><status state="up"/>'
+    b'<address addr="10.0.0.1" addrtype="ipv4"/>'
+    b'<ports><port portid="80" protocol="tcp"><state state="open"/>'
+    b'<service name="http"/></port></ports></host></nmaprun>'
+)
+
+
+class _GraphStore:
+    """Minimal store that materializes observations into an in-memory graph."""
+
+    def __init__(self) -> None:
+        from raptix_core.types.kg import KnowledgeGraph
+
+        self.graph = KnowledgeGraph()
+
+    def record_observations(self, records, **scope):
+        for record in records:
+            self.graph.upsert_node(
+                Node.make(
+                    NodeKind(record["kind"]),
+                    record["label"],
+                    key=record["key"],
+                    **record.get("props", {}),
+                )
+            )
+        return {"created": len(records), "merged": 0, "edges": 0, "revision": "r"}
+
+
+def _legacy_scan(monkeypatch):
+    """Run the legacy nmap auto-ingest path over the memory transport."""
+    from types import SimpleNamespace
+
+    from langchain_core.messages import ToolMessage
+
+    from raptix.execution.backends.factory import build_sandbox_backend
+
+    transport = MemoryTransport()
+    transport.files["/workspace/acme/scan.xml"] = _NMAP_XML
+    config = {"configurable": {"sandbox_url": "http://traceability-acme"}}
+    remote = build_sandbox_backend(config)
+    remote._client = httpx.Client(
+        base_url="http://traceability-acme", transport=httpx.MockTransport(transport.handle)
+    )
+    monkeypatch.setattr(
+        remote, "ls_info", lambda _: [{"path": "/workspace/acme/scan.xml", "size": len(_NMAP_XML)}]
+    )
+    monkeypatch.setenv("RAPTIX_KG_AUTOINGEST", "1")
+    monkeypatch.setenv("RAPTIX_KG_EVIDENCE_CAPTURE", "1")
+    request = SimpleNamespace(
+        tool=SimpleNamespace(name="bash"),
+        runtime=SimpleNamespace(config=config),
+        state={"engagement_name": "acme", "workspace_path": "/workspace/acme"},
+        tool_call={
+            "id": "legacy-scan-1",
+            "args": {"command": "nmap -oX /workspace/acme/scan.xml 10.0.0.1"},
+        },
+    )
+    reply = ToolMessage(content="scan done\n[Exit code: 0]", tool_call_id="legacy-scan-1")
+
+    async def handler(_):
+        return reply
+
+    return transport, remote, _GraphStore(), request, reply, handler
+
+
+async def test_legacy_scanner_output_is_retained_and_inspectable(monkeypatch) -> None:
+    from raptix.execution.tools.evidence.artifacts import inspect_artifact_source
+    from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
+
+    transport, remote, store, request, reply, handler = _legacy_scan(monkeypatch)
+    returned = await KGAutoIngestMiddleware(
+        store=store, sandbox=remote, role="recon"
+    ).awrap_tool_call(request, handler)
+    assert returned is reply
+    node = next(node for node in store.graph.nodes.values() if node.kind == NodeKind.HOST)
+    assert node.props["source_artifact_ref"].startswith("workspace-evidence://")
+
+    # The original scan file is later overwritten; the capture must survive.
+    transport.files["/workspace/acme/scan.xml"] = b"<nmaprun/>"
+    result = inspect_artifact_source(
+        node, sandbox=remote, workspace="/workspace/acme", engagement="acme"
+    )
+    assert result["integrity"] == "ok"
+    assert result["size"] == len(_NMAP_XML)
+    assert result["assessment"]["outcome"] == "not_assessed"
+    assert result["assessment"]["scope"] == "capture_retention"
