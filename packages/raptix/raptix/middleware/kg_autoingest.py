@@ -70,6 +70,32 @@ def _capture_enabled() -> bool:
     return os.environ.get("RAPTIX_KG_EVIDENCE_CAPTURE", "0").lower() in {"1", "true", "yes"}
 
 
+class _CaptureStore:
+    """Delegate a store, stamping one capture reference onto every node written.
+
+    The legacy adapter path builds its observation dicts and writes them itself,
+    so a thin wrapper keeps adapters unchanged while giving every node the same
+    ``source_artifact_ref`` for the one scan that produced it.
+    """
+
+    def __init__(self, store: Any, extra_props: dict[str, Any]) -> None:
+        self._store = store
+        self._extra = extra_props
+
+    def record_observations(self, observations: Any, **scope: Any) -> Any:
+        for observation in observations:
+            if not isinstance(observation, dict):
+                continue
+            props = observation.setdefault("props", {})
+            if isinstance(props, dict):
+                for key, value in self._extra.items():
+                    props.setdefault(key, value)
+        return self._store.record_observations(observations, **scope)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._store, name)
+
+
 def _flag_value(args: list[str], flag: str) -> str | None:
     """Value immediately following the first (and only) occurrence of
     ``flag`` in ``args``, or ``None`` if it's absent or ambiguous."""
@@ -221,13 +247,42 @@ class KGAutoIngestMiddleware(AgentMiddleware):
                 workspace=workspace,
             )
             return
+        store: Any = self._store
+        if _capture_enabled():
+            from raptix.execution.tools.evidence.artifacts import retain_artifact
+
+            try:
+                retained = retain_artifact(
+                    Artifact(
+                        id=episode_id,
+                        artifact_ref=f"episode://{episode_id}/{kind}",
+                        format_hint=kind,
+                        producer=self._role,
+                    ),
+                    content,
+                    sandbox=sandbox,
+                    workspace=workspace,
+                    engagement=engagement,
+                )
+            except Exception as exc:  # noqa: BLE001 — retention failure preserves baseline ingestion
+                log.debug("Scanner capture unavailable (%s)", type(exc).__name__)
+            else:
+                # Legacy adapters use their own node identity, so the capture is
+                # retained for integrity/traceability but not source-assessed.
+                store = _CaptureStore(
+                    self._store,
+                    {
+                        "source_artifact_ref": retained.artifact_ref,
+                        "source_artifact_id": retained.id,
+                    },
+                )
         with tempfile.TemporaryDirectory(prefix="raptix-kg-") as directory:
             path = Path(directory) / "scan"
             path.write_bytes(content)
             outcome = ingest(
                 kind,
                 path,
-                store=self._store,
+                store=store,
                 engagement=engagement,
                 created_by=self._role,
                 source_episode_id=episode_id,
