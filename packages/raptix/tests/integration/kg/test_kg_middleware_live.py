@@ -12,6 +12,7 @@ import json
 from types import SimpleNamespace
 from typing import Any
 
+import pytest
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 
 from raptix.knowledge.graph.store import KGStore
@@ -32,6 +33,54 @@ def _fake_request(
 
     request.override = override  # type: ignore[attr-defined]
     return request
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+async def test_claim_context_reaches_model_after_external_graph_update(
+    kgstore: KGStore,
+    engagement: str,
+    monkeypatch: pytest.MonkeyPatch,
+    asynchronous: bool,
+) -> None:
+    monkeypatch.setenv("RAPTIX_KG_CLAIM_CONTEXT", "1")
+    middleware = KGMiddleware(store=kgstore)
+    state: dict[str, Any] = {"engagement_name": engagement}
+    initial = (
+        await middleware.abefore_agent(state, runtime=None)
+        if asynchronous
+        else middleware.before_agent(state, runtime=None)
+    )
+    state.update(initial or {})
+    worker_store = KGStore.from_env()
+    try:
+        worker_store.record_observations(
+            [{"kind": "Hypothesis", "key": "hypothesis::child", "label": "child-claim"}],
+            engagement=engagement,
+            created_by="analyst",
+            source_episode_id="child-turn",
+        )
+    finally:
+        worker_store.close()
+    refreshed = (
+        await middleware.abefore_model(state, runtime=None)
+        if asynchronous
+        else middleware.before_model(state, runtime=None)
+    )
+    state.update(refreshed or {})
+    request = _fake_request(state=state, system_message=SystemMessage(content="base prompt"))
+
+    async def async_handler(request: Any) -> SystemMessage:
+        return request.system_message
+
+    message = (
+        await middleware.awrap_model_call(request, async_handler)
+        if asynchronous
+        else middleware.wrap_model_call(request, lambda request: request.system_message)
+    )
+    text = str(message.content)
+    assert "child-claim" in text
+    assert '"episode": "child-turn"' in text
+    assert "No row is verified" in text
 
 
 def test_middleware_hydrates_state_from_engagement_name_live(
