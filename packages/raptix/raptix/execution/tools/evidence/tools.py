@@ -548,9 +548,119 @@ def recheck_workspace_verification(
     return _json({"finding_id": finding_id, "verification": outcome})
 
 
+@tool
+def record_workspace_finding(
+    finding_id: str,
+    config: RunnableConfig,
+    state: Annotated[dict | None, InjectedState] = None,
+) -> str:
+    """Promote a verified workspace finding into the engagement KG.
+
+    Deterministic bridge for the workspace-first verifier: read
+    ``findings/evidence/<finding>_verification.json``, confirm it belongs to
+    ``finding_id``, and upsert a ``Finding`` node carrying ``verification_ref``
+    so the KG consumer (``inspect_evidence``) can re-derive the differential
+    outcome. A missing, foreign, malformed or unbound verification — or an
+    unavailable graph store — writes nothing. Never sets ``Finding.validated``.
+
+    Args:
+        finding_id: The verification file's finding id (e.g. ``FIND-001``).
+    """
+    from raptix.execution.tools.evidence.artifacts import MAX_DESCRIPTOR_BYTES, resolve_verification
+    from raptix_core.types.kg import Node, NodeKind
+
+    if not _VERIFICATION_ID.fullmatch(finding_id or ""):
+        return _json({"error": "invalid finding_id"})
+    configurable = (config or {}).get("configurable") or {}
+    scope = state or {}
+    workspace, url = _evidence_scope(scope, configurable)
+    engagement = scope.get("kg_engagement") or scope.get("engagement_name")
+    if not workspace or not url or not engagement:
+        return _json({"error": "missing_run_context"})
+    try:
+        sandbox = _scoped_sandbox(config, configurable, url)
+    except Exception as exc:  # noqa: BLE001 — a failed bridge must not promote a claim
+        return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
+    path = f"{workspace}/{_VERIFICATION_EVIDENCE_DIR}/{finding_id}_verification.json"
+    try:
+        files = sandbox.download_files(
+            [path], workspace_path=workspace, max_bytes=MAX_DESCRIPTOR_BYTES
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
+    if len(files) != 1 or files[0].path != path:
+        return _json({"finding_id": finding_id, "error": "transfer_failed"})
+    if files[0].error:
+        return _json({"finding_id": finding_id, "error": files[0].error})
+    try:
+        payload = json.loads(files[0].content or b"")
+    except (TypeError, ValueError):
+        return _json({"finding_id": finding_id, "error": "invalid_verification_json"})
+    reference = payload.get("verification_ref") if isinstance(payload, dict) else None
+    if not isinstance(reference, str) or not reference:
+        return _json({"finding_id": finding_id, "error": "no_verification_ref"})
+    if payload.get("vuln_id") != finding_id:
+        return _json({"finding_id": finding_id, "error": "finding_binding_mismatch"})
+    record = resolve_verification(
+        reference, sandbox=sandbox, workspace=workspace, engagement=engagement
+    )
+    if "error" in record:
+        return _json({"finding_id": finding_id, "error": record["error"]})
+    outcome = _rederive_verification_outcome(
+        reference,
+        sandbox=sandbox,
+        workspace=workspace,
+        engagement=engagement,
+        finding_id=finding_id,
+    )
+    from raptix.knowledge.graph.store import (
+        KGStore,
+        KGStoreConfigError,
+        KGStoreUnavailableError,
+    )
+
+    try:
+        store = KGStore.from_env()
+    except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
+        return _json({"finding_id": finding_id, "error": f"kg_unavailable:{type(exc).__name__}"})
+    node_key = f"finding::{finding_id}"
+    observation = {
+        "kind": NodeKind.FINDING.value,
+        "key": node_key,
+        "label": finding_id,
+        "props": {
+            "verification_ref": reference,
+            "verification_outcome": outcome.get("outcome"),
+            "source": "workspace_verification",
+        },
+        "edges_out": [],
+    }
+    try:
+        written = store.record_observations(
+            [observation],
+            engagement=engagement,
+            created_by=str(scope.get("role") or "verifier"),
+            source_episode_id=f"record-finding::{finding_id}",
+        )
+    except Exception as exc:  # noqa: BLE001 — surface write failure, never a silent success
+        return _json({"finding_id": finding_id, "error": f"kg_write_failed:{type(exc).__name__}"})
+    finally:
+        store.close()
+    node_id = Node.make(NodeKind.FINDING, finding_id, key=node_key).id
+    return _json(
+        {
+            "finding_id": finding_id,
+            "node_id": node_id,
+            "verification_outcome": outcome.get("outcome"),
+            "graph": written,
+        }
+    )
+
+
 EVIDENCE_TOOLS = [
     inspect_evidence,
     recheck_workspace_verification,
+    record_workspace_finding,
     seal_evidence,
     export_session_asciicast,
     list_session_recordings,

@@ -52,6 +52,10 @@ every downstream decision.
 7. Any persisted verification can be re-checked later with
    ``recheck_workspace_verification(finding_id)``: it re-derives the differential
    outcome from the retained proof/control captures without re-running the PoC.
+8. When the confirmed finding should be visible in the engagement graph, call
+   ``record_workspace_finding(FIND-NNN)``: it reads the persisted verification and
+   upserts a ``Finding`` node carrying ``verification_ref`` deterministically.
+   It writes nothing when the verification is missing, foreign or malformed.
 </OPERATING_LOOP>
 
 <PROOF_QUALITY>
