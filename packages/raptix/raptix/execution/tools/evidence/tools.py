@@ -344,10 +344,12 @@ def _evidence_scope(state: dict | None, configurable: dict) -> tuple[str | None,
     """Resolve the scoped (workspace, sandbox_url) from run config / state."""
     from raptix.middleware.filesystem import _normalize_engagement_workspace
 
-    workspace = _normalize_engagement_workspace(
-        configurable.get("workspace_path") or (state or {}).get("workspace_path")
+    raw_workspace = configurable.get("workspace_path") or (state or {}).get("workspace_path")
+    workspace = (
+        _normalize_engagement_workspace(raw_workspace) if isinstance(raw_workspace, str) else None
     )
-    return workspace, configurable.get("sandbox_url")
+    url = configurable.get("sandbox_url")
+    return workspace, url if isinstance(url, str) and url else None
 
 
 def _scoped_sandbox(config: RunnableConfig, configurable: dict, url: str) -> Any:
@@ -359,7 +361,12 @@ def _scoped_sandbox(config: RunnableConfig, configurable: dict, url: str) -> Any
 
 
 def _rederive_verification_outcome(
-    reference: Any, *, sandbox: Any, workspace: str, engagement: str
+    reference: Any,
+    *,
+    sandbox: Any,
+    workspace: str,
+    engagement: str,
+    finding_id: str | None = None,
 ) -> dict[str, Any]:
     """Resolve a verification reference and re-derive its differential outcome.
 
@@ -384,6 +391,11 @@ def _rederive_verification_outcome(
         if "integrity" in record:
             failure["integrity"] = record["integrity"]
         return failure
+    if finding_id is not None:
+        if record.get("finding_id") != finding_id:
+            return inconclusive("finding_binding_mismatch")
+        if not isinstance(record.get("execution"), dict):
+            return inconclusive("missing_execution_context")
     proof_ref = record.get("proof_ref")
     control_ref = record.get("control_ref")
     if not all(isinstance(value, str) and value for value in (proof_ref, control_ref)):
@@ -397,6 +409,7 @@ def _rederive_verification_outcome(
             sandbox=sandbox,
             workspace=workspace,
             engagement=engagement,
+            execution=record.get("execution"),
         )
     except Exception as exc:  # noqa: BLE001 — an untrusted reference cannot promote a claim
         return inconclusive(f"inspection_failed:{type(exc).__name__}")
@@ -430,15 +443,11 @@ def _inspect_captured_source(
 ) -> dict[str, Any]:
     from raptix.execution.backends.factory import build_sandbox_backend
     from raptix.execution.tools.evidence.artifacts import inspect_artifact_source
-    from raptix.middleware.filesystem import _normalize_engagement_workspace
 
-    workspace = _normalize_engagement_workspace(
-        configurable.get("workspace_path") or (state or {}).get("workspace_path")
-    )
+    workspace, url = _evidence_scope(state, configurable)
     # Explicit run config only: an ambient SANDBOX_URL has no per-engagement
     # scope guarantee (a subagent would silently bind the process-wide daemon),
     # so its absence returns missing_run_context rather than resolving a capture.
-    url = configurable.get("sandbox_url")
     captured_source: dict[str, Any] = {
         "integrity": "unavailable",
         "assessment": {
@@ -507,8 +516,10 @@ def recheck_workspace_verification(
         )
     except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
         return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
-    if len(files) != 1 or files[0].error:
-        reason = files[0].error if files else "transfer_failed"
+    if len(files) != 1 or files[0].path != path:
+        return _json({"finding_id": finding_id, "error": "transfer_failed"})
+    if files[0].error:
+        reason = files[0].error
         return _json({"finding_id": finding_id, "error": reason})
     try:
         payload = json.loads(files[0].content or b"")
@@ -517,8 +528,22 @@ def recheck_workspace_verification(
     reference = payload.get("verification_ref") if isinstance(payload, dict) else None
     if not isinstance(reference, str) or not reference:
         return _json({"finding_id": finding_id, "error": "no_verification_ref"})
+    if payload.get("vuln_id") != finding_id:
+        return _json(
+            {
+                "finding_id": finding_id,
+                "verification": {
+                    "outcome": "inconclusive",
+                    "reason": "finding_binding_mismatch",
+                },
+            }
+        )
     outcome = _rederive_verification_outcome(
-        reference, sandbox=sandbox, workspace=workspace, engagement=engagement
+        reference,
+        sandbox=sandbox,
+        workspace=workspace,
+        engagement=engagement,
+        finding_id=finding_id,
     )
     return _json({"finding_id": finding_id, "verification": outcome})
 

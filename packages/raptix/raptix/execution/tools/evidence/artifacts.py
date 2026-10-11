@@ -146,11 +146,14 @@ def record_verification(
     workspace: str,
     engagement: str,
     producer: str,
+    finding_id: str | None = None,
+    execution: dict[str, Any] | None = None,
+    invocation_id: str | None = None,
 ) -> str:
     """Persist a proof/control pair and its patterns as one opaque reference.
 
-    A finding node carries this single ``verification_ref``; the consumer
-    re-derives the differential outcome from the two retained captures.
+    The persisted workspace result carries ``verification_ref``. Bound records
+    additionally identify the finding, invocation and both execution states.
     """
     record = json.dumps(
         {
@@ -158,6 +161,11 @@ def record_verification(
             "control_ref": control_ref,
             "success_patterns": list(success_patterns),
             "negative_patterns": list(negative_patterns),
+            **(
+                {"finding_id": finding_id, "execution": execution, "invocation_id": invocation_id}
+                if finding_id is not None
+                else {}
+            ),
         },
         sort_keys=True,
         ensure_ascii=True,
@@ -206,7 +214,19 @@ def resolve_verification(
         record = json.loads(content)
     except json.JSONDecodeError:
         return {"error": "invalid_verification_record"}
-    return record if isinstance(record, dict) else {"error": "invalid_verification_record"}
+    if (
+        not isinstance(record, dict)
+        or not all(
+            isinstance(record.get(key), str) and record[key] for key in ("proof_ref", "control_ref")
+        )
+        or not all(
+            isinstance(record.get(key), list)
+            and all(isinstance(pattern, str) for pattern in record[key])
+            for key in ("success_patterns", "negative_patterns")
+        )
+    ):
+        return {"error": "invalid_verification_record", "integrity": "ok"}
+    return record
 
 
 def verify_capture_pair(
@@ -218,6 +238,7 @@ def verify_capture_pair(
     sandbox: Any,
     workspace: str,
     engagement: str,
+    execution: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Differential source check on two retained captures.
 
@@ -245,9 +266,26 @@ def verify_capture_pair(
     if proof is None or control is None:
         result["reason"] = "capture_unavailable"
         return result
+    if execution is not None and (
+        not isinstance(execution, dict)
+        or not all(
+            isinstance(execution.get(side), dict)
+            and execution[side].get("complete") is True
+            and type(execution[side].get("exit_code")) is int
+            and execution[side]["exit_code"] == 0
+            for side in ("proof", "control")
+        )
+    ):
+        result["reason"] = "execution_incomplete_or_unsuccessful"
+        return result
+    try:
+        proof_text, control_text = proof.decode("utf-8"), control.decode("utf-8")
+    except UnicodeDecodeError:
+        result["reason"] = "non_text_capture"
+        return result
     validation = validate_evidence(
-        proof.decode("utf-8", "replace"),
-        control.decode("utf-8", "replace"),
+        proof_text,
+        control_text,
         success_patterns=list(success_patterns),
         negative_patterns=list(negative_patterns),
     )
@@ -256,7 +294,7 @@ def verify_capture_pair(
     result["noise_matches"] = list(validation.noise_matches)
     if validation.validated:
         result["outcome"] = "supported"
-    elif validation.noise_matches:
+    elif validation.noise_matches and validation.negative_matches:
         result["outcome"] = "contradicted"
     else:
         result["reason"] = "; ".join(validation.errors) or "insufficient_signal"

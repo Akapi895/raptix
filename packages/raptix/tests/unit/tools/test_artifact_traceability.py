@@ -565,6 +565,10 @@ def test_verify_capture_pair_maps_the_differential_outcome() -> None:
     assert contradicted["noise_matches"] == ["PROOF-MARKER"]
 
     assert _pair(remote, b"nothing here", b"baseline-ok body")["outcome"] == "inconclusive"
+    assert (
+        _pair(remote, b"PROOF-MARKER body", b"PROOF-MARKER without baseline")["outcome"]
+        == "inconclusive"
+    )
 
 
 def test_verify_capture_pair_is_inconclusive_when_a_capture_is_missing() -> None:
@@ -596,7 +600,7 @@ async def test_workspace_finding_retains_pair_that_inspect_reports(monkeypatch) 
     transport.commands["positive"] = "proof-marker found\n[Exit code: 0]"
     transport.commands["negative"] = "ordinary response\n[Exit code: 0]"
     remote = sandbox(transport)
-    monkeypatch.setattr(verify_module, "get_sandbox", lambda: remote)
+    monkeypatch.setattr(verify_module, "get_sandbox", lambda _config=None: remote)
     monkeypatch.setenv("RAPTIX_KG_EVIDENCE_CAPTURE", "1")
     raw = await verify_module.validate_workspace_finding.ainvoke(
         {
@@ -607,7 +611,8 @@ async def test_workspace_finding_retains_pair_that_inspect_reports(monkeypatch) 
             "negative_patterns": "ordinary response",
             "cvss_vector": _CVSS,
             "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
-        }
+        },
+        config={"configurable": {"sandbox_url": "http://traceability-acme"}},
     )
     produced = json.loads(raw)
     ref = produced["verification_ref"]
@@ -643,7 +648,7 @@ async def test_workspace_finding_retains_pair_that_inspect_reports(monkeypatch) 
     assert "validated" not in node.props
 
 
-def _persisted_verification(remote):
+def _persisted_verification(remote, finding_id="FIND-001", execution=None):
     from raptix.execution.tools.evidence.artifacts import record_verification, retain_capture
 
     pr = retain_capture(
@@ -669,6 +674,13 @@ def _persisted_verification(remote):
         workspace="/workspace/acme",
         engagement="acme",
         producer="v",
+        finding_id=finding_id,
+        execution=execution
+        if execution is not None
+        else {
+            "proof": {"exit_code": 0, "complete": True},
+            "control": {"exit_code": 0, "complete": True},
+        },
     )
 
 
@@ -679,7 +691,7 @@ def test_recheck_workspace_verification_rederives_from_persisted_file(monkeypatc
     remote = sandbox(transport)
     vref = _persisted_verification(remote)
     transport.files["/workspace/acme/findings/evidence/FIND-001_verification.json"] = json.dumps(
-        {"validated": True, "verification_ref": vref}
+        {"vuln_id": "FIND-001", "validated": True, "verification_ref": vref}
     ).encode()
     monkeypatch.setattr(
         "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
@@ -740,7 +752,7 @@ def test_recheck_workspace_verification_treats_malformed_record_as_inconclusive(
         producer="x",
     )
     transport.files["/workspace/acme/findings/evidence/FIND-009_verification.json"] = json.dumps(
-        {"verification_ref": junk_ref}
+        {"vuln_id": "FIND-009", "verification_ref": junk_ref}
     ).encode()
     monkeypatch.setattr(
         "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
@@ -750,6 +762,185 @@ def test_recheck_workspace_verification_treats_malformed_record_as_inconclusive(
         recheck_workspace_verification.invoke(
             {"finding_id": "FIND-009", "state": {"kg_engagement": "acme"}}, config=config
         )
+    )
+    assert result["verification"]["outcome"] == "inconclusive"
+    assert result["verification"]["reason"] == "invalid_verification_record"
+
+
+def _recheck_file(monkeypatch, transport, finding_id, payload):
+    from raptix.execution.tools.evidence.tools import recheck_workspace_verification
+
+    remote = sandbox(transport)
+    transport.files[f"/workspace/acme/findings/evidence/{finding_id}_verification.json"] = (
+        json.dumps(payload).encode()
+    )
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    return json.loads(
+        recheck_workspace_verification.invoke(
+            {
+                "finding_id": finding_id,
+                "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+            },
+            config={"configurable": {"sandbox_url": "http://x"}},
+        )
+    )
+
+
+@pytest.mark.parametrize("payload_id", ["FIND-001", "FIND-002"])
+def test_recheck_refuses_verification_copied_to_another_finding(monkeypatch, payload_id) -> None:
+    transport = MemoryTransport()
+    reference = _persisted_verification(sandbox(transport), finding_id="FIND-001")
+    result = _recheck_file(
+        monkeypatch,
+        transport,
+        "FIND-002",
+        {
+            "vuln_id": payload_id,
+            "verification_ref": reference,
+        },
+    )
+    assert result["verification"]["outcome"] == "inconclusive"
+    assert result["verification"]["reason"] == "finding_binding_mismatch"
+
+
+@pytest.mark.parametrize(
+    "execution",
+    [
+        {
+            "proof": {"exit_code": 1, "complete": True},
+            "control": {"exit_code": 0, "complete": True},
+        },
+        {
+            "proof": {"exit_code": 0, "complete": False},
+            "control": {"exit_code": 0, "complete": True},
+        },
+        {
+            "proof": {"exit_code": 0, "complete": True},
+            "control": {"exit_code": -1, "complete": False},
+        },
+    ],
+)
+def test_recheck_does_not_support_failed_or_incomplete_runs(monkeypatch, execution) -> None:
+    transport = MemoryTransport()
+    reference = _persisted_verification(sandbox(transport), execution=execution)
+    result = _recheck_file(
+        monkeypatch,
+        transport,
+        "FIND-001",
+        {
+            "vuln_id": "FIND-001",
+            "validated": True,
+            "verification_ref": reference,
+        },
+    )
+    assert result["verification"]["outcome"] == "inconclusive"
+    assert result["verification"]["integrity"] == {"proof": "ok", "control": "ok"}
+
+
+async def test_identical_command_strings_retain_both_invocations(monkeypatch) -> None:
+    from raptix.execution.tools.evidence.artifacts import resolve_verification, verify_capture_pair
+    from raptix.execution.tools.plumbing import verification as verifier
+
+    remote = sandbox(MemoryTransport())
+    replies = iter(["proof-marker\n[Exit code: 0]", "ordinary response\n[Exit code: 0]"])
+
+    async def execute(**kwargs):
+        return next(replies)
+
+    monkeypatch.setattr(remote, "execute_tmux_async", execute)
+    monkeypatch.setattr(verifier, "get_sandbox", lambda _config=None: remote)
+    monkeypatch.setenv("RAPTIX_KG_EVIDENCE_CAPTURE", "1")
+    produced = json.loads(
+        await verifier.validate_workspace_finding.ainvoke(
+            {
+                "finding_id": "FIND-001",
+                "poc_command": "same-command",
+                "success_patterns": "proof-marker",
+                "negative_command": "same-command",
+                "negative_patterns": "ordinary response",
+                "cvss_vector": _CVSS,
+                "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+            },
+            config={"configurable": {"sandbox_url": "http://run"}},
+        )
+    )
+    record = resolve_verification(
+        produced["verification_ref"], sandbox=remote, workspace="/workspace/acme", engagement="acme"
+    )
+    outcome = verify_capture_pair(
+        proof_ref=record["proof_ref"],
+        control_ref=record["control_ref"],
+        success_patterns=record["success_patterns"],
+        negative_patterns=record["negative_patterns"],
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+    )
+    assert outcome["outcome"] == "supported"
+
+
+def test_old_unbound_record_is_not_treated_as_finding_evidence(monkeypatch) -> None:
+    from raptix.execution.tools.evidence.artifacts import record_verification, retain_capture
+
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    proof = retain_capture(
+        b"PROOF-MARKER",
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+        producer="legacy",
+    )
+    control = retain_capture(
+        b"baseline-ok",
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+        producer="legacy",
+    )
+    reference = record_verification(
+        proof_ref=proof,
+        control_ref=control,
+        success_patterns=["PROOF-MARKER"],
+        negative_patterns=["baseline-ok"],
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+        producer="legacy",
+    )
+    result = _recheck_file(
+        monkeypatch, transport, "FIND-001", {"vuln_id": "FIND-001", "verification_ref": reference}
+    )
+    assert result["verification"]["outcome"] == "inconclusive"
+
+
+@pytest.mark.parametrize(
+    "bad_record",
+    [
+        {
+            "proof_ref": "x",
+            "control_ref": "y",
+            "success_patterns": "not-a-list",
+            "negative_patterns": [],
+        },
+        {"proof_ref": [], "control_ref": "y", "success_patterns": [], "negative_patterns": []},
+    ],
+)
+def test_malformed_verification_fields_do_not_produce_a_verdict(monkeypatch, bad_record) -> None:
+    from raptix.execution.tools.evidence.artifacts import retain_capture
+
+    transport = MemoryTransport()
+    reference = retain_capture(
+        json.dumps(bad_record).encode(),
+        sandbox=sandbox(transport),
+        workspace="/workspace/acme",
+        engagement="acme",
+        producer="test",
+    )
+    result = _recheck_file(
+        monkeypatch, transport, "FIND-001", {"vuln_id": "FIND-001", "verification_ref": reference}
     )
     assert result["verification"]["outcome"] == "inconclusive"
     assert result["verification"]["reason"] == "invalid_verification_record"

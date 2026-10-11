@@ -8,36 +8,49 @@
 
 ## Context
 
-`validate_workspace_finding` already runs a proof command and a mandatory
-baseline control, but it neither retains the two outputs nor reports a
-supported/contradicted/inconclusive verdict — it returns a validated boolean
-plus excerpts and asks the agent to persist the JSON itself. ADR-0061 added
-retained captures; this ADR binds a proof/control pair to that mechanism so a
-downstream consumer can re-derive the differential outcome.
+Before capture wiring, `validate_workspace_finding` ran proof/control commands
+but discarded their full runner outputs. It returns a compatibility boolean
+plus excerpts; the workspace-first verifier persists that JSON. ADR-0061's
+captures let a downstream consumer re-derive a differential outcome without
+requiring a new graph writer or a second verdict on the producer.
 
 ## Decision
 
-With `RAPTIX_KG_EVIDENCE_CAPTURE=1` and an engagement workspace on state, retain
+With `RAPTIX_KG_EVIDENCE_CAPTURE=1` and explicit sandbox/workspace run context, retain
 the proof and control outputs as captures and write one record that stores both
 references plus the success/negative patterns. The record's reference is
-returned additively as `verification_ref`; the agent puts it on the finding
-node's props (existing `kg_record` surface).
+returned additively as `verification_ref`; the agent persists the complete JSON
+at `findings/evidence/<finding_id>_verification.json` and references that file
+from the finding's `evidence_pointer`. The verifier has no `kg_record` tool.
 
-`inspect_evidence` resolves `verification_ref` and re-runs strict
+The primary consumer is A1's read-only `recheck_workspace_verification(finding_id)`.
+It resolves `verification_ref` and re-runs strict
 `specialist_contracts.evidence.validate_evidence` over the two captures:
 
 - **supported** — proof matches a success pattern, control matches a baseline
   pattern, and the control does not match any success pattern.
-- **contradicted** — the control also matched a success pattern.
+- **contradicted** — a valid baseline control also matched a success pattern.
 - **inconclusive** — a capture is missing or drifted, a pattern is invalid, the
-  baseline did not match, or the signal is insufficient.
+  baseline did not match, execution failed/timed out/truncated, or the signal is insufficient.
+
+Both commands must report complete output and exit code zero for either
+non-inconclusive verdict. The workspace producer uses the same strict signal
+criterion for its compatibility `validated` boolean; the global graph PoC
+validator is unchanged. Command invocations are captured in execution order,
+not keyed by command text. The record binds `finding_id`, an invocation ID,
+and proof/control completion and exit status. A1 checks the requested ID against
+both the persisted JSON's `vuln_id` and the retained record. Legacy unbound
+records remain readable but cannot support a finding-specific A1 verdict.
+
+`inspect_evidence` remains an optional consumer for KG nodes already carrying a
+reference; no automatic workspace-to-KG copy or KG dependency is added.
 
 The verdict is scoped to this one differential observation. It never sets
 `Finding.validated`, changes the recorded-claims summary, or claims
 exploitability, CVSS, target liveness, or independent corroboration. Integrity
-is reported per side and is separate from the verdict. No new tool or graph node
-model is introduced; the only new type is the delegating capture store wrapper
-(ADR-0061's legacy path), which forwards to the existing `KGStore`.
+is reported per side and is separate from the verdict. A1 adds a workspace
+recheck tool; it reuses capture storage and the strict validator rather than
+introducing another store or graph node model.
 
 ## Threat model
 
@@ -46,7 +59,11 @@ scope, path containment and size bounds are checked before any bytes are
 pattern-matched. Hashes detect drift, not authenticated provenance; a
 model-authored reference is not proof of execution or authorization. Retention
 is best-effort and flag-gated; failure leaves the verification result unchanged
-and simply omits the reference.
+and simply omits the reference. The finding reference must not be transplanted
+to another finding; digest integrity alone does not prove that binding. Producer
+and consumer use the run's explicit endpoint for capture operations, with no
+cross-engagement process-default fallback. Execution failures cannot become
+positive evidence solely because their output contains a matching marker.
 
 ## Consequences
 
@@ -54,7 +71,9 @@ A finding can carry a re-derivable differential check without an operator
 re-running the PoC, and the outcome is honest about missing/tampered evidence.
 The captured outputs are the runner's returned text (possibly truncated at the
 sandbox seam), not guaranteed raw bytes; the tool mandates `negative_command`
-and `negative_patterns`, and both are required for any non-inconclusive verdict.
+and `negative_patterns`. Output completeness is recorded conservatively; an
+unknown completion status cannot produce a positive finding. Persistence remains
+an agent-authored step; the recheck validates artifacts, not LLM compliance.
 Provider coverage remains limited to `validate_workspace_finding`; the
 `validate_finding` graph path is unchanged.
 
@@ -62,7 +81,7 @@ Provider coverage remains limited to `validate_workspace_finding`; the
 
 - Reuse only the existing boolean: loses the supported/contradicted/inconclusive
   distinction and the re-derivation over retained bytes.
-- Add a dedicated verification tool/store: unnecessary; the pair record rides
-  the ADR-0061 capture machinery and `inspect_evidence` is the existing consumer.
+- Force the workspace verifier to write KG nodes: conflicts with its live
+  no-graph boundary. A1 rechecks the workspace artifact directly.
 - Bind the pair directly on a new node type: expands the graph model for one
   relationship a props reference already carries.

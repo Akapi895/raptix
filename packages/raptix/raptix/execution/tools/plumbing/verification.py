@@ -5,12 +5,23 @@ from __future__ import annotations
 import json
 import os
 from typing import Annotated, Any
+from uuid import uuid4
 
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from raptix.execution.tools.bash.bash import get_sandbox
-from raptix.execution.tools.research.poc import parse_cvss_vector, sandbox_runner, validate_poc
+from raptix.execution.tools.research.poc import (
+    execution_status,
+    parse_cvss_vector,
+    sandbox_runner,
+    validate_poc,
+)
+from raptix.specialist_contracts.evidence import validate_evidence
+from raptix_core.utils.logging import get_logger
+
+log = get_logger("verification.workspace")
 
 
 def _patterns(raw: str) -> list[str]:
@@ -25,9 +36,11 @@ def _retain_verification_ref(
     *,
     state: dict[str, Any] | None,
     sandbox: Any,
-    commands: dict[str, tuple[str, str, int]],
-    poc_command: str,
-    negative_command: str,
+    outputs: list[tuple[str, str, int]],
+    finding_id: str,
+    execution: dict[str, Any],
+    workspace: str | None,
+    config: RunnableConfig,
     success_patterns: list[str],
     negative_patterns: list[str],
 ) -> str | None:
@@ -36,22 +49,18 @@ def _retain_verification_ref(
     Best-effort and flag-gated: any failure leaves the verification result
     unchanged and simply omits the reference.
     """
-    if not _capture_enabled() or not negative_command:
+    if not _capture_enabled() or len(outputs) != 2:
         return None
     from raptix.execution.tools.evidence.artifacts import record_verification, retain_capture
-    from raptix.middleware.filesystem import _normalize_engagement_workspace
 
     scope = state or {}
-    workspace = _normalize_engagement_workspace(scope.get("workspace_path"))
     engagement = scope.get("kg_engagement") or scope.get("engagement_name")
-    proof = commands.get(poc_command)
-    control = commands.get(negative_command)
+    proof, control = outputs
     if not (
         isinstance(workspace, str)
         and isinstance(engagement, str)
         and engagement
-        and proof is not None
-        and control is not None
+        and (config.get("configurable") or {}).get("sandbox_url")
     ):
         return None
     try:
@@ -78,8 +87,12 @@ def _retain_verification_ref(
             workspace=workspace,
             engagement=engagement,
             producer="validate_workspace_finding",
+            finding_id=finding_id,
+            execution=execution,
+            invocation_id=str(config.get("run_id") or uuid4()),
         )
-    except Exception:  # noqa: BLE001 — retention is best-effort over the result
+    except Exception as exc:  # noqa: BLE001 — retention is best-effort over the result
+        log.debug("Verification retention unavailable (%s)", type(exc).__name__)
         return None
 
 
@@ -91,6 +104,7 @@ async def validate_workspace_finding(
     negative_command: str,
     negative_patterns: str,
     cvss_vector: str,
+    config: RunnableConfig,
     state: Annotated[dict | None, InjectedState] = None,
 ) -> str:
     """Run a minimal PoC and its mandatory baseline control in the sandbox.
@@ -105,10 +119,11 @@ async def validate_workspace_finding(
     matches a success pattern, the baseline matches a baseline pattern, and the
     baseline does not match any success pattern.
 
-    With ``RAPTIX_KG_EVIDENCE_CAPTURE=1`` (and an engagement workspace on state)
-    the two outputs are retained and the JSON gains a ``verification_ref``; put
-    it on the finding node's props so ``inspect_evidence`` can re-derive the
-    differential outcome later.
+    With ``RAPTIX_KG_EVIDENCE_CAPTURE=1`` and explicit run context, retain both
+    runner outputs and include ``verification_ref`` in the JSON persisted at
+    ``findings/evidence/<finding_id>_verification.json``. A1 rechecks that file;
+    it does not require a KG node. Incomplete or unsuccessful execution cannot
+    validate a finding even when output contains a success marker.
     """
     required = {
         "finding_id": finding_id,
@@ -124,7 +139,19 @@ async def validate_workspace_finding(
             {"error": "mandatory verification fields are missing", "fields": empty},
             sort_keys=True,
         )
-    sandbox = get_sandbox()
+    from raptix.middleware.filesystem import _normalize_engagement_workspace
+
+    configurable = (config or {}).get("configurable") or {}
+    raw_workspace = configurable.get("workspace_path") or (state or {}).get("workspace_path")
+    if raw_workspace is not None and not isinstance(raw_workspace, str):
+        return json.dumps({"error": "invalid_workspace"}, sort_keys=True)
+    workspace = _normalize_engagement_workspace(raw_workspace)
+    if raw_workspace is not None and workspace is None:
+        return json.dumps({"error": "invalid_workspace"}, sort_keys=True)
+    url = configurable.get("sandbox_url")
+    if url is not None and (not isinstance(url, str) or not url):
+        return json.dumps({"error": "invalid_sandbox_url"}, sort_keys=True)
+    sandbox = get_sandbox(config) if url else get_sandbox()
     if sandbox is None:
         return json.dumps({"error": "HTTPSandbox not initialized"}, sort_keys=True)
     try:
@@ -138,12 +165,12 @@ async def validate_workspace_finding(
             {"error": "success_patterns and negative_patterns must each contain a pattern"},
             sort_keys=True,
         )
-    commands: dict[str, tuple[str, str, int]] = {}
-    base_runner = sandbox_runner(sandbox)
+    outputs: list[tuple[str, str, int]] = []
+    base_runner = sandbox_runner(sandbox, workspace_path=workspace)
 
     async def _capturing(command: str) -> tuple[str, str, int]:
         output = await base_runner(command)
-        commands[command] = output
+        outputs.append(output)
         return output
 
     result = await validate_poc(
@@ -156,12 +183,26 @@ async def validate_workspace_finding(
         cvss=cvss,
     )
     payload = result.to_dict()
+    proof, control = outputs
+    execution = {"proof": execution_status(proof), "control": execution_status(control)}
+    strict = validate_evidence(
+        f"{proof[0]}\n{proof[1]}",
+        f"{control[0]}\n{control[1]}",
+        success_patterns=positive,
+        negative_patterns=negative,
+    )
+    payload["validated"] = strict.validated and all(
+        step["complete"] and step["exit_code"] == 0 for step in execution.values()
+    )
+    payload["verification_execution"] = execution
     verification_ref = _retain_verification_ref(
         state=state,
         sandbox=sandbox,
-        commands=commands,
-        poc_command=poc_command,
-        negative_command=negative_command,
+        outputs=outputs,
+        finding_id=finding_id,
+        execution=execution,
+        workspace=workspace,
+        config=config,
         success_patterns=positive,
         negative_patterns=negative,
     )
