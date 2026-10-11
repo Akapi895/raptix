@@ -52,7 +52,7 @@ import hashlib
 import logging
 import re
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 from deepagents.backends.protocol import (
@@ -262,8 +262,10 @@ class HTTPSandbox(BaseSandbox):
             truncated=data.get("truncated", False),
         )
 
-    def upload_files(self, files: list[tuple[str, bytes]]) -> list[FileUploadResponse]:
-        payload = {
+    def upload_files(
+        self, files: list[tuple[str, bytes]], *, workspace_path: str | None = None
+    ) -> list[FileUploadResponse]:
+        payload: dict[str, Any] = {
             "files": [
                 {
                     "path": path,
@@ -272,21 +274,34 @@ class HTTPSandbox(BaseSandbox):
                 for path, data in files
             ]
         }
+        if workspace_path is not None:
+            payload["workspace_path"] = workspace_path
         response = self._request("post", "/upload_files", json=payload)
         data = response.json()
+        if workspace_path is not None and data.get("scope") != workspace_path:
+            raise SandboxError("sandbox did not acknowledge scoped upload")
 
         return [
             FileUploadResponse(path=item["path"], error=item.get("error")) for item in data["files"]
         ]
 
-    def download_files(self, paths: list[str]) -> list[FileDownloadResponse]:
-        response = self._request("post", "/download_files", json={"paths": paths})
+    def download_files(
+        self, paths: list[str], *, workspace_path: str | None = None, max_bytes: int | None = None
+    ) -> list[FileDownloadResponse]:
+        payload: dict[str, Any] = {"paths": paths}
+        if workspace_path is not None:
+            payload["workspace_path"] = workspace_path
+        if max_bytes is not None:
+            payload["max_bytes"] = max_bytes
+        response = self._request("post", "/download_files", json=payload)
         data = response.json()
+        if workspace_path is not None and data.get("scope") != workspace_path:
+            raise SandboxError("sandbox did not acknowledge scoped download")
 
         out: list[FileDownloadResponse] = []
         for item in data["files"]:
             content_b64 = item.get("data_b64")
-            content = base64.b64decode(content_b64) if content_b64 else None
+            content = base64.b64decode(content_b64) if content_b64 is not None else None
             out.append(
                 FileDownloadResponse(
                     path=item["path"],

@@ -1,4 +1,4 @@
-# 0050. Project recorded claims through the existing KG summary
+# 0060. Project recorded claims through the existing KG summary
 
 - **Status:** Proposed
 - **Date:** 2026-10-11
