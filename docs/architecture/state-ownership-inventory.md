@@ -119,9 +119,23 @@ carries both onto the materialized KG node's `props` (both the in-memory
 `apply_observations` path and the `KGStore.record_observations` path), so
 a `Finding`/`Vulnerability`/etc. node written through the Wave-T3
 auto-ingest path (#5) can be traced back to the `Artifact` (#7) that
-produced it. The second leg — `Artifact`→tool-version chain (#9) — is
-**not** closed: `capabilities/provenance.py`'s `build_execution_provenance`
-is still never called from either `Artifact` construction site
-(`middleware/kg_autoingest.py`, `execution/tools/research/ingest_services.py`
-— both checked directly), so an `Artifact` today carries `producer` (the
-agent role) but no tool/adapter/parser-version chain. That remains open.
+produced it.
+
+The second leg — `Artifact`→tool-version chain (#9) — was investigated
+(ADR-0049 finding 10 / decision 8) and found **structurally blocked, not
+merely unwired**: `capabilities/provenance.py` names its own intended
+caller as "the T7 adapters / T10 workers," but neither constructs a real
+`Artifact` anywhere in production code today. Every `execution/adapters/
+*.py` adapter only builds an `ExecutionSpec` (by design — adapters never
+execute or parse). `execution/workers/runner.py` (T10) only *receives* an
+`Artifact` on `PrimitiveOutcome`; `artifact_content=` has zero assignments
+outside that dataclass's own default anywhere in the runtime. The only two
+real `Artifact(` construction sites remain #10's `middleware/
+kg_autoingest.py` and `execution/tools/research/ingest_services.py` —
+neither is the caller `provenance.py` names, and neither has a downstream
+reader for a tool-version field. Wiring it there would repeat the
+"abstraction with no consumer" mistake this inventory and ADR-0049 already
+corrected twice (RoE test, `Finding.status`), just one layer deeper. This
+leg stays open until a real T7/T10 executor exists; it is not a "P1
+remaining work" item in the normal sense — it depends on unfinished T10
+infrastructure, not on more provenance-linking effort.

@@ -140,6 +140,35 @@ each document's claims against the current code (2026-10-11):
    not the legacy pre-T3 `knowledge/graph/ingest.py` adapter path
    (nmap/httpx/nuclei/katana/arjun) — that path never constructs
    `Observation` instances at all and is out of scope here.
+10. **The remaining provenance leg (`Artifact` → tool/adapter/parser-version
+    chain) cannot be closed yet — its own prerequisite does not exist in
+    any production code path.** `capabilities/provenance.py`'s own
+    docstring names its intended caller as "the T7 adapters / T10
+    workers." Traced both: `execution/adapters/*.py` (`CommandAdapter`
+    and every subclass — nmap, sqlmap, gobuster, nuclei, nikto, subfinder,
+    snmpwalk, john, slither, netexec, impacket, responder,
+    bloodhound_collect) only build an `ExecutionSpec` — by design, per
+    `base.py`'s module docstring, an adapter "never executes, never
+    parses output"; none constructs an `Artifact`.
+    `execution/workers/runner.py` (Wave T10, marked `✅ DONE` in
+    `docs/tool-optimization-implementation-plan.md`) only *receives* an
+    `Artifact` on `PrimitiveOutcome.artifact` — `artifact_content=` (the
+    paired raw bytes field) has zero assignments anywhere in
+    `packages/raptix/raptix/` outside the dataclass's own default
+    (`b""`), and the module's own docstring says "the real LLM-backed
+    planner plugs in later... the deterministic tests inject a scripted
+    one." T10 "done" means the bounded-worker loop and contract are
+    built and tested with injected doubles, not that a live sandbox
+    execution produces a real `Artifact` anywhere today. A repo-wide
+    grep for `Artifact(` construction (excluding tests) finds exactly one
+    production site: `execution/tools/research/ingest_services.py` —
+    which `provenance.py` does not name as its caller, and which (like
+    `kg_autoingest.py`) has zero downstream readers of a tool-version
+    field, the same "no consumer" trap findings 6 and 7 already hit
+    twice. Wiring provenance into either real `Artifact` construction
+    site would mean using `capabilities/provenance.py` outside its
+    documented scope to populate a field nothing reads — not completing
+    decision 7, but repeating the mistake decision 7 corrected.
 
 ## Decision
 
@@ -211,6 +240,15 @@ each document's claims against the current code (2026-10-11):
    against the existing suites that exercise this path end to end:
    `test_registry.py`, `test_adapter_output_parsers.py`, and
    `test_kg_autoingest.py` (87 tests total, all passing, no regressions).
+
+8. **No PR for the `Artifact` → tool-version leg, for a different reason
+   than decisions 3/4: not "no consumer" but "no producer."** Finding 10
+   shows the T7/T10 call sites `capabilities/provenance.py` names as its
+   intended caller do not construct `Artifact` instances in any production
+   path today. Revisit only once a real executor exists that turns an
+   `ExecutionSpec` + sandbox output into an `Artifact` — at that point,
+   wire `build_execution_provenance`/`provenance_for_tool` in at that
+   construction site, not into `kg_autoingest.py`/`ingest_services.py`.
 
 ## Threat model
 
@@ -291,11 +329,11 @@ only covers `engagement`/`firstseen`/`lastupdated`/`created_by`/
    during this ADR's own implementation pass — see findings 6 and 7.
 4. [x] Propagate `Observation.source_artifact_id`/`parser_id` through
    `knowledge/ingest/materialize.py` (finding 9 / decision 7) — done;
-   `docs/architecture/state-ownership-inventory.md`'s P1 follow-up
-   ("provenance linking") item is closed by this change for the
-   Finding/Artifact/parser-version leg. The remaining leg of that
-   follow-up — linking a `Finding`'s `source_artifact_id` forward to
-   `capabilities/provenance.py`'s tool/adapter/parser-version chain — is
-   not yet wired (that chain is built per-execution and not currently
-   attached to the `Artifact`/`Observation` it produced) and is left open
-   for a future pass, not claimed as done here.
+   closes the Finding→Observation/Artifact leg of
+   `docs/architecture/state-ownership-inventory.md`'s P1 follow-up.
+5. [x] Investigate the remaining leg (`Artifact`→tool-version chain,
+   finding 10 / decision 8) — not implemented, by design: its prerequisite
+   (a real executor constructing `Artifact` from T7/T10) does not exist in
+   production code yet. Not left open as "someone should get to this" —
+   left open as "this cannot be done correctly until T10's executor
+   wiring lands"; re-open only after that.
