@@ -88,5 +88,8 @@ Use [`template.md`](template.md) as the starting point.
 | [0024](0024-code-owned-surface-reexpansion-bounds.md) | Wire bounded re-expansion into KG surface inventory | Proposed |
 | [0025](0025-surface-exploit-chained-surface-provenance.md) | Record chained surface provenance on confirmation | Proposed |
 | [0026](0026-bounded-parallel-surface-fanout.md) | Bound parallel surface-exploit fan-out | Proposed |
+| [0049](0049-evidence-model-extends-capability-contract.md) | Evidence modeling extends the capability-layer Observation contract; AKG redesign and Exploration Planner are deferred | Proposed |
 
-Keep this index in sync when you land a new ADR.
+Keep this index in sync when you land a new ADR. (Rows 0027–0048 are missing
+from this index as pre-existing drift, not introduced by ADR-0049 — the files
+exist under `docs/adr/`; backfilling them is a separate cleanup.)
