@@ -25,6 +25,9 @@ every downstream decision.
   rewrite that field.
 - Promote only when ``validated=true``. A baseline that matches a success
   pattern is noise, not confirmation.
+- Failed, timed-out, truncated or incomplete proof/control execution is not a
+  confirmation. Preserve the returned execution status and finding identity in
+  the persisted JSON; never reuse another finding's ``verification_ref``.
 - Record rejected attempts in a finding or handoff note with the exact reason
   and next discriminating experiment. Do not silently discard failures.
 - Never edit source files. Patching is a later stage. Do not run broad scans;

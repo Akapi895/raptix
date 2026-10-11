@@ -274,8 +274,45 @@ POC_ERR_SANDBOX = "[SANDBOX_ERROR]"
 # 60s budget but can wedge — this guards against indefinite hangs.
 POC_RUNNER_TIMEOUT_SECONDS: float = 120.0
 
+_COMPLETED_OUTPUT = re.compile(
+    r"(?:^|\n)\[(?:Exit code:[ \t]*|Command completed with no output\. Exit code:[ \t]*)"
+    r"(-?\d+)[^\]\r\n]*\][ \t\r\n]*\Z"
+)
+_TRUNCATED_OUTPUT = re.compile(r"\[\.\.\. \d+ lines / \d+ chars truncated")
+_CWD_FOOTER = re.compile(r"\n\[cwd: [^\]\r\n]+\][ \t\r\n]*\Z")
+_INCOMPLETE_OUTPUT = (
+    "[TIMEOUT]",
+    "[SIZE LIMIT]",
+    "[AUTO-BACKGROUND]",
+    "[BACKGROUND]",
+    "[RUNNING]",
+    "[POC_TIMEOUT]",
+    "[SANDBOX_ERROR]",
+    "[session:",
+)
 
-def sandbox_runner(sandbox: Any, *, timeout: float | None = None) -> PoCRunner:
+
+def execution_status(output: tuple[str, str, int]) -> dict[str, Any]:
+    """Interpret native tmux completion once; callers decide validation policy."""
+    stdout, stderr, code = output
+    cwd = _CWD_FOOTER.search(stdout)
+    body = stdout[: cwd.start()] if cwd is not None else stdout
+    footer = _COMPLETED_OUTPUT.search(body)
+    # Successful nonempty tmux output omits Exit0 but ends in cwd. Nonzero
+    # completion carries an explicit exit footer immediately before cwd.
+    complete = (footer is not None or cwd is not None) and not stderr
+    complete = (
+        bool(complete)
+        and not _TRUNCATED_OUTPUT.search(stdout)
+        and not any(marker in stdout for marker in _INCOMPLETE_OUTPUT)
+    )
+    exit_code = int(footer[1]) if footer is not None else (0 if cwd is not None else code)
+    return {"complete": bool(complete), "exit_code": exit_code}
+
+
+def sandbox_runner(
+    sandbox: Any, *, timeout: float | None = None, workspace_path: str | None = None
+) -> PoCRunner:
     """Adapt an ``HTTPSandbox`` into a :data:`PoCRunner` callable.
 
     The sandbox must expose ``execute_tmux_async`` (or ``execute_tmux``) that
@@ -291,10 +328,11 @@ def sandbox_runner(sandbox: Any, *, timeout: float | None = None) -> PoCRunner:
 
     async def _run(command: str) -> tuple[str, str, int]:
         eff_timeout = timeout if timeout is not None else POC_RUNNER_TIMEOUT_SECONDS
+        workspace = {"workspace_path": workspace_path} if workspace_path is not None else {}
         try:
             if hasattr(sandbox, "execute_tmux_async"):
                 coro: Awaitable[str] = sandbox.execute_tmux_async(
-                    command=command, session="poc", timeout=60, is_input=False
+                    command=command, session="poc", timeout=60, is_input=False, **workspace
                 )
             else:
                 coro = asyncio.to_thread(
@@ -303,6 +341,7 @@ def sandbox_runner(sandbox: Any, *, timeout: float | None = None) -> PoCRunner:
                     session="poc",
                     timeout=60,
                     is_input=False,
+                    **workspace,
                 )
             out = await asyncio.wait_for(coro, timeout=eff_timeout)
         except asyncio.TimeoutError:
@@ -313,14 +352,7 @@ def sandbox_runner(sandbox: Any, *, timeout: float | None = None) -> PoCRunner:
             err_msg = f"{POC_ERR_SANDBOX} {type(e).__name__}: {e}"
             log.error("sandbox_runner failed: %s", err_msg)
             return "", err_msg, -1
-        code = 0
-        m = re.search(r"\[Exit code:\s*(-?\d+)", out)
-        if m:
-            try:
-                code = int(m.group(1))
-            except ValueError:
-                pass
-        return out, "", code
+        return out, "", execution_status((out, "", 0))["exit_code"]
 
     return _run
 
