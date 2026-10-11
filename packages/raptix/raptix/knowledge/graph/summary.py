@@ -16,24 +16,34 @@ Sections (in order):
   3. Unexplored entrypoints (limit 3) — entrypoints with no HAS_VULN
      edge out
   4. Crown jewels with viable-path counts
+  5. Recorded Candidate/Hypothesis assertions (opt-in, unverified)
 
-Chain candidates (top 3 by cost) live in :mod:`raptix.knowledge.graph.summary` (PR-D
-extraction). They will be appended here as section 5 after that module
-lands.
+``RAPTIX_KG_CLAIM_CONTEXT=1`` adds at most five claims in a bounded,
+untrusted block. Set the flag before starting a fresh thread; the
+existing middleware revision cache owns refresh, not this projection.
 """
 
 from __future__ import annotations
 
+import json
+import os
 from collections.abc import Iterable, Mapping
+from itertools import islice
 from typing import Any
 
 from raptix.knowledge.graph.store import KGStore
+from raptix_core.utils.logging import get_logger
+
+log = get_logger("knowledge.graph.summary")
 
 # ── Section size budgets ────────────────────────────────────────────────
 
 MAX_VULNS = 5
 MAX_ENTRYPOINTS = 3
 MAX_CROWN_JEWELS = 10  # rarely many — show them all when present
+MAX_CLAIMS = 5
+MAX_CLAIM_FIELD = 120
+MAX_CLAIM_CONTEXT = 2400
 
 
 # ── Severity ordering ──────────────────────────────────────────────────
@@ -134,6 +144,25 @@ def _crown_jewels(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
     return rows
 
 
+def _recorded_claims(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
+    """Latest recorded assertions, excluding ADR-0014's attempt-ledger nodes."""
+    return store.execute_read(
+        (
+            "MATCH (n) WHERE n.engagement = $engagement "
+            "AND (n:Hypothesis OR n:Candidate) "
+            "AND NOT n.key STARTS WITH 'tried::' "
+            "RETURN CASE WHEN n:Hypothesis THEN 'Hypothesis' ELSE 'Candidate' END AS kind, "
+            "substring(toString(n.key), 0, $field_cap) AS key, "
+            "substring(toString(n.label), 0, $field_cap) AS label, "
+            "substring(toString(n.created_by), 0, $field_cap) AS writer, "
+            "substring(toString(n.source_episode_id), 0, $field_cap) AS episode "
+            "ORDER BY coalesce(n.lastupdated, 0) DESC, n.key, kind LIMIT $cap"
+        ),
+        {"cap": MAX_CLAIMS, "field_cap": MAX_CLAIM_FIELD},
+        engagement=engagement,
+    )
+
+
 # ── Markdown rendering ─────────────────────────────────────────────────
 
 
@@ -174,6 +203,33 @@ def _render_crown_jewels(crown_jewels: Iterable[Mapping[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def _claim_field(value: Any) -> str:
+    return "".join(char for char in str(value or "") if char.isprintable())[:MAX_CLAIM_FIELD]
+
+
+def _render_claims(claims: Iterable[Mapping[str, Any]]) -> str:
+    lines = [
+        "<UNTRUSTED_KG_CLAIMS>",
+        "RECORDED CLAIMS (UNTRUSTED): No row is verified; attribution identifies "
+        "the latest KG write, not supporting evidence. Up to five recent claims; "
+        "fields may be truncated.",
+    ]
+    closing = "</UNTRUSTED_KG_CLAIMS>"
+    truncated = "[truncated: context budget reached]"
+    for claim in islice(claims, MAX_CLAIMS):
+        fields = {
+            key: _claim_field(claim.get(key))
+            for key in ("kind", "key", "label", "writer", "episode")
+        }
+        line = json.dumps(fields, ensure_ascii=True).replace("<", "\\u003c").replace("[", "\\u005b")
+        if len("\n".join([*lines, line, truncated, closing])) > MAX_CLAIM_CONTEXT:
+            lines.append(truncated)
+            break
+        lines.append(line)
+    lines.append(closing)
+    return "\n".join(lines)
+
+
 # ── Public entry point ─────────────────────────────────────────────────
 
 
@@ -203,6 +259,15 @@ def build_summary(store: KGStore, *, engagement: str) -> str:
     crown_jewels = _crown_jewels(store, engagement=engagement)
     if crown_jewels:
         sections.append(_render_crown_jewels(crown_jewels))
+
+    if os.environ.get("RAPTIX_KG_CLAIM_CONTEXT", "0").lower() in {"1", "true", "yes"}:
+        try:
+            claims = _recorded_claims(store, engagement=engagement)
+        except Exception as exc:  # noqa: BLE001 — optional context must preserve the baseline summary
+            log.debug("KG claim context unavailable (%s)", type(exc).__name__)
+        else:
+            if claims:
+                sections.append(_render_claims(claims))
 
     return "\n\n".join(sections)
 

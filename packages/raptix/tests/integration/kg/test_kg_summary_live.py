@@ -10,7 +10,10 @@ Skips when Neo4j is unreachable — same convention as the rest of
 
 from __future__ import annotations
 
+import json
 from typing import Any
+
+import pytest
 
 from raptix.knowledge.graph.store import KGStore
 from raptix.knowledge.graph.summary import (
@@ -95,15 +98,14 @@ def _populate(store: KGStore, engagement: str) -> None:
     # as a viable path.
     store.execute_write(
         (
-            "MATCH (e:Entrypoint {key: $ek, engagement: $eng}) "
-            "MATCH (c:CrownJewel {key: $ck, engagement: $eng}) "
+            "MATCH (e:Entrypoint {key: $ek, engagement: $engagement}) "
+            "MATCH (c:CrownJewel {key: $ck, engagement: $engagement}) "
             "MERGE (e)-[r:LEADS_TO]->(c) "
-            "ON CREATE SET r.engagement = $eng, r.firstseen = 1, r.lastupdated = 1"
+            "ON CREATE SET r.engagement = $engagement, r.firstseen = 1, r.lastupdated = 1"
         ),
         {
             "ek": f"entrypoint::unexplored::{engagement}",
             "ck": f"crown::admin-panel::{engagement}",
-            "eng": engagement,
         },
         engagement=engagement,
     )
@@ -223,3 +225,88 @@ def test_summary_respects_entrypoint_cap(kgstore: KGStore, engagement: str) -> N
     # Each entrypoint is one "- " bullet.
     bullet_count = ep_section.count("- ")
     assert bullet_count == MAX_ENTRYPOINTS
+
+
+def test_claim_context_excludes_foreign_claims_credentials_and_attempt_ledger(
+    kgstore: KGStore, engagement: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("RAPTIX_KG_CLAIM_CONTEXT", "1")
+    other_engagement = f"{engagement}-other"
+    try:
+        kgstore.record_observations(
+            [{"kind": "Hypothesis", "key": "hypothesis::foreign", "label": "foreign-claim"}],
+            engagement=other_engagement,
+            created_by="other-agent",
+            source_episode_id="other-turn",
+        )
+        kgstore.record_observations(
+            [
+                {
+                    "kind": "Hypothesis",
+                    "key": "hypothesis::local",
+                    "label": "local-hypothesis",
+                    "props": {"status": "confirmed", "password": "hidden-prop"},
+                },
+                {"kind": "Candidate", "key": "candidate::local", "label": "local-candidate"},
+                {"kind": "Candidate", "key": "tried::actor::recon", "label": "attempt-ledger"},
+                {"kind": "Credential", "key": "credential::local", "label": "credential-secret"},
+                {"kind": "Secret", "key": "secret::local", "label": "token-secret"},
+            ],
+            engagement=engagement,
+            created_by="analyst",
+            source_episode_id="local-turn",
+        )
+        out = build_summary(kgstore, engagement=engagement)
+        assert "local-hypothesis" in out
+        assert "local-candidate" in out
+        assert '"writer": "analyst"' in out
+        assert '"episode": "local-turn"' in out
+        for excluded in (
+            "foreign-claim",
+            "attempt-ledger",
+            "credential-secret",
+            "token-secret",
+            "hidden-prop",
+            "confirmed",
+        ):
+            assert excluded not in out
+    finally:
+        kgstore.execute_write(
+            "MATCH (n) WHERE n.engagement = $engagement DETACH DELETE n",
+            engagement=other_engagement,
+        )
+
+
+def test_claim_context_has_stable_selection_under_row_limit(
+    kgstore: KGStore, engagement: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("RAPTIX_KG_CLAIM_CONTEXT", "1")
+    kgstore.record_observations(
+        [
+            {"kind": "Candidate", "key": f"candidate::{i}", "label": f"claim-{i}"}
+            for i in reversed(range(8))
+        ],
+        engagement=engagement,
+        created_by="scanner",
+        source_episode_id="limit-seed",
+    )
+    out = build_summary(kgstore, engagement=engagement)
+    rows = [json.loads(line) for line in out.splitlines() if line.startswith("{")]
+    assert [row["key"] for row in rows] == [f"candidate::{i}" for i in range(5)]
+
+
+def test_claim_context_flag_off_preserves_baseline_for_same_graph(
+    kgstore: KGStore, engagement: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    kgstore.record_observations(
+        [{"kind": "Hypothesis", "key": "hypothesis::flag", "label": "flagged-claim"}],
+        engagement=engagement,
+        created_by="analyst",
+        source_episode_id="flag-seed",
+    )
+    monkeypatch.setenv("RAPTIX_KG_CLAIM_CONTEXT", "1")
+    enabled = build_summary(kgstore, engagement=engagement)
+    assert "flagged-claim" in enabled
+    monkeypatch.setenv("RAPTIX_KG_CLAIM_CONTEXT", "0")
+    disabled = build_summary(kgstore, engagement=engagement)
+    assert disabled == enabled.split("\n\n<UNTRUSTED_KG_CLAIMS>")[0]

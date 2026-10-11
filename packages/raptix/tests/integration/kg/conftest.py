@@ -101,8 +101,7 @@ def engagement(kgstore: KGStore) -> Iterator[str]:
         # assertions, so swallow.
         try:
             kgstore.execute_write(
-                "MATCH (n) WHERE n.engagement = $eng DETACH DELETE n",
-                {"eng": label},
+                "MATCH (n) WHERE n.engagement = $engagement DETACH DELETE n",
                 engagement=label,
             )
         except Exception:  # pragma: no cover — best-effort
