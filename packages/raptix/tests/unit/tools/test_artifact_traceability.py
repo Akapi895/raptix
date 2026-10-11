@@ -112,24 +112,31 @@ def test_scoped_download_fails_closed_with_old_server() -> None:
         remote.download_files(["/workspace/a.txt"], workspace_path="/workspace", max_bytes=10)
 
 
-def test_server_rejects_download_outside_requested_workspace(tmp_path) -> None:
-    """The scoped-path guard refuses a path outside the requested workspace root.
+def test_server_rejects_download_outside_requested_workspace(monkeypatch, tmp_path) -> None:
+    """The scoped-download route refuses a path outside the requested workspace.
 
-    Tested directly (order-independent, no route/backend): the route is a thin
-    call over this guard, and the daemon env may carry an engagement pin.
+    The engagement pin and auth token are pinned so the assertion does not
+    depend on env another test may leave in the daemon process.
     """
     from importlib import import_module
 
-    from fastapi import HTTPException
+    from fastapi.testclient import TestClient
+
+    from raptix.execution.sandbox.kernel.daemon import DaemonSandbox
 
     server = import_module("raptix.execution.sandbox.server.app")
+    monkeypatch.setattr(server, "_fenced_engagement_slug", lambda: None)
+    monkeypatch.setattr(server, "_required_token", None)
+    monkeypatch.setattr(server, "_get_backend", lambda: object.__new__(DaemonSandbox))
     root = tmp_path / "active"
     root.mkdir()
     outside = tmp_path / "foreign.bin"
     outside.write_bytes(b"foreign evidence")
-    with pytest.raises(HTTPException) as failure:
-        server._check_file_paths([str(outside)], str(root))
-    assert failure.value.status_code == 403
+    response = TestClient(server.app).post(
+        "/download_files",
+        json={"paths": [str(outside)], "workspace_path": str(root), "max_bytes": 100},
+    )
+    assert response.status_code == 403
 
 
 @pytest.fixture
@@ -504,7 +511,7 @@ def _legacy_scan(monkeypatch):
     return transport, remote, _GraphStore(), request, reply, handler
 
 
-async def test_legacy_scanner_output_is_retained_and_inspectable(monkeypatch) -> None:
+async def test_legacy_scanner_capture_is_inspectable_after_overwrite(monkeypatch) -> None:
     from raptix.execution.tools.evidence.artifacts import inspect_artifact_source
     from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
 

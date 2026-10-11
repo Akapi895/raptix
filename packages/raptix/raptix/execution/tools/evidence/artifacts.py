@@ -16,6 +16,9 @@ from raptix_core.types.kg import Node
 
 MAX_CAPTURE_BYTES = 256_000
 MAX_DESCRIPTOR_BYTES = 16_000
+# Short content-digest prefix used as a capture's logical id (references use
+# the full descriptor digest; this only names the content-addressed artifact).
+_CAPTURE_ID_CHARS = 16
 _REFERENCE = re.compile(r"workspace-evidence://([0-9a-f]{64})\Z")
 
 
@@ -120,8 +123,10 @@ def retain_capture(
     two byte-identical captures collapse to one reference.
     """
     digest = hashlib.sha256(content).hexdigest()
+    # artifact_ref is a required placeholder; retain_artifact replaces it with
+    # the descriptor-digest reference and returns that.
     artifact = Artifact(
-        id=f"capture::{digest[:16]}",
+        id=f"capture::{digest[:_CAPTURE_ID_CHARS]}",
         artifact_ref=f"capture://{digest}",
         format_hint=format_hint,
         producer=producer,
@@ -176,11 +181,11 @@ def _load_capture(
         descriptor = _read(sandbox, descriptor_path, workspace, MAX_DESCRIPTOR_BYTES)
         if hashlib.sha256(descriptor).hexdigest() != str(reference).rsplit("/", 1)[-1]:
             raise EvidenceCaptureError("descriptor_drift", integrity="drift")
-        data = json.loads(descriptor)
-        if data.get("engagement") != engagement:
+        metadata = json.loads(descriptor)
+        if metadata.get("engagement") != engagement:
             raise EvidenceCaptureError("scope_mismatch")
         content = _read(sandbox, content_path, workspace, MAX_CAPTURE_BYTES)
-        expected = (data.get("artifact") or {}).get("sha256")
+        expected = (metadata.get("artifact") or {}).get("sha256")
         if not isinstance(expected, str) or hashlib.sha256(content).hexdigest() != expected:
             raise EvidenceCaptureError("content_drift", integrity="drift")
         return content, "ok", None
@@ -198,10 +203,10 @@ def resolve_verification(
     if content is None:
         return {"error": reason or "capture_unavailable", "integrity": integrity}
     try:
-        data = json.loads(content)
+        record = json.loads(content)
     except json.JSONDecodeError:
         return {"error": "invalid_verification_record"}
-    return data if isinstance(data, dict) else {"error": "invalid_verification_record"}
+    return record if isinstance(record, dict) else {"error": "invalid_verification_record"}
 
 
 def verify_capture_pair(
@@ -273,14 +278,15 @@ def inspect_artifact_source(
         descriptor = _read(sandbox, descriptor_path, workspace, MAX_DESCRIPTOR_BYTES)
         if hashlib.sha256(descriptor).hexdigest() != str(reference).rsplit("/", 1)[-1]:
             raise EvidenceCaptureError("descriptor_drift", integrity="drift")
-        data = json.loads(descriptor)
-        artifact = Artifact(artifact_ref=reference, **data["artifact"])
+        metadata = json.loads(descriptor)
+        artifact = Artifact(artifact_ref=reference, **metadata["artifact"])
         recorded_parser = node.props.get("parser_id")
         if (
-            data["engagement"] != engagement
+            metadata["engagement"] != engagement
             or artifact.id != node.props.get("source_artifact_id")
             or (
-                recorded_parser is not None and data.get("parser_id") not in (None, recorded_parser)
+                recorded_parser is not None
+                and metadata.get("parser_id") not in (None, recorded_parser)
             )
         ):
             raise EvidenceCaptureError("scope_or_artifact_mismatch")
@@ -288,7 +294,7 @@ def inspect_artifact_source(
         if hashlib.sha256(content).hexdigest() != artifact.sha256:
             raise EvidenceCaptureError("content_drift", integrity="drift")
         result.update(integrity="ok", sha256=artifact.sha256, size=len(content))
-        _assess_source(result, node, artifact, content, data)
+        _assess_source(result, node, artifact, content, metadata)
     except EvidenceCaptureError as exc:
         result["integrity"] = exc.integrity
         result["assessment"]["reason"] = str(exc)
@@ -298,7 +304,11 @@ def inspect_artifact_source(
 
 
 def _assess_source(
-    result: dict[str, Any], node: Node, artifact: Artifact, content: bytes, data: dict[str, Any]
+    result: dict[str, Any],
+    node: Node,
+    artifact: Artifact,
+    content: bytes,
+    metadata: dict[str, Any],
 ) -> None:
     """Re-derive the recorded node identity from the retained bytes, or say why not.
 
@@ -306,7 +316,7 @@ def _assess_source(
     capture's producer has none (legacy adapters), the capture is reported as
     retained/integrity-checked but not source-assessed — never silently promoted.
     """
-    parser_id = data.get("parser_id")
+    parser_id = metadata.get("parser_id")
     registry = default_registry()
     parser = registry.get(parser_id) if isinstance(parser_id, str) and parser_id else None
     if parser is None:
@@ -316,7 +326,7 @@ def _assess_source(
             "reason": "no_registered_parser",
         }
         return
-    if parser.parser_version != data.get("parser_version"):
+    if parser.parser_version != metadata.get("parser_version"):
         # Bytes verified intact; only the recorded parser version is gone, so the
         # source check is inconclusive rather than reinterpreted under a newer parser.
         raise EvidenceCaptureError("parser_version_unavailable", integrity="ok")

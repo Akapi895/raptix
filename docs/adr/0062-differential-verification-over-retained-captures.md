@@ -35,8 +35,9 @@ node's props (existing `kg_record` surface).
 The verdict is scoped to this one differential observation. It never sets
 `Finding.validated`, changes the recorded-claims summary, or claims
 exploitability, CVSS, target liveness, or independent corroboration. Integrity
-is reported per side and is separate from the verdict. No new tool, store, or
-graph node model is introduced.
+is reported per side and is separate from the verdict. No new tool or graph node
+model is introduced; the only new type is the delegating capture store wrapper
+(ADR-0061's legacy path), which forwards to the existing `KGStore`.
 
 ## Threat model
 
@@ -52,9 +53,10 @@ and simply omits the reference.
 A finding can carry a re-derivable differential check without an operator
 re-running the PoC, and the outcome is honest about missing/tampered evidence.
 The captured outputs are the runner's returned text (possibly truncated at the
-sandbox seam), not guaranteed raw bytes; the control is optional in the tool but
-required for a non-inconclusive verdict. Provider coverage remains limited to
-`validate_workspace_finding`; `validate_finding`'s graph path is unchanged.
+sandbox seam), not guaranteed raw bytes; the tool mandates `negative_command`
+and `negative_patterns`, and both are required for any non-inconclusive verdict.
+Provider coverage remains limited to `validate_workspace_finding`; the
+`validate_finding` graph path is unchanged.
 
 ## Alternatives considered
 
