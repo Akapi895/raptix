@@ -66,6 +66,10 @@ _REGISTRY_SCANNERS = {
 }
 
 
+def _capture_enabled() -> bool:
+    return os.environ.get("RAPTIX_KG_EVIDENCE_CAPTURE", "0").lower() in {"1", "true", "yes"}
+
+
 def _flag_value(args: list[str], flag: str) -> str | None:
     """Value immediately following the first (and only) occurrence of
     ``flag`` in ``args``, or ``None`` if it's absent or ambiguous."""
@@ -162,6 +166,7 @@ class KGAutoIngestMiddleware(AgentMiddleware):
         workspace = _normalize_engagement_workspace(state.get("workspace_path"))
         if not isinstance(engagement, str) or not engagement or workspace is None:
             return
+        sandbox = self._sandbox
         if output_path == "-" and kind == "nmap_xml":
             output = result.content.rsplit("\n[Exit code: 0]", 1)[0]
             content = output.encode("utf-8")
@@ -174,7 +179,6 @@ class KGAutoIngestMiddleware(AgentMiddleware):
                 or len(output_path) > 512
             ):
                 return
-            sandbox = self._sandbox
             runtime = getattr(request, "runtime", None)
             if runtime is not None and getattr(runtime, "config", None):
                 from raptix.execution.backends.factory import build_sandbox_backend
@@ -187,7 +191,13 @@ class KGAutoIngestMiddleware(AgentMiddleware):
                 return
             if size > _MAX_BYTES:
                 return
-            downloaded = sandbox.download_files([output_path])
+            downloaded = (
+                sandbox.download_files(
+                    [output_path], workspace_path=workspace, max_bytes=_MAX_BYTES
+                )
+                if _capture_enabled()
+                else sandbox.download_files([output_path])
+            )
             if len(downloaded) != 1 or downloaded[0].error:
                 return
             content = downloaded[0].content
@@ -201,7 +211,15 @@ class KGAutoIngestMiddleware(AgentMiddleware):
                 if not base_url:
                     return
                 metadata["base_url"] = base_url
-            self._ingest_via_registry(kind, content, engagement, episode_id, metadata=metadata)
+            self._ingest_via_registry(
+                kind,
+                content,
+                engagement,
+                episode_id,
+                metadata=metadata,
+                sandbox=sandbox,
+                workspace=workspace,
+            )
             return
         with tempfile.TemporaryDirectory(prefix="raptix-kg-") as directory:
             path = Path(directory) / "scan"
@@ -225,6 +243,8 @@ class KGAutoIngestMiddleware(AgentMiddleware):
         episode_id: str,
         *,
         metadata: dict[str, Any] | None = None,
+        sandbox: Any = None,
+        workspace: str | None = None,
     ) -> None:
         """Parse through the T3 ParserRegistry and record the observations.
 
@@ -247,6 +267,24 @@ class KGAutoIngestMiddleware(AgentMiddleware):
             records = observations_to_records(outcome.observations)
             if not records:
                 return
+            if _capture_enabled() and sandbox is not None and workspace is not None:
+                from raptix.execution.tools.evidence.artifacts import retain_artifact
+
+                try:
+                    retained = retain_artifact(
+                        artifact,
+                        content,
+                        sandbox=sandbox,
+                        workspace=workspace,
+                        engagement=engagement,
+                        parser_id=outcome.format_id,
+                        parser_version=outcome.parser_version,
+                    )
+                except Exception as exc:  # noqa: BLE001 — retention failure preserves baseline ingestion
+                    log.debug("Scanner capture unavailable (%s)", type(exc).__name__)
+                else:
+                    for record in records:
+                        record["props"]["source_artifact_ref"] = retained.artifact_ref
             self._store.record_observations(
                 records,
                 engagement=engagement,

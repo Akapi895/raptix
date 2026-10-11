@@ -23,9 +23,11 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
+from langgraph.prebuilt import InjectedState
 
 from raptix.execution.tools.evidence.asciicast import (
     AsciicastExportError,
@@ -243,7 +245,11 @@ def verify_evidence(workspace_path: str = "") -> str:
 
 
 @tool
-def inspect_evidence(finding_id: str) -> str:
+def inspect_evidence(
+    finding_id: str,
+    config: RunnableConfig,
+    state: Annotated[dict | None, InjectedState] = None,
+) -> str:
     """Inspect the evidence trail for one finding.
 
     Verifier/operator surface. Returns the finding node from the
@@ -252,18 +258,28 @@ def inspect_evidence(finding_id: str) -> str:
     manifest, and the asciicast recordings captured for the engagement.
 
     Args:
-        finding_id: FINDING (or vulnerability) node id — from
-            ``search_knowledge`` results or the ``validate_finding``
-            return value.
+        finding_id: Graph node id from ``search_knowledge`` results.
 
     Returns:
-        JSON {finding, linked, custody, recordings}.
+        JSON {finding, linked, custody, recordings}. Nodes with a retained
+        scanner capture also return captured_source: integrity plus a scoped
+        parser-membership assessment, never security verification.
     """
     from raptix.execution.tools.reporting.kg_adapter import load_engagement_graph
     from raptix_core.types.kg import KnowledgeGraph
     from raptix_core.utils.engagement_scope import get_active_engagement
 
-    engagement = get_active_engagement()
+    configurable = (config or {}).get("configurable") or {}
+    # Resolve the engagement the same way the capture producer does
+    # (kg_autoingest: ``kg_engagement`` then ``engagement_name``) so the
+    # descriptor's recorded engagement matches the graph partition; the
+    # contextvar is only a fallback for callers without injected state.
+    engagement = (
+        (state or {}).get("kg_engagement")
+        or (state or {}).get("engagement_name")
+        or get_active_engagement()
+        or configurable.get("engagement_name")
+    )
     graph: KnowledgeGraph = load_engagement_graph(engagement) if engagement else KnowledgeGraph()
     node = graph.nodes.get(finding_id)
     if node is None:
@@ -290,19 +306,68 @@ def inspect_evidence(finding_id: str) -> str:
     evidence_root = _evidence_root("")
     custody = _verify_manifest(evidence_root)
     recordings = list_recordings(_evidence_dir())
-    return _json(
-        {
-            "finding": {
-                "id": node.id,
-                "kind": node.kind.value,
-                "label": node.label,
-                "props": node.props,
-            },
-            "linked": linked,
-            "custody": custody,
-            "recordings": recordings,
-        }
+    result: dict[str, Any] = {
+        "finding": {
+            "id": node.id,
+            "kind": node.kind.value,
+            "label": node.label,
+            "props": node.props,
+        },
+        "linked": linked,
+        "custody": custody,
+        "recordings": recordings,
+    }
+
+    # A retained scanner capture is finding-specific: resolve exact bytes and
+    # assess only whether this output emits the recorded node identity. It is
+    # deliberately independent of the whole-workspace custody above and never
+    # promotes a security claim.
+    if node.props.get("source_artifact_ref"):
+        result["captured_source"] = _inspect_captured_source(
+            node, config, state, configurable, engagement
+        )
+    return _json(result)
+
+
+def _inspect_captured_source(
+    node: Any,
+    config: RunnableConfig,
+    state: dict | None,
+    configurable: dict,
+    engagement: str | None,
+) -> dict[str, Any]:
+    from raptix.execution.backends.factory import build_sandbox_backend
+    from raptix.execution.tools.evidence.artifacts import inspect_artifact_source
+    from raptix.middleware.filesystem import _normalize_engagement_workspace
+
+    workspace = _normalize_engagement_workspace(
+        configurable.get("workspace_path") or (state or {}).get("workspace_path")
     )
+    # Explicit run config only: an ambient SANDBOX_URL has no per-engagement
+    # scope guarantee (a subagent would silently bind the process-wide daemon),
+    # so its absence returns missing_run_context rather than resolving a capture.
+    url = configurable.get("sandbox_url")
+    captured_source: dict[str, Any] = {
+        "integrity": "unavailable",
+        "assessment": {
+            "scope": "scanner_output_membership",
+            "outcome": "inconclusive",
+            "reason": "missing_run_context",
+        },
+    }
+    if not workspace or not url or not engagement:
+        return captured_source
+    try:
+        run_config = {**(config or {}), "configurable": {**configurable, "sandbox_url": url}}
+        captured_source = inspect_artifact_source(
+            node,
+            sandbox=build_sandbox_backend(run_config),
+            workspace=workspace,
+            engagement=engagement,
+        )
+    except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
+        captured_source["assessment"]["reason"] = f"inspection_failed:{type(exc).__name__}"
+    return captured_source
 
 
 EVIDENCE_TOOLS = [

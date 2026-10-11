@@ -89,6 +89,8 @@ Use [`template.md`](template.md) as the starting point.
 | [0025](0025-surface-exploit-chained-surface-provenance.md) | Record chained surface provenance on confirmation | Proposed |
 | [0026](0026-bounded-parallel-surface-fanout.md) | Bound parallel surface-exploit fan-out | Proposed |
 | [0049](0049-evidence-model-extends-capability-contract.md) | Evidence modeling extends the capability-layer Observation contract; AKG redesign and Exploration Planner are deferred | Proposed |
+| [0060](0060-project-recorded-claims-through-existing-kg-context.md) | Project recorded claims through the existing KG summary | Proposed |
+| [0061](0061-retain-and-inspect-scanner-captures.md) | Retain scanner captures and inspect their source consistency | Proposed |
 
 Keep this index in sync when you land a new ADR. (Rows 0027–0048 are missing
 from this index as pre-existing drift, not introduced by ADR-0049 — the files
