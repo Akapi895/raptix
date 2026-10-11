@@ -5,10 +5,12 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import asdict, replace
 from typing import Any
 
 from raptix.knowledge.ingest import default_registry
+from raptix.specialist_contracts.evidence import validate_evidence
 from raptix_core.types.capability import Artifact
 from raptix_core.types.kg import Node
 
@@ -100,6 +102,160 @@ def retain_artifact(
     ):
         raise EvidenceCaptureError("capture_upload_failed")
     return replace(retained, artifact_ref=reference)
+
+
+def retain_capture(
+    content: bytes,
+    *,
+    sandbox: Any,
+    workspace: str,
+    engagement: str,
+    producer: str,
+    format_hint: str | None = None,
+) -> str:
+    """Retain exact bytes as an opaque capture; returns its reference.
+
+    Used for evidence that has no scanner parser (a PoC proof or a baseline
+    control). Reuses the descriptor/integrity machinery of ``retain_artifact``;
+    two byte-identical captures collapse to one reference.
+    """
+    digest = hashlib.sha256(content).hexdigest()
+    artifact = Artifact(
+        id=f"capture::{digest[:16]}",
+        artifact_ref=f"capture://{digest}",
+        format_hint=format_hint,
+        producer=producer,
+    )
+    return retain_artifact(
+        artifact, content, sandbox=sandbox, workspace=workspace, engagement=engagement
+    ).artifact_ref
+
+
+def record_verification(
+    *,
+    proof_ref: str,
+    control_ref: str,
+    success_patterns: Sequence[str],
+    negative_patterns: Sequence[str],
+    sandbox: Any,
+    workspace: str,
+    engagement: str,
+    producer: str,
+) -> str:
+    """Persist a proof/control pair and its patterns as one opaque reference.
+
+    A finding node carries this single ``verification_ref``; the consumer
+    re-derives the differential outcome from the two retained captures.
+    """
+    record = json.dumps(
+        {
+            "proof_ref": proof_ref,
+            "control_ref": control_ref,
+            "success_patterns": list(success_patterns),
+            "negative_patterns": list(negative_patterns),
+        },
+        sort_keys=True,
+        ensure_ascii=True,
+    ).encode("utf-8")
+    return retain_capture(
+        record,
+        sandbox=sandbox,
+        workspace=workspace,
+        engagement=engagement,
+        producer=producer,
+        format_hint="verification",
+    )
+
+
+def _load_capture(
+    reference: Any, *, sandbox: Any, workspace: str, engagement: str
+) -> tuple[bytes | None, str, str | None]:
+    """Resolve a capture's bytes and integrity without a node to compare to."""
+    try:
+        descriptor_path, content_path = _paths(str(reference), workspace)
+        descriptor = _read(sandbox, descriptor_path, workspace, MAX_DESCRIPTOR_BYTES)
+        if hashlib.sha256(descriptor).hexdigest() != str(reference).rsplit("/", 1)[-1]:
+            raise EvidenceCaptureError("descriptor_drift", integrity="drift")
+        data = json.loads(descriptor)
+        if data.get("engagement") != engagement:
+            raise EvidenceCaptureError("scope_mismatch")
+        content = _read(sandbox, content_path, workspace, MAX_CAPTURE_BYTES)
+        expected = (data.get("artifact") or {}).get("sha256")
+        if not isinstance(expected, str) or hashlib.sha256(content).hexdigest() != expected:
+            raise EvidenceCaptureError("content_drift", integrity="drift")
+        return content, "ok", None
+    except EvidenceCaptureError as exc:
+        return None, exc.integrity, str(exc)
+
+
+def resolve_verification(
+    reference: str, *, sandbox: Any, workspace: str, engagement: str
+) -> dict[str, Any]:
+    """Load a verification record (proof/control refs + patterns)."""
+    content, integrity, reason = _load_capture(
+        reference, sandbox=sandbox, workspace=workspace, engagement=engagement
+    )
+    if content is None:
+        return {"error": reason or "capture_unavailable", "integrity": integrity}
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        return {"error": "invalid_verification_record"}
+    return data if isinstance(data, dict) else {"error": "invalid_verification_record"}
+
+
+def verify_capture_pair(
+    *,
+    proof_ref: str,
+    control_ref: str,
+    success_patterns: Sequence[str],
+    negative_patterns: Sequence[str],
+    sandbox: Any,
+    workspace: str,
+    engagement: str,
+) -> dict[str, Any]:
+    """Differential source check on two retained captures.
+
+    supported    — proof matches a success pattern, control matches a baseline
+                   pattern, and the control does NOT match any success pattern.
+    contradicted — the control also matched a success pattern (the differential
+                   claim is refuted).
+    inconclusive — a capture is missing/drifted, a pattern is invalid, or the
+                   signal is insufficient.
+
+    This is a scoped differential observation, never exploitability, CVSS,
+    target liveness, or independent corroboration.
+    """
+    proof, proof_integrity, _ = _load_capture(
+        proof_ref, sandbox=sandbox, workspace=workspace, engagement=engagement
+    )
+    control, control_integrity, _ = _load_capture(
+        control_ref, sandbox=sandbox, workspace=workspace, engagement=engagement
+    )
+    result: dict[str, Any] = {
+        "scope": "differential_response",
+        "outcome": "inconclusive",
+        "integrity": {"proof": proof_integrity, "control": control_integrity},
+    }
+    if proof is None or control is None:
+        result["reason"] = "capture_unavailable"
+        return result
+    validation = validate_evidence(
+        proof.decode("utf-8", "replace"),
+        control.decode("utf-8", "replace"),
+        success_patterns=list(success_patterns),
+        negative_patterns=list(negative_patterns),
+    )
+    result["success_matches"] = list(validation.success_matches)
+    result["negative_matches"] = list(validation.negative_matches)
+    result["noise_matches"] = list(validation.noise_matches)
+    if validation.validated:
+        result["outcome"] = "supported"
+    elif validation.noise_matches:
+        result["outcome"] = "contradicted"
+    else:
+        result["reason"] = "; ".join(validation.errors) or "insufficient_signal"
+    return result
 
 
 def inspect_artifact_source(

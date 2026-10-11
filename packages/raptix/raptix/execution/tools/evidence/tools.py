@@ -261,9 +261,11 @@ def inspect_evidence(
         finding_id: Graph node id from ``search_knowledge`` results.
 
     Returns:
-        JSON {finding, linked, custody, recordings}. Nodes with a retained
-        scanner capture also return captured_source: integrity plus a scoped
-        parser-membership assessment, never security verification.
+        JSON {finding, linked, custody, recordings}. A node with a retained
+        scanner capture also returns captured_source (integrity + a scoped
+        parser-membership assessment); a node with a verification reference
+        also returns verification (a scoped differential outcome over its
+        proof/control captures). Neither ever promotes a security claim.
     """
     from raptix.execution.tools.reporting.kg_adapter import load_engagement_graph
     from raptix_core.types.kg import KnowledgeGraph
@@ -326,7 +328,53 @@ def inspect_evidence(
         result["captured_source"] = _inspect_captured_source(
             node, config, state, configurable, engagement
         )
+
+    # A verification reference re-derives a differential outcome from the two
+    # retained proof/control captures. Scoped to that one claim; never sets
+    # Finding.validated and never treated as independent corroboration.
+    if node.props.get("verification_ref"):
+        result["verification"] = _inspect_verification(
+            str(node.props["verification_ref"]), config, state, configurable, engagement
+        )
     return _json(result)
+
+
+def _inspect_verification(
+    reference: str,
+    config: RunnableConfig,
+    state: dict | None,
+    configurable: dict,
+    engagement: str | None,
+) -> dict[str, Any]:
+    from raptix.execution.backends.factory import build_sandbox_backend
+    from raptix.execution.tools.evidence.artifacts import resolve_verification, verify_capture_pair
+    from raptix.middleware.filesystem import _normalize_engagement_workspace
+
+    workspace = _normalize_engagement_workspace(
+        configurable.get("workspace_path") or (state or {}).get("workspace_path")
+    )
+    url = configurable.get("sandbox_url")
+    if not workspace or not url or not engagement:
+        return {"outcome": "inconclusive", "reason": "missing_run_context"}
+    try:
+        run_config = {**(config or {}), "configurable": {**configurable, "sandbox_url": url}}
+        sandbox = build_sandbox_backend(run_config)
+        record = resolve_verification(
+            reference, sandbox=sandbox, workspace=workspace, engagement=engagement
+        )
+        if "error" in record:
+            return {"outcome": "inconclusive", "reason": record["error"]}
+        return verify_capture_pair(
+            proof_ref=record["proof_ref"],
+            control_ref=record["control_ref"],
+            success_patterns=record.get("success_patterns") or [],
+            negative_patterns=record.get("negative_patterns") or [],
+            sandbox=sandbox,
+            workspace=workspace,
+            engagement=engagement,
+        )
+    except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
+        return {"outcome": "inconclusive", "reason": f"inspection_failed:{type(exc).__name__}"}
 
 
 def _inspect_captured_source(

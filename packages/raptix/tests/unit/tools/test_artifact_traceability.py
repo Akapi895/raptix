@@ -15,12 +15,17 @@ from raptix_core.types.kg import Node, NodeKind
 class MemoryTransport:
     def __init__(self) -> None:
         self.files: dict[str, bytes] = {}
+        self.commands: dict[str, str] = {}
 
     def handle(self, request: httpx.Request) -> httpx.Response:
         import base64
 
         body = json.loads(request.content)
         scope = body.get("workspace_path")
+        if request.url.path == "/execute_tmux":
+            return httpx.Response(
+                200, json={"output": self.commands.get(body.get("command"), "[Exit code: 1]")}
+            )
         if request.url.path == "/upload_files":
             for item in body["files"]:
                 self.files[item["path"]] = base64.b64decode(item["data_b64"])
@@ -520,3 +525,112 @@ async def test_legacy_scanner_output_is_retained_and_inspectable(monkeypatch) ->
     assert result["size"] == len(_NMAP_XML)
     assert result["assessment"]["outcome"] == "not_assessed"
     assert result["assessment"]["scope"] == "capture_retention"
+
+
+def _pair(remote, proof: bytes, control: bytes):
+    from raptix.execution.tools.evidence.artifacts import retain_capture, verify_capture_pair
+
+    proof_ref = retain_capture(
+        proof, sandbox=remote, workspace="/workspace/acme", engagement="acme", producer="t"
+    )
+    control_ref = retain_capture(
+        control, sandbox=remote, workspace="/workspace/acme", engagement="acme", producer="t"
+    )
+    return verify_capture_pair(
+        proof_ref=proof_ref,
+        control_ref=control_ref,
+        success_patterns=["PROOF-MARKER"],
+        negative_patterns=["baseline-ok"],
+        sandbox=remote,
+        workspace="/workspace/acme",
+        engagement="acme",
+    )
+
+
+def test_verify_capture_pair_maps_the_differential_outcome() -> None:
+    remote = sandbox(MemoryTransport())
+    supported = _pair(remote, b"PROOF-MARKER body", b"baseline-ok body")
+    assert supported["outcome"] == "supported"
+    assert supported["integrity"] == {"proof": "ok", "control": "ok"}
+
+    contradicted = _pair(remote, b"PROOF-MARKER body", b"baseline-ok PROOF-MARKER leak")
+    assert contradicted["outcome"] == "contradicted"
+    assert contradicted["noise_matches"] == ["PROOF-MARKER"]
+
+    assert _pair(remote, b"nothing here", b"baseline-ok body")["outcome"] == "inconclusive"
+
+
+def test_verify_capture_pair_is_inconclusive_when_a_capture_is_missing() -> None:
+    from raptix.execution.tools.evidence.artifacts import verify_capture_pair
+
+    result = verify_capture_pair(
+        proof_ref="workspace-evidence://" + "0" * 64,
+        control_ref="workspace-evidence://" + "1" * 64,
+        success_patterns=["x"],
+        negative_patterns=["y"],
+        sandbox=sandbox(MemoryTransport()),
+        workspace="/workspace/acme",
+        engagement="acme",
+    )
+    assert result["outcome"] == "inconclusive"
+    assert result["reason"] == "capture_unavailable"
+    assert result["integrity"] == {"proof": "missing", "control": "missing"}
+
+
+_CVSS = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+
+
+async def test_workspace_finding_retains_pair_that_inspect_reports(monkeypatch) -> None:
+    from raptix.execution.tools.evidence.tools import inspect_evidence
+    from raptix.execution.tools.plumbing import verification as verify_module
+    from raptix_core.types.kg import KnowledgeGraph
+
+    transport = MemoryTransport()
+    transport.commands["positive"] = "proof-marker found\n[Exit code: 0]"
+    transport.commands["negative"] = "ordinary response\n[Exit code: 0]"
+    remote = sandbox(transport)
+    monkeypatch.setattr(verify_module, "get_sandbox", lambda: remote)
+    monkeypatch.setenv("RAPTIX_KG_EVIDENCE_CAPTURE", "1")
+    raw = await verify_module.validate_workspace_finding.ainvoke(
+        {
+            "finding_id": "FIND-001",
+            "poc_command": "positive",
+            "success_patterns": "proof-marker",
+            "negative_command": "negative",
+            "negative_patterns": "ordinary response",
+            "cvss_vector": _CVSS,
+            "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+        }
+    )
+    produced = json.loads(raw)
+    ref = produced["verification_ref"]
+    assert ref.startswith("workspace-evidence://")
+
+    node = Node.make(
+        NodeKind.FINDING, "validated: differential", key="finding::x", verification_ref=ref
+    )
+    graph = KnowledgeGraph()
+    graph.upsert_node(node)
+    monkeypatch.setattr(
+        "raptix.execution.tools.reporting.kg_adapter.load_engagement_graph", lambda _: graph
+    )
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _config: remote
+    )
+    config = {
+        "configurable": {
+            "sandbox_url": "http://traceability-acme",
+            "workspace_path": "/workspace/acme",
+        }
+    }
+    result = json.loads(
+        inspect_evidence.invoke(
+            {
+                "finding_id": node.id,
+                "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+            },
+            config=config,
+        )
+    )
+    assert result["verification"]["outcome"] == "supported"
+    assert "validated" not in node.props
