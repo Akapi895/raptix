@@ -363,7 +363,10 @@ def _inspect_verification(
             reference, sandbox=sandbox, workspace=workspace, engagement=engagement
         )
         if "error" in record:
-            return {"outcome": "inconclusive", "reason": record["error"]}
+            failure: dict[str, Any] = {"outcome": "inconclusive", "reason": record["error"]}
+            if "integrity" in record:
+                failure["integrity"] = record["integrity"]
+            return failure
         return verify_capture_pair(
             proof_ref=record["proof_ref"],
             control_ref=record["control_ref"],
