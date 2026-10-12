@@ -9,9 +9,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   isApprovalsView, isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView,
-  type ApprovalRequestView, type RequestRecoveryView, type ScopedRunView, type StreamScope, type ThreadBindingView,
+  type ApprovalRequestView, type PendingInterruptView, type RequestRecoveryView, type ScopedRunView, type ScopedThreadView, type StreamScope, type ThreadBindingView,
 } from '@raptix/web-contracts'
-import type { PendingInterruptView } from '@raptix/web-contracts'
 import { apiBaseUrl } from '../../app/config'
 import { ApiInvalidResponseError, ApiStatusError } from '../../shared/api/errors'
 import { encodePathSegment, requestJson } from '../../shared/api/http'
@@ -42,17 +41,17 @@ export interface ConsoleSession {
   submitting: boolean
   creating: boolean
   submitError: string | null
-  pendingQuestion: PendingInterruptView | null
+  pendingQuestions: readonly PendingInterruptView[]
   answered: readonly string[]
   answering: boolean
   answerError: string | null
   cancelling: boolean
   cancelError: string | null
   approvals: ConsoleApprovalsState
-  createThread(kind: 'planning' | 'execution'): Promise<void>
+  createThread(kind: 'planning' | 'execution', sendAfter?: string): Promise<boolean>
   selectThread(threadId: string): void
   send(text: string): Promise<void>
-  answerQuestion(questionId: string, value: string | string[]): Promise<void>
+  answerQuestion(answers: { questionId: string; value: string | string[] }[]): Promise<void>
   cancelRun(): Promise<void>
   decideApproval(requestId: string, action: 'allow' | 'deny'): Promise<void>
   refreshApprovals(): void
@@ -64,6 +63,10 @@ const threadPath = (engagementId: string, threadId: string): string => `${engage
 const newRequestId = (): string => (crypto.randomUUID ? `ui-${crypto.randomUUID()}` : `ui-${Date.now()}-${Math.random().toString(36).slice(2)}`)
 const ackPollIntervalMs = 400
 const ackPollAttempts = 40
+
+/** Pending interrupts exposed by the thread snapshot: the plural list when the runtime reports several at once, the singular view otherwise. */
+const pendingOf = (snapshot: ScopedThreadView): readonly PendingInterruptView[] =>
+  snapshot.pendingQuestions !== undefined ? snapshot.pendingQuestions : snapshot.pendingQuestion !== undefined && snapshot.pendingQuestion !== null ? [snapshot.pendingQuestion] : []
 
 async function waitForAcceptance(engagementId: string, requestId: string, signal: AbortSignal): Promise<RequestRecoveryView> {
   let last: RequestRecoveryView | null = null
@@ -90,7 +93,7 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
   const [submitting, setSubmitting] = useState(false)
   const [creating, setCreating] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [pendingQuestion, setPendingQuestion] = useState<PendingInterruptView | null>(null)
+  const [pendingQuestions, setPendingQuestions] = useState<readonly PendingInterruptView[]>([])
   const [answered, setAnswered] = useState<readonly string[]>([])
   const [answering, setAnswering] = useState(false)
   const [answerError, setAnswerError] = useState<string | null>(null)
@@ -134,7 +137,7 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
       onEvent: event => apply(state => reduceStreamEvent(state, event)),
       onRecovery: (observed, snapshot) => {
         setRun(observed)
-        setPendingQuestion(snapshot.pendingQuestion ?? null)
+        setPendingQuestions(pendingOf(snapshot))
         apply(state => mergeThreadHistory(mergeRunObservation(state, observed), snapshot))
       },
       onTransport: next => { setTransport(next); if (next === 'disconnected') apply(streamDisconnected) },
@@ -156,7 +159,7 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
     setRun(null)
     setRecoveryRequired(false)
     setSubmitError(null)
-    setPendingQuestion(null)
+    setPendingQuestions([])
     setAnswered([])
     setAnswerError(null)
     setCancelError(null)
@@ -174,7 +177,7 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
       if (cancelled || controller.signal.aborted) return
       streamRef.current = mergeThreadHistory(emptyStreamState(engagementId, activeThreadId), snapshot)
       setStream(streamRef.current)
-      setPendingQuestion(snapshot.pendingQuestion ?? null)
+      setPendingQuestions(pendingOf(snapshot))
       const page: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, activeThreadId)}/runs?limit=10`, { signal: controller.signal, retries: 1 })
       const list = (page as { runs?: unknown }).runs
       if (!Array.isArray(list) || !list.every(isScopedRunView)) throw new ApiInvalidResponseError('Run page was not a validated scoped run list')
@@ -207,35 +210,10 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
     return () => { controller.abort(); stopObservation() }
   }, [engagementId, revision, loadThreads, stopObservation])
 
-  const createThread = useCallback(async (kind: 'planning' | 'execution'): Promise<void> => {
-    if (creating) return
-    setCreating(true)
-    setError(null)
-    const controller = new AbortController()
-    pollController.current?.abort()
-    pollController.current = controller
-    try {
-      const requestId = newRequestId()
-      const ack: unknown = await requestJson(apiBaseUrl, `${engagementPath(engagementId)}/threads`, { method: 'POST', body: { requestId, kind }, signal: controller.signal })
-      if (!isRequestRecoveryView(ack) || ack.engagementId !== engagementId) throw new ApiInvalidResponseError('Thread acknowledgement did not match this engagement')
-      const accepted = ack.state === 'accepted' ? ack : await waitForAcceptance(engagementId, requestId, controller.signal)
-      if (accepted.state !== 'accepted' || !accepted.threadId) throw new ApiInvalidResponseError(`Thread creation ended as ${accepted.state}`)
-      await loadThreads(controller.signal, 'none')
-      if (controller.signal.aborted) return
-      selectThread(accepted.threadId)
-    } catch (cause) {
-      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Thread creation failed')
-    } finally {
-      if (pollController.current === controller) pollController.current = null
-      setCreating(false)
-    }
-  }, [creating, engagementId, loadThreads, selectThread])
-
-  const send = useCallback(async (text: string): Promise<void> => {
-    const threadId = activeThreadId
-    if (!threadId || submitting) return
+  const submitRun = useCallback(async (threadId: string, text: string): Promise<boolean> => {
+    if (submitting) return false
     const trimmed = text.trim()
-    if (!trimmed) return
+    if (!trimmed) return false
     setSubmitting(true)
     setSubmitError(null)
     const controller = new AbortController()
@@ -243,7 +221,7 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
     pollController.current = controller
     try {
       const requestId = newRequestId()
-      const ack: unknown = await requestJson(apiBaseUrl, `${engagementPath(engagementId)}/threads/${encodePathSegment(threadId)}/runs`, { method: 'POST', body: { requestId, message: trimmed }, signal: controller.signal })
+      const ack: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, threadId)}/runs`, { method: 'POST', body: { requestId, message: trimmed }, signal: controller.signal })
       if (!isRequestRecoveryView(ack) || ack.engagementId !== engagementId || ack.threadId !== threadId) throw new ApiInvalidResponseError('Run acknowledgement did not match this thread')
       const accepted = ack.state === 'accepted' ? ack : await waitForAcceptance(engagementId, requestId, controller.signal)
       if (accepted.state !== 'accepted' || !accepted.runId) throw new ApiInvalidResponseError(`Run submission ended as ${accepted.state}`)
@@ -259,20 +237,58 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
         }
       } catch { /* run view stays unset; stream recovery still resolves it truthfully */ }
       observeRun(threadId, accepted.runId)
+      return true
     } catch (cause) {
       if (!controller.signal.aborted) setSubmitError(cause instanceof Error ? cause.message : 'Run submission failed')
+      return false
     } finally {
       if (pollController.current === controller) pollController.current = null
       setSubmitting(false)
     }
-  }, [activeThreadId, engagementId, observeRun, submitting])
+  }, [engagementId, observeRun, submitting])
+
+  const createThread = useCallback(async (kind: 'planning' | 'execution', sendAfter?: string): Promise<boolean> => {
+    if (creating) return false
+    setCreating(true)
+    setError(null)
+    const controller = new AbortController()
+    pollController.current?.abort()
+    pollController.current = controller
+    try {
+      const requestId = newRequestId()
+      const ack: unknown = await requestJson(apiBaseUrl, `${engagementPath(engagementId)}/threads`, { method: 'POST', body: { requestId, kind }, signal: controller.signal })
+      if (!isRequestRecoveryView(ack) || ack.engagementId !== engagementId) throw new ApiInvalidResponseError('Thread acknowledgement did not match this engagement')
+      const accepted = ack.state === 'accepted' ? ack : await waitForAcceptance(engagementId, requestId, controller.signal)
+      if (accepted.state !== 'accepted' || !accepted.threadId) throw new ApiInvalidResponseError(`Thread creation ended as ${accepted.state}`)
+      await loadThreads(controller.signal, 'none')
+      if (controller.signal.aborted) return false
+      selectThread(accepted.threadId)
+      // NB: selectThread -> stopObservation aborts pollController.current —
+      // which is OUR controller here. submitRun starts its own controller, so
+      // never gate the follow-up send on this signal.
+      if (sendAfter !== undefined && sendAfter.trim() !== '') return submitRun(accepted.threadId, sendAfter)
+      return true
+    } catch (cause) {
+      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Thread creation failed')
+      return false
+    } finally {
+      if (pollController.current === controller) pollController.current = null
+      setCreating(false)
+    }
+  }, [creating, engagementId, loadThreads, selectThread, submitRun])
+
+  const send = useCallback(async (text: string): Promise<void> => {
+    const threadId = activeThreadId
+    if (!threadId) return
+    await submitRun(threadId, text)
+  }, [activeThreadId, submitRun])
 
   const refresh = useCallback((): void => { setRevision(value => value + 1) }, [])
 
-  /** W11 graph-interrupt resume: one validated answer, new run identity, no second attempt for the same requestId. */
-  const answerQuestion = useCallback(async (questionId: string, value: string | string[]): Promise<void> => {
+  /** W11 graph-interrupt resume: one submit answers EVERY pending question (LangGraph requires an interrupt-id-keyed map), a new run identity acks, and no second attempt repeats the same requestId. */
+  const answerQuestion = useCallback(async (answers: { questionId: string; value: string | string[] }[]): Promise<void> => {
     const threadId = activeThreadId
-    if (!threadId || answering) return
+    if (!threadId || answering || answers.length === 0) return
     setAnswering(true)
     setAnswerError(null)
     const controller = new AbortController()
@@ -280,12 +296,13 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
     pollController.current = controller
     try {
       const requestId = newRequestId()
-      const ack: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, threadId)}/resume`, { method: 'POST', body: { requestId, value, questionId }, signal: controller.signal })
+      const ack: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, threadId)}/resume`, { method: 'POST', body: { requestId, answers }, signal: controller.signal })
       if (!isRequestRecoveryView(ack) || ack.engagementId !== engagementId || ack.threadId !== threadId || ack.operation !== 'resume') throw new ApiInvalidResponseError('Resume acknowledgement did not match this thread')
       const accepted = ack.state === 'accepted' ? ack : await waitForAcceptance(engagementId, requestId, controller.signal)
       if (accepted.state !== 'accepted' || !accepted.runId) throw new ApiInvalidResponseError(`Resume ended as ${accepted.state}`)
-      setAnswered(previous => previous.includes(questionId) ? previous : [...previous, questionId])
-      setPendingQuestion(current => current?.questionId === questionId ? null : current)
+      const submitted = answers.map(answer => answer.questionId)
+      setAnswered(previous => [...previous, ...submitted.filter(id => !previous.includes(id))])
+      setPendingQuestions(current => current.filter(question => !submitted.includes(question.questionId)))
       setRecoveryRequired(true)
       try {
         const view: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, threadId)}/runs/${encodePathSegment(accepted.runId)}`, { signal: controller.signal, retries: 1 })
@@ -359,5 +376,5 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
   const refreshApprovals = useCallback((): void => { setApprovalsRevision(value => value + 1) }, [])
 
   useEffect(() => () => stopObservation(), [stopObservation])
-  return { status, error, threads, activeThreadId, stream, run, transport, recoveryRequired, submitting, creating, submitError, pendingQuestion, answered, answering, answerError, cancelling, cancelError, approvals, createThread, selectThread, send, answerQuestion, cancelRun, decideApproval, refreshApprovals, refresh }
+  return { status, error, threads, activeThreadId, stream, run, transport, recoveryRequired, submitting, creating, submitError, pendingQuestions, answered, answering, answerError, cancelling, cancelError, approvals, createThread, selectThread, send, answerQuestion, cancelRun, decideApproval, refreshApprovals, refresh }
 }

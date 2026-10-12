@@ -40,7 +40,7 @@ it('never downgrades full live content with capped checkpoint replays', () => {
 
 it('preserves existing run attribution and live-only handoff state from history', () => {
   const state = reduceStreamEvent(emptyStreamState('eng', 'thread'), run('run', { type: 'engagement_ready', agent: 'soundwave' }))
-  const merged = mergeThreadHistory({ ...state, invocations: { ...state.invocations, [JSON.stringify(['s1', 's1'])]: { agent: 'recon', sessionId: 's1', status: 'running', runId: 'run' } } }, snapshot({
+  const merged = mergeThreadHistory({ ...state, invocations: { ...state.invocations, [JSON.stringify(['s1', 's1'])]: { agent: 'recon', sessionId: 's1', status: 'running', runId: 'run', order: 0 } } }, snapshot({
     transcripts: [
       { key: 's1::subagent_end@2026-10-02T00:00:01+00:00', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'subagent_end', agent: 'recon', sessionId: 's1', status: 'success', truncated: false } },
       { key: null, runId: null, source: 'checkpoint', truncated: false, payload: { type: 'engagement_ready', agent: 'soundwave', truncated: false } },
