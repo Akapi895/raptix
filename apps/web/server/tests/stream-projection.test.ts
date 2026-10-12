@@ -22,6 +22,21 @@ it('projects public messages/tool arguments without state, private reasoning, pr
   expect(events[0]!.runId).toBeNull(); expect(events[0]!.source).toBe('checkpoint');
   expect(events[0]!.upstreamCursor).toBeUndefined(); expect(events[1]!.upstreamCursor).toBe('100-3');
 });
+it('forwards the stowed thinking trace as message reasoning and keeps opaque reasoning blocks private', () => {
+  const events = projectStreamFrame(scope, frame('messages/complete', [
+    { type: 'ai', id: 'm1', content: 'Answer', additional_kwargs: { reasoning_content: 'Step by step…' } },
+    { type: 'ai', id: 'm2', content: [{ type: 'thinking', thinking: 'Thinking blocks' }, { type: 'text', text: 'Answer body' }] },
+    { type: 'ai', id: 'm3', content: [{ type: 'reasoning', text: 'OPAQUE-REASON' }] },
+    { type: 'ai', id: 'm4', content: 'No trace' },
+  ], '400-1'), 'conn:1');
+  expect(events.every(isPublicStreamEvent)).toBe(true);
+  const messages = events.filter(e => e.payload.type === 'message').map(e => e.payload as { messageId: string | null; reasoning?: string });
+  expect(messages.find(m => m.messageId === 'm1')).toMatchObject({ reasoning: 'Step by step…' });
+  expect(messages.find(m => m.messageId === 'm2')).toMatchObject({ reasoning: 'Thinking blocks' });
+  expect(messages.find(m => m.messageId === 'm3')!.reasoning).toBeUndefined();
+  expect(messages.find(m => m.messageId === 'm4')!.reasoning).toBeUndefined();
+  expect(JSON.stringify(events)).not.toContain('OPAQUE-REASON');
+});
 it('distinguishes tuple message chunks from legacy cumulative arrays and commits only the final projected event cursor', () => {
   const tuple = projectStreamFrame(scope, frame('messages', [{ type: 'AIMessageChunk', id: 'm', content: 'Hi' }, { langgraph_checkpoint_ns: 'model:child', api_key: 'PRIVATE' }], '200-1'), 'conn:1');
   expect(tuple[0]!.payload).toMatchObject({ type: 'message', mode: 'delta', content: 'Hi' });

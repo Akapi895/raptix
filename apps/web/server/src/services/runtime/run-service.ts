@@ -8,7 +8,7 @@ import { parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } fr
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-context.js';
 import { projectThreadHistory } from './history-projection.js';
-import { assertResumeValue, findPendingQuestion } from './interrupt-projection.js';
+import { assertResumeValue, findPendingQuestions } from './interrupt-projection.js';
 
 const conflict = (): ProjectPolicyError => new ProjectPolicyError('conflict', 'Runtime context, readiness or active-run policy prevents this operation');
 const terminal = (status: string): boolean => ['success', 'error', 'timeout', 'interrupted'].includes(status);
@@ -19,7 +19,7 @@ export class RunService {
   public constructor(private readonly options: { ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort }) {}
   private async threadState(user: string, engagement: string, thread: string): ReturnType<RuntimeReadPort['state']> {
     const state = await this.options.reads.state(thread);
-    if (!Object.keys(state.values).length && !findPendingQuestion(state.values, state.tasks)) {
+    if (!Object.keys(state.values).length && !findPendingQuestions(state.values, state.tasks).length) {
       const previous = (await this.options.ownership.runs(user, engagement, thread, 0, 1))[0];
       if (previous?.runId && terminal((await this.options.runtime.run(thread, previous.runId)).status)) throw new RuntimeCheckpointMissingError();
     }
@@ -114,20 +114,44 @@ export class RunService {
   }
   /** W11: resume a pending graph interrupt on the bound thread; ack returns the NEW run identity. */
   public async resume(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
-    const { requestId, value, questionId, intent } = parseResumeCreate(raw);
+    const { requestId, value, questionId, answers, intent } = parseResumeCreate(raw);
     const { ownership, context, runtime } = this.options;
     const replay = await ownership.replay(user, engagement, requestId, 'resume', intent, thread);
     if (replay) return replay;
     let trusted: TrustedRuntimeContext;
+    let resumePayload: string | string[] | Record<string, string | string[]>;
     try {
       const binding = await ownership.getBinding(user, engagement, thread);
       trusted = await context.resolve(user, engagement, { kind: binding.kind, threadId: thread });
       if (!trusted.configurable.authorization_confirmed) throw conflict();
       const state = await this.threadState(user, engagement, thread);
-      const pending = findPendingQuestion(state.values, state.tasks);
-      if (!pending || (questionId !== null && questionId !== pending.questionId)) throw conflict();
-      try { assertResumeValue(value, pending); }
-      catch { throw new ProjectPolicyError('bad_request', 'Resume answer does not match the pending question options'); }
+      const pending = findPendingQuestions(state.values, state.tasks);
+      if (!pending.length) throw conflict();
+      if (questionId !== null && !answers && pending.length === 1 && pending[0]!.questionId !== questionId) throw conflict();
+      // Parallel ask_user_question tool calls raise several interrupts at
+      // once; LangGraph requires an interrupt-id-keyed resume map covering
+      // every pending interrupt in one invocation.
+      const byQuestion = new Map(pending.map(question => [question.questionId, question]));
+      const resolved = answers ?? [{ questionId: questionId ?? pending[0]!.questionId, value }];
+      if (pending.length > 1 && !answers) throw new ProjectPolicyError('bad_request', 'Multiple interrupts are pending — resume must answer every pending question');
+      const cover = new Set(resolved.map(answer => answer.questionId));
+      if (cover.size !== resolved.length || !pending.every(question => cover.has(question.questionId))) throw new ProjectPolicyError('bad_request', 'Resume must answer every pending question exactly once');
+      // Legacy shape: a single pending interrupt without a LangGraph id keeps
+      // resuming with the bare value.
+      const legacy = pending.length === 1 && !pending[0]!.interruptId;
+      const resumeMap: Record<string, string | string[]> = {};
+      for (const answer of resolved) {
+        const question = byQuestion.get(answer.questionId);
+        if (!question) throw conflict();
+        try { assertResumeValue(answer.value, question); }
+        catch { throw new ProjectPolicyError('bad_request', `Resume answer does not match the pending question options (${answer.questionId})`); }
+        if (!question.interruptId) {
+          if (!legacy) throw conflict();
+          continue;
+        }
+        resumeMap[question.interruptId] = answer.value;
+      }
+      resumePayload = legacy ? resolved[0]!.value : resumeMap;
     } catch (error) {
       const winner = await ownership.replay(user, engagement, requestId, 'resume', intent, thread);
       if (winner) return winner;
@@ -137,7 +161,7 @@ export class RunService {
     if (!reservation.reserved) return reservation.request;
     await ownership.recordDispatch(user, engagement, requestId, reservation.token, trusted);
     return this.dispatch(user, engagement, requestId, reservation.token, async () => {
-      const remote = await runtime.createResumeRun(thread, trusted, requestId, value);
+      const remote = await runtime.createResumeRun(thread, trusted, requestId, resumePayload);
       metadata(remote.metadata, { ...trusted.metadata, ui_request_id: requestId });
       return ownership.accept(user, engagement, requestId, reservation.token, thread, remote.runId);
     });
@@ -170,18 +194,21 @@ export class RunService {
     let truncated = history.length > 50;
     for (const value of history.slice(-50)) {
       if (typeof value !== 'object' || value === null) continue;
-      const { type, role, content, id } = value as Record<string, unknown>;
+      const { type, role, content, id, additional_kwargs } = value as Record<string, unknown>;
       const tag = role ?? type;
       if (typeof tag !== 'string' || !['user', 'human', 'assistant', 'ai'].includes(tag)) continue;
       if (typeof content !== 'string') { truncated = true; continue; }
       if (content.length > 8000) truncated = true;
       const messageId = typeof id === 'string' && id.length > 0 && id.length <= 256 ? id : null;
-      messages.push({ role: ['user', 'human'].includes(String(tag)) ? 'user' : 'assistant', content: content.slice(0, 8000), messageId });
+      const kwargs = typeof additional_kwargs === 'object' && additional_kwargs !== null ? additional_kwargs as Record<string, unknown> : {};
+      const reasoning = typeof kwargs.reasoning_content === 'string' && kwargs.reasoning_content ? kwargs.reasoning_content.slice(0, 16000) : undefined;
+      messages.push({ role: ['user', 'human'].includes(String(tag)) ? 'user' : 'assistant', content: content.slice(0, 8000), messageId, ...(reasoning ? { reasoning } : {}) });
     }
     const scope = { engagementId: engagement, threadId: thread, runId: '' };
     const transcripts = projectThreadHistory(scope, values);
-    const pendingQuestion = findPendingQuestion(values, tasks);
-    return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated, ...(pendingQuestion ? { pendingQuestion } : {}) };
+    const pendingQuestions = findPendingQuestions(values, tasks);
+    const pendingQuestion = pendingQuestions[0];
+    return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated, ...(pendingQuestion ? { pendingQuestion } : {}), ...(pendingQuestions.length > 0 ? { pendingQuestions } : {}) };
   }
   public async reconcile(user: string, engagement: string, requestId: string): Promise<RequestRecoveryView> {
     const { ownership, context, runtime, reads } = this.options;

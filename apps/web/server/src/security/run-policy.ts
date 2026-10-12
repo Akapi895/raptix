@@ -30,17 +30,30 @@ export function parseRunPage(raw: unknown): { offset: number; limit: number } {
   if (!page.limit) throw invalid();
   return page;
 }
-/** W11 scoped graph-interrupt resume: one validated value, optional targeting question id. */
-export function parseResumeCreate(raw: unknown): { requestId: string; value: string | string[]; questionId: string | null; intent: { value: string | string[]; questionId: string | null } } {
-  const value = body(raw, ['requestId', 'value', 'questionId']);
+const isResumeValue = (answer: unknown): boolean =>
+  (typeof answer === 'string' && answer.trim().length > 0 && Buffer.byteLength(answer) <= 2000) ||
+  (Array.isArray(answer) && answer.length > 0 && answer.length <= 10 && answer.every(part => typeof part === 'string' && part.length > 0 && Buffer.byteLength(part) <= 2000));
+/** One pending-question answer within a multi-interrupt resume. */
+export interface ResumeAnswer { questionId: string; value: string | string[] }
+/** W11 scoped graph-interrupt resume: one validated value, optional targeting question id, or every pending answer at once. */
+export function parseResumeCreate(raw: unknown): { requestId: string; value: string | string[]; questionId: string | null; answers?: ResumeAnswer[]; intent: { value: string | string[]; questionId: string | null; answers?: ResumeAnswer[] } } {
+  const value = body(raw, ['requestId', 'value', 'questionId', 'answers']);
+  const parseAnswer = (entry: unknown): ResumeAnswer | null => {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) return null;
+    const item = entry as Record<string, unknown>;
+    if (typeof item.questionId !== 'string' || !item.questionId || item.questionId.length > 256 || !isResumeValue(item.value)) return null;
+    return { questionId: item.questionId, value: item.value as string | string[] };
+  };
+  const answers = value.answers === undefined ? undefined : Array.isArray(value.answers) && value.answers.length > 0 && value.answers.length <= 8 ? value.answers.map(parseAnswer) : undefined;
+  if (answers !== undefined && answers.some(a => a === null)) throw invalid();
+  const validatedAnswers = answers === undefined ? undefined : answers as ResumeAnswer[];
+  if (validatedAnswers !== undefined && validatedAnswers.length === 0) throw invalid();
   const answer = value.value;
-  const single = typeof answer === 'string' && answer.trim().length > 0 && Buffer.byteLength(answer) <= 2000;
-  const multi = Array.isArray(answer) && answer.length > 0 && answer.length <= 10 && answer.every(part => typeof part === 'string' && part.length > 0 && Buffer.byteLength(part) <= 2000);
-  if (!single && !multi) throw invalid();
   const questionId = value.questionId === undefined ? null : value.questionId;
   if (questionId !== null && (typeof questionId !== 'string' || questionId.length > 256)) throw invalid();
-  const normalized = (single ? answer : answer) as string | string[];
-  return { requestId: value.requestId as string, value: normalized, questionId, intent: { value: normalized, questionId } };
+  if (validatedAnswers === undefined && !isResumeValue(answer)) throw invalid();
+  const normalized = validatedAnswers === undefined ? (answer as string | string[]) : [];
+  return { requestId: value.requestId as string, value: normalized, questionId, ...(validatedAnswers ? { answers: validatedAnswers } : {}), intent: { value: normalized, questionId, ...(validatedAnswers ? { answers: validatedAnswers } : {}) } };
 }
 /** W11 file-backed HITL decision: allow/deny only (redirect needs a validated args editor — W17+). */
 export function parseApprovalDecision(raw: unknown): { requestId: string; action: 'allow' | 'deny'; operatorNote: string } {

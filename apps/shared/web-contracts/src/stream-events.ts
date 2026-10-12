@@ -1,7 +1,7 @@
 import type { NormalizedSubagentEvent } from '@raptix/streaming'
 import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
 export interface StreamScope { engagementId: string; threadId: string; runId: string }
-export interface MessagePayload { type: 'message'; messageId: string | null; role: 'user' | 'assistant'; content: string; mode: 'delta' | 'snapshot'; truncated: boolean }
+export interface MessagePayload { type: 'message'; messageId: string | null; role: 'user' | 'assistant'; content: string; /** Thinking trace stowed in `additional_kwargs.reasoning_content` / thinking content blocks (assistant only, optional). */ reasoning?: string; mode: 'delta' | 'snapshot'; truncated: boolean }
 export interface ToolPayload { type: 'tool_call' | 'tool_result'; toolCallId: string | null; name: string; argsPreview?: string; content?: string; status?: string; error?: boolean; cancelled?: boolean; delegation: boolean; truncated: boolean }
 export type CustomPayload = Omit<NormalizedSubagentEvent, 'args'> & { argsPreview?: string; truncated: boolean }
 export interface InterruptPayload { type: 'interrupt'; interruptId: string | null }
@@ -18,7 +18,7 @@ export function isPublicStreamPayload(value: unknown): value is PublicStreamPayl
   if (!isRecord(p) || typeof p.type !== 'string') return false
   if (p.type === 'interrupt') return p.interruptId === null || isNonEmptyString(p.interruptId)
   if (typeof p.truncated !== 'boolean') return false
-  if (p.type === 'message') return (p.messageId === null || isNonEmptyString(p.messageId)) && typeof p.role === 'string' && ['user', 'assistant'].includes(p.role) && typeof p.content === 'string' && typeof p.mode === 'string' && ['delta', 'snapshot'].includes(p.mode)
+  if (p.type === 'message') return (p.messageId === null || isNonEmptyString(p.messageId)) && typeof p.role === 'string' && ['user', 'assistant'].includes(p.role) && typeof p.content === 'string' && (p.reasoning === undefined || typeof p.reasoning === 'string') && typeof p.mode === 'string' && ['delta', 'snapshot'].includes(p.mode)
   if (p.type === 'tool_call' || p.type === 'tool_result') return (p.toolCallId === null || isNonEmptyString(p.toolCallId)) && isNonEmptyString(p.name) && typeof p.delegation === 'boolean' && (p.argsPreview === undefined || typeof p.argsPreview === 'string') && (p.content === undefined || typeof p.content === 'string') && (p.status === undefined || typeof p.status === 'string') && (p.error === undefined || typeof p.error === 'boolean') && (p.cancelled === undefined || typeof p.cancelled === 'boolean')
   if (!customTypes.includes(String(p.type)) || !isNonEmptyString(p.agent)) return false
   for (const k of ['sessionId', 'createdAt', 'tool', 'content', 'text', 'prompt', 'status', 'question', 'header', 'session', 'command', 'argsPreview']) if (p[k] !== undefined && typeof p[k] !== 'string') return false

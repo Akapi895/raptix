@@ -46,14 +46,38 @@ function message(raw: unknown, mode: 'delta' | 'snapshot'): PublicStreamPayload[
   const role = typeof rawRole === 'string' ? ({ AIMessageChunk: 'ai', AIMessage: 'ai', HumanMessage: 'human', HumanMessageChunk: 'human', ToolMessage: 'tool', ToolMessageChunk: 'tool' } as Record<string, string>)[rawRole] ?? rawRole : rawRole;
   if (typeof role !== 'string' || !['ai', 'assistant', 'human', 'user', 'tool'].includes(role)) return [];
   const text = typeof m.content === 'string' ? m.content : Array.isArray(m.content) ? m.content.filter(c => record(c) && c.type === 'text' && typeof c.text === 'string').map(c => c.text).join('') : '';
+  const thinking = reasoningOf(m);
   const p = preview(text);
   if (role === 'tool') return [{ type: 'tool_result', toolCallId: id(m.tool_call_id), name: id(m.name) ?? 'tool', content: p.text, delegation: m.name === 'task', truncated: p.truncated, ...(typeof m.status === 'string' ? { status: m.status.slice(0, 64) } : {}), ...(typeof m.error === 'boolean' ? { error: m.error } : {}), ...(typeof m.cancelled === 'boolean' ? { cancelled: m.cancelled } : {}) }];
-  const output: PublicStreamPayload[] = [{ type: 'message', messageId: id(m.id), role: ['human', 'user'].includes(role) ? 'user' : 'assistant', content: p.text, mode, truncated: p.truncated }];
+  const output: PublicStreamPayload[] = [{ type: 'message', messageId: id(m.id), role: ['human', 'user'].includes(role) ? 'user' : 'assistant', content: p.text, ...(thinking.text ? { reasoning: thinking.text } : {}), mode, truncated: p.truncated || thinking.truncated }];
   if (Array.isArray(m.tool_calls)) for (const call of m.tool_calls.slice(0, 50)) if (record(call) && typeof call.name === 'string') {
     const a = preview(JSON.stringify(args(call.args ?? {})), 8000);
     output.push({ type: 'tool_call', toolCallId: id(call.id), name: call.name.slice(0, 128), argsPreview: a.text, delegation: call.name === 'task', truncated: a.truncated });
   }
   return output;
+}
+
+/**
+ * Thinking-trace extraction: thinking models stow the trace in
+ * `additional_kwargs.reasoning_content` or in `thinking` content blocks.
+ * Never executes content — extraction + redaction + bounds only.
+ */
+function reasoningOf(m: Record<string, unknown>): { text: string; truncated: boolean } {
+  const parts: string[] = [];
+  if (Array.isArray(m.content)) {
+    for (const block of m.content) {
+      if (record(block) && (block.type === 'thinking' || block.type === 'reasoning_content')) {
+        const text = typeof block.thinking === 'string' ? block.thinking : typeof block.reasoning_content === 'string' ? block.reasoning_content : typeof block.text === 'string' ? block.text : '';
+        if (text) parts.push(text);
+      }
+    }
+  }
+  const kwargs = record(m.additional_kwargs) ? m.additional_kwargs : {};
+  const stowed = [kwargs.reasoning_content, kwargs.reasoning].filter((v): v is string => typeof v === 'string' && v.length > 0);
+  parts.push(...stowed);
+  if (parts.length === 0) return { text: '', truncated: false };
+  const p = preview(parts.join('\n\n'));
+  return p;
 }
 export function projectStreamFrame(scope: StreamScope, frame: SseFrame, occurrence: string): PublicStreamEvent[] {
   if (!frame.data) return [];
