@@ -1,5 +1,5 @@
 import type { CustomPayload, ScopedThreadView, ThreadHistoryEvent } from '@raptix/web-contracts'
-import { bounded, type Invocation, type StreamMessage, type StreamState, type StreamTool } from './stream-reducer.ts'
+import { bounded, HISTORY_ORDER, type Invocation, type StreamMessage, type StreamState, type StreamTool } from './stream-reducer.ts'
 
 /**
  * W09 history recovery: merge one owned checkpoint snapshot into the stream
@@ -29,6 +29,7 @@ function mergeTool(old: StreamTool | undefined, payload: CustomPayload, truncate
     runId: old?.runId ?? null,
     callSeen: old?.callSeen === true || !result,
     resultSeen: old?.resultSeen === true || result,
+    order: old?.order ?? HISTORY_ORDER,
   }
 }
 function invocationStatus(old: Invocation | undefined, payload: CustomPayload): Invocation['status'] {
@@ -45,7 +46,7 @@ export function mergeThreadHistory(previous: StreamState, snapshot: ScopedThread
     const key = JSON.stringify([[], message.messageId])
     const old = previous.messages[key]
     if (old) continue
-    const entry: StreamMessage = { type: 'message', messageId: message.messageId, role: message.role, content: message.content, mode: 'snapshot', truncated: message.content.length >= 8000, runId: null, source: 'checkpoint' }
+    const entry: StreamMessage = { type: 'message', messageId: message.messageId, role: message.role, content: message.content, mode: 'snapshot', truncated: message.content.length >= 8000, runId: null, source: 'checkpoint', order: HISTORY_ORDER, ...(message.reasoning ? { reasoning: message.reasoning } : {}) }
     state.messages = bounded({ ...state.messages, [key]: entry }, 500)
   }
   for (const [index, history] of (snapshot.transcripts ?? []).entries()) mergeHistoryEvent(state, history, index)
@@ -59,11 +60,11 @@ function mergeHistoryEvent(state: StreamState, history: ThreadHistoryEvent, inde
   } else if (payload.type === 'subagent_start' || payload.type === 'subagent_end' || payload.type === 'subagent_message') {
     const key = payload.sessionId ?? `unattributed:${history.key ?? `history:${index}`}`
     const old: Invocation | undefined = state.invocations[key]
-    state.invocations = bounded({ ...state.invocations, [key]: { ...old, agent: payload.agent, ...(payload.sessionId ? { sessionId: payload.sessionId } : {}), status: invocationStatus(old, payload), ...(payload.elapsedSeconds === undefined ? {} : { elapsedSeconds: payload.elapsedSeconds }), ...(payload.error === undefined ? {} : { error: payload.error }), ...(payload.cancelled === undefined ? {} : { cancelled: payload.cancelled }), runId: old?.runId ?? null } }, 500)
+    state.invocations = bounded({ ...state.invocations, [key]: { ...old, agent: payload.agent, ...(payload.sessionId ? { sessionId: payload.sessionId } : {}), status: invocationStatus(old, payload), ...(payload.elapsedSeconds === undefined ? {} : { elapsedSeconds: payload.elapsedSeconds }), ...(payload.error === undefined ? {} : { error: payload.error }), ...(payload.cancelled === undefined ? {} : { cancelled: payload.cancelled }), runId: old?.runId ?? null, order: old?.order ?? HISTORY_ORDER } }, 500)
   } else if (payload.type === 'ask_user_question') {
     const key = payload.questionId ?? history.key ?? `history:${index}`
     const old = state.questions[key]
     const downgrade = old?.source === 'runtime' && history.truncated
-    state.questions = bounded({ ...state.questions, [key]: downgrade ? old! : { ...payload, runId: null, source: 'checkpoint' } }, 100)
+    state.questions = bounded({ ...state.questions, [key]: downgrade ? old! : { ...payload, runId: null, source: 'checkpoint', order: old?.order ?? HISTORY_ORDER } }, 100)
   }
 }
