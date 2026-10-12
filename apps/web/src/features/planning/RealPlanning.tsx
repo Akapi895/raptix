@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { isPlanningView, type PlanningView, type ProjectViewModel, type ScopeEntry } from '@raptix/web-contracts'
 import { apiBaseUrl } from '../../app/config'
+import { routePath } from '../../app/router'
 import { ApiInvalidResponseError } from '../../shared/api/errors'
 import { encodePathSegment, requestJson } from '../../shared/api/http'
+// THROWAWAY PROTOTYPE (remove after UX review): planning empty-state variants, dev-only.
+import { PlanningUxPrototype, isPlanningPrototypeActive, useVariantNavigation } from './planningUxPrototype'
 
 async function getRealPlanning(id: string, signal?: AbortSignal): Promise<PlanningView> {
   const value = await requestJson<unknown>(apiBaseUrl, `/engagements/${encodePathSegment(id)}/plan-docs`, { signal, retries: 1 })
@@ -24,6 +27,7 @@ function ScopeTable({ title, entries }: { title: string; entries: readonly Scope
 export default function RealPlanning({ project, scope = false }: { project: ProjectViewModel; scope?: boolean }) {
   const [revision, setRevision] = useState(0)
   const [read, setRead] = useState<{ id: string; view?: PlanningView; error?: string } | null>(null)
+  const [protoVariant, setProtoVariant] = useVariantNavigation()
   useEffect(() => {
     const controller = new AbortController()
     setRead(null)
@@ -35,6 +39,9 @@ export default function RealPlanning({ project, scope = false }: { project: Proj
   }, [project.id, project.updatedAt, revision])
   const current = read?.id === project.id ? read : null
   const view = current?.view
+  if (isPlanningPrototypeActive()) {
+    return <PlanningUxPrototype rawVariant={protoVariant} setVariant={setProtoVariant} view={view} project={project} onRefresh={() => { setRead(null); setRevision(n => n + 1) }} consoleHref={routePath('operator-console', project.id)} />
+  }
   const roe = view?.documents.roe.state === 'ready' ? view.documents.roe.content : undefined
   const conops = view?.documents.conops.state === 'ready' ? view.documents.conops.content : undefined
   const deconfliction = view?.documents.deconfliction.state === 'ready' ? view.documents.deconfliction.content : undefined

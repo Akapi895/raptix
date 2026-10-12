@@ -31,6 +31,7 @@ import { REAL_FALLBACK_REASON, REAL_UNAVAILABLE_REASONS, toCreateFormError } fro
 import { RealProviders } from './providers'
 import RealPlanning from '../features/planning/RealPlanning'
 import RealConsole from '../features/agent-runs/RealConsole'
+import ConsoleUxDemo, { isUxDemoActive } from '../features/agent-runs/consoleUxDemo'
 import RealFindings from '../features/findings-evidence/RealFindings'
 import RealInfrastructure from '../features/infrastructure/RealInfrastructure'
 import RealAssets from '../features/infrastructure/RealAssets'
@@ -86,7 +87,9 @@ function RealRoot() {
       if (createOpenRef.current) {
         createOpenRef.current = false
         setCreateOpen(false)
-        navigateUrl(routePath('charter', created.id))
+        // Briefing-first flow: the brief is drafted with Soundwave in the
+        // Operator Console before execution unlocks, so land there directly.
+        navigateUrl(routePath('operator-console', created.id))
       }
     } catch (cause) {
       setCreateError(toCreateFormError(cause))
@@ -165,7 +168,7 @@ function RealProjectWorkspace({ projectId, screen, projects, listLoading, onRelo
       navigate={navigate} narrow={narrow} menuOpen={menuOpen}
       onMenu={() => setMenuOpen(true)} onCloseMenu={() => setMenuOpen(false)}
     >
-      {screen === 'charter' ? <RealCharterLanding project={project} /> : screen === 'scope-boundaries' ? <div style={{ background: C.page, minHeight: '100%', padding: 24 }}><RealPlanning key={project.id} project={project} scope /></div> : screen === 'operator-console' ? <RealConsole key={project.id} project={project} /> : screen === 'findings' ? <div style={{ height: '100vh' }}><RealFindings key={project.id} project={project} /></div> : screen === 'infrastructure' ? <RealInfrastructure key={project.id} project={project} /> : screen === 'assets' ? <RealAssets key={project.id} project={project} /> : screen === 'logs' ? <RealLogs key={project.id} project={project} /> : screen === 'reports' ? <RealReports key={project.id} project={project} /> : screen === 'project-settings' ? <RealSettings key={project.id} project={project} onDeleted={() => navigateUrl('/projects')} /> : screen === 'vector-campaigns' ? <RealCampaigns key={project.id} project={project} /> : screen === 'c2-sessions' ? <RealC2 key={project.id} project={project} /> : screen === 'credentials' ? <RealVault key={project.id} project={project} /> : screen === 'members' ? <RealMembers key={project.id} project={project} /> : <RealUnavailableScreen screen={screen} project={project} />}
+      {screen === 'charter' ? <RealCharterLanding project={project} /> : screen === 'scope-boundaries' ? <div style={{ background: C.page, minHeight: '100%', padding: 24 }}><RealPlanning key={project.id} project={project} scope /></div> : screen === 'operator-console' ? (isUxDemoActive() ? <ConsoleUxDemo key={project.id} project={project} /> : <RealConsole key={project.id} project={project} />) : screen === 'findings' ? <div style={{ height: '100vh' }}><RealFindings key={project.id} project={project} /></div> : screen === 'infrastructure' ? <RealInfrastructure key={project.id} project={project} /> : screen === 'assets' ? <RealAssets key={project.id} project={project} /> : screen === 'logs' ? <RealLogs key={project.id} project={project} /> : screen === 'reports' ? <RealReports key={project.id} project={project} /> : screen === 'project-settings' ? <RealSettings key={project.id} project={project} onDeleted={() => navigateUrl('/projects')} /> : screen === 'vector-campaigns' ? <RealCampaigns key={project.id} project={project} /> : screen === 'c2-sessions' ? <RealC2 key={project.id} project={project} /> : screen === 'credentials' ? <RealVault key={project.id} project={project} /> : screen === 'members' ? <RealMembers key={project.id} project={project} /> : <RealUnavailableScreen screen={screen} project={project} />}
     </RealShell>
   )
 }
