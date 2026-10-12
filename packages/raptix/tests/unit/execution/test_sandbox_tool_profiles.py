@@ -186,6 +186,43 @@ def test_credentials_profile_ships_the_pinned_wordlist_copy(
     assert len(entries) >= 10, "benchmark dictionary must have a usable entry set"
 
 
+RECON_WORDLIST_FILES: Final[tuple[str, ...]] = (
+    "subdomains.txt",
+    "api-endpoints.txt",
+    "params.txt",
+    "headers.txt",
+    "seclists/usernames/top-usernames-shortlist.txt",
+)
+
+
+def test_recon_wordlists_are_copy_pinned_from_checkout() -> None:
+    """The recon dictionary set is COPYed from the checkout (not
+    downloaded) into the paths the recon/api-enumeration skills document,
+    so their ``ffuf -w /usr/share/wordlists/...`` examples resolve without
+    a mutable, network-fetched corpus."""
+    dockerfile_text = DOCKERFILE_PATH.read_text(encoding="utf-8")
+    assert "infra/containers/wordlists/ /usr/share/wordlists/" in dockerfile_text
+    wordlist_root = REPO_ROOT / "infra" / "containers" / "wordlists"
+    for relative in RECON_WORDLIST_FILES:
+        path = wordlist_root / relative
+        assert path.is_file(), f"pinned wordlist {relative} is missing from the checkout"
+        entries = [
+            line.strip()
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")
+        ]
+        assert entries, f"pinned wordlist {relative} has no usable entries"
+
+
+def test_dirb_wordlist_documented_path_is_linked() -> None:
+    """Kali's dirb package installs dictionaries under
+    /usr/share/dirb/wordlists, while the recon skills and the gobuster
+    adapter document /usr/share/wordlists/dirb/common.txt, so the image
+    links the documented path to the packaged one."""
+    dockerfile_text = DOCKERFILE_PATH.read_text(encoding="utf-8")
+    assert "ln -sfn /usr/share/dirb/wordlists /usr/share/wordlists/dirb" in dockerfile_text
+
+
 def test_compose_passes_t8_build_args_defaulting_off() -> None:
     compose = yaml.safe_load(COMPOSE_PATH.read_text(encoding="utf-8"))
     build_args = compose["services"]["sandbox"]["build"]["args"]
