@@ -22,6 +22,7 @@
  */
 
 import type { Command } from "./types.js";
+import { resolveApiUrl } from "../utils/apiUrl.js";
 
 interface BundleStatus {
   name: string;
@@ -41,7 +42,7 @@ interface ToggleResponse {
 }
 
 function apiBase(): string {
-  return process.env.RAPTIX_API_URL || "http://localhost:2024";
+  return resolveApiUrl();
 }
 
 function formatList(data: ListResponse): string {

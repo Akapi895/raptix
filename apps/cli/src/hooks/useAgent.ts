@@ -26,6 +26,7 @@ import {
 } from "@raptix/streaming";
 import { getModelOverride } from "../commands/modelOverride.js";
 import { getAssistantOverride } from "../commands/assistantOverride.js";
+import { resolveApiUrl } from "../utils/apiUrl.js";
 
 interface LangChainMessage {
   type: string; // "human", "ai", "tool"
@@ -117,7 +118,7 @@ let _nextEventId = 0;
 
 
 export function useAgent({
-  apiUrl = process.env.RAPTIX_API_URL || "http://localhost:2024",
+  apiUrl = resolveApiUrl(),
   resumeThread = false,
 }: UseAgentOptions = {}): UseAgentReturn {
   const clientRef = useRef(new Client({ apiUrl }));

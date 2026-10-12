@@ -24,6 +24,7 @@ import {
   getAssistantOverride,
   setAssistantOverride,
 } from "./assistantOverride.js";
+import { resolveApiUrl } from "../utils/apiUrl.js";
 
 interface AssistantRow {
   assistant_id: string;
@@ -32,7 +33,7 @@ interface AssistantRow {
 }
 
 function apiBase(): string {
-  return process.env.RAPTIX_API_URL || "http://localhost:2024";
+  return resolveApiUrl();
 }
 
 /**
