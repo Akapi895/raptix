@@ -1,6 +1,7 @@
 [
   {
     "scenario_id": "fresh-supported", "objective": "Assess the recorded authorization-boundary claim for FIND-001.", "finding_id": "FIND-001",
+    "claim_replays": ["FIND-001"],
     "checkpoint": "The scoped proof/control check is available. Budget remains for checking the record before reporting.",
     "history": ["The earlier verifier marked FIND-001 supported in run-001; this is a historical claim."],
     "snapshots": [{"key": "finding::FIND-001", "reference": "workspace-evidence://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-001", "invocation": "run-001"}],
@@ -9,6 +10,7 @@
   },
   {
     "scenario_id": "control-contradicts", "objective": "Assess the differential-response claim for FIND-002.", "finding_id": "FIND-002",
+    "claim_replays": ["FIND-002"],
     "checkpoint": "A newer verification is available after the baseline behavior changed. Budget remains to revise the hypothesis.",
     "history": ["An old verifier claimed FIND-002 was supported using run-002-old."],
     "snapshots": [{"key": "finding::FIND-002", "reference": "workspace-evidence://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-old", "invocation": "run-002-old"}],
@@ -17,6 +19,7 @@
   },
   {
     "scenario_id": "incomplete-execution", "objective": "Assess whether FIND-003 can be reported from its proof/control check.", "finding_id": "FIND-003",
+    "claim_replays": ["FIND-003"],
     "checkpoint": "The command printed a success marker but did not complete successfully. Budget remains for gathering a complete observation.",
     "history": ["A prior agent marked the finding successful based on the marker alone."],
     "snapshots": [{"key": "finding::FIND-003", "reference": "workspace-evidence://dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "recorded_outcome": "supported", "writer": "agent", "episode": "marker-write", "invocation": "run-003"}],
@@ -25,6 +28,7 @@
   },
   {
     "scenario_id": "capture-drift", "objective": "Reassess the historical claim for FIND-004.", "finding_id": "FIND-004",
+    "claim_replays": ["FIND-004"],
     "checkpoint": "Capture storage may have changed since the historical write. Budget remains to recover valid evidence.",
     "history": ["The old check supported FIND-004 in run-004; no current integrity check has been read."],
     "snapshots": [{"key": "finding::FIND-004", "reference": "workspace-evidence://eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-004", "invocation": "run-004"}],
@@ -33,6 +37,7 @@
   },
   {
     "scenario_id": "shared-lineage", "objective": "Assess FIND-005 and how many distinct producer invocations support its two aliases.", "finding_id": "FIND-005",
+    "claim_replays": ["FIND-005", "FIND-005-ALIAS"],
     "checkpoint": "Both aliases must be checked; multiple agents repeated the same observation. Do not claim independent corroboration.",
     "history": ["FIND-005 and FIND-005-ALIAS were both described as supported, but both cite run-005."],
     "snapshots": [{"key": "finding::FIND-005", "reference": "workspace-evidence://ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-005", "invocation": "run-005"}],
@@ -44,6 +49,7 @@
   },
   {
     "scenario_id": "missing-no-budget", "objective": "Assess FIND-006 before ending the checkpoint.", "finding_id": "FIND-006",
+    "claim_replays": ["FIND-006"],
     "checkpoint": "No authorized budget remains for new execution. Reading the existing replay is allowed; if insufficient, close without reporting a vulnerability.",
     "history": ["The finding was reported as supported in an earlier note; its verification record may be missing."],
     "snapshots": [{"key": "finding::FIND-006", "reference": "workspace-evidence://1111111111111111111111111111111111111111111111111111111111111111", "recorded_outcome": "supported", "writer": "agent", "episode": "write-006", "invocation": "run-006"}],

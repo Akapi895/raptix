@@ -19,6 +19,12 @@ LiteLLM proxy and valid provider credentials. Existing `RAPTIX_LLM__PROXY_URL` /
 `LITELLM_MASTER_KEY` fallbacks and the runtime's local proxy defaults.
 
 ```powershell
+# For the local Docker stack, configure the host terminal with the active proxy key.
+$env:RAPTIX_LLM__PROXY_URL = 'http://localhost:4000'
+$proxyKey = docker exec raptix-langgraph python -c "import os; from raptix_core.types.llm import ProxyConfig; print(os.getenv('RAPTIX_LLM__PROXY_API_KEY') or os.getenv('LITELLM_MASTER_KEY') or ProxyConfig().api_key)"
+if ($LASTEXITCODE -ne 0) { throw 'Could not retrieve the active proxy key' }
+$env:RAPTIX_LLM__PROXY_API_KEY = $proxyKey.Trim()
+
 # Paired ablation on the development corpus
 uv run python -m benchmarks.suites.decision_eval --model custom/Qwen/Qwen3.5-122B-A10B-FP8 --repetitions 3 --seed 7 --timeout 60
 
@@ -35,6 +41,12 @@ seed does **not** make provider generations deterministic. Each repetition start
 a new agent and message history. There is no client retry or model fallback.
 The proxy may implement its own routing; reports retain its reported model name
 when supplied, and do not infer the underlying provider when absent.
+The host's default proxy key may differ from the running container's key. Settings
+above apply to the current terminal and must be configured in a new terminal too.
+If every episode fails during execution, the CLI saves the report and exits
+nonzero. Partial failures remain in denominators; a completed but incorrect model
+answer does not make the CLI fail. Inspect model turns and provider errors before
+interpreting a fast run as a model evaluation.
 
 ## Scenarios and scoring
 
@@ -78,6 +90,29 @@ Malformed responses and provider/timeout failures remain failures in denominator
 False positives include reporting an unsupported claim even when its verdict says
 inconclusive. Redundant reads are counted separately from decision correctness.
 
+### Provenance output boundary
+
+Each checkpoint freezes `claim_replays`: trusted ownership metadata identifying
+the verification lookups belonging to its claim, including constituent aliases.
+Other declared lookups remain readable but are not citable for that claim. This
+metadata is separate from golden answers and excluded from model messages.
+
+The output boundary (ADR-0066, `read-bound-v1`) checks citations against the
+serialized results of completed reads. Fixture presence, historical snapshots
+and a model's proposed tool calls do not create evidence. References must match
+exactly, be unique, be claim-bound and carry a producer invocation. Distinct
+producer invocations determine lineage; writers, reads and reference counts do
+not. Unresolved citations leave the derived lineage unknown. Failed episodes,
+missing reads and scope/tool violations cannot produce a bound decision.
+
+Reports retain raw `content`, `observations`, `provenance` diagnostics and
+`bound_decision` (null on rejection). Golden-answer scores remain unchanged;
+`provenance_rejections` counts schema-valid answers rejected by the boundary.
+When summarizing older episodes without audits, this count stays unknown (`null`).
+Binding is not verdict/action correctness or verified security state. A bound
+decision can still be semantically wrong. The boundary neither repairs generated
+answers nor promotes findings into the production KG.
+
 ## Reports and interpretation
 
 Outputs go to `benchmarks/results/runs/decision-eval/run-<UTC>/report.json`.
@@ -120,6 +155,26 @@ multiple repetitions and inspect failures. Zero gain on easy cases does not
 justify default activation. These results cannot establish exploitation success,
 hypothesis discovery, long-horizon OPPLAN behavior, weak/strong model parity or
 the need for P4. Target-backed experiments and additional ablations come next.
+
+## P3 delivery checkpoint (2026-10-12)
+
+The replay harness, paired scoring, development/held-out corpora, read-bound
+output boundary and failure reporting are implemented and locally verified.
+A full live matrix used five custom model aliases (excluding GLM-5.2), three
+repetitions, scheduling seed 7 and a 120-second episode timeout: 180 development
+and 480 held-out episodes. It recorded 1,334 completed model turns, usage and
+nonempty responses in 646 episodes, and 14 recursion failures retained in the
+denominators. Corpus, initial prompt and tool-schema fingerprints were checked.
+
+| Corpus | Raw joint correctness, baseline / evidence | Bound-output coverage, baseline / evidence |
+|---|---|---|
+| Development | 39/90 / 42/90 | 53/90 / 60/90 |
+| Held-out | 139/240 / 151/240 | 154/240 / 163/240 |
+
+Local reports: `run-20261012_105048_203784/report.json` (development) and
+`run-20261012_110254_792133/report.json` (held-out), under the standard suite run
+directory. Reports remain ignored generated artifacts. This closes P3 delivery;
+measuring benefit from frontier/projection/dynamic fan-out remains P4 work.
 
 ## Initial local smoke (2026-10-12)
 

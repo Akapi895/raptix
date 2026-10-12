@@ -35,6 +35,7 @@ def test_unsupported_report_is_a_false_positive_even_with_inconclusive_verdict()
             "scenario_id": "drift",
             "objective": "Assess one claim",
             "finding_id": "FIND-1",
+            "claim_replays": ["FIND-1"],
             "checkpoint": "A previously retained capture drifted.",
             "history": [],
             "snapshots": [],
@@ -77,26 +78,54 @@ class PromptCapture(BaseCallbackHandler):
 
 
 @pytest.mark.asyncio
+async def test_output_boundary_rejects_lookup_id_as_reference() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    scenario.replays = {"FIND-001": {"outcome": "inconclusive", "reason": "missing_baseline"}}
+    content = '{"outcome":"inconclusive","next_action":"gather_evidence","evidence_refs":["FIND-001"],"lineage_count":1}'
+    model = ReplayModel(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "read_replayed_verification",
+                        "id": "read-1",
+                        "args": {"finding_id": "FIND-001"},
+                    }
+                ],
+            ),
+            AIMessage(content=content),
+        ]
+    )
+    row = await run_episode(scenario, model, "baseline", timeout=5)
+    assert row.get("provenance", {}).get("accepted") is False
+    assert row["bound_decision"] is None
+    assert "unknown_reference" in row["provenance"]["issues"]
+    assert row["content"] == content
+
+
+@pytest.mark.asyncio
 async def test_agent_consumes_replay_without_exposing_golden_answers() -> None:
     scenario = Scenario.model_validate(
         {
             "scenario_id": "fresh",
             "objective": "Assess one claim",
             "finding_id": "FIND-1",
+            "claim_replays": ["FIND-1"],
             "checkpoint": "Decide the next step.",
             "history": [],
             "snapshots": [],
             "replays": {
                 "FIND-1": {
                     "outcome": "supported",
-                    "reference": "capture-A",
+                    "reference": "workspace-evidence://" + "a" * 64,
                     "invocation_id": "run-A",
                 }
             },
             "expected": {
                 "outcome": "supported",
                 "accepted_actions": ["report_scoped"],
-                "evidence_refs": ["capture-A"],
+                "evidence_refs": ["workspace-evidence://" + "a" * 64],
                 "lineage_count": 1,
                 "required_reads": ["FIND-1"],
             },
@@ -117,15 +146,24 @@ async def test_agent_consumes_replay_without_exposing_golden_answers() -> None:
                 ],
             ),
             AIMessage(
-                content='{"outcome":"supported","next_action":"report_scoped","evidence_refs":["capture-A"],"lineage_count":1}'
+                content=json.dumps(
+                    {
+                        "outcome": "supported",
+                        "next_action": "report_scoped",
+                        "evidence_refs": ["workspace-evidence://" + "a" * 64],
+                        "lineage_count": 1,
+                    }
+                )
             ),
         ],
     )
     result = await run_episode(scenario, model, "baseline", timeout=5)
     assert result["scores"]["decision_correct"] is True
+    assert result["provenance"]["accepted"] is True
+    assert result["bound_decision"] is not None
     assert result["reads"] == ["FIND-1"]
     assert result["cost_usd"] is None
-    assert "capture-A" not in capture.prompts[0]
+    assert "workspace-evidence://" + "a" * 64 not in capture.prompts[0]
     assert all(
         word not in capture.prompts[0]
         for word in ("accepted_actions", "required_reads", '"expected"')
@@ -206,10 +244,11 @@ def test_corpus_scenarios_are_internally_consistent(corpus: str) -> None:
     assert len({case.finding_id for case in cases}) == len(cases)
     for case in cases:
         assert case.expected.required_reads
-        assert set(case.expected.required_reads) <= set(case.replays)
+        assert set(case.expected.required_reads) <= set(case.claim_replays) <= set(case.replays)
         references = {
             row["reference"]
-            for row in case.replays.values()
+            for lookup, row in case.replays.items()
+            if lookup in case.claim_replays
             if isinstance(row.get("reference"), str)
         }
         assert set(case.expected.evidence_refs) <= references, case.scenario_id
@@ -224,6 +263,18 @@ def test_corpus_scenarios_are_internally_consistent(corpus: str) -> None:
 def test_held_out_corpus_stays_in_the_evaluation_band() -> None:
     cases = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/held-out.json")
     assert 15 <= len(cases) <= 20
+
+
+@pytest.mark.parametrize("corpus", ["dev", "held-out"])
+def test_verification_reference_has_one_recorded_invocation(corpus: str) -> None:
+    cases = load_scenarios(BENCHMARKS_DIR / f"scenarios/decision-eval/{corpus}.json")
+    for case in cases:
+        producers: dict[str, str] = {}
+        for replay in case.replays.values():
+            if "reference" not in replay:
+                continue
+            reference, invocation = replay["reference"], replay["invocation_id"]
+            assert producers.setdefault(reference, invocation) == invocation, case.scenario_id
 
 
 @pytest.mark.parametrize(
@@ -336,6 +387,7 @@ def test_paired_summary_keeps_failures_in_denominator() -> None:
     assert report["paired_decision_gain"]["test"] == 1
     assert report["groups"]["test:baseline"]["provider_failures"] == 1
     assert report["groups"]["test:baseline"]["decision_correct"] == 0
+    assert report["groups"]["test:baseline"]["provenance_rejections"] is None
     with pytest.raises(ValueError, match="both conditions"):
         summarize(rows[:1])
     with pytest.raises(ValueError, match="duplicate"):
@@ -477,6 +529,9 @@ def test_cli_runs_both_conditions_against_scripted_http_provider(tmp_path: Path)
         report = json.loads(report_text)
         assert "scripted-secret-not-for-report" not in report_text
         assert len(report["episodes"]) == 12
+        assert report["output_boundary"] == "read-bound-v1"
+        assert report["episodes"][0]["provenance"]["accepted"] is True
+        assert report["episodes"][0]["bound_decision"]["lineage_count"] == 1
         assert report["summary"]["groups"]["scripted-http:baseline"]["decision_correct"] == 1 / 6
         assert report["summary"]["groups"]["scripted-http:evidence"]["false_positive_rate"] == 1
         assert report["summary"]["paired_decision_gain"]["scripted-http"] == 0
@@ -510,9 +565,77 @@ async def test_completed_tool_attempt_survives_later_provider_failure() -> None:
     )
     row = await run_episode(scenario, model, "baseline", timeout=5)
     assert row["error"] == "RuntimeError"
+    assert row["bound_decision"] is None
+    assert row["provenance"]["issues"] == ["episode_failed"]
     assert row["scores"]["scope_violations"] == 1
     assert row["completed_model_turns"] == 1
     assert row["cost_usd"] is None
+
+
+def test_cli_authentication_failure_saves_report_and_exits_nonzero(tmp_path: Path) -> None:
+    import os
+    import subprocess
+    import sys
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    from benchmarks.engine.paths import REPO_ROOT
+
+    class DeniedProvider(BaseHTTPRequestHandler):
+        def log_message(self, format: str, *args: Any) -> None:
+            return None
+
+        def do_POST(self) -> None:
+            self.rfile.read(int(self.headers["Content-Length"]))
+            body = json.dumps(
+                {"error": {"message": "invalid authentication", "type": "authentication_error"}}
+            ).encode()
+            self.send_response(401)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), DeniedProvider)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "benchmarks.suites.decision_eval",
+                "--model",
+                "scripted-denied",
+                "--output",
+                str(tmp_path / "denied"),
+                "--timeout",
+                "10",
+            ],
+            cwd=REPO_ROOT,
+            env={
+                **os.environ,
+                "RAPTIX_PLUGINS": "__benchmark_tests__",
+                "RAPTIX_LLM__PROXY_URL": f"http://127.0.0.1:{server.server_port}",
+                "RAPTIX_LLM__PROXY_API_KEY": "synthetic-denied-key",
+            },
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+        assert result.returncode != 0
+        report = json.loads((tmp_path / "denied/report.json").read_text(encoding="utf-8"))
+        assert len(report["episodes"]) == 12
+        assert all(
+            row["error"] == "AuthenticationError" and row["completed_model_turns"] == 0
+            for row in report["episodes"]
+        )
+        assert "All episodes failed during execution" in result.stderr
+        assert "synthetic-denied-key" not in result.stdout + result.stderr
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(5)
 
 
 @pytest.mark.asyncio

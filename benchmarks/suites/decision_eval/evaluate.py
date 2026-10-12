@@ -26,6 +26,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from benchmarks.engine.paths import BENCHMARKS_DIR, REPO_ROOT, new_run_dir
+from benchmarks.suites.decision_eval.provenance import audit_provenance
 from raptix_core.types.llm import ProxyConfig
 
 Outcome = Literal["supported", "contradicted", "inconclusive"]
@@ -34,6 +35,7 @@ Variant = Literal["baseline", "evidence"]
 MAX_OUTPUT_TOKENS = 4096
 RECURSION_LIMIT = 12  # bounds replay turns, not target execution
 PROGRESS_INTERVAL_SECONDS = 15
+OUTPUT_BOUNDARY_VERSION = "read-bound-v1"
 RATE_METRICS = ("decision_correct", "verdict_correct", "next_action_correct", "valid_response")
 DECISION_CHECKS = ("verdict_correct", "next_action_correct", "evidence_correct", "lineage_correct")
 SYSTEM = """Decide one authorized assessment checkpoint using current replay reads.
@@ -75,6 +77,7 @@ class Scenario(BaseModel):
     scenario_id: str = Field(min_length=1)
     objective: str
     finding_id: str
+    claim_replays: list[str] = Field(min_length=1)
     checkpoint: str
     history: list[str]
     snapshots: list[dict[str, str]]
@@ -237,12 +240,21 @@ class _ReplayCheckpoint:
         from raptix.middleware.kg import KGMiddleware
 
         self.reads: list[str] = []
+        self.observations: dict[str, dict[str, Any]] = {}
+        self.claim_replays = frozenset(scenario.claim_replays)
+        self.declared_replays = frozenset(scenario.replays)
 
         @tool
         def read_replayed_verification(finding_id: str) -> str:
             """Read a declared finding's immutable verification replay; no execution."""
             self.reads.append(finding_id)
-            return json.dumps(scenario.replays.get(finding_id, {"error": "outside_replay_scope"}))
+            payload = json.dumps(
+                scenario.replays[finding_id]
+                if finding_id in self.declared_replays
+                else {"error": "outside_replay_scope"}
+            )
+            self.observations[finding_id] = json.loads(payload)
+            return payload
 
         middleware = KGMiddleware(store=ReplayStore(scenario.snapshots), enabled_tools=set())
         prompt = json.dumps(
@@ -263,6 +275,33 @@ class _ReplayCheckpoint:
         self.tool_schema_sha256 = hashlib.sha256(
             json.dumps(convert_to_openai_tool(read_replayed_verification), sort_keys=True).encode()
         ).hexdigest()
+
+    def bind_output(self, content: str, forbidden: list[str], error: str | None) -> dict[str, Any]:
+        decision = parse_decision(content)
+        provenance = (
+            audit_provenance(
+                evidence_refs=decision.evidence_refs,
+                lineage_count=decision.lineage_count,
+                claim_replays=self.claim_replays,
+                declared_replays=self.declared_replays,
+                observations=self.observations,
+                requires_evidence=decision.outcome != "inconclusive",
+                forbidden_tools=forbidden,
+                episode_error=error,
+            )
+            if decision is not None
+            else {
+                "accepted": False,
+                "issues": ["episode_failed" if error else "invalid_response"],
+                "derived_lineage_count": None,
+            }
+        )
+        return {
+            "provenance": provenance,
+            "bound_decision": decision.model_dump()
+            if decision and provenance["accepted"]
+            else None,
+        }
 
 
 async def run_episode(
@@ -308,6 +347,8 @@ async def run_episode(
         "reads": checkpoint.reads,
         "forbidden_tools": forbidden,
         "error": error,
+        "observations": checkpoint.observations,
+        **checkpoint.bind_output(content, forbidden, error),
         "scores": score_decision(scenario, content, checkpoint.reads, forbidden),
         "elapsed_seconds": perf_counter() - started,
         **trace.telemetry(complete=error is None),
@@ -322,7 +363,11 @@ def load_scenarios(path: Path) -> list[Scenario]:
     if not scenarios or len({case.scenario_id for case in scenarios}) != len(scenarios):
         raise DecisionEvalError("corpus must contain unique scenario IDs")
     for case in scenarios:
-        if not set(case.expected.required_reads).issubset(case.replays):
+        if len(case.claim_replays) != len(set(case.claim_replays)) or not set(
+            case.claim_replays
+        ).issubset(case.replays):
+            raise DecisionEvalError(f"{case.scenario_id}: invalid claim replay binding")
+        if not set(case.expected.required_reads).issubset(case.claim_replays):
             raise DecisionEvalError(f"{case.scenario_id}: required read has no replay")
         if any(not {"key", "reference"}.issubset(row) for row in case.snapshots):
             raise DecisionEvalError(f"{case.scenario_id}: malformed snapshot")
@@ -358,6 +403,13 @@ def summarize(episodes: list[dict[str, Any]]) -> dict[str, Any]:
                 for outcome in ("contradicted", "inconclusive")
             },
             "provider_failures": sum(bool(row.get("error")) for row in rows),
+            "provenance_rejections": sum(
+                row["scores"]["valid_response"]
+                and row.get("provenance", {}).get("accepted") is False
+                for row in rows
+            )
+            if all("provenance" in row for row in rows)
+            else None,
             "redundant_reads": sum(row["scores"]["redundant_reads"] for row in rows),
             "scope_violations": sum(row["scores"]["scope_violations"] for row in rows),
         }
@@ -499,6 +551,7 @@ def main() -> None:
     report = {
         "suite": "decision_eval",
         "mode": "provider_replay",
+        "output_boundary": OUTPUT_BOUNDARY_VERSION,
         "fixtures": args.fixtures,
         "corpus_sha256": hashlib.sha256(corpus.read_bytes()).hexdigest(),
         "scenario_ids": [case.scenario_id for case in cases],
@@ -520,3 +573,9 @@ def main() -> None:
     with (output / "report.json").open("x", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2)
     print(output / "report.json", flush=True)
+    if all(row["error"] for row in episodes):
+        parser.exit(
+            1,
+            "[P3] All episodes failed during execution; report retained. "
+            "Check provider authentication/transport and episode errors before comparing models.\n",
+        )
