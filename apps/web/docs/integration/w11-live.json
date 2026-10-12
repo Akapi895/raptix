@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqsxupt0000l0fitepn81au",
-  "threadId": "5e94d862-0a2f-4492-9ac9-d1fe842230f9",
-  "runId": "01a0fc17-c333-78c2-9043-31e04925f2a6",
+  "projectId": "cmv4vrkdi0000f4firba3mpui",
+  "threadId": "1e145d27-7115-465d-84ca-b33d8c6b95d1",
+  "runId": "01a12ed5-22d4-7471-a872-a4ad84d91cdd",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -16,7 +16,7 @@
     "deployed model produced no question interrupt this round; the resume happy path is proven by the controlled service lanes",
     "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11"
   ],
-  "streamCursor": "1790935811820-0",
+  "streamCursor": "1791787083144-0",
   "publicEvents": 4,
   "resumeRoundTrip": false,
   "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged",

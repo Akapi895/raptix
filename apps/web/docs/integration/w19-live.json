@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqsx3be000020fi31vd04lo",
-  "threadId": "2ef6f219-504f-4b73-85e2-4e68625a9828",
-  "runId": "01a0fc17-380d-70d3-abc0-54e546b37f42",
+  "projectId": "cmv4vuz3v0000eofizwzt0qjk",
+  "threadId": "b8fa9063-8764-4f81-b450-639be1664acc",
+  "runId": "01a12ed7-9025-7c71-bfe5-0d7c9ca96fc9",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -16,7 +16,7 @@
     "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11",
     "the members capability reflects the real single-user view while invite/RBAC stay stated-absent with reasons"
   ],
-  "streamCursor": "1790935775861-0",
+  "streamCursor": "1791787242320-0",
   "publicEvents": 4,
   "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W19 truthful local single-user members view, the explicit 503 invite/RBAC reasons and scoped foreign denial against the real database; context-only isolated target, runtime guard path unchanged",
   "ownedRuntimeFixtureRemoved": true
