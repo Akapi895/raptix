@@ -1,6 +1,7 @@
 [
   {
     "scenario_id": "unrelated-positive", "objective": "Assess only the isolation claim for HOLD-101; HOLD-OTHER concerns a different scoped resource.", "finding_id": "HOLD-101",
+    "claim_replays": ["HOLD-101"],
     "checkpoint": "The related check is incomplete; an unrelated successful observation is also available. Budget remains for the requested resource.",
     "history": ["A previous operator suggested that success on HOLD-OTHER might support HOLD-101."], "snapshots": [],
     "replays": {
@@ -11,6 +12,7 @@
   },
   {
     "scenario_id": "two-refs-one-invocation", "objective": "Assess HOLD-102 using both retained projections and count distinct producing invocations.", "finding_id": "HOLD-102",
+    "claim_replays": ["HOLD-102-A", "HOLD-102-B"],
     "checkpoint": "The two projections use different retained references but originate from the same execution. They are not independent corroboration.",
     "history": ["HOLD-102-A and HOLD-102-B are projections of producer run-common."], "snapshots": [],
     "replays": {
@@ -21,6 +23,7 @@
   },
   {
     "scenario_id": "binding-transplant", "objective": "Assess the claim for HOLD-103, not the finding from which its reference was copied.", "finding_id": "HOLD-103",
+    "claim_replays": ["HOLD-103"],
     "checkpoint": "The JSON ID was changed when a prior result was copied. Budget remains to gather a finding-bound observation.",
     "history": ["An earlier agent relabeled a supported check as HOLD-103."],
     "snapshots": [{"key": "finding::HOLD-103", "reference": "workspace-evidence://5555555555555555555555555555555555555555555555555555555555555555", "recorded_outcome": "supported", "writer": "agent", "episode": "copy-write", "invocation": "foreign-run"}],
@@ -29,6 +32,7 @@
   },
   {
     "scenario_id": "historical-consensus-refuted", "objective": "Assess the differential claim for HOLD-104 after its current baseline recheck.", "finding_id": "HOLD-104",
+    "claim_replays": ["HOLD-104"],
     "checkpoint": "Current proof and control are complete, but the baseline also has the proof's success signal. Budget remains for revising the claim.",
     "history": ["Three prior agents agreed HOLD-104 was supported. They all repeated the same run-old observation."],
     "snapshots": [{"key": "finding::HOLD-104", "reference": "workspace-evidence://6666666666666666666666666666666666666666666666666666666666666666", "recorded_outcome": "supported", "writer": "analyst", "episode": "consensus-write", "invocation": "run-old"}],
@@ -37,6 +41,7 @@
   },
   {
     "scenario_id": "independent-lineage", "objective": "Assess the recorded claim for HOLD-105 using both retained checks and count distinct producer invocations.", "finding_id": "HOLD-105",
+    "claim_replays": ["HOLD-105-ONE", "HOLD-105-TWO"],
     "checkpoint": "Two independent checks are available; each carries its own retained reference and producer invocation. Budget remains for both reads.",
     "history": ["HOLD-105 was described as supported by two separate verifications."],
     "snapshots": [{"key": "finding::HOLD-105", "reference": "workspace-evidence://a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-105", "invocation": "run-alpha"}],
@@ -48,6 +53,7 @@
   },
   {
     "scenario_id": "three-refs-two-invocations", "objective": "Assess HOLD-106 across its three retained projections and count distinct producing invocations.", "finding_id": "HOLD-106",
+    "claim_replays": ["HOLD-106-A", "HOLD-106-B", "HOLD-106-C"],
     "checkpoint": "Three projections are recorded; two share one producer invocation and one comes from a separate execution.",
     "history": ["HOLD-106-A and HOLD-106-B were written by the same producer run; HOLD-106-C was written separately."],
     "snapshots": [{"key": "finding::HOLD-106", "reference": "workspace-evidence://c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-106", "invocation": "run-pair"}],
@@ -59,18 +65,20 @@
     "expected": {"outcome": "supported", "accepted_actions": ["report_scoped"], "evidence_refs": ["workspace-evidence://c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3", "workspace-evidence://d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4", "workspace-evidence://e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5"], "lineage_count": 2, "required_reads": ["HOLD-106-A", "HOLD-106-B", "HOLD-106-C"]}
   },
   {
-    "scenario_id": "same-ref-two-invocations", "objective": "Assess HOLD-107 from both retained checks, which cite one reference from two separate executions.", "finding_id": "HOLD-107",
-    "checkpoint": "Two separate executions produced the same retained reference. Count producing invocations, not references.",
+    "scenario_id": "same-captures-two-invocations", "objective": "Assess HOLD-107 from both retained verification records, whose separate executions captured identical proof/control bytes.", "finding_id": "HOLD-107",
+    "claim_replays": ["HOLD-107-ONE", "HOLD-107-TWO"],
+    "checkpoint": "The proof/control capture bytes were reproduced, but each verification record retains its own producer invocation. Check both records before counting producer lineages.",
     "history": ["HOLD-107 was re-verified by a second execution that reproduced the first capture."],
     "snapshots": [{"key": "finding::HOLD-107", "reference": "workspace-evidence://f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-107", "invocation": "run-one"}],
     "replays": {
       "HOLD-107-ONE": {"outcome": "supported", "reference": "workspace-evidence://f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0", "invocation_id": "run-one"},
-      "HOLD-107-TWO": {"outcome": "supported", "reference": "workspace-evidence://f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0", "invocation_id": "run-two"}
+      "HOLD-107-TWO": {"outcome": "supported", "reference": "workspace-evidence://f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1", "invocation_id": "run-two"}
     },
-    "expected": {"outcome": "supported", "accepted_actions": ["report_scoped"], "evidence_refs": ["workspace-evidence://f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0"], "lineage_count": 2, "required_reads": ["HOLD-107-ONE", "HOLD-107-TWO"]}
+    "expected": {"outcome": "supported", "accepted_actions": ["report_scoped"], "evidence_refs": ["workspace-evidence://f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0", "workspace-evidence://f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1"], "lineage_count": 2, "required_reads": ["HOLD-107-ONE", "HOLD-107-TWO"]}
   },
   {
     "scenario_id": "stale-snapshot-retention-expired", "objective": "Reassess the historical claim for HOLD-108.", "finding_id": "HOLD-108",
+    "claim_replays": ["HOLD-108"],
     "checkpoint": "The historical capture may no longer be retrievable. Budget remains to recover valid evidence.",
     "history": ["An old verifier supported HOLD-108 from run-old; no current integrity check has been read."],
     "snapshots": [{"key": "finding::HOLD-108", "reference": "workspace-evidence://1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-old-108", "invocation": "run-old"}],
@@ -79,6 +87,7 @@
   },
   {
     "scenario_id": "current-positive-new-reference", "objective": "Assess the recorded claim for HOLD-109 against its current verification.", "finding_id": "HOLD-109",
+    "claim_replays": ["HOLD-109"],
     "checkpoint": "A current differential proof/control check is available and differs from the historical write. Budget remains for reporting a scoped claim.",
     "history": ["An old verifier supported HOLD-109 from run-old; the retained capture may have moved since."],
     "snapshots": [{"key": "finding::HOLD-109", "reference": "workspace-evidence://2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-old-109", "invocation": "run-old"}],
@@ -87,6 +96,7 @@
   },
   {
     "scenario_id": "history-contradicted-current-supported", "objective": "Assess the differential claim for HOLD-110 at its current checkpoint.", "finding_id": "HOLD-110",
+    "claim_replays": ["HOLD-110"],
     "checkpoint": "A current differential proof/control check has completed. Budget remains for updating the claim.",
     "history": ["Two earlier agents recorded HOLD-110 as contradicted after a failed control run."],
     "snapshots": [{"key": "finding::HOLD-110", "reference": "workspace-evidence://6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f6f", "recorded_outcome": "contradicted", "writer": "verifier", "episode": "write-old-110", "invocation": "run-old"}],
@@ -95,6 +105,7 @@
   },
   {
     "scenario_id": "contradicted-ignore-unrelated", "objective": "Assess only the differential claim for HOLD-111; HOLD-OTHER-111 concerns a different scoped resource.", "finding_id": "HOLD-111",
+    "claim_replays": ["HOLD-111"],
     "checkpoint": "The scoped recheck is complete and an unrelated successful observation is also recorded. Budget remains for revising the claim if needed.",
     "history": ["An earlier note described HOLD-111 as supported from run-old."],
     "snapshots": [{"key": "finding::HOLD-111", "reference": "workspace-evidence://7171717171717171717171717171717171717171717171717171717171717171", "recorded_outcome": "supported", "writer": "agent", "episode": "write-old-111", "invocation": "run-old"}],
@@ -106,6 +117,7 @@
   },
   {
     "scenario_id": "control-check-missing", "objective": "Assess whether HOLD-112 can be reported from its proof/control check.", "finding_id": "HOLD-112",
+    "claim_replays": ["HOLD-112"],
     "checkpoint": "The proof observation completed but its control counterpart is not present. Budget remains to complete the pair.",
     "history": ["A prior agent described HOLD-112 as supported from the proof step alone."],
     "snapshots": [{"key": "finding::HOLD-112", "reference": "workspace-evidence://7373737373737373737373737373737373737373737373737373737373737373", "recorded_outcome": "supported", "writer": "agent", "episode": "write-112", "invocation": "run-old"}],
@@ -114,6 +126,7 @@
   },
   {
     "scenario_id": "existing-evidence-no-budget", "objective": "Assess HOLD-113 before ending the checkpoint.", "finding_id": "HOLD-113",
+    "claim_replays": ["HOLD-113"],
     "checkpoint": "No authorized budget remains for new execution. Reading the retained verification is allowed before closing.",
     "history": ["A note claims HOLD-113 was supported; the retained verification must be read before reporting."],
     "snapshots": [{"key": "finding::HOLD-113", "reference": "workspace-evidence://7474747474747474747474747474747474747474747474747474747474747474", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-113", "invocation": "run-final"}],
@@ -122,6 +135,7 @@
   },
   {
     "scenario_id": "record-locked-no-budget", "objective": "Assess HOLD-114 before ending the checkpoint.", "finding_id": "HOLD-114",
+    "claim_replays": ["HOLD-114"],
     "checkpoint": "No authorized budget remains. Reading is allowed; if the record cannot be used, close without reporting a vulnerability.",
     "history": ["An earlier note reported HOLD-114 as supported; its verification record may be unavailable."],
     "snapshots": [{"key": "finding::HOLD-114", "reference": "workspace-evidence://7575757575757575757575757575757575757575757575757575757575757575", "recorded_outcome": "supported", "writer": "agent", "episode": "write-114", "invocation": "run-old"}],
@@ -130,6 +144,7 @@
   },
   {
     "scenario_id": "supported-ignore-unrelated", "objective": "Assess only the scoped claim for HOLD-115; HOLD-OTHER-115 concerns a different scoped resource.", "finding_id": "HOLD-115",
+    "claim_replays": ["HOLD-115"],
     "checkpoint": "The scoped proof/control check and an unrelated stronger result are both recorded. Budget remains for the requested resource.",
     "history": ["HOLD-115 was supported by an earlier verifier; the unrelated result is newer and larger."],
     "snapshots": [{"key": "finding::HOLD-115", "reference": "workspace-evidence://7878787878787878787878787878787878787878787878787878787878787878", "recorded_outcome": "supported", "writer": "verifier", "episode": "write-old-115", "invocation": "run-old"}],
@@ -141,6 +156,7 @@
   },
   {
     "scenario_id": "partial-pair-one-missing", "objective": "Assess the claim for HOLD-116, which requires both its proof and control observations.", "finding_id": "HOLD-116",
+    "claim_replays": ["HOLD-116-PROOF", "HOLD-116-CONTROL"],
     "checkpoint": "One of the two required observations is available. Budget remains to gather the missing part before deciding.",
     "history": ["An earlier agent described HOLD-116 as supported from the proof observation alone."],
     "snapshots": [{"key": "finding::HOLD-116", "reference": "workspace-evidence://7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a7a", "recorded_outcome": "supported", "writer": "agent", "episode": "write-116", "invocation": "run-old"}],
