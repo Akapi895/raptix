@@ -44,6 +44,7 @@ import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
+from weakref import WeakValueDictionary
 
 log = logging.getLogger(__name__)
 
@@ -73,6 +74,14 @@ def _record_hmac(this_hash: str, key: bytes | None) -> str:
 class AuditChainState:
     seq: int = 0
     last_hash: str = _GENESIS_PREV_HASH
+    hydrated: bool = field(default=False, compare=False, repr=False)
+    lock: threading.Lock = field(default_factory=threading.Lock, compare=False, repr=False)
+
+
+# Compiled parent/child graphs have independent sink objects for the same file.
+# Share their process-local cursor and lock without retaining dead engagements.
+_CHAIN_STATES: WeakValueDictionary[Path, AuditChainState] = WeakValueDictionary()
+_CHAIN_STATES_LOCK = threading.Lock()
 
 
 @dataclass
@@ -100,11 +109,20 @@ class RoEAuditSink:
             env_key = os.environ.get("RAPTIX_AUDIT_HMAC_KEY")
             if env_key:
                 self.hmac_key = env_key.encode("utf-8")
+        with _CHAIN_STATES_LOCK:
+            key = self.path.resolve()
+            shared = _CHAIN_STATES.get(key)
+            if shared is None:
+                _CHAIN_STATES[key] = self._state
+            else:
+                self._state = shared
+            self._lock = self._state.lock
 
     def _ensure_hydrated(self) -> None:
-        if self._hydrated:
+        if self._hydrated or self._state.hydrated:
             return
         self._hydrated = True
+        self._state.hydrated = True
         if not self.path.exists():
             return
         last_seq = 0
@@ -123,7 +141,8 @@ class RoEAuditSink:
                     last_hash = str(rec.get("hash", last_hash))
         except OSError as exc:
             log.warning("audit_sink: failed to hydrate from %s: %s", self.path, exc)
-        self._state = AuditChainState(seq=last_seq, last_hash=last_hash)
+        self._state.seq = last_seq
+        self._state.last_hash = last_hash
 
     def append(self, record: dict[str, Any]) -> dict[str, Any]:
         """Append ``record`` to the ledger; return the persisted form."""
@@ -152,7 +171,8 @@ class RoEAuditSink:
             except OSError as exc:
                 log.error("audit_sink: failed to write to %s: %s", self.path, exc)
                 raise
-            self._state = AuditChainState(seq=seq, last_hash=this_hash)
+            self._state.seq = seq
+            self._state.last_hash = this_hash
             return stamped
 
 
