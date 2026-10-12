@@ -16,6 +16,8 @@ function project(overrides: Partial<ProjectViewModel> = {}): ProjectViewModel {
     targetType: 'web_url',
     targetValue: 'http://authorized-local-target:3010',
     authorizationConfirmed: true,
+    brief: null,
+    handoffConfirmedAt: null,
     metadataState: 'verified',
     lifecycleStatus: 'running',
     findingCount: null,
@@ -73,10 +75,18 @@ describe('real-project create draft validation', () => {
     targetType: 'web_url' as const,
     targetValue: 'http://authorized-local-target:3010',
     authorizationConfirmed: true,
+    brief: 'Authorized external web assessment of the local lab target with defined constraints.',
   }
 
   it('accepts a fully valid draft', () => {
     expect(validateCreateProjectDraft(valid)).toEqual({})
+  })
+
+  it('requires a briefing of usable length and bounds its size', () => {
+    expect(validateCreateProjectDraft({ ...valid, brief: '' }).brief).toBeDefined()
+    expect(validateCreateProjectDraft({ ...valid, brief: 'too short' }).brief).toBeDefined()
+    expect(validateCreateProjectDraft({ ...valid, brief: 'x'.repeat(20_001) }).brief).toBeDefined()
+    expect(validateCreateProjectDraft({ ...valid, brief: 'x'.repeat(20_000) }).brief).toBeUndefined()
   })
 
   it('rejects workspace slugs that violate the server slug policy', () => {

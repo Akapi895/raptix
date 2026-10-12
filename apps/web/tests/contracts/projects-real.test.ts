@@ -34,6 +34,8 @@ function projectDto(overrides: Partial<ProjectViewModel> = {}): ProjectViewModel
     targetType: 'web_url',
     targetValue: 'http://authorized-local-target:3010',
     authorizationConfirmed: true,
+    brief: null,
+    handoffConfirmedAt: null,
     metadataState: 'verified',
     lifecycleStatus: 'draft',
     findingCount: null,
@@ -223,6 +225,7 @@ describe('features/projects/projects-real adapter', () => {
       targetType: 'ip_range',
       targetValue: '10.0.0.0/24',
       authorizationConfirmed: true,
+      brief: 'Authorized internal network sweep of the lab range with scoped constraints.',
     })
     expect(created.id).toBe('eng_002')
     expect(calls[0].url).toBe('/api/engagements')
@@ -234,12 +237,13 @@ describe('features/projects/projects-real adapter', () => {
       targetType: 'ip_range',
       targetValue: '10.0.0.0/24',
       authorizationConfirmed: true,
+      brief: 'Authorized internal network sweep of the lab range with scoped constraints.',
     })
 
     stubFetch(() => jsonResponse(201, projectDto()))
     await realProjectsApi.create({
       name: 'fresh-slug', targetType: 'web_url', targetValue: 'https://x.example',
-      authorizationConfirmed: true,
+      authorizationConfirmed: true, brief: 'Authorized external web assessment with scoped constraints.',
     })
     expect(JSON.parse(String(calls[0].init.body))).not.toHaveProperty('displayName')
   })
@@ -306,6 +310,7 @@ describe('use-real-projects store', () => {
       targetType: 'web_url',
       targetValue: 'http://authorized-local-target:3010',
       authorizationConfirmed: true,
+      brief: 'Authorized external web assessment with scoped constraints.',
     })
     expect(created.id).toBe('eng_009')
     const detail = projectsStore.readProject('eng_009')
@@ -324,6 +329,7 @@ describe('use-real-projects store', () => {
       targetType: 'web_url',
       targetValue: 'http://authorized-local-target:3010',
       authorizationConfirmed: true,
+      brief: 'Authorized external web assessment with scoped constraints.',
     })
     resolvers[1]?.(jsonResponse(201, projectDto({ id: 'eng_010' })))
     await flush()
