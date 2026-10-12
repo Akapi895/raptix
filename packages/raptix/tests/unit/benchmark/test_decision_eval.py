@@ -241,11 +241,22 @@ def test_cli_runs_both_conditions_against_scripted_http_provider(tmp_path: Path)
 
     from benchmarks.engine.paths import REPO_ROOT
 
+    second_episode_started = threading.Event()
+    release_provider = threading.Event()
+    first_progress_received = threading.Event()
+    logs: list[str] = []
+
     class Provider(BaseHTTPRequestHandler):
+        requests = 0
+
         def log_message(self, format: str, *args: Any) -> None:
             return None
 
         def do_POST(self) -> None:
+            Provider.requests += 1
+            if Provider.requests == 3:
+                second_episode_started.set()
+                release_provider.wait(30)
             request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
             user = next(message for message in request["messages"] if message["role"] == "user")
             checkpoint = json.loads(user["content"])
@@ -318,10 +329,40 @@ def test_cli_runs_both_conditions_against_scripted_http_provider(tmp_path: Path)
             "RAPTIX_LLM__PROXY_URL": f"http://127.0.0.1:{server.server_port}",
             "RAPTIX_LLM__PROXY_API_KEY": "scripted-secret-not-for-report",
         }
-        completed = subprocess.run(
-            command, env=env, cwd=REPO_ROOT, text=True, capture_output=True, timeout=90
+        process = subprocess.Popen(
+            command,
+            env=env,
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
-        assert completed.returncode == 0, completed.stderr
+
+        def read_progress() -> None:
+            assert process.stdout is not None
+            for line in process.stdout:
+                logs.append(line)
+                if "[1/12] DONE" in line:
+                    first_progress_received.set()
+
+        reader = threading.Thread(target=read_progress, daemon=True)
+        reader.start()
+        try:
+            assert second_episode_started.wait(15), "provider never reached the next episode"
+            assert first_progress_received.wait(2), "no flushed progress before the run finished"
+            partial = (tmp_path / "report/episodes.jsonl").read_text(encoding="utf-8").splitlines()
+            assert len(partial) == 1
+            assert json.loads(partial[0])["scenario_id"] == "fresh-supported"
+        finally:
+            release_provider.set()
+            try:
+                process.wait(timeout=90)
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait(timeout=5)
+                reader.join(5)
+        assert process.returncode == 0, "".join(logs)
         report_text = (tmp_path / "report/report.json").read_text(encoding="utf-8")
         report = json.loads(report_text)
         assert "scripted-secret-not-for-report" not in report_text
@@ -362,3 +403,59 @@ async def test_completed_tool_attempt_survives_later_provider_failure() -> None:
     assert row["scores"]["scope_violations"] == 1
     assert row["completed_model_turns"] == 1
     assert row["cost_usd"] is None
+
+
+@pytest.mark.asyncio
+async def test_slow_episode_emits_heartbeat_and_retains_failed_results(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from benchmarks.suites.decision_eval import evaluate
+
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    monkeypatch.setattr(evaluate, "PROGRESS_INTERVAL_SECONDS", 0.02)
+    monkeypatch.setattr(
+        evaluate,
+        "ChatOpenAI",
+        lambda **kwargs: ReplayModel(responses=[AIMessage(content="invalid")], sleep=0.08),
+    )
+    rows = await evaluate.evaluate_models([scenario], ["scripted-slow"], 1, 0, 5, tmp_path)
+    log = capsys.readouterr().out
+    assert "[1/2] WAIT" in log
+    assert "[2/2] DONE" in log and "status=FAIL" in log
+    journal = [
+        json.loads(line)
+        for line in (tmp_path / "episodes.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert journal == rows
+    assert (tmp_path / "progress.log").read_text(encoding="utf-8") == log
+
+
+@pytest.mark.asyncio
+async def test_cancelling_progress_monitor_restores_episode_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import asyncio
+    import os
+
+    from benchmarks.suites.decision_eval import evaluate
+
+    entered = asyncio.Event()
+
+    class SlowProvider(ReplayModel):
+        async def _agenerate(self, *args: Any, **kwargs: Any) -> Any:
+            entered.set()
+            return await super()._agenerate(*args, **kwargs)
+
+    monkeypatch.setenv("RAPTIX_KG_EVIDENCE_CONTEXT", "caller-value")
+    monkeypatch.setattr(
+        evaluate,
+        "ChatOpenAI",
+        lambda **kwargs: SlowProvider(responses=[AIMessage(content="invalid")], sleep=10),
+    )
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    run = asyncio.create_task(evaluate.evaluate_models([scenario], ["scripted-slow"], 1, 0, 30))
+    await asyncio.wait_for(entered.wait(), timeout=5)
+    run.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await run
+    assert os.environ["RAPTIX_KG_EVIDENCE_CONTEXT"] == "caller-value"

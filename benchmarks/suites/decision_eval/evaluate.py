@@ -11,6 +11,7 @@ import os
 import random
 import subprocess
 from collections import defaultdict
+from collections.abc import Coroutine
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Literal
@@ -32,6 +33,7 @@ Action = Literal["report_scoped", "revise_hypothesis", "gather_evidence", "stop_
 Variant = Literal["baseline", "evidence"]
 MAX_OUTPUT_TOKENS = 4096
 RECURSION_LIMIT = 12  # bounds replay turns, not target execution
+PROGRESS_INTERVAL_SECONDS = 15
 RATE_METRICS = ("decision_correct", "verdict_correct", "next_action_correct", "valid_response")
 DECISION_CHECKS = ("verdict_correct", "next_action_correct", "evidence_correct", "lineage_correct")
 SYSTEM = """Decide one authorized assessment checkpoint using current replay reads.
@@ -325,13 +327,78 @@ def summarize(episodes: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+class _RunProgress:
+    def __init__(self, total: int, output: Path | None) -> None:
+        self.total, self.completed, self.output = total, 0, output
+        if output:
+            with (output / "episodes.jsonl").open("x", encoding="utf-8"):
+                pass
+        self._log(f"[P3] Planned episodes={total}; output={output or 'in-memory'}")
+
+    def _log(self, message: str) -> None:
+        print(message, flush=True)
+        if self.output:
+            with (self.output / "progress.log").open("a", encoding="utf-8") as handle:
+                handle.write(message + "\n")
+
+    def start(
+        self, model: str, scenario: str, variant: str, repetition: int, timeout: float
+    ) -> None:
+        self.started = perf_counter()
+        self._log(
+            f"[P3] [{self.completed + 1}/{self.total}] START model={model} case={scenario} variant={variant} repetition={repetition + 1} timeout={timeout:g}s"
+        )
+
+    def waiting(self) -> None:
+        self._log(
+            f"[P3] [{self.completed + 1}/{self.total}] WAIT episode still running; elapsed={perf_counter() - self.started:.1f}s"
+        )
+
+    def finish(self, row: dict[str, Any]) -> None:
+        if self.output:
+            with (self.output / "episodes.jsonl").open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(row) + "\n")
+        self.completed += 1
+        status = (
+            f"ERROR:{row['error']}"
+            if row["error"]
+            else "PASS"
+            if row["scores"]["decision_correct"]
+            else "FAIL"
+        )
+        self._log(
+            f"[P3] [{self.completed}/{self.total}] DONE model={row['model']} case={row['scenario_id']} variant={row['variant']} status={status} elapsed={row['elapsed_seconds']:.1f}s"
+        )
+
+    async def monitor(self, operation: Coroutine[Any, Any, dict[str, Any]]) -> dict[str, Any]:
+        episode = asyncio.create_task(operation)
+        try:
+            while not episode.done():
+                finished, _pending = await asyncio.wait(
+                    {episode}, timeout=PROGRESS_INTERVAL_SECONDS
+                )
+                if not finished:
+                    self.waiting()
+            return episode.result()
+        finally:
+            if not episode.done():
+                episode.cancel()
+                await asyncio.gather(episode, return_exceptions=True)
+
+
 async def evaluate_models(
-    cases: list[Scenario], models: list[str], repetitions: int, seed: int, timeout: float
+    cases: list[Scenario],
+    models: list[str],
+    repetitions: int,
+    seed: int,
+    timeout: float,
+    output: Path | None = None,
 ) -> list[dict[str, Any]]:
     proxy = ProxyConfig()
     url = os.getenv("RAPTIX_LLM__PROXY_URL") or os.getenv("LITELLM_PROXY_URL") or proxy.url
     key = os.getenv("RAPTIX_LLM__PROXY_API_KEY") or os.getenv("LITELLM_MASTER_KEY") or proxy.api_key
     episodes = []
+    progress = _RunProgress(len(cases) * len(models) * repetitions * 2, output)
     rng = random.Random(seed)
     for repetition in range(repetitions):
         for case in cases:
@@ -339,6 +406,7 @@ async def evaluate_models(
                 variants: list[Variant] = ["baseline", "evidence"]
                 rng.shuffle(variants)
                 for variant in variants:
+                    progress.start(model_name, case.scenario_id, variant, repetition, timeout)
                     model = ChatOpenAI(
                         model=model_name,
                         base_url=url.rstrip("/")
@@ -349,8 +417,9 @@ async def evaluate_models(
                         timeout=timeout,
                         max_retries=0,
                     )
-                    row = await run_episode(case, model, variant, timeout=timeout)
+                    row = await progress.monitor(run_episode(case, model, variant, timeout=timeout))
                     episodes.append({**row, "model": model_name, "repetition": repetition})
+                    progress.finish(episodes[-1])
     return episodes
 
 
@@ -372,9 +441,13 @@ def main() -> None:
         parser.error("positive repetitions/timeout and distinct model aliases required")
     corpus = BENCHMARKS_DIR / "scenarios" / "decision-eval" / f"{args.fixtures}.json"
     cases = load_scenarios(corpus)
-    episodes = asyncio.run(
-        evaluate_models(cases, args.model, args.repetitions, args.seed, args.timeout)
-    )
+    output = args.output or new_run_dir("decision-eval")
+    output.mkdir(parents=True, exist_ok=True)
+    if any(
+        (output / name).exists()
+        for name in ("report.json", "episodes.jsonl", "progress.log", "run.json")
+    ):
+        parser.error("output already contains a run; choose a new directory")
     git_command = ["git", "-C", str(REPO_ROOT)]
     revision = subprocess.check_output(git_command + ["rev-parse", "HEAD"], text=True).strip()
     dirty = bool(subprocess.check_output(git_command + ["status", "--porcelain"], text=True))
@@ -384,16 +457,21 @@ def main() -> None:
         "fixtures": args.fixtures,
         "corpus_sha256": hashlib.sha256(corpus.read_bytes()).hexdigest(),
         "scenario_ids": [case.scenario_id for case in cases],
+        "models": args.model,
+        "planned_episodes": len(cases) * len(args.model) * args.repetitions * 2,
+        "pid": os.getpid(),
         "seed": args.seed,
         "repetitions": args.repetitions,
         "timeout_seconds": args.timeout,
         "git_revision": revision,
         "git_dirty": dirty,
-        "summary": summarize(episodes),
-        "episodes": episodes,
     }
-    output = args.output or new_run_dir("decision-eval")
-    output.mkdir(parents=True, exist_ok=True)
+    with (output / "run.json").open("x", encoding="utf-8") as handle:
+        json.dump(report, handle, indent=2)
+    episodes = asyncio.run(
+        evaluate_models(cases, args.model, args.repetitions, args.seed, args.timeout, output)
+    )
+    report.update(summary=summarize(episodes), episodes=episodes)
     with (output / "report.json").open("x", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2)
-    print(output / "report.json")
+    print(output / "report.json", flush=True)

@@ -72,6 +72,27 @@ inconclusive. Redundant reads are counted separately from decision correctness.
 
 Outputs go to `benchmarks/results/runs/decision-eval/run-<UTC>/report.json`.
 `--output DIRECTORY` selects a new destination; an existing report is not overwritten.
+The run directory is printed immediately. Each episode prints flushed `START`
+and `DONE` lines with its counter, model, scenario, condition, repetition and
+deadline/status. Slow episodes emit a `WAIT` heartbeat every 15 seconds.
+`PASS`/`FAIL` refer to decision scoring; `ERROR:<type>` is an episode failure.
+
+Live artifacts are available before the final report:
+
+- `run.json`: run identity, corpus hash, model aliases, PID and scheduling settings.
+- `progress.log`: the same progress messages as the terminal.
+- `episodes.jsonl`: each completed episode, including failures, flushed before
+  its `DONE` line. An interrupted run retains this journal; it is not a complete
+  paired report until all scheduled episodes finish.
+
+In another PowerShell terminal, follow a new run with:
+
+```powershell
+Get-Content -LiteralPath "<run-directory>\progress.log" -Wait
+```
+
+Updates apply to newly started processes. A process started with the old harness
+keeps its loaded code and will only write its final report at completion.
 Reports retain corpus/prompt hashes, git revision and dirty status, scenario/model
 identity, scheduling parameters, per-episode answers, reads, scores, latency,
 provider-reported token usage and cost. Missing usage/cost stays `null`; no pricing
