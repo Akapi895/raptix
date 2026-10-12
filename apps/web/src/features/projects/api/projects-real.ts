@@ -44,6 +44,7 @@ export function createRealProjectsApi(baseUrl: string = apiBaseUrl): ProjectsApi
         targetType: input.targetType,
         targetValue: input.targetValue,
         authorizationConfirmed: true as const,
+        brief: input.brief,
       }
       const value = await requestJson<unknown>(
         baseUrl, ENGAGEMENTS_PATH,
@@ -56,6 +57,7 @@ export function createRealProjectsApi(baseUrl: string = apiBaseUrl): ProjectsApi
         ...(patch.displayName === undefined ? {} : { displayName: patch.displayName }),
         ...(patch.targetType === undefined ? {} : { targetType: patch.targetType }),
         ...(patch.targetValue === undefined ? {} : { targetValue: patch.targetValue }),
+        ...(patch.handoffConfirmed === undefined ? {} : { handoffConfirmed: patch.handoffConfirmed }),
       }
       const value = await requestJson<unknown>(
         baseUrl, `${ENGAGEMENTS_PATH}/${encodePathSegment(id)}`,

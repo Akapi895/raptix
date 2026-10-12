@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import type { FocusEvent } from 'react'
+import type { ChangeEvent, FocusEvent } from 'react'
 import type { EngagementTargetType } from '@raptix/web-contracts'
 import Dialog from '../../../shared/ui/Dialog'
 import { FolderIcon, XIcon } from '../../../components/Icons'
-import { validateCreateProjectDraft } from '../real-project.types'
+import { BRIEF_MAX_LENGTH, validateCreateProjectDraft } from '../real-project.types'
 import type { CreateProjectField, RealNewProjectModalProps } from '../real-project.types'
 
 const TARGET_TYPES: { value: EngagementTargetType; label: string }[] = [
@@ -12,12 +12,12 @@ const TARGET_TYPES: { value: EngagementTargetType; label: string }[] = [
 ]
 const DARK_INPUT = { backgroundColor: '#161D27', border: '1px solid #273142', color: '#F3F4F6' }
 
-function focusInput(e: FocusEvent<HTMLInputElement>) {
+function focusInput(e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
   e.currentTarget.style.borderColor = '#EE0033'
   e.currentTarget.style.boxShadow = '0 0 0 2px rgba(238,0,51,0.1)'
 }
 
-function blurInput(e: FocusEvent<HTMLInputElement>) {
+function blurInput(e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
   e.currentTarget.style.borderColor = '#273142'
   e.currentTarget.style.boxShadow = 'none'
 }
@@ -80,12 +80,33 @@ export default function RealNewProjectModal({ onClose, onCreate, pending, error 
   const [targetType, setTargetType] = useState<EngagementTargetType>('web_url')
   const [targetValue, setTargetValue] = useState('')
   const [authConfirmed, setAuthConfirmed] = useState(false)
+  const [brief, setBrief] = useState('')
   const [localErrors, setLocalErrors] = useState<Partial<Record<CreateProjectField, string>>>({})
 
   const clearField = (field: CreateProjectField) =>
     setLocalErrors(previous => ({ ...previous, [field]: undefined }))
   const fieldError = (field: CreateProjectField): string | undefined =>
     error?.field === field ? error.message : localErrors[field]
+
+  const uploadBrief = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!/\.(md|markdown|txt)$/i.test(file.name)) {
+      setLocalErrors(previous => ({ ...previous, brief: 'Unsupported file — upload a .md, .markdown or .txt file' }))
+      return
+    }
+    if (file.size > BRIEF_MAX_LENGTH * 2) {
+      setLocalErrors(previous => ({ ...previous, brief: 'File is too large for the brief field' }))
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      setBrief(String(reader.result ?? ''))
+      clearField('brief')
+    }
+    reader.readAsText(file)
+  }
 
   const handleSubmit = () => {
     if (pending) return
@@ -95,6 +116,7 @@ export default function RealNewProjectModal({ onClose, onCreate, pending, error 
       targetType,
       targetValue: targetValue.trim(),
       authorizationConfirmed: authConfirmed,
+      brief,
     }
     const failures = validateCreateProjectDraft(draft)
     setLocalErrors(failures)
@@ -105,6 +127,7 @@ export default function RealNewProjectModal({ onClose, onCreate, pending, error 
       targetType,
       targetValue: draft.targetValue,
       authorizationConfirmed: true,
+      brief: draft.brief.trim(),
     })
   }
 
@@ -203,6 +226,39 @@ export default function RealNewProjectModal({ onClose, onCreate, pending, error 
           mono
           error={fieldError('targetValue')}
         />
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label htmlFor="real-new-project-brief" className="block text-[12px] font-semibold" style={{ color: '#9CA3AF' }}>
+              Engagement Brief <span style={{ color: '#EE0033' }}>*</span>
+              <span className="font-normal" style={{ color: '#6B7280' }}> — scope, constraints, stop conditions</span>
+            </label>
+            <label
+              htmlFor="real-new-project-brief-file"
+              className="text-[11px] font-semibold px-2 py-1 rounded-lg cursor-pointer transition-colors"
+              style={{ backgroundColor: '#161D27', border: '1px solid #273142', color: '#9CA3AF' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#F3F4F6')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#9CA3AF')}
+            >
+              Upload .md
+            </label>
+            <input id="real-new-project-brief-file" type="file" accept=".md,.markdown,.txt" onChange={uploadBrief} className="hidden" />
+          </div>
+          <textarea
+            id="real-new-project-brief"
+            value={brief}
+            onChange={e => { setBrief(e.target.value); clearField('brief') }}
+            rows={6}
+            placeholder={'Paste the engagement brief, or upload a markdown file.\n\nThe brief becomes the prompt Soundwave uses to draft scope and RoE before any execution chat unlocks.'}
+            className="w-full px-3.5 py-2.5 text-[13px] rounded-2xl outline-none transition-all resize-y"
+            style={{ ...DARK_INPUT, fontFamily: "'JetBrains Mono', monospace" }}
+            onFocus={focusInput}
+            onBlur={blurInput}
+          />
+          <div className="flex items-start justify-between gap-2">
+            <FieldError message={fieldError('brief')} />
+            <span className="text-[11px] ml-auto shrink-0" style={{ color: '#6B7280' }}>{brief.trim().length} chars</span>
+          </div>
+        </div>
         <div>
           <label htmlFor="real-new-project-auth" className="flex items-start gap-2.5 text-[12px] cursor-pointer" style={{ color: '#9CA3AF' }}>
             <input

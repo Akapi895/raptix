@@ -27,6 +27,7 @@ export type CreateProjectField =
   | 'targetType'
   | 'targetValue'
   | 'authorizationConfirmed'
+  | 'brief'
 
 export interface CreateProjectInput {
   /** Workspace slug; sent to the backend as `name` and immutable after create. */
@@ -36,6 +37,8 @@ export interface CreateProjectInput {
   targetType: EngagementTargetType
   targetValue: string
   authorizationConfirmed: true
+  /** Operator brief — the prompt Soundwave drafts scope/RoE from. Required. */
+  brief: string
 }
 
 export interface RealNewProjectFormError {
@@ -118,7 +121,12 @@ export interface CreateProjectDraft {
   targetType: EngagementTargetType
   targetValue: string
   authorizationConfirmed: boolean
+  brief: string
 }
+
+/** Brief bounds mirror the server policy (security/project-policy.ts). */
+export const BRIEF_MIN_LENGTH = 20
+export const BRIEF_MAX_LENGTH = 20_000
 
 export function validateCreateProjectDraft(
   draft: CreateProjectDraft,
@@ -134,6 +142,12 @@ export function validateCreateProjectDraft(
   if (targetError !== undefined) errors.targetValue = targetError
   if (!draft.authorizationConfirmed) {
     errors.authorizationConfirmed = 'Explicit authorization confirmation is required'
+  }
+  const brief = draft.brief.trim()
+  if (brief.length < BRIEF_MIN_LENGTH) {
+    errors.brief = 'Brief is required — paste the engagement brief or upload a markdown file (min 20 characters)'
+  } else if (brief.length > BRIEF_MAX_LENGTH) {
+    errors.brief = `Brief is too long — at most ${BRIEF_MAX_LENGTH} characters`
   }
   return errors
 }

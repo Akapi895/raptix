@@ -15,6 +15,8 @@ export interface CreateProjectRequest {
   targetType: EngagementTargetType
   targetValue: string
   authorizationConfirmed: true
+  /** Operator brief — required; the prompt Soundwave drafts scope/RoE from. */
+  brief: string
 }
 
 /** Only these fields are patchable (PATCH /api/engagements/:id). */
@@ -22,6 +24,8 @@ export interface ProjectPatch {
   displayName?: string
   targetType?: EngagementTargetType
   targetValue?: string
+  /** One-way handoff confirmation; only `true` is accepted. */
+  handoffConfirmed?: true
 }
 
 export interface ProjectsApi {

@@ -48,7 +48,9 @@ const VALID_CREATE_BASE = {
   targetValue: 'https://example.com/engagement',
 };
 
-const VALID_CREATE = { ...VALID_CREATE_BASE, authorizationConfirmed: true } as const;
+const VALID_BRIEF = 'Authorized external web assessment of example.com with scoped constraints.';
+
+const VALID_CREATE = { ...VALID_CREATE_BASE, authorizationConfirmed: true, brief: VALID_BRIEF } as const;
 
 describe('project slug policy', () => {
   it('matches the legacy 3-64 lowercase/digit/internal-hyphen rule', () => {
@@ -81,13 +83,14 @@ describe('project slug policy', () => {
 });
 
 describe('parseCreateProject', () => {
-  it('accepts a minimal valid create and stores the target verbatim', () => {
+  it('accepts a minimal valid create and stores the target and brief verbatim', () => {
     const parsed = parseCreateProject(VALID_CREATE);
     expect(parsed).toEqual({
       name: 'alpha-target',
       targetType: 'web_url',
       targetValue: 'https://example.com/engagement',
       authorizationConfirmed: true,
+      brief: VALID_BRIEF,
     });
     expect('displayName' in parsed).toBe(false);
   });
@@ -95,6 +98,23 @@ describe('parseCreateProject', () => {
   it('accepts an optional displayName', () => {
     const parsed = parseCreateProject({ ...VALID_CREATE, displayName: 'Alpha Target' });
     expect(parsed.displayName).toBe('Alpha Target');
+  });
+
+  it('requires a briefing and bounds its length', () => {
+    for (const brief of [undefined, '', '   ', 'too short', 42]) {
+      expectPolicyError(
+        () => parseCreateProject({ ...VALID_CREATE_BASE, authorizationConfirmed: true, brief }),
+        'bad_request',
+        'brief',
+      );
+    }
+    expect(parseCreateProject({ ...VALID_CREATE, brief: 'x'.repeat(20_000) }).brief).toHaveLength(20_000);
+    expectPolicyError(
+      () => parseCreateProject({ ...VALID_CREATE, brief: 'x'.repeat(20_001) }),
+      'bad_request',
+      'brief',
+    );
+    expect(parseCreateProject({ ...VALID_CREATE, brief: '  padded brief that is definitely long enough here  ' }).brief).not.toContain('  padded');
   });
 
   it('rejects non-object payloads and unknown keys strictly', () => {
@@ -256,6 +276,17 @@ describe('parseProjectPatch', () => {
     expect(
       parseProjectPatch({ displayName: 'N', targetType: 'web_url', targetValue: 'https://a.dev' }),
     ).toEqual({ displayName: 'N', targetType: 'web_url', targetValue: 'https://a.dev' });
+  });
+
+  it('accepts the one-way handoff confirmation and refuses any revocation shape', () => {
+    expect(parseProjectPatch({ handoffConfirmed: true })).toEqual({ handoffConfirmed: true });
+    for (const handoffConfirmed of [false, 'yes', 1, null]) {
+      expectPolicyError(
+        () => parseProjectPatch({ handoffConfirmed }),
+        'bad_request',
+        'handoffConfirmed',
+      );
+    }
   });
 
   it('rejects immutable/authority/control fields with their field key', () => {

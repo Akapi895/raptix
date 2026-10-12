@@ -95,6 +95,8 @@ class InMemoryProjectRepository implements ProjectRepositoryPort {
   }
 }
 
+const BRIEF = 'Authorized lab assessment with scoped constraints.';
+
 let recordSeq = 0;
 
 function makeRecord(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
@@ -106,6 +108,8 @@ function makeRecord(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
     targetType: 'web_url',
     targetValue: 'http://authorized-local-target:3010',
     authorizationConfirmed: true,
+    brief: null,
+    handoffConfirmedAt: null,
     status: 'draft',
     userId: 'local',
     threadId: null,
@@ -158,6 +162,8 @@ const EXPECTED_VIEW_KEYS = [
   'targetType',
   'targetValue',
   'authorizationConfirmed',
+  'brief',
+  'handoffConfirmedAt',
   'metadataState',
   'lifecycleStatus',
   'findingCount',
@@ -361,6 +367,7 @@ describe('POST /api/engagements', () => {
         targetType: 'web_url',
         targetValue: 'http://authorized-local-target:3010',
         authorizationConfirmed: true,
+        brief: BRIEF,
       },
     });
 
@@ -399,6 +406,7 @@ describe('POST /api/engagements', () => {
         targetType: 'web_url',
         targetValue: 'http://authorized-local-target:3010',
         authorizationConfirmed: true,
+        brief: BRIEF,
       },
     });
 
@@ -416,6 +424,7 @@ describe('POST /api/engagements', () => {
         targetType: 'ip_range',
         targetValue: '10.0.0.0/24',
         authorizationConfirmed: true,
+        brief: BRIEF,
       },
     });
 
@@ -502,6 +511,7 @@ describe('POST /api/engagements', () => {
         targetType: 'web_url',
         targetValue: 'http://t.local',
         authorizationConfirmed: true,
+        brief: BRIEF,
       },
     });
 
@@ -527,6 +537,7 @@ describe('POST /api/engagements', () => {
         targetType: 'web_url',
         targetValue: 'http://t.local',
         authorizationConfirmed: true,
+        brief: BRIEF,
       },
     });
 
@@ -545,6 +556,7 @@ describe('POST /api/engagements', () => {
         targetType: 'web_url',
         targetValue: 'http://t.local',
         authorizationConfirmed: true,
+        brief: BRIEF,
       },
     });
 

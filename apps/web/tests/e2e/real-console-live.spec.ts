@@ -14,7 +14,7 @@ test('console creates a planning thread, submits a root run, renders live/public
   const api = 'http://127.0.0.1:5285/api'
   expect((await (await request.get(`${api}/capabilities`)).json()).capabilities.runs).toEqual({ supported: true, available: true })
   const slug = `w10-console-${Date.now()}`
-  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true } })
+  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, brief: 'Authorized console live test brief with scoped constraints.' } })
   expect(create.status()).toBe(201)
   const project = await create.json()
 
