@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqsxfmo0000ckfie12g416p",
-  "threadId": "3f77b389-d07f-423f-a675-5371127ec09f",
-  "runId": "01a0fc17-741a-7261-90f2-cb06c6b77ce2",
+  "projectId": "cmv4vqxt700007wfifg40cab5",
+  "threadId": "19b9f58c-7af6-4d56-895e-7f16367a74b1",
+  "runId": "01a12ed4-b12a-7460-80e1-af12ea87bcd4",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -12,12 +12,12 @@
     "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
     "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11"
   ],
-  "streamCursor": "1790935791368-0",
+  "streamCursor": "1791787053928-0",
   "publicEvents": 4,
   "wireShapes": [
     {
       "event": "metadata",
-      "id": "1790935791368-0",
+      "id": "1791787053928-0",
       "array": false,
       "keys": [
         "run_id",
@@ -26,7 +26,7 @@
     },
     {
       "event": "values",
-      "id": "1790935791370-0",
+      "id": "1791787053939-0",
       "array": false,
       "keys": [
         "messages",
@@ -42,13 +42,14 @@
         "vulnerability_tags",
         "flag_format",
         "mission_brief",
+        "active_objective_id",
         "files",
         "proxy_api_key"
       ]
     },
     {
       "event": "updates",
-      "id": "1790935791371-0",
+      "id": "1791787053941-0",
       "array": false,
       "keys": [
         "EngagementContextMiddleware.before_agent"
@@ -56,7 +57,7 @@
     },
     {
       "event": "updates",
-      "id": "1790935791383-0",
+      "id": "1791787053948-0",
       "array": false,
       "keys": [
         "RoEGuardrailMiddleware.before_agent"
@@ -64,7 +65,7 @@
     },
     {
       "event": "updates",
-      "id": "1790935791384-0",
+      "id": "1791787053950-0",
       "array": false,
       "keys": [
         "PatchToolCallsMiddleware.before_agent"
@@ -72,7 +73,7 @@
     },
     {
       "event": "updates",
-      "id": "1790935795166-0",
+      "id": "1791787056262-0",
       "array": false,
       "keys": [
         "model"
@@ -80,7 +81,7 @@
     },
     {
       "event": "values",
-      "id": "1790935795167-0",
+      "id": "1791787056277-0",
       "array": false,
       "keys": [
         "messages",
@@ -96,6 +97,7 @@
         "vulnerability_tags",
         "flag_format",
         "mission_brief",
+        "active_objective_id",
         "files",
         "proxy_api_key"
       ]

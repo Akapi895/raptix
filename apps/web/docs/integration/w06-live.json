@@ -1,11 +1,12 @@
 {
   "ok": true,
   "provenance": "real PostgreSQL/new API/runtime catalog/thread/checkpoint plus installed middleware hydration; no runs/models/tools submitted",
-  "projectId": "cmuqff7gb0000icfimwgpbyfx",
-  "runtimeThreadId": "01a0fabd-78b3-7b23-8899-65b9de146d83",
-  "workspaceSlug": "w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+  "projectId": "cmv4vmdak0000ocfilql275dg",
+  "runtimeThreadId": "01a12ed1-8ad1-7fe1-a3d1-d5bb0692e688",
+  "workspaceSlug": "w06-context-42502bdf-34b4-4fc5-a806-fe35e50729a3",
   "runtimeGraphs": [
     "decepticon",
+    "raptix",
     "soundwave"
   ],
   "checks": [

@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqswwoe000078fiynis17oe",
-  "threadId": "a05327a4-e9ef-4780-b437-680a1e134b2c",
-  "runId": "01a0fc17-139f-7b01-b16b-cc567c1dd938",
+  "projectId": "cmv4vuus40000w8fi2rmn5dz8",
+  "threadId": "61c23c7b-6a92-4c1f-806f-0f2d5b9612e6",
+  "runId": "01a12ed7-79bc-74e1-a7c7-856834f18428",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -18,7 +18,7 @@
     "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11",
     "the vault capability is available with a valid 32-byte VAULT_ENCRYPTION_KEY and the missing-key posture stays unit-tested"
   ],
-  "streamCursor": "1790935768356-0",
+  "streamCursor": "1791787236310-0",
   "publicEvents": 4,
   "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W18 encrypted vault storage, redacted metadata, explicit audited reveal and revocation against the real database; context-only isolated target, runtime guard path unchanged",
   "ownedRuntimeFixtureRemoved": true
