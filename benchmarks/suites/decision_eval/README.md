@@ -41,8 +41,13 @@ when supplied, and do not infer the underlying provider when absent.
 `benchmarks/scenarios/decision-eval/dev.json` covers supported proof/control,
 contradiction after an older positive claim, incomplete execution, drift, alias
 lineage and missing evidence with exhausted budget. The separate held-out corpus
-is explicitly selected, evaluation-only, and not used to tune policies. These are
-authored synthetic fixtures, not independent real-world generalization evidence.
+(16 scenarios) is explicitly selected, evaluation-only, and not used to tune
+policies; it adds independent/shared lineage counting over two or three
+projections, current-versus-historical preference in both directions, unrelated
+evidence rejection on supported and contradicted claims, partial proof/control
+pairs, and exhausted-budget decisions with and without usable existing evidence.
+These are authored synthetic fixtures, not independent real-world
+generalization evidence.
 
 The model receives objective, checkpoint, historical notes, available replay IDs,
 and optionally historical KG snapshots. Ground truth stays exclusively in the
