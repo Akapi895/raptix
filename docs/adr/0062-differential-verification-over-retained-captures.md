@@ -1,6 +1,6 @@
 # 0062. Differential verification over retained captures
 
-- **Status:** Proposed
+- **Status:** Superseded by [ADR-0063](0063-bounded-recorded-verification-context.md)
 - **Date:** 2026-10-11
 - **Related:** ADR-0049, ADR-0060, ADR-0061;
   `docs/structure-review.md` P1;

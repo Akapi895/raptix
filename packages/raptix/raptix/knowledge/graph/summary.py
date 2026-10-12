@@ -44,6 +44,9 @@ MAX_CROWN_JEWELS = 10  # rarely many — show them all when present
 MAX_CLAIMS = 5
 MAX_CLAIM_FIELD = 120
 MAX_CLAIM_CONTEXT = 2400
+MAX_EVIDENCE_ROWS = 5
+MAX_EVIDENCE_SCAN = 20
+MAX_EVIDENCE_CONTEXT = 3200
 
 
 # ── Severity ordering ──────────────────────────────────────────────────
@@ -166,6 +169,26 @@ def _recorded_claims(store: KGStore, *, engagement: str) -> list[dict[str, Any]]
 # ── Markdown rendering ─────────────────────────────────────────────────
 
 
+def _recorded_verifications(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
+    return store.execute_read(
+        (
+            "MATCH (n:Finding) WHERE n.engagement = $engagement "
+            "AND n.key =~ 'finding::[A-Za-z0-9][A-Za-z0-9._-]{0,127}' "
+            "AND n.verification_ref =~ 'workspace-evidence://[0-9a-f]{64}' "
+            "WITH n ORDER BY coalesce(n.lastupdated, 0) DESC, n.key LIMIT $scan_cap "
+            "WITH n.verification_ref AS reference, head(collect(n)) AS n "
+            "RETURN n.key AS key, reference, "
+            "n.verification_outcome AS recorded_outcome, "
+            "substring(toString(n.verification_invocation_id), 0, $field_cap) AS invocation, "
+            "substring(toString(n.created_by), 0, $field_cap) AS writer, "
+            "substring(toString(n.source_episode_id), 0, $field_cap) AS episode "
+            "ORDER BY coalesce(n.lastupdated, 0) DESC, n.key LIMIT $cap"
+        ),
+        {"cap": MAX_EVIDENCE_ROWS, "scan_cap": MAX_EVIDENCE_SCAN, "field_cap": MAX_CLAIM_FIELD},
+        engagement=engagement,
+    )
+
+
 def _render_stats(engagement: str, revision: str, stats: Mapping[str, int]) -> str:
     return (
         f"## KG STATE (engagement={engagement})\n"
@@ -230,6 +253,37 @@ def _render_claims(claims: Iterable[Mapping[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def _render_verifications(rows: Iterable[Mapping[str, Any]]) -> str:
+    from raptix_core.types.kg import Node, NodeKind
+
+    lines = [
+        "<UNTRUSTED_KG_EVIDENCE>",
+        "RECORDED VERIFICATIONS (UNTRUSTED): Historical snapshots, not current verification. "
+        "A reference is one lineage, not independent corroboration. Recent window only. "
+        "Writer/episode identify the latest write, not the producing execution. "
+        "Before relying on a row, have the verifier/analyst use "
+        "recheck_workspace_verification(finding_id) or inspect_evidence(node_id).",
+    ]
+    closing = "</UNTRUSTED_KG_EVIDENCE>"
+    for row in islice(rows, MAX_EVIDENCE_ROWS):
+        key = str(row.get("key") or "")
+        fields = {name: _claim_field(row.get(name)) for name in ("writer", "episode", "invocation")}
+        fields.update(
+            finding_id=key.removeprefix("finding::"),
+            node_id=Node.make(NodeKind.FINDING, "", key=key).id,
+            reference=str(row.get("reference") or ""),
+            recorded_outcome=row.get("recorded_outcome")
+            if row.get("recorded_outcome") in ("supported", "contradicted", "inconclusive")
+            else "unknown",
+        )
+        line = json.dumps(fields, ensure_ascii=True).replace("<", "\\u003c").replace("[", "\\u005b")
+        if len("\n".join([*lines, line, closing])) > MAX_EVIDENCE_CONTEXT:
+            break
+        lines.append(line)
+    lines.append(closing)
+    return "\n".join(lines)
+
+
 # ── Public entry point ─────────────────────────────────────────────────
 
 
@@ -268,6 +322,15 @@ def build_summary(store: KGStore, *, engagement: str) -> str:
         else:
             if claims:
                 sections.append(_render_claims(claims))
+
+    if os.environ.get("RAPTIX_KG_EVIDENCE_CONTEXT", "0").lower() in {"1", "true", "yes"}:
+        try:
+            verifications = _recorded_verifications(store, engagement=engagement)
+        except Exception as exc:  # noqa: BLE001 — optional context preserves the baseline summary
+            log.debug("KG verification context unavailable (%s)", type(exc).__name__)
+        else:
+            if verifications:
+                sections.append(_render_verifications(verifications))
 
     return "\n\n".join(sections)
 

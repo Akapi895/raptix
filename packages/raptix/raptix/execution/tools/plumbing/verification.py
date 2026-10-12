@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 import os
 from typing import Annotated, Any
-from uuid import uuid4
 
+from langchain_core.callbacks import AsyncCallbackManager
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
@@ -41,6 +41,7 @@ def _retain_verification_ref(
     execution: dict[str, Any],
     workspace: str | None,
     config: RunnableConfig,
+    invocation_id: str | None,
     success_patterns: list[str],
     negative_patterns: list[str],
 ) -> str | None:
@@ -89,7 +90,7 @@ def _retain_verification_ref(
             producer="validate_workspace_finding",
             finding_id=finding_id,
             execution=execution,
-            invocation_id=str(config.get("run_id") or uuid4()),
+            invocation_id=invocation_id,
         )
     except Exception as exc:  # noqa: BLE001 — retention is best-effort over the result
         log.debug("Verification retention unavailable (%s)", type(exc).__name__)
@@ -106,6 +107,7 @@ async def validate_workspace_finding(
     cvss_vector: str,
     config: RunnableConfig,
     state: Annotated[dict | None, InjectedState] = None,
+    callbacks: AsyncCallbackManager | None = None,
 ) -> str:
     """Run a minimal PoC and its mandatory baseline control in the sandbox.
 
@@ -203,6 +205,9 @@ async def validate_workspace_finding(
         execution=execution,
         workspace=workspace,
         config=config,
+        invocation_id=str(callbacks.parent_run_id)
+        if callbacks and callbacks.parent_run_id
+        else None,
         success_patterns=positive,
         negative_patterns=negative,
     )
