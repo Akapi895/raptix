@@ -34,6 +34,7 @@ import contextlib
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -283,6 +284,17 @@ def _ensure_container_workspace(args: argparse.Namespace, trace_dir: Path) -> No
     _log(f"workspace ensured in sandbox: {args.container_workspace}")
 
 
+def _canonical_mount_source(source: str) -> str:
+    """Normalize Docker Desktop's known Windows-drive alias, not arbitrary mounts."""
+    path = source.replace("\\", "/").rstrip("/")
+    alias = re.fullmatch(r"/run/desktop/mnt/host/([A-Za-z])/(.*)", path)
+    if alias:
+        path = f"{alias[1].upper()}:/{alias[2]}"
+    if re.match(r"^[A-Za-z]:/", path):
+        path = path[0].upper() + path[1:]
+    return path
+
+
 def _verify_workspace_isolation(args: argparse.Namespace) -> dict[str, Any]:
     """Verify the operator's deployment claim against both actual Docker mounts."""
     sources: dict[str, str] = {}
@@ -316,7 +328,7 @@ def _verify_workspace_isolation(args: argparse.Namespace) -> dict[str, Any]:
                 )
         except (ValueError, KeyError, TypeError) as exc:
             errors.append(f"{container}: invalid deployment inspection ({type(exc).__name__})")
-    if len(set(sources.values())) != 1:
+    if len({_canonical_mount_source(source) for source in sources.values()}) != 1:
         errors.append("langgraph and sandbox must mount the same engagement directory")
     if errors:
         raise SystemExit(
@@ -982,8 +994,8 @@ def main(argv: list[str] | None = None) -> int:
             "trace/capture/<channel>.status + summary.capture_channels."
         ),
         "roe_enforcement": (
-            "audit-only (plan/roe.json ships no machine_enforcement block); "
-            "scope enforced by single-target prompt + operator monitoring"
+            "mode comes from the captured plan/roe.json machine_enforcement block; "
+            "tool audit decisions remain the authority for invocation enforcement"
         ),
         "injections": dict.fromkeys(PROTOCOL_KINDS, 0),
         "injections_planned": {
@@ -1004,7 +1016,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         manifest["repo_dirty"] = bool((st.stdout or "").strip())
         manifest["repo_dirty_note"] = (
-            "working tree has uncommitted changes NOT in the deployed image"
+            "working tree has uncommitted changes; compare image revisions and build mode"
             if manifest["repo_dirty"]
             else ""
         )
@@ -1014,9 +1026,7 @@ def main(argv: list[str] | None = None) -> int:
         imgs = _docker(
             [
                 "inspect",
-                "raptix-langgraph",
-                "raptix-sandbox",
-                "raptix-litellm",
+                *args.log_containers.split(","),
                 "--format",
                 "{{.Name}} {{.Image}}",
             ],

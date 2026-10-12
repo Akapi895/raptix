@@ -25,12 +25,6 @@ from typing import Annotated, Any
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 
-from raptix.intelligence.agents.standard._surface_reexpand import plan_reexpansion
-from raptix.intelligence.agents.standard._surface_registry import (
-    build_coverage_matrix,
-    build_objective_expand_payload,
-    surfaces_from_kg_inventory,
-)
 from raptix.knowledge.graph.ingest import ingest as _ingest_dispatch
 from raptix.knowledge.graph.store import KGStore
 
@@ -204,6 +198,14 @@ def build_kg_tools(
             if not engagement:
                 return _err(_ENGAGEMENT_UNSET)
             try:
+                # Agent-only planners must not run during middleware package import.
+                from raptix.intelligence.agents.standard._surface_reexpand import plan_reexpansion
+                from raptix.intelligence.agents.standard._surface_registry import (
+                    build_coverage_matrix,
+                    build_objective_expand_payload,
+                    surfaces_from_kg_inventory,
+                )
+
                 rows = store.execute_read(
                     (
                         "MATCH (e:Endpoint) WHERE e.engagement = $engagement "
