@@ -199,6 +199,33 @@ def test_shared_lineage_cannot_be_scored_as_independent_sources() -> None:
     assert scored["decision_correct"] is False
 
 
+@pytest.mark.parametrize("corpus", ["dev", "held-out"])
+def test_corpus_scenarios_are_internally_consistent(corpus: str) -> None:
+    cases = load_scenarios(BENCHMARKS_DIR / f"scenarios/decision-eval/{corpus}.json")
+    assert len({case.scenario_id for case in cases}) == len(cases)
+    assert len({case.finding_id for case in cases}) == len(cases)
+    for case in cases:
+        assert case.expected.required_reads
+        assert set(case.expected.required_reads) <= set(case.replays)
+        references = {
+            row["reference"]
+            for row in case.replays.values()
+            if isinstance(row.get("reference"), str)
+        }
+        assert set(case.expected.evidence_refs) <= references, case.scenario_id
+        invocations = {
+            row["invocation_id"]
+            for row in case.replays.values()
+            if row.get("reference") in set(case.expected.evidence_refs)
+        }
+        assert case.expected.lineage_count == len(invocations), case.scenario_id
+
+
+def test_held_out_corpus_stays_in_the_evaluation_band() -> None:
+    cases = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/held-out.json")
+    assert 15 <= len(cases) <= 20
+
+
 @pytest.mark.parametrize(
     "template",
     [
