@@ -21,6 +21,8 @@
 .env
 .env.local
 .env.*.local
+.venv
+.raptix
 *.pem
 *.key
 
@@ -47,3 +49,5 @@ reference
 assets
 tests
 workspace
+benchmarks/results
+benchmarks/external

@@ -1,0 +1,32 @@
+# Pinned HTTP-header dictionary for recon/exploit skills.
+# Used with ffuf:  ffuf -u https://<target>/ -H "FUZZ: 127.0.0.1" -w /usr/share/wordlists/headers.txt
+# One header name per line, LF endings, UTF-8. Versioned with the checkout.
+X-Forwarded-For
+X-Forwarded-Host
+X-Forwarded-Proto
+X-Forwarded-Server
+X-Real-IP
+X-Original-URL
+X-Rewrite-URL
+X-HTTP-Method-Override
+X-Method-Override
+X-Original-Method
+X-Host
+X-Client-IP
+X-Custom-IP-Authorization
+X-Originating-IP
+X-Remote-IP
+X-Remote-Addr
+X-Forwarded-For-Original
+Client-IP
+True-Client-IP
+Forwarded
+X-WAP-Profile
+Referer
+Origin
+X-Requested-With
+Content-Type
+Accept
+Authorization
+Cookie
+Host

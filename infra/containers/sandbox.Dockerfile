@@ -46,6 +46,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
         whois \
         netcat-openbsd \
         iputils-ping \
+        iproute2 \
+        nftables \
         subfinder \
         # ── Exploit & post-exploitation ──
         hydra \
@@ -116,10 +118,15 @@ RUN echo "set-option -g history-limit 20000" > /root/.tmux.conf
 # heavier raptix agent / LLM / langgraph SDKs are deliberately
 # left out so the sandbox image doesn't bloat for the >95% of users
 # who never enable the daemon.
+# Match the workspace-tested framework set. Unbounded DeepAgents/LangChain
+# resolution on Kali reached pip's resolution-too-deep limit during a cold build.
 RUN pip3 install --break-system-packages --no-cache-dir \
-    "fastapi>=0.115.0" \
-    "uvicorn>=0.30.0" \
-    "deepagents>=0.5.0"
+    "fastapi==0.136.1" \
+    "uvicorn==0.47.0" \
+    "deepagents==0.6.8" \
+    "langchain==1.3.9" \
+    "langchain-core==1.4.9" \
+    "langgraph==1.2.4"
 
 # ── Open-web acquisition engine (insane-search port, ADR-0010) ───────
 # raptix/execution/sandbox/web runs HERE, inside the sandbox, so all open-web
@@ -395,6 +402,16 @@ COPY packages/raptix-core/raptix_core /opt/raptix_core
 # versioned with the checkout, so cracking benchmarks never depend on a
 # mutable corpus and the JohnAdapter's wordlist path always exists.
 COPY infra/containers/sandbox-wordlist.txt /opt/raptix/share/wordlists/benchmark-dict.txt
+# Pinned recon dictionary set — repo-committed and versioned with the
+# checkout, shipped to the paths the recon/api-enumeration skills document
+# (/usr/share/wordlists/*). Same reproducibility rule as the credentials
+# dictionary: no mutable, network-fetched corpus at build or run time.
+COPY infra/containers/wordlists/ /usr/share/wordlists/
+# Kali's dirb package installs its dictionaries under
+# /usr/share/dirb/wordlists, but the recon skills and the gobuster
+# adapter document /usr/share/wordlists/dirb/common.txt. Link the
+# documented path to the packaged one so those examples resolve.
+RUN ln -sfn /usr/share/dirb/wordlists /usr/share/wordlists/dirb
 ENV PYTHONPATH=/opt
 
 # Install the Playwright templates' node deps LOCALLY (in their own dir) so the

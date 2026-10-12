@@ -1,0 +1,33 @@
+# Pinned short username dictionary.
+# Referenced by exploit/web skills as /usr/share/wordlists/seclists/usernames/top-usernames-shortlist.txt
+# One username per line, LF endings, UTF-8. Versioned with the checkout.
+root
+admin
+administrator
+user
+test
+guest
+info
+adm
+mysql
+user1
+operator
+oracle
+ftp
+pi
+puppet
+ansible
+ec2-user
+vagrant
+azureuser
+cisco
+citrix
+www-data
+postgres
+svc_backup
+backup
+support
+deploy
+jenkins
+git
+nagios
