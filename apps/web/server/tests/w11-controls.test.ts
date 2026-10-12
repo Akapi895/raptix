@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RuntimeRejectedError, RuntimeUnavailableError } from '../src/integrations/runtime/read-client.js';
-import { assertResumeValue, findPendingQuestion } from '../src/services/runtime/interrupt-projection.js';
+import { assertResumeValue, findPendingQuestion, findPendingQuestions } from '../src/services/runtime/interrupt-projection.js';
 import { RunService } from '../src/services/runtime/run-service.js';
 
 const time = '2026-10-02T00:00:00.000Z';
@@ -33,6 +33,17 @@ describe('pending interrupt projection', () => {
     expect(findPendingQuestion({}, [{ id: 'task-1', interrupts: [{ id: 'interrupt-1', value: question }] }])).toMatchObject({ questionId: 'call-1', question: question.question });
     expect(findPendingQuestion({}, [{ interrupts: [{ value: { ...question, id: 42 } }] }])).toBeNull();
   });
+  it('collects every pending interrupt with its LangGraph id for parallel questions', () => {
+    const q2 = { ...question, id: 'call-2', question: 'Reporting language?' };
+    const all = findPendingQuestions({}, [{ interrupts: [{ id: 'ig-1', value: question }] }, { interrupts: [{ id: 'ig-2', value: q2 }] }]);
+    expect(all).toHaveLength(2);
+    expect(all[0]).toMatchObject({ questionId: 'call-1', interruptId: 'ig-1' });
+    expect(all[1]).toMatchObject({ questionId: 'call-2', interruptId: 'ig-2' });
+    // Bare question envelopes (no interrupt id) still restore, without an id.
+    expect(findPendingQuestions({ __interrupt__: [{ value: question }] })).toEqual([expect.objectContaining({ questionId: 'call-1' })]);
+    expect(findPendingQuestions({ __interrupt__: [{ value: question }] })[0]!.interruptId).toBeUndefined();
+    expect(findPendingQuestions({})).toEqual([]);
+  });
   it('validates answers against option labels, allow_other and multi-select semantics', () => {
     const pending = findPendingQuestion({ __interrupt__: [{ value: question }] })!;
     assertResumeValue('Yes (Recommended)', pending);
@@ -51,10 +62,11 @@ describe('pending interrupt projection', () => {
 describe('RunService.resume', () => {
   it('acknowledges a new run identity for a validated pending question', async () => {
     const dispatched: unknown[] = [];
-    const service = new RunService(ports({ runtime: { createResumeRun: async (_t: string, _c: unknown, requestId: string, value: string | string[]) => { dispatched.push({ requestId, value }); return { runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }; } } as unknown as Ports['runtime'] }));
+    const service = new RunService(ports({ runtime: { createResumeRun: async (_t: string, _c: unknown, requestId: string, resume: string | string[] | Record<string, string | string[]>) => { dispatched.push({ requestId, resume }); return { runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }; } } as unknown as Ports['runtime'] }));
     const ack = await service.resume('local', 'eng', 'thread', { requestId: 'request-0001', value: 'Yes (Recommended)' });
     expect(ack).toMatchObject({ state: 'accepted', runId: 'run-new', operation: 'resume' });
-    expect(dispatched).toEqual([{ requestId: 'request-0001', value: 'Yes (Recommended)' }]);
+    // The interrupt envelope carries the LangGraph id, so the resume payload is keyed by it.
+    expect(dispatched).toEqual([{ requestId: 'request-0001', resume: { i1: 'Yes (Recommended)' } }]);
   });
   it('resumes a question exposed only by LangGraph task interrupts', async () => {
     const service = new RunService(ports({
@@ -75,7 +87,7 @@ describe('RunService.resume', () => {
   });
   it('conflicts without a pending interrupt or a mismatched question target and rejects wrong answers', async () => {
     const dispatched: unknown[] = [];
-    const runtime = { createResumeRun: async (_t: string, _c: unknown, requestId: string, value: string | string[]) => { dispatched.push({ requestId, value }); return { runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }; } } as unknown as Ports['runtime'];
+    const runtime = { createResumeRun: async (_t: string, _c: unknown, requestId: string, resume: string | string[] | Record<string, string | string[]>) => { dispatched.push({ requestId, resume }); return { runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }; } } as unknown as Ports['runtime'];
     const noInterrupt = new RunService(ports({ reads: { state: async () => ({ values: {}, graphId: null }) } as unknown as Ports['reads'] }));
     await expect(noInterrupt.resume('local', 'eng', 'thread', { requestId: 'request-0001', value: 'Yes (Recommended)' })).rejects.toMatchObject({ code: 'conflict' });
     const service = new RunService(ports({ runtime }));
@@ -83,6 +95,23 @@ describe('RunService.resume', () => {
     await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0001', value: ['Yes (Recommended)'] })).rejects.toMatchObject({ code: 'bad_request' });
     await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0001', value: 'Yes (Recommended)', questionId: 'call-1' })).resolves.toMatchObject({ state: 'accepted' });
     expect(dispatched).toHaveLength(1);
+  });
+  it('resumes every pending interrupt in one interrupt-id-keyed map when parallel questions are pending', async () => {
+    const q2 = { type: 'ask_user_question', agent: 'soundwave', id: 'call-2', question: 'Reporting language?', header: 'Language', options: [{ label: 'Tiếng Việt', description: 'vn' }], multi_select: false, allow_other: false };
+    const dispatched: unknown[] = [];
+    const service = new RunService(ports({
+      reads: { state: async () => ({ values: {}, tasks: [{ interrupts: [{ id: 'ig-1', value: question }] }, { interrupts: [{ id: 'ig-2', value: q2 }] }], graphId: 'soundwave' }) } as unknown as Ports['reads'],
+      runtime: { createResumeRun: async (_t: string, _c: unknown, requestId: string, resume: string | string[] | Record<string, string | string[]>) => { dispatched.push({ requestId, resume }); return { runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }; } } as unknown as Ports['runtime'],
+    }));
+    // Single-value resume against multiple pending interrupts is rejected.
+    await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0001', value: 'Yes (Recommended)' })).rejects.toMatchObject({ code: 'bad_request' });
+    // Partial coverage is rejected.
+    await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0002', answers: [{ questionId: 'call-1', value: 'Yes (Recommended)' }] })).rejects.toMatchObject({ code: 'bad_request' });
+    // A wrong answer fails validation.
+    await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0003', answers: [{ questionId: 'call-1', value: 'Yes (Recommended)' }, { questionId: 'call-2', value: 'English' }] })).rejects.toMatchObject({ code: 'bad_request' });
+    // Full coverage resumes every interrupt in one keyed map.
+    await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0004', answers: [{ questionId: 'call-1', value: 'Yes (Recommended)' }, { questionId: 'call-2', value: 'Tiếng Việt' }] })).resolves.toMatchObject({ state: 'accepted' });
+    expect(dispatched).toEqual([{ requestId: 'request-0004', resume: { 'ig-1': 'Yes (Recommended)', 'ig-2': 'Tiếng Việt' } }]);
   });
   it('marks the ledger uncertain when the runtime disappears after reservation', async () => {
     const marks: string[] = [];
@@ -166,8 +195,10 @@ describe('RunService.snapshot pending interrupt restore', () => {
   it('exposes the restoreable question additively and nothing when the thread is clean', async () => {
     const interrupted = await service({ messages: [], __interrupt__: [{ value: question }] }).snapshot('local', 'eng', 'thread');
     expect(interrupted.pendingQuestion).toMatchObject({ questionId: 'call-1', source: 'runtime' });
+    expect(interrupted.pendingQuestions).toHaveLength(1);
     const clean = await service({ messages: [] }).snapshot('local', 'eng', 'thread');
     expect(clean.pendingQuestion).toBeUndefined();
+    expect(clean.pendingQuestions).toBeUndefined();
     const taskInterrupt = await service({ messages: [] }, [{ interrupts: [{ value: question }] }]).snapshot('local', 'eng', 'thread');
     expect(taskInterrupt.pendingQuestion).toMatchObject({ questionId: 'call-1', source: 'runtime' });
   });

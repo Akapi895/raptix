@@ -8,7 +8,7 @@ import type { PendingInterruptView } from '@raptix/web-contracts';
 
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-function questionFrom(value: unknown): PendingInterruptView | null {
+function questionFrom(value: unknown, interruptId?: unknown): PendingInterruptView | null {
   if (!record(value) || value.type !== 'ask_user_question') return null;
   const questionId = typeof value.id === 'string' && value.id.length > 0 && value.id.length <= 256 ? value.id : null;
   if (!questionId || typeof value.question !== 'string' || !value.question || value.question.length > 4000) return null;
@@ -20,36 +20,55 @@ function questionFrom(value: unknown): PendingInterruptView | null {
     }
   }
   const header = typeof value.header === 'string' ? value.header.slice(0, 200) : '';
-  return { questionId, question: value.question, header, options, multiSelect: value.multi_select === true, allowOther: value.allow_other === true, source: 'runtime' };
+  const langgraphInterruptId = typeof interruptId === 'string' && interruptId.length > 0 && interruptId.length <= 256 ? interruptId : undefined;
+  return { questionId, question: value.question, header, options, multiSelect: value.multi_select === true, allowOther: value.allow_other === true, source: 'runtime', ...(langgraphInterruptId ? { interruptId: langgraphInterruptId } : {}) };
 }
 
 /**
- * Depth-first bounded scan for a pending `ask_user_question` interrupt.
- * Covers both runtime shapes: the classic `values.__interrupt__` entries and
- * the langgraph-api task layout (`tasks[].interrupts[].value`), which the
- * platform 0.10 state response uses instead of merged values.
+ * Depth-first bounded scan collecting EVERY restorable `ask_user_question`
+ * interrupt. Covers both runtime shapes: the classic `values.__interrupt__`
+ * entries and the langgraph-api task layout (`tasks[].interrupts[].value`),
+ * which the platform 0.10 state response uses instead of merged values.
+ * Parallel `ask_user_question` tool calls raise several interrupts at once;
+ * resuming those requires the langgraph interrupt ids.
  */
-export function findPendingQuestion(values: Record<string, unknown>, tasks?: unknown): PendingInterruptView | null {
+export function findPendingQuestions(values: Record<string, unknown>, tasks?: unknown, limit = 8): PendingInterruptView[] {
+  const found: PendingInterruptView[] = [];
+  const seenQuestions = new Set<string>();
   const queue: unknown[] = [values.__interrupt__];
   if (Array.isArray(tasks)) {
     for (const task of tasks.slice(0, 20)) {
       if (record(task) && Array.isArray(task.interrupts)) queue.push(...task.interrupts.slice(0, 10));
     }
   }
-  for (let seen = 0; queue.length && seen < 200; ) {
+  for (let seen = 0; queue.length && seen < 200 && found.length < limit; ) {
     const current = queue.shift();
     seen++;
     if (Array.isArray(current)) {
-      if (queue.length + current.length > 400) return null;
+      if (queue.length + current.length > 400) return found;
       queue.push(...current.slice(0, 100));
     } else if (record(current)) {
-      const direct = questionFrom(current.value ?? current);
-      if (direct) return direct;
-      if (current.value !== undefined) queue.push(current.value);
-      if (current.__interrupt__ !== undefined) queue.push(current.__interrupt__);
+      // Only the interrupt-object shape (`{id, value}`) carries the LangGraph
+      // interrupt id; a bare question payload's `id` is the tool-call id.
+      const interruptId = current.value !== undefined && typeof current.id === 'string' ? current.id : undefined;
+      const direct = questionFrom(current.value ?? current, interruptId);
+      if (direct) {
+        if (!seenQuestions.has(direct.questionId)) {
+          seenQuestions.add(direct.questionId);
+          found.push(direct);
+        }
+      } else {
+        if (current.value !== undefined) queue.push(current.value);
+        if (current.__interrupt__ !== undefined) queue.push(current.__interrupt__);
+      }
     }
   }
-  return null;
+  return found;
+}
+
+/** First pending `ask_user_question` interrupt, or null (W11 single-question shape). */
+export function findPendingQuestion(values: Record<string, unknown>, tasks?: unknown): PendingInterruptView | null {
+  return findPendingQuestions(values, tasks, 1)[0] ?? null;
 }
 
 /** Validates the operator answer against the question contract; throws 400 on mismatch. */

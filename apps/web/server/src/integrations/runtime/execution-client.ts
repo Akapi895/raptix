@@ -1,4 +1,4 @@
-import { STREAM_OPTIONS } from '@raptix/streaming';
+﻿import { STREAM_OPTIONS } from '@raptix/streaming';
 import type { TrustedRuntimeContext } from '../../services/runtime/runtime-context.js';
 import { RuntimeReadClient, RuntimeUnavailableError } from './read-client.js';
 
@@ -10,7 +10,7 @@ export interface RuntimeExecutionPort {
   createThread(id: string, metadata: Record<string, string>, initial: TrustedRuntimeContext['configurable']): Promise<{ threadId: string; metadata: Record<string, unknown> }>;
   createRun(threadId: string, context: TrustedRuntimeContext, requestId: string, message: string): Promise<RuntimeRun>;
   /** W11 graph-interrupt resume: a new run carrying `command.resume`, never an input message. */
-  createResumeRun(threadId: string, context: TrustedRuntimeContext, requestId: string, value: string | string[]): Promise<RuntimeRun>;
+  createResumeRun(threadId: string, context: TrustedRuntimeContext, requestId: string, resume: string | string[] | Record<string, string | string[]>): Promise<RuntimeRun>;
   /** W11 pause/cancel semantics: interrupt action keeps the checkpoint resumable. */
   cancelRun(threadId: string, runId: string): Promise<void>;
   run(threadId: string, runId: string): Promise<RuntimeRun>;
@@ -36,9 +36,9 @@ export class RuntimeExecutionClient extends RuntimeReadClient implements Runtime
       stream_subgraphs: STREAM_OPTIONS.streamSubgraphs, stream_resumable: STREAM_OPTIONS.streamResumable,
     }, true), threadId);
   }
-  public async createResumeRun(threadId: string, context: TrustedRuntimeContext, requestId: string, value: string | string[]): Promise<RuntimeRun> {
+  public async createResumeRun(threadId: string, context: TrustedRuntimeContext, requestId: string, resume: string | string[] | Record<string, string | string[]>): Promise<RuntimeRun> {
     return run(await this.read(`/threads/${encodeURIComponent(threadId)}/runs`, {
-      assistant_id: context.assistantId, command: { resume: value },
+      assistant_id: context.assistantId, command: { resume },
       config: { configurable: context.configurable }, metadata: { ...context.metadata, ui_request_id: requestId },
       multitask_strategy: 'reject', if_not_exists: 'reject', stream_mode: STREAM_OPTIONS.streamMode,
       stream_subgraphs: STREAM_OPTIONS.streamSubgraphs, stream_resumable: STREAM_OPTIONS.streamResumable,

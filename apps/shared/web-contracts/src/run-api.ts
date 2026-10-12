@@ -9,6 +9,8 @@ export interface ScopedRunView {
 }
 export interface ScopedThreadMessage {
   role: 'user' | 'assistant'; content: string; messageId?: string | null
+  /** Thinking trace stowed in `additional_kwargs.reasoning_content` (assistant only, optional). */
+  reasoning?: string
 }
 /**
  * One durable checkpoint transcript entry (W09). Provenance `key` comes from
@@ -26,6 +28,8 @@ export interface ScopedThreadView {
   transcripts?: ThreadHistoryEvent[]; transcriptsTruncated?: boolean
   /** Restored graph-interrupt question (W11): lets the picker survive reloads. */
   pendingQuestion?: PendingInterruptView
+  /** Every restorable `ask_user_question` interrupt (parallel tool calls raise several at once). */
+  pendingQuestions?: PendingInterruptView[]
 }
 /** Owner-scoped bound-thread list for the Console selector (W10). */
 export interface ScopedThreadListView {
@@ -36,6 +40,8 @@ export interface PendingInterruptView {
   questionId: string; question: string; header: string
   options: { label: string; description: string }[]
   multiSelect: boolean; allowOther: boolean; source: 'runtime'
+  /** LangGraph interrupt identity — required to resume when several interrupts are pending at once. */
+  interruptId?: string
 }
 /** One workspace-file-backed HITL approval request, public projection (W11). */
 export interface ApprovalRequestView {
@@ -55,8 +61,9 @@ export function isScopedRunView(v: unknown): v is ScopedRunView {
 }
 export function isScopedThreadView(v: unknown): v is ScopedThreadView {
   if (!isRecord(v) || !isThreadBindingView(v.binding) || (v.rawStatus !== null && !isNonEmptyString(v.rawStatus)) || !Array.isArray(v.messages) || typeof v.messagesTruncated !== 'boolean' || v.historyScope !== 'root_messages_only' || v.source !== 'runtime') return false
-  if (!v.messages.every(m => isRecord(m) && typeof m.role === 'string' && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && (m.messageId === undefined || m.messageId === null || isNonEmptyString(m.messageId)))) return false
+  if (!v.messages.every(m => isRecord(m) && typeof m.role === 'string' && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && (m.reasoning === undefined || typeof m.reasoning === 'string') && (m.messageId === undefined || m.messageId === null || isNonEmptyString(m.messageId)))) return false
   if (v.pendingQuestion !== undefined && !isPendingInterruptView(v.pendingQuestion)) return false
+  if (v.pendingQuestions !== undefined && (!Array.isArray(v.pendingQuestions) || !v.pendingQuestions.every(isPendingInterruptView))) return false
   if (v.transcripts === undefined && v.transcriptsTruncated === undefined) return true
   if (!Array.isArray(v.transcripts) || typeof v.transcriptsTruncated !== 'boolean') return false
   return v.transcripts.every(t => isRecord(t) && (t.key === null || isNonEmptyString(t.key)) && t.runId === null && t.source === 'checkpoint' && typeof t.truncated === 'boolean' && isPublicStreamPayload(t.payload))
@@ -65,7 +72,7 @@ export function isScopedThreadListView(v: unknown): v is ScopedThreadListView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && v.source === 'runtime' && Array.isArray(v.threads) && v.threads.every(isThreadBindingView)
 }
 export function isPendingInterruptView(v: unknown): v is PendingInterruptView {
-  return isRecord(v) && isNonEmptyString(v.questionId) && isNonEmptyString(v.question) && typeof v.header === 'string' && Array.isArray(v.options) && v.options.every(o => isRecord(o) && isNonEmptyString(o.label) && typeof o.description === 'string') && typeof v.multiSelect === 'boolean' && typeof v.allowOther === 'boolean' && v.source === 'runtime'
+  return isRecord(v) && isNonEmptyString(v.questionId) && isNonEmptyString(v.question) && typeof v.header === 'string' && Array.isArray(v.options) && v.options.every(o => isRecord(o) && isNonEmptyString(o.label) && typeof o.description === 'string') && typeof v.multiSelect === 'boolean' && typeof v.allowOther === 'boolean' && v.source === 'runtime' && (v.interruptId === undefined || isNonEmptyString(v.interruptId))
 }
 export function isApprovalRequestView(v: unknown): v is ApprovalRequestView {
   if (!isRecord(v) || !isNonEmptyString(v.engagementId) || !isNonEmptyString(v.requestId) || typeof v.engagementName !== 'string' || !isNonEmptyString(v.agentName) || !isNonEmptyString(v.toolName) || !isRecord(v.toolArgsRedacted) || !isRecord(v.matchedRule)) return false
