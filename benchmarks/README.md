@@ -69,12 +69,18 @@ uv run python -m benchmarks.suites.dreadgoad run \
 
 # Tool/capability evaluation: registry, selection-policy and executor tiers
 uv run python -m benchmarks.suites.tool_eval --fixtures dev
+
+# P3 evidence-context decision ablation (model provider, no target required)
+uv run python -m benchmarks.suites.decision_eval --model custom/Qwen/Qwen3.5-122B-A10B-FP8
 ```
 
 [Suite guides and evaluation criteria](docs/README.md) describe exact
 prerequisites and scoring. Tool-eval's pinned baselines remain in
 `suites/tool_eval/baseline/`; they are evaluator inputs, not disposable outputs.
 Held-out corpora must not be used to tune tool schemas.
+
+[Decision-eval guide](suites/decision_eval/README.md) documents P3 replay scenarios,
+paired baseline/evidence conditions, held-out evaluation and reporting boundaries.
 
 ## Inputs and output policy
 
