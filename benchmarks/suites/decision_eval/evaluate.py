@@ -11,7 +11,7 @@ import os
 import random
 import subprocess
 from collections import defaultdict
-from collections.abc import Coroutine
+from collections.abc import Coroutine, Iterator
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Literal
@@ -86,6 +86,52 @@ class DecisionEvalError(ValueError):
     """Invalid decision corpus or comparison schedule."""
 
 
+def _iter_balanced_json_objects(content: str) -> Iterator[str]:
+    """Yield each balanced ``{...}`` slice, ignoring braces inside JSON strings."""
+    for start, opening in enumerate(content):
+        if opening != "{":
+            continue
+        depth, in_string, escaped = 0, False, False
+        for index in range(start, len(content)):
+            current = content[index]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif current == "\\":
+                    escaped = True
+                elif current == '"':
+                    in_string = False
+            elif current == '"':
+                in_string = True
+            elif current == "{":
+                depth += 1
+            elif current == "}":
+                depth -= 1
+                if depth == 0:
+                    yield content[start : index + 1]
+                    break
+
+
+def parse_decision(content: str) -> Decision | None:
+    """Validate a decision, tolerating Markdown fences and surrounding prose.
+
+    A bare JSON object is tried first, so strict answers are unchanged. Failing
+    that, the first balanced JSON object that validates against the strict
+    ``Decision`` schema is accepted. Prose and schema-invalid JSON never yield a
+    decision: extraction is not answer repair and adds no inferred fields.
+    """
+    try:
+        return Decision.model_validate_json(content)
+    except ValueError:
+        pass
+    for candidate in _iter_balanced_json_objects(content):
+        try:
+            return Decision.model_validate_json(candidate)
+        except ValueError:
+            continue
+    return None
+
+
 def score_decision(
     scenario: Scenario, content: str, reads: list[str], forbidden_tools: list[str]
 ) -> dict[str, Any]:
@@ -103,9 +149,8 @@ def score_decision(
         "scope_violations": sum(finding not in scenario.replays for finding in reads)
         + len(forbidden_tools),
     }
-    try:
-        decision = Decision.model_validate_json(content)
-    except ValueError:
+    decision = parse_decision(content)
+    if decision is None:
         return scores
     scores.update(
         valid_response=True,

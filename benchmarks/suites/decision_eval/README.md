@@ -62,6 +62,11 @@ The answer schema requires:
 - `lineage_count`: distinct recorded producer invocation IDs behind those
   references. This does not assert independent corroboration.
 
+A response is valid when it contains a JSON object matching that schema exactly.
+Surrounding Markdown fences or prose are ignored (ADR-0065); a bare JSON object
+is unchanged. Missing or extra fields, wrong enums, wrong value types and prose
+with no JSON object stay invalid. Extraction is not answer repair.
+
 Joint decision correctness requires the expected verdict, an accepted next action,
 correct references and lineage count, required replay reads, and no scope violation.
 Malformed responses and provider/timeout failures remain failures in denominators.
@@ -124,9 +129,11 @@ alias was `custom/Qwen/Qwen3.5-122B-A10B-FP8`. One repetition, scheduling seed 7
 
 Development had one failed episode in each condition. Some baseline answers
 were semantically plausible but used Markdown fences and failed the strict JSON
-protocol. Held-out showed no measured gain in this small run. No policy, prompt,
-fixture or scoring change was made from the held-out outputs. This is smoke
-evidence, not justification for default rollout or model parity; cost was unknown.
+protocol; the current scorer accepts those envelopes (ADR-0065), so these counts
+are not comparable to post-change runs. Held-out showed no measured gain in this
+small run. No policy, prompt, fixture or scoring change was made from the held-out
+outputs. This is smoke evidence, not justification for default rollout or model
+parity; cost was unknown.
 
 Ignored local artifacts:
 
