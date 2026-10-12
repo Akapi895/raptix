@@ -234,6 +234,7 @@ describe('server bootstrap (injected projects service + database health)', () =>
         targetType: 'web_url',
         targetValue: 'http://authorized-local-target:3010',
         authorizationConfirmed: true,
+        brief: 'Authorized lab assessment with scoped constraints.',
       },
     });
     expect(createResponse.statusCode).toBe(201);

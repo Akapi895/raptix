@@ -32,6 +32,8 @@ export interface ProjectRecord {
   readonly targetType: EngagementTargetType;
   readonly targetValue: string;
   readonly authorizationConfirmed: boolean;
+  readonly brief?: string | null;
+  readonly handoffConfirmedAt?: Date | null;
   readonly status: EngagementStatus;
   readonly userId: string;
   readonly threadId: string | null;
@@ -47,6 +49,7 @@ export interface CreateProjectData {
   readonly targetType: EngagementTargetType;
   readonly targetValue: string;
   readonly authorizationConfirmed: boolean;
+  readonly brief?: string | null;
   readonly workspacePath?: string | null;
 }
 
@@ -54,6 +57,7 @@ export interface UpdateProjectData {
   readonly displayName?: string | null;
   readonly targetType?: EngagementTargetType;
   readonly targetValue?: string;
+  readonly handoffConfirmedAt?: Date | null;
 }
 
 /**
@@ -138,6 +142,10 @@ function toProjectViewModel(record: ProjectRecord): ProjectViewModel {
     targetType: record.targetType,
     targetValue: record.targetValue,
     authorizationConfirmed: record.authorizationConfirmed,
+    brief: record.brief ?? null,
+    handoffConfirmedAt: record.handoffConfirmedAt instanceof Date
+      ? record.handoffConfirmedAt.toISOString()
+      : record.handoffConfirmedAt ?? null,
     metadataState: toMetadataState(record),
     lifecycleStatus: record.status,
     findingCount: null,
@@ -228,6 +236,7 @@ export class ProjectsService {
         targetType: parsed.targetType,
         targetValue: parsed.targetValue,
         authorizationConfirmed: parsed.authorizationConfirmed,
+        brief: parsed.brief,
         workspacePath,
       });
     } catch (error) {
@@ -240,11 +249,12 @@ export class ProjectsService {
   }
 
   /**
-   * Only displayName/targetType/targetValue are patchable (strict policy
-   * parse). Every patch first loads the owned record and refuses rows whose
-   * stored name is not a safe workspace slug — a poisoned legacy row is 404
-   * with no mutation. Target-field changes are additionally gated on draft +
-   * no runtime thread and validated as the MERGED pair.
+   * Only displayName/targetType/targetValue plus the one-way handoff
+   * confirmation are patchable (strict policy parse). Every patch first
+   * loads the owned record and refuses rows whose stored name is not a safe
+   * workspace slug — a poisoned legacy row is 404 with no mutation.
+   * Target-field changes are additionally gated on draft + no runtime thread
+   * and validated as the MERGED pair.
    */
   public async patchProject(
     userId: string | undefined,
@@ -269,7 +279,12 @@ export class ProjectsService {
         patch.targetValue ?? current.targetValue,
       );
     }
-    const record = await this.repository.update(this.ownerId(userId), id, patch);
+    const record = await this.repository.update(this.ownerId(userId), id, {
+      ...(patch.displayName === undefined ? {} : { displayName: patch.displayName }),
+      ...(patch.targetType === undefined ? {} : { targetType: patch.targetType }),
+      ...(patch.targetValue === undefined ? {} : { targetValue: patch.targetValue }),
+      ...(patch.handoffConfirmed === undefined ? {} : { handoffConfirmedAt: new Date() }),
+    });
     if (record === null) throw new ProjectNotFoundError();
     return toProjectViewModel(record);
   }

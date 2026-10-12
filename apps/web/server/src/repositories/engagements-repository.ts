@@ -21,6 +21,8 @@ export interface EngagementRecord {
   readonly targetType: EngagementTargetType;
   readonly targetValue: string;
   readonly authorizationConfirmed: boolean;
+  readonly brief: string | null;
+  readonly handoffConfirmedAt: Date | null;
   readonly status: EngagementStatus;
   readonly userId: string;
   readonly threadId: string | null;
@@ -36,6 +38,7 @@ export interface CreateEngagementData {
   readonly targetType: EngagementTargetType;
   readonly targetValue: string;
   readonly authorizationConfirmed: boolean;
+  readonly brief?: string | null;
   readonly threadId?: string | null;
   readonly workspacePath?: string | null;
 }
@@ -48,6 +51,8 @@ export interface UpdateEngagementData {
   readonly status?: EngagementStatus;
   readonly threadId?: string | null;
   readonly workspacePath?: string | null;
+  readonly brief?: string | null;
+  readonly handoffConfirmedAt?: Date | null;
 }
 
 /**
@@ -84,6 +89,8 @@ function toRecord(row: EngagementRow): EngagementRecord {
     targetType: row.targetType as EngagementTargetType,
     targetValue: row.targetValue,
     authorizationConfirmed: row.authorizationConfirmed,
+    brief: row.brief,
+    handoffConfirmedAt: row.handoffConfirmedAt,
     status: row.status as EngagementStatus,
     userId: row.userId,
     threadId: row.threadId,
@@ -143,6 +150,7 @@ export class EngagementsRepository {
           targetType: data.targetType,
           targetValue: data.targetValue,
           authorizationConfirmed: data.authorizationConfirmed,
+          brief: data.brief ?? null,
           threadId: data.threadId ?? null,
           workspacePath: data.workspacePath ?? null,
         },
@@ -174,6 +182,8 @@ export class EngagementsRepository {
       status?: EngagementStatus;
       threadId?: string | null;
       workspacePath?: string | null;
+      brief?: string | null;
+      handoffConfirmedAt?: Date | null;
     } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.displayName !== undefined) patch.displayName = data.displayName;
@@ -182,6 +192,8 @@ export class EngagementsRepository {
     if (data.status !== undefined) patch.status = data.status;
     if (data.threadId !== undefined) patch.threadId = data.threadId;
     if (data.workspacePath !== undefined) patch.workspacePath = data.workspacePath;
+    if (data.brief !== undefined) patch.brief = data.brief;
+    if (data.handoffConfirmedAt !== undefined) patch.handoffConfirmedAt = data.handoffConfirmedAt;
 
     try {
       const result = await this.db.updateMany({

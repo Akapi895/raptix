@@ -10,7 +10,7 @@ test('new API planning missing/partial/valid/invalid/unavailable states, reload,
   const suffix = Date.now()
   const slug = `w04-browser-${suffix}`
   const target = 'http://authorized-planning-test.invalid'
-  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: target, authorizationConfirmed: true } })
+  const create = await request.post(`${api}/engagements`, { data: { name: slug, targetType: 'web_url', targetValue: target, authorizationConfirmed: true, brief: 'Authorized planning states test brief with scoped constraints.' } })
   expect(create.status()).toBe(201)
   const project = await create.json()
   const plan = path.join(root, slug, 'plan')

@@ -113,9 +113,28 @@ export interface ParsedCreateProject {
   readonly targetType: ProjectTargetType;
   readonly targetValue: string;
   readonly authorizationConfirmed: true;
+  readonly brief: string;
 }
 
-const CREATE_ALLOWED_KEYS = ['name', 'displayName', 'targetType', 'targetValue', 'authorizationConfirmed'] as const;
+const CREATE_ALLOWED_KEYS = ['name', 'displayName', 'targetType', 'targetValue', 'authorizationConfirmed', 'brief'] as const;
+
+/** Brief bounds: short enough to stay a single prompt, long enough to be a real brief. */
+const BRIEF_MAX_LENGTH = 20_000;
+const BRIEF_MIN_LENGTH = 20;
+
+function parseBrief(raw: unknown): string {
+  if (typeof raw !== 'string') {
+    throw badField('brief', 'brief is required — paste the engagement brief text or upload a markdown file');
+  }
+  const brief = raw.trim();
+  if (brief.length < BRIEF_MIN_LENGTH) {
+    throw badField('brief', `brief is too short — provide at least ${BRIEF_MIN_LENGTH} characters describing scope and constraints`);
+  }
+  if (brief.length > BRIEF_MAX_LENGTH) {
+    throw badField('brief', `brief is too long — at most ${BRIEF_MAX_LENGTH} characters`);
+  }
+  return brief;
+}
 
 /** Strict create parsing: unknown keys, weak types and unsafe targets fail closed. */
 export function parseCreateProject(raw: unknown): ParsedCreateProject {
@@ -141,12 +160,14 @@ export function parseCreateProject(raw: unknown): ParsedCreateProject {
   if (raw.authorizationConfirmed !== true) {
     throw badField('authorizationConfirmed', 'Explicit authorization confirmation is required');
   }
+  const brief = parseBrief(raw.brief);
   return {
     name: raw.name,
     ...(displayName === undefined ? {} : { displayName }),
     targetType: raw.targetType,
     targetValue: raw.targetValue,
     authorizationConfirmed: true,
+    brief,
   };
 }
 
@@ -154,9 +175,11 @@ export interface ParsedProjectPatch {
   readonly displayName?: string;
   readonly targetType?: ProjectTargetType;
   readonly targetValue?: string;
+  /** One-way handoff confirmation: only `true` is accepted, never reset from the browser. */
+  readonly handoffConfirmed?: true;
 }
 
-const PATCH_ALLOWED_KEYS = ['displayName', 'targetType', 'targetValue'] as const;
+const PATCH_ALLOWED_KEYS = ['displayName', 'targetType', 'targetValue', 'handoffConfirmed'] as const;
 
 /**
  * PATCH never accepts authority/control/immutable fields: `name` is the
@@ -199,14 +222,18 @@ export function parseProjectPatch(raw: unknown): ParsedProjectPatch {
     }
     targetValue = raw.targetValue;
   }
-  if (displayName === undefined && targetType === undefined && targetValue === undefined) {
+  if (displayName === undefined && targetType === undefined && targetValue === undefined && raw.handoffConfirmed === undefined) {
     throw new ProjectPolicyError('bad_request', 'No supported fields to update');
+  }
+  if (raw.handoffConfirmed !== undefined && raw.handoffConfirmed !== true) {
+    throw badField('handoffConfirmed', 'handoffConfirmed only accepts true — the planning handoff cannot be revoked from the browser');
   }
   if (targetType !== undefined && targetValue !== undefined) assertProjectTarget(targetType, targetValue);
   return {
     ...(displayName === undefined ? {} : { displayName }),
     ...(targetType === undefined ? {} : { targetType }),
     ...(targetValue === undefined ? {} : { targetValue }),
+    ...(raw.handoffConfirmed === undefined ? {} : { handoffConfirmed: true as const }),
   };
 }
 

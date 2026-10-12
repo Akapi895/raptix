@@ -22,9 +22,10 @@ test('web-native create, planning run, report export, settings save and delete',
     await page.locator('#real-new-project-display-name').fill('W15 Core Flow')
     await page.locator('#real-new-project-slug').fill(slug)
     await page.locator('#real-new-project-target').fill('https://authorized.invalid')
+    await page.locator('#real-new-project-brief').fill('Authorized core flow test brief with scoped constraints.')
     await page.locator('#real-new-project-auth').check()
     await page.getByRole('button', { name: /Create/i }).click()
-    await page.waitForURL(/\/projects\/[^/]+\/charter$/, { timeout: 30000 })
+    await page.waitForURL(/\/projects\/[^/]+\/console$/, { timeout: 30000 })
     await expect(page.getByText(slug).first()).toBeVisible()
 
     // 2+3. Planning: create a bound planning thread and execute one real run.

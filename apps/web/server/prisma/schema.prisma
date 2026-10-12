@@ -33,6 +33,10 @@ model Engagement {
   targetType             TargetType
   targetValue            String
   authorizationConfirmed Boolean          @default(false)
+  // Operator briefing captured at creation; the prompt Soundwave drafts scope/RoE from.
+  brief                  String?
+  // Explicit planning-handoff confirmation instant; null until confirmed.
+  handoffConfirmedAt     DateTime?
   status                 EngagementStatus @default(draft)
 
   // Self-hosted single-user mode — userId is always "local".

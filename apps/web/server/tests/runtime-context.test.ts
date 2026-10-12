@@ -13,13 +13,13 @@ import { ProjectNotFoundError } from '../src/services/projects-service.js';
 
 const roots: string[] = [];
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });
-async function setup() {
+async function setup(opts: { pinnedSlug?: string } = {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'raptix-w06-')); roots.push(root);
   await mkdir(path.join(root, 'parity-project'));
-  const project: ProjectViewModel = { id: 'owned', workspaceSlug: 'parity-project', displayName: 'Untrusted display name', targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, metadataState: 'verified', lifecycleStatus: 'draft', source: 'api', findingCount: null, assetCount: null, activeAgentCount: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  const project: ProjectViewModel = { id: 'owned', workspaceSlug: 'parity-project', displayName: 'Untrusted display name', targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, brief: null, handoffConfirmedAt: null, metadataState: 'verified', lifecycleStatus: 'draft', source: 'api', findingCount: null, assetCount: null, activeAgentCount: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
   const bound: ThreadBindingView = { engagementId: 'owned', threadId: 'thread', assistantId: 'soundwave', kind: 'planning', createdAt: project.createdAt, updatedAt: project.updatedAt };
   const control = { graphs: ['soundwave', 'decepticon', 'vulnresearch', 'recon'], stateGraph: null as string | null, proof: '', metadata: {} as Record<string, unknown>, values: {} as Record<string, unknown>, calls: 0 };
-  const config = loadRuntimeConfig({ LANGGRAPH_API_URL: 'http://127.0.0.1:2400', RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace' })!;
+  const config = loadRuntimeConfig({ LANGGRAPH_API_URL: 'http://127.0.0.1:2400', RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace', ...(opts.pinnedSlug === undefined ? {} : { RAPTIX_RUNTIME_WORKSPACE_SLUG: opts.pinnedSlug }) })!;
   const planning = { version: 1, engagementId: 'owned', documents: Object.fromEntries(['roe', 'conops', 'deconfliction', 'opplan'].map(n => [n, { state: 'missing' }])), bundle: Object.fromEntries(PLANNING_DOCUMENTS.map(n => [n, 'missing'])), readiness: { state: 'blocked', reasons: ['roe:missing'], runtimeSignal: 'not_observed' } } as PlanningView;
   const service = new RuntimeContextService({ config, workspaceRoot: root,
     projects: { async getProject(user, id) { if (user !== 'local' || id !== project.id) throw new ProjectNotFoundError(); return project; }, async getPlanning() { return planning; } },
@@ -29,7 +29,7 @@ async function setup() {
   return { root, project, bound, control, config, service };
 }
 it('resolves the five CLI configurable fields from persisted metadata and trusted POSIX mapping', async () => {
-  const { service } = await setup();
+  const { service } = await setup({ pinnedSlug: 'parity-project' });
   const context = await service.resolve('local', 'owned', { kind: 'planning' });
   const fixture = JSON.parse(readFileSync(new URL('../../tests/fixtures/w06/cli-context.json', import.meta.url), 'utf8'));
   const cli = readFileSync(new URL('../../../cli/src/hooks/useAgent.ts', import.meta.url), 'utf8');
