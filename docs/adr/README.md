@@ -93,6 +93,7 @@ Use [`template.md`](template.md) as the starting point.
 | [0061](0061-retain-and-inspect-scanner-captures.md) | Retain scanner captures and inspect their source consistency | Proposed |
 | [0062](0062-differential-verification-over-retained-captures.md) | Differential verification over retained captures | Superseded by 0063 |
 | [0063](0063-bounded-recorded-verification-context.md) | Bounded recorded verification context on the existing KG summary | Proposed |
+| [0064](0064-evaluate-evidence-informed-decisions-with-replay.md) | Evaluate evidence-informed decisions at replay checkpoints | Proposed |
 
 Keep this index in sync when you land a new ADR. (Rows 0027–0048 are missing
 from this index as pre-existing drift, not introduced by ADR-0049 — the files

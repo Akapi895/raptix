@@ -1,0 +1,38 @@
+[
+  {
+    "scenario_id": "unrelated-positive", "objective": "Assess only the isolation claim for HOLD-101; HOLD-OTHER concerns a different scoped resource.", "finding_id": "HOLD-101",
+    "checkpoint": "The related check is incomplete; an unrelated successful observation is also available. Budget remains for the requested resource.",
+    "history": ["A previous operator suggested that success on HOLD-OTHER might support HOLD-101."], "snapshots": [],
+    "replays": {
+      "HOLD-101": {"outcome": "inconclusive", "reason": "missing_baseline"},
+      "HOLD-OTHER": {"outcome": "supported", "reference": "workspace-evidence://2222222222222222222222222222222222222222222222222222222222222222", "invocation_id": "other-run"}
+    },
+    "expected": {"outcome": "inconclusive", "accepted_actions": ["gather_evidence"], "evidence_refs": [], "lineage_count": 0, "required_reads": ["HOLD-101"]}
+  },
+  {
+    "scenario_id": "two-refs-one-invocation", "objective": "Assess HOLD-102 using both retained projections and count distinct producing invocations.", "finding_id": "HOLD-102",
+    "checkpoint": "The two projections use different retained references but originate from the same execution. They are not independent corroboration.",
+    "history": ["HOLD-102-A and HOLD-102-B are projections of producer run-common."], "snapshots": [],
+    "replays": {
+      "HOLD-102-A": {"outcome": "supported", "reference": "workspace-evidence://3333333333333333333333333333333333333333333333333333333333333333", "invocation_id": "run-common"},
+      "HOLD-102-B": {"outcome": "supported", "reference": "workspace-evidence://4444444444444444444444444444444444444444444444444444444444444444", "invocation_id": "run-common"}
+    },
+    "expected": {"outcome": "supported", "accepted_actions": ["report_scoped"], "evidence_refs": ["workspace-evidence://3333333333333333333333333333333333333333333333333333333333333333", "workspace-evidence://4444444444444444444444444444444444444444444444444444444444444444"], "lineage_count": 1, "required_reads": ["HOLD-102-A", "HOLD-102-B"]}
+  },
+  {
+    "scenario_id": "binding-transplant", "objective": "Assess the claim for HOLD-103, not the finding from which its reference was copied.", "finding_id": "HOLD-103",
+    "checkpoint": "The JSON ID was changed when a prior result was copied. Budget remains to gather a finding-bound observation.",
+    "history": ["An earlier agent relabeled a supported check as HOLD-103."],
+    "snapshots": [{"key": "finding::HOLD-103", "reference": "workspace-evidence://5555555555555555555555555555555555555555555555555555555555555555", "recorded_outcome": "supported", "writer": "agent", "episode": "copy-write", "invocation": "foreign-run"}],
+    "replays": {"HOLD-103": {"outcome": "inconclusive", "reason": "finding_binding_mismatch"}},
+    "expected": {"outcome": "inconclusive", "accepted_actions": ["gather_evidence"], "evidence_refs": [], "lineage_count": 0, "required_reads": ["HOLD-103"]}
+  },
+  {
+    "scenario_id": "historical-consensus-refuted", "objective": "Assess the differential claim for HOLD-104 after its current baseline recheck.", "finding_id": "HOLD-104",
+    "checkpoint": "Current proof and control are complete, but the baseline also has the proof's success signal. Budget remains for revising the claim.",
+    "history": ["Three prior agents agreed HOLD-104 was supported. They all repeated the same run-old observation."],
+    "snapshots": [{"key": "finding::HOLD-104", "reference": "workspace-evidence://6666666666666666666666666666666666666666666666666666666666666666", "recorded_outcome": "supported", "writer": "analyst", "episode": "consensus-write", "invocation": "run-old"}],
+    "replays": {"HOLD-104": {"outcome": "contradicted", "reference": "workspace-evidence://7777777777777777777777777777777777777777777777777777777777777777", "invocation_id": "run-new", "negative_matches": ["CONTROL"], "noise_matches": ["PROOF"]}},
+    "expected": {"outcome": "contradicted", "accepted_actions": ["revise_hypothesis"], "evidence_refs": ["workspace-evidence://7777777777777777777777777777777777777777777777777777777777777777"], "lineage_count": 1, "required_reads": ["HOLD-104"]}
+  }
+]
