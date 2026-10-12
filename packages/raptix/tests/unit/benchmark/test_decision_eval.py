@@ -13,10 +13,20 @@ from benchmarks.engine.paths import BENCHMARKS_DIR
 from benchmarks.suites.decision_eval.evaluate import (
     Scenario,
     load_scenarios,
+    parse_decision,
     run_episode,
     score_decision,
     summarize,
 )
+
+
+def _correct_decision(scenario: Scenario) -> dict[str, Any]:
+    return {
+        "outcome": scenario.expected.outcome,
+        "next_action": scenario.expected.accepted_actions[0],
+        "evidence_refs": list(scenario.expected.evidence_refs),
+        "lineage_count": scenario.expected.lineage_count,
+    }
 
 
 def test_unsupported_report_is_a_false_positive_even_with_inconclusive_verdict() -> None:
@@ -187,6 +197,79 @@ def test_shared_lineage_cannot_be_scored_as_independent_sources() -> None:
     assert scored["verdict_correct"] is True
     assert scored["lineage_correct"] is False
     assert scored["decision_correct"] is False
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        "{body}",
+        "```json\n{body}\n```",
+        "Here is my decision:\n\n```json\n{body}\n```\n",
+        "{body}\n\nRationale: the current read supports the scoped claim.",
+        "Analysis follows.\n\n{body}\n\nEnd of analysis.",
+    ],
+)
+def test_enveloped_valid_decision_is_scored(template: str) -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    content = template.format(body=json.dumps(_correct_decision(scenario)))
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is True
+    assert scored["decision_correct"] is True
+
+
+def test_prose_without_a_json_decision_stays_invalid() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    content = "The retained capture supports the claim, so report it."
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is False
+    assert scored["decision_correct"] is False
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        {"outcome": "believed"},
+        {"next_action": "print_flag"},
+        {"lineage_count": "1"},
+        {"unexpected": True},
+    ],
+)
+def test_enveloped_but_invalid_decision_stays_unscored(mutation: dict[str, Any]) -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    body = {**_correct_decision(scenario), **mutation}
+    content = f"```json\n{json.dumps(body)}\n```"
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is False
+    assert scored["decision_correct"] is False
+
+
+def test_enveloped_decision_missing_a_field_stays_unscored() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    body = _correct_decision(scenario)
+    del body["lineage_count"]
+    content = f"```json\n{json.dumps(body)}\n```"
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is False
+
+
+def test_non_decision_json_before_the_decision_is_skipped() -> None:
+    scenario = load_scenarios(BENCHMARKS_DIR / "scenarios/decision-eval/dev.json")[0]
+    content = (
+        'Metadata: {"source": "replay", "count": 1}\n'
+        "```json\n" + json.dumps(_correct_decision(scenario)) + "\n```"
+    )
+    scored = score_decision(scenario, content, list(scenario.expected.required_reads), [])
+    assert scored["valid_response"] is True
+    assert scored["decision_correct"] is True
+
+
+def test_braces_inside_string_values_do_not_break_extraction() -> None:
+    decision = parse_decision(
+        'note {"outcome": "supported", "next_action": "report_scoped", '
+        '"evidence_refs": ["ref{with}braces"], "lineage_count": 1}'
+    )
+    assert decision is not None
+    assert decision.evidence_refs == ["ref{with}braces"]
 
 
 @pytest.mark.asyncio
