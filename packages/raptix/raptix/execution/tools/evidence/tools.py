@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import tool
+from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 
 from raptix.execution.tools.evidence.asciicast import (
@@ -335,7 +335,7 @@ def inspect_evidence(
     # Finding.validated and never treated as independent corroboration.
     if node.props.get("verification_ref"):
         result["verification"] = _inspect_verification(
-            str(node.props["verification_ref"]), config, state, configurable, engagement
+            node, config, state, configurable, engagement
         )
     return _json(result)
 
@@ -401,7 +401,7 @@ def _rederive_verification_outcome(
     if not all(isinstance(value, str) and value for value in (proof_ref, control_ref)):
         return inconclusive("invalid_verification_record")
     try:
-        return verify_capture_pair(
+        outcome = verify_capture_pair(
             proof_ref=proof_ref,
             control_ref=control_ref,
             success_patterns=record.get("success_patterns") or [],
@@ -411,12 +411,15 @@ def _rederive_verification_outcome(
             engagement=engagement,
             execution=record.get("execution"),
         )
+        if record.get("invocation_id"):
+            outcome["invocation_id"] = record["invocation_id"]
+        return outcome
     except Exception as exc:  # noqa: BLE001 — an untrusted reference cannot promote a claim
         return inconclusive(f"inspection_failed:{type(exc).__name__}")
 
 
 def _inspect_verification(
-    reference: str,
+    node: Any,
     config: RunnableConfig,
     state: dict | None,
     configurable: dict,
@@ -425,12 +428,24 @@ def _inspect_verification(
     workspace, url = _evidence_scope(state, configurable)
     if not workspace or not url or not engagement:
         return {"outcome": "inconclusive", "reason": "missing_run_context"}
+    key = node.props.get("key")
+    finding_id = (
+        key.removeprefix("finding::")
+        if isinstance(key, str) and key.startswith("finding::")
+        else None
+    )
+    if not finding_id or not _VERIFICATION_ID.fullmatch(finding_id):
+        return {"outcome": "inconclusive", "reason": "missing_finding_binding"}
     try:
         sandbox = _scoped_sandbox(config, configurable, url)
     except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
         return {"outcome": "inconclusive", "reason": f"inspection_failed:{type(exc).__name__}"}
     return _rederive_verification_outcome(
-        reference, sandbox=sandbox, workspace=workspace, engagement=engagement
+        node.props["verification_ref"],
+        sandbox=sandbox,
+        workspace=workspace,
+        engagement=engagement,
+        finding_id=finding_id,
     )
 
 
@@ -495,49 +510,51 @@ def recheck_workspace_verification(
     Args:
         finding_id: The id used for the verification file (e.g. ``FIND-001``).
     """
+    return _json(_read_workspace_verification(finding_id, config, state))
+
+
+def _read_workspace_verification(
+    finding_id: str, config: RunnableConfig, state: dict | None
+) -> dict[str, Any]:
+    """Share the same scoped read and binding policy for recheck and promotion."""
     from raptix.execution.tools.evidence.artifacts import MAX_DESCRIPTOR_BYTES
 
     if not _VERIFICATION_ID.fullmatch(finding_id or ""):
-        return _json({"error": "invalid finding_id"})
+        return {"error": "invalid finding_id"}
     configurable = (config or {}).get("configurable") or {}
     scope = state or {}
     workspace, url = _evidence_scope(scope, configurable)
     engagement = scope.get("kg_engagement") or scope.get("engagement_name")
     if not workspace or not url or not engagement:
-        return _json({"error": "missing_run_context"})
+        return {"error": "missing_run_context"}
     try:
         sandbox = _scoped_sandbox(config, configurable, url)
     except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
-        return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
+        return {"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"}
     path = f"{workspace}/{_VERIFICATION_EVIDENCE_DIR}/{finding_id}_verification.json"
     try:
         files = sandbox.download_files(
             [path], workspace_path=workspace, max_bytes=MAX_DESCRIPTOR_BYTES
         )
     except Exception as exc:  # noqa: BLE001 — inspection failures cannot promote a claim
-        return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
+        return {"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"}
     if len(files) != 1 or files[0].path != path:
-        return _json({"finding_id": finding_id, "error": "transfer_failed"})
+        return {"finding_id": finding_id, "error": "transfer_failed"}
     if files[0].error:
         reason = files[0].error
-        return _json({"finding_id": finding_id, "error": reason})
+        return {"finding_id": finding_id, "error": reason}
     try:
         payload = json.loads(files[0].content or b"")
     except (TypeError, ValueError):
-        return _json({"finding_id": finding_id, "error": "invalid_verification_json"})
+        return {"finding_id": finding_id, "error": "invalid_verification_json"}
     reference = payload.get("verification_ref") if isinstance(payload, dict) else None
     if not isinstance(reference, str) or not reference:
-        return _json({"finding_id": finding_id, "error": "no_verification_ref"})
+        return {"finding_id": finding_id, "error": "no_verification_ref"}
     if payload.get("vuln_id") != finding_id:
-        return _json(
-            {
-                "finding_id": finding_id,
-                "verification": {
-                    "outcome": "inconclusive",
-                    "reason": "finding_binding_mismatch",
-                },
-            }
-        )
+        return {
+            "finding_id": finding_id,
+            "verification": {"outcome": "inconclusive", "reason": "finding_binding_mismatch"},
+        }
     outcome = _rederive_verification_outcome(
         reference,
         sandbox=sandbox,
@@ -545,7 +562,7 @@ def recheck_workspace_verification(
         engagement=engagement,
         finding_id=finding_id,
     )
-    return _json({"finding_id": finding_id, "verification": outcome})
+    return {"finding_id": finding_id, "verification_ref": reference, "verification": outcome}
 
 
 @tool
@@ -553,6 +570,7 @@ def record_workspace_finding(
     finding_id: str,
     config: RunnableConfig,
     state: Annotated[dict | None, InjectedState] = None,
+    tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> str:
     """Promote a verified workspace finding into the engagement KG.
 
@@ -561,58 +579,24 @@ def record_workspace_finding(
     ``finding_id``, and upsert a ``Finding`` node carrying ``verification_ref``
     so the KG consumer (``inspect_evidence``) can re-derive the differential
     outcome. A missing, foreign, malformed or unbound verification — or an
-    unavailable graph store — writes nothing. Never sets ``Finding.validated``.
+    unavailable graph store — writes nothing. Only a supported recheck is
+    recorded; other outcomes remain available through the read-only recheck.
+    Never sets ``Finding.validated``.
 
     Args:
         finding_id: The verification file's finding id (e.g. ``FIND-001``).
     """
-    from raptix.execution.tools.evidence.artifacts import MAX_DESCRIPTOR_BYTES, resolve_verification
     from raptix_core.types.kg import Node, NodeKind
 
-    if not _VERIFICATION_ID.fullmatch(finding_id or ""):
-        return _json({"error": "invalid finding_id"})
-    configurable = (config or {}).get("configurable") or {}
+    checked = _read_workspace_verification(finding_id, config, state)
+    if "error" in checked:
+        return _json(checked)
+    outcome = checked["verification"]
+    if outcome.get("outcome") != "supported":
+        return _json({**checked, "error": "verification_not_supported"})
+    reference = checked["verification_ref"]
     scope = state or {}
-    workspace, url = _evidence_scope(scope, configurable)
     engagement = scope.get("kg_engagement") or scope.get("engagement_name")
-    if not workspace or not url or not engagement:
-        return _json({"error": "missing_run_context"})
-    try:
-        sandbox = _scoped_sandbox(config, configurable, url)
-    except Exception as exc:  # noqa: BLE001 — a failed bridge must not promote a claim
-        return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
-    path = f"{workspace}/{_VERIFICATION_EVIDENCE_DIR}/{finding_id}_verification.json"
-    try:
-        files = sandbox.download_files(
-            [path], workspace_path=workspace, max_bytes=MAX_DESCRIPTOR_BYTES
-        )
-    except Exception as exc:  # noqa: BLE001
-        return _json({"finding_id": finding_id, "error": f"inspection_failed:{type(exc).__name__}"})
-    if len(files) != 1 or files[0].path != path:
-        return _json({"finding_id": finding_id, "error": "transfer_failed"})
-    if files[0].error:
-        return _json({"finding_id": finding_id, "error": files[0].error})
-    try:
-        payload = json.loads(files[0].content or b"")
-    except (TypeError, ValueError):
-        return _json({"finding_id": finding_id, "error": "invalid_verification_json"})
-    reference = payload.get("verification_ref") if isinstance(payload, dict) else None
-    if not isinstance(reference, str) or not reference:
-        return _json({"finding_id": finding_id, "error": "no_verification_ref"})
-    if payload.get("vuln_id") != finding_id:
-        return _json({"finding_id": finding_id, "error": "finding_binding_mismatch"})
-    record = resolve_verification(
-        reference, sandbox=sandbox, workspace=workspace, engagement=engagement
-    )
-    if "error" in record:
-        return _json({"finding_id": finding_id, "error": record["error"]})
-    outcome = _rederive_verification_outcome(
-        reference,
-        sandbox=sandbox,
-        workspace=workspace,
-        engagement=engagement,
-        finding_id=finding_id,
-    )
     from raptix.knowledge.graph.store import (
         KGStore,
         KGStoreConfigError,
@@ -631,6 +615,7 @@ def record_workspace_finding(
         "props": {
             "verification_ref": reference,
             "verification_outcome": outcome.get("outcome"),
+            "verification_invocation_id": outcome.get("invocation_id"),
             "source": "workspace_verification",
         },
         "edges_out": [],
@@ -639,8 +624,8 @@ def record_workspace_finding(
         written = store.record_observations(
             [observation],
             engagement=engagement,
-            created_by=str(scope.get("role") or "verifier"),
-            source_episode_id=f"record-finding::{finding_id}",
+            created_by=str(scope.get("role") or scope.get("agent_name") or "agent"),
+            source_episode_id=tool_call_id,
         )
     except Exception as exc:  # noqa: BLE001 — surface write failure, never a silent success
         return _json({"finding_id": finding_id, "error": f"kg_write_failed:{type(exc).__name__}"})

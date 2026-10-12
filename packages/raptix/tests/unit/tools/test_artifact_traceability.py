@@ -592,6 +592,9 @@ _CVSS = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
 
 
 async def test_workspace_finding_retains_pair_that_inspect_reports(monkeypatch) -> None:
+    from uuid import UUID
+
+    from raptix.execution.tools.evidence.artifacts import resolve_verification
     from raptix.execution.tools.evidence.tools import inspect_evidence
     from raptix.execution.tools.plumbing import verification as verify_module
     from raptix_core.types.kg import KnowledgeGraph
@@ -612,14 +615,21 @@ async def test_workspace_finding_retains_pair_that_inspect_reports(monkeypatch) 
             "cvss_vector": _CVSS,
             "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
         },
-        config={"configurable": {"sandbox_url": "http://traceability-acme"}},
+        config={
+            "run_id": UUID("00000000-0000-0000-0000-000000000123"),
+            "configurable": {"sandbox_url": "http://traceability-acme"},
+        },
     )
     produced = json.loads(raw)
     ref = produced["verification_ref"]
     assert ref.startswith("workspace-evidence://")
+    retained = resolve_verification(
+        ref, sandbox=remote, workspace="/workspace/acme", engagement="acme"
+    )
+    assert retained["invocation_id"] == "00000000-0000-0000-0000-000000000123"
 
     node = Node.make(
-        NodeKind.FINDING, "validated: differential", key="finding::x", verification_ref=ref
+        NodeKind.FINDING, "validated: differential", key="finding::FIND-001", verification_ref=ref
     )
     graph = KnowledgeGraph()
     graph.upsert_node(node)
@@ -959,6 +969,8 @@ def _fake_kgstore(monkeypatch):
                         NodeKind(observation["kind"]),
                         observation["label"],
                         key=observation["key"],
+                        created_by=scope.get("created_by"),
+                        source_episode_id=scope.get("source_episode_id"),
                         **observation.get("props", {}),
                     )
                 )
@@ -973,8 +985,22 @@ def _fake_kgstore(monkeypatch):
     return graph
 
 
+def _bridge_call(arguments, config):
+    from raptix.execution.tools.evidence.tools import record_workspace_finding
+
+    return record_workspace_finding.invoke(
+        {
+            "type": "tool_call",
+            "name": "record_workspace_finding",
+            "id": "bridge-turn-1",
+            "args": arguments,
+        },
+        config=config,
+    ).content
+
+
 def test_record_workspace_finding_promotes_verification_into_kg(monkeypatch) -> None:
-    from raptix.execution.tools.evidence.tools import inspect_evidence, record_workspace_finding
+    from raptix.execution.tools.evidence.tools import inspect_evidence
 
     transport = MemoryTransport()
     remote = sandbox(transport)
@@ -988,15 +1014,14 @@ def test_record_workspace_finding_promotes_verification_into_kg(monkeypatch) -> 
     )
     config = {"configurable": {"sandbox_url": "http://x"}}
     state = {"kg_engagement": "acme", "workspace_path": "/workspace/acme"}
-    result = json.loads(
-        record_workspace_finding.invoke({"finding_id": "FIND-001", "state": state}, config=config)
-    )
+    result = json.loads(_bridge_call({"finding_id": "FIND-001", "state": state}, config=config))
     assert result["verification_outcome"] == "supported"
     (node,) = graph.nodes.values()
     assert node.kind == NodeKind.FINDING
     assert node.props["verification_ref"] == vref
     assert "validated" not in node.props
     assert node.id == result["node_id"]
+    assert node.props["source_episode_id"] == "bridge-turn-1"
 
     # The KG consumer now fires on the promoted node.
     monkeypatch.setattr(
@@ -1022,8 +1047,6 @@ def test_record_workspace_finding_promotes_verification_into_kg(monkeypatch) -> 
 def test_record_workspace_finding_writes_nothing_on_bad_input(
     monkeypatch, finding, payload
 ) -> None:
-    from raptix.execution.tools.evidence.tools import record_workspace_finding
-
     transport = MemoryTransport()
     remote = sandbox(transport)
     if payload is not None:
@@ -1035,7 +1058,7 @@ def test_record_workspace_finding_writes_nothing_on_bad_input(
         "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
     )
     result = json.loads(
-        record_workspace_finding.invoke(
+        _bridge_call(
             {
                 "finding_id": finding,
                 "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
@@ -1044,4 +1067,101 @@ def test_record_workspace_finding_writes_nothing_on_bad_input(
         )
     )
     assert "error" in result
+    assert not graph.nodes
+
+
+@pytest.mark.parametrize("record_id", ["FIND-OTHER", None])
+def test_kg_inspection_rejects_foreign_or_unbound_verification(monkeypatch, record_id) -> None:
+    from raptix.execution.tools.evidence.tools import inspect_evidence
+    from raptix_core.types.kg import KnowledgeGraph
+
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    reference = _persisted_verification(remote, finding_id=record_id)
+    node = Node.make(
+        NodeKind.FINDING, "FIND-001", key="finding::FIND-001", verification_ref=reference
+    )
+    graph = KnowledgeGraph()
+    graph.upsert_node(node)
+    monkeypatch.setattr(
+        "raptix.execution.tools.reporting.kg_adapter.load_engagement_graph", lambda _: graph
+    )
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    response = json.loads(
+        inspect_evidence.invoke(
+            {
+                "finding_id": node.id,
+                "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+            },
+            config={"configurable": {"sandbox_url": "http://x"}},
+        )
+    )
+    assert response["verification"]["outcome"] == "inconclusive"
+    assert response["verification"]["reason"] == "finding_binding_mismatch"
+
+
+@pytest.mark.parametrize("record_id", ["FIND-OTHER", None])
+def test_bridge_rejects_foreign_or_unbound_retained_record(monkeypatch, record_id) -> None:
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    reference = _persisted_verification(remote, finding_id=record_id)
+    transport.files["/workspace/acme/findings/evidence/FIND-001_verification.json"] = json.dumps(
+        {"vuln_id": "FIND-001", "verification_ref": reference}
+    ).encode()
+    graph = _fake_kgstore(monkeypatch)
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    response = json.loads(
+        _bridge_call(
+            {
+                "finding_id": "FIND-001",
+                "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+            },
+            config={"configurable": {"sandbox_url": "http://x"}},
+        )
+    )
+    assert "error" in response
+    assert not graph.nodes
+
+
+@pytest.mark.parametrize(
+    "execution",
+    [
+        {},
+        {
+            "proof": {"exit_code": 1, "complete": True},
+            "control": {"exit_code": 0, "complete": True},
+        },
+        {
+            "proof": {"exit_code": 0, "complete": False},
+            "control": {"exit_code": 0, "complete": True},
+        },
+    ],
+)
+def test_bridge_does_not_record_incomplete_or_unsuccessful_verification(
+    monkeypatch, execution
+) -> None:
+    transport = MemoryTransport()
+    remote = sandbox(transport)
+    reference = _persisted_verification(remote, execution=execution)
+    transport.files["/workspace/acme/findings/evidence/FIND-001_verification.json"] = json.dumps(
+        {"vuln_id": "FIND-001", "validated": True, "verification_ref": reference}
+    ).encode()
+    graph = _fake_kgstore(monkeypatch)
+    monkeypatch.setattr(
+        "raptix.execution.backends.factory.build_sandbox_backend", lambda _c: remote
+    )
+    response = json.loads(
+        _bridge_call(
+            {
+                "finding_id": "FIND-001",
+                "state": {"kg_engagement": "acme", "workspace_path": "/workspace/acme"},
+            },
+            config={"configurable": {"sandbox_url": "http://x"}},
+        )
+    )
+    assert response["verification"]["outcome"] == "inconclusive"
     assert not graph.nodes

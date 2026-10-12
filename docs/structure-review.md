@@ -7,6 +7,17 @@
 > (a second "Observation" concept vs. the existing
 > `capability.Observation`). Read ADR-0049 first.
 
+> **Implementation checkpoint (2026-10-12):** stage 3's retained scanner and
+> differential evidence loop is implemented, including workspace and KG rechecks
+> and the deterministic bridge (ADR-0061/0062). This audit repaired copied-reference
+> binding, the bridge's no-write gate and execution attribution. Stage 4 adds the
+> bounded, default-off recorded-verification context and P2 correctness fixtures
+> (ADR-0063). Snapshots are not current verified state. The live harness is
+> `tests/local/harnesses/a2_verification_live.py`: real HTTP/tmux/filesystem/Neo4j
+> and agent middleware, with a scripted model provider. Next: a P3 decision
+> harness with baseline/ablation and held-out scenarios; default rollout,
+> evidence-aware OPPLAN policy and P4 remain subject to measured benefit.
+
 ## Response:
 11/10/2026, 15:24:46 · gpt-6-thinking
 
