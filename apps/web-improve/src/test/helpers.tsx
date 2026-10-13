@@ -1,6 +1,7 @@
 import { act, render } from '@testing-library/react'
 import { createElement, type ComponentType, type ReactNode } from 'react'
 import { StoreProvider, useStore, type Store } from '../store'
+import { ConsoleProviders } from '../state/query'
 
 // eslint-disable-next-line react-refresh/only-export-components
 function Probe({ ready }: { ready: (s: Store) => void }) {
@@ -40,14 +41,21 @@ export function mountStore(me = 'Alex Morgan') {
   }
 }
 
-/** Mounts a screen (component or element) inside the store provider. Set window.location.hash before calling for route-driven screens. */
+/**
+ * Mounts a screen (component or element) inside the store provider. Set window.location.hash before calling for route-driven screens.
+ * The console Query providers wrap the screen too: migrated screens read
+ * through Query-backed services (ADR-0067), and screens without queries are
+ * unaffected by the extra provider.
+ */
 export function mountScreen(ui: ComponentType | ReactNode, me = 'Alex Morgan') {
   let store!: Store
   const node = typeof ui === 'function' ? createElement(ui) : ui
   const view = render(
     <StoreProvider>
-      <Probe ready={(s) => (store = s)} />
-      {node}
+      <ConsoleProviders>
+        <Probe ready={(s) => (store = s)} />
+        {node}
+      </ConsoleProviders>
     </StoreProvider>,
   )
   if (me !== 'Alex Morgan') {
