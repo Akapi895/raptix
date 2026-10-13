@@ -14,7 +14,7 @@ import { useTasks } from './tasks/use-tasks'
 import { minutesLeft, TASK_KINDS } from './tasks/domain'
 import type { TaskItem, TaskKind } from './tasks/domain'
 
-const SEV_COLOR: Record<Severity, string> = { critical: 'var(--c-bad)', high: '#F2894F', medium: 'var(--c-warn)', low: 'var(--c-cyan)', info: 'var(--c-neutral)' }
+const SEV_COLOR: Record<Severity, string> = { critical: 'var(--c-bad)', high: 'var(--c-orange)', medium: 'var(--c-warn)', low: 'var(--c-cyan)', info: 'var(--c-neutral)' }
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const SELECT_PROJECT = 'Select a project to continue'
 const ATTN_ICON: Record<AttnSource, LucideIcon> = { agent: WifiOff, plan: Sparkles, request: KeyRound, roe: ShieldAlert, c2: Server }
