@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from
 import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, X, Search, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
 import { ROLE_LABEL, canAccessProject, sevLabel, useDirty, useStore } from '../store'
 import { TECHNIQUES, type Evidence, type Finding, type FindingStatus, type Severity } from '../data'
-import { FindingReadError, useFindingDetail, useFindingList } from '../features/findings/query'
-import type { EvidenceView, FindingSort } from '../features/findings/service'
+import { FindingReadError, useFindingDetail, useFindingList, useFindingWrites } from '../features/findings/query'
+import type { EvidenceView, FindingSort, FindingTransitionTarget } from '../features/findings/service'
 import {
   Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Kpi, Locked, Modal, Mono, PageHeader, Pager, Person, PersonaHint, SearchBox, Segmented, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx, useGuard,
 } from '../ui'
@@ -32,15 +32,25 @@ function useCreateReason(projectId?: string) {
 }
 
 /* ───────────── FI-01: list ───────────── */
-/** Verify / dismiss actions for an AI-suggested finding (never counted as verified until verified). */
+/**
+ * Verify / dismiss actions for an AI-suggested finding (never counted as
+ * verified until verified). Ticket 32: verification imports the suggestion
+ * through the typed write, which can only land it as a DRAFT (invariant 5
+ * at the handler) — curation and the submit to review stay human-driven.
+ */
 function useAiActions() {
   const { A, confirm, toast, go, can, readOnly, me, persistFilters, setFilter } = useStore()
+  const writes = useFindingWrites()
   const dismissed: Record<string, string> = persistFilters['fd-dismissed'] || {}
   const why = (f: Finding) => (readOnly(f.projectId) ? 'Project is read-only.' : !can('createFinding', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot verify or dismiss AI suggestions. An Analyst or Operator can.` : '')
   const verify = (f: Finding) => confirm({
-    title: `Verify & create finding from ${f.id}?`, confirmLabel: 'Verify & create finding',
-    body: 'You confirm you reviewed the source step and evidence. The suggestion becomes a finding in "In Review" and a Reviewer must still confirm it before it counts in reports.',
-    onConfirm: () => { A.setFindingStatus(f.id, 'review', 'Verified from AI suggestion by a human'); toast(`${f.id} is now a finding in review.`); go('finding', { id: f.id }) },
+    title: `Verify & import ${f.id} as a draft?`, confirmLabel: 'Verify & create finding',
+    body: 'You confirm you reviewed the source step and evidence. The suggestion becomes a draft finding for you to curate — it enters review only after you submit it, and a Reviewer must still confirm it before it counts in reports.',
+    onConfirm: async () => {
+      const res = await writes.importSuggestion(f.id)
+      if (res.ok) { toast(`${f.id} imported as a draft finding.`); go('finding', { id: f.id }) }
+      else toast(res.failure.message, 'warn')
+    },
   })
   const dismiss = (f: Finding) => confirm({
     title: `Dismiss ${f.id}?`, confirmLabel: 'Dismiss suggestion', danger: true, reasonLabel: 'Reason for dismissing', reasonRequired: true,
@@ -213,8 +223,16 @@ const MaskedName = ({ ev }: { ev: EvidenceView }) =>
 /* ───────────── FI-03: create / edit ───────────── */
 interface Draft { title: string; severity: Severity; severityReason: string; asset: string; op: string; technique: string; desc: string; scopeNote: string; impact: string; rec: string; evidence: string[]; owner: string; kind: string; stepId?: string }
 
+/**
+ * Finding create/edit form (ticket 32): validation, dirty tracking and the
+ * save/submit write run on the typed findings service — one atomic commit
+ * per user-visible save (content, evidence links, severity rationale and
+ * the optional submit). A refused save commits nothing and leaves the draft
+ * in the form with the failure message rendered above it.
+ */
 function FindingForm() {
-  const { db, me, pid, route, go, A, toast, persistFilters, setFilter, setSwitcherOpen, can } = useStore()
+  const { db, me, pid, route, go, toast, persistFilters, setFilter, setSwitcherOpen, can } = useStore()
+  const writes = useFindingWrites()
   const editing = route.id ? db.findings.find((f) => f.id === route.id) : undefined
   const projectId = editing?.projectId || (pid !== 'all' ? pid : '')
   const createReason = useCreateReason(projectId || undefined)
@@ -251,39 +269,43 @@ function FindingForm() {
   const noEvidence = d.evidence.length === 0
   const submitReason = noEvidence ? 'At least 1 piece of evidence is required to submit for review (you can save a draft first).' : ''
 
-  const draftPayload = () => ({ projectId, title: d.title.trim(), severity: d.severity, owner: d.owner, kind: d.kind, desc: d.desc, scopeNote: d.scopeNote, asset: d.asset, impact: d.impact, rec: d.rec, technique: d.technique, op: d.op, stepId: d.stepId, evidence: d.evidence, severityReason: d.severityReason })
+  const draftPayload = () => ({ title: d.title.trim(), severity: d.severity, severityReason: d.severityReason.trim() || undefined, owner: d.owner, kind: d.kind, desc: d.desc, scopeNote: d.scopeNote, asset: d.asset, impact: d.impact, rec: d.rec, technique: d.technique, op: d.op, stepId: d.stepId, evidence: d.evidence })
   const finish = (id: string, msg: string) => {
     setSaved(true)
     toast(msg)
     setTimeout(() => go('finding', { id }), 80)
   }
-  const persist = (submit: boolean, navigate: boolean): string | null => {
-    if (!projectId) return null
-    let id = editing?.id || ''
-    if (editing) {
-      A.updateFinding(editing.id, draftPayload())
-      d.evidence.filter((e) => !editing.evidence.includes(e)).forEach((e) => A.attachEvidence(editing.id, e))
-      if (d.severity !== editing.severity && d.severityReason.trim()) A.addFindingComment(editing.id, `Rationale for changing severity to ${sevLabel[d.severity]}: ${d.severityReason.trim()}`)
-      if (submit) A.setFindingStatus(editing.id, 'review')
-    } else {
-      id = A.createFinding(draftPayload(), submit)
-      if (d.severityReason.trim()) A.addFindingComment(id, `Severity rationale (${sevLabel[d.severity]}): ${d.severityReason.trim()}`)
-    }
+  const [saving, setSaving] = useState(false)
+  const [saveErr, setSaveErr] = useState<string | null>(null)
+  /** Save through the typed service. A refusal returns without navigating —
+   *  the draft stays in the form and the failure message is rendered. */
+  const persist = async (submit: boolean, navigate: boolean): Promise<string | null> => {
+    if (!projectId || saving) return null
+    setSaving(true)
+    setSaveErr(null)
+    const res = await writes.save(editing?.id ?? null, { ...draftPayload(), submit })
+    setSaving(false)
+    if (!res.ok) { setSaveErr(res.failure.message); return null }
+    const id = res.data.id
     if (navigate) finish(id, submit ? `${id} submitted for review.` : `Draft ${id} saved.`)
     return id
   }
-  const saveDraft = () => {
+  const saveDraft = async () => {
     setTried(true)
     if (d.title.trim().length < 5) { toast('Enter a finding title (at least 5 characters) before saving a draft.', 'warn'); return }
-    persist(false, true)
+    await persist(false, true)
   }
-  const submit = () => {
+  const submit = async () => {
     setTried(true)
     if (Object.keys(err).length) { toast('Please complete the required fields.', 'warn'); return }
     if (submitReason) { toast(submitReason, 'warn'); return }
-    persist(true, true)
+    await persist(true, true)
   }
-  useDirty(dirty, () => { if (d.title.trim().length >= 5 && projectId && !locked) { persist(false, false); setSaved(true); toast('Draft saved.') } })
+  useDirty(dirty, () => {
+    if (d.title.trim().length >= 5 && projectId && !locked && !saving) {
+      void persist(false, false).then((id) => { if (id) { setSaved(true); toast('Draft saved.') } else setSaved(false) })
+    }
+  })
 
   if (editing && !canAccessProject(db, me, editing.projectId)) return <Empty icon={Lock} title="You do not have permission to edit this finding" action={<Button onClick={() => go('findings')}>Back to list</Button>} />
   if (editing && pid !== 'all' && editing.projectId !== pid) return <Empty icon={Lock} title={`${editing.id} belongs to project ${editing.projectId}`} action={<Button onClick={() => setSwitcherOpen(true)}>Select project</Button>}>Select the correct project to edit this finding.</Empty>
@@ -318,6 +340,11 @@ function FindingForm() {
       {createReason ? <Banner tone="warn" title="Cannot create / edit finding">{createReason}</Banner>
         : locked ? <Banner tone="warn" title="Finding is no longer editable">Only drafts or returned findings can be edited. Current status: {STATUS_LABEL[editing!.status]}.</Banner>
           : guard.ro ? <Banner tone="warn" title="Read-only">{guard.reason}</Banner> : null}
+      {saveErr && (
+        <Banner tone="bad" title="The finding was not saved">
+          {saveErr} Your draft is still in the form below — fix the problem and save again.
+        </Banner>
+      )}
       <fieldset disabled={locked} className="min-w-0 space-y-5">
         <Card>
           <CardHeader title="General information" />
@@ -380,8 +407,8 @@ function FindingForm() {
         {!locked && submitReason && <span className="mr-auto flex items-center gap-1.5 text-xs text-muted"><Lock size={12} aria-hidden />{submitReason}</span>}
         <Button variant="ghost" onClick={() => (editing ? go('finding', { id: editing.id }) : go('findings'))}>Cancel</Button>
         <Button onClick={() => setPreview(true)} icon={FileText}>Preview</Button>
-        <Button onClick={saveDraft} disabled={locked} title={locked ? createReason || 'Cannot edit in the current status.' : ''}>Save Draft</Button>
-        <Button variant="primary" icon={Send} onClick={submit} disabled={locked || !!submitReason} title={locked ? createReason || 'Cannot edit in the current status.' : submitReason}>Submit for Review</Button>
+        <Button onClick={saveDraft} disabled={locked || saving} title={locked ? createReason || 'Cannot edit in the current status.' : ''}>Save Draft</Button>
+        <Button variant="primary" icon={Send} onClick={submit} disabled={locked || saving || !!submitReason} title={locked ? createReason || 'Cannot edit in the current status.' : submitReason}>Submit for Review</Button>
       </div>
       <Modal open={preview} onClose={() => setPreview(false)} title="Finding preview" width={640} footer={<Button onClick={() => setPreview(false)}>Close</Button>}>
         <div className="space-y-3">
@@ -401,15 +428,17 @@ const FLOW = ['Draft', 'In Review', 'Confirmed', 'Remediation', 'Retest', 'Resol
 const FLOW_IDX: Record<string, number> = { ai_suggested: -1, draft: 0, returned: 0, review: 1, confirmed: 2, remediation: 3, retest: 4, resolved: 5 }
 
 /**
- * Finding detail (ticket 31): the record, history/metadata and linked
+ * Finding detail (ticket 31/32): the record, history/metadata and linked
  * evidence come from the typed detail read through Query — role-sensitive
  * masking (`viewSensitive`) is applied by the service, not by the screen.
- * Lifecycle actions, comments, retest recording and report attachment stay
- * with the bridged legacy actions until ticket 32 (lifecycle) and 36
- * (reports) migrate them.
+ * Lifecycle actions run through the typed write handlers (ticket 32): each
+ * transition is role/state gated at the handler and publishes a ChangeSet
+ * both this view and legacy consumers observe. Report attachment stays with
+ * the bridged legacy actions until ticket 36 migrates reports.
  */
 function FindingDetail() {
   const { route, go, can, readOnly, me, A, confirm, toast, db, setPid, setSwitcherOpen } = useStore()
+  const writes = useFindingWrites()
   const detail = useFindingDetail(route.id)
   const [note, setNote] = useState('')
   const [rep, setRep] = useState(false)
@@ -437,9 +466,16 @@ function FindingDetail() {
   const reportReason = f.status === 'ai_suggested' ? 'AI suggestions are unverified and cannot be included in a report. Verify the finding first.' : ro ? roReason : !can('editReport', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot edit reports.` : ['draft', 'review', 'returned'].includes(f.status) ? 'Only confirmed findings can be added to a report.' : ''
 
   const lastDecision = [...f.history].reverse().find((h) => /Confirmed|Returned/.test(h.text))
-  const doSubmit = () => { A.setFindingStatus(f.id, 'review'); toast(`${f.id} submitted for review.`) }
-  const approve = () => confirm({ title: `Confirm ${f.id}?`, body: 'The finding will move to "Confirmed" and can be added to reports. This action is written to the audit log.', confirmLabel: 'Confirm Finding', onConfirm: () => { A.setFindingStatus(f.id, 'confirmed'); toast(`${f.id} was confirmed.`) } })
-  const sendBack = () => confirm({ title: `Return ${f.id} for changes`, body: 'The author will be notified with your reason so they can make changes.', confirmLabel: 'Return for Changes', danger: true, reasonLabel: 'Reason for returning', reasonRequired: true, onConfirm: (r) => { A.setFindingStatus(f.id, 'returned', r); toast(`${f.id} returned to the author.`, 'warn') } })
+  /** One lifecycle move through the typed handler; the handler is the
+   *  enforcer — a refusal (role, state, read-only) surfaces its reason. */
+  const runTransition = async (to: FindingTransitionTarget, msg: string, opts?: { note?: string; warn?: boolean }) => {
+    const res = await writes.transition(f.id, to, opts?.note)
+    if (res.ok) toast(msg, opts?.warn ? 'warn' : 'ok')
+    else toast(res.failure.message, 'warn')
+  }
+  const doSubmit = () => { void runTransition('review', `${f.id} submitted for review.`) }
+  const approve = () => confirm({ title: `Confirm ${f.id}?`, body: 'The finding will move to "Confirmed" and can be added to reports. This action is written to the audit log.', confirmLabel: 'Confirm Finding', onConfirm: () => { void runTransition('confirmed', `${f.id} was confirmed.`) } })
+  const sendBack = () => confirm({ title: `Return ${f.id} for changes`, body: 'The author will be notified with your reason so they can make changes.', confirmLabel: 'Return for Changes', danger: true, reasonLabel: 'Reason for returning', reasonRequired: true, onConfirm: (r) => { void runTransition('returned', `${f.id} returned to the author.`, { note: r, warn: true }) } })
 
   const actions: ReactNode[] = []
   if (['draft', 'returned'].includes(f.status)) {
@@ -461,8 +497,8 @@ function FindingDetail() {
       <Button key="c" variant="primary" icon={ShieldCheck} disabled={ro || !reviewer} title={ro ? roReason : !reviewer ? 'Only a Reviewer or Manager can confirm findings.' : ''} onClick={approve}>Confirm Finding</Button>,
     )
   }
-  if (f.status === 'confirmed') actions.push(<Button key="rm" variant="primary" disabled={ro || !(reviewer || author)} title={ro ? roReason : ''} onClick={() => confirm({ title: 'Move to remediation?', body: 'Marks the finding as being remediated by the asset owner.', confirmLabel: 'Move to Remediation', onConfirm: () => { A.setFindingStatus(f.id, 'remediation'); toast(`${f.id} moved to In Remediation.`) } })}>Send to Remediation</Button>)
-  if (f.status === 'remediation') actions.push(<Button key="rt" variant="primary" icon={RotateCcw} disabled={ro || !(reviewer || author)} title={ro ? roReason : ''} onClick={() => { A.setFindingStatus(f.id, 'retest'); toast(`${f.id} is awaiting retest.`) }}>Request Retest</Button>)
+  if (f.status === 'confirmed') actions.push(<Button key="rm" variant="primary" disabled={ro || !(reviewer || author)} title={ro ? roReason : ''} onClick={() => confirm({ title: 'Move to remediation?', body: 'Marks the finding as being remediated by the asset owner.', confirmLabel: 'Move to Remediation', onConfirm: () => { void runTransition('remediation', `${f.id} moved to In Remediation.`) } })}>Send to Remediation</Button>)
+  if (f.status === 'remediation') actions.push(<Button key="rt" variant="primary" icon={RotateCcw} disabled={ro || !(reviewer || author)} title={ro ? roReason : ''} onClick={() => { void runTransition('retest', `${f.id} is awaiting retest.`) }}>Request Retest</Button>)
   if (f.status === 'retest') actions.push(<Button key="gt" variant="primary" icon={RotateCcw} onClick={() => go('finding', { id: f.id, tab: 'retest' })}>Record Retest</Button>)
   actions.push(
     <Button key="rep" icon={FilePlus2} disabled={!!reportReason} title={reportReason || 'Add this finding to a report in the same project'} onClick={() => setRep(true)}>Add to Report</Button>,

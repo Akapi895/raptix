@@ -12,15 +12,20 @@
  * actor can access. Evidence references stay opaque: they are matched
  * against the project's evidence records and never parsed. AI suggestions
  * are proposals — they are listed and counted separately and never enter
- * the severity breakdown. Reads are pure projections — mutations stay with
- * the legacy actions until ticket 32 migrates them.
+ * the severity breakdown. Ticket 32 adds the write side: every mutation is
+ * a scope-checked handler that enforces the lifecycle's role/state policy
+ * at the handler (never in the screen), commits once through the shared
+ * authority and publishes the affected identities, so legacy consumers and
+ * Query views observe the same change.
  */
-import { projectAccessible, can as policyCan } from '../../auth/policy'
+import { projectAccessible, projectLocked, can as policyCan } from '../../auth/policy'
+import type { CanAction } from '../../domain/permissions'
+import { formatDemoInstant } from '../../domain/clock'
 import { TECHNIQUES, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
-import type { Finding, FindingStatus, Severity } from '../../domain/entities'
+import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
+import type { Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'
 import type { EvidenceReference } from '../../domain/evidence'
-import type { RequestContext, ServiceResult } from '../../domain/service'
 
 /** Filter/sort state for the findings inventory (all optional; empty = unfiltered). */
 export interface FindingListQuery {
@@ -111,6 +116,12 @@ export interface FindingDetailRead {
 export interface FindingService {
   list(ctx: RequestContext, query?: FindingListQuery): Promise<ServiceResult<FindingListRead>>
   get(ctx: RequestContext, id: string): Promise<ServiceResult<FindingDetailRead>>
+  /** Creates (id `null`) or edits a draft/returned finding; `submit` moves it to review. */
+  save(ctx: RequestContext, id: string | null, input: FindingSaveInput): Promise<ServiceResult<Finding>>
+  /** One lifecycle move; the transition map enforces role + state policy at the handler. */
+  transition(ctx: RequestContext, id: string, to: FindingTransitionTarget, note?: string): Promise<ServiceResult<Finding>>
+  /** Imports an AI suggestion as a DRAFT (invariant 5 — the AI never publishes a finding). */
+  importSuggestion(ctx: RequestContext, id: string): Promise<ServiceResult<Finding>>
 }
 
 /** Category → statuses the tab covers; drafts also include returned findings. */
@@ -254,13 +265,248 @@ export function getFinding(db: Db, ctx: RequestContext, id: string): ServiceResu
   }
 }
 
-/** Builds the typed findings service; `guard` is the factory's superseded-scope read guard. */
+/* ───────────── Write side (ticket 32) ───────────── */
+
+/** Validated payload for creating a finding or saving an edit from the finding form. */
+export interface FindingSaveInput {
+  title: string
+  severity: Severity
+  /** Required for critical severity; stored as a rationale comment. */
+  severityReason?: string
+  asset: string
+  op?: string
+  technique?: string
+  desc: string
+  scopeNote?: string
+  impact: string
+  rec: string
+  /** Opaque evidence references; every one must resolve in the finding's project. */
+  evidence: string[]
+  owner: string
+  kind?: string
+  stepId?: string
+  /** Submit for review instead of keeping the finding at its current stage. */
+  submit?: boolean
+}
+
+/** Lifecycle targets a finding can move to (the return path included). */
+export type FindingTransitionTarget = 'draft' | 'review' | 'confirmed' | 'returned' | 'remediation' | 'retest' | 'resolved'
+
+/** Display labels for audit rows; kept local so the service never imports the legacy store. */
+const ROLE_TEXT: Record<Role, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
+const STATUS_TEXT: Record<FindingStatus, string> = { ai_suggested: 'an unverified AI suggestion', draft: 'a draft', review: 'in review', returned: 'returned for changes', confirmed: 'confirmed', remediation: 'in remediation', retest: 'in retest', resolved: 'resolved' }
+const TARGET_TEXT: Record<FindingTransitionTarget, string> = { draft: 'a draft', review: 'review', confirmed: 'confirmed', returned: 'returned for changes', remediation: 'remediation', retest: 'retest', resolved: 'resolved' }
+const HISTORY_TEXT: Record<FindingTransitionTarget, string> = { draft: 'Imported AI suggestion as a draft', review: 'Submitted for review', confirmed: 'Confirmed', returned: 'Returned for changes', remediation: 'Sent to remediation', retest: 'Moved to retest', resolved: 'Marked resolved' }
+const VERB_TEXT: Record<FindingTransitionTarget, string> = { draft: 'import AI suggestions', review: 'submit findings for review', confirmed: 'confirm findings', returned: 'return findings for changes', remediation: 'move findings to remediation', retest: 'move findings to retest', resolved: 'resolve findings' }
+
+/**
+ * The lifecycle contract (requirement 33): from-status → legal targets with
+ * the policy actions that may execute the move. Invariant 5 lives here, not
+ * in the screen: an `ai_suggested` record's only legal target is `draft` —
+ * the AI never publishes a finding; a human imports it as a draft to curate,
+ * and it enters review only through a human submit with `createFinding`.
+ */
+const TRANSITIONS: Partial<Record<FindingStatus, Partial<Record<FindingTransitionTarget, readonly CanAction[]>>>> = {
+  ai_suggested: { draft: ['createFinding'] },
+  draft: { review: ['createFinding'] },
+  returned: { review: ['createFinding'] },
+  review: { confirmed: ['reviewFinding'], returned: ['reviewFinding'] },
+  confirmed: { remediation: ['createFinding', 'reviewFinding'] },
+  remediation: { retest: ['createFinding', 'reviewFinding'] },
+  retest: { resolved: ['createFinding', 'reviewFinding'] },
+  resolved: {},
+}
+
+const findingRef = (f: Finding) => ({ kind: 'finding' as const, id: f.id, projectId: f.projectId })
+const stampOf = (clock: Clock) => formatDemoInstant(clock.now())
+const notFoundFailure = (id: string): ServiceFailure => ({
+  kind: 'not-found',
+  message: `Finding ${id} does not exist or is not available for your account.`,
+  entity: { kind: 'finding', id },
+})
+
+/** Resolves a finding for a write, or the scope failure that refuses it
+ *  (missing/out-of-scope → not-found without leaking existence; a finding in
+ *  an accessible project outside the active context → forbidden with the
+ *  owning project on the entity ref, mirroring the detail read). */
+function writableFinding(db: Db, ctx: RequestContext, id: string): { ok: true; finding: Finding; project: Project } | { ok: false; failure: ServiceFailure } {
+  const f = db.findings.find((x) => x.id === id)
+  if (!f) return { ok: false, failure: notFoundFailure(id) }
+  const project = db.projects.find((p) => p.id === f.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) return { ok: false, failure: notFoundFailure(id) }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== f.projectId) {
+    return {
+      ok: false,
+      failure: {
+        kind: 'forbidden',
+        message: `Finding ${id} belongs to project ${f.projectId}. Switch to that project to change it.`,
+        entity: { kind: 'finding', id, projectId: f.projectId },
+      },
+    }
+  }
+  return { ok: true, finding: f, project }
+}
+
+/** Read-only context first, then the role matrix for any of the granted actions. */
+function roleDenied(ctx: RequestContext, project: Project, actions: readonly CanAction[], message: string): ServiceFailure | undefined {
+  if (projectLocked(project)) return { kind: 'forbidden', message: `Project ${project.id} is closed or cancelled — findings are read-only.` }
+  if (!actions.some((a) => policyCan(ctx.actor, a, project))) return { kind: 'forbidden', message }
+  return undefined
+}
+
+/** Evidence references stay opaque: matched by equality against the finding's
+ *  own project records, never parsed. Cross-project references are rejected
+ *  (scope compatibility) and sensitive captures need `viewSensitive` (masking).
+ *  `allowRelink` keeps the form's legacy re-point semantics for prefilled
+ *  evidence; the explicit link action refuses evidence another finding holds. */
+function evidenceScopeFailure(db: Db, ctx: RequestContext, project: Project, refs: readonly string[], opts: { findingId?: string; allowRelink?: boolean } = {}): ServiceFailure | undefined {
+  for (const ref of refs) {
+    const rec = db.evidence.find((e) => e.id === ref)
+    if (!rec || rec.projectId !== project.id) return { kind: 'validation', message: `Evidence ${ref} is not part of project ${project.id}.` }
+    if (!opts.allowRelink && rec.findingId && rec.findingId !== opts.findingId) return { kind: 'validation', message: `Evidence ${ref} is already linked to ${rec.findingId}.` }
+    if (rec.sensitive && !policyCan(ctx.actor, 'viewSensitive', project)) return { kind: 'forbidden', message: `Evidence ${ref} is labeled sensitive; the ${ROLE_TEXT[ctx.actor.role]} role cannot link it.` }
+  }
+  return undefined
+}
+
+/** Handler-side re-check of the form's inline validation (defense in depth).
+ *  Drafts may stay sparse — only a usable title is required; the full field
+ *  set and the evidence requirement are enforced when submitting for review. */
+function saveValidationFailure(db: Db, input: FindingSaveInput, projectId: string, submit: boolean): ServiceFailure | undefined {
+  if (input.title.trim().length < 5) return { kind: 'validation', message: 'Enter a finding title (at least 5 characters).' }
+  if (!submit) return undefined
+  if (!input.asset) return { kind: 'validation', message: 'Select the affected asset.' }
+  if (!db.assets.some((a) => a.projectId === projectId && a.name === input.asset)) return { kind: 'validation', message: 'Select an asset that belongs to the project.' }
+  if (!input.desc.trim() || !input.impact.trim() || !input.rec.trim()) return { kind: 'validation', message: 'Description, impact and recommendation are required.' }
+  if (input.severity === 'critical' && !input.severityReason?.trim()) return { kind: 'validation', message: 'Critical severity requires a rationale.' }
+  if (input.technique && !TECHNIQUES.some((t) => t.id === input.technique)) return { kind: 'validation', message: `Unknown ATT&CK technique ${input.technique}.` }
+  if (input.evidence.length === 0) return { kind: 'validation', message: 'At least 1 piece of evidence is required to submit for review (you can save a draft first).' }
+  return undefined
+}
+
+/**
+ * Creates (id `null`) or edits a draft/returned finding in one atomic commit
+ * — content, new evidence links, the severity rationale comment and the
+ * optional submit all share one corr, so the form's save is one user-visible
+ * action. A failed save commits nothing and the caller keeps its draft.
+ */
+export function saveFinding(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string | null, input: FindingSaveInput): ServiceResult<Finding> {
+  const db = authority.snapshot()
+  if (!id) {
+    // A finding belongs to exactly one project; the aggregate context cannot create one.
+    if (!ctx.projectId || ctx.projectId === 'all') return { ok: false, failure: { kind: 'forbidden', message: 'Select a specific project before creating a finding.' } }
+    const project = db.projects.find((p) => p.id === ctx.projectId)
+    if (!project || !projectAccessible(project, ctx.actor)) return { ok: false, failure: { kind: 'not-found', message: `Project ${ctx.projectId} is not available for your account.` } }
+    const denied = roleDenied(ctx, project, ['createFinding'], `The ${ROLE_TEXT[ctx.actor.role]} role cannot create findings.`)
+    if (denied) return { ok: false, failure: denied }
+    const invalid = saveValidationFailure(db, input, project.id, !!input.submit) || evidenceScopeFailure(db, ctx, project, input.evidence, { allowRelink: true })
+    if (invalid) return { ok: false, failure: invalid }
+    const at = stampOf(clock)
+    const newId = 'FD-' + String(db.counters.finding + 1).padStart(3, '0')
+    authority.commit(ctx.corr, (d) => {
+      d.counters.finding++
+      d.findings.unshift({
+        id: newId, projectId: project.id, title: input.title.trim(), severity: input.severity, status: input.submit ? 'review' : 'draft',
+        asset: input.asset, op: input.op || '', technique: input.technique || '', owner: input.owner, date: at, updated: at,
+        desc: input.desc, impact: input.impact, rec: input.rec, evidence: [...input.evidence],
+        comments: input.severityReason?.trim() ? [{ by: ctx.actor.id, at, text: `Severity rationale (${input.severity}): ${input.severityReason.trim()}` }] : [],
+        history: [{ at, by: ctx.actor.id, text: 'Draft created' }, ...(input.submit ? [{ at, by: ctx.actor.id, text: 'Submitted for review' }] : [])],
+        retests: [],
+      })
+      input.evidence.forEach((ref) => { const rec = d.evidence.find((x) => x.id === ref); if (rec) rec.findingId = newId })
+      d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: input.submit ? 'Created finding and submitted for review' : 'Created draft finding', obj: newId, projectId: project.id, result: 'Success', reason: '' })
+      if (input.submit) d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + clock.now() % 10000, group: 'todo', text: `${newId} needs review`, projectId: project.id, at, read: false, to: { name: 'finding', id: newId } })
+    })
+    return { ok: true, data: authority.snapshot().findings.find((x) => x.id === newId)! }
+  }
+  const t = writableFinding(db, ctx, id)
+  if (!t.ok) return t
+  const { finding, project } = t
+  if (!['draft', 'returned'].includes(finding.status)) {
+    return { ok: false, failure: { kind: 'conflict', message: `${id} is ${STATUS_TEXT[finding.status]} — only drafts or returned findings can be edited.`, entity: findingRef(finding) } }
+  }
+  const denied = roleDenied(ctx, project, ['createFinding'], `The ${ROLE_TEXT[ctx.actor.role]} role cannot edit findings.`)
+  if (denied) return { ok: false, failure: denied }
+  const invalid = saveValidationFailure(db, input, project.id, !!input.submit)
+    || evidenceScopeFailure(db, ctx, project, input.evidence, { findingId: id, allowRelink: true })
+  if (invalid) return { ok: false, failure: invalid }
+  const at = stampOf(clock)
+  const severityChanged = input.severity !== finding.severity
+  authority.commit(ctx.corr, (d) => {
+    const f = d.findings.find((x) => x.id === id)!
+    Object.assign(f, {
+      title: input.title.trim(), severity: input.severity, desc: input.desc, impact: input.impact, rec: input.rec,
+      asset: input.asset, technique: input.technique || '', owner: input.owner, op: input.op || '', evidence: [...input.evidence], updated: at,
+    })
+    f.history.push({ at, by: ctx.actor.id, text: 'Content updated' })
+    input.evidence.filter((ref) => !finding.evidence.includes(ref)).forEach((ref) => { const rec = d.evidence.find((x) => x.id === ref); if (rec) rec.findingId = id })
+    if (severityChanged && input.severityReason?.trim()) f.comments.push({ by: ctx.actor.id, at, text: `Rationale for changing severity to ${input.severity}: ${input.severityReason.trim()}` })
+    if (input.submit) { f.status = 'review'; f.history.push({ at, by: ctx.actor.id, text: 'Submitted for review' }) }
+  })
+  return { ok: true, data: authority.snapshot().findings.find((x) => x.id === id)! }
+}
+
+/**
+ * One lifecycle move. Order of refusals: missing/out-of-scope → not-found,
+ * cross-project context → forbidden, illegal from→to pair → conflict, then
+ * read-only context and role policy → forbidden with the reason, then the
+ * stage's own validation rules (evidence for submit, reason for return).
+ */
+export function transitionFinding(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, to: FindingTransitionTarget, note?: string): ServiceResult<Finding> {
+  const db = authority.snapshot()
+  const t = writableFinding(db, ctx, id)
+  if (!t.ok) return t
+  const { finding, project } = t
+  if (projectLocked(project)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `Project ${project.id} is closed or cancelled — findings are read-only.`, entity: findingRef(finding) } }
+  }
+  const actions = TRANSITIONS[finding.status]?.[to]
+  if (!actions) {
+    return { ok: false, failure: { kind: 'conflict', message: `Finding ${id} is ${STATUS_TEXT[finding.status]}; it cannot move to ${TARGET_TEXT[to]} from there.`, entity: findingRef(finding) } }
+  }
+  const denied = roleDenied(ctx, project, actions, `The ${ROLE_TEXT[ctx.actor.role]} role cannot ${VERB_TEXT[to]}.`)
+  if (denied) return { ok: false, failure: denied }
+  if (to === 'review' && finding.evidence.length === 0) {
+    return { ok: false, failure: { kind: 'validation', message: 'At least 1 piece of evidence is required to submit for review (you can save a draft first).' } }
+  }
+  if (to === 'returned' && !note?.trim()) {
+    return { ok: false, failure: { kind: 'validation', message: 'A reason is required to return a finding for changes.' } }
+  }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const f = d.findings.find((x) => x.id === id)!
+    f.status = to
+    f.updated = at
+    f.history.push({ at, by: ctx.actor.id, text: HISTORY_TEXT[to] + (note?.trim() ? `: ${note.trim()}` : '') })
+    if (to === 'returned') f.comments.push({ by: ctx.actor.id, at, text: note!.trim() })
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: HISTORY_TEXT[to], obj: id, projectId: f.projectId, result: 'Success', reason: note?.trim() || '' })
+    if (to === 'returned') d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + clock.now() % 10000, group: 'todo', text: `${id} was returned for changes`, projectId: f.projectId, at, read: false, to: { name: 'finding', id } })
+  })
+  return { ok: true, data: authority.snapshot().findings.find((x) => x.id === id)! }
+}
+
+/**
+ * Invariant 5 at the handler: the AI's only write path is this import, and
+ * the transition map gives `ai_suggested` no route except `draft`. A human
+ * curates the draft; review/confirmed are reachable only through the same
+ * human-driven transitions as any other finding.
+ */
+export function importFindingSuggestion(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<Finding> {
+  return transitionFinding(authority, clock, ctx, id, 'draft')
+}
+
+/** Builds the typed findings service; `guard` is the factory's superseded-scope read guard.
+ *  Reads observe scope cancellation; mutations capture their context at call time and commit once. */
 export function createFindingService(
   authority: DbAuthority,
+  clock: Clock,
   guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
 ): FindingService {
   return {
     list: (ctx, query) => guard(() => listFindings(authority.snapshot(), ctx, query)),
     get: (ctx, id) => guard(() => getFinding(authority.snapshot(), ctx, id)),
+    save: (ctx, id, input) => Promise.resolve(saveFinding(authority, clock, ctx, id, input)),
+    transition: (ctx, id, to, note) => Promise.resolve(transitionFinding(authority, clock, ctx, id, to, note)),
+    importSuggestion: (ctx, id) => Promise.resolve(transitionFinding(authority, clock, ctx, id, 'draft')),
   }
 }
