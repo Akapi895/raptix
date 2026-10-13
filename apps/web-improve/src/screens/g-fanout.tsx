@@ -19,9 +19,9 @@ import { useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { Ban, CheckCircle2, CircleDashed, Clock, HelpCircle, Layers, Loader2, PauseCircle, RotateCcw, ShieldQuestion, Users, XCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { allocation, groupSummary, useStore } from '../store'
+import { useStore } from '../store'
 import { BRANCH_LABEL, BRANCH_TERMINAL } from '../data'
-import type { Agent, Branch, BranchState } from '../data'
+import type { Agent, Branch, BranchState, Db } from '../data'
 import { BranchReadError, useBranch, useBranchGroup, useBranchGroups, useCancelBranch, useReassignBranch, useRetryBranch } from '../features/branches/query'
 import type { BranchCounts, BranchRow } from '../features/branches/service'
 import type { BranchGroup } from '../domain/entities'
@@ -29,6 +29,27 @@ import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated
 import { tz } from './g-common'
 
 /* ───────── shared helpers ───────── */
+/* Ticket 67: the fanout derivations moved here from the legacy store — this
+   surface is their only consumer, so the store no longer exports them. */
+function allocation(db: Db, projectId: string) {
+  const mine = db.agents.filter((a) => a.projectId === projectId)
+  const pool = db.agents.filter((a) => !a.projectId && (a.status === 'online' || a.status === 'idle'))
+  const all = [...mine, ...pool]
+  const conn = (a: Agent) => a.status === 'online' || a.status === 'idle'
+  const busy = all.filter((a) => conn(a) && a.op)
+  const avail = all.filter((a) => conn(a) && !a.op)
+  const disc = all.filter((a) => !conn(a))
+  return { all, mine, pool, busy, avail, disc, total: all.length, connected: all.filter(conn).length, capacity: avail.length }
+}
+function groupSummary(db: Db, groupId: string) {
+  const bs = db.branches.filter((b) => b.groupId === groupId)
+  const n = (st: BranchState) => bs.filter((b) => b.state === st).length
+  const done = n('completed'), failed = n('failed')
+  const open = bs.filter((b) => !BRANCH_TERMINAL.includes(b.state)).length
+  const missing = bs.length - done - failed - n('cancelled') - n('blocked')
+  const overall = open > 0 ? (n('unknown') + n('paused') > 0 ? 'Degraded — branches paused or unknown' : 'In progress') : failed + n('blocked') > 0 ? 'Partially Completed' : 'Completed'
+  return { bs, total: bs.length, running: n('running'), done, failed, waiting: n('waiting_approval'), queued: n('queued'), paused: n('paused'), unknown: n('unknown'), missing, open, overall, evidence: bs.reduce((a, b) => a + b.evidence.length, 0) }
+}
 const TONE: Record<string, string> = {
   ok: 'text-ok bg-ok-soft border-ok/30', warn: 'text-warn bg-warn-soft border-warn/30', bad: 'text-bad bg-bad-soft border-bad/30',
   cyan: 'text-cyan bg-info-soft border-cyan/30', neutral: 'text-muted bg-subtle border-line',

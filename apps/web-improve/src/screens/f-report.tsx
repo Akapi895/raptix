@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, ArrowLeft, CheckCircle2, Download, Eye, FileText, History, Lock, RotateCcw, Save, Send, ShieldCheck, Wand2, XCircle, ListChecks, Plus, Table2 } from 'lucide-react'
-import { useStore, useDirty, sevLabel } from '../store'
+import { useStore, useDirty } from '../store'
+import { sevLabel } from '../features/findings/service'
 import type { Report } from '../data'
 import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui'
 import { closureEvidence, reportChecks, type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead } from '../features/reports/service'
