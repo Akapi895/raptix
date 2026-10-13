@@ -1,8 +1,8 @@
 /**
  * Context-aware copilot drawer (ticket 60) — the `copilotDrawer` shell slot
  * implementation (ticket 08 contract, wired at the mount site in
- * src/router/host.tsx; shell internals are untouched and the legacy
- * src/screens/ai-copilot.tsx stays the slot default for direct Shell mounts).
+ * src/router/host.tsx and, since ticket 66 retired the legacy drawer screen,
+ * also the shell's omitted-slot default).
  *
  * Composition mirrors the migrated AI workspace (ticket 38): the conversation
  * read is the typed ChatService list through the feature-local Query binding —
