@@ -9,13 +9,13 @@
  * slots keep the legacy implementations, so this composition is not edited by
  * later feature owners — the integrator wires replacements at the mount site.
  */
-import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { Activity, Lock, ShieldAlert } from 'lucide-react'
 import { useStore, type Route } from '../store'
 import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from '../ui'
 import { CopilotDrawer } from '../screens/ai-copilot'
 import { DemoGuide } from '../screens/demo-guide'
-import { isWide } from './nav'
+import { isWide, NAV } from './nav'
 import { Sidebar } from './sidebar'
 import { Topbar, type HeaderSlots } from './header'
 import { ContextRibbon, StopBanner } from './context-ribbon'
@@ -82,6 +82,23 @@ function Toasts() {
   )
 }
 
+/* ───────────── Route announcement (ticket 64) ───────────── */
+/**
+ * One polite live region for route changes: the text is written after mount
+ * and only when page/id actually changes, so a navigation announces once and
+ * same-page tab/filter updates stay silent (no duplicate live-region output).
+ */
+function RouteAnnouncer() {
+  const { route } = useStore()
+  const ref = useRef<HTMLParagraphElement>(null)
+  const nav = NAV.flatMap((g) => g.items).find((i) => i.match.includes(route.page))
+  const text = `Navigated to ${nav?.label || route.page}${route.id ? ` ${route.id}` : ''}`
+  useEffect(() => {
+    if (ref.current) ref.current.textContent = text
+  }, [text])
+  return <p ref={ref} role="status" aria-live="polite" className="sr-only" data-testid="route-announcer" />
+}
+
 /* ───────────── Shell ───────────── */
 export function Shell({ children, slots = {} }: { children: ReactNode; slots?: ShellSlots }) {
   const { project, loading, me, go, route, copilotOpen, setNoticesOpen, setSwitcherOpen } = useStore()
@@ -113,6 +130,7 @@ export function Shell({ children, slots = {} }: { children: ReactNode; slots?: S
       <CopilotDrawerSlot />
       <GlobalModals />
       <Toasts />
+      <RouteAnnouncer />
       <DemoGuide />
     </div>
   )
