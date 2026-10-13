@@ -1,9 +1,9 @@
 import { useRef, useState, type ComponentType, type ReactNode } from 'react'
-import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut } from 'lucide-react'
+import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut, type LucideProps } from 'lucide-react'
 import { ROLE_LABEL, eligibility, useStore, type Store } from '../store'
-import { TACTICS, TECHNIQUES, type DetectState, type Operation, type Step, type Technique } from '../data'
+import { TACTICS, TECHNIQUES, type DetectState, type Operation, type Step, type StepStatus, type Technique } from '../data'
 import { Banner, Button, SearchBox, Card, CardHeader, Drawer, Empty, Kpi, Mono, PageHeader, Segmented, Select, Status, Table, Tabs, cx } from '../ui'
-import { AnalysisReadError, useAnalysisCoverage } from '../features/analysis/query'
+import { AnalysisReadError, useAnalysisCoverage, useAttackPath } from '../features/analysis/query'
 import type { AnalysisCoverageRead, CoverageCell, CoverageCellState, CoveragePair } from '../features/analysis/service'
 
 /* ───────────── Shared types (feature read model) ───────────── */
@@ -155,7 +155,7 @@ function Analysis() {
         value={tab} onChange={(t) => go('analysis', { id: route.id, tab: t })}
         tabs={[{ id: 'overview', label: 'Overview', icon: Radar }, { id: 'chain', label: 'Attack Paths', icon: Network }, { id: 'matrix', label: 'MITRE ATT&CK', icon: Grid3x3 }, { id: 'detection', label: 'Detection Coverage', icon: ShieldAlert }]}
       />
-      {tab === 'chain' ? <Chain ana={ana} opId={opMissing ? undefined : route.id} /> : tab === 'matrix' ? <Matrix ana={ana} /> : tab === 'detection' ? <Detection ana={ana} canAdmin={can('admin')} /> : <Overview ana={ana} />}
+      {tab === 'chain' ? <Chain opId={opMissing ? undefined : route.id} /> : tab === 'matrix' ? <Matrix ana={ana} /> : tab === 'detection' ? <Detection ana={ana} canAdmin={can('admin')} /> : <Overview ana={ana} />}
       </>}
     </div>
   )
@@ -399,15 +399,16 @@ function Overview({ ana }: { ana: Ana }) {
   )
 }
 
-/* ───────────── Attack Paths graph ───────────── */
+/* ───────────── Attack Paths graph (ticket 55 — typed path read) ───────────── */
 type Sel = { kind: 'step' | 'asset' | 'tech'; id: string } | null
-const STEP_COL: Record<string, string> = { ok: 'var(--c-ok)', fail: 'var(--c-bad)', running: 'var(--c-accent)', unknown: 'var(--c-warn)', pending: 'var(--c-neutral)', notrun: 'var(--c-neutral)', review: 'var(--c-warn)' }
-const STEP_GLYPH: Record<string, ComponentType<any>> = { ok: CheckCircle2, fail: XCircle, running: CircleDashed, unknown: AlertTriangle, pending: CircleDashed, notrun: MinusCircle, review: Eye }
-const STEP_TXT: Record<string, string> = { ok: 'Succeeded', fail: 'Failed', running: 'Running', unknown: 'Unknown', pending: 'Pending', notrun: 'Not run', review: 'In review' }
+const STEP_COL: Record<StepStatus, string> = { ok: 'var(--c-ok)', fail: 'var(--c-bad)', running: 'var(--c-accent)', unknown: 'var(--c-warn)', pending: 'var(--c-neutral)', notrun: 'var(--c-neutral)', review: 'var(--c-warn)' }
+const STEP_GLYPH: Record<StepStatus, ComponentType<LucideProps>> = { ok: CheckCircle2, fail: XCircle, running: CircleDashed, unknown: AlertTriangle, pending: CircleDashed, notrun: MinusCircle, review: Eye }
+const STEP_TXT: Record<StepStatus, string> = { ok: 'Succeeded', fail: 'Failed', running: 'Running', unknown: 'Unknown', pending: 'Pending', notrun: 'Not run', review: 'In review' }
 
-function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
-  const { db, go, can, toast, me } = useStore()
-  const withSteps = ana.ops.filter((o) => ana.entries.some((e) => e.op.id === o.id))
+function Chain({ opId }: { opId?: string }) {
+  const { db, go, can, toast, me, persistFilters } = useStore()
+  const agent: string = persistFilters['ana-agent'] ?? 'all'
+  const os: string = persistFilters['ana-os'] ?? 'all'
   const [pick, setPick] = useState('')
   const [sel, setSel] = useState<Sel>(null)
   const [zoom, setZoom] = useState(1)
@@ -415,23 +416,32 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
   const [hide, setHide] = useState<Record<string, boolean>>({})
   const wrap = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
-  const op = withSteps.find((o) => o.id === (opId || pick)) || withSteps.find((o) => ana.entries.some((e) => e.op.id === o.id && e.tested)) || withSteps[0]
-  if (!withSteps.length || !op) return <NoOps />
+  const graph = useAttackPath({ opId: opId || pick || undefined, agent, os })
+  if (graph.isError) {
+    const failure = graph.error instanceof AnalysisReadError ? graph.error.failure : undefined
+    return <Banner tone="bad" title="The attack path could not be loaded" action={<Button size="sm" onClick={() => graph.refetch()}>Retry</Button>}>{failure?.message || 'The attack-path data could not be loaded. Try again.'}</Banner>
+  }
+  if (!graph.data) return <div aria-busy="true" className="rounded-xl border border-line bg-panel p-10 text-center text-sm text-muted">Loading attack path…</div>
+  const path = graph.data.selected
+  if (!path) return <NoOps />
 
-  const steps = ana.entries.filter((e) => e.op.id === op.id).map((e) => e.step)
+  const steps = path.steps.map((ps) => ps.step)
+  /* A step reached a recorded outcome (ok/fail) — the read model decides; the
+   * view never re-derives observed state, so the graph cannot claim success
+   * for planned/running/review hops. */
+  const executed = (id: string) => path.steps.find((ps) => ps.step.id === id)?.executed ?? false
   const X0 = 70, GAP = 124
   const sx = (i: number) => X0 + i * GAP
   const W = X0 * 2 + Math.max(0, steps.length - 1) * GAP, H = 350
   const Y = { a: 52, s: 180, t: 300 }
-  const tested = (s: Step) => s.status === 'ok' || s.status === 'fail'
-  const assetNames = [...new Set(steps.map((s) => s.asset).filter((a) => a && a !== '—'))]
+  const assetNames = path.assets.map((a) => a.name)
   const assetX = assetNames.map((n) => { const xs = steps.map((s, i) => (s.asset === n ? sx(i) : -1)).filter((x) => x >= 0); return { n, x: xs.reduce((a, b) => a + b, 0) / xs.length } }).sort((a, b) => a.x - b.x)
   for (let i = 1; i < assetX.length; i++) if (assetX[i].x - assetX[i - 1].x < 130) assetX[i].x = assetX[i - 1].x + 130
   const ax = (n: string) => assetX.find((a) => a.n === n)?.x ?? 0
   const W2 = Math.max(W, (assetX.at(-1)?.x ?? 0) + X0)
   const dim = (s: Step) => hide[s.status] || (hl !== null && s.technique !== hl)
   const fit = () => { const w = wrap.current?.clientWidth || W2; setZoom(Math.max(0.4, Math.min(1, (w - 8) / W2))) }
-  const few = steps.filter(tested).length < 2
+  const few = path.nObserved < 2
 
   const download = () => {
     const el = svgRef.current
@@ -441,14 +451,14 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
     src = src.replace('>', `><rect width="100%" height="100%" fill="${cs.getPropertyValue('--c-panel').trim()}"/>`)
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([src], { type: 'image/svg+xml' }))
-    a.download = `attack-path-${op.id}.svg`
+    a.download = `attack-path-${path.op.id}.svg`
     a.click()
     toast('Graph image downloaded (SVG).')
   }
 
   const selStep = sel?.kind === 'step' ? steps.find((s) => s.id === sel.id) : undefined
-  const selAsset = sel?.kind === 'asset' ? db.assets.find((a) => a.name === sel.id && a.projectId === op.projectId) : undefined
-  const selTech = sel?.kind === 'tech' ? TECHNIQUES.find((t) => t.id === sel.id) : undefined
+  const selAsset = sel?.kind === 'asset' ? db.assets.find((a) => a.name === sel.id && a.projectId === path.projectId) : undefined
+  const selTech = sel?.kind === 'tech' ? path.techniques.find((t) => t.id === sel.id) : undefined
   const close = () => setSel(null)
 
   return (
@@ -457,8 +467,8 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
         <Card>
           <div className="mb-3 text-sm font-semibold">Graph filters</div>
           <label className="mb-1.5 block text-xs text-muted">Operation shown</label>
-          <Select value={op.id} disabled={!!opId} onChange={(e) => { setPick(e.target.value); setSel(null) }} aria-label="Operation shown">
-            {withSteps.map((o) => <option key={o.id} value={o.id}>{o.id}</option>)}
+          <Select value={path.op.id} disabled={!!opId} onChange={(e) => { setPick(e.target.value); setSel(null) }} aria-label="Operation shown">
+            {graph.data.ops.map((o) => <option key={o.id} value={o.id}>{o.id}</option>)}
           </Select>
           {opId && <div className="mt-1 text-xs text-neutral">Locked by the operation filter above.</div>}
           <div className="mb-1.5 mt-4 text-xs text-muted">Show by step result</div>
@@ -485,7 +495,7 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
       </div>
       <Card pad={false} className="min-w-0">
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
-          <div className="mr-auto"><div className="text-sm font-semibold">{op.id} — {op.name}</div><div className="text-xs text-muted">{steps.length} steps · {steps.filter(tested).length} executed</div></div>
+          <div className="mr-auto"><div className="text-sm font-semibold">{path.op.id} — {path.op.name}</div><div className="text-xs text-muted">{steps.length} steps · {path.nObserved} executed</div></div>
           <Button size="sm" variant="ghost" icon={ZoomOut} onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.15).toFixed(2)))} aria-label="Zoom out" title="Zoom out" />
           <span className="w-10 text-center text-xs tabular-nums text-muted">{Math.round(zoom * 100)}%</span>
           <Button size="sm" variant="ghost" icon={ZoomIn} onClick={() => setZoom((z) => Math.min(1.6, +(z + 0.15).toFixed(2)))} aria-label="Zoom in" title="Zoom in" />
@@ -493,29 +503,35 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
           <Button size="sm" variant="ghost" icon={RotateCcw} onClick={() => { setZoom(1); setHl(null); setHide({}); setSel(null) }}>Reset view</Button>
           <Button size="sm" variant="secondary" icon={Download} disabled={!can('viewSensitive')} title={can('viewSensitive') ? 'Download the graph as SVG' : `The ${ROLE_LABEL[me.role]} role cannot download graph images.`} onClick={download}>Download image</Button>
         </div>
-        {few && <div className="border-b border-line p-3"><Banner tone="info" title="Not enough data to draw the full chain">Only {steps.filter(tested).length} step(s) have executed. Remaining steps are shown as planned (dashed) and are never presented as verified paths.</Banner></div>}
+        {few && <div className="border-b border-line p-3"><Banner tone="info" title="Not enough data to draw the full chain">Only {path.nObserved} step(s) have executed. Remaining steps are shown as planned (dashed) and are never presented as verified paths.</Banner></div>}
         <div ref={wrap} className="overflow-auto p-2" style={{ maxHeight: 560 }}>
-          <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${W2} ${H}`} width={W2 * zoom} height={H * zoom} role="img" aria-label={`Attack path graph for operation ${op.id}`} fontFamily="Inter, Arial, sans-serif">
+          <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${W2} ${H}`} width={W2 * zoom} height={H * zoom} role="img" aria-label={`Attack path graph for operation ${path.op.id}`} fontFamily="Inter, Arial, sans-serif">
             <defs><marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--c-muted)" /></marker></defs>
             {[['Assets', Y.a], ['Execution steps', Y.s], ['Techniques', Y.t]].map(([l, y]) => <text key={l as string} x={6} y={(y as number) - 34} fontSize="10" fill="var(--c-neutral)" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>{l}</text>)}
-            {/* edges: asset to step */}
-            {steps.map((s, i) => s.asset && s.asset !== '—' && (
-              <path key={'ea' + s.id} d={`M${ax(s.asset)},${Y.a + 22} C${ax(s.asset)},${Y.a + 70} ${sx(i)},${Y.s - 70} ${sx(i)},${Y.s - 24}`} fill="none" stroke={tested(s) ? 'var(--c-muted)' : 'var(--c-neutral)'} strokeWidth={1.3} strokeDasharray={tested(s) ? undefined : '4 3'} opacity={dim(s) ? 0.2 : 0.8}>
-                <title>{tested(s) ? 'Observed' : 'Planned — not executed'}: {s.asset} → {s.id}</title>
-              </path>
-            ))}
-            {/* edges: step to step */}
-            {steps.slice(1).map((s, i) => {
-              const rec = tested(steps[i]) && (tested(s) || s.status === 'running' || s.status === 'review')
-              return <line key={'es' + s.id} x1={sx(i) + 25} x2={sx(i + 1) - 26} y1={Y.s} y2={Y.s} stroke={rec ? 'var(--c-muted)' : 'var(--c-neutral)'} strokeWidth={1.8} strokeDasharray={rec ? undefined : '5 4'} markerEnd="url(#arr)" opacity={dim(s) && dim(steps[i]) ? 0.2 : 0.9}><title>{rec ? 'Observed' : 'Planned — not executed'}: {steps[i].id} → {s.id}</title></line>
+            {/* provenance edges from the path read model: observed only between recorded execution events */}
+            {path.edges.map((e) => {
+              if (e.kind === 'asset-step') {
+                const i = steps.findIndex((s) => s.id === e.to)
+                return (
+                  <path key={e.id} d={`M${ax(e.from)},${Y.a + 22} C${ax(e.from)},${Y.a + 70} ${sx(i)},${Y.s - 70} ${sx(i)},${Y.s - 24}`} fill="none" stroke={e.observed ? 'var(--c-muted)' : 'var(--c-neutral)'} strokeWidth={1.3} strokeDasharray={e.observed ? undefined : '4 3'} opacity={dim(steps[i]) ? 0.2 : 0.8}>
+                    <title>{e.observed ? 'Observed' : 'Planned — not executed'}: {e.from} → {e.to}</title>
+                  </path>
+                )
+              }
+              const i = steps.findIndex((s) => s.id === e.from)
+              return (
+                <line key={e.id} x1={sx(i) + 25} x2={sx(i + 1) - 26} y1={Y.s} y2={Y.s} stroke={e.observed ? 'var(--c-muted)' : 'var(--c-neutral)'} strokeWidth={1.8} strokeDasharray={e.observed ? undefined : '5 4'} markerEnd="url(#arr)" opacity={dim(steps[i]) && dim(steps[i + 1]) ? 0.2 : 0.9}>
+                  <title>{e.observed ? 'Observed' : 'Planned — not executed'}: {e.from} → {e.to}</title>
+                </line>
+              )
             })}
-            {/* edges: step to technique */}
+            {/* step→technique taxonomy connectors (view-level, not path edges) */}
             {steps.map((s, i) => <line key={'et' + s.id} x1={sx(i)} x2={sx(i)} y1={Y.s + 24} y2={Y.t - 20} stroke="var(--c-line)" strokeWidth={1.3} opacity={dim(s) ? 0.2 : 1} />)}
             {/* asset nodes */}
             {assetX.map((a) => {
               const on = sel?.kind === 'asset' && sel.id === a.n
               return (
-                <g key={a.n} tabIndex={0} role="button" aria-label={`Asset ${a.n}`} className="cursor-pointer outline-none" onClick={() => setSel({ kind: 'asset', id: a.n })} onKeyDown={(e) => e.key === 'Enter' && setSel({ kind: 'asset', id: a.n })}>
+                <g key={a.n} tabIndex={0} role="button" aria-label={`Asset ${a.n}`} className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" onClick={() => setSel({ kind: 'asset', id: a.n })} onKeyDown={(e) => e.key === 'Enter' && setSel({ kind: 'asset', id: a.n })}>
                   <rect x={a.x - 56} y={Y.a - 20} width={112} height={40} rx={10} fill="var(--c-panel)" stroke="var(--c-accent)" strokeWidth={on ? 3 : 1.5} />
                   <text x={a.x} y={Y.a + 4} textAnchor="middle" fontSize="12" fill="var(--c-fg)" fontFamily="JetBrains Mono, monospace">{a.n.length > 14 ? a.n.slice(0, 13) + '…' : a.n}</text>
                 </g>
@@ -526,8 +542,8 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
               const G = STEP_GLYPH[s.status]
               const on = sel?.kind === 'step' && sel.id === s.id
               return (
-                <g key={s.id} tabIndex={0} role="button" aria-label={`Step ${s.id} ${s.name}`} className="cursor-pointer outline-none" opacity={dim(s) ? 0.25 : 1} onClick={() => setSel({ kind: 'step', id: s.id })} onKeyDown={(e) => e.key === 'Enter' && setSel({ kind: 'step', id: s.id })}>
-                  <circle cx={sx(i)} cy={Y.s} r={23} fill="var(--c-panel)" stroke={STEP_COL[s.status]} strokeWidth={on ? 4 : 2} strokeDasharray={tested(s) ? undefined : '4 3'} />
+                <g key={s.id} tabIndex={0} role="button" aria-label={`Step ${s.id} ${s.name}`} className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" opacity={dim(s) ? 0.25 : 1} onClick={() => setSel({ kind: 'step', id: s.id })} onKeyDown={(e) => e.key === 'Enter' && setSel({ kind: 'step', id: s.id })}>
+                  <circle cx={sx(i)} cy={Y.s} r={23} fill="var(--c-panel)" stroke={STEP_COL[s.status]} strokeWidth={on ? 4 : 2} strokeDasharray={executed(s.id) ? undefined : '4 3'} />
                   <G x={sx(i) - 10} y={Y.s - 10} width={20} height={20} color={STEP_COL[s.status]} />
                   <text x={sx(i)} y={Y.s + 42} textAnchor="middle" fontSize="11" fill="var(--c-fg)" fontFamily="JetBrains Mono, monospace">{s.id}</text>
                   <text x={sx(i)} y={Y.s + 55} textAnchor="middle" fontSize="10" fill="var(--c-muted)">{STEP_TXT[s.status]}</text>
@@ -540,7 +556,7 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
               const x = sx(i), y = Y.t
               const on = (sel?.kind === 'tech' && sel.id === s.technique) || hl === s.technique
               return (
-                <g key={'t' + s.id} tabIndex={0} role="button" aria-label={`Technique ${s.technique}`} className="cursor-pointer outline-none" opacity={dim(s) ? 0.25 : 1} onClick={() => setSel({ kind: 'tech', id: s.technique })} onKeyDown={(e) => e.key === 'Enter' && setSel({ kind: 'tech', id: s.technique })}>
+                <g key={'t' + s.id} tabIndex={0} role="button" aria-label={`Technique ${s.technique}`} className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent" opacity={dim(s) ? 0.25 : 1} onClick={() => setSel({ kind: 'tech', id: s.technique })} onKeyDown={(e) => e.key === 'Enter' && setSel({ kind: 'tech', id: s.technique })}>
                   <polygon points={`${x - 40},${y} ${x - 28},${y - 18} ${x + 28},${y - 18} ${x + 40},${y} ${x + 28},${y + 18} ${x - 28},${y + 18}`} fill="var(--c-panel)" stroke="var(--c-cyan)" strokeWidth={on ? 3 : 1.5} />
                   <text x={x} y={y + 4} textAnchor="middle" fontSize="11.5" fill="var(--c-fg)" fontFamily="JetBrains Mono, monospace">{s.technique}</text>
                 </g>
@@ -556,8 +572,8 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
         footer={selStep ? (
           <>
             <Button variant="ghost" icon={Crosshair} onClick={() => { setHl(selStep.technique); close() }}>Filter by technique</Button>
-            <Button icon={ExternalLink} onClick={() => go('operation', { id: op.id, tab: 'console' })}>Open execution step</Button>
-            <CreateFindingBtn variant="primary" label="Create Finding from this node" prefill={{ projectId: op.projectId, op: op.id, technique: selStep.technique, asset: selStep.asset, stepId: selStep.id, title: selStep.name }} />
+            <Button icon={ExternalLink} onClick={() => go('operation', { id: path.op.id, tab: 'console' })}>Open execution step</Button>
+            <CreateFindingBtn variant="primary" label="Create Finding from this node" prefill={{ projectId: path.projectId, op: path.op.id, technique: selStep.technique, asset: selStep.asset, stepId: selStep.id, title: selStep.name }} />
           </>
         ) : selTech ? (
           <>
@@ -568,9 +584,9 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
       >
         {selStep && (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2"><Status kind="step" value={selStep.status} /><Banner tone="info" icon={CheckCircle2}>{tested(selStep) ? 'Observed — recorded in operation data.' : selStep.status === 'review' ? 'Output received — awaiting operator review; not counted as executed in coverage until approved.' : 'Not executed — shown from the operation plan only.'}</Banner></div>
+            <div className="flex flex-wrap items-center gap-2"><Status kind="step" value={selStep.status} /><Banner tone="info" icon={CheckCircle2}>{executed(selStep.id) ? 'Observed — recorded in operation data.' : selStep.status === 'review' ? 'Output received — awaiting operator review; not counted as executed in coverage until approved.' : 'Not executed — shown from the operation plan only.'}</Banner></div>
             <dl className="grid grid-cols-2 gap-4 text-sm">
-              {[['Operation', op.id], ['Project', op.projectId], ['Asset', selStep.asset], ['Agent', selStep.agent], ['Timestamp', selStep.ts], ['Duration', selStep.dur], ['Technique', selStep.technique]].map(([k, v]) => <div key={k}><dt className="text-xs text-muted">{k}</dt><dd className="font-mono text-[13px]">{v}</dd></div>)}
+              {[['Operation', path.op.id], ['Project', path.projectId], ['Session', path.op.sessionId ?? '—'], ['Asset', selStep.asset], ['Agent', selStep.agent], ['Timestamp', selStep.ts], ['Duration', selStep.dur], ['Technique', selStep.technique]].map(([k, v]) => <div key={k}><dt className="text-xs text-muted">{k}</dt><dd className="font-mono text-[13px]">{v}</dd></div>)}
             </dl>
             <div><div className="mb-1 text-xs text-muted">Description / output</div><div className="rounded-lg bg-bg p-3 text-sm">{selStep.output}</div></div>
             <div><div className="mb-2 text-xs text-muted">Evidence</div><EvidenceList ids={selStep.evidence && selStep.evidence.startsWith('EV-') ? [selStep.evidence] : []} /></div>
@@ -586,7 +602,11 @@ function Chain({ ana, opId }: { ana: Ana; opId?: string }) {
           <div className="space-y-3 text-sm">
             <p className="text-muted">{selTech.desc}</p>
             <div className="text-xs text-muted">Tactic: <span className="text-fg">{selTech.tactic}</span></div>
-            <div className="text-xs text-muted">Steps using this technique: <span className="font-mono text-fg">{steps.filter((s) => s.technique === selTech.id).map((s) => s.id).join(', ')}</span></div>
+            <div className="text-xs text-muted">Steps using this technique: <span className="font-mono text-fg">{selTech.stepIds.join(', ')}</span></div>
+            <div>
+              <div className="mb-1 text-xs text-muted">Related findings</div>
+              {selTech.findings.length ? <ul className="space-y-1">{selTech.findings.map((f) => <li key={f.id}><button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('finding', { id: f.id })}>{f.id}</button> — {f.title}</li>)}</ul> : <div className="text-sm text-neutral">No related findings.</div>}
+            </div>
             <Button size="sm" variant="ghost" icon={Grid3x3} onClick={() => go('analysis', { id: opId, tab: 'matrix' })}>View in MITRE ATT&CK matrix</Button>
           </div>
         )}
