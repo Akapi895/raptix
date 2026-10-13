@@ -20,6 +20,7 @@ import type { DbAuthority } from '../../domain/database'
 import { APR } from '../../data'
 import { CloseTab, TeamTab } from '../../screens/b-detail2'
 import { aggregateFor } from '../../screens/dashboard/service'
+import { detailFor } from '../../screens/project-detail/service'
 import {
   closePanelItems, confirmCloseTransaction, evaluateCloseChecklist, reopenProjectTransaction, requestCloseTransaction,
 } from './service'
@@ -330,9 +331,9 @@ describe('close console and governance panels agree with the handlers (ticket 22
 
 /* Renders the close console for the store's active dataset. */
 function ClosePanel() {
-  const { db } = useStore()
-  const p = db.projects.find((x) => x.id === P16)!
-  return <CloseTab p={p} setTab={() => {}} />
+  const { db, me } = useStore()
+  const d = detailFor(db, { id: me.name, role: me.role }, P16)!
+  return <CloseTab p={d.project} d={d} setTab={() => {}} />
 }
 
 /* Renders the team governance panel (the closure confirmation surface). */
