@@ -8,6 +8,11 @@
  * a legacy project mutation refetches the typed members view without a
  * reload. Screen cases pin the migrated org tab: dirty/save through the
  * typed service and the read-only viewer gate.
+ *
+ * Ticket 57 appends the integration registry (connect/disconnect with the
+ * audited revoke, create-once access-key re-entry) and policy toggles: role
+ * gates refuse at the handler with reasons, secrets stay masked, and the
+ * bridge reaches the cross-console analysis indicator in both directions.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -18,9 +23,10 @@ import type { ConsoleServices } from '../../domain/service-factory'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
-import { getOrgMembers, getOrgProfile, inviteMember, setMemberRole, setMemberStatus, updateOrgProfile, type OrgProfile } from './service'
-import { useOrgMembers, useOrgProfile } from './query'
+import { getOrgMembers, getOrgProfile, inviteMember, setMemberRole, setMemberStatus, updateOrgProfile, getIntegrations, getPolicies, setIntegrationConnection, setPolicyEnabled, updateIntegrationKey, type OrgProfile } from './service'
+import { useIntegrations, useOrgMembers, useOrgProfile, usePolicies } from './query'
 import { routes } from '../../screens/f'
+import { analysisRoutes } from '../../screens/e-analysis'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 
@@ -360,5 +366,202 @@ describe('settings org tab on the typed service (ticket 56)', () => {
     // The masked contact keeps the admin's address out of the viewer's DOM.
     expect(document.body.textContent).not.toContain('dana.whitfield@acme-security.example.test')
     h.unmount()
+  })
+})
+
+/* ───────────── integration registry + policy configuration (ticket 57) ───────────── */
+
+describe('integration registry handlers (ticket 57)', () => {
+  it('gates connect/disconnect to admins; disconnect requires a reason; repeats conflict', () => {
+    const h = harness()
+    const gate = { kind: 'forbidden', message: 'Only Organization Admins can connect or disconnect integrations. Ask an admin.' }
+    expect(setIntegrationConnection(h.authority, h.clock, ctxOf(alex), 'IN-1', 'disconnect', 'Trying')).toEqual({ ok: false, failure: expect.objectContaining(gate) })
+    expect(setIntegrationConnection(h.authority, h.clock, ctxOf(casey), 'IN-1', 'connect', '')).toEqual({ ok: false, failure: expect.objectContaining(gate) })
+    expect(setIntegrationConnection(h.authority, h.clock, ctxOf(dana), 'IN-1', 'disconnect', '   ')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'A reason is required to disconnect an integration.' }) })
+    expect(setIntegrationConnection(h.authority, h.clock, ctxOf(dana), 'IN-9', 'connect', '')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'not-found' }) })
+    expect(setIntegrationConnection(h.authority, h.clock, ctxOf(dana), 'IN-1', 'connect', '')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('already connected') }) })
+    expect(setIntegrationConnection(h.authority, h.clock, ctxOf(dana), 'IN-4', 'disconnect', 'Trying')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('not connected') }) })
+    expect(h.authority.snapshot().integrations.find((i) => i.id === 'IN-1')!.status).toBe('connected')
+    h.authority.reset()
+  })
+
+  it('disconnects with the audited revoke and the card history entry; the summary indicator follows', () => {
+    const h = harness()
+    const res = setIntegrationConnection(h.authority, h.clock, ctxOf(dana, 'all', 'int-disc'), 'IN-1', 'disconnect', 'Maintenance window (simulated)')
+    expect(res.ok).toBe(true)
+    if (res.ok) expect(res.data).toMatchObject({ status: 'disconnected' })
+    const db = h.authority.snapshot()
+    expect(db.integrations.find((i) => i.id === 'IN-1')!.history[0]).toContain('Disconnected by Dana Whitfield')
+    expect(db.audit[0]).toMatchObject({ action: 'Disconnected integration', obj: 'IN-1', actor: 'Dana Whitfield', result: 'Success', reason: 'Maintenance window (simulated)' })
+    const read = getIntegrations(db, ctxOf(dana))
+    expect(read.ok && read.data?.siem).toMatchObject({ id: 'IN-1', connected: false })
+    const back = setIntegrationConnection(h.authority, h.clock, ctxOf(dana), 'IN-1', 'connect', '')
+    expect(back.ok).toBe(true)
+    const staffRead = getIntegrations(h.authority.snapshot(), ctxOf(pat))
+    expect(staffRead.ok && staffRead.data.canEdit).toBe(false)
+    h.authority.reset()
+  })
+
+  it('re-enters the access key create-once: masked storage, plaintext never committed or returned', () => {
+    const h = harness()
+    expect(updateIntegrationKey(h.authority, h.clock, ctxOf(alex), 'IN-4', 'super-secret-key-99')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden' }) })
+    expect(updateIntegrationKey(h.authority, h.clock, ctxOf(dana), 'IN-4', 'short')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'The key needs at least 8 characters.' }) })
+    expect(h.authority.snapshot().integrations.find((i) => i.id === 'IN-4')!.status).toBe('authfail')
+    const res = updateIntegrationKey(h.authority, h.clock, ctxOf(dana, 'all', 'int-key'), 'IN-4', 'super-secret-key-99')
+    expect(res.ok).toBe(true)
+    if (res.ok) expect(res.data.secret).toBe('••••••••••••y-99')
+    const db = h.authority.snapshot()
+    // Create-once: the plaintext key appears nowhere in the committed dataset.
+    expect(JSON.stringify(db)).not.toContain('super-secret-key-99')
+    expect(db.integrations.find((i) => i.id === 'IN-4')).toMatchObject({ status: 'connected', secret: '••••••••••••y-99' })
+    expect(db.audit[0]).toMatchObject({ action: 'Updated integration key', obj: 'IN-4', actor: 'Dana Whitfield', reason: 'Key is not stored in the UI' })
+    h.authority.reset()
+  })
+})
+
+describe('policy configuration handler (ticket 57)', () => {
+  it('gates toggles to admins, requires a reason to disable and audits both directions', () => {
+    const h = harness()
+    expect(setPolicyEnabled(h.authority, h.clock, ctxOf(alex), 'PL-5', true, '')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('Only Organization Admins can enable or disable policies') }) })
+    expect(setPolicyEnabled(h.authority, h.clock, ctxOf(dana), 'PL-5', false, '   ')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'A reason is required to disable a policy.' }) })
+    expect(setPolicyEnabled(h.authority, h.clock, ctxOf(dana), 'PL-99', false, 'x')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'not-found' }) })
+    const on = setPolicyEnabled(h.authority, h.clock, ctxOf(dana), 'PL-5', true, '')
+    expect(on.ok).toBe(true)
+    expect(setPolicyEnabled(h.authority, h.clock, ctxOf(dana), 'PL-5', true, '')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('already enabled') }) })
+    const off = setPolicyEnabled(h.authority, h.clock, ctxOf(dana, 'all', 'pol-off'), 'PL-5', false, 'Compensating controls active (simulated)')
+    expect(off.ok).toBe(true)
+    if (off.ok) expect(off.data).toMatchObject({ enabled: false, updated: 'Oct 13, 2026' })
+    const db = h.authority.snapshot()
+    expect(db.policies.find((p) => p.id === 'PL-5')!.enabled).toBe(false)
+    expect(db.audit[0]).toMatchObject({ action: 'Disabled policy: Time-window override', obj: 'PL-5', actor: 'Dana Whitfield', result: 'Success', reason: 'Compensating controls active (simulated)' })
+    // The toggle only records configuration — it never bypasses enforcement,
+    // which reads its own preflight/grant rules, not this list.
+    expect(getPolicies(db, ctxOf(casey))).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: 'The Client / Viewer role cannot view organization policies.' }) })
+    expect(getPolicies(db, ctxOf(taylor)).ok).toBe(true)
+    h.authority.reset()
+  })
+})
+
+describe('bridge for integrations and policies (ticket 57)', () => {
+  function IntProbe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
+    ready(useStore(), useServices(), useQueryClient())
+    return <IntViews />
+  }
+  function IntViews() {
+    const q = useIntegrations()
+    const p = usePolicies()
+    return (
+      <div>
+        <div data-testid="siem-status">{q.data?.integrations.find((i) => i.id === 'IN-1')?.status ?? '—'}</div>
+        <div data-testid="siem-banner">{q.data?.siem?.connected === false ? 'SIEM down' : 'SIEM ok'}</div>
+        <div data-testid="pl5">{p.data?.policies.find((x) => x.id === 'PL-5')?.enabled === true ? 'enabled' : 'off'}</div>
+      </div>
+    )
+  }
+  function mountInt(me = 'Dana Whitfield') {
+    let store!: Store
+    let svc!: ConsoleServices
+    const view = render(
+      <StoreProvider>
+        <ConsoleProviders>
+          <IntProbe ready={(s, v) => { store = s; svc = v }} />
+        </ConsoleProviders>
+      </StoreProvider>,
+    )
+    if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
+    return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  }
+
+  it('a legacy integration toggle refetches the typed registry and the SIEM indicator (legacy → new)', async () => {
+    const h = mountInt('Dana Whitfield')
+    await waitFor(() => expect(screen.getByTestId('siem-status')).toHaveTextContent('connected'))
+    h.run(() => h.store().A.toggleIntegration('IN-1'))
+    await waitFor(() => expect(screen.getByTestId('siem-status')).toHaveTextContent('disconnected'))
+    expect(screen.getByTestId('siem-banner')).toHaveTextContent('SIEM down')
+    h.unmount()
+  })
+
+  it('a legacy policy toggle refetches the typed policy list (legacy → new)', async () => {
+    const h = mountInt('Dana Whitfield')
+    await waitFor(() => expect(screen.getByTestId('pl5')).toHaveTextContent('off'))
+    h.run(() => h.store().A.togglePolicy('PL-5'))
+    await waitFor(() => expect(screen.getByTestId('pl5')).toHaveTextContent('enabled'))
+    h.unmount()
+  })
+
+  it('a typed settings write updates the cross-console analysis indicator (new → legacy consumer)', async () => {
+    window.location.hash = '#/analysis?tab=matrix'
+    let store!: Store
+    let svc!: ConsoleServices
+    const Analysis = analysisRoutes.analysis
+    const view = render(
+      <StoreProvider>
+        <ConsoleProviders>
+          <BridgeProbe ready={(s, v) => { store = s; svc = v }} />
+          <Analysis />
+        </ConsoleProviders>
+      </StoreProvider>,
+    )
+    act(() => { store.setMe('Taylor Chen') })
+    await waitFor(() => expect(screen.getByRole('button', { name: /T1078/ })).toHaveTextContent('Executed & Not Detected'))
+    await act(async () => {
+      await svc.settings(dana, 'all').setIntegrationConnection(ctxOf(dana, 'all', 'svc'), 'IN-1', 'disconnect', 'Maintenance window (simulated)')
+    })
+    // The analysis screen's indicator flips from the settings-side write.
+    await waitFor(() => expect(screen.getByText('Detection integration unavailable')).toBeInTheDocument())
+    // ...and the legacy store observed the same commit through the one authority.
+    expect(store.db.integrations.find((i) => i.id === 'IN-1')!.status).toBe('disconnected')
+    expect(store.db.audit[0]).toMatchObject({ action: 'Disconnected integration', obj: 'IN-1' })
+    view.unmount()
+  })
+})
+
+describe('settings integrations and policies tabs on the typed service (ticket 57)', () => {
+  it('renders the registry from the typed read and the SIEM banner follows a service disconnect', async () => {
+    window.location.hash = '#/settings?tab=integrations'
+    const h = mountScreenRoute('Dana Whitfield')
+    h.show(<routes.settings />)
+    await waitFor(() => expect(screen.getByText('SIEM-Lab')).toBeInTheDocument())
+    expect(screen.queryByText('SIEM is not connected')).not.toBeInTheDocument()
+    await act(async () => {
+      await h.svc().settings(dana, 'all').setIntegrationConnection(ctxOf(dana, 'all', 'svc'), 'IN-1', 'disconnect', 'Maintenance window (simulated)')
+    })
+    await waitFor(() => expect(screen.getByText('SIEM is not connected')).toBeInTheDocument())
+    h.unmount()
+  })
+
+  it('gates the registry actions below admin with the refusal reason', async () => {
+    window.location.hash = '#/settings?tab=integrations'
+    const h = mountScreenRoute('Pat Kim')
+    h.show(<routes.settings />)
+    await waitFor(() => expect(screen.getByText('SIEM-Lab')).toBeInTheDocument())
+    const toggles = [...screen.getAllByRole('button', { name: 'Disconnect' }), ...screen.getAllByRole('button', { name: 'Re-enter key' })]
+    expect(toggles.length).toBeGreaterThan(0)
+    for (const b of toggles) {
+      expect(b).toBeDisabled()
+      expect(b.getAttribute('title')).toContain('Only Organization Admins can connect or disconnect integrations')
+    }
+    h.unmount()
+  })
+
+  it('shows the policy "last change" line after a typed toggle and gates reviewer toggles', async () => {
+    window.location.hash = '#/settings?tab=policies'
+    const h = mountScreenRoute('Dana Whitfield')
+    h.show(<routes.settings />)
+    fireEvent.click(await waitFor(() => screen.getByRole('button', { name: 'Policy switches & session rules' })))
+    await waitFor(() => expect(screen.getAllByText('Time-window override').length).toBeGreaterThan(0))
+    await act(async () => {
+      await h.svc().settings(dana, 'all').setPolicyEnabled(ctxOf(dana, 'all', 'svc'), 'PL-5', true, '')
+    })
+    await waitFor(() => expect(screen.getByText(/Last change: .* by Dana Whitfield/)).toBeInTheDocument())
+    h.unmount()
+
+    const reviewer = mountScreenRoute('Pat Kim')
+    reviewer.show(<routes.settings />)
+    fireEvent.click(await waitFor(() => screen.getByRole('button', { name: 'Policy switches & session rules' })))
+    await waitFor(() => expect(screen.getAllByText('Time-window override').length).toBeGreaterThan(0))
+    for (const t of screen.getAllByRole('switch', { name: /policy /i })) expect(t).toBeDisabled()
+    expect(screen.getByText('Only Organization Admins can enable or disable policies. Ask an admin to request the change.')).toBeInTheDocument()
+    reviewer.unmount()
   })
 })

@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRound, Lock, LogOut, MinusCircle, MoreHorizontal, OctagonX, Plug, RefreshCw, Save, ShieldAlert, ShieldCheck, Trash2, UserPlus, XCircle } from 'lucide-react'
 import { useStore, useDirty, ROLE_LABEL, today } from '../store'
-import { USERS, TECHNIQUES, type Role, type DetectState } from '../data'
-import { OrgReadError, useOrgMembers, useOrgProfile, useOrgWrites } from '../features/settings/query'
-import type { OrgMembersRead, OrgProfile, OrgProfileRead } from '../features/settings/service'
+import { USERS, TECHNIQUES, type Integration, type Policy, type Role, type DetectState } from '../data'
+import { OrgReadError, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites } from '../features/settings/query'
+import type { IntegrationsRead, OrgMembersRead, OrgProfile, OrgProfileRead, PoliciesRead } from '../features/settings/service'
 import { Avatar, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Input, Menu, Modal, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Toggle, cx, usePaged } from '../ui'
 
 type TabId = 'org' | 'users' | 'integrations' | 'policies' | 'retention' | 'templates' | 'detection' | 'audit' | 'notifications' | 'security'
@@ -244,23 +244,36 @@ function UsersPanel({ read }: { read: OrgMembersRead }) {
   )
 }
 
-/* ───────── ST-06 Integrations ───────── */
+/* ───────── ST-06 Integrations (ticket 57: typed service) ───────── */
 function IntegrationsTab() {
-  const { db, me, A, toast, confirm } = useStore()
-  const admin = me.role === 'admin'
+  const q = useIntegrations()
+  if (q.isPending) return <div aria-busy="true" aria-label="Loading integrations"><Skeleton className="h-96" /></div>
+  if (q.isError || !q.data) return <Forbidden reason={q.error instanceof OrgReadError ? q.error.failure.message : 'The integration registry could not be loaded.'} />
+  return <IntegrationsPanel read={q.data} />
+}
+
+function IntegrationsPanel({ read }: { read: IntegrationsRead }) {
+  const { A, toast, confirm } = useStore()
+  const writes = useIntegrationWrites()
+  const admin = read.canEdit
   const [reauth, setReauth] = useState<string | null>(null)
   const [key, setKey] = useState('')
   const [det, setDet] = useState<string | null>(null)
   const why = 'Only Organization Admins can connect or disconnect integrations. Ask an admin.'
-  const siem = db.integrations.find((i) => i.kind === 'SIEM')
-  const d = db.integrations.find((i) => i.id === det)
+  const d = read.integrations.find((i) => i.id === det)
+  const setConn = (i: Integration, action: 'connect' | 'disconnect', reason: string, okMsg: string, tone?: 'warn') => {
+    void writes.setConnection(i.id, action, reason).then((res) => {
+      if (res.ok) toast(okMsg, tone)
+      else toast(res.failure.message, 'bad')
+    })
+  }
   return (
     <>
       {!admin && <ReadOnlyNote>{why} API keys are always masked, and only admins see the configuration area.</ReadOnlyNote>}
-      {siem && siem.status !== 'connected' && <Banner tone="warn" title="SIEM is not connected">Analysis screens will show "No detection data yet" instead of guessed charts.</Banner>}
+      {read.siem && !read.siem.connected && <Banner tone="warn" title="SIEM is not connected">Analysis screens will show "No detection data yet" instead of guessed charts.</Banner>}
       <div className="mb-3 flex justify-end"><Button disabled={!admin} title={admin ? undefined : why} onClick={() => { A.audit('Requested integration (simulated)', 'IN-new', '', 'Pending', ''); toast('Integration request submitted for review', 'info') }}>Request Integration</Button></div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {db.integrations.map((i) => (
+        {read.integrations.map((i) => (
           <Card key={i.id} className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-2"><div><div className="font-medium">{i.name}</div><div className="text-xs text-muted">{i.kind}</div></div><Status kind="integ" value={i.status} /></div>
             {i.status === 'authfail' && <Banner tone="bad" title="Authentication failed">{i.history[0]?.split('— ')[1] || 'The key is invalid.'}. Integration data is not syncing.</Banner>}
@@ -269,15 +282,15 @@ function IntegrationsTab() {
               {i.status === 'authfail'
                 ? <Button size="sm" variant="primary" icon={KeyRound} disabled={!admin} title={admin ? undefined : why} onClick={() => { setKey(''); setReauth(i.id) }}>Re-enter key</Button>
                 : i.status === 'connected'
-                  ? <Button size="sm" variant="danger" disabled={!admin} title={admin ? undefined : why} onClick={() => confirm({ title: `Disconnect ${i.name}?`, body: 'Integration data stops syncing; dependent screens will show "No data".', confirmLabel: 'Disconnect', danger: true, reasonLabel: 'Reason', reasonRequired: true, onConfirm: (rs) => { A.toggleIntegration(i.id); A.audit('Disconnected integration', i.id, '', 'Success', rs); toast(`Disconnected ${i.name}`, 'warn') } })}>Disconnect</Button>
-                  : <Button size="sm" variant="primary" icon={Plug} disabled={!admin} title={admin ? undefined : why} onClick={() => { A.toggleIntegration(i.id); A.audit('Connected integration', i.id, ''); toast(`Connected ${i.name}`) }}>Connect</Button>}
+                  ? <Button size="sm" variant="danger" disabled={!admin} title={admin ? undefined : why} onClick={() => confirm({ title: `Disconnect ${i.name}?`, body: 'Integration data stops syncing; dependent screens will show "No data".', confirmLabel: 'Disconnect', danger: true, reasonLabel: 'Reason', reasonRequired: true, onConfirm: (rs) => setConn(i, 'disconnect', rs, `Disconnected ${i.name}`, 'warn') })}>Disconnect</Button>
+                  : <Button size="sm" variant="primary" icon={Plug} disabled={!admin} title={admin ? undefined : why} onClick={() => setConn(i, 'connect', '', `Connected ${i.name}`)}>Connect</Button>}
               <Button size="sm" icon={RefreshCw} disabled={i.status !== 'connected'} title={i.status !== 'connected' ? 'Connect the integration before testing it' : undefined} onClick={() => toast(`Test Connection for ${i.name}: passed (simulated, 142 ms)`)}>Test Connection</Button>
               <Button size="sm" variant="ghost" onClick={() => setDet(i.id)}>View Details</Button>
             </div>
           </Card>
         ))}
       </div>
-      <Modal open={!!reauth} onClose={() => setReauth(null)} title="Re-enter access key" footer={<><Button onClick={() => setReauth(null)}>Cancel</Button><Button variant="primary" disabled={key.length < 8} title={key.length < 8 ? 'The key needs at least 8 characters' : undefined} onClick={() => { if (reauth) { A.toggleIntegration(reauth); A.audit('Updated integration key', reauth, '', 'Success', 'Key is not stored in the UI'); toast('Re-authenticated. The key is masked and stored in the backend.') } setReauth(null) }}>Authenticate</Button></>}>
+      <Modal open={!!reauth} onClose={() => setReauth(null)} title="Re-enter access key" footer={<><Button onClick={() => setReauth(null)}>Cancel</Button><Button variant="primary" disabled={key.length < 8} title={key.length < 8 ? 'The key needs at least 8 characters' : undefined} onClick={() => { if (reauth) { void writes.reauthenticate(reauth, key).then((res) => { toast(res.ok ? 'Re-authenticated. The key is masked and stored in the backend.' : res.failure.message, res.ok ? undefined : 'bad') }) } setReauth(null) }}>Authenticate</Button></>}>
         <Field label="API key / token" hint="The value is masked and never shown again after saving (simulated)."><Input type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} /></Field>
       </Modal>
       <Drawer open={!!d} onClose={() => setDet(null)} title={d ? `Details — ${d.name}` : ''}>
@@ -341,27 +354,41 @@ function PoliciesTab() {
 }
 
 function PolicyList() {
-  const { db, me, A, toast, confirm } = useStore()
-  const admin = me.role === 'admin'
+  const q = usePolicies()
+  if (q.isPending) return <div aria-busy="true" aria-label="Loading policies"><Skeleton className="h-96" /></div>
+  if (q.isError || !q.data) return <Forbidden reason={q.error instanceof OrgReadError ? q.error.failure.message : 'The policy list could not be loaded.'} />
+  return <PolicyListPanel read={q.data} />
+}
+
+function PolicyListPanel({ read }: { read: PoliciesRead }) {
+  const { A, toast, confirm } = useStore()
+  const writes = usePolicyWrites()
+  const admin = read.canEdit
   const why = 'Only Organization Admins can enable or disable policies. Ask an admin to request the change.'
   const [sim, setSim] = useState({ role: 'operator' as Role, type: 'Interactive', approved: true })
   const allowed = (sim.role === 'operator' || sim.role === 'manager') && sim.approved && sim.type !== 'Unapproved type'
   const reason = !sim.approved ? 'Denied: no approved, time-boxed access grant (PL-11).' : sim.role !== 'operator' && sim.role !== 'manager' ? `Denied: the ${ROLE_LABEL[sim.role]} role cannot open interactive sessions.` : sim.type === 'Unapproved type' ? 'Denied: this session type is not allowed for the project.' : 'Allowed: approved grant, permitted role, session type allowed in the project.'
+  const setEnabled = (p: Policy, enabled: boolean, rs = '') => {
+    void writes.setEnabled(p.id, enabled, rs).then((res) => {
+      if (res.ok) toast(`${enabled ? 'Enabled' : 'Disabled'} "${p.name}"`, enabled ? undefined : 'warn')
+      else toast(res.failure.message, 'bad')
+    })
+  }
   return (
     <>
       <Banner tone="info" title="Policy simulation">This screen simulates policies. Enforcement is independent of the AI prompt and the frontend; there is no unconditional bypass. Every change is audited.</Banner>
       {!admin && <ReadOnlyNote>{why}</ReadOnlyNote>}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {db.policies.map((p) => {
-          const hist = db.audit.filter((a) => a.obj === p.id).slice(0, 2)
+        {read.policies.map((p) => {
+          const hist = read.recentAudit.filter((a) => a.obj === p.id).slice(0, 2)
           const estop = p.id === 'PL-7'
           return (
             <Card key={p.id}>
               <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Mono className="whitespace-nowrap text-muted">{p.id}</Mono><span className="font-medium">{p.name}</span></div><p className="mt-0.5 text-sm text-muted">{p.desc}</p></div>
                 <div className="flex flex-col items-end gap-1"><Toggle on={p.enabled} label={`${p.enabled ? 'Disable' : 'Enable'} policy ${p.name}`} disabled={!admin} onChange={() => {
-                  if (p.enabled) confirm({ title: `Disable policy "${p.name}"?`, body: <>Impact: {p.impact}. Disabling reduces controls and is audited.</>, confirmLabel: 'Disable policy', danger: true, reasonLabel: 'Reason for disabling', reasonRequired: true, onConfirm: (rs) => { A.togglePolicy(p.id); A.audit(`Disabled policy: ${p.name}`, p.id, '', 'Success', rs); toast(`Disabled "${p.name}"`, 'warn') } })
-                  else { A.togglePolicy(p.id); toast(`Enabled "${p.name}"`) }
+                  if (p.enabled) confirm({ title: `Disable policy "${p.name}"?`, body: <>Impact: {p.impact}. Disabling reduces controls and is audited.</>, confirmLabel: 'Disable policy', danger: true, reasonLabel: 'Reason for disabling', reasonRequired: true, onConfirm: (rs) => setEnabled(p, false, rs) })
+                  else setEnabled(p, true)
                 }} /><span className={cx('inline-flex items-center gap-1 text-xs', p.enabled ? 'text-ok' : 'text-neutral')}>{p.enabled ? <CheckCircle2 size={12} /> : <MinusCircle size={12} />}{p.enabled ? 'Enabled' : 'Disabled'}</span></div>
               </div>
               <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
