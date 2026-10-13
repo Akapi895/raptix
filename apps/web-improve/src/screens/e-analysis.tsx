@@ -1,58 +1,17 @@
-import { useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
+import { useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut } from 'lucide-react'
 import { ROLE_LABEL, eligibility, useStore, type Store } from '../store'
 import { TACTICS, TECHNIQUES, type DetectState, type Operation, type Step, type Technique } from '../data'
 import { Banner, Button, SearchBox, Card, CardHeader, Drawer, Empty, Kpi, Mono, PageHeader, Segmented, Select, Status, Table, Tabs, cx } from '../ui'
-import type { Db } from '../data'
+import { AnalysisReadError, useAnalysisCoverage } from '../features/analysis/query'
+import type { AnalysisCoverageRead, CoverageCell, CoverageCellState, CoveragePair } from '../features/analysis/service'
 
-/* ───────────── Shared types and computations ───────────── */
-type Entry = { op: Operation; step: Step; tested: boolean }
-type CellState = DetectState | 'planned' | 'untested'
-type Cell = { tech: Technique; runs: Entry[]; planned: Entry[]; state: CellState }
-type Pair = { projectId: string; tech: Technique; runs: Entry[]; state: DetectState }
+/* ───────────── Shared types (feature read model) ───────────── */
+type Ana = AnalysisCoverageRead
+type Cell = CoverageCell
+type CellState = CoverageCellState
+type Pair = CoveragePair
 export interface Prefill { projectId: string; op?: string; technique?: string; asset?: string; title?: string; severity?: string; desc?: string; stepId?: string }
-
-interface Ana {
-  allOps: Operation[]; ops: Operation[]; entries: Entry[]; cells: Cell[]; pairs: Pair[]
-  siemOn: boolean; siemName: string
-  nRun: number; nDetected: number; nUndetected: number; nNoData: number; nPlanned: number; nBranch: number; nEvidence: number
-}
-
-function buildAna(db: Db, allOps: Operation[], opId: string | undefined, agent: string, os: string): Ana {
-  const ops = opId ? allOps.filter((o) => o.id === opId) : allOps
-  const entries: Entry[] = []
-  ops.forEach((op) => op.steps.forEach((step) => {
-    const ag = db.agents.find((a) => a.id === step.agent)
-    if (agent !== 'all' && step.agent !== agent) return
-    if (os !== 'all' && ag?.os !== os) return
-    entries.push({ op, step, tested: step.status === 'ok' || step.status === 'fail' })
-  }))
-  const siem = db.integrations.find((i) => i.kind === 'SIEM')
-  const siemOn = !!siem && siem.status === 'connected'
-  const det = (p: string, t: string): DetectState => (siemOn ? db.detection[p]?.[t] ?? 'nodata' : 'nodata')
-  const byTech = new Map<string, Entry[]>()
-  entries.filter((e) => e.tested).forEach((e) => byTech.set(e.step.technique, [...(byTech.get(e.step.technique) || []), e]))
-  const cells: Cell[] = TECHNIQUES.map((tech) => {
-    const runs = byTech.get(tech.id) || []
-    const st = runs.map((r) => det(r.op.projectId, tech.id))
-    const planned = entries.filter((e) => !e.tested && e.step.technique === tech.id)
-    const state: CellState = !runs.length ? (planned.length ? 'planned' : 'untested') : st.includes('undetected') ? 'undetected' : st.includes('detected') ? 'detected' : 'nodata'
-    return { tech, runs, planned, state }
-  })
-  const pairs: Pair[] = []
-  byTech.forEach((runs, tid) => {
-    const tech = TECHNIQUES.find((t) => t.id === tid)
-    if (!tech) return
-    ;[...new Set(runs.map((r) => r.op.projectId))].forEach((p) => pairs.push({ projectId: p, tech, runs: runs.filter((r) => r.op.projectId === p), state: det(p, tid) }))
-  })
-  const branches = new Set(entries.filter((e) => e.tested).map((e) => e.op.projectId + '|' + e.step.asset))
-  return {
-    allOps, ops, entries, cells, pairs, siemOn, siemName: siem?.name || 'SIEM',
-    nRun: byTech.size, nDetected: cells.filter((c) => c.state === 'detected').length, nUndetected: cells.filter((c) => c.state === 'undetected').length,
-    nNoData: cells.filter((c) => c.state === 'nodata').length, nPlanned: cells.filter((c) => c.state === 'planned').length, nBranch: branches.size,
-    nEvidence: new Set(entries.filter((e) => e.step.evidence?.startsWith('EV-')).map((e) => e.step.evidence)).size,
-  }
-}
 
 const CELL_META: Record<CellState, { label: string; long: string; cls: string; icon: typeof CheckCircle2 }> = {
   detected: { label: 'Executed & Detected', long: 'Executed & Detected', cls: 'border-ok/50 bg-ok/12 text-ok', icon: CheckCircle2 },
@@ -128,34 +87,55 @@ function DetectBadge({ state }: { state: DetectState }) {
 
 /* ───────────── Main page ───────────── */
 function Analysis() {
-  const { db, scoped, route, go, pid, project, persistFilters, setFilter, me, can, accessible } = useStore()
+  const { route, go, pid, project, persistFilters, setFilter, can, accessible } = useStore()
   const tab = route.tab || 'overview'
-  const allOps = scoped(db.operations)
   const agent: string = persistFilters['ana-agent'] ?? 'all'
   const os: string = persistFilters['ana-os'] ?? 'all'
-  const opMissing = !!route.id && !allOps.some((o) => o.id === route.id)
-  const ana = useMemo(() => buildAna(db, allOps, route.id, agent, os), [db, allOps.length, route.id, agent, os, pid, me.name]) // eslint-disable-line react-hooks/exhaustive-deps
-  const agents = scoped(db.agents).filter((a) => a.projectId)
+  const cov = useAnalysisCoverage({ opId: route.id || undefined, agent, os })
   const setOp = (id?: string) => go('analysis', { id, tab })
   const reset = () => { setFilter('ana-agent', 'all'); setFilter('ana-os', 'all'); if (route.id) setOp(undefined) }
   const filtered = !!route.id || agent !== 'all' || os !== 'all'
-  const hasAnyData = allOps.some((o) => o.steps.some((st) => st.status === 'ok' || st.status === 'fail'))
+  const head = (
+    <PageHeader
+      title="Attack Analysis"
+      sub="Attack paths, MITRE ATT&CK matrix, and detection coverage — built only from recorded operation results and real detection data."
+      meta={<span className="inline-flex h-6 items-center rounded-full border border-line px-2.5 text-xs text-muted">{pid === 'all' ? `All accessible projects (${accessible.length})` : `${project?.id} — ${project?.name}`}</span>}
+    />
+  )
+  if (cov.isError) {
+    const failure = cov.error instanceof AnalysisReadError ? cov.error.failure : undefined
+    return (
+      <div>
+        {head}
+        <Banner tone="bad" title="Attack analysis could not be loaded" action={<Button size="sm" onClick={() => cov.refetch()}>Retry</Button>}>
+          {failure?.message || 'The coverage data could not be loaded. Try again.'}
+        </Banner>
+      </div>
+    )
+  }
+  if (!cov.data) {
+    return (
+      <div>
+        {head}
+        <div aria-busy="true" className="rounded-xl border border-line bg-panel p-10 text-center text-sm text-muted">Loading attack coverage…</div>
+      </div>
+    )
+  }
+  const ana = cov.data
+  const opMissing = !!route.id && !ana.allOps.some((o) => o.id === route.id)
+  const hasAnyData = ana.allOps.some((o) => o.steps.some((st) => st.status === 'ok' || st.status === 'fail'))
 
   return (
     <div>
-      <PageHeader
-        title="Attack Analysis"
-        sub="Attack paths, MITRE ATT&CK matrix, and detection coverage — built only from recorded operation results and real detection data."
-        meta={<span className="inline-flex h-6 items-center rounded-full border border-line px-2.5 text-xs text-muted">{pid === 'all' ? `All accessible projects (${accessible.length})` : `${project?.id} — ${project?.name}`}</span>}
-      />
+      {head}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Select aria-label="Filter operation" value={route.id && !opMissing ? route.id : ''} onChange={(e) => setOp(e.target.value || undefined)} className="!w-auto min-w-52">
-          <option value="">All operations ({allOps.length})</option>
-          {allOps.map((o) => <option key={o.id} value={o.id}>{o.id} — {o.name}</option>)}
+          <option value="">All operations ({ana.allOps.length})</option>
+          {ana.allOps.map((o) => <option key={o.id} value={o.id}>{o.id} — {o.name}</option>)}
         </Select>
         <Select aria-label="Filter agent" value={agent} onChange={(e) => setFilter('ana-agent', e.target.value)} className="!w-auto min-w-40">
           <option value="all">All agents</option>
-          {agents.map((a) => <option key={a.id} value={a.id}>{a.id} · {a.host}</option>)}
+          {ana.agentOptions.map((a) => <option key={a.id} value={a.id}>{a.id} · {a.host}</option>)}
         </Select>
         <Select aria-label="Filter operating system" value={os} onChange={(e) => setFilter('ana-os', e.target.value)} className="!w-auto min-w-36">
           <option value="all">All operating systems</option><option>Windows</option><option>Linux</option>
@@ -170,7 +150,7 @@ function Analysis() {
           This operation belongs to another project or you do not have access. Data from other projects is not shown.
         </Banner>
       )}
-      {!hasAnyData && pid !== 'all' ? <NoProjectData /> : <>
+      {!hasAnyData && pid !== 'all' ? <NoProjectData ops={ana.allOps} /> : <>
       <Tabs
         value={tab} onChange={(t) => go('analysis', { id: route.id, tab: t })}
         tabs={[{ id: 'overview', label: 'Overview', icon: Radar }, { id: 'chain', label: 'Attack Paths', icon: Network }, { id: 'matrix', label: 'MITRE ATT&CK', icon: Grid3x3 }, { id: 'detection', label: 'Detection Coverage', icon: ShieldAlert }]}
@@ -182,10 +162,9 @@ function Analysis() {
 }
 
 /** Empty state for projects with no executed steps (e.g. RT-2026-017): reason + next action. */
-function NoProjectData() {
-  const { db, pid, go, scoped } = useStore()
+function NoProjectData({ ops }: { ops: Operation[] }) {
+  const { db, pid, go } = useStore()
   const el = eligibility(db, pid)
-  const ops = scoped(db.operations)
   return (
     <div className="space-y-4">
       <Empty icon={Radar} title={`No execution data in ${pid} yet`}
@@ -301,7 +280,7 @@ function OpTimeline({ ana }: { ana: Ana }) {
 }
 
 function Overview({ ana }: { ana: Ana }) {
-  const { go, route, db, scoped } = useStore()
+  const { go, route } = useStore()
   const hasData = ana.entries.some((e) => e.tested)
   if (!ana.allOps.length) return <NoOps />
   const idArg = route.id
@@ -413,7 +392,7 @@ function Overview({ ana }: { ana: Ana }) {
               )}
             </Card>
           </div>
-          <div className="text-xs text-muted">Source: step results from {scoped(db.operations).length} operations in the current scope. Last updated: Oct 13, 2026 (UTC+7).</div>
+          <div className="text-xs text-muted">Source: step results from {ana.allOps.length} operations in the current scope. Last updated: Oct 13, 2026 (UTC+7).</div>
         </>
       )}
     </div>
@@ -723,7 +702,7 @@ function Matrix({ ana }: { ana: Ana }) {
 
 /* ───────────── Detection Coverage ───────────── */
 function Detection({ ana, canAdmin }: { ana: Ana; canAdmin: boolean }) {
-  const { go, can, scoped, db, me } = useStore()
+  const { go, can, me } = useStore()
   const [tactic, setTactic] = useState('')
   const [sel, setSel] = useState<Pair | null>(null)
   if (!can('viewSensitive')) {
@@ -737,7 +716,7 @@ function Detection({ ana, canAdmin }: { ana: Ana; canAdmin: boolean }) {
   const withData = nd + nu
   const gaps = pairs.filter((p) => p.state !== 'detected')
   const telemetry = pairs.filter((p) => p.runs.length)
-  const findingsOf = (p: Pair) => scoped(db.findings).filter((f) => f.projectId === p.projectId && f.technique === p.tech.id)
+  const findingsOf = (p: Pair) => p.findings
   const byTactic = TACTICS.map((t) => { const ps = pairs.filter((p) => p.tech.tactic === t); return { t, d: ps.filter((p) => p.state === 'detected').length, u: ps.filter((p) => p.state === 'undetected').length, n: ps.filter((p) => p.state === 'nodata').length } }).filter((r) => r.d + r.u + r.n > 0)
   const gapPrefill = (p: Pair): Prefill => ({ projectId: p.projectId, op: p.runs[0].op.id, technique: p.tech.id, asset: p.runs[0].step.asset, stepId: p.runs[0].step.id, title: p.state === 'undetected' ? `Technique ${p.tech.id} (${p.tech.name}) not detected` : `No detection signal recorded for ${p.tech.id} (unverified)`, severity: 'medium', desc: p.state === 'undetected' ? `Technique ${p.tech.id} was tested and ${ana.siemName} confirmed no detection signal.` : `No signal observed from ${ana.siemName} for ${p.tech.id}; verify with the Blue Team.` })
 
