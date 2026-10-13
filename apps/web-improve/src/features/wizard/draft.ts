@@ -1,14 +1,16 @@
 /**
- * Project wizard draft: schema, step map and compat adapters (tickets 17/18,
+ * Project wizard draft: schema, step map and compat adapters (tickets 17–19,
  * ADR-0067 — docs/adr/0067-web-console-service-domain-boundary.md).
  *
  * One typed draft powers all five steps. The information, objectives,
  * scope/ROE and assets steps validate through the Zod schema below (React
  * Hook Form + zodResolver in the shell hook); the review step stays
- * presentation-only and gates submission through `reviewIssues` until
- * ticket 19. Creation still commits through the single legacy store action
- * (`A.createProject`) via {@link toLegacyProjectDraft}; no second project
- * creation path or database is introduced.
+ * presentation-only and gates submission through `reviewIssues` — fail rows
+ * block only submit, never draft creation or step progression. Creation
+ * commits through the handler-owned transaction (`createProjectTransaction`,
+ * ticket 19) reached via the single legacy store action (`A.createProject`)
+ * and {@link toLegacyProjectDraft}; no second project creation path or
+ * database is introduced.
  */
 import { z } from 'zod'
 import type { ProjectDraft } from '../../store'
