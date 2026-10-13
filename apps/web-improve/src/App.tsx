@@ -1,5 +1,6 @@
 import { Suspense, type ComponentType } from 'react'
 import { StoreProvider, useStore } from './store'
+import { ConsoleProviders } from './state/query'
 import { Shell } from './shell'
 import { routes as a } from './screens/a'
 import { routes as b } from './screens/b'
@@ -33,7 +34,9 @@ function Router() {
 export default function App() {
   return (
     <StoreProvider>
-      <Router />
+      <ConsoleProviders>
+        <Router />
+      </ConsoleProviders>
     </StoreProvider>
   )
 }
