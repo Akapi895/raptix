@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
-import { computePreflight, preflightPass, StoreProvider, useServices, useStore, type Store } from '../store'
+import { computePreflight, StoreProvider, useServices, useStore, type Store } from '../store'
+import { preflightPass } from '../features/operations/preflight'
 import type { ConsoleServices } from '../domain/service-factory'
 import type { ActorRef, RequestContext } from '../domain/service'
 import { runOperationPreflight, startOperation } from '../features/operations/service'

@@ -14,7 +14,8 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { ListTree, PanelRight, Plus, Sparkles } from 'lucide-react'
-import { eligibility, useServices, useStore } from '../store'
+import { useServices, useStore } from '../store'
+import { eligibility } from '../features/operations/preflight'
 import { actorRef } from '../auth/persona'
 import { useQueryScope } from '../state/keys'
 import { createChatHandlers } from '../features/aichat/handlers'
