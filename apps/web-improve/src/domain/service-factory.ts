@@ -29,6 +29,12 @@ import { createChatService, type ChatService } from '../features/aichat/service'
 // Ticket 48 append: agent fleet list/detail read handlers are feature-local
 // (src/features/agents/service.ts); the factory only wires them into a scope.
 import { createAgentService, type AgentService } from '../features/agents/service'
+// Ticket 34 append: report catalog reads + validated draft creation are
+// feature-local (src/features/reports/service.ts); the factory wires the scope.
+import { createReportService, type ReportService } from '../features/reports/service'
+// Ticket 43 append: branch group reads + branch action writes are feature-local
+// (src/features/branches/service.ts); the factory only wires them into a scope.
+import { createBranchService, type BranchService } from '../features/branches/service'
 // Ticket 52 append: tradecraft library reads (playbooks + techniques) are
 // feature-local (src/features/library/service.ts); the factory only wires
 // them into a scope.
