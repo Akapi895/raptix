@@ -1,15 +1,22 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FileBarChart, FolderKanban, Inbox, KeyRound, Plus, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow } from 'lucide-react'
-import { useStore, sevLabel, readiness, completion, eligibility, hhmm } from '../store'
+import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FileBarChart, FolderKanban, Inbox, KeyRound, Plus, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow, type LucideIcon } from 'lucide-react'
+import { useStore, sevLabel } from '../store'
 import { APR } from '../data'
 import type { Plan, Report, SessionRequest, Approval, Severity } from '../data'
-import { AiModeBadge, Banner, Button, Card, CardHeader, DemoTag, Donut, Empty, Gated, IdLink, Kpi, Legend, Mono, PageHeader, Progress, Segmented, Status, Timeline, cx } from '../ui'
+import { actorRef } from '../auth/persona'
+import { useAuthStore, useProjectStore, useUiStore } from '../state/stores'
+import { AiModeBadge, Banner, Button, Card, CardHeader, DemoTag, Donut, Empty, Gated, IdLink, Kpi, Legend, Mono, PageHeader, PageSkeleton, Progress, Segmented, STATUS, Status, Timeline, cx } from '../ui'
+import type { CanAction } from '../domain/permissions'
+import { useConsoleGo, useDashboard, type ConsoleGo } from './dashboard/use-dashboard'
+import { attentionItems, canDo, completion, dashboardKpis, eligibility, formatCountdown, grantMinutesLeft, openFindings, opProgress, readiness } from './dashboard/domain'
+import type { AttnSource, DashboardAggregate } from './dashboard/domain'
 
 const SEV_COLOR: Record<Severity, string> = { critical: 'var(--c-bad)', high: '#F2894F', medium: 'var(--c-warn)', low: 'var(--c-cyan)', info: 'var(--c-neutral)' }
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const SELECT_PROJECT = 'Select a project to continue'
+const ATTN_ICON: Record<AttnSource, LucideIcon> = { agent: WifiOff, plan: Sparkles, request: KeyRound, roe: ShieldAlert, c2: Server }
 
-/* ───────── Shared derived data ───────── */
+/* ───────── Shared derived data (legacy path, MyTasks until ticket 15) ───────── */
 function useCC() {
   const s = useStore()
   const { db, scoped } = s
@@ -31,48 +38,53 @@ function useCC() {
       reviewReports: reports.filter((r) => r.status === 'review'),
       reviewFindings: findings.filter((f) => f.status === 'review'),
     }
-  }, [db, s.pid, s.accessible, scoped]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [db, s.pid, s.accessible, scoped])
 }
 
-const opProgress = (steps: { status: string }[]) => (steps.length ? Math.round((steps.filter((x) => x.status === 'ok' || x.status === 'fail').length / steps.length) * 100) : 0)
-
-/* ───────── Command Center ───────── */
-interface Attn { id: string; icon: typeof Server; tone: 'bad' | 'warn' | 'cyan'; title: string; sub: string; project: string; at?: string; cta: string; to: () => void; kind: string }
+/* ───────── Command Center (ticket 14: typed aggregate reads + Query + shared scope) ───────── */
+const ErrorNotice = ({ message, retry }: { message?: string; retry: () => void }) => (
+  <Banner tone="bad" title="The dashboard could not be loaded" action={<Button size="sm" onClick={retry}>Try again</Button>}>{message || 'The aggregate read failed.'}</Banner>
+)
 
 export function Dashboard() {
-  const s = useStore()
-  const { db, go, project, can, me } = s
-  const d = useCC()
-  const all = s.pid === 'all'
+  const go = useConsoleGo()
+  const meName = useAuthStore((s) => s.meName)
+  const pid = useProjectStore((s) => s.pid)
+  const { data, isError, error, refetch, now } = useDashboard()
+  const all = pid === 'all'
+  const project = data?.projects.find((p) => p.id === pid)
+
+  if (!data) {
+    return (
+      <div>
+        <PageHeader title="Command Center" />
+        {isError ? <ErrorNotice message={error?.message} retry={refetch} /> : <PageSkeleton />}
+      </div>
+    )
+  }
+  const d = data
+  const actor = actorRef(meName)
+  const can = (action: CanAction, projectId?: string) => canDo(d, actor, action, projectId)
   const gate = { allowed: !all && can('run'), reason: all ? SELECT_PROJECT : 'Your role cannot start operations. Ask a Red Team Manager or Operator.' }
+  const k = dashboardKpis(d)
+  const attention = attentionItems(d, actor)
+  const open = openFindings(d)
+  const sevData = SEVS.map((s) => ({ label: STATUS.sev[s].label, value: open.filter((f) => f.severity === s).length, color: SEV_COLOR[s] }))
 
-  const running = d.ops.filter((o) => o.status === 'running')
-  const offline = d.agents.filter((a) => a.status === 'lost' || a.status === 'unhealthy')
-  const healthy = d.agents.filter((a) => a.status === 'online' || a.status === 'idle')
-  const live = d.sessions.filter((x) => x.state === 'connected')
-  const openFindings = d.findings.filter((f) => ['review', 'confirmed', 'remediation', 'retest', 'returned'].includes(f.status))
-  const aiSuggested = d.findings.filter((f) => f.status === 'ai_suggested').length
-  const activeProjects = d.projects.filter((p) => ['active', 'approved', 'review', 'paused'].includes(p.status)).length
-  const reviewPlans = d.plans.filter((p) => p.status === 'in_review')
-  const roeIssues = d.projects.filter((p) => ['active', 'approved', 'pending'].includes(p.status) && p.roeStatus !== 'approved')
-
-  const attention: Attn[] = [
-    ...offline.map((a): Attn => ({ id: 'ag' + a.id, kind: 'Agent offline', icon: WifiOff, tone: 'bad', title: `Agent ${a.host} is ${a.status === 'lost' ? 'offline' : 'unhealthy'}`, sub: a.op ? `Assigned to ${a.op}. Last seen ${a.lastSeen}.` : `Last seen ${a.lastSeen}.`, project: a.projectId, at: a.lastSeen, cta: 'Open agent', to: () => go('agent', { id: a.id }) })),
-    ...reviewPlans.map((p): Attn => ({ id: 'pl' + p.id, kind: 'Plan awaiting approval', icon: Sparkles, tone: 'warn', title: `Plan ${p.id} awaiting approval`, sub: `${p.title} · requested by ${p.requestedBy}`, project: p.projectId, at: p.updated, cta: can('approvePlan', p.projectId) ? 'Review plan' : 'View plan', to: () => go('ai-plan-review', { id: p.id }) })),
-    ...d.pendingRequests.map((r): Attn => ({ id: 'sr' + r.id, kind: 'Session access request', icon: KeyRound, tone: 'warn', title: `${r.by} requests ${r.mode} access to ${r.sessionId}`, sub: `${r.duration} · ${r.reason}`, project: r.projectId, at: r.at, cta: can('approveAccess', r.projectId) ? 'Review request' : 'View request', to: () => go('c2-session', { id: r.sessionId }) })),
-    ...roeIssues.map((p): Attn => ({ id: 'roe' + p.id, kind: 'ROE issue', icon: ShieldAlert, tone: 'bad', title: `${p.id} has no approved ROE (${p.roeStatus === 'none' ? 'not created' : p.roeStatus})`, sub: 'Operations cannot pass preflight until the ROE is approved.', project: p.id, at: p.updated, cta: 'Open project', to: () => go('project', { id: p.id }) })),
-    ...d.c2.filter((n) => n.status === 'offline' || n.status === 'degraded').map((n): Attn => ({ id: 'c2' + n.id, kind: 'C2 node', icon: Server, tone: n.status === 'offline' ? 'bad' : 'warn', title: `C2 node ${n.name} is ${n.status}`, sub: `${n.kind} · ${n.region} · last seen ${n.last}`, project: '', at: n.last, cta: 'Open C2', to: () => go('c2') })),
-  ]
-  const rank = { bad: 0, warn: 1, cyan: 2 }
-  attention.sort((a, b) => rank[a.tone] - rank[b.tone])
-
-  const sevData = SEVS.map((k) => ({ label: sevLabel[k], value: openFindings.filter((f) => f.severity === k).length, color: SEV_COLOR[k] }))
+  if (!all && !project) {
+    return (
+      <div>
+        <PageHeader title="Command Center" />
+        <Empty icon={ShieldCheck} title="This project is not available for your role">Select a project in the top bar, or switch to the aggregate view.</Empty>
+      </div>
+    )
+  }
 
   return (
     <div>
       <PageHeader
         title="Command Center"
-        sub={all ? `All projects · ${d.projects.length} accessible · signed in as ${me.name}` : `${project?.name} · ${project?.client}`}
+        sub={all ? `All projects · ${k.accessibleProjects} accessible · signed in as ${meName}` : `${project?.name} · ${project?.client}`}
         meta={all ? <span className="rounded-full border border-line bg-subtle px-2 py-0.5 text-xs text-muted">Aggregate view</span> : <Mono className="text-muted">{project?.id}</Mono>}
         actions={<>
           <Gated allowed={can('createProject')} reason="Only Red Team Managers and Organization Admins can create projects."><Button variant="primary" icon={FolderKanban} onClick={() => go('project-new')}>Create Project</Button></Gated>
@@ -81,19 +93,20 @@ export function Dashboard() {
         </>}
       />
 
+      {isError && <ErrorNotice message={error?.message} retry={refetch} />}
       {all && <Banner tone="info" title="Showing aggregated data across accessible projects">Read-only view. Select a project in the top bar to start operations or open sessions.</Banner>}
 
       {/* KPI strip */}
       <section aria-label="Key metrics" className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="Active Projects" icon={FolderKanban} value={activeProjects} sub={`${d.projects.length} accessible`} onClick={() => go('projects')} />
-        <Kpi label="Running Operations" icon={Activity} tone="cyan" value={running.length} sub={`${d.ops.length} total`} onClick={() => go('operations')} />
-        <Kpi label="Plans Awaiting Approval" icon={ClipboardCheck} tone={reviewPlans.length ? 'warn' : undefined} value={reviewPlans.length} sub={`${d.pendingApprovals.length + d.pendingRequests.length} other approvals`} onClick={() => go('tasks')} />
-        <Kpi label="Agents Connected" icon={Radar} tone={offline.length ? 'warn' : 'ok'} value={<>{healthy.length}<span className="text-muted"> / {d.agents.length}</span></>} sub={offline.length ? `${offline.length} disconnected` : 'All connected'} onClick={() => go('agents')} />
-        <Kpi label="Active Sessions" icon={Terminal} value={live.length} sub={`${d.sessions.length} tracked`} onClick={() => go('c2')} />
-        <Kpi label="Open Findings" icon={Bug} value={openFindings.length} sub={aiSuggested ? `${aiSuggested} AI suggestion${aiSuggested === 1 ? '' : 's'} not counted` : `${openFindings.filter((f) => f.severity === 'critical' || f.severity === 'high').length} critical or high`} onClick={() => go('findings')} />
+        <Kpi label="Active Projects" icon={FolderKanban} value={k.activeProjects} sub={`${k.accessibleProjects} accessible`} onClick={() => go('projects')} />
+        <Kpi label="Running Operations" icon={Activity} tone="cyan" value={k.running} sub={`${k.totalOps} total`} onClick={() => go('operations')} />
+        <Kpi label="Plans Awaiting Approval" icon={ClipboardCheck} tone={k.reviewPlans ? 'warn' : undefined} value={k.reviewPlans} sub={`${k.otherApprovals} other approvals`} onClick={() => go('tasks')} />
+        <Kpi label="Agents Connected" icon={Radar} tone={k.offlineAgents ? 'warn' : 'ok'} value={<>{k.healthyAgents}<span className="text-muted"> / {k.totalAgents}</span></>} sub={k.offlineAgents ? `${k.offlineAgents} disconnected` : 'All connected'} onClick={() => go('agents')} />
+        <Kpi label="Active Sessions" icon={Terminal} value={k.liveSessions} sub={`${k.trackedSessions} tracked`} onClick={() => go('c2')} />
+        <Kpi label="Open Findings" icon={Bug} value={k.openFindings} sub={k.aiSuggested ? `${k.aiSuggested} AI suggestion${k.aiSuggested === 1 ? '' : 's'} not counted` : `${k.criticalOrHigh} critical or high`} onClick={() => go('findings')} />
       </section>
 
-      {!all && project && <ProjectPanels pid={project.id} />}
+      {!all && project && <ProjectPanels ds={d} pid={project.id} go={go} now={now} meName={meName} />}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="space-y-6">
@@ -106,12 +119,12 @@ export function Dashboard() {
               <ul className="divide-y divide-line border-t border-line">
                 {attention.slice(0, 8).map((a) => (
                   <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-                    <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', a.tone === 'bad' ? 'bg-bad/10 text-bad' : a.tone === 'warn' ? 'bg-warn/10 text-warn' : 'bg-cyan/10 text-cyan')}><a.icon size={17} aria-hidden /></span>
+                    <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', a.tone === 'bad' ? 'bg-bad/10 text-bad' : a.tone === 'warn' ? 'bg-warn/10 text-warn' : 'bg-cyan/10 text-cyan')}><AttentionGlyph source={a.source} /></span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-sm font-medium">{a.title}<span className="rounded-full border border-line px-2 text-[11px] font-normal text-muted">{a.kind}</span></div>
                       <div className="truncate text-xs text-muted">{a.sub}{a.project && all ? ` · ${a.project}` : ''}</div>
                     </div>
-                    <Button size="sm" onClick={a.to}>{a.cta}<ArrowRight size={14} aria-hidden /></Button>
+                    <Button size="sm" onClick={() => go(a.to.page, { id: a.to.id, tab: a.to.tab })}>{a.cta}<ArrowRight size={14} aria-hidden /></Button>
                   </li>
                 ))}
               </ul>
@@ -123,7 +136,7 @@ export function Dashboard() {
           <Card pad={false}>
             <div className="p-5 pb-3"><CardHeader title="Active operations" sub="Operations that are running, paused or waiting on a decision." actions={<Button size="sm" variant="ghost" onClick={() => go('operations')}>All operations</Button>} /></div>
             {(() => {
-              const act = d.ops.filter((o) => ['running', 'paused', 'pending', 'ready'].includes(o.status))
+              const act = d.operations.filter((o) => ['running', 'paused', 'pending', 'ready'].includes(o.status))
               if (!act.length) return <div className="px-5 pb-5"><Empty icon={Workflow} title="No active operations" action={<Gated {...gate}><Button size="sm" variant="primary" onClick={() => go('operation-new')}>New operation</Button></Gated>}>Create an operation once the ROE is approved and preflight passes.</Empty></div>
               return (
                 <ul className="divide-y divide-line border-t border-line">
@@ -161,8 +174,8 @@ export function Dashboard() {
           {/* Findings by severity */}
           <Card>
             <CardHeader title="Open findings by severity" actions={<DemoTag />} />
-            {openFindings.length === 0 ? <Empty icon={ShieldCheck} title="No open findings">Findings appear here once confirmed.</Empty> : (
-              <div className="flex flex-wrap items-center gap-5"><Donut data={sevData} size={120} center={<div className="text-center"><div className="text-xl font-semibold">{openFindings.length}</div><div className="text-[11px] text-muted">open</div></div>} /><Legend data={sevData} /></div>
+            {open.length === 0 ? <Empty icon={ShieldCheck} title="No open findings">Findings appear here once confirmed.</Empty> : (
+              <div className="flex flex-wrap items-center gap-5"><Donut data={sevData} size={120} center={<div className="text-center"><div className="text-xl font-semibold">{open.length}</div><div className="text-[11px] text-muted">open</div></div>} /><Legend data={sevData} /></div>
             )}
           </Card>
 
@@ -179,16 +192,12 @@ export function Dashboard() {
   )
 }
 
+const AttentionGlyph = ({ source }: { source: AttnSource }) => {
+  const I = ATTN_ICON[source]
+  return <I size={17} aria-hidden />
+}
 
 /* ───────── Project Command Center panels (CC-V3-02) ───────── */
-const minsLeft = (expires: string) => {
-  const m = expires.match(/(\d{1,2}):(\d{2}) (AM|PM)/)
-  if (!m) return null
-  const h = (parseInt(m[1]) % 12) + (m[3] === 'PM' ? 12 : 0)
-  const [nh, nm] = hhmm().split(':').map(Number)
-  return h * 60 + parseInt(m[2]) - (nh * 60 + nm)
-}
-const fmtLeft = (n: number | null) => (n === null ? 'time unknown' : n <= 0 ? 'expired' : n >= 60 ? `expires in ${Math.floor(n / 60)} h ${n % 60} min` : `expires in ${n} min`)
 const Pill = ({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'ok' | 'warn' | 'bad' | 'neutral' | 'cyan' }) => (
   <span className={cx('inline-flex h-5 items-center whitespace-nowrap rounded-full border px-2 text-xs font-medium', { ok: 'border-ok/30 bg-ok-soft text-ok', warn: 'border-warn/30 bg-warn-soft text-warn', bad: 'border-bad/30 bg-bad-soft text-bad', neutral: 'border-line bg-subtle text-muted', cyan: 'border-cyan/30 bg-info-soft text-cyan' }[tone])}>{children}</span>
 )
@@ -196,40 +205,42 @@ const Row = ({ onClick, children }: { onClick?: () => void; children: ReactNode 
   <li className="flex items-start gap-2 py-2 text-sm">{children}{onClick && <button onClick={onClick} className="ml-auto shrink-0 whitespace-nowrap text-xs font-medium text-accent hover:underline">Open</button>}</li>
 )
 
-function ProjectPanels({ pid }: { pid: string }) {
-  const s = useStore()
-  const { db, go, aiMode, can } = s
-  const d = useCC()
-  const p = db.projects.find((x) => x.id === pid)!
-  const rd = readiness(db, pid)
-  const cp = completion(db, pid)
-  const el = eligibility(db, pid)
-  const noData = cp.ops === 0 && d.findings.length === 0 && d.reports.length === 0
+function ProjectPanels({ ds, pid, go, now, meName }: { ds: DashboardAggregate; pid: string; go: ConsoleGo; now: number; meName: string }) {
+  const aiMode = useUiStore((s) => s.aiMode)
+  const can = (action: CanAction, projectId?: string) => canDo(ds, actorRef(meName), action, projectId ?? pid)
+  const p = ds.projects.find((x) => x.id === pid)!
+  const rd = readiness(ds, pid)
+  const cp = completion(ds, pid)
+  const el = eligibility(ds, pid)
+  const noData = cp.ops === 0 && ds.findings.length === 0 && ds.reports.length === 0
 
   // AI pending decisions
-  const plans = d.plans.filter((x) => x.status === 'in_review' || x.status === 'proposed')
-  const tools = ((db as any).toolEvents as { id: string; projectId: string; tool: string; target: string; state: string; conversationId: string }[]).filter((t) => t.projectId === pid && t.state === 'awaiting')
-  const reviewSteps = d.ops.flatMap((o) => o.steps.filter((x) => x.status === 'review').map((x) => ({ o, x })))
-  const suggestions = d.findings.filter((f) => f.status === 'ai_suggested')
+  const plans = ds.plans.filter((x) => x.status === 'in_review' || x.status === 'proposed')
+  const tools = ds.toolEvents.filter((t) => t.state === 'awaiting')
+  const reviewSteps = ds.operations.flatMap((o) => o.steps.filter((x) => x.status === 'review').map((x) => ({ o, x })))
+  const suggestions = ds.findings.filter((f) => f.status === 'ai_suggested')
   const aiTotal = plans.length + tools.length + reviewSteps.length + suggestions.length
 
   // sessions
-  const sess = d.sessions.filter((x) => ['connected', 'available', 'awaiting', 'suspended'].includes(x.state))
-  const pend = d.pendingRequests
+  const sess = ds.sessions.filter((x) => ['connected', 'available', 'awaiting', 'suspended'].includes(x.state))
+  const pend = ds.sessionRequests.filter((r) => r.status === 'pending')
 
   // health
-  const c2 = d.c2.filter((n) => n.projectIds.includes(pid))
-  const agOn = d.agents.filter((a) => a.status === 'online' || a.status === 'idle')
-  const agOff = d.agents.filter((a) => !(a.status === 'online' || a.status === 'idle'))
+  const c2 = ds.c2Nodes.filter((n) => n.projectIds.includes(pid))
+  const agOn = ds.agents.filter((a) => a.status === 'online' || a.status === 'idle')
+  const agOff = ds.agents.filter((a) => !(a.status === 'online' || a.status === 'idle'))
 
   // inbox grouped by type
+  const pendingApprovals = ds.approvals.filter((a) => a.status === 'pending')
+  const reviewFindings = ds.findings.filter((f) => f.status === 'review')
+  const reviewReports = ds.reports.filter((r) => r.status === 'review')
   const groups: { type: string; items: { id: string; text: string; to: () => void }[] }[] = [
-    { type: 'Project Approval', items: d.pendingApprovals.filter((a) => a.type === APR.create || a.type === APR.close).map((a) => ({ id: a.id, text: `${a.type} — ${a.by}`, to: () => go('project', { id: pid }) })) },
-    { type: 'ROE Change', items: d.pendingApprovals.filter((a) => a.type === APR.scope).map((a) => ({ id: a.id, text: `${a.diff || a.type} — ${a.by}`, to: () => go('project', { id: pid, tab: 'scope' }) })) },
-    { type: 'AI Plan Review', items: d.plans.filter((x) => x.status === 'in_review').map((x) => ({ id: x.id, text: `${x.title} ${x.ver ?? 'v' + x.version}`, to: () => go('ai-plan-review', { id: x.id }) })) },
+    { type: 'Project Approval', items: pendingApprovals.filter((a) => a.type === APR.create || a.type === APR.close).map((a) => ({ id: a.id, text: `${a.type} — ${a.by}`, to: () => go('project', { id: pid }) })) },
+    { type: 'ROE Change', items: pendingApprovals.filter((a) => a.type === APR.scope).map((a) => ({ id: a.id, text: `${a.diff || a.type} — ${a.by}`, to: () => go('project', { id: pid, tab: 'scope' }) })) },
+    { type: 'AI Plan Review', items: ds.plans.filter((x) => x.status === 'in_review').map((x) => ({ id: x.id, text: `${x.title} ${x.ver ?? 'v' + x.version}`, to: () => go('ai-plan-review', { id: x.id }) })) },
     { type: 'Session Access', items: pend.map((r) => ({ id: r.id, text: `${r.by} requests ${r.mode} access to ${r.sessionId}`, to: () => go('c2-session', { id: r.sessionId }) })) },
-    { type: 'Finding Review', items: d.reviewFindings.map((f) => ({ id: f.id, text: f.title, to: () => go('finding', { id: f.id }) })) },
-    { type: 'Report Review', items: d.reviewReports.map((r) => ({ id: r.id, text: `${r.title} ${r.version}`, to: () => go('report-review', { id: r.id }) })) },
+    { type: 'Finding Review', items: reviewFindings.map((f) => ({ id: f.id, text: f.title, to: () => go('finding', { id: f.id }) })) },
+    { type: 'Report Review', items: reviewReports.map((r) => ({ id: r.id, text: `${r.title} ${r.version}`, to: () => go('report-review', { id: r.id }) })) },
   ]
   const inboxTotal = groups.reduce((n, g) => n + g.items.length, 0)
 
@@ -297,7 +308,7 @@ function ProjectPanels({ pid }: { pid: string }) {
                   <Terminal size={15} className="mt-0.5 shrink-0 text-muted" aria-hidden />
                   <span className="min-w-0"><Mono>{x.id}</Mono> <span className="text-xs text-muted">{x.asset}</span>
                     <span className="mt-0.5 flex flex-wrap gap-1"><Pill tone={x.state === 'connected' ? 'ok' : 'neutral'}>Session: {x.state}</Pill></span>
-                    {x.grants.map((g) => { const n = minsLeft(g.expires); return <span key={g.user} className="mt-1 block text-xs text-muted">Grant: {g.user}, {g.perm} · <span className={n !== null && n <= 15 ? 'font-medium text-warn' : ''}>{fmtLeft(n)}</span></span> })}
+                    {x.grants.map((g) => { const n = grantMinutesLeft(g.expires, now); return <span key={g.user} className="mt-1 block text-xs text-muted">Grant: {g.user}, {g.perm} · <span className={n !== undefined && n <= 15 ? 'font-medium text-warn' : ''}>{formatCountdown(n)}</span></span> })}
                     {x.grants.length === 0 && <span className="mt-1 block text-xs text-muted">No access grants</span>}
                   </span>
                 </Row>
@@ -320,10 +331,10 @@ function ProjectPanels({ pid }: { pid: string }) {
             <Pill tone="ok">{agOn.length} agents connected</Pill>
             {agOff.length > 0 && <Pill tone="bad">{agOff.length} disconnected</Pill>}
           </div>
-          {c2.length === 0 && d.agents.length === 0 ? <Empty icon={Server} title="No infrastructure assigned">Assign agents or a C2 node to this project.</Empty> : (
+          {c2.length === 0 && ds.agents.length === 0 ? <Empty icon={Server} title="No infrastructure assigned">Assign agents or a C2 node to this project.</Empty> : (
             <ul className="divide-y divide-line">
               {c2.map((n) => <Row key={n.id} onClick={() => go('c2')}><Server size={15} className="mt-0.5 shrink-0 text-muted" aria-hidden /><span className="min-w-0"><span className="font-medium">{n.name}</span><span className="block text-xs text-muted">{n.kind} · {n.latency}</span></span><span className="ml-auto"><Pill tone={n.status === 'healthy' ? 'ok' : n.status === 'degraded' ? 'warn' : 'neutral'}>{n.status}</Pill></span></Row>)}
-              {d.agents.map((a) => <Row key={a.id} onClick={() => go('agent', { id: a.id })}><Radar size={15} className="mt-0.5 shrink-0 text-muted" aria-hidden /><span className="min-w-0"><span className="font-medium">{a.host}</span><span className="block text-xs text-muted"><Mono>{a.id}</Mono> · last seen {a.lastSeen}</span></span><span className="ml-auto"><Pill tone={a.status === 'online' || a.status === 'idle' ? 'ok' : 'bad'}>{a.status === 'online' || a.status === 'idle' ? 'connected' : 'disconnected'}</Pill></span></Row>)}
+              {ds.agents.map((a) => <Row key={a.id} onClick={() => go('agent', { id: a.id })}><Radar size={15} className="mt-0.5 shrink-0 text-muted" aria-hidden /><span className="min-w-0"><span className="font-medium">{a.host}</span><span className="block text-xs text-muted"><Mono>{a.id}</Mono> · last seen {a.lastSeen}</span></span><span className="ml-auto"><Pill tone={a.status === 'online' || a.status === 'idle' ? 'ok' : 'bad'}>{a.status === 'online' || a.status === 'idle' ? 'connected' : 'disconnected'}</Pill></span></Row>)}
             </ul>
           )}
         </Card>
@@ -347,7 +358,7 @@ function ProjectPanels({ pid }: { pid: string }) {
   )
 }
 
-/* ───────── My Tasks (approvals inbox) ───────── */
+/* ───────── My Tasks (approvals inbox; ticket 15 migrates this route) ───────── */
 type TaskKind = 'project' | 'scope' | 'closure' | 'plan' | 'access' | 'report' | 'finding'
 interface Task { id: string; kind: TaskKind; label: string; title: string; sub: string; project: string; by: string; at: string; allowed: boolean; why: string; open: () => void; actions: ReactNode }
 
