@@ -10,12 +10,17 @@
  * persona/project switch cancels the superseded scope's reads before a
  * delayed response can restore old visibility.
  */
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
 import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
-import type { ServiceFailure } from '../../domain/service'
-import type { FindingDetailRead, FindingListQuery, FindingListRead } from './service'
+import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
+import type { Finding } from '../../domain/entities'
+import type {
+  FindingDetailRead, FindingListQuery, FindingListRead,
+  FindingSaveInput, FindingTransitionTarget,
+} from './service'
 
 /** Feature-local key namespaces: ['finding', scope, 'list', query] / ['finding', scope, id]. */
 export const findingKeys = {
@@ -65,4 +70,30 @@ export function useFindingDetail(id?: string) {
     },
     enabled: !!services && !!id,
   })
+}
+
+/**
+ * Write-side binding (ticket 32): typed finding mutations for the current
+ * scope. Each call captures actor/project at call time — a persona or
+ * project switch never retargets an in-flight write — and every commit
+ * publishes one ChangeSet that the bridge turns into refetches for both the
+ * Query views and the legacy store (one data authority, observed both ways).
+ * Callers resolve the explicit ServiceResult: a refused write never commits,
+ * and the message is safe to render.
+ */
+export function useFindingWrites() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMemo(() => {
+    const actor = actorRef(scope.actor)
+    const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
+    const svc = () => services.findings(actor, scope.project)
+    return {
+      save: (id: string | null, input: FindingSaveInput): Promise<ServiceResult<Finding>> =>
+        svc().save(ctx('finding-save'), id, input),
+      transition: (id: string, to: FindingTransitionTarget, note?: string) =>
+        svc().transition(ctx('finding-transition'), id, to, note),
+      importSuggestion: (id: string) => svc().importSuggestion(ctx('finding-import'), id),
+    }
+  }, [services, scope.actor, scope.project])
 }
