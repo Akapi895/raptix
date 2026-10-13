@@ -1,9 +1,9 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRound, Lock, LogOut, MinusCircle, MoreHorizontal, OctagonX, Plug, RefreshCw, Save, ShieldAlert, ShieldCheck, Trash2, UserPlus, XCircle } from 'lucide-react'
 import { useStore, useDirty, ROLE_LABEL, today } from '../store'
-import { USERS, TECHNIQUES, type Integration, type Policy, type Role, type DetectState } from '../data'
-import { OrgReadError, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites } from '../features/settings/query'
-import type { IntegrationsRead, OrgMembersRead, OrgProfile, OrgProfileRead, PoliciesRead } from '../features/settings/service'
+import { USERS, TECHNIQUES, type Integration, type Policy, type Retention, type Role, type DetectState } from '../data'
+import { OrgReadError, useAudit, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites, useRetention, useRetentionWrites } from '../features/settings/query'
+import { auditCorr, type AuditRead, type IntegrationsRead, type OrgMembersRead, type OrgProfile, type OrgProfileRead, type PoliciesRead, type RetentionRead } from '../features/settings/service'
 import { Avatar, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Input, Menu, Modal, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Toggle, cx, usePaged } from '../ui'
 
 type TabId = 'org' | 'users' | 'integrations' | 'policies' | 'retention' | 'templates' | 'detection' | 'audit' | 'notifications' | 'security'
@@ -139,7 +139,7 @@ const CELL: Record<string, { tip: string; cls: string }> = {
   Y: { tip: 'Can perform', cls: 'text-ok' }, 'Y*': { tip: 'Can perform only when project-specific policy or approval allows it', cls: 'text-ok' }, R: { tip: 'Read-only view', cls: 'text-cyan' },
   Req: { tip: 'Must request approval; cannot approve own request', cls: 'text-warn' }, '—': { tip: 'No access', cls: 'text-neutral' }, Restricted: { tip: 'Restricted view', cls: 'text-cyan' }, 'R (delivered only)': { tip: 'Read-only, delivered reports only', cls: 'text-cyan' },
 }
-const corr = (a: { id: string; corr?: string }) => a.corr || 'COR-' + a.id.replace(/\D/g, '').padStart(4, '0')
+const corr = auditCorr
 const actorType = (a: { actor: string; role: string }) => a.actor === 'AI Operator' ? 'AI' : a.role === 'System' || a.actor === 'System' ? 'System' : 'Human'
 const utcOf = (at: string) => { const t = Date.parse(at.replace(/\s*\(UTC\+7\)/, '')); return Number.isNaN(t) ? '—' : new Date(t - 7 * 3600000).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (UTC)' }
 function UsersTab() {
@@ -438,38 +438,85 @@ function PolicyListPanel({ read }: { read: PoliciesRead }) {
   )
 }
 
-/* ───────── Retention ───────── */
+/* ───────── Retention (ticket 58: typed service, session-persistent simulation) ───────── */
 function RetentionTab() {
-  const { db, me, A, toast, confirm, persistFilters, setFilter } = useStore()
-  const admin = me.role === 'admin'
-  const holds = (persistFilters.holds || []) as string[]
+  const q = useRetention()
+  if (q.isPending) return <div aria-busy="true" aria-label="Loading retention policies"><Skeleton className="h-96" /></div>
+  if (q.isError || !q.data) return <Forbidden reason={q.error instanceof OrgReadError ? q.error.failure.message : 'The retention policies could not be loaded.'} />
+  return <RetentionPanel read={q.data} />
+}
+
+function RetentionPanel({ read }: { read: RetentionRead }) {
+  const { toast, confirm } = useStore()
+  const writes = useRetentionWrites()
+  const admin = read.canEdit
+  const why = 'Only Organization Admins can change retention policies. Ask an admin to make the change.'
+  const held = (id: string) => read.holds.includes(id)
   const [view, setView] = useState<string | null>(null)
-  const expiring = db.retention.filter((r) => r.state === 'Expiring soon' && !holds.includes(r.id))
-  const hist = useMemo(() => db.audit.filter((a) => /Closed project|Reopen|export|deliver|hold|archive/i.test(a.action)).slice(0, 6), [db.audit])
-  const v = db.retention.find((r) => r.id === view)
-  const delWhy = (r: { id: string; state: string }) => !admin ? 'Only Organization Admins can delete under policy.' : holds.includes(r.id) ? 'A legal hold is active, so deletion is blocked. Release the hold first.' : r.state !== 'Expired' ? 'Not yet due for deletion under the policy.' : ''
+  const [edit, setEdit] = useState<string | null>(null)
+  const [f, setF] = useState({ period: '', label: '' })
+  const [err, setErr] = useState('')
+  const expiring = read.policies.filter((r) => r.state === 'Expiring soon' && !held(r.id))
+  const v = read.policies.find((r) => r.id === view)
+  const e = read.policies.find((r) => r.id === edit)
+  const periodErr = !/^\d{1,3} (month|year)s$/.test(f.period.trim()) ? 'Use a positive period such as “24 months”.' : ''
+  const labelErr = !f.label.trim() ? 'Required.' : ''
+  const dirty = !!e && (f.period.trim() !== e.period || f.label.trim() !== e.label)
+  const openEdit = (r: Retention) => { setF({ period: r.period, label: r.label }); setErr(''); setEdit(r.id) }
+  const resetEdit = () => { if (e) setF({ period: e.period, label: e.label }); setErr('') }
+  const save = async () => {
+    if (!e) return
+    setErr('')
+    const res = await writes.save(e.id, { period: f.period.trim(), label: f.label.trim() })
+    if (!res.ok) { setErr(res.failure.message); return }
+    toast('Retention policy saved (simulated)'); setEdit(null)
+  }
+  const hold = (r: Retention, on: boolean) => confirm({
+    title: `${on ? 'Place a legal hold on' : 'Release the legal hold on'} "${r.name}"?`,
+    body: on ? 'The item will not be deleted on schedule until the hold is released. The hold persists for this demo session and is audited.' : 'The item becomes eligible for scheduled deletion again. The release is audited.',
+    confirmLabel: on ? 'Place legal hold' : 'Release hold', danger: on, reasonLabel: on ? 'Legal basis' : 'Reason for releasing', reasonRequired: true,
+    onConfirm: (rs) => { void writes.setHold(r.id, on, rs).then((res) => { if (res.ok) toast(on ? 'Legal hold placed' : 'Legal hold released'); else toast(res.failure.message, 'bad') }) },
+  })
+  const delWhy = (r: Retention) => !admin ? why : held(r.id) ? 'A legal hold is active, so deletion is blocked. Release the hold first.' : r.state !== 'Expired' ? 'Not yet due for deletion under the policy.' : ''
   return (
     <>
-      {expiring.map((r) => <Banner key={r.id} tone="warn" title={`Expiring soon: ${r.name}`} action={admin ? <Button size="sm" onClick={() => confirm({ title: `Place a legal hold on "${r.name}"?`, body: 'The item will not be deleted on schedule until the hold is released.', confirmLabel: 'Place legal hold', reasonLabel: 'Legal basis', reasonRequired: true, onConfirm: (rs) => { setFilter('holds', [...holds, r.id]); A.audit('Placed legal hold (simulated)', r.id, r.scope.startsWith('RT') ? r.scope : '', 'Success', rs); toast('Legal hold placed') } })}>Place legal hold</Button> : undefined}>Scope {r.scope} expires {r.expires}. Review before data is deleted under the policy.</Banner>)}
+      {expiring.map((r) => <Banner key={r.id} tone="warn" title={`Expiring soon: ${r.name}`} action={admin ? <Button size="sm" onClick={() => hold(r, true)}>Place legal hold</Button> : undefined}>Scope {r.scope} expires {r.expires}. Review before data is deleted under the policy.</Banner>)}
+      <Banner tone="info" title="Simulated retention controls">Save, hold and delete are validated, permission-gated and persist for this demo session (Demo reset restores the recorded policy). Deletion under policy is recorded and audited; demo data is never destroyed and the backend enforces the real schedule.</Banner>
       <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
         {[{ t: 'Close', d: 'The project becomes read-only. Evidence and reports are not deleted.', i: CheckCircle2 }, { t: 'Archive', d: 'Data moves to the archive and stays retrievable by permission during the retention period.', i: Clock }, { t: 'Delete under policy', d: 'Only after expiry, with no legal hold, a confirmation and a reason. Audited.', i: Trash2 }].map((x) => <Card key={x.t}><div className="flex items-center gap-2 font-medium"><x.i size={16} className="text-accent" aria-hidden />{x.t}</div><p className="mt-1 text-sm text-muted">{x.d}</p></Card>)}
       </div>
-      <Table rows={db.retention} rowKey={(r) => r.id} cols={[
+      {!admin && <ReadOnlyNote>{why}</ReadOnlyNote>}
+      <Table rows={read.policies} rowKey={(r) => r.id} cols={[
         { key: 'n', header: 'Policy', render: (r) => <div><div className="font-medium">{r.name}</div><div className="text-xs text-muted">{r.scope}</div></div> },
         { key: 'p', header: 'Retention', render: (r) => r.period },
         { key: 'l', header: 'Label', hideBelow: 'md', render: (r) => r.label },
         { key: 'o', header: 'Owner', hideBelow: 'lg', render: (r) => r.owner },
         { key: 'e', header: 'Expires', render: (r) => <span className="whitespace-nowrap">{r.expires}</span> },
-        { key: 's', header: 'Status', render: (r) => holds.includes(r.id) ? <Status kind="generic" value="warn" label="Legal hold" /> : <Status kind="generic" value={r.state === 'Expiring soon' ? 'warn' : 'ok'} label={r.state} /> },
-        { key: 'x', header: '', render: (r) => <div className="flex gap-1.5"><Button size="sm" onClick={() => setView(r.id)}>View Retention Policy</Button>{(() => { const w = delWhy(r); return <Button size="sm" variant="danger" icon={Trash2} disabled={!!w} title={w || undefined} onClick={() => confirm({ title: 'Delete under policy?', body: r.name, confirmLabel: 'Delete', danger: true, reasonLabel: 'Reason', reasonRequired: true, onConfirm: (rs) => { A.audit('Deleted under policy', r.id, '', 'Success', rs); toast('Deletion requested (simulated)') } })}>Delete</Button> })()}</div> },
+        { key: 's', header: 'Status', render: (r) => held(r.id) ? <Status kind="generic" value="warn" label="Legal hold" /> : <Status kind="generic" value={r.state === 'Expiring soon' ? 'warn' : r.state.startsWith('Deleted') ? 'bad' : 'ok'} label={r.state} /> },
+        { key: 'x', header: '', render: (r) => { const w = delWhy(r); return <div className="flex flex-wrap gap-1.5">
+          <Button size="sm" onClick={() => setView(r.id)}>View Retention Policy</Button>
+          <Button size="sm" disabled={!admin} title={admin ? undefined : why} onClick={() => openEdit(r)}>Edit</Button>
+          {held(r.id)
+            ? <Button size="sm" disabled={!admin} title={admin ? undefined : why} onClick={() => hold(r, false)}>Release hold</Button>
+            : <Button size="sm" disabled={!admin} title={admin ? undefined : why} onClick={() => hold(r, true)}>Place legal hold</Button>}
+          <Button size="sm" variant="danger" icon={Trash2} disabled={!!w} title={w || undefined} onClick={() => confirm({ title: 'Delete under policy?', body: `${r.name} — simulated: the deletion is recorded and audited; demo data is never destroyed.`, confirmLabel: 'Delete', danger: true, reasonLabel: 'Reason', reasonRequired: true, onConfirm: (rs) => { void writes.remove(r.id, rs).then((res) => { if (res.ok) toast('Deletion recorded (simulated)'); else toast(res.failure.message, 'bad') }) } })}>Delete</Button>
+        </div> } },
       ]} />
       <Card className="mt-5">
-        <CardHeader title="Retention history" />
-        {hist.length ? <Timeline items={hist.map((a) => ({ at: a.at, title: `${a.action} — ${a.obj}`, sub: `${a.actor}${a.reason ? ' · ' + a.reason : ''}` }))} /> : <p className="text-sm text-muted">No retention events yet.</p>}
+        <CardHeader title="Retention history" sub="Scoped, sensitive-filtered rows from the same canonical history as the Audit log tab." />
+        {read.history.length ? <Timeline items={read.history.map((a) => ({ at: a.at, title: `${a.action} — ${a.obj}`, sub: `${a.actor}${a.reason ? ' · ' + a.reason : ''}` }))} /> : <p className="text-sm text-muted">No retention events yet.</p>}
       </Card>
       <Drawer open={!!v} onClose={() => setView(null)} title={v?.name || ''}>
-        {v && <DescList cols={1} items={[{ k: 'Scope', v: v.scope }, { k: 'Retention period', v: v.period }, { k: 'Classification label', v: v.label }, { k: 'Storage', v: 'Cold archive, demo region (simulated)' }, { k: 'Export / delete authority', v: `${v.owner} (deletion needs confirmation and a reason)` }, { k: 'Expires', v: v.expires }, { k: 'Legal hold', v: holds.includes(v.id) ? 'Active' : 'None' }]} />}
+        {v && <DescList cols={1} items={[{ k: 'Scope', v: v.scope }, { k: 'Retention period', v: v.period }, { k: 'Classification label', v: v.label }, { k: 'Storage', v: 'Cold archive, demo region (simulated)' }, { k: 'Export / delete authority', v: `${v.owner} (deletion needs confirmation and a reason)` }, { k: 'Expires', v: v.expires }, { k: 'Legal hold', v: held(v.id) ? 'Active' : 'None' }]} />}
       </Drawer>
+      <Modal open={!!e} onClose={() => setEdit(null)} title="Edit retention policy" footer={<><Button onClick={() => setEdit(null)}>Cancel</Button><Button onClick={resetEdit} disabled={!dirty} title={dirty ? 'Restore the saved values' : 'No changes to discard'}>Reset</Button><Button variant="primary" disabled={!dirty || !!periodErr || !!labelErr} title={!dirty ? 'No changes to save' : periodErr || labelErr || undefined} onClick={save}>Save</Button></>}>
+        {e && <div className="space-y-4">
+          {err && <Banner tone="bad" title="Change not saved">{err}</Banner>}
+          <Field label="Policy"><Input value={e.name} readOnly disabled /></Field>
+          <Field label="Retention period" required error={periodErr} hint="Simulated: validated here, enforced by the backend."><Input value={f.period} onChange={(ev) => setF({ ...f, period: ev.target.value })} placeholder="24 months" /></Field>
+          <Field label="Classification label" required error={labelErr}><Select value={f.label} onChange={(ev) => setF({ ...f, label: ev.target.value })}>{['Confidential', 'Internal', 'Public'].map((l) => <option key={l}>{l}</option>)}</Select></Field>
+        </div>}
+      </Modal>
     </>
   )
 }
@@ -520,22 +567,27 @@ function DetectionTab() {
   )
 }
 
-/* ───────── ST-08 Audit ───────── */
+/* ───────── ST-08 Audit (ticket 58: canonical typed history) ───────── */
+const AUDIT_F = { q: '', actor: '', act: '', proj: '', res: '', origin: '', corr: '', kind: '' }
 function AuditTab() {
-  const { db, me, accessible, A, toast, persistFilters, setFilter } = useStore()
-  const F = (persistFilters.auditF || { q: '', actor: '', act: '', proj: '', res: '', origin: '', corr: '', kind: '' }) as { q: string; actor: string; act: string; proj: string; res: string; origin: string; corr: string; kind: string }
+  const { persistFilters, setFilter } = useStore()
+  const F = (persistFilters.auditF || AUDIT_F) as typeof AUDIT_F
   const set = (patch: Partial<typeof F>) => setFilter('auditF', { ...F, ...patch })
+  const q = useAudit({ q: F.q, actor: F.actor, action: F.act, project: F.proj, result: F.res, origin: F.origin as '' | 'human' | 'ai', corr: F.corr, kind: F.kind as '' | 'estop' })
+  if (q.isPending) return <div aria-busy="true" aria-label="Loading audit log"><Skeleton className="h-96" /></div>
+  if (q.isError || !q.data) return <Forbidden reason={q.error instanceof OrgReadError ? q.error.failure.message : 'The audit log could not be loaded.'} />
+  return <AuditPanel read={q.data} F={F} set={set} clear={() => setFilter('auditF', undefined)} />
+}
+
+function AuditPanel({ read, F, set, clear }: { read: AuditRead; F: typeof AUDIT_F; set: (patch: Partial<typeof AUDIT_F>) => void; clear: () => void }) {
+  const { A, toast, accessible } = useStore()
   const { q, actor, act, proj, res, origin } = F
   const [sel, setSel] = useState<string | null>(null)
   const [more, setMore] = useState(false)
-  const ids = new Set(accessible.map((p) => p.id))
-  const base = db.audit.filter((a) => me.role === 'admin' || (a.projectId && ids.has(a.projectId)))
   const isAi = (a: { actor: string }) => a.actor === 'AI Operator'
-  const rows = base.filter((a) => (!actor || a.actor === actor) && (!act || a.action === act) && (!proj || a.projectId === proj) && (!res || a.result === res) && (!origin || (origin === 'ai' ? isAi(a) : !isAi(a))) && (!F.corr || corr(a) === F.corr) && (!F.kind || /^Emergency stop/i.test(a.action)) && (!q || `${a.id} ${corr(a)} ${a.actor} ${a.action} ${a.obj} ${a.reason}`.toLowerCase().includes(q.toLowerCase())))
+  const rows = read.items
   const pg = usePaged(rows, 12)
-  const uniq = (k: 'actor' | 'action' | 'result') => [...new Set(base.map((a) => a[k]))]
-  const corrs = [...new Set(base.map((a) => corr(a)).filter((c) => /^COR-\d{3}-\d{2}$/.test(c)))]
-  const canExport = me.role === 'admin' || me.role === 'reviewer'
+  const canExport = read.canExport
   const exportCsv = () => {
     const esc = (s: string) => `"${s.replace(/"/g, '""')}"`
     const csv = ['Event ID,Time (UTC+7),Time (UTC),Actor Type,Actor,Role,Project,Action,Object,Result,Approval,Correlation ID,Reason', ...rows.map((a) => [a.id, a.at, utcOf(a.at), actorType(a), a.actor, a.role, a.projectId || 'Workspace', a.action, a.obj, a.result, approval(a), corr(a), a.reason].map(esc).join(','))].join('\n')
@@ -543,22 +595,21 @@ function AuditTab() {
     const el = document.createElement('a'); el.href = url; el.download = 'raptix-audit-log-simulated.csv'; el.click(); URL.revokeObjectURL(url)
     A.audit('Exported audit log (CSV)', 'AUDIT', '', 'Success', `${rows.length} records`); toast(`Exported ${rows.length} records (simulated CSV)`)
   }
-  const a = db.audit.find((x) => x.id === sel)
-  const clear = () => setFilter('auditF', undefined)
+  const a = rows.find((x) => x.id === sel)
   const tone = (r: string) => r === 'Success' ? 'ok' : r === 'Pending' || r === 'Warning' ? 'warn' : 'bad'
   const approval = (x: { actor: string; action: string; result: string }) => isAi(x) ? 'AI proposal / system (not a human approval)' : /Approved|approved/.test(x.action) ? 'Human approval' : x.result === 'Pending' ? 'Awaiting approval' : '—'
   return (
     <>
-      <Banner tone="info" title="Read-only, append-only log">Records cannot be edited or deleted from this interface. Times are shown in Asia/Ho_Chi_Minh (UTC+7); the event detail also shows UTC. Sensitive content is masked by role. AI-originated proposals are labeled separately from human approvals and actual operation events.</Banner>
+      <Banner tone="info" title="Read-only, append-only log">Every consequential action — from legacy screens and migrated features alike — commits to this one history. Records cannot be edited or deleted from this interface. Times are shown in Asia/Ho_Chi_Minh (UTC+7); the event detail also shows UTC. Sensitive content is masked by role. AI-originated proposals are labeled separately from human approvals and actual operation events.</Banner>
       <FilterBar right={<><Button icon={Download} onClick={exportCsv} disabled={!rows.length || !canExport} title={!canExport ? 'Only Organization Admins and Reviewers can export the audit log' : !rows.length ? 'No records to export' : undefined}>Export Audit Log</Button></>}>
         <SearchBox value={q} onChange={(v) => set({ q: v })} placeholder="Search actor, action, object…" className="w-full sm:w-72" />
-        <Select aria-label="Correlation ID" className="w-44" value={F.corr} onChange={(e) => set({ corr: e.target.value })}><option value="">All correlation IDs</option>{corrs.map((x) => <option key={x}>{x}</option>)}</Select>
-        <Select aria-label="Result" className="w-36" value={res} onChange={(e) => set({ res: e.target.value })}><option value="">All results</option>{uniq('result').map((x) => <option key={x}>{x}</option>)}</Select>
+        <Select aria-label="Correlation ID" className="w-44" value={F.corr} onChange={(e) => set({ corr: e.target.value })}><option value="">All correlation IDs</option>{read.options.corrs.map((x) => <option key={x}>{x}</option>)}</Select>
+        <Select aria-label="Result" className="w-36" value={res} onChange={(e) => set({ res: e.target.value })}><option value="">All results</option>{read.options.results.map((x) => <option key={x}>{x}</option>)}</Select>
         <Button size="sm" variant={F.kind ? 'primary' : 'secondary'} icon={OctagonX} aria-pressed={!!F.kind} onClick={() => set({ kind: F.kind ? '' : 'estop' })}>Emergency stop events</Button>
         <Button size="sm" variant={more || actor || act || proj || origin ? 'primary' : 'secondary'} aria-expanded={more} onClick={() => setMore(!more)}>More filters{[actor, act, proj, origin].filter(Boolean).length ? ` (${[actor, act, proj, origin].filter(Boolean).length})` : ''}</Button>
         {more && <>
-          <Select aria-label="Actor" className="w-40" value={actor} onChange={(e) => set({ actor: e.target.value })}><option value="">All actors</option>{uniq('actor').map((x) => <option key={x}>{x}</option>)}</Select>
-          <Select aria-label="Action" className="w-48" value={act} onChange={(e) => set({ act: e.target.value })}><option value="">All actions</option>{uniq('action').map((x) => <option key={x}>{x}</option>)}</Select>
+          <Select aria-label="Actor" className="w-40" value={actor} onChange={(e) => set({ actor: e.target.value })}><option value="">All actors</option>{read.options.actors.map((x) => <option key={x}>{x}</option>)}</Select>
+          <Select aria-label="Action" className="w-48" value={act} onChange={(e) => set({ act: e.target.value })}><option value="">All actions</option>{read.options.actions.map((x) => <option key={x}>{x}</option>)}</Select>
           <Select aria-label="Project" className="w-40" value={proj} onChange={(e) => set({ proj: e.target.value })}><option value="">All projects</option>{accessible.map((p) => <option key={p.id}>{p.id}</option>)}</Select>
           <Select aria-label="Origin" className="w-40" value={origin} onChange={(e) => set({ origin: e.target.value })}><option value="">Human and AI</option><option value="human">Human events</option><option value="ai">AI-originated</option></Select>
         </>}
@@ -581,7 +632,7 @@ function AuditTab() {
         {a && <div className="space-y-5">
           <DescList items={[{ k: 'Event ID', v: <Mono className="whitespace-nowrap">{a.id}</Mono> }, { k: 'Time (display)', v: <span className="whitespace-nowrap">{a.at.includes('UTC') ? a.at : `${a.at} (UTC+7)`}</span> }, { k: 'Time (UTC)', v: <span className="whitespace-nowrap">{utcOf(a.at)}</span> }, { k: 'Display timezone', v: 'Asia/Ho_Chi_Minh (UTC+7)' }, { k: 'Actor type', v: actorType(a) }, { k: 'Actor', v: `${a.actor} (${a.role})` }, { k: 'Action', v: a.action }, { k: 'Object', v: <Mono className="whitespace-nowrap">{a.obj}</Mono> }, { k: 'Project', v: a.projectId || 'Workspace' }, { k: 'Result', v: a.result }, { k: 'Approval', v: approval(a) }, { k: 'Correlation ID', v: <Mono className="whitespace-nowrap">{corr(a)}</Mono> }, { k: 'Source', v: 'Raptix Web (simulated)' }, { k: 'Reason', v: a.reason || '—' }]} />
           {isAi(a) && <Banner tone="info" title="AI-originated event">This event came from the AI Operator (a proposal or blocked tool call). It is not a human approval and not an executed operation event.</Banner>}
-          {/(policy|scope|Approved|Revoked|Stop|Changed|Updated|Exported|Disabled|Closed)/i.test(a.action) && (
+          {/(policy|scope|Approved|Revoked|Stop|Changed|Updated|Exported|Disabled|Closed|hold|retention)/i.test(a.action) && (
             <div><div className="mb-2 text-xs font-medium text-muted">Before / after</div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2"><div className="rounded-lg border border-line bg-bg p-3 text-xs"><div className="mb-1 text-muted">Before</div><Mono className="whitespace-nowrap">{a.action.includes('Disabled') ? 'enabled: true' : 'state: before action'}</Mono></div><div className="rounded-lg border border-line bg-bg p-3 text-xs"><div className="mb-1 text-muted">After</div><Mono className="whitespace-nowrap">{a.action.includes('Disabled') ? 'enabled: false' : 'state: after action'}</Mono></div></div>
               <p className="mt-1 text-[11px] text-neutral">Simulated values; the backend stores the full diff.</p></div>

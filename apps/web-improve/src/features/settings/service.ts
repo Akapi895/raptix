@@ -13,11 +13,12 @@
  * contact is masked for non-admin readers and client (viewer-role) member
  * emails are masked for staff below admin — external personnel PII.
  */
+import { projectAccessible } from '../../auth/policy'
 import { USERS, type Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import type { Audit, Integration, OrgInvite, OrgProfile, Policy, Role } from '../../domain/entities'
+import type { Audit, Integration, OrgInvite, OrgProfile, Policy, Retention, Role } from '../../domain/entities'
 
 export type { OrgInvite, OrgProfile } from '../../domain/entities'
 
@@ -108,8 +109,8 @@ export function getOrgMembers(db: Db, ctx: RequestContext): ServiceResult<OrgMem
 }
 
 /** Workspace-level writes publish the org identity; every commit carries its audit row. */
-function auditRow(d: Db, ctx: RequestContext, at: string, action: string, obj: string, result: string, reason: string) {
-  d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action, obj, projectId: '', result, reason })
+function auditRow(d: Db, ctx: RequestContext, at: string, action: string, obj: string, result: string, reason: string, projectId = '') {
+  d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action, obj, projectId, result, reason })
 }
 
 /** Validated profile patch; `undefined` fields keep the committed value. */
@@ -368,6 +369,195 @@ export function setPolicyEnabled(authority: DbAuthority, clock: Clock, ctx: Requ
   return { ok: true, data: policyOf(authority.snapshot(), id)! }
 }
 
+/* ───────────── Retention (ticket 58) ───────────── */
+
+/**
+ * One retention read: the seeded policies, the committed legal holds and the
+ * retention-relevant audit slice. Holds live in `db.org` (the ticket 56
+ * workspace state) so a hold placed here persists for the demo session,
+ * commits atomically with its audit row and demo reset restores the seed.
+ * Every control stays clearly simulated — saving or deleting records
+ * configuration/audit rows and never destroys seeded data.
+ */
+export interface RetentionRead {
+  policies: Retention[]
+  /** Retention ids currently under a legal hold (blocks scheduled deletion). */
+  holds: string[]
+  /** Retention-relevant audit rows, scoped and sensitive-filtered, newest first. */
+  history: Audit[]
+  /** UI hint; every mutation re-checks the role at the handler. */
+  canEdit: boolean
+}
+
+/** The retention history slice: this tab's lifecycle plus project closure events. */
+const RETENTION_HISTORY = /Closed project|Reopen|export|deliver|hold|archive|Retention|Deleted under policy/i
+
+export function getRetention(db: Db, ctx: RequestContext): ServiceResult<RetentionRead> {
+  if (!STAFF.includes(ctx.actor.role)) {
+    return { ok: false, failure: { kind: 'forbidden', message: 'Retention policies are visible to Organization Admins, Red Team Managers and Reviewers. Ask an admin if you need access.' } }
+  }
+  return {
+    ok: true,
+    data: {
+      policies: db.retention,
+      holds: [...db.org.holds],
+      history: sensitiveAuditMask(db, ctx, db.audit.filter((a) => RETENTION_HISTORY.test(a.action)).slice(0, 12)),
+      canEdit: ctx.actor.role === 'admin',
+    },
+  }
+}
+
+/**
+ * Sensitive audit masking (policy PM-7): a row whose object references
+ * sensitive evidence hides its reason below Organization Admin — the object
+ * id stays a legal reference while the capture content is masked by role.
+ */
+function sensitiveAuditMask(db: Db, ctx: RequestContext, rows: Audit[]): Audit[] {
+  if (ctx.actor.role === 'admin') return rows
+  const sensitive = new Set(db.evidence.filter((e) => e.sensitive).map((e) => e.id))
+  return rows.map((a) => (sensitive.has(a.obj) ? { ...a, reason: '•••• (sensitive evidence masked)' } : a))
+}
+
+/** Validated retention policy patch; `undefined` fields keep the committed value. */
+export interface RetentionPatch { period?: string; label?: string }
+const PERIOD_RE = /^\d{1,3} (month|year)s$/
+
+/**
+ * Saves one retention policy's period/label. Admin-only, validated (a
+ * positive period such as “24 months”, a non-empty classification label) and
+ * audited in the same commit. The write records configuration only —
+ * enforcement of expiry windows is a backend concern this demo never fakes.
+ */
+export function updateRetention(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, patch: RetentionPatch): ServiceResult<Retention> {
+  if (ctx.actor.role !== 'admin') return { ok: false, failure: { kind: 'forbidden', message: 'Only Organization Admins can change retention policies. Ask an admin to make the change.' } }
+  const db = authority.snapshot()
+  const r = db.retention.find((x) => x.id === id)
+  if (!r) return { ok: false, failure: { kind: 'not-found', message: `No retention policy ${id}.` } }
+  const period = patch.period !== undefined ? patch.period.trim() : r.period
+  const label = patch.label !== undefined ? patch.label.trim() : r.label
+  if (!PERIOD_RE.test(period)) return { ok: false, failure: { kind: 'validation', message: 'Enter a retention period such as “24 months”.' } }
+  if (!label) return { ok: false, failure: { kind: 'validation', message: 'A classification label is required.' } }
+  if (period === r.period && label === r.label) return { ok: false, failure: { kind: 'conflict', message: `${r.name} already has these values.` } }
+  const at = formatDemoInstant(clock.now())
+  const changed = [period !== r.period ? `period ${period}` : '', label !== r.label ? `label ${label}` : ''].filter(Boolean).join(', ')
+  authority.commit(ctx.corr, (d) => {
+    const row = d.retention.find((x) => x.id === id)!
+    row.period = period
+    row.label = label
+    auditRow(d, ctx, at, 'Updated retention policy (simulated)', id, 'Success', changed)
+  })
+  return { ok: true, data: authority.snapshot().retention.find((x) => x.id === id)! }
+}
+
+/**
+ * Places or releases a legal hold. Admin-only; both directions need a reason
+ * (the legal basis on placement, the justification for lifting it) and a
+ * repeat is a conflict. The hold flag is the session-persistent org state, so
+ * the block survives navigation and persona switches until demo reset.
+ */
+export function setRetentionHold(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, held: boolean, reason: string): ServiceResult<Retention> {
+  if (ctx.actor.role !== 'admin') return { ok: false, failure: { kind: 'forbidden', message: 'Only Organization Admins can place or release legal holds. Ask an admin.' } }
+  if (!reason.trim()) return { ok: false, failure: { kind: 'validation', message: held ? 'A legal basis is required to place a hold.' : 'A reason is required to release a hold.' } }
+  const db = authority.snapshot()
+  const r = db.retention.find((x) => x.id === id)
+  if (!r) return { ok: false, failure: { kind: 'not-found', message: `No retention policy ${id}.` } }
+  if (held === db.org.holds.includes(id)) return { ok: false, failure: { kind: 'conflict', message: `${r.name} already ${held ? 'has' : 'has no'} legal hold.` } }
+  const at = formatDemoInstant(clock.now())
+  const projectId = r.scope.startsWith('RT') ? r.scope : ''
+  authority.commit(ctx.corr, (d) => {
+    d.org.holds = held ? [...d.org.holds, id] : d.org.holds.filter((x) => x !== id)
+    auditRow(d, ctx, at, held ? 'Placed legal hold (simulated)' : 'Released legal hold (simulated)', id, 'Success', reason.trim(), projectId)
+  })
+  return { ok: true, data: authority.snapshot().retention.find((x) => x.id === id)! }
+}
+
+/**
+ * Deletes under policy — explicitly simulated: the commit records the policy
+ * state as “Deleted (simulated)”, never destroying seeded demo data, and
+ * appends the audited deletion row. Admin-only, reason-required, blocked
+ * while a legal hold is active and before the retention window expires.
+ */
+export function deleteRetentionData(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, reason: string): ServiceResult<Retention> {
+  if (ctx.actor.role !== 'admin') return { ok: false, failure: { kind: 'forbidden', message: 'Only Organization Admins can delete under policy. Ask an admin to make the change.' } }
+  if (!reason.trim()) return { ok: false, failure: { kind: 'validation', message: 'A reason is required to delete under policy.' } }
+  const db = authority.snapshot()
+  const r = db.retention.find((x) => x.id === id)
+  if (!r) return { ok: false, failure: { kind: 'not-found', message: `No retention policy ${id}.` } }
+  if (db.org.holds.includes(id)) return { ok: false, failure: { kind: 'conflict', message: 'A legal hold is active, so deletion is blocked. Release the hold first.' } }
+  if (r.state !== 'Expired') return { ok: false, failure: { kind: 'conflict', message: 'Not yet due for deletion under the policy.' } }
+  const at = formatDemoInstant(clock.now())
+  const projectId = r.scope.startsWith('RT') ? r.scope : ''
+  authority.commit(ctx.corr, (d) => {
+    const row = d.retention.find((x) => x.id === id)!
+    row.state = 'Deleted (simulated)'
+    auditRow(d, ctx, at, 'Deleted under policy (simulated)', id, 'Success', reason.trim(), projectId)
+  })
+  return { ok: true, data: authority.snapshot().retention.find((x) => x.id === id)! }
+}
+
+/* ───────────── Canonical audit history (ticket 58) ───────────── */
+
+/** Correlation id of one audit row (typed rows carry corr; seeded rows derive it). */
+export function auditCorr(a: Audit): string {
+  return a.corr || 'COR-' + a.id.replace(/\D/g, '').padStart(4, '0')
+}
+
+/** One audit-history query: every field is an optional narrowing filter. */
+export interface AuditQuery { q?: string; actor?: string; action?: string; project?: string; result?: string; origin?: '' | 'human' | 'ai'; corr?: string; kind?: '' | 'estop' }
+
+/** One audit-history read: the filtered rows plus the filter option universes. */
+export interface AuditRead {
+  /** Newest-first filtered rows (the tab paginates for display). */
+  items: Audit[]
+  total: number
+  options: { actors: string[]; actions: string[]; results: string[]; corrs: string[] }
+  /** Export gate: Organization Admins and Reviewers only (baseline policy). */
+  canExport: boolean
+}
+
+/**
+ * The canonical audit history read. Both commit paths land here through the
+ * one authority — legacy actions (`A.audit` commits `corr: 'legacy'`) and
+ * typed feature handlers append rows to the same collection — so this read is
+ * the single searchable history. Scoped projection (baseline): workspace-level
+ * rows are organization-internal and admin-only; every other visible row
+ * names a project in the reader's scope. Sensitive masking (PM-7) applies to
+ * rows referencing sensitive evidence.
+ */
+export function getAudit(db: Db, ctx: RequestContext, query: AuditQuery = {}): ServiceResult<AuditRead> {
+  if (!STAFF.includes(ctx.actor.role)) {
+    return { ok: false, failure: { kind: 'forbidden', message: 'The audit log is visible to Organization Admins, Red Team Managers and Reviewers. Ask an admin if you need access.' } }
+  }
+  const admin = ctx.actor.role === 'admin'
+  const accessible = new Set(db.projects.filter((p) => projectAccessible(p, ctx.actor)).map((p) => p.id))
+  const base = sensitiveAuditMask(db, ctx, db.audit.filter((a) => admin || (a.projectId && accessible.has(a.projectId))))
+  const q = (query.q || '').toLowerCase()
+  const isAi = (a: Audit) => a.actor === 'AI Operator'
+  const rows = base.filter((a) =>
+    (!query.actor || a.actor === query.actor) &&
+    (!query.action || a.action === query.action) &&
+    (!query.project || a.projectId === query.project) &&
+    (!query.result || a.result === query.result) &&
+    (!query.origin || (query.origin === 'ai' ? isAi(a) : !isAi(a))) &&
+    (!query.corr || auditCorr(a) === query.corr) &&
+    (!query.kind || /^Emergency stop/i.test(a.action)) &&
+    (!q || `${a.id} ${auditCorr(a)} ${a.actor} ${a.action} ${a.obj} ${a.reason}`.toLowerCase().includes(q)))
+  return {
+    ok: true,
+    data: {
+      items: rows,
+      total: rows.length,
+      options: {
+        actors: [...new Set(base.map((a) => a.actor))],
+        actions: [...new Set(base.map((a) => a.action))],
+        results: [...new Set(base.map((a) => a.result))],
+        corrs: [...new Set(base.map((a) => auditCorr(a)))].filter((c) => /^COR-\d{3}-\d{2}$/.test(c)),
+      },
+      canExport: admin || ctx.actor.role === 'reviewer',
+    },
+  }
+}
+
 /** Builds the typed organization settings service; `guard` is the factory's
  *  superseded-scope read guard. Reads observe scope cancellation; mutations
  *  capture their context at call time and commit once. */
@@ -384,6 +574,12 @@ export interface SettingsService {
   setIntegrationConnection(ctx: RequestContext, id: string, action: IntegrationAction, reason: string): Promise<ServiceResult<Integration>>
   updateIntegrationKey(ctx: RequestContext, id: string, key: string): Promise<ServiceResult<Integration>>
   setPolicyEnabled(ctx: RequestContext, id: string, enabled: boolean, reason: string): Promise<ServiceResult<Policy>>
+  /* Ticket 58: retention controls + canonical audit history. */
+  getRetention(ctx: RequestContext): Promise<ServiceResult<RetentionRead>>
+  getAudit(ctx: RequestContext, query: AuditQuery): Promise<ServiceResult<AuditRead>>
+  updateRetention(ctx: RequestContext, id: string, patch: RetentionPatch): Promise<ServiceResult<Retention>>
+  setRetentionHold(ctx: RequestContext, id: string, held: boolean, reason: string): Promise<ServiceResult<Retention>>
+  deleteRetentionData(ctx: RequestContext, id: string, reason: string): Promise<ServiceResult<Retention>>
 }
 
 export function createSettingsService(
@@ -403,5 +599,10 @@ export function createSettingsService(
     setIntegrationConnection: (ctx, id, action, reason) => Promise.resolve(setIntegrationConnection(authority, clock, ctx, id, action, reason)),
     updateIntegrationKey: (ctx, id, key) => Promise.resolve(updateIntegrationKey(authority, clock, ctx, id, key)),
     setPolicyEnabled: (ctx, id, enabled, reason) => Promise.resolve(setPolicyEnabled(authority, clock, ctx, id, enabled, reason)),
+    getRetention: (ctx) => guard(() => getRetention(authority.snapshot(), ctx)),
+    getAudit: (ctx, query) => guard(() => getAudit(authority.snapshot(), ctx, query)),
+    updateRetention: (ctx, id, patch) => Promise.resolve(updateRetention(authority, clock, ctx, id, patch)),
+    setRetentionHold: (ctx, id, held, reason) => Promise.resolve(setRetentionHold(authority, clock, ctx, id, held, reason)),
+    deleteRetentionData: (ctx, id, reason) => Promise.resolve(deleteRetentionData(authority, clock, ctx, id, reason)),
   }
 }
