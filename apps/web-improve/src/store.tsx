@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
+import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
 import { can as policyCan, projectAccessible, readOnlyContext } from './auth/policy'
 import type { CanAction } from './domain/permissions'
@@ -56,8 +56,9 @@ import {
 // report handlers (one audited implementation for both entry points).
 import { deliverReportVersion, exportReportVersion, type DeliveryInput } from './features/reports/service'
 // Ticket 26 append: the preflight derivation and the start gate live in the
-// operations feature; the legacy helpers/actions delegate to the same handlers.
-import { computePreflightChecks, PROJECT_TZ_OFFSET_MS, type Check } from './features/operations/preflight'
+// operations feature. (Ticket 67 retired the store's computePreflight wrapper
+// and its demo-anchor: callers derive the eight checks at the factory clock's
+// instant via computePreflightChecks.)
 // Ticket 27: the lifecycle control transitions are feature-local
 // handlers; the remaining legacy entries delegate so the gates, the atomic
 // agent reservations and the audited outcomes have one implementation for
@@ -125,17 +126,6 @@ export function sessionPerm(db: Db, me: Persona, s: Session): SessionPerm {
   if (me.role === 'viewer' || !canAccessProject(db, me, s.projectId)) return 'none'
   const g = s.grants.find((x) => x.user === me.name)
   return g ? g.perm : 'read-only'
-}
-
-/* ───────────── Preflight (8 checks) ───────────── */
-/* Ticket 26: the deterministic policy lives in the operations feature
-   (src/features/operations/preflight.ts) — the legacy helper delegates to the
-   same derivation the typed handlers use, so both entry points observe the
-   same canonical checks (and the same scope-revision invalidation). Ticket 67
-   retired the store's type re-exports: consumers import Check/CheckState from
-   the feature module directly. */
-export function computePreflight(db: Db, op: Operation): Check[] {
-  return computePreflightChecks(db, op, Date.UTC(2026, 9, 13, 0, nowMin()) - PROJECT_TZ_OFFSET_MS)
 }
 
 /* ───────────── Project closure checklist ───────────── */
