@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Asset, type Agent, type Group, type Plan, type PlanStep, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent, type Conversation } from './data'
+import { signIn, signOut } from './auth/persona'
+import { can as policyCan, projectAccessible, readOnlyContext } from './auth/policy'
 import type { CanAction } from './domain/permissions'
 import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
@@ -38,11 +40,9 @@ const toHash = (r: Route) => `#/${r.page}${r.id ? '/' + encodeURIComponent(r.id)
 export const ROLE_LABEL: Record<Role, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
 export type Persona = (typeof USERS)[number]
 
+/** Membership policy seam (ticket 06): forwards to the shared permissions interface. */
 export function canAccessProject(db: Db, me: Persona, projectId: string) {
-  const p = db.projects.find((x) => x.id === projectId)
-  if (!p) return false
-  if (me.role === 'admin' || me.role === 'manager' || me.role === 'reviewer') return true
-  return p.members.some((m) => m.user === me.name)
+  return projectAccessible(db.projects.find((x) => x.id === projectId), { id: me.name, role: me.role })
 }
 
 export function sessionPerm(db: Db, me: Persona, s: Session): SessionPerm {
@@ -392,9 +392,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const setMeName = useAuthStore((s) => s.setMe)
   const me = USERS.find((u) => u.name === meName)!
   const authed = useAuthStore((s) => s.authed)
-  const setAuthed = useAuthStore((s) => s.setAuthed)
   const org = useAuthStore((s) => s.org)
-  const setOrg = useAuthStore((s) => s.setOrg)
   const [route, setRoute] = useState<Route>(() => parseHash())
   const pid = useProjectStore((s) => s.pid)
   const setPidRaw = useProjectStore((s) => s.setPid)
@@ -439,42 +437,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const scoped = useCallback(
     <T extends { projectId: string }>(arr: T[]) => {
       const ids = new Set(accessible.map((p) => p.id))
+      // Specific-project mode denies the whole read when the project is not a
+      // membership the actor holds (ledger gap G-12); 'all' aggregates only
+      // accessible projects.
+      if (pid !== 'all' && !ids.has(pid)) return [] as T[]
       return arr.filter((x) => (pid === 'all' ? ids.has(x.projectId) || x.projectId === '' : x.projectId === pid))
     },
     [accessible, pid],
   )
 
-  const readOnly = (projectId?: string) => {
-    const p = db.projects.find((x) => x.id === (projectId || pid))
-    if (!p) return false
-    return p.status === 'closed' || p.status === 'cancelled' || me.role === 'viewer'
-  }
-  const can: Store['can'] = (a, projectId) => {
-    const p = db.projects.find((x) => x.id === (projectId || pid))
-    if (p && (p.status === 'closed' || p.status === 'cancelled') && a !== 'reopen' && a !== 'viewSensitive') return false
-    const r = me.role
-    switch (a) {
-      case 'createProject': return r === 'admin' || r === 'manager'
-      case 'approve': return r === 'reviewer' || r === 'admin'
-      case 'editScope': return r === 'admin' || r === 'manager'
-      case 'run': return r === 'manager' || r === 'operator'
-      case 'createFinding': return r === 'manager' || r === 'operator' || r === 'analyst'
-      case 'reviewFinding': return r === 'manager' || r === 'reviewer'
-      case 'editReport': return r === 'manager' || r === 'operator' || r === 'analyst'
-      case 'approveReport': return r === 'reviewer'
-      case 'requestClose': return r === 'manager'
-      case 'confirmClose': return r === 'reviewer' || r === 'admin'
-      case 'reopen': return r === 'admin'
-      case 'admin': return r === 'admin'
-      case 'viewSensitive': return r !== 'viewer'
-      case 'estop': return r === 'manager' || r === 'admin'
-      case 'plan': return r === 'manager' || r === 'operator'
-      case 'approvePlan': return r === 'reviewer' || r === 'admin'
-      case 'interactive': return r === 'manager' || r === 'operator'
-      case 'approveAccess': return r === 'manager' || r === 'admin' || r === 'reviewer'
-      case 'terminate': return r === 'manager' || r === 'admin'
-    }
-  }
+  const readOnly = (projectId?: string) =>
+    readOnlyContext(db.projects.find((x) => x.id === (projectId || pid)), { id: me.name, role: me.role })
+  const can: Store['can'] = (a, projectId) =>
+    policyCan({ id: me.name, role: me.role }, a, db.projects.find((x) => x.id === (projectId || pid)))
 
   /* dirty guard */
   const setDirty = useCallback((on: boolean, save?: () => void) => { setDirtyS(on); saveRef.current = on ? save : undefined }, [])
@@ -525,12 +500,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })
   }, [pid, guarded])
 
+  /* Auth writes forward to the shared auth authority via the auth feature
+     actions (ticket 06); navigation stays legacy until ticket 07. */
   const login = (o?: string) => {
-    if (o) setOrg(o)
-    setAuthed(true)
+    signIn(useAuthStore.getState().meName, o)
     navRaw('command-center')
   }
-  const logout = () => { setAuthed(false); navRaw('login') }
+  const logout = () => { signOut(); navRaw('login') }
 
   const confirm = (o: ConfirmOpts) => setConfirmState(o)
 
