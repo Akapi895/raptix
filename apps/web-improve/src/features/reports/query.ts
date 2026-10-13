@@ -17,14 +17,19 @@ import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Report, Template } from '../../domain/entities'
-import type { DeliveryListQuery, DraftOptionsRead, ReportDraftInput, ReportListQuery, ReportListRead } from './service'
+import type { DeliveryListQuery, DraftOptionsRead, ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead } from './service'
 
-/** Feature-local key namespaces, each aligned with its owning entity kind. */
+/** Feature-local key namespaces, each aligned with its owning entity kind.
+ *  The editor/preview key shares the `report` kind prefix, so any committed
+ *  report change (legacy action or typed section write) refetches both
+ *  screens and the catalog from one publication. */
 export const reportKeys = {
   list: (scope: QueryScope, query: ReportListQuery) => consoleKeys.view('report', scope, 'list', query),
   templates: (scope: QueryScope) => consoleKeys.view('template', scope, 'list'),
   deliveries: (scope: QueryScope, query: DeliveryListQuery) => consoleKeys.view('report-export', scope, 'list', query),
   draftOptions: (scope: QueryScope) => consoleKeys.view('finding', scope, 'report-draft-options'),
+  /** One editor/preview read of a report (ticket 35) — both screens consume it. */
+  editor: (scope: QueryScope, id: string) => consoleKeys.view('report', scope, 'editor', id),
 }
 
 /** A service failure rethrown as the query error, so screens render the kind and message. */
@@ -107,13 +112,36 @@ export function useDraftOptions(enabled = true) {
 }
 
 /**
- * Write-side binding (ticket 34): the validated draft creation for the
- * current scope. The call captures actor/project at call time — a persona or
- * project switch never retargets an in-flight write — and the commit
- * publishes one ChangeSet that the bridge turns into refetches for both the
- * Query views and the legacy store. Callers resolve the explicit
- * ServiceResult: a refused create commits nothing and the message is safe to
- * render.
+ * Query-backed editor/preview read of one report (ticket 35): the report
+ * aggregate, its project summary, the handler-computed edit gate and the
+ * resolved finding rows. Keyed under the `report` kind, so a committed
+ * report change — a typed section write or a legacy `saveReportSection` —
+ * invalidates it and both screens refetch from the one publication. A
+ * non-member's read resolves to a not-found failure (no existence leak).
+ * An empty id (malformed deep link) also refuses with not-found.
+ */
+export function useReportEditor(id: string) {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: reportKeys.editor(scope, id),
+    queryFn: async (): Promise<ReportEditorRead> => {
+      const res = await services.reports(actorRef(scope.actor), scope.project).editor(ctxOf(scope, 'report-editor'), id)
+      if (!res.ok) throw new ReportReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/**
+ * Write-side binding (tickets 34 + 35): the validated draft creation and the
+ * section/findings writes for the current scope. Each call captures
+ * actor/project at call time — a persona or project switch never retargets
+ * an in-flight write — and every commit publishes one ChangeSet that the
+ * bridge turns into refetches for both the Query views and the legacy store.
+ * Callers resolve the explicit ServiceResult: a refused write commits
+ * nothing and the message is safe to render.
  */
 export function useReportWrites() {
   const services = useServices()
@@ -125,6 +153,16 @@ export function useReportWrites() {
     return {
       createDraft: (input: ReportDraftInput): Promise<ServiceResult<Report>> =>
         svc().createDraft(ctx('report-create'), input),
+      saveSection: (id: string, sectionId: string, body: string): Promise<ServiceResult<Report>> =>
+        svc().saveSection(ctx('report-section-save'), id, sectionId, body),
+      addSection: (id: string, title: string): Promise<ServiceResult<Report>> =>
+        svc().addSection(ctx('report-section-add'), id, title),
+      removeSection: (id: string, sectionId: string): Promise<ServiceResult<Report>> =>
+        svc().removeSection(ctx('report-section-remove'), id, sectionId),
+      reorderSections: (id: string, order: string[]): Promise<ServiceResult<Report>> =>
+        svc().reorderSections(ctx('report-section-reorder'), id, order),
+      setFindings: (id: string, ids: string[]): Promise<ServiceResult<Report>> =>
+        svc().setFindings(ctx('report-findings-set'), id, ids),
     }
   }, [services, scope.actor, scope.project])
 }

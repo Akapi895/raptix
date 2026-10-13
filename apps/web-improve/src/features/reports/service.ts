@@ -21,7 +21,7 @@ import { USERS, type Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import type { ExportRec, FindingStatus, Report, ReportStatus, Severity, Template } from '../../domain/entities'
+import type { ExportRec, Finding, FindingStatus, Project, Report, ReportStatus, Severity, Template } from '../../domain/entities'
 
 /** Finding statuses a formal report may include: confirmed or later. AI suggestions never qualify. */
 export const CONFIRMED_OR_LATER: FindingStatus[] = ['confirmed', 'remediation', 'retest', 'resolved']
@@ -279,8 +279,249 @@ export function createReportDraft(authority: DbAuthority, clock: Clock, ctx: Req
   return { ok: true, data: authority.snapshot().reports.find((x) => x.id === id)! }
 }
 
+/* ───────────── Editor + preview read (ticket 35) ───────────── */
+
+/** One finding row in the editor's selection panel; `reportable` gates adding. */
+export interface EditorFindingRow {
+  id: string
+  title: string
+  severity: Severity
+  status: FindingStatus
+  asset: string
+  reportable: boolean
+  linked: boolean
+}
+
+/** One opaque evidence reference plus the redaction marker the preview renders. */
+export interface LinkedEvidenceRef { ref: string; sensitive: boolean }
+
+/** One linked finding as the preview's findings table renders it. */
+export interface LinkedFindingRow {
+  id: string
+  title: string
+  severity: Severity
+  asset: string
+  evidence: LinkedEvidenceRef[]
+}
+
+/**
+ * Editor/preview read model: the report aggregate, its project summary, the
+ * handler-computed edit gate and the resolved finding rows. Both screens read
+ * the same model — the preview renders it strictly read-only. Scope follows
+ * {@link resolveReport}: a non-member's read is `not-found` (no existence
+ * leak), a member scoped to another project gets `forbidden` with the owning
+ * project on the entity ref so the screen can offer an explicit switch.
+ */
+export interface ReportEditorRead {
+  report: Report
+  project: { id: string; client: string; type: string; roeVersion: string; window: string }
+  /** Handler-computed `editReport`/status gate; empty reason = editable. */
+  canEdit: boolean
+  editReason: string
+  findings: EditorFindingRow[]
+  linked: LinkedFindingRow[]
+}
+
+const EDITABLE_REPORT: readonly ReportStatus[] = ['draft', 'returned']
+const STATUS_EN: Record<ReportStatus, string> = { draft: 'a draft', returned: 'returned', review: 'In Review', approved: 'Approved', exported: 'Exported', delivered: 'Delivered' }
+
+const reportNotFound = (id: string): ServiceFailure => ({
+  kind: 'not-found',
+  message: 'This report does not exist or is not available for your account.',
+  entity: { kind: 'report', id },
+})
+
+/** The read-only reason for a report the actor cannot edit (status →
+ *  read-only project → role, mirroring the legacy editor's lock message). */
+function editGate(report: Report, project: Project, ctx: RequestContext): { canEdit: boolean; editReason: string } {
+  if (!EDITABLE_REPORT.includes(report.status)) {
+    return { canEdit: false, editReason: `This report is ${STATUS_EN[report.status]}, so it is read-only. ${report.status === 'delivered' ? 'Create a new version to make changes.' : 'Wait for the reviewer to decide.'}` }
+  }
+  if (projectLocked(project)) return { canEdit: false, editReason: `Project ${project.id} is closed or cancelled — reports are read-only.` }
+  if (!can(ctx.actor, 'editReport', project)) return { canEdit: false, editReason: `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot edit reports. Ask a Red Team Manager, Operator or Analyst to make the change.` }
+  return { canEdit: true, editReason: '' }
+}
+
+/** Resolves a report for a read or write: missing/out-of-scope → `not-found`
+ *  without leaking existence; an accessible report outside the active project
+ *  context → `forbidden` with the owning project on the entity ref. */
+function resolveReport(db: Db, ctx: RequestContext, id: string): { ok: true; report: Report; project: Project } | { ok: false; failure: ServiceFailure } {
+  const r = db.reports.find((x) => x.id === id)
+  if (!r) return { ok: false, failure: reportNotFound(id) }
+  const project = db.projects.find((p) => p.id === r.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) return { ok: false, failure: reportNotFound(id) }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== r.projectId) {
+    return { ok: false, failure: { kind: 'forbidden', message: `Report ${id} belongs to project ${r.projectId}. Switch to that project to open it.`, entity: { kind: 'report', id, projectId: r.projectId } } }
+  }
+  return { ok: true, report: r, project }
+}
+
+/** Pure editor/preview read: gate, selection rows and the linked findings
+ *  with their redaction markers, all resolved within the report's own project. */
+export function readReportEditor(db: Db, ctx: RequestContext, id: string): ServiceResult<ReportEditorRead> {
+  const t = resolveReport(db, ctx, id)
+  if (!t.ok) return t
+  const { report, project } = t
+  const gate = editGate(report, project, ctx)
+  return {
+    ok: true,
+    data: {
+      report,
+      project: { id: project.id, client: project.client, type: project.type, roeVersion: project.roeVersion, window: project.window },
+      canEdit: gate.canEdit,
+      editReason: gate.editReason,
+      findings: db.findings
+        .filter((f) => f.projectId === project.id)
+        .map((f) => ({ id: f.id, title: f.title, severity: f.severity, status: f.status, asset: f.asset, reportable: CONFIRMED_OR_LATER.includes(f.status), linked: report.findings.includes(f.id) })),
+      linked: report.findings
+        .map((fid) => db.findings.find((f) => f.id === fid && f.projectId === project.id))
+        .filter((f): f is Finding => !!f)
+        .map((f) => ({
+          id: f.id, title: f.title, severity: f.severity, asset: f.asset,
+          evidence: f.evidence.map((ref) => ({ ref, sensitive: !!db.evidence.find((e) => e.id === ref && e.projectId === project.id)?.sensitive })),
+        })),
+    },
+  }
+}
+
+/* ───────────── Section + findings writes (ticket 35) ───────────── */
+
+/** Write gate for report content: read-only project, missing `editReport`
+ *  role or a non-draft report refuse the mutation at the handler — never
+ *  only in the screen (locked approved content stays locked here). */
+function sectionWriteFailure(report: Report, project: Project, ctx: RequestContext): ServiceFailure | undefined {
+  if (projectLocked(project)) return { kind: 'forbidden', message: `Project ${project.id} is closed or cancelled — reports are read-only.` }
+  if (!can(ctx.actor, 'editReport', project)) return { kind: 'forbidden', message: `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot edit reports. Ask a Red Team Manager, Operator or Analyst to make the change.` }
+  if (!EDITABLE_REPORT.includes(report.status)) {
+    return { kind: 'conflict', message: `This report is ${STATUS_EN[report.status]}, so it is read-only. ${report.status === 'delivered' ? 'Create a new version to make changes.' : 'Wait for the reviewer to decide.'}` }
+  }
+  return undefined
+}
+
+const stampOf = (clock: Clock) => formatDemoInstant(clock.now())
+const nextSectionId = (sections: Report['sections']) => {
+  let n = sections.length + 1
+  while (sections.some((s) => s.id === 's' + n)) n++
+  return 's' + n
+}
+
+/** Saves one section's body. A refused save commits nothing — the editor
+ *  keeps its draft and renders the failure. */
+export function saveReportSection(authority: DbAuthority, clock: Clock, ctx: RequestContext, reportId: string, sectionId: string, body: string): ServiceResult<Report> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, reportId)
+  if (!t.ok) return t
+  const denied = sectionWriteFailure(t.report, t.project, ctx)
+  if (denied) return { ok: false, failure: denied }
+  if (!t.report.sections.some((s) => s.id === sectionId)) {
+    return { ok: false, failure: { kind: 'validation', message: `Section ${sectionId} does not exist in ${reportId}.` } }
+  }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === reportId)!
+    const s = r.sections.find((x) => x.id === sectionId)!
+    s.body = body
+    r.updated = at
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === reportId)! }
+}
+
+/** Appends one empty section with a generated id and an audit row. */
+export function addReportSection(authority: DbAuthority, clock: Clock, ctx: RequestContext, reportId: string, title: string): ServiceResult<Report> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, reportId)
+  if (!t.ok) return t
+  const denied = sectionWriteFailure(t.report, t.project, ctx)
+  if (denied) return { ok: false, failure: denied }
+  if (!title.trim()) return { ok: false, failure: { kind: 'validation', message: 'Enter a section title.' } }
+  const at = stampOf(clock)
+  const id = nextSectionId(t.report.sections)
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === reportId)!
+    r.sections.push({ id, title: title.trim(), body: '' })
+    r.updated = at
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Added report section', obj: reportId, projectId: r.projectId, result: 'Success', reason: title.trim() })
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === reportId)! }
+}
+
+/** Removes one section (never the last one) with an audit row. */
+export function removeReportSection(authority: DbAuthority, clock: Clock, ctx: RequestContext, reportId: string, sectionId: string): ServiceResult<Report> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, reportId)
+  if (!t.ok) return t
+  const denied = sectionWriteFailure(t.report, t.project, ctx)
+  if (denied) return { ok: false, failure: denied }
+  if (!t.report.sections.some((s) => s.id === sectionId)) {
+    return { ok: false, failure: { kind: 'validation', message: `Section ${sectionId} does not exist in ${reportId}.` } }
+  }
+  if (t.report.sections.length <= 1) {
+    return { ok: false, failure: { kind: 'validation', message: 'A report needs at least one section.' } }
+  }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === reportId)!
+    r.sections = r.sections.filter((s) => s.id !== sectionId)
+    r.updated = at
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Removed report section', obj: reportId, projectId: r.projectId, result: 'Success', reason: sectionId })
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === reportId)! }
+}
+
+/** Persists a section order; the ids must be a permutation of the report's
+ *  own sections (no duplicates, none missing, none unknown). */
+export function reorderReportSections(authority: DbAuthority, clock: Clock, ctx: RequestContext, reportId: string, order: string[]): ServiceResult<Report> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, reportId)
+  if (!t.ok) return t
+  const denied = sectionWriteFailure(t.report, t.project, ctx)
+  if (denied) return { ok: false, failure: denied }
+  const ids = t.report.sections.map((s) => s.id)
+  if (order.length !== ids.length || [...order].sort().join(',') !== [...ids].sort().join(',')) {
+    return { ok: false, failure: { kind: 'validation', message: `The section order does not match the sections of ${reportId}.` } }
+  }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === reportId)!
+    r.sections = order.map((sid) => r.sections.find((s) => s.id === sid)!)
+    r.updated = at
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Reordered report sections', obj: reportId, projectId: r.projectId, result: 'Success', reason: '' })
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === reportId)! }
+}
+
+/** Replaces the linked-findings selection. Every finding must belong to the
+ *  report's own project; newly added ones must be confirmed-or-later —
+ *  suggested and unreviewed findings are refused (already-linked findings
+ *  may stay, and unlinking is always allowed). */
+export function setReportFindings(authority: DbAuthority, clock: Clock, ctx: RequestContext, reportId: string, ids: string[]): ServiceResult<Report> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, reportId)
+  if (!t.ok) return t
+  const { report, project } = t
+  const denied = sectionWriteFailure(report, project, ctx)
+  if (denied) return { ok: false, failure: denied }
+  for (const fid of ids) {
+    const f = db.findings.find((x) => x.id === fid)
+    if (!f || f.projectId !== project.id) {
+      return { ok: false, failure: { kind: 'validation', message: `Finding ${fid} is not part of project ${project.id}.` } }
+    }
+    if (!report.findings.includes(fid) && !CONFIRMED_OR_LATER.includes(f.status)) {
+      return { ok: false, failure: { kind: 'validation', message: `Finding ${fid} is ${STATUS_TEXT[f.status]} — only confirmed findings can be included in a report.` } }
+    }
+  }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === reportId)!
+    r.findings = [...ids]
+    r.updated = at
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Updated report findings', obj: reportId, projectId: r.projectId, result: 'Success', reason: '' })
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === reportId)! }
+}
+
 /** Builds the typed report service; `guard` is the factory's superseded-scope read guard.
- *  Reads observe scope cancellation; the create captures its context at call time and commits once. */
+ *  Reads observe scope cancellation; writes capture their context at call time and commit once. */
 export function createReportService(
   authority: DbAuthority,
   clock: Clock,
@@ -292,6 +533,13 @@ export function createReportService(
     deliveries: (ctx: RequestContext, query?: DeliveryListQuery) => guard(() => listDeliveries(authority.snapshot(), ctx, query)),
     draftOptions: (ctx: RequestContext) => guard(() => draftOptions(authority.snapshot(), ctx)),
     createDraft: (ctx: RequestContext, input: ReportDraftInput) => Promise.resolve(createReportDraft(authority, clock, ctx, input)),
+    /* Ticket 35: the editor/preview read and the section/findings writes. */
+    editor: (ctx: RequestContext, id: string) => guard(() => readReportEditor(authority.snapshot(), ctx, id)),
+    saveSection: (ctx: RequestContext, id: string, sectionId: string, body: string) => Promise.resolve(saveReportSection(authority, clock, ctx, id, sectionId, body)),
+    addSection: (ctx: RequestContext, id: string, title: string) => Promise.resolve(addReportSection(authority, clock, ctx, id, title)),
+    removeSection: (ctx: RequestContext, id: string, sectionId: string) => Promise.resolve(removeReportSection(authority, clock, ctx, id, sectionId)),
+    reorderSections: (ctx: RequestContext, id: string, order: string[]) => Promise.resolve(reorderReportSections(authority, clock, ctx, id, order)),
+    setFindings: (ctx: RequestContext, id: string, ids: string[]) => Promise.resolve(setReportFindings(authority, clock, ctx, id, ids)),
   }
 }
 
