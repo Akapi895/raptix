@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   Bell, Bot, CheckCheck, ChevronDown, FolderKanban, Layers, LogOut, Menu as MenuIcon, Settings,
-  Pin, Phone, MoreHorizontal, Building2, Clock, AlertTriangle, FlaskConical, RotateCcw, Info, Search, ShieldAlert, Sparkles, Lock, Check as CheckIcon, Loader2, Home, History, CornerDownLeft, OctagonX, Activity, type LucideIcon,
+  Phone, MoreHorizontal, Building2, Clock, AlertTriangle, FlaskConical, RotateCcw, Info, ShieldAlert, Sparkles, Lock, Check as CheckIcon, Loader2, Home, OctagonX, Activity, type LucideIcon,
 } from 'lucide-react'
-import { ROLE_LABEL, useStore, eligibility, sessionPerm, type Route, type Store } from './store'
+import { ROLE_LABEL, useStore, eligibility, type Route, type Store } from './store'
 import { USERS } from './data'
-import { Banner, Button, IconButton, Modal, Field, Textarea, Status, SearchBox, Tabs, Segmented, Avatar, Check, cx } from './ui'
+import { Banner, Button, IconButton, Modal, Field, Textarea, Status, Tabs, Segmented, Avatar, Check, cx } from './ui'
 import { CopilotDrawer } from './screens/ai-copilot'
 import { DemoGuide } from './screens/demo-guide'
 import { NAV, isWide } from './shell/nav'
 import { Sidebar } from './shell/sidebar'
+import { ProjectSwitcher } from './shell/project-switcher'
+import { GlobalSearch } from './shell/search'
 
 type CopilotCtx = { kind: string; id?: string; label: string }
 type Ext = {
@@ -21,188 +23,7 @@ const useS = () => useStore() as unknown as Store & Ext
 
 /* ───────────── Navigation + sidebar: extracted in src/shell/nav.ts + sidebar.tsx (ticket 08a) ───────────── */
 
-/* ───────────── Project switcher ───────────── */
-function ProjectSwitcher() {
-  const { db, accessible, pid, setPid, project, switcherOpen, setSwitcherOpen, go, can, me, loading, route } = useS()
-  const isNew = route.page === 'project-new'
-  const [tab, setTab] = useState<'recent' | 'pinned' | 'all'>('recent')
-  const [q, setQ] = useState('')
-  const [st, setSt] = useState('')
-  const [cl, setCl] = useState('')
-  const accessIds = useMemo(() => new Set(accessible.map((p) => p.id)), [accessible])
-  const clients = useMemo(() => Array.from(new Set(db.projects.map((p) => p.client))).sort(), [db.projects])
-  const statuses = useMemo(() => Array.from(new Set(db.projects.map((p) => p.status))), [db.projects])
-  const list = useMemo(() => {
-    let l = tab === 'all' || q.trim() ? db.projects : accessible
-    if (tab === 'pinned') l = l.filter((p) => p.pinned)
-    if (tab === 'recent') l = l.filter((p) => p.status !== 'closed').slice(0, 5)
-    if (st) l = l.filter((p) => p.status === st)
-    if (cl) l = l.filter((p) => p.client === cl)
-    const k = q.trim().toLowerCase()
-    if (k) l = l.filter((p) => (p.id + p.name + p.client).toLowerCase().includes(k))
-    return l
-  }, [db.projects, accessible, tab, q, st, cl])
-  const sel = 'h-9 min-w-0 flex-1 rounded-[10px] border border-line bg-panel px-2 text-xs text-fg'
-  return (
-    <div className="relative min-w-0">
-      <button onClick={() => setSwitcherOpen(!switcherOpen)} aria-haspopup="dialog" aria-expanded={switcherOpen} aria-label={`Project: ${isNew ? 'New project (draft)' : project ? project.id : 'All Projects'}`} className="flex h-10 max-w-[340px] items-center gap-2 rounded-[10px] border border-line bg-panel px-3 text-sm hover:bg-hover">
-        {loading ? <Loader2 size={16} className="shrink-0 animate-spin text-cyan" aria-hidden /> : <FolderKanban size={16} className="shrink-0 text-accent" aria-hidden />}
-        <span className="truncate font-medium">{isNew ? 'New project (draft)' : project ? <><span className="font-mono text-[13px]">{project.id}</span><span className="max-xl:hidden"> · {project.name}</span></> : 'All Projects'}</span>
-        {project && !isNew && <span className="hidden 2xl:inline"><Status kind="project" value={project.status} size="sm" /></span>}
-        <ChevronDown size={15} className="shrink-0 text-muted" aria-hidden />
-      </button>
-      {switcherOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setSwitcherOpen(false)} aria-hidden />
-          <div role="dialog" aria-label="Select project" className="fixed left-3 right-3 top-[68px] z-50 rounded-2xl border border-line bg-panel p-3 shadow-xl sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-2 sm:w-[480px]">
-            <SearchBox value={q} onChange={setQ} placeholder="Search by ID, name or client…" />
-            <div className="my-3 flex gap-2">
-              <select aria-label="Filter by client" value={cl} onChange={(e) => setCl(e.target.value)} className={sel}>
-                <option value="">All clients</option>{clients.map((c) => <option key={c}>{c}</option>)}
-              </select>
-              <select aria-label="Filter by status" value={st} onChange={(e) => setSt(e.target.value)} className={sel}>
-                <option value="">All statuses</option>{statuses.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-              </select>
-            </div>
-            <div role="tablist" className="mb-2 flex gap-1 border-b border-line">
-              {([['recent', 'Recent'], ['pinned', 'Pinned'], ['all', 'All']] as const).map(([id, l]) => (
-                <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cx('h-9 border-b-2 px-3 text-xs font-medium', tab === id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg')}>{l}</button>
-              ))}
-            </div>
-            <div className="no-scrollbar max-h-[320px] overflow-y-auto">
-              <button onClick={() => setPid('all')} className={cx('mb-1 flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-left hover:bg-hover', pid === 'all' && 'bg-hover')}>
-                <Layers size={16} className="text-cyan" aria-hidden />
-                <div className="flex-1"><div className="text-sm font-medium">All Projects</div><div className="text-xs text-muted">Aggregate view — read-only, cannot start operations</div></div>
-                {pid === 'all' && <CheckIcon size={16} className="text-accent" aria-label="Current" />}
-              </button>
-              {list.length === 0 ? (
-                <div className="px-3 py-8 text-center text-sm text-muted">No matching projects. <button className="text-accent hover:underline" onClick={() => { setQ(''); setSt(''); setCl(''); setTab('all') }}>Clear filters</button></div>
-              ) : list.map((p) => {
-                const ok = accessIds.has(p.id)
-                return (
-                  <button key={p.id} disabled={!ok} title={ok ? undefined : 'No access'} onClick={() => setPid(p.id)} className={cx('flex min-h-14 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left', ok ? 'hover:bg-hover' : 'cursor-not-allowed opacity-60', pid === p.id && 'bg-hover')}>
-                    {p.pinned ? <Pin size={14} className="shrink-0 text-warn" aria-label="Pinned" /> : <span className="w-3.5" />}
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium"><span className="font-mono text-[13px]">{p.id}</span> · {p.name}</div>
-                      <div className="truncate text-xs text-muted">{p.client} · {p.type}{!ok && ' · '}{!ok && <span className="inline-flex items-center gap-1 text-neutral"><Lock size={11} aria-hidden />No access</span>}</div>
-                    </div>
-                    <Status kind="project" value={p.status} size="sm" />
-                    {pid === p.id && <CheckIcon size={16} className="text-accent" aria-label="Current" />}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="mt-3 flex gap-2">
-              <Button variant="secondary" className="flex-1" onClick={() => { setSwitcherOpen(false); go('projects') }}>View all projects</Button>
-              {can('createProject') && <Button variant="primary" className="flex-1" onClick={() => { setSwitcherOpen(false); go('project-new') }}>New project</Button>}
-            </div>
-            {me.role === 'viewer' && <p className="mt-3 text-xs text-muted">Only projects you have been granted access to are available.</p>}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-/* ───────────── Global search / command palette (APP-05) ───────────── */
-let RECENT: string[] = []
-type Hit = { group: string; id: string; label: string; meta?: string; to: () => void }
-const GROUP_ORDER = ['Projects', 'Operations', 'Plans', 'Findings', 'Sessions', 'Agents', 'Pages']
-function GlobalSearch() {
-  const { accessible, db, scoped, go, project, me } = useS()
-  const [open, setOpen] = useState(false)
-  const [q, setQ] = useState('')
-  const [idx, setIdx] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setOpen((o) => !o) }
-    }
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [])
-  useEffect(() => { if (open) { setQ(''); setIdx(0); setTimeout(() => inputRef.current?.focus(), 0) } }, [open])
-  useEffect(() => setIdx(0), [q])
-  const hits = useMemo<Hit[]>(() => {
-    const k = q.trim().toLowerCase()
-    if (!k) return []
-    const m = (...s: (string | undefined)[]) => s.join(' ').toLowerCase().includes(k)
-    const d = db as any
-    const pName = (id: string) => id
-    const ags = scoped((d.agents || []) as { projectId: string; id: string; host: string; status: string }[])
-    const plans = scoped((d.plans || []) as { projectId: string; id: string; title: string; status: string; ver?: string; version: number }[])
-    const sess = scoped((d.sessions || []) as any[]).filter((x) => sessionPerm(db, me, x) !== 'none')
-    const all: Hit[] = [
-      ...accessible.filter((p) => m(p.id, p.name, p.client)).map((p) => ({ group: 'Projects', id: p.id, label: p.name, meta: `${p.status} · ${p.client}`, to: () => go('project', { id: p.id }) })),
-      ...scoped(db.operations).filter((o) => m(o.id, o.name)).map((o) => ({ group: 'Operations', id: o.id, label: o.name, meta: `${o.status} · ${pName(o.projectId)}`, to: () => go('operation', { id: o.id }) })),
-      ...plans.filter((p) => m(p.id, p.title)).map((p) => ({ group: 'Plans', id: p.id, label: p.title, meta: `${p.ver ?? 'v' + p.version} · ${p.status.replace('_', ' ')} · ${p.projectId}`, to: () => go('ai-plan', { id: p.id }) })),
-      ...scoped(db.findings).filter((f) => m(f.id, f.title)).map((f) => ({ group: 'Findings', id: f.id, label: f.title, meta: `${f.status === 'ai_suggested' ? 'AI suggestion' : f.status} · ${f.projectId}`, to: () => go('finding', { id: f.id }) })),
-      ...sess.filter((x) => m(x.id, x.asset, x.account)).map((x) => ({ group: 'Sessions', id: x.id as string, label: `${x.asset}`, meta: `${x.state} · ${x.projectId}`, to: () => go('c2-session', { id: x.id }) })),
-      ...ags.filter((a) => m(a.id, a.host)).map((a) => ({ group: 'Agents', id: a.id, label: a.host, meta: `${a.status} · ${a.projectId}`, to: () => go('agent', { id: a.id }) })),
-      ...NAV.flatMap((g) => g.items).filter((i) => m(i.label, i.page)).map((i) => ({ group: 'Pages', id: i.label, label: 'Open page', to: () => go(i.page) })),
-    ]
-    return GROUP_ORDER.flatMap((g) => all.filter((h) => h.group === g).slice(0, 4))
-  }, [q, db, accessible, scoped, go, me])
-  const choose = (h: Hit) => {
-    const k = q.trim()
-    if (k) RECENT = [k, ...RECENT.filter((x) => x !== k)].slice(0, 5)
-    setOpen(false)
-    h.to()
-  }
-  const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') { e.preventDefault(); setOpen(false) }
-    else if (e.key === 'ArrowDown') { e.preventDefault(); setIdx((i) => Math.min(hits.length - 1, i + 1)) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setIdx((i) => Math.max(0, i - 1)) }
-    else if (e.key === 'Enter' && hits[idx]) { e.preventDefault(); choose(hits[idx]) }
-  }
-  const groups = GROUP_ORDER.filter((g) => hits.some((h) => h.group === g))
-  return (
-    <>
-      <button onClick={() => setOpen(true)} aria-label="Search (Ctrl+K)" className="flex h-10 min-w-0 max-w-md flex-1 items-center gap-2 rounded-[10px] border border-line bg-panel px-3 text-sm text-neutral hover:bg-hover max-md:hidden">
-        <Search size={16} aria-hidden />
-        <span className="flex-1 truncate text-left">Search projects, operations, plans…</span>
-        <kbd className="rounded border border-line bg-subtle px-1.5 font-mono text-xs text-muted max-xl:hidden">⌘K</kbd>
-      </button>
-      <IconButton icon={Search} label="Search" onClick={() => setOpen(true)} className="md:hidden" />
-      {open && (
-        <div className="fixed inset-0 z-[90] flex items-start justify-center p-4 pt-[10vh]">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} aria-hidden />
-          <div role="dialog" aria-modal="true" aria-label="Global search" onKeyDown={onKey} className="relative flex max-h-[70vh] w-full max-w-[640px] flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-xl">
-            <div className="flex items-center gap-3 border-b border-line px-4">
-              <Search size={18} className="shrink-0 text-neutral" aria-hidden />
-              <input ref={inputRef} role="combobox" aria-expanded aria-controls="cmdk-list" aria-label="Search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search projects, operations, plans, findings, sessions, agents, pages…" className="h-14 min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-neutral" />
-              <span className="shrink-0 rounded-full border border-line bg-subtle px-2.5 py-0.5 text-xs font-medium text-muted">{project ? project.id : 'All accessible projects'}</span>
-            </div>
-            <div id="cmdk-list" role="listbox" className="no-scrollbar flex-1 overflow-y-auto p-2">
-              {!q.trim() ? (
-                <div className="px-2 py-2">
-                  <div className="mb-1 px-1 text-xs font-semibold uppercase tracking-wider text-neutral">Recent searches</div>
-                  {RECENT.length === 0 ? <div className="px-1 py-3 text-sm text-muted">No recent searches. Type to search within {project ? project.id : 'all accessible projects'}.</div> : RECENT.map((r) => (
-                    <button key={r} onClick={() => setQ(r)} className="flex h-10 w-full items-center gap-3 rounded-[10px] px-2 text-left text-sm hover:bg-hover"><History size={15} className="text-neutral" aria-hidden />{r}</button>
-                  ))}
-                </div>
-              ) : hits.length === 0 ? (
-                <div className="px-4 py-10 text-center"><div className="text-sm font-semibold">No results</div><div className="mt-1 text-sm text-muted">Try a project ID, operation name or agent hostname{project ? ', or switch to All Projects' : ''}.</div></div>
-              ) : groups.map((g) => (
-                <div key={g} className="mb-1">
-                  <div className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-neutral">{g}</div>
-                  {hits.map((h, i) => h.group === g && (
-                    <button key={h.group + h.id} role="option" aria-selected={i === idx} onMouseEnter={() => setIdx(i)} onClick={() => choose(h)} className={cx('flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-left text-sm', i === idx ? 'bg-accent-soft' : 'hover:bg-hover')}>
-                      <span className={cx('whitespace-nowrap text-[13px]', h.group !== 'Pages' && 'font-mono')}>{h.id}</span><span className="min-w-0 flex-1 truncate text-muted">{h.label}</span>{h.meta && <span className="shrink-0 whitespace-nowrap text-xs text-neutral max-sm:hidden">{h.meta}</span>}
-                      {i === idx && <CornerDownLeft size={14} className="text-neutral" aria-hidden />}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-4 border-t border-line px-4 py-2 text-xs text-muted"><span>↑↓ navigate</span><span>↵ open</span><span>Esc close</span></div>
-          </div>
-        </div>
-      )}
-    </>
-  )
-}
-
+/* ───────────── Project switcher + global search: extracted in src/shell/project-switcher.tsx + search.tsx (ticket 08b) ───────────── */
 /* ───────────── Default AI Mode (global preference for NEW conversations only) ───────────── */
 const AI_MODES = [
   { id: 'observe', label: 'Observe', text: 'AI reads data and answers questions. It cannot change anything or run tools.' },
