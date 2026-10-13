@@ -1,18 +1,16 @@
 /**
  * Shared UI primitives compatibility barrel (ticket 09).
  *
- * Input, button, status, identity, table/pager, tabs/segmented, filter/empty
- * and dialog/menu primitives are extracted into `src/ui/*`; this module
- * re-exports them so existing `./ui` imports keep resolving while the
- * remaining primitives (composed/domain 12, charts 13) still live here. No
- * reimplementation — every extracted export forwards to its owning module.
+ * Input, button, status, identity, table/pager, tabs/segmented, filter/empty,
+ * dialog/menu primitives (09–11) and the composed/domain blocks (12) are
+ * extracted into `src/ui/*`; this module re-exports them so existing `./ui`
+ * imports keep resolving while the chart family and the remaining badge/
+ * console/reason leftovers (13) still live here. No reimplementation — every
+ * extracted export forwards to its owning module.
  */
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AlertTriangle, Ban, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye, Info, Lock, ShieldCheck, ShieldOff, XCircle, WifiOff, FlaskConical, Lightbulb, Zap, type LucideIcon } from 'lucide-react'
-import { useStore } from './store'
+import type { ReactNode } from 'react'
+import { Ban, Clock, Eye, Info, Lightbulb, Lock, WifiOff, Zap, type LucideIcon } from 'lucide-react'
 import { cx } from './ui/cx'
-import { toneText, type Tone } from './ui/status-map'
-import { Button } from './ui/button'
 
 export { cx } from './ui/cx'
 export { STATUS, toneText, type StatusKind, type Tone } from './ui/status-map'
@@ -29,8 +27,16 @@ export { Empty } from './ui/empty'
 export { FilterBar } from './ui/filter-bar'
 export { Modal, Drawer } from './ui/dialog'
 export { Menu } from './ui/menu'
+export { Card, CardHeader, PageHeader } from './ui/layout'
+export { Banner, ApprovalBanner } from './ui/banner'
+export { Skeleton, PageSkeleton } from './ui/skeleton'
+export { DescList, Kpi, Progress, Timeline, Stepper } from './ui/data'
+export { DemoTag } from './ui/demo-tag'
+export { Gated, Locked, PersonaHint } from './ui/guard'
+export { useGuard } from './ui/use-guard'
+export { useDebounced, useMemoList } from './ui/use-debounced'
 
-/* ───────────── V2 badges / banners ───────────── */
+/* ───────────── V2 badges / console ───────────── */
 export function AiModeBadge({ mode }: { mode: 'observe' | 'propose' | 'execution' }) {
   const m = {
     observe: { label: 'Observe', icon: Eye, cls: 'border-cyan/30 bg-info-soft text-cyan' },
@@ -39,26 +45,6 @@ export function AiModeBadge({ mode }: { mode: 'observe' | 'propose' | 'execution
   }[mode]
   return <span className={cx('inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-xs font-medium', m.cls)}><m.icon size={13} aria-hidden />{m.label}</span>
 }
-export function ApprovalBanner({ state, title, children, action }: { state: 'none' | 'waiting' | 'approved' | 'rejected' | 'expired'; title?: string; children?: ReactNode; action?: ReactNode }) {
-  const m = {
-    none: { t: 'Approval not requested', icon: ShieldOff, cls: 'border-line bg-subtle text-muted' },
-    waiting: { t: 'Waiting for approval', icon: Clock, cls: 'border-warn/30 bg-warn-soft text-warn' },
-    approved: { t: 'Approved', icon: ShieldCheck, cls: 'border-ok/30 bg-ok-soft text-ok' },
-    rejected: { t: 'Rejected', icon: XCircle, cls: 'border-bad/30 bg-bad-soft text-bad' },
-    expired: { t: 'Approval expired', icon: Clock, cls: 'border-line bg-subtle text-muted' },
-  }[state]
-  return (
-    <div role={state === 'rejected' ? 'alert' : 'status'} className={cx('flex w-full items-start gap-3 rounded-xl border px-4 py-3', m.cls)}>
-      <m.icon size={18} className="mt-0.5 shrink-0" aria-hidden />
-      <div className="min-w-0 flex-1 text-sm">
-        <div className="font-semibold">{title || m.t}</div>
-        {children && <div className="mt-0.5 text-fg/90">{children}</div>}
-      </div>
-      {action && <div className="shrink-0">{action}</div>}
-    </div>
-  )
-}
-export const DemoTag = () => <span className="inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-full border border-line bg-subtle px-2 text-xs font-medium text-muted"><FlaskConical size={12} aria-hidden />Demo data</span>
 export const ConsolePane = ({ children, className }: { children: ReactNode; className?: string }) => (
   <div className={cx('no-scrollbar overflow-auto rounded-lg border border-console-line bg-console font-mono text-[12.5px] leading-relaxed text-console-fg', className)}>{children}</div>
 )
@@ -66,137 +52,6 @@ export type ReasonCodeValue = 'Missing approval' | 'Out of scope' | 'Expired gra
 export function ReasonCode({ code }: { code: ReasonCodeValue }) {
   const I = ({ 'Missing approval': Clock, 'Out of scope': Ban, 'Expired grant': Clock, 'Agent unavailable': WifiOff, 'Project not selected': Info, 'Permission denied': Lock } as Record<string, LucideIcon>)[code] || Info
   return <span className="inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-md border border-line bg-subtle px-1.5 text-xs font-medium text-muted"><I size={12} aria-hidden />{code}</span>
-}
-
-/* ───────────── Layout ───────────── */
-export const Card = ({ children, className, pad = true }: { children: ReactNode; className?: string; pad?: boolean }) => (
-  <div className={cx('rounded-xl border border-line bg-panel', pad && 'p-5', className)}>{children}</div>
-)
-export function CardHeader({ title, sub, actions }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode }) {
-  return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h3 className="text-[15px] font-semibold text-fg">{title}</h3>
-        {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
-      </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-    </div>
-  )
-}
-export function PageHeader({ title, sub, actions, back, meta, crumbs }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode; back?: { label: string; to: () => void }; meta?: ReactNode; crumbs?: { label: string; to?: () => void }[] }) {
-  return (
-    <div className="mb-6">
-      {crumbs && (
-        <nav aria-label="Breadcrumb" className="mb-2 flex flex-wrap items-center gap-1 text-xs text-muted">
-          {crumbs.map((c, i) => (
-            <span key={i} className="flex items-center gap-1">
-              {c.to ? <button onClick={c.to} className="hover:text-fg hover:underline">{c.label}</button> : <span className="text-fg">{c.label}</span>}
-              {i < crumbs.length - 1 && <ChevronRight size={12} />}
-            </span>
-          ))}
-        </nav>
-      )}
-      {back && (
-        <button onClick={back.to} className="mb-2 inline-flex items-center gap-1 text-xs text-muted hover:text-fg">
-          <ChevronLeft size={14} /> {back.label}
-        </button>
-      )}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-[22px] font-semibold leading-tight tracking-tight text-fg">{title}</h1>
-            {meta}
-          </div>
-          {sub && <p className="mt-1 max-w-3xl text-sm text-muted">{sub}</p>}
-        </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-      </div>
-    </div>
-  )
-}
-
-/* ───────────── Banner / empty / skeleton ───────────── */
-export function Banner({ tone = 'info', title, children, action, icon }: { tone?: 'info' | 'warn' | 'bad' | 'ok'; title?: ReactNode; children?: ReactNode; action?: ReactNode; icon?: LucideIcon }) {
-    const m = { info: ['text-cyan bg-info-soft border-cyan/30', Info], warn: ['text-warn bg-warn-soft border-warn/30', AlertTriangle], bad: ['text-bad bg-bad-soft border-bad/30', XCircle], ok: ['text-ok bg-ok-soft border-ok/30', CheckCircle2] }[tone] as [string, LucideIcon]
-  const I = icon || m[1]
-  return (
-    <div role={tone === 'bad' || tone === 'warn' ? 'alert' : 'status'} className={cx('mb-4 flex items-start gap-3 rounded-xl border px-4 py-3', m[0])}>
-      <I size={18} className="mt-0.5 shrink-0" aria-hidden />
-      <div className="min-w-0 flex-1 text-sm">
-        {title && <div className="font-semibold">{title}</div>}
-        {children && <div className="text-fg/90">{children}</div>}
-      </div>
-      {action && <div className="shrink-0">{action}</div>}
-    </div>
-  )
-}
-export const Skeleton = ({ className }: { className?: string }) => <div className={cx('animate-pulse rounded-md bg-hover', className)} />
-export function PageSkeleton() {
-  return (
-    <div aria-busy="true" aria-label="Loading data">
-      <Skeleton className="mb-3 h-7 w-64" /><Skeleton className="mb-8 h-4 w-96" />
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}</div>
-      <Skeleton className="h-72" />
-    </div>
-  )
-}
-
-/* ───────────── Data display ───────────── */
-export function DescList({ items, cols = 2 }: { items: { k: ReactNode; v: ReactNode }[]; cols?: 1 | 2 | 3 }) {
-  return (
-    <dl className={cx('grid gap-x-8 gap-y-4', cols === 1 ? 'grid-cols-1' : cols === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3')}>
-      {items.map((i, n) => (
-        <div key={n} className="min-w-0"><dt className="mb-1 text-xs text-muted">{i.k}</dt><dd className="break-words text-sm text-fg">{i.v || '—'}</dd></div>
-      ))}
-    </dl>
-  )
-}
-export function Kpi({ label, value, sub, tone, onClick, icon: I }: { label: string; value: ReactNode; sub?: ReactNode; tone?: Tone; onClick?: () => void; icon?: LucideIcon }) {
-  const C: any = onClick ? 'button' : 'div'
-  return (
-    <C onClick={onClick} className={cx('rounded-xl border border-line bg-panel p-4 text-left', onClick && 'transition hover:bg-hover')}>
-      <div className="mb-2 flex items-center justify-between text-xs text-muted"><span>{label}</span>{I && <I size={15} aria-hidden className={tone ? toneText(tone) : ''} />}</div>
-      <div className={cx('text-2xl font-semibold tabular-nums', tone && toneText(tone))}>{value}</div>
-      {sub && <div className="mt-1 text-xs text-muted">{sub}</div>}
-    </C>
-  )
-}
-export function Progress({ value, tone = 'accent', label }: { value: number; tone?: Tone; label?: string }) {
-  const bg = { ok: 'bg-ok', warn: 'bg-warn', bad: 'bg-bad', accent: 'bg-accent', cyan: 'bg-cyan', neutral: 'bg-neutral' }[tone]
-  return (
-    <div className="flex items-center gap-2">
-      <div role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={100} aria-label={label} className="h-1.5 flex-1 overflow-hidden rounded-full bg-hover"><div className={cx('h-full rounded-full', bg)} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div>
-      <span className="w-9 text-right text-xs tabular-nums text-muted">{value}%</span>
-    </div>
-  )
-}
-export function Timeline({ items }: { items: { at: string; title: ReactNode; sub?: ReactNode; tone?: Tone }[] }) {
-  return (
-    <ol className="relative ml-2 border-l border-line">
-      {items.map((i, n) => (
-        <li key={n} className="relative pb-5 pl-6 last:pb-0">
-          <span className={cx('absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-panel', { ok: 'bg-ok', warn: 'bg-warn', bad: 'bg-bad', accent: 'bg-accent', cyan: 'bg-cyan', neutral: 'bg-neutral' }[i.tone || 'accent'])} />
-          <div className="text-sm text-fg">{i.title}</div>
-          {i.sub && <div className="mt-0.5 text-xs text-muted">{i.sub}</div>}
-          <div className="mt-0.5 font-mono text-xs text-neutral">{i.at}</div>
-        </li>
-      ))}
-    </ol>
-  )
-}
-export function Stepper({ steps, current, onJump }: { steps: string[]; current: number; onJump?: (i: number) => void }) {
-  return (
-    <ol className="no-scrollbar mb-6 flex gap-2 overflow-x-auto">
-      {steps.map((s, i) => (
-        <li key={s} className="flex-1" style={{ minWidth: 130 }}>
-          <button disabled={!onJump || i > current} onClick={() => onJump?.(i)} className={cx('flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition', i === current ? 'border-accent bg-accent-soft text-fg' : i < current ? 'border-ok/40 text-fg hover:bg-hover' : 'border-line text-muted')}>
-            <span className={cx('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold', i < current ? 'bg-ok text-white' : i === current ? 'bg-accent text-white' : 'bg-hover')}>{i < current ? '✓' : i + 1}</span>
-            <span className="font-medium">{s}</span>
-          </button>
-        </li>
-      ))}
-    </ol>
-  )
 }
 
 /* ───────────── SVG charts ───────────── */
@@ -249,55 +104,3 @@ export function LineChart({ series, labels, height = 160 }: { series: { name: st
     </svg>
   )
 }
-
-/* ───────────── Guards ───────────── */
-/** Visibly disabled control; hover, focus or click explains why */
-export function Gated({ allowed, reason, children }: { allowed: boolean; reason: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false)
-  if (allowed) return <>{children}</>
-  return (
-    <span
-      className="relative inline-flex" aria-disabled="true" tabIndex={0}
-      onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}
-      onClick={() => setOpen(true)} onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); if (e.key === 'Enter' || e.key === ' ') setOpen(true) }}
-    >
-      <span className="inline-flex cursor-not-allowed opacity-50" inert>{children}</span>
-      {open && (
-        <span role="tooltip" className="absolute left-0 top-full z-50 mt-1.5 w-64 rounded-xl border border-line bg-panel p-3 text-left shadow-xl">
-          <span className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-fg"><Lock size={12} aria-hidden />Why is this disabled?</span>
-          <span className="block text-xs font-normal text-muted">{reason}</span>
-        </span>
-      )}
-    </span>
-  )
-}
-/** Shows why an action is locked (no permission / read-only) */
-export function Locked({ reason }: { reason: string }) {
-  return <span className="inline-flex items-center gap-1.5 text-xs text-muted"><Lock size={13} aria-hidden />{reason}</span>
-}
-/** Blocks actions on read-only projects; always with a reason */
-export function useGuard(projectId?: string) {
-  const s = useStore()
-  const ro = s.readOnly(projectId)
-  const p = s.db.projects.find((x) => x.id === (projectId || s.pid))
-  const reason = !ro ? '' : s.me.role === 'viewer' ? 'The Viewer role has read-only access.' : p && p.status === 'closed' ? 'Project is closed — read-only.' : 'Project is read-only.'
-  return { ro, reason }
-}
-/** Suggests switching persona when the current role cannot perform the next demo step */
-export function PersonaHint({ need, persona, children }: { need: string; persona: string; children?: ReactNode }) {
-  const { me, setMe } = useStore()
-  return (
-    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-line bg-hover/50 px-4 py-3 text-sm">
-      <Info size={16} className="text-cyan" aria-hidden />
-      <span className="flex-1 text-muted">{children || `This step requires ${need}. You are signed in as ${me.role}.`}</span>
-      <Button size="sm" onClick={() => setMe(persona)}>Switch to {persona}</Button>
-    </div>
-  )
-}
-
-export function useDebounced<T>(v: T, ms = 200) {
-  const [d, setD] = useState(v)
-  useEffect(() => { const t = setTimeout(() => setD(v), ms); return () => clearTimeout(t) }, [v, ms])
-  return d
-}
-export const useMemoList = useMemo
