@@ -4,8 +4,8 @@
  * accessible projects; the heatmap separates detected / undetected (verified)
  * / no data (unverified) and never reads a disconnected source as
  * "undetected"; keyboard-operable matrix interactions and router-only
- * navigation; the legacy→Query bridge updates the aggregate after a legacy
- * step review without a reload; late responses for a superseded scope are
+ * navigation; the Query bridge updates the aggregate after a recorded step
+ * review without a reload; late responses for a superseded scope are
  * cancelled. Plus focused handler edges (planned ≠ executed, non-member
  * denial, aggregate scope folding).
  */
@@ -21,8 +21,12 @@ import type { ConsoleServices } from '../../domain/service-factory'
 import { analysisRoutes } from '../../screens/e-analysis'
 import { seed } from '../../data'
 import { coverageOf } from './service'
+import { reviewOperationStep } from '../operations/service'
+import type { ActorRef, RequestContext } from '../../domain/service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
+
+const TAYLOR: ActorRef = { id: 'Taylor Chen', role: 'operator' }
 
 function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
   const store = useStore()
@@ -127,13 +131,15 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
     h.unmount()
   })
 
-  it('a legacy step review updates the aggregate without a reload', async () => {
+  it('a recorded step review updates the aggregate without a reload', async () => {
     const h = mountAnalysis('Taylor Chen', '#/analysis?tab=matrix')
     h.show()
     h.run(() => h.store().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getByText(/11\/22 techniques tested/)).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /T1119/ })).toHaveTextContent('Planned Only')
-    h.run(() => h.store().A.reviewStep('OP-014', 'S11', 'approve'))
+    // Ticket 65 retired the A.reviewStep wrapper; the review commits through
+    // the same typed handler the wrapper delegated to.
+    h.run(() => { reviewOperationStep(h.svc().authority, h.svc().clock, { actor: TAYLOR, projectId: 'RT-2026-014', corr: 'legacy' }, 'OP-014', 'S11', 'approve') })
     await waitFor(() => expect(screen.getByText(/12\/22 techniques tested/)).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /T1119/ })).toHaveTextContent('Executed & No Data')
     h.unmount()
