@@ -12,6 +12,16 @@ afterEach(() => {
   window.location.hash = ''
 })
 
+/* Ticket 47: the console reads through the typed session query, so waits are
+   needed for the fetch + the bridge refetch. advanceTimersByTimeAsync(0)
+   fires React Query's setTimeout(0) notifications without advancing the demo
+   clock (the countdowns below stay exact). */
+const flush = async () => { await act(async () => { await vi.advanceTimersByTimeAsync(0) }) }
+async function until(check: () => boolean) {
+  for (let i = 0; i < 60 && !check(); i++) await flush()
+  expect(check()).toBe(true)
+}
+
 function GrantWatchProbe() {
   useGrantWatch()
   return null
@@ -24,7 +34,7 @@ describe('grant countdown against the simulated clock (requirement 50)', () => {
     expect(minutesUntil('Oct 13, 2026, 10:42 AM (UTC+7)', '10:42')).toBe(0)
   })
 
-  it('a live grant survives several 15-second watch ticks and shows its remaining time', () => {
+  it('a live grant survives several 15-second watch ticks and shows its remaining time', async () => {
     // setPid must run while the route is NOT a detail page: its redirect branch
     // writes location.hash inside a state updater, which lands after go()'s write.
     window.location.hash = '#/c2'
@@ -33,7 +43,7 @@ describe('grant countdown against the simulated clock (requirement 50)', () => {
       view.store().setPid('RT-2026-014')
       view.store().go('c2-console', { id: 'SS-041' })
     })
-    expect(screen.getByText(/Expires in 33 min/)).toBeInTheDocument()
+    await until(() => screen.queryByText(/Expires in 33 min/) !== null)
     act(() => {
       vi.advanceTimersByTime(90_000)
     })
@@ -44,18 +54,18 @@ describe('grant countdown against the simulated clock (requirement 50)', () => {
 })
 
 describe('grant expiry (requirement 50/51 baseline: enforced by the mounted useGrantWatch)', () => {
-  it('the watch removes the grant at the deadline and the console locks its input', () => {
+  it('the watch removes the grant at the deadline and the console locks its input', async () => {
     window.location.hash = '#/c2'
     const view = mountScreen(Console, 'Taylor Chen')
     act(() => {
       view.store().setPid('RT-2026-014')
       view.store().go('c2-console', { id: 'SS-041' })
     })
-    expect(screen.getByRole('button', { name: 'Show host summary' })).toBeEnabled()
+    await until(() => screen.queryByRole('button', { name: 'Show host summary' }) !== null)
     act(() => {
       vi.advanceTimersByTime(1_980_000)
     })
-    expect(screen.getByLabelText('Command input')).toBeDisabled()
+    await until(() => screen.queryByLabelText('Command input')?.hasAttribute('disabled') === true)
     expect(screen.getAllByText(/Access expired\. Request a new grant\./).length).toBeGreaterThan(0)
     view.unmount()
   })
@@ -75,13 +85,14 @@ describe('grant expiry (requirement 50/51 baseline: enforced by the mounted useG
     view.unmount()
   })
 
-  it('an in-flight command rechecks access before committing output (requirement 113 deadline semantics)', () => {
+  it('an in-flight command rechecks access before committing output (requirement 113 deadline semantics)', async () => {
     window.location.hash = '#/c2'
     const view = mountScreen(Console, 'Taylor Chen')
     act(() => {
       view.store().setPid('RT-2026-014')
       view.store().go('c2-console', { id: 'SS-041' })
     })
+    await until(() => screen.queryByRole('button', { name: 'Show host summary' }) !== null)
     const userLines = () => view.store().db.sessions.find((s) => s.id === 'SS-041')!.transcript.filter((l) => l.who === 'user').length
     expect(userLines()).toBe(2)
     fireEvent.click(screen.getByRole('button', { name: 'Show host summary' }))

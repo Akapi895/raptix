@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Ban, Bot, Clock, Copy, Eye, FileText, Loader2, Lock, OctagonX, Radio, ShieldCheck, TerminalSquare, Unplug } from 'lucide-react'
-import { useStore, sessionPerm, hhmm } from '../store'
-import type { Db, Session } from '../data'
-import type { Persona } from '../store'
-import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui'
+import { useStore, hhmm } from '../store'
+import type { Session } from '../data'
+import { C2ReadError, useC2Session, useC2Sessions } from '../features/c2/query'
+import type { C2AccessInfo } from '../features/c2/service'
+import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui'
 
 export const SELECT_PROJECT = 'Select a project to continue'
 export const MIN_REASON = 20
@@ -16,13 +17,6 @@ export function minutesUntil(exp: string, nowHHMM: string) {
   const h = (parseInt(m[1]) % 12) + (m[3] === 'PM' ? 12 : 0)
   const [nh, nm] = nowHHMM.split(':').map(Number)
   return h * 60 + parseInt(m[2]) - (nh * 60 + nm)
-}
-
-export function useSession(id?: string) {
-  const { db, me, pid } = useStore()
-  const s = db.sessions.find((x) => x.id === id)
-  const perm = s ? sessionPerm(db, me, s) : 'none'
-  return { s, perm, allProjects: pid === 'all' }
 }
 
 /* ───────── Request access drawer (C2-08) ───────── */
@@ -73,23 +67,9 @@ export function RequestAccessDrawer({ session, open, onClose, initialMode = 'int
   )
 }
 
-/* ───────── Access state (connection and access are separate) ───────── */
-export type AccessKey = 'none' | 'read-only' | 'interactive' | 'pending' | 'expired' | 'rejected' | 'changes'
-export interface AccessInfo { key: AccessKey; label: string; tone: 'ok' | 'warn' | 'bad' | 'cyan' | 'neutral'; detail?: string }
-export function accessOf(db: Db, me: Persona, s: Session): AccessInfo {
-  if (sessionPerm(db, me, s) === 'none') return { key: 'none', label: 'None', tone: 'neutral', detail: 'No access to this project' }
-  if (['terminated', 'revoking'].includes(s.state)) return { key: 'none', label: 'None', tone: 'neutral', detail: 'Session ended' }
-  const g = s.grants.find((x) => x.user === me.name)
-  if (g) { const until = g.expires.replace('Oct 13, 2026, ', ''); return g.perm === 'interactive' ? { key: 'interactive', label: `Interactive until ${until}`, tone: 'warn' } : { key: 'read-only', label: `Read-only until ${until}`, tone: 'cyan' } }
-  const last = db.sessionRequests.find((r) => r.sessionId === s.id && r.by === me.name)
-  if (last?.status === 'pending') return { key: 'pending', label: 'Pending request', tone: 'warn', detail: last.id }
-  if (last?.status === 'expired') return { key: 'expired', label: 'Expired — read-only', tone: 'neutral', detail: last.id }
-  if (last?.status === 'rejected') return { key: 'rejected', label: 'Request rejected — read-only', tone: 'bad', detail: last.id }
-  if (last?.status === 'changes') return { key: 'changes', label: 'Changes requested — read-only', tone: 'warn', detail: last.id }
-  return { key: 'read-only', label: 'Read-only', tone: 'cyan' }
-}
+/* ───────── Access state (derived by the typed session read — ticket 47) ───────── */
 const TONE_CLS = { ok: 'text-ok', warn: 'text-warn', bad: 'text-bad', cyan: 'text-cyan', neutral: 'text-muted' }
-export function AccessChip({ a }: { a: AccessInfo }) {
+export function AccessChip({ a }: { a: C2AccessInfo }) {
   return <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-panel px-2 py-0.5 text-xs font-medium', TONE_CLS[a.tone])}><span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />{a.label}{a.detail && a.key !== 'none' && <span className="font-mono text-muted">· {a.detail}</span>}</span>
 }
 
@@ -172,38 +152,44 @@ export function useRevoke() {
   return Object.assign(revoke, { retry })
 }
 
-/* ───────── Session detail (C2-V3-04) ───────── */
+/* ───────── Session detail (C2-V3-04, ticket 47: typed reads) ───────── */
 const Row = ({ children }: { children: ReactNode }) => <div className="flex flex-wrap items-center gap-2">{children}</div>
 
 export function SessionDetail() {
-  const { db, route, go, me, can, scoped } = useStore()
+  const { route, go, me, can, pid } = useStore()
   useGrantWatch()
-  const { s, perm, allProjects } = useSession(route.id)
+  const allProjects = pid === 'all'
   const [drawer, setDrawer] = useState(false)
   const terminate = useTerminate()
   const revoke = useRevoke()
   const rs = useRevokeSim()
+  const detail = useC2Session(route.id)
   const back = { label: 'C2 & Sessions', to: () => go('c2', { tab: 'sessions' }) }
-  if (!s || !scoped([s]).length) return <><PageHeader title="Session not found" back={back} /><Empty icon={Radio} title={`No session "${route.id}" in this project`} action={<Button onClick={() => go('c2', { tab: 'sessions' })}>Back to sessions</Button>}>It may have been removed, or it belongs to another project. Switch project to view it.</Empty></>
+  if (detail.isPending) return <div aria-busy="true" aria-label="Loading session"><PageSkeleton /></div>
+  if (detail.isError || !detail.data) {
+    return <><PageHeader title="Session not found" back={back} /><Empty icon={Radio} title={`No session "${route.id}" in this project`} action={<Button onClick={() => go('c2', { tab: 'sessions' })}>Back to sessions</Button>}>{(detail.error as C2ReadError | null)?.failure.message ?? 'It may have been removed, or it belongs to another project. Switch project to view it.'}</Empty></>
+  }
+  const read = detail.data
+  const { session: s, perm } = read
   if (perm === 'none' && me.role !== 'viewer') return <><PageHeader title={s.id} back={back} /><Empty icon={Lock} title="You do not have access to this session" action={<Button onClick={() => go('c2', { tab: 'sessions' })}>Back to sessions</Button>}>Sessions are limited to projects you are a member of.</Empty></>
   const viewer = me.role === 'viewer'
-  const acc = accessOf(db, me, s)
-  const asset = db.assets.find((a) => a.name === s.asset && a.projectId === s.projectId)
-  const agent = db.agents.find((a) => a.id === s.agentId)
-  const channel = db.channels.find((c) => c.id === s.channelId)
-  const project = db.projects.find((p) => p.id === s.projectId)
-  const op = db.operations.find((o) => o.id === s.opId)
-  const reqs = db.sessionRequests.filter((r) => r.sessionId === s.id)
+  const acc = read.access
+  const asset = read.asset
+  const agent = read.agent
+  const channel = read.channel
+  const project = read.project
+  const op = read.op
+  const reqs = read.requests
   const approved = reqs.find((r) => r.status === 'approved')
-  const myGrant = s.grants.find((g) => g.user === me.name)
+  const myGrant = read.myGrant
   const live = s.state === 'connected'
   const dead = ['expired', 'terminated', 'revoking'].includes(s.state)
   const myPending = reqs.find((r) => r.by === me.name && r.status === 'pending')
   const blocked = allProjects ? SELECT_PROJECT : viewer ? 'The Client / Viewer role cannot open sessions.' : ''
   const canInteractive = perm === 'interactive' && live && !blocked
-  const findings = db.findings.filter((f) => f.asset === s.asset && f.projectId === s.projectId)
-  const audit = db.audit.filter((a) => a.obj === s.id && a.projectId === s.projectId).slice(0, 5)
-  const evidence = db.evidence.filter((e) => e.projectId === s.projectId && e.opId === s.opId)
+  const audit = read.audit.slice(0, 5)
+  const evidence = read.evidence
+  const findings = read.findings
   const reqWhy = blocked || (!can('interactive') ? 'Your role cannot request interactive access.' : myPending ? `Request ${myPending.id} is already pending approval.` : dead ? `Session is ${s.state}.` : perm === 'interactive' ? 'You already have interactive access.' : '')
   const intReason = blocked || (dead ? `Session is ${s.state}. Request access again once a new session exists.` : s.state === 'disconnected' ? 'Session is disconnected. Interactive input is unavailable until it reconnects.' : perm !== 'interactive' ? (myPending ? `Access request ${myPending.id} is awaiting approval.` : 'You have read-only access. Request interactive access to continue.') : 'Session is not connected.')
   const failFor = (u: string) => rs.fails.find((f) => f.sessionId === s.id && f.user === u)
@@ -235,7 +221,7 @@ export function SessionDetail() {
           <Card><CardHeader title="Connection health" sub="Independent of any access grant" /><DescList items={[
             { k: 'Connection', v: <Status kind="session" value={s.state} size="sm" /> },
             { k: 'Channel', v: channel ? <span className="inline-flex items-center gap-2"><IdLink onClick={() => go('c2-channel', { id: channel.id })}>{channel.id}</IdLink><Status kind="channel" value={channel.status} size="sm" /></span> : '—' },
-            { k: 'Last observed', v: s.last }, { k: 'Last heartbeat', v: channel?.last || s.last }, { k: 'Latency', v: db.c2Nodes.find((n) => n.id === channel?.nodeId)?.latency || '—' },
+            { k: 'Last observed', v: s.last }, { k: 'Last heartbeat', v: channel?.last || s.last }, { k: 'Latency', v: channel?.nodeLatency || '—' },
             { k: 'Disconnect reason', v: s.state === 'disconnected' ? `Heartbeat lost — agent ${s.agentId} (simulated)` : s.state === 'terminated' ? 'Terminated by operator' : '—' },
           ]} />
             <p className="mt-3 flex items-center gap-1.5 text-xs text-muted"><DemoTag />All values are simulated.</p></Card>
@@ -303,7 +289,7 @@ export function TLine({ l }: { l: Session['transcript'][number] }) {
   return <div className="flex gap-3 py-0.5"><span className="shrink-0 text-console-muted">{l.ts}</span><span className={cx('w-20 shrink-0 font-semibold', l.who === 'user' ? 'text-console-fg' : 'text-console-muted')}>{who}</span><span className="min-w-0 break-words">{l.text}</span></div>
 }
 
-/* ───────── Interactive console (C2-V3-05, one component for Reverse and Web) ───────── */
+/* ───────── Interactive console (C2-V3-05, ticket 47: typed reads; commands stay on the 46 grant-enforced transaction) ───────── */
 const ACTIONS: Record<Session['kind'], string[]> = {
   reverse: ['Show host summary', 'List running services (simulated)', 'Show network interfaces (simulated)', 'Show current account (simulated)'],
   web: ['Show application profile', 'List exposed routes (simulated)', 'Show response headers (simulated)', 'Check session health'],
@@ -311,9 +297,9 @@ const ACTIONS: Record<Session['kind'], string[]> = {
 const BUSY_MS = 2500
 
 export function Console() {
-  const { db, route, go, me, can, A, toast, confirm, scoped } = useStore()
+  const { db, route, go, me, can, A, toast, confirm, pid } = useStore()
   useGrantWatch()
-  const { s, perm, allProjects } = useSession(route.id)
+  const allProjects = pid === 'all'
   const [drawer, setDrawer] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [tab, setTab] = useState('transcript')
@@ -324,18 +310,25 @@ export function Console() {
   const rs = useRevokeSim()
   const timer = useRef<number | undefined>(undefined)
   const stRef = useRef('')
+  const detail = useC2Session(route.id)
+  const list = useC2Sessions({})
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 15000); return () => { clearInterval(t); clearTimeout(timer.current) } }, [])
-  const grant = s?.grants.find((g) => g.user === me.name && g.perm === 'interactive')
-  const left = grant ? minutesUntil(grant.expires, hhmm()) : 0
   const back = { label: 'C2 & Sessions', to: () => go('c2', { tab: 'sessions' }) }
-  if (!s || !scoped([s]).length) return <><PageHeader title="Console unavailable" back={back} /><Empty icon={TerminalSquare} title="Session not found in this project" action={<Button onClick={() => go('c2', { tab: 'sessions' })}>Back to sessions</Button>}>This session does not exist or belongs to another project.</Empty></>
+  if (detail.isPending) return <div aria-busy="true" aria-label="Loading console"><PageSkeleton /></div>
+  if (detail.isError || !detail.data) {
+    return <><PageHeader title="Console unavailable" back={back} /><Empty icon={TerminalSquare} title="Session not found in this project" action={<Button onClick={() => go('c2', { tab: 'sessions' })}>Back to sessions</Button>}>{(detail.error as C2ReadError | null)?.failure.message ?? 'This session does not exist or belongs to another project.'}</Empty></>
+  }
+  const read = detail.data
+  const { session: s, perm } = read
   if (perm === 'none') return <><PageHeader title={s.id} back={back} /><Empty icon={Lock} title="Console not available" action={<Button onClick={() => go('c2-session', { id: s.id })}>View session metadata</Button>}>Your role or project membership does not permit viewing this console.</Empty></>
 
-  const asset = db.assets.find((a) => a.name === s.asset && a.projectId === s.projectId)
-  const project = db.projects.find((p) => p.id === s.projectId)
+  const grant = read.myGrant?.perm === 'interactive' ? read.myGrant : undefined
+  const left = grant ? minutesUntil(grant.expires, hhmm()) : 0
+  const asset = read.asset
+  const project = read.project
   const hasExpiredLine = !grant && s.transcript.some((l) => l.text.includes(`grant for ${me.name} expired`))
   const hasRevokedLine = !grant && s.transcript.some((l) => l.text.includes(`Access for ${me.name} revoked`))
-  const myReq = db.sessionRequests.find((r) => r.sessionId === s.id && r.by === me.name)
+  const myReq = read.requests.find((r) => r.by === me.name)
   const outOfScope = asset?.scope === 'out'
   const blocked = allProjects ? SELECT_PROJECT : ''
   const myFail = rs.fails.find((f) => f.sessionId === s.id && s.grants.some((g) => g.user === f.user))
@@ -354,8 +347,8 @@ export function Console() {
   const canType = st === 'interactive' && !blocked && !busyNow
   const canRequest = !blocked && can('interactive') && !['terminated', 'disconnected', 'pending', 'interactive', 'revokefail'].includes(st)
   const renew = st === 'expired' || st === 'revoked'
-  const evidence = db.evidence.filter((e) => e.projectId === s.projectId && e.opId === s.opId)
-  const events = db.audit.filter((a) => a.obj === s.id && a.projectId === s.projectId)
+  const evidence = read.evidence
+  const events = read.audit
   const run = (label: string) => {
     setBusy(label)
     /* Ticket 46: the command handler re-checks the grant and its deadline at
@@ -367,7 +360,7 @@ export function Console() {
       if (!res.ok) toast('Command interrupted — access changed while it was running.', 'warn')
     }, BUSY_MS)
   }
-  const mine = db.sessions.filter((x) => x.projectId === s.projectId && sessionPerm(db, me, x) !== 'none')
+  const mine = (list.data?.items ?? []).filter((x) => x.projectId === s.projectId && x.access.key !== 'none')
   const statusLabel = busyNow ? 'Busy — command in progress' : { interactive: 'Interactive authorized', readonly: 'Read-only', pending: 'Pending access', expired: 'Expired', revoked: 'Revoked', terminated: s.state === 'revoking' ? 'Termination requested' : 'Terminated', disconnected: 'Disconnected', denied: 'Policy denied', revokefail: 'Revocation failed' }[st]
   const stop = db.stopState && db.stopState.id === s.opId ? db.stopState : null
   const doRefresh = () => { setRefresh('busy'); window.setTimeout(() => setRefresh('still'), 1200) }
@@ -380,7 +373,7 @@ export function Console() {
         <Mono>{s.id}</Mono><span className="rounded-md border border-line bg-subtle px-2 py-0.5 text-xs font-medium">{kindLabel(s.kind)}</span>
         <span className="text-sm text-muted"><Mono>{s.projectId}</Mono> / <Mono>{s.opId}</Mono> / <Mono>{s.agentId}</Mono> / {s.asset}</span>
         <span className="inline-flex items-center gap-1.5 text-xs text-muted">Connection<Status kind="session" value={s.state} size="sm" /></span>
-        <span className="inline-flex items-center gap-1.5 text-xs text-muted">Access<AccessChip a={accessOf(db, me, s)} /></span>
+        <span className="inline-flex items-center gap-1.5 text-xs text-muted">Access<AccessChip a={read.access} /></span>
         <span className="text-xs text-muted">Access owner: {s.grants.find((g) => g.perm === 'interactive')?.user || 'None'}</span>
         <span className={cx('ml-auto inline-flex items-center gap-1.5 text-sm font-medium', st === 'interactive' && left <= 10 ? 'text-warn' : 'text-fg')} aria-live="polite">
           <Clock size={14} aria-hidden />{st === 'interactive' || st === 'revokefail' ? `Expires in ${Math.max(left, 0)} min (${grant?.expires.replace('Oct 13, 2026, ', '')})` : hasExpiredLine ? 'Grant expired' : 'No active grant'}
