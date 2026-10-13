@@ -32,6 +32,7 @@ import { createSettingsService, type SettingsService } from '../features/setting
 import { createAssetService, type AssetService } from '../features/assets/service'
 import { createWorkerService, type WorkerService } from '../features/workers/service'
 import { createNoticeService, type NoticeService } from '../features/notices/service'
+import { createResultsService, type ResultsService } from '../features/results/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -107,6 +108,8 @@ export interface ConsoleServices {
   workers(actor: ActorRef, projectId: string): WorkerService
   /** Typed notice center handlers (ticket 59 — feature-local implementation). */
   notices(actor: ActorRef, projectId: string): NoticeService
+  /** Typed operation results + execution graph read (ticket 30 — feature-local implementation). */
+  results(actor: ActorRef, projectId: string): ResultsService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -194,6 +197,8 @@ export function createConsoleServices(): ConsoleServices {
     createWorkerService(authority, scopeGuard(actor, projectId))
   const forNotices = (actor: ActorRef, projectId: string): NoticeService =>
     createNoticeService(authority, clock, scopeGuard(actor, projectId))
+  const forResults = (actor: ActorRef, projectId: string): ResultsService =>
+    createResultsService(authority, scopeGuard(actor, projectId))
 
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
@@ -234,6 +239,7 @@ export function createConsoleServices(): ConsoleServices {
     assets: forAssets,
     workers: forWorkers,
     notices: forNotices,
+    results: forResults,
     cancelScope,
     reset(variant) {
       scheduler.clear()
