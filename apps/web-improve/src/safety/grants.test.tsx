@@ -3,8 +3,7 @@ import { act, cleanup, fireEvent, screen } from '@testing-library/react'
 
 vi.useFakeTimers()
 const { mountScreen } = await import('../test/helpers')
-const { hhmm } = await import('../store')
-const { minutesUntil, useGrantWatch, Console } = await import('../screens/h-session')
+const { minutesUntil, hhmm, useGrantWatch, Console } = await import('../screens/h-session')
 
 afterEach(() => {
   cleanup()

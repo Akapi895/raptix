@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Ban, Bot, Clock, Copy, Eye, FileText, Loader2, Lock, OctagonX, Radio, ShieldCheck, TerminalSquare, Unplug } from 'lucide-react'
-import { useStore, hhmm } from '../store'
+import { useStore } from '../store'
 import type { Session } from '../data'
 import { C2ReadError, useC2Session, useC2Sessions } from '../features/c2/query'
 import type { C2AccessInfo } from '../features/c2/service'
@@ -9,6 +9,16 @@ import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Fie
 export const SELECT_PROJECT = 'Select a project to continue'
 export const MIN_REASON = 20
 export const kindLabel = (k: Session['kind']) => (k === 'reverse' ? 'Reverse Shell' : 'Web Shell')
+
+/* Ticket 67: the demo wall-clock label moved here from the legacy store — the
+   same simulated clock (UTC+7), anchored at the dataset's demo instant
+   (Oct 13, 2026, 10:42 AM) at this module's evaluation. */
+const T0 = Date.now()
+const pad2 = (n: number) => String(n).padStart(2, '0')
+export function hhmm() {
+  const m = 10 * 60 + 42 + Math.floor((Date.now() - T0) / 60000)
+  return `${pad2(Math.floor(m / 60) % 24)}:${pad2(m % 60)}`
+}
 
 /** Minutes until a "Oct 13, 2026, 12:00 PM (UTC+7)" style timestamp, relative to the simulated clock. */
 export function minutesUntil(exp: string, nowHHMM: string) {

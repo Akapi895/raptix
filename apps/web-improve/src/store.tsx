@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
+import { USERS, APR, type Db, type Project, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
 import { can as policyCan, projectAccessible, readOnlyContext, ROLE_LABEL } from './auth/policy'
 import type { CanAction } from './domain/permissions'
@@ -46,7 +46,7 @@ import {
 // legacy entries delegate to them so the four-eyes rules, the gated resolve
 // and the immediate stop response have one implementation for both entry points.
 import {
-  confirmCloseTransaction, evaluateCloseChecklist, reopenProjectTransaction, requestCloseTransaction,
+  confirmCloseTransaction, reopenProjectTransaction, requestCloseTransaction,
 } from './features/closure/service'
 import {
   acknowledgeEmergencyStopTransaction, failEmergencyStopTransaction, finalizeEmergencyStopTransaction,
@@ -91,10 +91,13 @@ import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
 
 /* ───────────── Simulated clock (UTC+7) ───────────── */
+/* Ticket 67: the store's hhmm/today exports retired — the session console owns
+   its wall-clock label (src/screens/h-session.tsx); these stay as the store's
+   internal demo-clock projection for logs/stamps only. */
 const T0 = Date.now()
 const pad = (n: number) => String(n).padStart(2, '0')
 const nowMin = () => 10 * 60 + 42 + Math.floor((Date.now() - T0) / 60000)
-export function hhmm() {
+const hhmm = () => {
   const m = nowMin()
   return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`
 }
@@ -103,7 +106,7 @@ const hhmm12 = () => {
   return `${h % 12 || 12}:${pad(m % 60)} ${h < 12 ? 'AM' : 'PM'}`
 }
 const stamp = () => `Oct 13, 2026, ${hhmm12()} (UTC+7)`
-export const today = () => 'Oct 13, 2026'
+const today = () => 'Oct 13, 2026'
 
 /* ───────────── Roles ───────────── */
 /* Ticket 67: the store's ROLE_LABEL definition moved to the auth policy
@@ -124,36 +127,11 @@ export function sessionPerm(db: Db, me: Persona, s: Session): SessionPerm {
 /* ───────────── Project closure checklist ───────────── */
 /* Ticket 22: the derivation lives in the closure handlers
    (src/features/closure/service.ts) — one canonical, never-stored checklist
-   for the store consumers (completion %, close panel) and the typed
-   request/confirm handlers. Ticket 65 retires the store's re-export; the
-   remaining consumer (completion) resolves the canonical derivation
-   directly. The close console adds its agent-reservation row through
-   closePanelItems; the waiver stays a request-time input. */
-
-
-/* ───────────── V3: completion ───────────── */
-/* Ticket 26/67: the eligibility label derivation is the operations feature's
-   pure domain function (src/features/operations/preflight.ts) — ticket 67
-   retired the store's forwarding export; every consumer imports it from the
-   feature module directly. */
-export function completion(db: Db, pid: string) {
-  const p = db.projects.find((x) => x.id === pid)
-  const objs = p?.objectives ?? []
-  const objPct = objs.length ? Math.round(objs.reduce((a, o) => a + o.progress, 0) / objs.length) : 0
-  const ops = db.operations.filter((o) => o.projectId === pid)
-  const opsDone = ops.filter((o) => o.status === 'done').length
-  const fs = db.findings.filter((f) => f.projectId === pid)
-  const confirmed = fs.filter((f) => ['confirmed', 'remediation', 'retest', 'resolved'].includes(f.status)).length
-  const suggested = fs.filter((f) => f.status === 'ai_suggested').length
-  const inReview = fs.filter((f) => ['draft', 'review', 'returned'].includes(f.status)).length
-  const reps = db.reports.filter((r) => r.projectId === pid)
-  const delivered = reps.some((r) => r.status === 'delivered')
-  const repLabel = delivered ? 'Delivered' : reps.length ? reps.map((r) => r.status).sort()[0].replace(/^./, (c) => c.toUpperCase()) : 'None'
-  const chk = evaluateCloseChecklist(db, pid)
-  const closeDone = chk.filter((c) => c.ok).length
-  const pct = Math.round(objPct * 0.5 + (delivered ? 30 : reps.some((r) => ['approved', 'exported'].includes(r.status)) ? 20 : 0) + (closeDone / chk.length) * 20)
-  return { pct, objPct, ops: ops.length, opsDone, confirmed, suggested, inReview, repLabel, delivered, closeDone, closeTotal: chk.length }
-}
+   for the typed request/confirm handlers. Ticket 65 retired the store's
+   re-export and ticket 67 moved the last consumer (the closure suite's
+   completion % probe) next to the derivation it pins. The close console adds
+   its agent-reservation row through closePanelItems; the waiver stays a
+   request-time input. */
 
 /* ───────────── Live log ───────────── */
 interface LogLine { id: string; ts: string; level: 'INFO' | 'WARN' | 'ERROR'; agent: string; stepId: string; text: string }
@@ -283,26 +261,6 @@ const ServicesCtx = createContext<ConsoleServices | null>(null)
 /** Canonical data authority + service factory (ADR-0067): typed handlers, clock and bridge subscription. */
 // eslint-disable-next-line react-refresh/only-export-components
 export const useServices = () => useContext(ServicesCtx)!
-
-export function allocation(db: Db, projectId: string) {
-  const mine = db.agents.filter((a) => a.projectId === projectId)
-  const pool = db.agents.filter((a) => !a.projectId && (a.status === 'online' || a.status === 'idle'))
-  const all = [...mine, ...pool]
-  const conn = (a: Agent) => a.status === 'online' || a.status === 'idle'
-  const busy = all.filter((a) => conn(a) && a.op)
-  const avail = all.filter((a) => conn(a) && !a.op)
-  const disc = all.filter((a) => !conn(a))
-  return { all, mine, pool, busy, avail, disc, total: all.length, connected: all.filter(conn).length, capacity: avail.length }
-}
-export function groupSummary(db: Db, groupId: string) {
-  const bs = db.branches.filter((b) => b.groupId === groupId)
-  const n = (st: BranchState) => bs.filter((b) => b.state === st).length
-  const done = n('completed'), failed = n('failed')
-  const open = bs.filter((b) => !BRANCH_TERMINAL.includes(b.state)).length
-  const missing = bs.length - done - failed - n('cancelled') - n('blocked')
-  const overall = open > 0 ? (n('unknown') + n('paused') > 0 ? 'Degraded — branches paused or unknown' : 'In progress') : failed + n('blocked') > 0 ? 'Partially Completed' : 'Completed'
-  return { bs, total: bs.length, running: n('running'), done, failed, waiting: n('waiting_approval'), queued: n('queued'), paused: n('paused'), unknown: n('unknown'), missing, open, overall, evidence: bs.reduce((a, b) => a + b.evidence.length, 0) }
-}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   /* One data authority (ADR-0067): the context state is a projection of the
@@ -1025,4 +983,3 @@ export function useDirty(isDirty: boolean, save?: () => void) {
   }, [isDirty])
 }
 
-export const sevLabel: Record<string, string> = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low', info: 'Informational' }
