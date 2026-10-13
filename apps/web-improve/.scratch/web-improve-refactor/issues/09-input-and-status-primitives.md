@@ -1,7 +1,7 @@
 # 09: Input, button and status primitives
 
 **What to build:** Extract buttons, text/select/check/toggle inputs and status/severity presentation from the legacy UI module in bounded groups, preserving compatibility exports and tokens.
-**Blocked by:** 08.
+**Blocked by:** 08e (completion leaf of the split ticket 08 shell layout extraction; umbrella [08](08-shell-layout.md)).
 **Status:** ready-for-agent
 **Owner:** Input/status primitives.
 **Contract:** [execution.md](../execution.md).
