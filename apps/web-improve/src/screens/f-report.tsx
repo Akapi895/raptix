@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, ArrowLeft, CheckCircle2, Download, Eye, FileText, History, Lock, RotateCcw, Save, Send, ShieldCheck, Wand2, XCircle, ListChecks, Plus, Table2 } from 'lucide-react'
-import { useStore, useDirty, sevLabel, stamp } from '../store'
-import type { Report, Finding } from '../data'
+import { useStore, useDirty, sevLabel } from '../store'
+import type { Report } from '../data'
 import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui'
 import { getActiveRouter } from '../router/active'
 import { toHash, toHref } from '../router/history'
-import { CONFIRMED_OR_LATER } from '../features/reports/service'
-import type { ReportEditorRead } from '../features/reports/service'
-import { ReportReadError, useDraftOptions, useReportEditor, useReportWrites } from '../features/reports/query'
+import { closureEvidence, reportChecks, type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead } from '../features/reports/service'
+import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import type { ServiceResult } from '../domain/service'
+
+/* The review checklist lives in the typed report service (one implementation
+   for the catalog, editor, preview and review screens); re-exported here for
+   the legacy catalog screen's import site. */
+export { reportChecks, closureEvidence, type NoFind, type RCheck }
 
 /* ───────── shared helpers ───────── */
 /** Post-submit navigation: written through the active router (ticket 07 — the
@@ -19,40 +23,6 @@ const hardGo = (page: string, id?: string) => {
   const router = getActiveRouter()
   if (router) router.navigate(toHref({ page, id }))
   else window.location.hash = toHash({ page, id })
-}
-
-export interface RCheck { id: string; label: string; state: 'pass' | 'fail' | 'warn'; detail: string }
-export interface NoFind { on: boolean; note: string }
-export type Db = ReturnType<typeof useStore>['db']
-
-/** Completion evidence used by the no-findings closure variant */
-export function closureEvidence(db: Db, projectId: string) {
-  const ops = db.operations.filter((o) => o.projectId === projectId)
-  const run = ops.filter((o) => ['done', 'running', 'paused', 'estop'].includes(o.status) && o.steps.some((s) => s.status === 'ok' || s.status === 'fail'))
-  const ev = db.evidence.filter((e) => e.projectId === projectId)
-  return { ops, run, ev }
-}
-
-export function reportChecks(db: Db, r: Report, nf?: NoFind): RCheck[] {
-  const exec = r.sections.find((s) => /executive summary/i.test(s.title))
-  const linked = r.findings.map((id) => db.findings.find((f) => f.id === id)).filter(Boolean) as Finding[]
-  const unconf = linked.filter((f) => !CONFIRMED_OR_LATER.includes(f.status))
-  const empty = r.sections.filter((s) => !s.body.trim())
-  const tpl = db.templates.find((t) => t.name === r.template)
-  const ce = closureEvidence(db, r.projectId)
-  const nfMissing = [!(nf?.note || '').trim() || (nf?.note || '').trim().length < 20 ? 'a closure justification (at least 20 characters)' : '', ce.run.length === 0 ? 'at least one operation with recorded execution results' : '', ce.ev.length === 0 ? 'at least one evidence item or coverage observation' : '', linked.length ? 'unlinking the findings (a no-findings closure cannot list findings)' : ''].filter(Boolean)
-  const findChecks: RCheck[] = nf?.on
-    ? [{ id: 'find', label: 'No-findings closure is supported', state: nfMissing.length ? 'fail' : 'pass', detail: nfMissing.length ? `Needs ${nfMissing.join('; ')}.` : `Justification recorded, ${ce.run.length} operation(s) and ${ce.ev.length} evidence item(s) support the closure.` }]
-    : [
-      { id: 'find', label: 'At least one confirmed finding linked', state: r.findings.length ? 'pass' : 'fail', detail: r.findings.length ? `${r.findings.length} finding(s) linked.` : 'No confirmed findings are linked. Link one, or switch to the No-findings closure variant if the assessment found nothing.' },
-      { id: 'conf', label: 'Linked findings are confirmed', state: unconf.length ? 'fail' : 'pass', detail: unconf.length ? `Not confirmed: ${unconf.map((f) => f.id).join(', ')}` : linked.length ? 'All are confirmed or later.' : 'No findings to check.' },
-    ]
-  return [
-    { id: 'exec', label: 'Executive Summary present', state: exec && exec.body.trim() ? 'pass' : 'fail', detail: exec && exec.body.trim() ? 'Content is present.' : 'The Executive Summary section is empty.' },
-    ...findChecks,
-    { id: 'empty', label: 'Empty sections', state: empty.length ? 'warn' : 'pass', detail: empty.length ? `${empty.length} empty section(s): ${empty.map((s) => s.title).join(', ')}` : 'Every section has content.' },
-    { id: 'tpl', label: 'Template is published', state: tpl && tpl.status !== 'published' ? 'warn' : 'pass', detail: tpl && tpl.status !== 'published' ? `${tpl.name} is not approved, so formal delivery is blocked.` : 'Template is published.' },
-  ]
 }
 
 /** Persisted no-findings variant for a report */
@@ -74,22 +44,7 @@ export function AiExclusion({ projectId }: { projectId?: string }) {
   )
 }
 
-/* ───────── version snapshots (taken whenever a version is submitted) ───────── */
-export interface Snap { version: string; at: string; by: string; bodies: Record<string, string>; findings: string[] }
-function useSnaps(id: string): Snap[] {
-  const { persistFilters } = useStore()
-  return ((persistFilters.repSnaps || {}) as Record<string, Snap[]>)[id] || []
-}
-function useSubmitter() {
-  const { persistFilters, setFilter, A, me } = useStore()
-  return (r: Report, bodies: Record<string, string>) => {
-    const all = (persistFilters.repSnaps || {}) as Record<string, Snap[]>
-    let version = r.version
-    if (r.status === 'returned') { const [maj, min] = r.version.replace('v', '').split('.').map(Number); version = `v${maj}.${min + 1}` }
-    setFilter('repSnaps', { ...all, [r.id]: [...(all[r.id] || []).filter((x) => x.version !== version), { version, at: stamp(), by: me.name, bodies, findings: r.findings }] })
-    A.submitReport(r.id)
-  }
-}
+/* ───────── version snapshots (ticket 36: canonical db state, service-owned) ───────── */
 
 function DiffView({ sections, a, b, aLabel, bLabel, af, bf }: { sections: { id: string; title: string }[]; a: Record<string, string>; b: Record<string, string>; aLabel: string; bLabel: string; af: string[]; bf: string[] }) {
   const lines = (t = '') => t.split('\n').map((l) => l.trim()).filter(Boolean)
@@ -129,16 +84,6 @@ function CheckList({ checks }: { checks: RCheck[] }) {
       })}
     </ul>
   )
-}
-
-/** Context gate: right project, right access; returns the report or an inline notice */
-function useGate(id?: string): { r?: Report; block?: ReactNode } {
-  const { db, accessible, pid, setPid, go } = useStore()
-  const r = db.reports.find((x) => x.id === id)
-  if (!r) return { block: <Empty icon={FileText} title="Report not found" action={<Button onClick={() => go('reports')}>Back to reports</Button>}>Report {id || ''} does not exist or was removed.</Empty> }
-  if (!accessible.some((p) => p.id === r.projectId)) return { block: <Empty icon={Lock} title="You do not have access to this report" action={<Button onClick={() => go('reports')}>Back to reports</Button>}>Ask the project manager to grant you access.</Empty> }
-  if (pid !== 'all' && r.projectId !== pid) return { block: <Empty icon={Lock} title="This report belongs to another project" action={<Button variant="primary" onClick={() => setPid(r.projectId)}>Switch to project {r.projectId}</Button>}>You are working in project {pid}. Switch to {r.projectId} to open report {r.id}.</Empty> }
-  return { r }
 }
 
 function ReportHead({ r, sub, actions, tab }: { r: Report; sub?: ReactNode; actions?: ReactNode; tab: 'edit' | 'preview' | 'review' }) {
@@ -325,12 +270,12 @@ export function ReportNew() {
 
 /* ═════════════ RP-02 — Editor (ticket 35) ═════════════ */
 /**
- * Shared read states for the migrated editor/preview: a pending skeleton, a
- * refused scope (a non-member's not-found without an existence leak; a
- * member scoped to another project gets a switch affordance from the
- * failure's entity ref), then the typed read model.
+ * Shared read states for the migrated editor/preview/review screens: a
+ * pending skeleton, a refused scope (a non-member's not-found without an
+ * existence leak; a member scoped to another project gets a switch
+ * affordance from the failure's entity ref), then the typed read model.
  */
-function ReportReadGate({ q, children }: { q: ReturnType<typeof useReportEditor>; children: (d: ReportEditorRead) => ReactNode }) {
+function ReportReadGate<T>({ q, children }: { q: { isPending: boolean; isError: boolean; error: Error | null; data: T | undefined; refetch: () => void }; children: (d: T) => ReactNode }) {
   const { go, setPid } = useStore()
   if (q.isPending) return <div aria-busy="true" aria-label="Loading report"><Skeleton className="h-72" /></div>
   if (q.isError) {
@@ -348,7 +293,7 @@ function ReportReadGate({ q, children }: { q: ReturnType<typeof useReportEditor>
       </Empty>
     )
   }
-  return <>{children(q.data)}</>
+  return <>{children(q.data!)}</>
 }
 
 export function ReportEditor() {
@@ -374,8 +319,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const r = d.report
   const project = d.project
   const [nf, setNf] = useNoFind(r.id)
-  const snaps = useSnaps(r.id)
-  const submitVersion = useSubmitter()
+  const snaps = r.snapshots ?? []
   const [active, setActive] = useState(r.sections[0]?.id)
   /* Sparse draft store: only sections the user edited diverge from the server
      body, so a refetch (own write or a legacy report change) flows through to
@@ -448,9 +392,11 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const submit = () => {
     if (submitBlock) return
     if (dirty) saveAll()
-    submitVersion(r, Object.fromEntries(merged.sections.map((x) => [x.id, x.body])))
-    toast(r.status === 'returned' ? `Resubmitted ${r.id} as a new version for ${r.reviewer}` : `Submitted ${r.id} to ${r.reviewer} for review`)
-    hardGo('report-review', r.id)
+    writes.submit(r.id, { bodies: Object.fromEntries(merged.sections.map((x) => [x.id, x.body])) }).then((res) => {
+      if (!res.ok) { toast(res.failure.message, 'bad'); return }
+      toast(r.status === 'returned' ? `Resubmitted ${r.id} as a new version for ${r.reviewer}` : `Submitted ${r.id} to ${r.reviewer} for review`)
+      hardGo('report-review', r.id)
+    })
   }
   const confirmedLinked = d.findings.filter((f) => f.reportable && f.linked)
   const insertFindings = () => insert('\n' + confirmedLinked.map((f) => `• ${f.id} (${sevLabel[f.severity]}) — ${f.title}. Asset ${f.asset}.`).join('\n'))
@@ -636,7 +582,8 @@ export function ReportPreview() {
 }
 
 function PreviewInner({ d }: { d: ReportEditorRead }) {
-  const { db, me, can, A, go, toast } = useStore()
+  const { db, me, can, go, toast } = useStore()
+  const writes = useReportWrites()
   const g = useGuard(d.report.projectId)
   const r = d.report
   const project = d.project
@@ -644,7 +591,6 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
   const [mode, setMode] = useState<'desktop' | 'pdf'>('desktop')
   const [pg, setPg] = useState(1)
   const [nf] = useNoFind(r.id)
-  const submitVersion = useSubmitter()
   const checks = reportChecks(db, r, nf)
   const blocking = checks.filter((c) => c.state === 'fail')
   const finalOk = ['approved', 'exported', 'delivered'].includes(r.status)
@@ -686,7 +632,7 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
       <ReportHead r={r} tab="preview" sub="Print-style preview. Export and delivery are separate steps after approval."
         actions={<>
           <Button icon={ArrowLeft} onClick={() => go('report', { id: r.id })}>Back to editor</Button>
-          {(r.status === 'draft' || r.status === 'returned') && <Button icon={Send} variant="primary" disabled={!!submitWhy} title={submitWhy || undefined} onClick={() => { submitVersion(r, Object.fromEntries(r.sections.map((x) => [x.id, x.body]))); toast(`Submitted ${r.id} for review`); hardGo('report-review', r.id) }}>{r.status === 'returned' ? 'Resubmit for Review' : 'Submit for Review'}</Button>}
+          {(r.status === 'draft' || r.status === 'returned') && <Button icon={Send} variant="primary" disabled={!!submitWhy} title={submitWhy || undefined} onClick={() => { writes.submit(r.id, { bodies: Object.fromEntries(r.sections.map((x) => [x.id, x.body])) }).then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { toast(`Submitted ${r.id} for review`); hardGo('report-review', r.id) } }) }}>{r.status === 'returned' ? 'Resubmit for Review' : 'Submit for Review'}</Button>}
         </>} />
       <AiExclusion projectId={r.projectId} />
       {missing > 0 && <Banner tone="warn" title={`${missing} section(s) are missing content`}>Missing fields are highlighted in the pages below.</Banner>}
@@ -716,8 +662,8 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
           <Card>
             <CardHeader title="Export" sub="Exporting PDF or DOCX only creates a file. It does not deliver the report to the client." />
             <div className="flex flex-wrap gap-2">
-              <Button icon={Download} variant="primary" disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { A.exportReport(r.id, 'PDF'); toast('PDF exported. Not delivered yet; go to the review page to mark delivery.') }}>Export PDF</Button>
-              <Button icon={Download} disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { A.exportReport(r.id, 'DOCX'); toast('DOCX exported. Not delivered yet.') }}>Export DOCX</Button>
+              <Button icon={Download} variant="primary" disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'PDF').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else toast('PDF exported. Not delivered yet; go to the review page to mark delivery.') }) }}>Export PDF</Button>
+              <Button icon={Download} disabled={!canExport} title={canExport ? undefined : exportWhy} onClick={() => { writes.exportVersion(r.id, 'DOCX').then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else toast('DOCX exported. Not delivered yet.') }) }}>Export DOCX</Button>
               <Button icon={Eye} disabled={me.role === 'viewer'} title={me.role === 'viewer' ? 'The Client / Viewer role cannot create trial exports' : 'Trial copy with watermark; not recorded in export history'} onClick={() => toast('Created a watermarked "DRAFT" trial copy (not saved to export history).', 'info')}>Trial export</Button>
             </div>
             {!canExport && <p className="mt-3 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{exportWhy}</p>}
@@ -735,61 +681,63 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
 }
 const Missing = ({ children }: { children: ReactNode }) => <div className="rounded border border-dashed border-amber-500 bg-amber-50 px-3 py-2 text-xs text-amber-800">{children}</div>
 
-/* ═════════════ RP-04..06 — Review / approval / export / delivery ═════════════ */
+/* ═════════════ RP-04..06 — Review / approval / export / delivery (ticket 36) ═════════════ */
+/**
+ * Review on the typed read + writes. The handler owns the four-eyes policy
+ * (the author can never decide their own report), the reviewer-role gate and
+ * the mandatory decision comments; export and delivery are separate gated
+ * steps whose records land in the canonical export/delivery history. A
+ * refused write renders the handler's reason and commits nothing.
+ */
 export function ReportReview() {
   const { route } = useStore()
-  const { r, block } = useGate(route.id)
-  if (!r) return <>{block}</>
-  return <ReviewInner r={r} />
+  const [nf] = useNoFind(route.id || '')
+  const q = useReportReview(route.id || '', nf)
+  return <ReportReadGate q={q}>{(d) => <ReviewInner key={d.report.id} d={d} />}</ReportReadGate>
 }
 
-export interface Deliv { recipient: string; channel: string; notes: string; at: string; by: string; version: string; ack?: string }
-
-function ReviewInner({ r }: { r: Report }) {
-  const { db, me, can, A, go, toast, confirm } = useStore()
-  const g = useGuard(r.projectId)
-  const project = db.projects.find((p) => p.id === r.projectId)!
+function ReviewInner({ d }: { d: ReportReviewRead }) {
+  const { db, go, toast, confirm } = useStore()
+  const writes = useReportWrites()
+  const r = d.report
+  const project = d.project
   const [nf] = useNoFind(r.id)
-  const snaps = useSnaps(r.id)
-  const { persistFilters, setFilter } = useStore()
-  const reasons = (persistFilters.repReasons || {}) as Record<string, string>
-  const delivs = (persistFilters.repDeliv || {}) as Record<string, Deliv>
+  const snaps = r.snapshots ?? []
   const [cmpVer, setCmpVer] = useState('')
-  const checks = reportChecks(db, r, nf)
+  const checks = d.checks
   const blocking = checks.filter((c) => c.state === 'fail')
-  const exps = db.exportsList.filter((e) => e.reportId === r.id)
+  const exps = d.exports
   const [recipient, setRecipient] = useState(project.client)
   const [channel, setChannel] = useState('Secure portal')
   const [notes, setNotes] = useState('')
   const [confirmed, setConfirmed] = useState(false)
   const [err, setErr] = useState('')
   const [open, setOpen] = useState<string | null>(null)
-  const linked = useMemo(() => r.findings.map((id) => db.findings.find((f) => f.id === id)).filter(Boolean) as Finding[], [db.findings, r.findings])
-  const evs = linked.flatMap((f) => f.evidence).map((id) => db.evidence.find((e) => e.id === id)).filter(Boolean)
-  const sensitive = evs.filter((e) => e!.sensitive).length
-  const tpl = db.templates.find((t) => t.name === r.template)
+  const linked = d.linked
+  const evs = linked.flatMap((f) => f.evidence)
+  const sensitive = evs.filter((e) => e.sensitive).length
 
-  const isReviewer = can('approveReport', r.projectId)
-  const approveWhy = r.status !== 'review' ? 'A report can be approved only while it is In Review.' : !isReviewer ? 'Only a Reviewer can approve or return reports. Switch to the assigned reviewer or ask them to act.' : g.ro ? g.reason : blocking.length ? `Cannot approve: ${blocking.map((c) => c.label).join('; ')}.` : ''
-  const returnWhy = r.status !== 'review' ? 'A report can be returned only while it is In Review.' : !isReviewer ? 'Only a Reviewer can return a report with comments.' : g.ro ? g.reason : ''
-  const roleOk = me.role === 'manager' || me.role === 'reviewer' || me.role === 'admin'
-  const exportWhy = !['approved', 'exported'].includes(r.status) ? (r.status === 'delivered' ? 'This report is delivered and read-only. Editing it creates a new version.' : 'Export unlocks after the report is approved.') : !roleOk ? 'Your role cannot export reports. Ask a Manager, Reviewer or Admin.' : g.ro ? g.reason : ''
-  const deliverWhy = !['approved', 'exported'].includes(r.status) ? (r.status === 'delivered' ? 'Already delivered.' : 'Delivery unlocks after the report is approved and exported.') : !roleOk ? 'Your role cannot mark delivery. Ask a Manager, Reviewer or Admin.' : g.ro ? g.reason : tpl && tpl.status !== 'published' ? 'The template is not approved, so formal delivery is blocked. Switch the report to a published template.' : !exps.some((e) => e.version === r.version) ? 'Export PDF or DOCX for this version first (step 2).' : !recipient.trim() ? 'Enter the recipient.' : !confirmed ? 'Confirm that the handover happened before marking delivery.' : ''
+  const approveWhy = d.gates.decide.reason || (blocking.length ? `Cannot approve: ${blocking.map((c) => c.label).join('; ')}.` : '')
+  const returnWhy = d.gates.decide.reason
+  const exportWhy = d.gates.export.reason
+  const deliverWhy = d.gates.deliver.reason || (!recipient.trim() ? 'Enter the recipient.' : !confirmed ? 'Confirm that the handover happened before marking delivery.' : '')
 
   const reqs = r.reviews.map((x, i) => ({ x, i })).filter((o) => o.x.action === 'Submitted for review').map(({ x, i }) => {
     const dec = r.reviews.slice(i + 1).find((y) => y.action !== 'Submitted for review')
     return { ver: x.version, by: x.by, at: x.at, decision: dec, status: dec ? (dec.action === 'Approved' ? 'approved' : 'returned') : 'pending', open: dec?.action === 'Changes requested' ? 1 : 0 }
   })
 
-  const approve = () => confirm({ title: `Approve ${r.id} (${r.version})?`, body: 'Approval only unlocks export. Exporting PDF/DOCX and marking delivery are separate steps that follow.', confirmLabel: 'Approve Report', reasonLabel: 'Approval reasoning (recorded with the pinned version)', reasonRequired: true, onConfirm: (note) => { A.approveReport(r.id); setFilter('repReasons', { ...reasons, [`${r.id}@${r.version}`]: note }); A.audit('Recorded approval reasoning', r.id, r.projectId, 'Success', `${r.version}: ${note}`); toast(`Approved ${r.id} ${r.version}. Not exported or delivered yet.`) } })
-  const ret = () => confirm({ title: `Return ${r.id} with comments`, body: 'The report goes back to its author. Your comment is saved in the review history and is never deleted.', confirmLabel: 'Return with Comments', danger: true, reasonLabel: 'Comments for the author', reasonRequired: true, onConfirm: (note) => { A.returnReport(r.id, note); toast(`Returned ${r.id} to ${r.author}`, 'warn'); hardGo('report', r.id) } })
-  const doExport = (f: 'PDF' | 'DOCX') => { A.exportReport(r.id, f); setErr(''); toast(`Exported ${f} for ${r.version}. Not delivered yet.`) }
-  const deliver = () => {
-    const res = A.deliverReport(r.id, recipient.trim())
-    if (!res.ok) { setErr(res.error || 'Cannot deliver.'); return }
-    setFilter('repDeliv', { ...delivs, [r.id]: { recipient: recipient.trim(), channel, notes, at: stamp(), by: me.name, version: r.version } })
-    setErr(''); toast(`Marked ${r.id} as delivered to ${recipient}`)
-  }
+  /** One review write at a time; a refusal renders the handler's reason. */
+  const runWrite = (fn: () => Promise<ServiceResult<Report>>, onOk: () => void) =>
+    fn().then((res) => {
+      if (!res.ok) { setErr(res.failure.message); return }
+      setErr('')
+      onOk()
+    })
+  const approve = () => confirm({ title: `Approve ${r.id} (${r.version})?`, body: 'Approval only unlocks export. Exporting PDF/DOCX and marking delivery are separate steps that follow.', confirmLabel: 'Approve Report', reasonLabel: 'Approval reasoning (recorded with the pinned version)', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'approve', note), () => toast(`Approved ${r.id} ${r.version}. Not exported or delivered yet.`)) })
+  const ret = () => confirm({ title: `Return ${r.id} with comments`, body: 'The report goes back to its author. Your comment is saved in the review history and is never deleted.', confirmLabel: 'Return with Comments', danger: true, reasonLabel: 'Comments for the author', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'return', note), () => { toast(`Returned ${r.id} to ${r.author}`, 'warn'); hardGo('report', r.id) }) })
+  const doExport = (f: 'PDF' | 'DOCX') => runWrite(() => writes.exportVersion(r.id, f).then((res) => (res.ok ? { ok: true as const, data: res.data.report } : res)), () => toast(`Exported ${f} for ${r.version}. Not delivered yet.`))
+  const deliver = () => runWrite(() => writes.deliver(r.id, { recipient: recipient.trim(), channel, notes }), () => toast(`Marked ${r.id} as delivered to ${recipient.trim()}`))
 
   return (
     <>
@@ -802,9 +750,10 @@ function ReviewInner({ r }: { r: Report }) {
       {nf?.on && <Banner tone="info" title="No-findings closure variant">This report closes the assessment without findings. Justification: {nf.note || 'not provided'}. The reviewer approves the closure based on the completion evidence.</Banner>}
       {r.status === 'draft' && <Banner tone="info" title="This report has not been submitted for review" action={<Button size="sm" onClick={() => go('report', { id: r.id })}>Open editor</Button>}>The author must finish the draft and select Submit for Review.</Banner>}
       {r.status === 'returned' && <Banner tone="warn" title="Returned with comments" action={<Button size="sm" variant="primary" onClick={() => go('report', { id: r.id })}>Revise and resubmit</Button>}>{[...r.reviews].reverse().find((x) => x.action === 'Changes requested')?.note || ''} The author ({r.author}) revises and resubmits as a new version. This round stays in the history.</Banner>}
-      {r.status === 'review' && !isReviewer && <PersonaHint need="Reviewer" persona={r.reviewer}>Approving or returning a report needs the Reviewer role. This report is assigned to {r.reviewer}.</PersonaHint>}
+      {r.status === 'review' && !d.gates.decide.allowed && <PersonaHint need="Reviewer" persona={r.reviewer}>{d.gates.decide.reason}</PersonaHint>}
       {r.status === 'delivered' && <Banner tone="ok" title="Report delivered">Delivered on {r.deliveredAt}. Version {r.version} is locked and read-only; edits create a new version and earlier exports are kept.</Banner>}
       {['approved', 'exported'].includes(r.status) && <Banner tone="info" title={`Version ${r.version} is locked`}>Approved content cannot be edited. {r.reviews.some((x) => x.action === 'Changes requested') ? 'Earlier returned rounds remain in the history.' : ''}</Banner>}
+      {err && <Banner tone="bad" title="The action was refused" action={<Button size="sm" onClick={() => setErr('')}>Dismiss</Button>}>{err}</Banner>}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-4">
@@ -856,7 +805,7 @@ function ReviewInner({ r }: { r: Report }) {
           </Card>
           <Card>
             <CardHeader title="Review history" sub="Sign-off trail across versions." />
-            {r.reviews.length === 0 ? <p className="text-sm text-muted">No history yet.</p> : <Timeline items={[...r.reviews].reverse().map((x) => ({ at: `${x.at} · ${x.version}`, title: `${x.action} — ${x.by}`, sub: x.note || (x.action === 'Approved' && reasons[`${r.id}@${x.version}`] ? `Reasoning: ${reasons[`${r.id}@${x.version}`]}` : undefined), tone: x.action === 'Approved' ? 'ok' : x.action === 'Changes requested' ? 'bad' : 'accent' }))} />}
+            {r.reviews.length === 0 ? <p className="text-sm text-muted">No history yet.</p> : <Timeline items={[...r.reviews].reverse().map((x) => ({ at: `${x.at} · ${x.version}`, title: `${x.action} — ${x.by}`, sub: x.note || undefined, tone: x.action === 'Approved' ? 'ok' : x.action === 'Changes requested' ? 'bad' : 'accent' }))} />}
           </Card>
         </div>
 
@@ -897,7 +846,6 @@ function ReviewInner({ r }: { r: Report }) {
 
           <Card>
             <CardHeader title="3. Delivery / handover" sub="Record who received this locked version." />
-            {err && <Banner tone="bad" title="Cannot mark as delivered">{err}</Banner>}
             <div className="space-y-3">
               <Field label="Recipient" required><Input value={recipient} onChange={(e) => setRecipient(e.target.value)} disabled={r.status === 'delivered'} /></Field>
               <Field label="Delivery channel" hint="Abstracted; no real transfer happens."><Select value={channel} onChange={(e) => setChannel(e.target.value)} disabled={r.status === 'delivered'}><option>Secure portal</option><option>Encrypted email</option><option>In-person handover</option></Select></Field>
@@ -907,19 +855,18 @@ function ReviewInner({ r }: { r: Report }) {
             <Button className="mt-3 w-full" icon={Send} variant="primary" disabled={!!deliverWhy} title={deliverWhy || undefined} onClick={deliver}>Mark as Delivered</Button>
             {deliverWhy && r.status !== 'delivered' && <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{deliverWhy}</p>}
             {r.status === 'delivered' && (() => {
-              const ex = exps.find((e) => e.status === 'Delivered'); const dv = delivs[r.id]
+              const ex = exps.find((e) => e.status === 'Delivered')
               const au = db.audit.find((a) => a.obj === r.id && a.action === 'Marked as delivered')
-              const ack = dv ? dv.ack : r.deliveredAt
               return (
                 <div className="mt-3 space-y-1.5 rounded-lg border border-ok/30 bg-ok/5 p-3 text-xs">
                   <div className="font-medium text-ok">Delivery record</div>
-                  <div className="flex justify-between gap-3"><span className="text-muted">Recipient</span><span>{dv?.recipient || ex?.recipient || '—'}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted">Method</span><span>{dv?.channel || 'Secure portal'}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted">Delivered</span><span className="whitespace-nowrap">{dv?.at || r.deliveredAt}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted">Version</span><Mono className="whitespace-nowrap">{dv?.version || ex?.version || r.version}</Mono></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted">Acknowledgement</span><span className={ack ? 'text-ok' : 'text-warn'}>{ack ? `Receipt acknowledged ${ack}` : 'Awaiting recipient acknowledgement'}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted">Recipient</span><span>{ex?.recipient || '—'}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted">Method</span><span>{ex?.channel || 'Secure portal'}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted">Delivered</span><span className="whitespace-nowrap">{ex?.at || r.deliveredAt}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted">Version</span><Mono className="whitespace-nowrap">{ex?.version || r.version}</Mono></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted">Acknowledgement</span><span className={ex?.ackAt ? 'text-ok' : 'text-warn'}>{ex?.ackAt ? `Receipt acknowledged ${ex.ackAt}` : 'Awaiting recipient acknowledgement'}</span></div>
                   <div className="flex justify-between gap-3"><span className="text-muted">Audit event</span><Mono className="whitespace-nowrap">{au?.id || 'AU-archived'} (immutable)</Mono></div>
-                  {dv && !dv.ack && <Button size="sm" icon={CheckCircle2} disabled={!roleOk} title={roleOk ? undefined : 'Your role cannot record acknowledgements'} onClick={() => { setFilter('repDeliv', { ...delivs, [r.id]: { ...dv, ack: stamp() } }); A.audit('Recorded delivery acknowledgement', r.id, r.projectId, 'Success', `Receipt confirmed by ${dv.recipient}`); toast('Recipient acknowledgement recorded') }}>Record recipient acknowledgement</Button>}
+                  {ex && !ex.ackAt && <Button size="sm" icon={CheckCircle2} disabled={!d.gates.ack.allowed} title={d.gates.ack.reason || undefined} onClick={() => writes.acknowledge(r.id).then((res) => { if (res.ok) toast('Recipient acknowledgement recorded'); else toast(res.failure.message, 'bad') })}>Record recipient acknowledgement</Button>}
                 </div>
               )
             })()}
@@ -927,7 +874,6 @@ function ReviewInner({ r }: { r: Report }) {
           </Card>
         </div>
       </div>
-      {void stamp}
     </>
   )
 }

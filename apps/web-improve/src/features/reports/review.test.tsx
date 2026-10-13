@@ -1,0 +1,357 @@
+/**
+ * Ticket 36: report review + immutable approved versions + export/delivery.
+ *
+ * Handlers: the review transitions (submit/resubmit with version snapshots,
+ * approve/return with the four-eyes policy — the author can never decide
+ * their own report — reviewer-role gating and mandatory decision comments)
+ * and the delivery chain (export of an approved version with its checksum on
+ * the export record, delivery of an exported version with the handover
+ * record, recipient acknowledgement). Screens: the review screen renders the
+ * handler gates with reasons and decides/exports/delivers through the typed
+ * writes; the editor's submit pins the version snapshot. Bridge: both
+ * directions — a legacy approval refetches the migrated review screen, and
+ * the typed delivery chain is observed by the legacy store and the catalog's
+ * kind-aligned delivery history.
+ */
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { ConsoleProviders } from '../../state/query'
+import { useProjectStore } from '../../state/stores'
+import { StoreProvider, useServices, useStore, type Store } from '../../store'
+import type { ConsoleServices } from '../../domain/service-factory'
+import { createDatabaseAuthority } from '../../domain/database'
+import { MockClock } from '../../domain/clock'
+import type { ActorRef, RequestContext } from '../../domain/service'
+import { routes } from '../../screens/f'
+import {
+  acknowledgeDelivery, decideReport, deliverReportVersion, exportReportVersion,
+  readReportReview, saveReportSection, submitReportVersion,
+} from './service'
+
+afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
+
+/* ───────────── handler harness ───────────── */
+function harness() {
+  const clock = new MockClock()
+  return { clock, authority: createDatabaseAuthority(clock) }
+}
+const actor = (id: string, role: ActorRef['role']): ActorRef => ({ id, role })
+const ctxOf = (a: ActorRef, projectId: string, corr = 't'): RequestContext => ({ actor: a, projectId, corr })
+const alex = actor('Alex Morgan', 'manager') // editReport; author of REP-014
+const pat = actor('Pat Kim', 'reviewer') // approveReport
+const taylor = actor('Taylor Chen', 'operator') // editReport only
+const casey = actor('Casey Nguyen (Client)', 'viewer') // nothing
+const riley = actor('Riley Brooks', 'analyst') // member of RT-2026-014 only
+const P14 = 'RT-2026-014'
+const P15 = 'RT-2026-015'
+
+const dbOf = (h: ReturnType<typeof harness>) => h.authority.snapshot()
+
+describe('report review transitions (ticket 36)', () => {
+  it('submits a draft for review: status, review entry, audit, notice and version snapshot in one commit', () => {
+    const h = harness()
+    const res = submitReportVersion(h.authority, h.clock, ctxOf(alex, P14), 'REP-014', { bodies: { exec: 'Summary of the assessment.' } })
+    expect(res.ok).toBe(true)
+    if (res.ok) {
+      expect(res.data).toMatchObject({ id: 'REP-014', status: 'review', version: 'v0.3' })
+      expect(res.data.snapshots).toHaveLength(1)
+      expect(res.data.snapshots![0]).toMatchObject({ version: 'v0.3', by: 'Alex Morgan', findings: ['FD-011'] })
+      expect(res.data.snapshots![0].bodies['exec']).toBe('Summary of the assessment.')
+      expect(res.data.reviews[0]).toMatchObject({ action: 'Submitted for review', by: 'Alex Morgan', version: 'v0.3' })
+    }
+    expect(dbOf(h).audit[0]).toMatchObject({ action: 'Submitted report for review', actor: 'Alex Morgan', obj: 'REP-014' })
+    expect(dbOf(h).notices.some((n) => n.text.includes('REP-014 needs review') && n.to.name === 'report-review')).toBe(true)
+    h.authority.reset()
+  })
+
+  it('gates submit: role, read-only context, state and cross-project scope without a leak', () => {
+    const h = harness()
+    expect(submitReportVersion(h.authority, h.clock, ctxOf(pat, P14), 'REP-014', { bodies: {} }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('(Reviewer) cannot edit reports') }) })
+    expect(submitReportVersion(h.authority, h.clock, ctxOf(casey, P14), 'REP-014', { bodies: {} }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('(Client / Viewer) cannot edit reports') }) })
+    // A closed project is read-only regardless of role.
+    expect(submitReportVersion(h.authority, h.clock, ctxOf(alex, 'RT-2026-009'), 'REP-009', { bodies: {} }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('read-only') }) })
+    expect(submitReportVersion(h.authority, h.clock, ctxOf(alex, P15), 'REP-015', { bodies: {} }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('In Review') }) })
+    const refused = submitReportVersion(h.authority, h.clock, ctxOf(riley, 'all'), 'REP-015', { bodies: {} })
+    expect(refused).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'not-found' }) })
+    expect(refused.ok || refused.failure.message).not.toContain(P15)
+    h.authority.reset()
+  })
+
+  it('return and resubmit produce a traceable revision with reviewer notes and a new version', () => {
+    const h = harness()
+    submitReportVersion(h.authority, h.clock, ctxOf(alex, P14), 'REP-014', { bodies: {} })
+    expect(decideReport(h.authority, h.clock, ctxOf(alex, P14), 'REP-014', 'return', 'Self-return.'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('the Red Team Manager role cannot') }) })
+    expect(decideReport(h.authority, h.clock, ctxOf(taylor, P14), 'REP-014', 'return', 'Tighten it.'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('Only a Reviewer') }) })
+    const back = decideReport(h.authority, h.clock, ctxOf(pat, P14), 'REP-014', 'return', 'Tighten the executive summary.')
+    expect(back.ok && back.data.status).toBe('returned')
+    expect(back.ok && back.data.reviews[1]).toMatchObject({ action: 'Changes requested', by: 'Pat Kim', note: 'Tighten the executive summary.' })
+    const again = submitReportVersion(h.authority, h.clock, ctxOf(alex, P14), 'REP-014', { bodies: { exec: 'Revised summary.' } })
+    expect(again.ok && again.data.version).toBe('v0.4')
+    expect(again.ok && again.data.reviews.map((x) => x.action)).toEqual(['Submitted for review', 'Changes requested', 'Submitted for review'])
+    expect(again.ok && again.data.snapshots!.map((s) => s.version)).toEqual(['v0.3', 'v0.4'])
+    h.authority.reset()
+  })
+
+  it('gates decisions: wrong state, wrong role, missing mandatory comment', () => {
+    const h = harness()
+    // REP-014 is a draft: not decidable.
+    expect(decideReport(h.authority, h.clock, ctxOf(pat, P14), 'REP-014', 'approve', 'ok'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('only while it is In Review') }) })
+    expect(decideReport(h.authority, h.clock, ctxOf(alex, P15), 'REP-015', 'approve', 'ok'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('Only a Reviewer') }) })
+    expect(decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', '   '))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: expect.stringContaining('approval reasoning is required') }) })
+    expect(decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'return', ''))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: expect.stringContaining('comment for the author is required') }) })
+    h.authority.reset()
+  })
+
+  it('enforces four-eyes at the handler: the author can never decide their own report', () => {
+    const h = harness()
+    h.authority.commit('setup', (d) => { d.reports.find((r) => r.id === 'REP-015')!.author = 'Pat Kim' })
+    const res = decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'self')
+    expect(res).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('four-eyes') }) })
+    expect(dbOf(h).reports.find((r) => r.id === 'REP-015')!.status).toBe('review')
+    h.authority.reset()
+  })
+
+  it('approval pins the version snapshot and records the reasoning in the canonical review history', () => {
+    const h = harness()
+    const res = decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'Content verified against IAM evidence.')
+    expect(res.ok).toBe(true)
+    if (res.ok) {
+      expect(res.data.status).toBe('approved')
+      expect(res.data.reviews[1]).toMatchObject({ action: 'Approved', by: 'Pat Kim', note: 'Content verified against IAM evidence.', version: 'v1.0' })
+      // No submitted snapshot existed (legacy review path), so approval pins the committed content.
+      expect(res.data.snapshots!.find((s) => s.version === 'v1.0')).toMatchObject({ pinned: true, by: 'Pat Kim' })
+    }
+    expect(dbOf(h).audit[0]).toMatchObject({ action: 'Approved report', actor: 'Pat Kim', reason: 'Content verified against IAM evidence.' })
+    // A later edit starts a new draft — locked approved content is refused and the pinned snapshot stays.
+    const denied = saveReportSection(h.authority, h.clock, ctxOf(alex, P15), 'REP-015', 'exec', 'mutated')
+    expect(denied).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('read-only') }) })
+    expect(dbOf(h).reports.find((r) => r.id === 'REP-015')!.snapshots!.find((s) => s.version === 'v1.0')).toMatchObject({ pinned: true })
+    h.authority.reset()
+  })
+
+  it('the review read carries gates, checklist and exports; scope rules mirror the editor read', () => {
+    const h = harness()
+    const patRead = readReportReview(dbOf(h), ctxOf(pat, P15), 'REP-015')
+    expect(patRead.ok).toBe(true)
+    if (patRead.ok) {
+      expect(patRead.data.project).toMatchObject({ id: P15, client: 'Fabrikam Cloud (Demo)', roeVersion: 'ROE-015-v1' })
+      expect(patRead.data.checks.map((c) => c.id)).toEqual(['exec', 'find', 'conf', 'empty', 'tpl'])
+      expect(patRead.data.linked[0]).toMatchObject({ id: 'FD-015', status: 'confirmed', evidence: [{ ref: 'EV-301', sensitive: false }] })
+      expect(patRead.data.gates.decide).toMatchObject({ allowed: true, reason: '' })
+      expect(patRead.data.gates.export.reason).toContain('Export unlocks after the report is approved')
+      expect(patRead.data.gates.deliver.reason).toContain('approved and exported')
+      expect(patRead.data.gates.ack.reason).toContain('delivered')
+      expect(patRead.data.exports).toHaveLength(0)
+    }
+    // The blocking checklist is surfaced for the approver's reason.
+    const blocked = readReportReview(dbOf(h), ctxOf(pat, P14), 'REP-014')
+    expect(blocked.ok && blocked.data.checks.some((c) => c.id === 'empty' && c.state === 'warn')).toBe(true)
+    // Non-member: not-found without a leak; member scoped elsewhere: forbidden with the owning project.
+    const leak = readReportReview(dbOf(h), ctxOf(riley, 'all'), 'REP-015')
+    expect(leak).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'not-found' }) })
+    expect(leak.ok || leak.failure.message).not.toContain(P15)
+    expect(readReportReview(dbOf(h), ctxOf(taylor, 'RT-2026-014'), 'REP-015'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', entity: { kind: 'report', id: 'REP-015', projectId: P15 } }) })
+    // Viewer: every gate is disallowed (the draft's status gates fire for this readable report).
+    const viewer = readReportReview(dbOf(h), ctxOf(casey, P14), 'REP-014')
+    expect(viewer.ok && !viewer.data.gates.decide.allowed && viewer.data.gates.decide.reason).toContain('In Review')
+    expect(viewer.ok && !viewer.data.gates.export.allowed && !viewer.data.gates.deliver.allowed).toBe(true)
+    h.authority.reset()
+  })
+})
+
+describe('report export and delivery (ticket 36)', () => {
+  it('exports an approved version: record content identical to the baseline export shape, checksum on the record', () => {
+    const h = harness()
+    expect(exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('Export unlocks after the report is approved') }) })
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    const res = exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
+    expect(res.ok).toBe(true)
+    if (res.ok) {
+      expect(res.data.rec).toMatchObject({ id: 'EX-92', reportId: 'REP-015', version: 'v1.0', format: 'PDF', by: 'Pat Kim', recipient: '—', status: 'Completed' })
+      expect(res.data.rec.checksum).toMatch(/^sha256:[0-9a-f]{4}…[0-9a-f]{4}$/)
+      expect(res.data.report.status).toBe('exported')
+    }
+    expect(dbOf(h).audit[0]).toMatchObject({ action: 'Exported report (PDF)', actor: 'Pat Kim', obj: 'REP-015' })
+    h.authority.reset()
+  })
+
+  it('gates export and delivery with reasons: state first, then role, then cross-project scope', () => {
+    const h = harness()
+    // The state gate fires before the role gate (mirroring the baseline reason order).
+    expect(exportReportVersion(h.authority, h.clock, ctxOf(taylor, P15), 'REP-015', 'DOCX'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('Export unlocks after the report is approved') }) })
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Fabrikam Cloud (Demo)', channel: 'Secure portal', notes: '' }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('has not been approved') }) })
+    // A closed project is read-only before any state or role consideration.
+    expect(exportReportVersion(h.authority, h.clock, ctxOf(pat, 'RT-2026-009'), 'REP-009', 'PDF'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('read-only') }) })
+    const leak = exportReportVersion(h.authority, h.clock, ctxOf(riley, 'all'), 'REP-015', 'PDF')
+    expect(leak).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'not-found' }) })
+    expect(leak.ok || leak.failure.message).not.toContain(P15)
+    // After approval the role gate fires: operator/viewer cannot export or deliver.
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    expect(exportReportVersion(h.authority, h.clock, ctxOf(taylor, P15), 'REP-015', 'DOCX'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('(Operator) cannot export reports') }) })
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(taylor, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '' }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('cannot mark delivery') }) })
+    // A delivered report refuses further exports while its project is active.
+    exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
+    deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '' })
+    expect(exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('already delivered') }) })
+    h.authority.reset()
+  })
+
+  it('delivery requires an export of the exact version and stamps the handover record; export alone is not delivery', () => {
+    const h = harness()
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '' }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: expect.stringContaining('no valid export exists for this version') }) })
+    exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: '   ', channel: 'Secure portal', notes: '' }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'Enter the recipient.' }) })
+    const res = deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: 'Handed over via portal.' })
+    expect(res.ok && res.data.status).toBe('delivered')
+    const rec = dbOf(h).exportsList.find((e) => e.id === 'EX-92')!
+    expect(rec).toMatchObject({ recipient: 'Mai Ellis', status: 'Delivered', channel: 'Secure portal', notes: 'Handed over via portal.', version: 'v1.0' })
+    expect(dbOf(h).reports.find((r) => r.id === 'REP-015')!.deliveredAt).toBeTruthy()
+    expect(dbOf(h).audit[0]).toMatchObject({ action: 'Marked as delivered', obj: 'REP-015', reason: 'Mai Ellis' })
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '' }))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('already delivered') }) })
+    h.authority.reset()
+  })
+
+  it('records the recipient acknowledgement on the delivered export record, idempotently', () => {
+    const h = harness()
+    expect(acknowledgeDelivery(h.authority, h.clock, ctxOf(pat, P15), 'REP-015'))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('Only a delivered report') }) })
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
+    deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '' })
+    const res = acknowledgeDelivery(h.authority, h.clock, ctxOf(pat, P15), 'REP-015')
+    expect(res.ok && res.data.ackAt).toBeTruthy()
+    expect(dbOf(h).audit[0]).toMatchObject({ action: 'Recorded delivery acknowledgement', obj: 'REP-015' })
+    const again = acknowledgeDelivery(h.authority, h.clock, ctxOf(pat, P15), 'REP-015')
+    expect(again.ok && again.data.ackAt).toBe(res.ok ? res.data.ackAt : undefined)
+    h.authority.reset()
+  })
+})
+
+/* ───────────── screen harness ───────────── */
+function ScreenProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
+  ready(useStore(), useServices())
+  return null
+}
+function mountScreenRoute(me = 'Alex Morgan', pid?: string) {
+  let store!: Store
+  let svc!: ConsoleServices
+  const ui = (node: React.ReactNode) => (
+    <StoreProvider>
+      <ConsoleProviders>
+        <ScreenProbe ready={(s, v) => { store = s; svc = v }} />
+        {node}
+      </ConsoleProviders>
+    </StoreProvider>
+  )
+  const view = render(ui(null))
+  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
+  if (pid) act(() => { useProjectStore.getState().setPid(pid) })
+  return {
+    store: () => store,
+    svc: () => svc,
+    run: (fn: () => unknown) => act(fn),
+    show: (node: React.ReactNode) => view.rerender(ui(node)),
+    unmount: view.unmount,
+  }
+}
+
+const Review = routes['report-review'] as React.ComponentType
+const Editor = routes.report as React.ComponentType
+
+describe('report review screen (ticket 36)', () => {
+  it('renders the handler gating with reasons for a non-reviewer', async () => {
+    window.location.hash = '#/report-review/REP-015'
+    const h = mountScreenRoute('Taylor Chen', P15)
+    h.show(<Review />)
+    await screen.findByText('Cloud Lab Report — Fabrikam Cloud')
+    expect(screen.getAllByText(/Only a Reviewer can approve or return reports/).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Approve Report' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Export PDF' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Mark as Delivered' })).toBeDisabled()
+    h.unmount()
+  })
+
+  it('a non-member opening a foreign report review lands on not-found without a leak', async () => {
+    window.location.hash = '#/report-review/REP-015'
+    const h = mountScreenRoute('Riley Brooks')
+    h.show(<Review />)
+    await screen.findByText('Report not found')
+    expect(screen.queryByText('Fabrikam Cloud')).not.toBeInTheDocument()
+    h.unmount()
+  })
+
+  it('approve → export → deliver through the typed writes updates the legacy store and this screen', async () => {
+    window.location.hash = '#/report-review/REP-015'
+    const h = mountScreenRoute('Pat Kim', P15)
+    h.show(<Review />)
+    await screen.findByText('Cloud Lab Report — Fabrikam Cloud')
+    // Delivery is gated until the export exists (step 2 first).
+    expect(screen.getByRole('button', { name: 'Mark as Delivered' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Approve Report' }))
+    h.run(() => { h.store().confirmState!.onConfirm('Content verified against IAM evidence.') })
+    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('approved'), { timeout: 3000 })
+    expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.reviews[1]!.note).toBe('Content verified against IAM evidence.')
+    // The refetched read re-gates the buttons before the next step.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Export PDF' })).toBeEnabled(), { timeout: 3000 })
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }))
+    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('exported'), { timeout: 3000 })
+    await waitFor(() => expect(screen.getAllByText(/EX-92/).length).toBeGreaterThan(0), { timeout: 3000 })
+    // The delivery card requires the handover record: recipient + confirmation.
+    fireEvent.change(screen.getByLabelText(/Recipient/), { target: { value: 'Fabrikam Cloud (Demo)' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: /Handover to the recipient is confirmed/ }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mark as Delivered' })).toBeEnabled(), { timeout: 3000 })
+    fireEvent.click(screen.getByRole('button', { name: 'Mark as Delivered' }))
+    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('delivered'), { timeout: 3000 })
+    const rec = h.store().db.exportsList.find((e) => e.id === 'EX-92')!
+    expect(rec).toMatchObject({ status: 'Delivered', recipient: 'Fabrikam Cloud (Demo)', channel: 'Secure portal' })
+    expect(await screen.findByText(/Awaiting recipient acknowledgement/)).toBeInTheDocument()
+    h.unmount()
+  })
+
+  it('a legacy approval refetches the migrated review screen (bridge: legacy → new)', async () => {
+    window.location.hash = '#/report-review/REP-015'
+    const h = mountScreenRoute('Pat Kim', P15)
+    h.show(<Review />)
+    await screen.findByText('Cloud Lab Report — Fabrikam Cloud')
+    expect(screen.queryByText('Version v1.0 is locked')).not.toBeInTheDocument()
+    h.run(() => { h.store().A.approveReport('REP-015') })
+    await waitFor(() => expect(screen.getByText('Version v1.0 is locked')).toBeInTheDocument(), { timeout: 3000 })
+    h.unmount()
+  })
+
+  it('the editor submit pins the version snapshot through the typed write and notifies the reviewer', async () => {
+    window.location.hash = '#/report/REP-014'
+    const h = mountScreenRoute('Alex Morgan')
+    h.show(<Editor />)
+    await screen.findByLabelText('Content of section Cover Page')
+    fireEvent.click(screen.getByRole('button', { name: 'Submit for Review' }))
+    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-014')!.status).toBe('review'), { timeout: 3000 })
+    const rep = h.store().db.reports.find((r) => r.id === 'REP-014')!
+    expect(rep.snapshots![0]).toMatchObject({ version: 'v0.3', by: 'Alex Morgan' })
+    expect(rep.snapshots![0].bodies['exec']).toContain('During the assessment period')
+    expect(h.store().db.notices.some((n) => n.text.includes('REP-014 needs review'))).toBe(true)
+    h.unmount()
+  })
+})
