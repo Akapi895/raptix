@@ -179,3 +179,56 @@ plus the documented membership seam (grep census on `wi/67b-retirelegacy`):
   § Windows Temporary Process Safety (same verification gap as batch 1; the
   migrated derivations are pinned by the preflight, closure, agents, C2 and
   safety suites, and `npm run build` covers the module graph).
+
+### Enabler A (session store, `wi/67c-session`)
+
+The remaining Context-seam migration needs the provider's transient UI state
+off `useState`/refs first: `StoreProvider`'s confirm dialog, dirty/unsaved
+guard, demo logs, stale marks, filters, stop outcome, AI busy and loading
+flag moved into the canonical session Zustand authority
+(`src/state/session.ts`), following the ticket 05 authority pattern
+(selector-based store, synchronous `resetSessionStores()` restoring
+initials). The public `Store` interface, every consumer and every observable
+behavior are unchanged — the provider reads/writes the session store exactly
+like it forwards persona/theme/toasts to the shared authorities. Zero screen
+or test edits outside the new suite; 3 touched files (+52/−53 on the store),
+far under the caps.
+
+- `src/state/session.ts` (new, 106 runtime lines): `useSessionStore`,
+  `resetSessionStores()` and the moved `LogLine`/`ConfirmOpts` types (plus
+  `UnsavedNav` for the guard's held navigation). The guard reads synchronous
+  state (`getState()`), so the old `dirtyRef` staleness hazard ("dirty
+  cleared first, the unsaved guard must not hold the redirect") cannot
+  recur; `setDirty(on, save)` keeps its semantics (`save` cleared when `off`)
+  and `useDirty` keeps its exact signature. `clearTransient()` clears
+  exactly the demo's transient set (dirty/save, confirm/unsaved modals, AI
+  busy, stale marks, filters) — `resetDemo` still leaves loading and
+  stopOutcome untouched and rebuilds logs through the store.
+- `src/store.tsx` (+52/−53): all transient reads/writes forwarded to the
+  session store; `resetSessionStores()` added to the provider's synchronous
+  init next to `resetSharedStores()` (repeated provider mounts never
+  inherit a previous mount's session state). `later()`/`aiTimers`/ticker/
+  clock-lockstep and the demo wall clock stay in the provider (runtime
+  concerns): `pushLog` still computes the `hhmm()` timestamp at the call
+  site and the ticker/`emergencyStop` keep their render-synced refs.
+- `src/state/session.test.tsx` (new, 155 test lines): duality both
+  directions — a `useSessionStore` write is observed by a legacy `useStore()`
+  consumer and vice versa — for confirm, the dirty guard (incl. the
+  clear-then-navigate-in-one-tick behavior and the save-capture), logs
+  (store `pushLog` ↔ legacy `A.fastForward` mirror), staleOps, filters,
+  stopOutcome and aiBusy (via the real `sendChat`/`stopChat` lifecycle), plus
+  the repeated-`StoreProvider`-mounts no-inheritance regression covering
+  every moved field.
+
+Checks: `npm run typecheck` — 0 diagnostics. `npm run lint` — 0 errors;
+171 → 169 warnings (store.tsx 13 → 11: the two `persistFilters` `any`
+findings left with the deleted state setters; both new files lint clean — 0
+new findings). `npm test -- --run --maxWorkers=2` — 938 tests / 70 files
+green (926 baseline + 12 new; the known parallel-load flake did not
+surface; no existing assertion changed). `npm run build` — succeeds
+(pre-existing chunk-size warning only).
+
+Gaps: browser route exercise skipped (same optional HTTP-check gap as the
+earlier batches; the transient state is pinned by the new session duality
+suite, the ticket 05 authority suite and the shell/estop/c-console/aichat
+suites that exercise these fields through real screens).

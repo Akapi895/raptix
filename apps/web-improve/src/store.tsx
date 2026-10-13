@@ -87,6 +87,11 @@ import {
   revokeGrantTransaction, sessionCommandTransaction,
 } from './features/c2/grants'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
+// Ticket 67 enabler A: the provider's transient UI state (confirm dialog,
+// dirty/unsaved guard, demo logs, stale marks, filters, stop outcome, AI
+// busy, loading) is backed by the session Zustand authority; this context
+// reads/writes it like the shared authorities above.
+import { resetSessionStores, useSessionStore, type ConfirmOpts, type LogLine } from './state/session'
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
 
@@ -127,15 +132,10 @@ export function canAccessProject(db: Db, me: Persona, projectId: string) {
    its agent-reservation row through closePanelItems; the waiver stays a
    request-time input. */
 
-/* ───────────── Live log ───────────── */
-interface LogLine { id: string; ts: string; level: 'INFO' | 'WARN' | 'ERROR'; agent: string; stepId: string; text: string }
-
-/* ───────────── Modal / toast ───────────── */
-interface ConfirmOpts {
-  title: string; body: ReactNode; confirmLabel: string; danger?: boolean
-  reasonLabel?: string; reasonRequired?: boolean; cancelLabel?: string
-  onConfirm: (reason: string) => void
-}
+/* ───────────── Session state ───────────── */
+/* Ticket 67 enabler A: LogLine/ConfirmOpts and the transient UI state they
+   describe are hosted by the session authority (src/state/session.ts); this
+   file keeps only the context seam and the demo runtime. */
 
 /* ───────────── Context ───────────── */
 export interface Store {
@@ -267,11 +267,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   /* The shared authorities are module singletons. Restoring their initial
      values synchronously — before this mount's consumers read them — means
      repeated provider mounts never inherit a previous mount's persona/
-     project/UI state (an effect would leave the first render stale). */
+     project/UI state (an effect would leave the first render stale). The
+     session authority (ticket 67 enabler A) is restored the same way. */
   const initedRef = useRef(false)
   if (!initedRef.current) {
     initedRef.current = true
     resetSharedStores()
+    resetSessionStores()
     /* Deep links no longer auto-authenticate (ticket 07): the auth store is
        the single authorization authority, and the route guard holds the
        requested URL as the safe return destination for unauthenticated visits. */
@@ -326,11 +328,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const setTheme = useThemeStore((s) => s.setTheme)
   const toasts = useToastStore((s) => s.toasts)
   const toast = useToastStore((s) => s.toast)
-  const [loading, setLoading] = useState(false)
-  const [confirmState, setConfirmState] = useState<ConfirmOpts | null>(null)
-  const [dirty, setDirtyS] = useState(false)
-  const saveRef = useRef<(() => void) | undefined>(undefined)
-  const [unsaved, setUnsaved] = useState<Store['unsaved']>(null)
+  /* Confirm dialog, dirty/unsaved guard, demo logs, stale marks, filters,
+     stop outcome, AI busy and the loading flag are the session Zustand
+     authority (ticket 67 enabler A); the context forwards to it so legacy
+     and migrated consumers observe one state. */
+  const loading = useSessionStore((s) => s.loading)
+  const setLoading = useSessionStore((s) => s.setLoading)
+  const confirmState = useSessionStore((s) => s.confirmState)
+  const confirm = useSessionStore((s) => s.confirm)
+  const closeConfirm = useSessionStore((s) => s.closeConfirm)
+  const dirty = useSessionStore((s) => s.dirty)
+  const setDirty = useSessionStore((s) => s.setDirty)
+  const clearDirty = useSessionStore((s) => s.clearDirty)
+  const unsaved = useSessionStore((s) => s.unsaved)
+  const closeUnsaved = useSessionStore((s) => s.closeUnsaved)
+  const guarded = useSessionStore((s) => s.guarded)
   const ui = useUiStore((s) => s)
   const switcherOpen = ui.switcherOpen
   const setSwitcherOpen = ui.setSwitcherOpen
@@ -341,9 +353,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const setCopilotOpen = ui.setCopilotOpen
   const aiMode = ui.aiMode
   const setAiMode = ui.setAiMode
-  const [stopOutcome, setStopOutcome] = useState<'ack' | 'fail' | 'unknown'>('ack')
+  const stopOutcome = useSessionStore((s) => s.stopOutcome)
+  const setStopOutcome = useSessionStore((s) => s.setStopOutcome)
   const stopOutRef = useRef(stopOutcome); stopOutRef.current = stopOutcome
-  const [aiBusy, setAiBusy] = useState<string | null>(null)
+  const aiBusy = useSessionStore((s) => s.aiBusy)
+  const setAiBusy = useSessionStore((s) => s.setAiBusy)
   const aiTimers = useRef(new Map<string, number>())
   /* Dataset-bound delayed callbacks; demo reset disposes them so stale
      callbacks never apply pre-reset state to the reseeded dataset. */
@@ -353,10 +367,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     pendingTimers.current.add(t)
     return t
   }, [])
-  const [logs, setLogs] = useState<Record<string, LogLine[]>>({})
-  const [staleOps, setStaleOps] = useState<Record<string, boolean>>({})
-  const [persistFilters, setPF] = useState<Record<string, any>>({})
-  const setFilter = useCallback((k: string, v: any) => setPF((s) => ({ ...s, [k]: v })), [])
+  const logs = useSessionStore((s) => s.logs)
+  const setLogsS = useSessionStore((s) => s.setLogs)
+  const pushLogS = useSessionStore((s) => s.pushLog)
+  const staleOps = useSessionStore((s) => s.staleOps)
+  const setStale = useSessionStore((s) => s.setStale)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
 
   const accessible = useMemo(() => db.projects.filter((p) => canAccessProject(db, me, p.id)), [db, me])
   const project = pid === 'all' ? null : db.projects.find((p) => p.id === pid) || null
@@ -377,35 +394,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const can: Store['can'] = (a, projectId) =>
     policyCan({ id: me.name, role: me.role }, a, db.projects.find((x) => x.id === (projectId || pid)))
 
-  /* dirty guard */
-  const setDirty = useCallback((on: boolean, save?: () => void) => {
-    /* The ref is updated here too: a post-write redirect clears its dirty
-       state and navigates in the same tick (f-report's submit — "dirty
-       cleared first, the unsaved guard must not hold the redirect"), before
-       the state update re-renders. Without this the guard would read the
-       stale committed-but-not-yet-refetched dirty flag and hold the
-       navigation behind the unsaved-changes modal. */
-    dirtyRef.current = on
-    setDirtyS(on); saveRef.current = on ? save : undefined
-  }, [])
-  const dirtyRef = useRef(false)
-  dirtyRef.current = dirty
-  const guarded = useCallback((fn: () => void) => {
-    if (dirtyRef.current) setUnsaved({ next: fn, save: saveRef.current })
-    else fn()
-  }, [])
-  const closeUnsaved = () => setUnsaved(null)
+  /* The dirty/unsaved guard (setDirty/guarded/closeUnsaved) is the session
+     authority's (ticket 67 enabler A): it reads synchronous store state, so
+     the old dirtyRef staleness hazard cannot recur — a "dirty cleared first,
+     then navigate" redirect is never held by the unsaved modal. */
 
   /* navigation — the router is the single location writer (ticket 07). navRaw
      forwards to the active data router; the fallback branch only serves
      router-less mounts (tests) and keeps the legacy state+hash write. */
   const navRaw = useCallback((r: Route) => {
-    setDirtyS(false); saveRef.current = undefined
+    clearDirty()
     const router = getActiveRouter()
     if (router) router.navigate(toHref(r))
     else { setRoute(r); window.location.hash = toHash(r) }
     document.querySelector('main')?.scrollTo?.(0, 0)
-  }, [])
+  }, [clearDirty])
   const go = useCallback((page: string, opts?: { id?: string; tab?: string }) => guarded(() => navRaw({ page, id: opts?.id, tab: opts?.tab })), [guarded, navRaw])
 
   /* The store's route is a projection of the router location, synced through
@@ -429,7 +432,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const setPid = useCallback((id: string) => {
     if (id === pid) { setSwitcherOpen(false); return }
     guarded(() => {
-      setDirtyS(false); saveRef.current = undefined
+      clearDirty()
       setPidRaw(id)
       setSwitcherOpen(false)
       setLoading(true)
@@ -443,7 +446,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       else if (r.page === 'project') navRaw({ ...r, id })
       else if (DETAIL_MAP[r.page]) navRaw({ page: DETAIL_MAP[r.page] })
     })
-  }, [pid, guarded, navRaw])
+    }, [pid, guarded, navRaw, clearDirty])
 
   /* Auth writes forward to the shared auth authority via the auth feature
      actions (ticket 06); navigation forwards to the router (ticket 07). */
@@ -454,14 +457,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
        Public and unknown destinations go home. */
     const r = routeRef.current
     if (isKnownPage(r.page) && r.page !== 'login' && !OUTSIDE_SHELL.has(r.page)) {
-      setDirtyS(false); saveRef.current = undefined
+      clearDirty()
       return
     }
     navRaw({ page: 'command-center' })
   }
   const logout = () => { signOut(); navRaw({ page: 'login' }) }
-
-  const confirm = (o: ConfirmOpts) => setConfirmState(o)
 
   /* ───────── Helpers ───────── */
   const buildLogs = (d: Db) => {
@@ -474,7 +475,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })
     return init
   }
-  useEffect(() => { setLogs(buildLogs(dbRef.current)) }, [])
+  useEffect(() => { setLogsS(buildLogs(dbRef.current)) }, [setLogsS])
 
   const resetDemo: Store['resetDemo'] = (scenario = 'default') => {
     pendingTimers.current.forEach((t) => window.clearTimeout(t))
@@ -482,9 +483,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     aiTimers.current.clear()
     services.reset(scenario)
     dbRef.current = services.authority.snapshot()
-    setLogs(buildLogs(dbRef.current))
-    setStaleOps({}); setPF({}); setPidRaw('all'); setDirtyS(false); saveRef.current = undefined
-    setConfirmState(null); setUnsaved(null); setAiBusy(null)
+    setLogsS(buildLogs(dbRef.current))
+    useSessionStore.getState().clearTransient(); setPidRaw('all')
     useUiStore.getState().clearTransient()
     useToastStore.getState().clear()
     toast(scenario === 'e2e01' ? 'Demo state reset — RT-2026-017 scenario dataset loaded.' : 'Demo state reset.', 'info')
@@ -496,7 +496,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     mutate((d) => { d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + Date.now() % 10000, group, text, projectId, at: stamp(), read: false, to, category }) })
 
   const pushLog = (opId: string, line: Omit<LogLine, 'id' | 'ts'>) =>
-    setLogs((l) => ({ ...l, [opId]: [...(l[opId] || []), { ...line, id: Math.random().toString(36).slice(2), ts: hhmm() + ':' + pad(new Date().getSeconds()) }] }))
+    pushLogS(opId, line, hhmm() + ':' + pad(new Date().getSeconds()))
 
   const stepsFrom = (names: string[], techs: string[], agents: string[], assets: string[]): Step[] =>
     names.map((name, i) => ({ id: 'S' + pad(i + 1), name, agent: agents.length ? agents[i % agents.length] : '—', asset: assets.length ? assets[i % assets.length] : '—', technique: techs[i % techs.length], status: 'notrun' as const, ts: '—', dur: '—', output: 'Not run.' }))
@@ -950,11 +950,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  const setStale = (opId: string, v: boolean) => setStaleOps((s) => ({ ...s, [opId]: v }))
 
   const value: Store = {
     db, me, setMe: setMeName, authed, login, logout, org, route, go, pid, project, setPid, scoped, accessible, readOnly, can, theme, setTheme, loading,
-    toast, toasts, confirm, confirmState, closeConfirm: () => setConfirmState(null), setDirty, dirty, unsaved, closeUnsaved, guarded,
+    toast, toasts, confirm, confirmState, closeConfirm, setDirty, dirty, unsaved, closeUnsaved, guarded,
     switcherOpen, setSwitcherOpen, noticesOpen, setNoticesOpen, copilotOpen, copilotCtx, setCopilotOpen, aiMode, setAiMode, aiBusy,
     logs, now: stamp, staleOps, setStale, persistFilters, setFilter, resetDemo, stopOutcome, setStopOutcome, A,
   }
