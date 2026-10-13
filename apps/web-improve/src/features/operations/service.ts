@@ -21,7 +21,7 @@
 import { can, projectAccessible, projectLocked, readOnlyContext } from '../../auth/policy'
 import { planVer } from '../../data'
 import type { Db } from '../../data'
-import { parseDemoInstant, formatDemoInstant } from '../../domain/clock'
+import { DEMO_TZ, parseDemoInstant, formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, Asset, Operation, Plan, Playbook, Project, Step } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
@@ -100,6 +100,19 @@ export interface OperationService {
   preflight(ctx: RequestContext, id: string): Promise<ServiceResult<PreflightRunRead>>
   /** The start gate: re-derived checks; a refusal names the failed check and reason (ticket 26). */
   startGate(ctx: RequestContext, id: string): Promise<ServiceResult<OperationStartRead>>
+  /* Ticket 27 — lifecycle controls: each transition re-derives its gate at
+   * the handler (a stale render can never admit an action) and commits
+   * atomically, publishing one ChangeSet both entry points observe. */
+  /** Starts a passing operation: run state + agent reservations + first session + plan + audit in one commit. */
+  start(ctx: RequestContext, id: string): Promise<ServiceResult<OperationTransitionRead>>
+  /** Pauses a running operation; the reason is required and audited. */
+  pause(ctx: RequestContext, id: string, reason: string): Promise<ServiceResult<OperationTransitionRead>>
+  /** Resumes a paused operation after the connectivity/plan rechecks; stopped operations never resume. */
+  resume(ctx: RequestContext, id: string): Promise<ServiceResult<OperationTransitionRead>>
+  /** The normal stop: releases reservations and terminates sessions in the same commit; reason required. */
+  stop(ctx: RequestContext, id: string, reason: string): Promise<ServiceResult<OperationTransitionRead>>
+  /** Completes an active operation with no running step; releases reservations in the same commit. */
+  complete(ctx: RequestContext, id: string): Promise<ServiceResult<OperationTransitionRead>>
 }
 
 /** Category → statuses the category pill covers ("needs" also takes review-pending drafts). */
@@ -195,6 +208,11 @@ export function createOperationService(
     detail: (ctx, id) => Promise.resolve(operationDetail(authority.snapshot(), ctx, id)),
     preflight: (ctx, id) => Promise.resolve(runOperationPreflight(authority, clock, ctx, id)),
     startGate: (ctx, id) => Promise.resolve(operationStartGate(authority, clock, ctx, id)),
+    start: (ctx, id) => Promise.resolve(startOperation(authority, clock, ctx, id)),
+    pause: (ctx, id, reason) => Promise.resolve(pauseOperation(authority, clock, ctx, id, reason)),
+    resume: (ctx, id) => Promise.resolve(resumeOperation(authority, clock, ctx, id)),
+    stop: (ctx, id, reason) => Promise.resolve(stopOperation(authority, clock, ctx, id, reason)),
+    complete: (ctx, id) => Promise.resolve(completeOperation(authority, clock, ctx, id)),
   }
 }
 
@@ -680,4 +698,199 @@ export function operationStartGate(authority: DbAuthority, clock: Clock, ctx: Re
     }
   }
   return { ok: true, data: { op, checks } }
+}
+
+/* ═════════════ Ticket 27 — operation lifecycle controls ═════════════ */
+
+/** Transcript time-of-day stamp (HH:MM:SS project time) from the injected clock. */
+const tickOf = (clock: Clock) =>
+  new Intl.DateTimeFormat('en-GB', { timeZone: DEMO_TZ, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date(clock.now()))
+
+/** Session states a normal stop terminates (legacy parity: 'awaiting' included). */
+const STOP_SESSION_STATES: readonly string[] = ['connected', 'available', 'awaiting', 'suspended']
+/** Session states completion terminates (legacy parity: 'awaiting' left open). */
+const COMPLETE_SESSION_STATES: readonly string[] = ['connected', 'available', 'suspended']
+
+/** The committed outcome of one lifecycle transition. */
+export interface OperationTransitionRead { op: Operation }
+
+const opEntity = (op: Operation) => ({ kind: 'operation' as const, id: op.id, projectId: op.projectId })
+
+/** Addressed-operation gate shared by the control transitions: scope without
+ * existence leak, membership, read-only and role gates with reasons. */
+function lifecycleGate(db: Db, ctx: RequestContext, op: Operation | undefined, verb: string): ServiceResult<{ op: Operation; project: Project }> {
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: opEntity(op) } }
+  }
+  const project = db.projects.find((p) => p.id === op.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
+  }
+  if (readOnlyContext(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; operations cannot be ${verb}.` } }
+  }
+  if (!can({ id: ctx.actor.id, role: ctx.actor.role }, 'run', project)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `Only a Manager or Operator can ${verb} operations.` } }
+  }
+  return { ok: true, data: { op, project } }
+}
+
+/** Creates the operation's first C2 session inside the start commit (legacy parity). */
+function startSession(d: Db, o: Operation, at: string, tick: string): string {
+  const ag = d.agents.find((a) => a.id === o.agents[0])
+  const asset = d.assets.find((a) => a.id === o.assets[0])
+  const ch = d.channels.find((c) => c.projectId === o.projectId) || d.channels[0]
+  const id = 'SS-' + String(++d.counters.session).padStart(3, '0')
+  d.sessions.unshift({ id, projectId: o.projectId, opId: o.id, agentId: ag?.id || '—', asset: asset?.name || '—', kind: 'reverse', channelId: ch?.id || '—', account: 'svc-demo', integrity: 'Standard', state: 'connected', started: at, last: at, grants: [], transcript: [{ ts: tick, who: 'system', text: `Session established via ${ch?.name || 'channel'} (demo).` }] })
+  o.sessionId = id
+  return id
+}
+
+/**
+ * Starts an operation (ticket 27). The ticket-26 gate RE-DERIVES the eight
+ * checks first — a start without a currently passing preflight, an expired or
+ * rejected plan approval or a non-run role is refused with its reason and
+ * commits nothing; nothing is trusted but the current records. The transition
+ * itself is ONE atomic commit: run state, first-step dispatch, the agent
+ * reservations (policy: one agent, one operation), project activation, the
+ * first C2 session, the linked plan's executed transition and the audit row —
+ * a partial start is impossible, and the single ChangeSet refreshes the
+ * operation views and the agent fleet together.
+ */
+export function startOperation(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<OperationTransitionRead> {
+  const gate = operationStartGate(authority, clock, ctx, id)
+  if (!gate.ok) return gate
+  const at = formatDemoInstant(clock.now())
+  const tick = tickOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const o = d.operations.find((x) => x.id === id)!
+    o.status = 'running'; o.startedAt = at; o.updated = at
+    o.steps.forEach((s, i) => { s.status = i === 0 ? 'running' : 'pending'; s.ts = i === 0 ? tick.slice(0, 5) : '—' })
+    o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a) a.op = id })
+    const p = d.projects.find((x) => x.id === o.projectId)!
+    if (p.status === 'approved') p.status = 'active'
+    if (!o.sessionId) startSession(d, o, at, tick)
+    const pl = o.planId ? d.plans.find((x) => x.id === o.planId) : undefined
+    if (pl && pl.status === 'approved') pl.status = 'executed'
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Started operation', obj: id, projectId: o.projectId, result: 'Success', reason: 'Preflight passed' })
+  })
+  return { ok: true, data: { op: authority.snapshot().operations.find((x) => x.id === id)! } }
+}
+
+/**
+ * Pauses a running operation: the reason is required (it is audited), and the
+ * refusal paths (role, read-only, out-of-scope, anything not running) commit
+ * nothing. Progress stops in one atomic commit with its stop attribution.
+ */
+export function pauseOperation(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, reason: string): ServiceResult<OperationTransitionRead> {
+  const db = authority.snapshot()
+  const op = db.operations.find((o) => o.id === id)
+  const gated = lifecycleGate(db, ctx, op, 'pause')
+  if (!gated.ok) return gated
+  if (!reason.trim()) {
+    return { ok: false, failure: { kind: 'validation', message: 'A reason is required to pause an operation. It is recorded in the audit log.', entity: opEntity(op!) } }
+  }
+  if (op!.status !== 'running') {
+    return { ok: false, failure: { kind: 'validation', message: `Operation ${id} is ${op!.status === 'estop' ? 'emergency stopped' : op!.status} — only a running operation can be paused.`, entity: opEntity(op!) } }
+  }
+  const at = formatDemoInstant(clock.now())
+  authority.commit(ctx.corr, (d) => {
+    const o = d.operations.find((x) => x.id === id)!
+    o.status = 'paused'; o.stopReason = reason; o.stopBy = ctx.actor.id; o.stopAt = at; o.updated = at
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Paused operation', obj: id, projectId: o.projectId, result: 'Success', reason })
+  })
+  return { ok: true, data: { op: authority.snapshot().operations.find((x) => x.id === id)! } }
+}
+
+/**
+ * Resumes a paused operation after the rechecks the resume dialog previews,
+ * now enforced at the handler: agents must be connected, a revised linked
+ * plan needs re-approval, and stopped/estopped operations never resume
+ * automatically. Success moves the run state in one atomic commit.
+ */
+export function resumeOperation(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<OperationTransitionRead> {
+  const db = authority.snapshot()
+  const op = db.operations.find((o) => o.id === id)
+  const gated = lifecycleGate(db, ctx, op, 'resume')
+  if (!gated.ok) return gated
+  if (op!.status !== 'paused') {
+    return { ok: false, failure: { kind: 'validation', message: `Operation ${id} is ${op!.status === 'estop' ? 'emergency stopped' : op!.status} — it does not resume automatically. Only a paused operation can be resumed.`, entity: opEntity(op!) } }
+  }
+  const lost = op!.agents.filter((aid) => db.agents.find((x) => x.id === aid)?.status !== 'online')
+  if (lost.length) {
+    return { ok: false, failure: { kind: 'validation', message: `Cannot resume: ${lost.join(', ')} not connected. Restore the connection or replace the agent.`, entity: opEntity(op!) } }
+  }
+  const pl = op!.planId ? db.plans.find((x) => x.id === op!.planId) : undefined
+  if (pl && !['approved', 'executed'].includes(pl.status)) {
+    return { ok: false, failure: { kind: 'validation', message: `Cannot resume: revised plan ${pl.id} ${planVer(pl)} needs re-approval.`, entity: opEntity(op!) } }
+  }
+  const at = formatDemoInstant(clock.now())
+  authority.commit(ctx.corr, (d) => {
+    const o = d.operations.find((x) => x.id === id)!
+    o.status = 'running'; o.stopReason = undefined; o.updated = at
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Resumed operation', obj: id, projectId: o.projectId, result: 'Success', reason: '' })
+  })
+  return { ok: true, data: { op: authority.snapshot().operations.find((x) => x.id === id)! } }
+}
+
+/**
+ * The normal stop (ticket 27): the reason is required, and everything that
+ * makes a stop real commits in the SAME atomic transaction — stopped state
+ * and attribution, running steps → Unknown, queued steps → Not run, the agent
+ * reservation release (policy: one agent, one operation) and linked session
+ * termination. One ChangeSet, so the fleet and the operation views agree.
+ */
+export function stopOperation(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, reason: string): ServiceResult<OperationTransitionRead> {
+  const db = authority.snapshot()
+  const op = db.operations.find((o) => o.id === id)
+  const gated = lifecycleGate(db, ctx, op, 'stop')
+  if (!gated.ok) return gated
+  if (!reason.trim()) {
+    return { ok: false, failure: { kind: 'validation', message: 'A reason is required to stop an operation. It is recorded in the audit log.', entity: opEntity(op!) } }
+  }
+  if (op!.status !== 'running' && op!.status !== 'paused') {
+    return { ok: false, failure: { kind: 'validation', message: `Operation ${id} is ${op!.status === 'estop' ? 'emergency stopped' : op!.status} — only a running or paused operation can be stopped.`, entity: opEntity(op!) } }
+  }
+  const at = formatDemoInstant(clock.now())
+  const tick = tickOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const o = d.operations.find((x) => x.id === id)!
+    o.status = 'cancelled'; o.stopReason = reason; o.stopBy = ctx.actor.id; o.stopAt = at; o.updated = at
+    o.steps.forEach((s) => { if (s.status === 'running') s.status = 'unknown'; if (s.status === 'pending') s.status = 'notrun' })
+    o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === id) a.op = null })
+    d.sessions.forEach((s) => { if (s.opId === id && STOP_SESSION_STATES.includes(s.state)) { s.state = 'terminated'; s.transcript.push({ ts: tick, who: 'system', text: 'Session terminated: operation stopped.' }) } })
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Stopped operation', obj: id, projectId: o.projectId, result: 'Success', reason })
+  })
+  return { ok: true, data: { op: authority.snapshot().operations.find((x) => x.id === id)! } }
+}
+
+/**
+ * Completes an active operation: refuses while any step is still running
+ * (baseline invariant — wait for it or pause first) and releases the agent
+ * reservations and linked sessions in the same atomic commit as the done
+ * state, so completion never leaves a reserved agent behind.
+ */
+export function completeOperation(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<OperationTransitionRead> {
+  const db = authority.snapshot()
+  const op = db.operations.find((o) => o.id === id)
+  const gated = lifecycleGate(db, ctx, op, 'complete')
+  if (!gated.ok) return gated
+  if (op!.status !== 'running' && op!.status !== 'paused') {
+    return { ok: false, failure: { kind: 'validation', message: `Operation ${id} is ${op!.status === 'estop' ? 'emergency stopped' : op!.status} — only an active operation can be completed.`, entity: opEntity(op!) } }
+  }
+  if (op!.steps.some((s) => s.status === 'running')) {
+    return { ok: false, failure: { kind: 'validation', message: 'Cannot complete: a step is still running. Wait for it to finish or use Pause.', entity: opEntity(op!) } }
+  }
+  const at = formatDemoInstant(clock.now())
+  const tick = tickOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const o = d.operations.find((x) => x.id === id)!
+    o.status = 'done'; o.updated = at
+    o.steps.forEach((s) => { if (s.status === 'pending') s.status = 'notrun' })
+    o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === id) a.op = null })
+    d.sessions.forEach((s) => { if (s.opId === id && COMPLETE_SESSION_STATES.includes(s.state)) { s.state = 'terminated'; s.transcript.push({ ts: tick, who: 'system', text: 'Session terminated at operation completion.' }) } })
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Completed operation', obj: id, projectId: o.projectId, result: 'Success', reason: '' })
+  })
+  return { ok: true, data: { op: authority.snapshot().operations.find((x) => x.id === id)! } }
 }

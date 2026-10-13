@@ -14,7 +14,7 @@ import { actorRef } from '../../auth/persona'
 import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
-import type { OperationDetailRead, OperationDraftInput, OperationDraftOptions, OperationDraftPatch, OperationListQuery, OperationListRead, OperationWriteRead, PreflightRunRead } from './service'
+import type { OperationDetailRead, OperationDraftInput, OperationDraftOptions, OperationDraftPatch, OperationListQuery, OperationListRead, OperationTransitionRead, OperationWriteRead, PreflightRunRead } from './service'
 
 /** Feature-local key namespace: ['operation', scope, 'list', query]. */
 export const operationKeys = {
@@ -149,6 +149,71 @@ export function useRunPreflight() {
     mutationFn: async (v: { id: string }): Promise<ServiceResult<PreflightRunRead>> => {
       const actor = actorRef(scope.actor)
       return services.operations(actor, scope.project).preflight({ actor, projectId: scope.project, corr: corr('operation-preflight') }, v.id)
+    },
+  })
+}
+
+/* ── Ticket 27: operation lifecycle control writes. ── */
+
+/**
+ * The lifecycle controls (start/pause/resume/stop/complete): each mutation
+ * captures the actor/project scope at call time, so a persona/project switch
+ * never retargets an in-flight transition, and the typed result — success or
+ * the refusal reason the handler re-derived at click time — is surfaced to
+ * the caller's onSuccess. The commit publishes one ChangeSet, so the
+ * operation views and the agent fleet refetch together.
+ */
+export function useStartOperation() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { id: string }): Promise<ServiceResult<OperationTransitionRead>> => {
+      const actor = actorRef(scope.actor)
+      return services.operations(actor, scope.project).start({ actor, projectId: scope.project, corr: corr('operation-start') }, v.id)
+    },
+  })
+}
+
+export function usePauseOperation() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { id: string; reason: string }): Promise<ServiceResult<OperationTransitionRead>> => {
+      const actor = actorRef(scope.actor)
+      return services.operations(actor, scope.project).pause({ actor, projectId: scope.project, corr: corr('operation-pause') }, v.id, v.reason)
+    },
+  })
+}
+
+export function useResumeOperation() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { id: string }): Promise<ServiceResult<OperationTransitionRead>> => {
+      const actor = actorRef(scope.actor)
+      return services.operations(actor, scope.project).resume({ actor, projectId: scope.project, corr: corr('operation-resume') }, v.id)
+    },
+  })
+}
+
+export function useStopOperation() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { id: string; reason: string }): Promise<ServiceResult<OperationTransitionRead>> => {
+      const actor = actorRef(scope.actor)
+      return services.operations(actor, scope.project).stop({ actor, projectId: scope.project, corr: corr('operation-stop') }, v.id, v.reason)
+    },
+  })
+}
+
+export function useCompleteOperation() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { id: string }): Promise<ServiceResult<OperationTransitionRead>> => {
+      const actor = actorRef(scope.actor)
+      return services.operations(actor, scope.project).complete({ actor, projectId: scope.project, corr: corr('operation-complete') }, v.id)
     },
   })
 }
