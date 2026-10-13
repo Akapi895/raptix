@@ -47,6 +47,10 @@ import { createAnalysisService, type AnalysisService } from '../features/analysi
 // invitations) are feature-local (src/features/settings/service.ts); the
 // factory only wires them into a scope.
 import { createSettingsService, type SettingsService } from '../features/settings/service'
+// Ticket 59 append: notice center handlers (scoped list, read/unread,
+// dismiss) are feature-local (src/features/notices/service.ts); the factory
+// only wires them into a scope.
+import { createNoticeService, type NoticeService } from '../features/notices/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -114,6 +118,8 @@ export interface ConsoleServices {
   analysis(actor: ActorRef, projectId: string): AnalysisService
   /** Typed organization settings handlers (ticket 56 — feature-local implementation). */
   settings(actor: ActorRef, projectId: string): SettingsService
+  /** Typed notice center handlers (ticket 59 — feature-local implementation). */
+  notices(actor: ActorRef, projectId: string): NoticeService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -351,6 +357,27 @@ export function createConsoleServices(): ConsoleServices {
     return createSettingsService(authority, clock, guard)
   }
 
+  /* ── Ticket 59 append: notification center (persona-scoped list,
+     read/unread, mark-all, dismiss). Reads share the superseded-scope guard
+     so cancelScope covers in-flight notice reads on a persona/project switch
+     and a late response cannot restore previous-scope visibility; writes
+     capture their context at call time and commit once. ── */
+  const forNotices = (actor: ActorRef, projectId: string): NoticeService => {
+    const key = scopeKey(actor, projectId)
+    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
+      let superseded = false
+      const cancel = () => { superseded = true }
+      let set = inFlight.get(key)
+      if (!set) { set = new Set(); inFlight.set(key, set) }
+      set.add(cancel)
+      await Promise.resolve()
+      set.delete(cancel)
+      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
+      return produce()
+    }
+    return createNoticeService(authority, clock, guard)
+  }
+
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
     set?.forEach((cancel) => cancel())
@@ -386,6 +413,7 @@ export function createConsoleServices(): ConsoleServices {
     library: forLibrary,
     analysis: forAnalysis,
     settings: forSettings,
+    notices: forNotices,
     cancelScope,
     reset(variant) {
       scheduler.clear()
