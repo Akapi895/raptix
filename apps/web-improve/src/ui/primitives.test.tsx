@@ -13,7 +13,7 @@ import { useState } from 'react'
 import { Search } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Avatar, Button, Check, Field, IconButton, IdLink, Input, Mono, Person, SearchBox, Select, Sev, Status, STATUS, Textarea, Toggle,
+  Avatar, Button, Check, Field, IconButton, IdLink, Input, Mono, Person, SearchBox, Segmented, Select, Sev, Status, STATUS, Textarea, Toggle,
   type StatusKind, type Tone,
 } from '../ui'
 
@@ -205,6 +205,25 @@ describe('input primitives', () => {
     expect(screen.getByText('Approved ROE required for preflight')).toBeInTheDocument()
     expect(screen.getByText('End must be after start')).toBeInTheDocument()
     expect(screen.getByText('Time window').closest('label')!.querySelector('.text-bad')!.textContent).toBe('End must be after start')
+  })
+})
+
+describe('segmented control', () => {
+  it('keeps the option label as each button accessible name inside a wrapping Field label and conveys pressed state (ticket 64)', async () => {
+    function Host() {
+      const [v, setV] = useState<'light' | 'dark'>('dark')
+      return <Field label="Theme"><Segmented value={v} onChange={setV} options={[{ id: 'light', label: 'Light' }, { id: 'dark', label: 'Dark' }]} /></Field>
+    }
+    render(<Host />)
+    // The wrapping <label> must not override the button name ("Theme Dark").
+    expect(screen.queryByRole('button', { name: /Theme / })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Light' })).toBeInTheDocument()
+    const dark = screen.getByRole('button', { name: 'Dark' })
+    expect(dark).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(screen.getByRole('button', { name: 'Light' }))
+    expect(screen.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'false')
   })
 })
 

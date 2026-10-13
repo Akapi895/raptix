@@ -86,6 +86,10 @@ afterEach(() => {
 })
 
 describe('dark-mode sweep (every route group)', () => {
+  // Eleven full app mounts in one test: it sits at vitest's default 5s
+  // per-test budget under full-suite parallel load (timed out on this box
+  // even on the untouched base), so it gets its own larger budget. No
+  // assertion is changed (ticket 64 audit-stability note).
   it('renders dark via the shared store with token colors only outside the print simulations', async () => {
     for (const s of SWEEP) {
       const { store } = mountApp(s.hash)
@@ -98,7 +102,7 @@ describe('dark-mode sweep (every route group)', () => {
       setActiveRouter(null)
       window.location.hash = ''
     }
-  })
+  }, 20000)
 })
 
 describe('print simulations (intentional fixed-light surfaces)', () => {
@@ -174,11 +178,11 @@ describe('theme toggle, persistence and reset across consumers', () => {
     act(() => { store().go('settings', { tab: 'notifications' }) })
     await screen.findByText('Notification preferences')
     expect(document.documentElement.classList.contains('dark')).toBe(true)
-    // Settings consumer applies through the same store on save. (The wrapping
-    // <label> overrides the first button's accessible name — recorded in the
-    // ticket as a separate a11y leaf — so click by text.)
+    // Settings consumer applies through the same store on save. (Ticket 64:
+    // the Segmented buttons keep their own accessible names inside the
+    // wrapping <label>, so the option is reachable by role + name.)
     const themeField = within(screen.getByText('Theme').closest('label')!)
-    fireEvent.click(themeField.getByText('Light (default)'))
+    fireEvent.click(themeField.getByRole('button', { name: 'Light (default)' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }))
     expect(document.documentElement.classList.contains('dark')).toBe(false)
     // A fresh provider mount resets the theme to the light default.
