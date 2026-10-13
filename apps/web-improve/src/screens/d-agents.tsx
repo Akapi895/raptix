@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
 import { useStore } from '../store'
 import { USERS, type Agent, type Group } from '../data'
-import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Status, Table, Tabs, Textarea, Timeline, useGuard, usePaged, Mono, cx } from '../ui'
-import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, useProjectName, useVisibleAgents, withLoading } from './d-shared'
+import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui'
+import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from './d-shared'
+import { AgentReadError, useAgentDetail, useAgentList } from '../features/agents/query'
+import type { AgentKpi } from '../features/agents/service'
 import { BRANCH_LABEL } from '../data'
 
 const POLICIES = ['Project use only', 'Shared with approval', 'Observe only (no execution)']
 const STATUS_LABEL: Record<string, string> = { online: 'Connected', idle: 'Idle', lost: 'Disconnected', disabled: 'Disabled', unknown: 'Unknown', unhealthy: 'Unhealthy' }
-const ATTN = ['lost', 'unknown', 'disabled', 'unhealthy']
 const ACTIVE_PROJECT = ['active', 'approved']
 
 /* ───────────── Heartbeat bars (simulated) ───────────── */
@@ -292,85 +293,99 @@ function FailurePanel({ a }: { a: Agent }) {
 }
 
 
-/* ───────────── Fleet (AG-V3-01) ───────────── */
+/* ───────────── Fleet (AG-V3-01, ticket 48: typed service read + Query) ───────────── */
+/** One row: the canonical agent plus the service-derived decorations. */
+type FleetRow = Agent & { sessions: number; pending?: { id: string; by: string; at: string; reviewer: string } }
+
 function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project' | 'pool'; onNewGroup: () => void; newGroupWhy: string; onAssign: (a: Agent | null) => void }) {
-  const { go, pid, db, can } = useStore()
-  const all = useVisibleAgents()
-  const [q, setQ] = useState(''), [st, setSt] = useState(''), [os, setOs] = useState(''), [pj, setPj] = useState(''), [gr, setGr] = useState(''), [kpi, setKpi] = useState<'' | 'conn' | 'lost' | 'assigned' | 'avail' | 'busy' | 'attn'>('')
+  const { go, pid, can } = useStore()
+  const [q, setQ] = useState(''), [st, setSt] = useState(''), [os, setOs] = useState(''), [pj, setPj] = useState(''), [gr, setGr] = useState(''), [kpi, setKpi] = useState<'' | AgentKpi>('')
+  const [page, setPage] = useState(1)
+  /* The one fleet read: scope-checked typed service; rows, KPI pills, filter
+     options and banner data all derive from accessible canonical agents. */
+  const list = useAgentList({
+    mode, q: q || undefined, status: st || undefined, os: os || undefined,
+    project: pj || undefined, group: gr || undefined, kpi: kpi || undefined,
+    page: page > 1 ? page : undefined,
+  })
+  useEffect(() => { setPage(1) }, [q, st, os, pj, gr, kpi, mode])
+  const read = list.data
+  const k = read?.kpis
+  const rows = useMemo<FleetRow[]>(() => (read?.items ?? []).map((it) => ({ ...it.agent, sessions: it.sessions, pending: it.pendingAssignment })), [read])
   const isConn = (a: Agent) => a.status === 'online' || a.status === 'idle'
-  const kpiFn = (a: Agent) => kpi === 'conn' ? isConn(a) : kpi === 'lost' ? a.status === 'lost' : kpi === 'assigned' ? !!a.projectId : kpi === 'avail' ? !a.projectId && isConn(a) && !a.op : kpi === 'busy' ? !!a.op : kpi === 'attn' ? ATTN.includes(a.status) : true
-  const { approvals } = db
-  const pendingAssign = (id: string) => approvals.find((x) => isAssignReq(x.type) && x.status === 'pending' && (x.diff || '').includes(id))
-  const base = all.filter((a) => (mode === 'pool' ? a.projectId === '' : a.projectId !== ''))
-  const rows = base.filter((a) => (!q || (a.id + a.host + a.ip).toLowerCase().includes(q.toLowerCase())) && (!st || a.status === st) && (!os || a.os === os) && (!pj || a.projectId === pj) && (!gr || a.group === gr) && kpiFn(a))
-  const pg = usePaged(rows, 10)
-  const assigned = all.filter((a) => a.projectId), pool = all.filter((a) => !a.projectId)
-  const connected = all.filter(isConn).length
-  const poolAvail = pool.filter((a) => isConn(a) && !a.op).length
-  const busy = all.filter((a) => !!a.op).length
-  const lost = all.filter((a) => a.status === 'lost').length
-  const attn = all.filter((a) => ATTN.includes(a.status)).length
-  const groups = [...new Set(base.map((a) => a.group).filter(Boolean))]
-  const projIds = [...new Set(base.map((a) => a.projectId).filter(Boolean))]
+  const groups = read?.groups ?? []
+  const projIds = read?.projects ?? []
+  const osList = read?.osList ?? []
+  const pages = read ? Math.max(1, Math.ceil(read.total / read.pageSize)) : 1
   const moreActive = [os, pj, gr].filter(Boolean).length
   const filtered = !!(q || st || os || pj || gr || kpi)
   const clear = () => { setQ(''); setSt(''); setOs(''); setPj(''); setGr(''); setKpi('') }
-  const tk = (k: typeof kpi) => () => setKpi(kpi === k ? '' : k)
-  const ks = (k: typeof kpi, d: string) => kpi === k ? 'Filter active, click to clear' : d
-  const sessions = (id: string) => db.sessions.filter((s) => s.agentId === id && ['connected', 'available', 'awaiting'].includes(s.state)).length
-  const assignWhy = (a: Agent) => a.projectId ? 'Already assigned to a project.' : a.op ? `Reserved by ${a.op}.` : !isConn(a) ? `${STATUS_LABEL[a.status]}: a non-connected agent is never available or auto-assigned.` : pendingAssign(a.id) ? `${pendingAssign(a.id)!.id} is already pending review.` : ''
+  const tk = (k: AgentKpi) => () => setKpi(kpi === k ? '' : k)
+  const ks = (v: AgentKpi, d: string) => kpi === v ? 'Filter active, click to clear' : d
+  const assignWhy = (a: FleetRow) => a.projectId ? 'Already assigned to a project.' : a.op ? `Reserved by ${a.op}.` : !isConn(a) ? `${STATUS_LABEL[a.status]}: a non-connected agent is never available or auto-assigned.` : a.pending ? `${a.pending.id} is already pending review.` : ''
   const scopeName = pid === 'all' ? 'the projects you can access' : pid
+  const poolAvail = k?.poolAvailable ?? 0
   return (
     <>
-      <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="Connected" value={connected} tone="ok" icon={Wifi} sub={ks('conn', `${assigned.filter(isConn).length} assigned · ${pool.filter(isConn).length} pool`)} onClick={tk('conn')} />
-        <Kpi label="Disconnected" value={lost} tone={lost ? 'bad' : undefined} icon={WifiOff} sub={ks('lost', lost ? 'Needs action' : 'No alerts')} onClick={tk('lost')} />
-        <Kpi label="Assigned to Project" value={assigned.length} icon={Layers} sub={ks('assigned', pid === 'all' ? 'Across accessible projects' : `Assigned to ${pid}`)} onClick={tk('assigned')} />
-        <Kpi label="Available in Shared Pool" value={poolAvail} tone={poolAvail ? 'cyan' : undefined} icon={Layers} sub={ks('avail', 'Connected, unassigned, unreserved')} onClick={tk('avail')} />
-        <Kpi label="Busy" value={busy} tone="cyan" icon={Zap} sub={ks('busy', 'Reserved by an operation')} onClick={tk('busy')} />
-        <Kpi label="Need Attention" value={attn} tone={attn ? 'warn' : undefined} icon={ShieldAlert} sub={ks('attn', 'Disconnected, unhealthy, unknown, disabled')} onClick={tk('attn')} />
-      </div>
-      <p className="-mt-2 mb-4 text-xs text-muted">Pool agents are not counted as assigned to a project. “Busy” counts only agents reserved by an operation; an agent that is connected but not reserved is available, not busy.</p>
-      <FilterBar right={<Button icon={FolderPlus} onClick={onNewGroup} disabled={!!newGroupWhy} title={newGroupWhy || 'Create an agent group'}>Create Group</Button>}>
-        <SearchBox className="w-64" value={q} onChange={setQ} placeholder="Search by ID, hostname or IP" />
-        <Select className="!w-40" aria-label="Status" value={st} onChange={(e) => setSt(e.target.value)}><option value="">All statuses</option>{Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
-        <MoreFilters active={moreActive}>
-          <Select aria-label="OS" value={os} onChange={(e) => setOs(e.target.value)}><option value="">All OS</option><option>Windows</option><option>Linux</option></Select>
-          {mode === 'project' && pid === 'all' && <Select aria-label="Project" value={pj} onChange={(e) => setPj(e.target.value)}><option value="">All projects</option>{projIds.map((id) => <option key={id} value={id}>{id}</option>)}</Select>}
-          <Select aria-label="Group" value={gr} onChange={(e) => setGr(e.target.value)}><option value="">All groups</option>{groups.map((g) => <option key={g}>{g}</option>)}</Select>
-        </MoreFilters>
-        {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
-      </FilterBar>
-      {newGroupWhy && <div className="-mt-2 mb-3"><Locked reason={`Create Group: ${newGroupWhy}`} /></div>}
-      {mode === 'project' && all.some((a) => a.status === 'lost' && a.projectId) && <Banner tone="bad" title="Some assigned agents are disconnected" action={<Button size="sm" onClick={() => go('agent', { id: all.find((a) => a.status === 'lost' && a.projectId)!.id, tab: 'conn' })}>View health failure</Button>}>{all.filter((a) => a.status === 'lost' && a.projectId).map((a) => `${a.id} ${a.host} (last seen ${a.lastSeen})`).join('; ')}. Last-seen data may be stale; no operation is marked complete because of it.</Banner>}
-      {mode === 'pool' && <Banner tone="info" title="Shared Pool">Connected agents that are not assigned to any project. They cannot join an operation until an assignment is approved. These rows are never counted as agents of the current project.</Banner>}
-      <DTable
-        rows={pg.rows} rowKey={(a) => a.id} onRow={(a) => go('agent', { id: a.id })}
-        empty={filtered ? <Empty icon={Layers} title="No agents match the filters" action={<Button onClick={clear}>Clear filters</Button>}>Try relaxing the filters.</Empty>
-          : mode === 'project'
-            ? <Empty icon={Layers} title={pid === 'all' ? 'No assigned agents' : `0 agents assigned to ${pid}`} action={<Button variant="primary" icon={UserPlus} onClick={() => onAssign(null)}>Request assignment</Button>}>No agent is assigned to {scopeName}. {poolAvail} connected {poolAvail === 1 ? 'agent is' : 'agents are'} in the Shared Pool and {poolAvail === 1 ? 'is' : 'are'} not counted as assigned. Assignment needs reviewer approval.</Empty>
-            : <Empty icon={Layers} title="The shared pool is empty">Every registered agent is assigned to a project. Register agents from Settings → Integrations.</Empty>}
-        cols={[
-          { key: 'id', header: 'Agent ID', width: '110px', render: (a) => <Id className="text-accent">{a.id}</Id> },
-          { key: 'host', header: 'Hostname', render: (a) => <div><span className="block max-w-[160px] truncate" title={a.host}><Mono>{a.host}</Mono></span><div className="text-xs text-muted"><Mono className="text-xs">{a.ip}</Mono></div></div> },
-          { key: 'os', header: 'OS', hideBelow: 'md', render: (a) => a.os },
-          { key: 'cap', header: 'Capability', hideBelow: 'lg', render: (a) => <span className="whitespace-nowrap text-xs">{a.os} · v{a.version}</span> },
-          { key: 'st', header: 'Connection', render: (a) => <Status kind="agent" value={a.status} /> },
-          { key: 'ls', header: 'Last seen (UTC+7)', render: (a) => <span className={cx('whitespace-nowrap text-xs', a.status === 'lost' && 'text-bad')}>{shortDate(a.lastSeen)}{a.status === 'lost' && <span className="ml-1">(stale)</span>}</span> },
-          { key: 'pj', header: 'Assignment', render: (a) => a.projectId ? <span className="whitespace-nowrap text-xs">{a.projectId}</span> : pendingAssign(a.id) ? <span title={`${pendingAssign(a.id)!.id}: waiting for reviewer approval`} className="whitespace-nowrap rounded-full border border-warn/30 bg-warn/10 px-2 py-0.5 text-[11px] text-warn">Pending Assignment</span> : <span className="whitespace-nowrap rounded-full border border-line px-2 py-0.5 text-[11px] text-muted">Unassigned</span> },
-          { key: 'grp', header: 'Group', hideBelow: 'lg', render: (a) => a.group ? <Trunc max="max-w-[130px]">{a.group}</Trunc> : <span className="text-muted">—</span> },
-          { key: 'op', header: 'Operation', hideBelow: 'md', render: (a) => a.op ? <IdL onClick={() => go('operation', { id: a.op! })}>{a.op}</IdL> : <span className="text-muted">—</span> },
-          { key: 'ss', header: 'Sessions', hideBelow: 'lg', render: (a) => <span className="text-xs">{sessions(a.id)}</span> },
-          { key: 'act', header: 'Actions', render: (a) => (
-            <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <Button size="sm" variant="ghost" onClick={() => go('agent', { id: a.id })}>View</Button>
-              {!a.projectId && <Button size="sm" className="whitespace-nowrap" disabled={!!assignWhy(a)} title={assignWhy(a) || 'Request assignment to a project (approval-gated)'} onClick={() => onAssign(a)}>Request assignment</Button>}
-            </span>
-          ) },
-        ]}
-      />
-      <Pager {...pg} />
-      <p className="mt-3 text-xs text-muted">An agent can only be used in the project it is assigned to. Agents in the Shared Pool must be assigned through the approval process before they can join an operation. {can('editScope') ? '' : 'Your role can request assignment but cannot assign immediately.'}</p>
+      {list.isPending ? (
+        <div aria-busy="true" aria-label="Loading agents"><Skeleton className="h-96" /></div>
+      ) : list.isError ? (
+        <Empty icon={AlertTriangle} title="Agents could not be loaded" action={<Button onClick={() => list.refetch()}>Retry</Button>}>
+          {(list.error as AgentReadError).failure.message}
+        </Empty>
+      ) : k && (
+        <>
+          <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <Kpi label="Connected" value={k.connected} tone="ok" icon={Wifi} sub={ks('conn', `${k.connectedAssigned} assigned · ${k.connectedPool} pool`)} onClick={tk('conn')} />
+            <Kpi label="Disconnected" value={k.disconnected} tone={k.disconnected ? 'bad' : undefined} icon={WifiOff} sub={ks('lost', k.disconnected ? 'Needs action' : 'No alerts')} onClick={tk('lost')} />
+            <Kpi label="Assigned to Project" value={k.assigned} icon={Layers} sub={ks('assigned', pid === 'all' ? 'Across accessible projects' : `Assigned to ${pid}`)} onClick={tk('assigned')} />
+            <Kpi label="Available in Shared Pool" value={k.poolAvailable} tone={k.poolAvailable ? 'cyan' : undefined} icon={Layers} sub={ks('avail', 'Connected, unassigned, unreserved')} onClick={tk('avail')} />
+            <Kpi label="Busy" value={k.busy} tone="cyan" icon={Zap} sub={ks('busy', 'Reserved by an operation')} onClick={tk('busy')} />
+            <Kpi label="Need Attention" value={k.attention} tone={k.attention ? 'warn' : undefined} icon={ShieldAlert} sub={ks('attn', 'Disconnected, unhealthy, unknown, disabled')} onClick={tk('attn')} />
+          </div>
+          <p className="-mt-2 mb-4 text-xs text-muted">Pool agents are not counted as assigned to a project. “Busy” counts only agents reserved by an operation; an agent that is connected but not reserved is available, not busy.</p>
+          <FilterBar right={<Button icon={FolderPlus} onClick={onNewGroup} disabled={!!newGroupWhy} title={newGroupWhy || 'Create an agent group'}>Create Group</Button>}>
+            <SearchBox className="w-64" value={q} onChange={setQ} placeholder="Search by ID, hostname or IP" />
+            <Select className="!w-40" aria-label="Status" value={st} onChange={(e) => setSt(e.target.value)}><option value="">All statuses</option>{Object.entries(STATUS_LABEL).map(([kk, v]) => <option key={kk} value={kk}>{v}</option>)}</Select>
+            <MoreFilters active={moreActive}>
+              <Select aria-label="OS" value={os} onChange={(e) => setOs(e.target.value)}><option value="">All OS</option>{osList.map((v) => <option key={v}>{v}</option>)}</Select>
+              {mode === 'project' && pid === 'all' && <Select aria-label="Project" value={pj} onChange={(e) => setPj(e.target.value)}><option value="">All projects</option>{projIds.map((id) => <option key={id} value={id}>{id}</option>)}</Select>}
+              <Select aria-label="Group" value={gr} onChange={(e) => setGr(e.target.value)}><option value="">All groups</option>{groups.map((g) => <option key={g}>{g}</option>)}</Select>
+            </MoreFilters>
+            {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
+          </FilterBar>
+          {newGroupWhy && <div className="-mt-2 mb-3"><Locked reason={`Create Group: ${newGroupWhy}`} /></div>}
+          {read.lostAssigned.length > 0 && mode === 'project' && <Banner tone="bad" title="Some assigned agents are disconnected" action={<Button size="sm" onClick={() => go('agent', { id: read.lostAssigned[0].id, tab: 'conn' })}>View health failure</Button>}>{read.lostAssigned.map((a) => `${a.id} ${a.host} (last seen ${a.lastSeen})`).join('; ')}. Last-seen data may be stale; no operation is marked complete because of it.</Banner>}
+          {mode === 'pool' && <Banner tone="info" title="Shared Pool">Connected agents that are not assigned to any project. They cannot join an operation until an assignment is approved. These rows are never counted as agents of the current project.</Banner>}
+          <DTable
+            rows={rows} rowKey={(a) => a.id} onRow={(a) => go('agent', { id: a.id })}
+            empty={filtered ? <Empty icon={Layers} title="No agents match the filters" action={<Button onClick={clear}>Clear filters</Button>}>Try relaxing the filters.</Empty>
+              : mode === 'project'
+                ? <Empty icon={Layers} title={pid === 'all' ? 'No assigned agents' : `0 agents assigned to ${pid}`} action={<Button variant="primary" icon={UserPlus} onClick={() => onAssign(null)}>Request assignment</Button>}>No agent is assigned to {scopeName}. {poolAvail} connected {poolAvail === 1 ? 'agent is' : 'agents are'} in the Shared Pool and {poolAvail === 1 ? 'is' : 'are'} not counted as assigned. Assignment needs reviewer approval.</Empty>
+                : <Empty icon={Layers} title="The shared pool is empty">Every registered agent is assigned to a project. Register agents from Settings → Integrations.</Empty>}
+            cols={[
+              { key: 'id', header: 'Agent ID', width: '110px', render: (a) => <Id className="text-accent">{a.id}</Id> },
+              { key: 'host', header: 'Hostname', render: (a) => <div><span className="block max-w-[160px] truncate" title={a.host}><Mono>{a.host}</Mono></span><div className="text-xs text-muted"><Mono className="text-xs">{a.ip}</Mono></div></div> },
+              { key: 'os', header: 'OS', hideBelow: 'md', render: (a) => a.os },
+              { key: 'cap', header: 'Capability', hideBelow: 'lg', render: (a) => <span className="whitespace-nowrap text-xs">{a.os} · v{a.version}</span> },
+              { key: 'st', header: 'Connection', render: (a) => <Status kind="agent" value={a.status} /> },
+              { key: 'ls', header: 'Last seen (UTC+7)', render: (a) => <span className={cx('whitespace-nowrap text-xs', a.status === 'lost' && 'text-bad')}>{shortDate(a.lastSeen)}{a.status === 'lost' && <span className="ml-1">(stale)</span>}</span> },
+              { key: 'pj', header: 'Assignment', render: (a) => a.projectId ? <span className="whitespace-nowrap text-xs">{a.projectId}</span> : a.pending ? <span title={`${a.pending.id}: waiting for reviewer approval`} className="whitespace-nowrap rounded-full border border-warn/30 bg-warn/10 px-2 py-0.5 text-[11px] text-warn">Pending Assignment</span> : <span className="whitespace-nowrap rounded-full border border-line px-2 py-0.5 text-[11px] text-muted">Unassigned</span> },
+              { key: 'grp', header: 'Group', hideBelow: 'lg', render: (a) => a.group ? <Trunc max="max-w-[130px]">{a.group}</Trunc> : <span className="text-muted">—</span> },
+              { key: 'op', header: 'Operation', hideBelow: 'md', render: (a) => a.op ? <IdL onClick={() => go('operation', { id: a.op! })}>{a.op}</IdL> : <span className="text-muted">—</span> },
+              { key: 'ss', header: 'Sessions', hideBelow: 'lg', render: (a) => <span className="text-xs">{a.sessions}</span> },
+              { key: 'act', header: 'Actions', render: (a) => (
+                <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <Button size="sm" variant="ghost" onClick={() => go('agent', { id: a.id })}>View</Button>
+                  {!a.projectId && <Button size="sm" className="whitespace-nowrap" disabled={!!assignWhy(a)} title={assignWhy(a) || 'Request assignment to a project (approval-gated)'} onClick={() => onAssign(a)}>Request assignment</Button>}
+                </span>
+              ) },
+            ]}
+          />
+          <Pager page={read.page} pages={pages} setPage={setPage} total={read.total} />
+          <p className="mt-3 text-xs text-muted">An agent can only be used in the project it is assigned to. Agents in the Shared Pool must be assigned through the approval process before they can join an operation. {can('editScope') ? '' : 'Your role can request assignment but cannot assign immediately.'}</p>
+        </>
+      )}
     </>
   )
 }
@@ -443,19 +458,21 @@ function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: G
   )
 }
 
-/* ───────────── Connectivity & health (AG-04) ───────────── */
+/* ───────────── Connectivity & health (AG-04, ticket 48: typed service read) ───────────── */
 function HealthTab() {
   const { go, A, toast, pid, can, now } = useStore()
-  const all = useVisibleAgents()
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const [gr, setGr] = useState('')
   const [obs, setObs] = useState(now())
   const [busy, setBusy] = useState(false)
-  const rows = all.filter((a) => !gr || a.group === gr)
+  /* The whole scoped base (assigned + pool): the connectivity tab reads every
+     row the actor may see, filtered by group server-side. */
+  const list = useAgentList({ mode: 'all', group: gr || undefined, pageSize: 100 })
+  const rows = useMemo(() => (list.data?.items ?? []).map((it) => it.agent), [list.data])
+  const groups = list.data?.groups ?? []
   const on = rows.filter((a) => a.status === 'online' || a.status === 'idle').length
   const lost = rows.filter((a) => a.status === 'lost')
   const delayed = rows.filter((a) => a.status === 'unhealthy')
-  const groups = [...new Set(all.map((a) => a.group).filter(Boolean))]
   const labels = ['6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '10:42 AM']
   const vals = [Math.max(0, on - 1), on, Math.max(0, on - (on > 3 ? 1 : 0)), on, on, on]
   const score = rows.length ? Math.round((on / rows.length) * 100) : 0
@@ -473,51 +490,61 @@ function HealthTab() {
       <FilterBar right={<><span className="hidden text-xs text-muted sm:inline">Last observed: <Mono>{obs}</Mono></span><Button icon={RefreshCw} onClick={refresh} disabled={busy}>{busy ? 'Refreshing…' : 'Refresh'}</Button></>}>
         <Select className="!w-44" aria-label="Group" value={gr} onChange={(e) => setGr(e.target.value)}><option value="">All groups</option>{groups.map((g) => <option key={g}>{g}</option>)}</Select>
       </FilterBar>
-      <div className="mb-5 grid gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader title="Connected agents, last 24 hours" sub="Simulated data. Times in UTC+7." />
-          {rows.length ? <LineChart labels={labels} series={[{ name: 'Connected agents', values: vals, color: 'var(--c-ok)' }]} /> : <Empty title="No connectivity data" />}
-        </Card>
-        <Card>
-          <CardHeader title="Health score" sub="Share of agents connected" />
-          <div className="flex items-baseline gap-2"><span className="text-3xl font-semibold">{score}%</span><span className="text-sm text-muted">{on} of {rows.length} connected</span></div>
-          <p className="mt-2 text-xs text-muted">Calculated as connected or idle agents divided by all agents in the filter. Disconnected, unhealthy, disabled and unknown agents lower the score. A high score is not a guarantee of readiness.</p>
-          {lost.length === 0 && delayed.length === 0 && <p className="mt-3 flex items-center gap-2 text-sm text-ok"><Wifi size={16} />No agents over the last-seen threshold (15 minutes).</p>}
-        </Card>
-      </div>
-      <h3 className="mb-3 text-[15px] font-semibold">Lost and delayed agents</h3>
-      <Table
-        rows={[...lost, ...delayed]} rowKey={(a) => a.id} onRow={(a) => go('agent', { id: a.id })}
-        empty={<Empty icon={Activity} title="No lost or delayed agents">All agents in this filter reported within the threshold.</Empty>}
-        cols={[
-          { key: 'id', header: 'Agent', render: (a) => <div className="flex items-center gap-2">{a.status === 'lost' ? <WifiOff size={15} className="text-bad" aria-hidden /> : <AlertTriangle size={15} className="text-warn" aria-hidden />}<div><Mono className="text-accent">{a.id}</Mono><div className="text-xs text-muted">{a.host} · {a.ip}</div></div></div> },
-          { key: 'st', header: 'Status', render: (a) => <Status kind="agent" value={a.status} /> },
-          { key: 'hb', header: 'Heartbeat (24 samples)', hideBelow: 'md', render: (a) => <Heartbeat a={a} /> },
-          { key: 'lat', header: 'Latency', render: (a) => a.status === 'lost' || a.status === 'disabled' ? <span className="text-muted">—</span> : <Mono>{18 + (hashNum(a.id) % 60)} ms</Mono> },
-          { key: 'ls', header: 'Last seen', render: (a) => <span className={cx('text-xs', a.status === 'lost' && 'font-medium text-bad')}>{a.lastSeen}</span> },
-          { key: 'op', header: 'Affected operations', hideBelow: 'lg', render: (a) => a.op ? <IdLink onClick={() => go('operation', { id: a.op! })}>{a.op}</IdLink> : <span className="text-muted">None</span> },
-          { key: 'act', header: '', render: (a) => (
-            <span className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-              <Button size="sm" variant="ghost" onClick={() => go('agent', { id: a.id })}>Open Details</Button>
-              {a.status === 'lost' && <Button size="sm" disabled={!!restoreWhy} title={restoreWhy || 'Restore connection (simulated)'} onClick={() => { A.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button>}
-            </span>
-          ) },
-        ]}
-      />
-      {restoreWhy && lost.length > 0 && <div className="mt-2"><Locked reason={`Restore: ${restoreWhy}`} /></div>}
-      <h3 className="mb-3 mt-6 text-[15px] font-semibold">Agent error events and recommended remediation</h3>
-      <Table
-        rows={errs} rowKey={(e) => e.a.id + e.kind} dense
-        empty={<Empty icon={Activity} title="No agent errors recorded" />}
-        cols={[
-          { key: 'a', header: 'Agent', render: (e) => <IdLink onClick={() => go('agent', { id: e.a.id })}>{e.a.id}</IdLink> },
-          { key: 'k', header: 'Event', render: (e) => <span className={cx('inline-flex items-center gap-1.5 text-xs font-medium', e.tone === 'bad' ? 'text-bad' : 'text-warn')}><AlertTriangle size={13} aria-hidden />{e.kind}</span> },
-          { key: 'n', header: 'Details', render: (e) => <span className="text-xs text-muted">{e.note}</span> },
-          { key: 'f', header: 'Recommended remediation', hideBelow: 'md', render: (e) => <span className="text-xs">{e.fix}</span> },
-          { key: 'op', header: 'Affected operation', render: (e) => e.a.op ? <IdLink onClick={() => go('operation', { id: e.a.op! })}>{e.a.op}</IdLink> : <span className="text-muted">—</span> },
-        ]}
-      />
-      <p className="mt-3 text-xs text-muted">Showing agents for the selected project and your access. Data freshness depends on the last heartbeat shown for each agent.</p>
+      {list.isPending ? (
+        <div aria-busy="true" aria-label="Loading connectivity"><Skeleton className="h-72" /></div>
+      ) : list.isError ? (
+        <Empty icon={AlertTriangle} title="Connectivity could not be loaded" action={<Button onClick={() => list.refetch()}>Retry</Button>}>
+          {(list.error as AgentReadError).failure.message}
+        </Empty>
+      ) : (
+        <>
+          <div className="mb-5 grid gap-4 xl:grid-cols-3">
+            <Card className="xl:col-span-2">
+              <CardHeader title="Connected agents, last 24 hours" sub="Simulated data. Times in UTC+7." />
+              {rows.length ? <LineChart labels={labels} series={[{ name: 'Connected agents', values: vals, color: 'var(--c-ok)' }]} /> : <Empty title="No connectivity data" />}
+            </Card>
+            <Card>
+              <CardHeader title="Health score" sub="Share of agents connected" />
+              <div className="flex items-baseline gap-2"><span className="text-3xl font-semibold">{score}%</span><span className="text-sm text-muted">{on} of {rows.length} connected</span></div>
+              <p className="mt-2 text-xs text-muted">Calculated as connected or idle agents divided by all agents in the filter. Disconnected, unhealthy, disabled and unknown agents lower the score. A high score is not a guarantee of readiness.</p>
+              {lost.length === 0 && delayed.length === 0 && <p className="mt-3 flex items-center gap-2 text-sm text-ok"><Wifi size={16} />No agents over the last-seen threshold (15 minutes).</p>}
+            </Card>
+          </div>
+          <h3 className="mb-3 text-[15px] font-semibold">Lost and delayed agents</h3>
+          <Table
+            rows={[...lost, ...delayed]} rowKey={(a) => a.id} onRow={(a) => go('agent', { id: a.id })}
+            empty={<Empty icon={Activity} title="No lost or delayed agents">All agents in this filter reported within the threshold.</Empty>}
+            cols={[
+              { key: 'id', header: 'Agent', render: (a) => <div className="flex items-center gap-2">{a.status === 'lost' ? <WifiOff size={15} className="text-bad" aria-hidden /> : <AlertTriangle size={15} className="text-warn" aria-hidden />}<div><Mono className="text-accent">{a.id}</Mono><div className="text-xs text-muted">{a.host} · {a.ip}</div></div></div> },
+              { key: 'st', header: 'Status', render: (a) => <Status kind="agent" value={a.status} /> },
+              { key: 'hb', header: 'Heartbeat (24 samples)', hideBelow: 'md', render: (a) => <Heartbeat a={a} /> },
+              { key: 'lat', header: 'Latency', render: (a) => a.status === 'lost' || a.status === 'disabled' ? <span className="text-muted">—</span> : <Mono>{18 + (hashNum(a.id) % 60)} ms</Mono> },
+              { key: 'ls', header: 'Last seen', render: (a) => <span className={cx('text-xs', a.status === 'lost' && 'font-medium text-bad')}>{a.lastSeen}</span> },
+              { key: 'op', header: 'Affected operations', hideBelow: 'lg', render: (a) => a.op ? <IdLink onClick={() => go('operation', { id: a.op! })}>{a.op}</IdLink> : <span className="text-muted">None</span> },
+              { key: 'act', header: '', render: (a) => (
+                <span className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                  <Button size="sm" variant="ghost" onClick={() => go('agent', { id: a.id })}>Open Details</Button>
+                  {a.status === 'lost' && <Button size="sm" disabled={!!restoreWhy} title={restoreWhy || 'Restore connection (simulated)'} onClick={() => { A.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button>}
+                </span>
+              ) },
+            ]}
+          />
+          {restoreWhy && lost.length > 0 && <div className="mt-2"><Locked reason={`Restore: ${restoreWhy}`} /></div>}
+          <h3 className="mb-3 mt-6 text-[15px] font-semibold">Agent error events and recommended remediation</h3>
+          <Table
+            rows={errs} rowKey={(e) => e.a.id + e.kind} dense
+            empty={<Empty icon={Activity} title="No agent errors recorded" />}
+            cols={[
+              { key: 'a', header: 'Agent', render: (e) => <IdLink onClick={() => go('agent', { id: e.a.id })}>{e.a.id}</IdLink> },
+              { key: 'k', header: 'Event', render: (e) => <span className={cx('inline-flex items-center gap-1.5 text-xs font-medium', e.tone === 'bad' ? 'text-bad' : 'text-warn')}><AlertTriangle size={13} aria-hidden />{e.kind}</span> },
+              { key: 'n', header: 'Details', render: (e) => <span className="text-xs text-muted">{e.note}</span> },
+              { key: 'f', header: 'Recommended remediation', hideBelow: 'md', render: (e) => <span className="text-xs">{e.fix}</span> },
+              { key: 'op', header: 'Affected operation', render: (e) => e.a.op ? <IdLink onClick={() => go('operation', { id: e.a.op! })}>{e.a.op}</IdLink> : <span className="text-muted">—</span> },
+            ]}
+          />
+          <p className="mt-3 text-xs text-muted">Showing agents for the selected project and your access. Data freshness depends on the last heartbeat shown for each agent.</p>
+        </>
+      )}
     </>
   )
 }
@@ -529,14 +556,16 @@ function Agents() {
   const tab = route.tab === 'pool' || route.tab === 'groups' || route.tab === 'health' ? route.tab : 'list'
   const [modal, setModal] = useState<{ g: Group | null } | null>(null)
   const [assign, setAssign] = useState<{ a: Agent | null } | null>(null)
-  const all = useVisibleAgents()
+  /* Tab badges come from the fleet read's whole-base counts. */
+  const fleet = useAgentList({})
+  const k = fleet.data?.kpis
   const newWhy = pid === 'all' ? 'Select a specific project to create a group.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can create groups.' : ''
   return (
     <>
       <PageHeader title="Agents" sub="Connectivity and allocation are separate: an agent can be connected yet unassigned (Shared Pool). Each agent is used only in the project it is assigned to."
         actions={<Button variant="primary" icon={UserPlus} onClick={() => setAssign({ a: null })}>Request assignment</Button>} />
       {pid === 'all' && <Banner tone="info" title="“All Projects” mode">Aggregated, read-only view. The assignment column shows where each agent belongs; agents are not shared freely between projects.</Banner>}
-      <Tabs value={tab} onChange={(t) => go('agents', { tab: t })} tabs={[{ id: 'list', label: 'Project Agents', count: all.filter((a) => a.projectId).length }, { id: 'pool', label: 'Shared Pool', count: all.filter((a) => !a.projectId).length }, { id: 'groups', label: 'Groups' }, { id: 'health', label: 'Connectivity' }]} />
+      <Tabs value={tab} onChange={(t) => go('agents', { tab: t })} tabs={[{ id: 'list', label: 'Project Agents', count: k?.assigned ?? 0 }, { id: 'pool', label: 'Shared Pool', count: k?.pool ?? 0 }, { id: 'groups', label: 'Groups' }, { id: 'health', label: 'Connectivity' }]} />
       {tab === 'groups' ? <GroupsTab onNew={() => setModal({ g: null })} onEdit={(g) => setModal({ g })} newWhy={newWhy} /> : tab === 'health' ? <HealthTab /> : <FleetList key={tab} mode={tab === 'pool' ? 'pool' : 'project'} onNewGroup={() => setModal({ g: null })} newGroupWhy={newWhy} onAssign={(a) => setAssign({ a })} />}
       {modal && <GroupModal group={modal.g} onClose={() => setModal(null)} />}
       {assign && <AssignDrawer agent={assign.a} onClose={() => setAssign(null)} />}
@@ -544,32 +573,32 @@ function Agents() {
   )
 }
 
-/* ───────────── Detail (AG-02) ───────────── */
+/* ───────────── Detail (AG-02, ticket 48: typed service read + Query) ───────────── */
 function AgentDetail() {
-  const { db, route, go, pid, accessible, me, can, A, confirm, toast, setPid, setSwitcherOpen } = useStore()
-  const pname = useProjectName()
-  const a = db.agents.find((x) => x.id === route.id)
+  const { route, go, pid, me, can, A, confirm, toast, setPid, setSwitcherOpen } = useStore()
+  const detail = useAgentDetail(route.id)
+  const read = detail.data
   const tab = route.tab || 'overview'
-  const guard = useGuard(a?.projectId || (pid === 'all' ? undefined : pid))
+  const guard = useGuard(read?.agent.projectId || (pid === 'all' ? undefined : pid))
   const [reveal, setReveal] = useState(false)
   const [assign, setAssign] = useState(false)
   const back = { label: 'Agents', to: () => go('agents') }
-  if (!a) return <><PageHeader title="Agent not found" back={back} /><Empty icon={Layers} title={`No agent “${route.id}”`} action={<Button onClick={() => go('agents')}>Back to agents</Button>}>The agent may have been removed or the ID is incorrect.</Empty></>
-  if (a.projectId && !accessible.some((p) => p.id === a.projectId))
-    return <><PageHeader title="Agent not accessible" back={back} /><Blocked title="You do not have access to this agent" actions={<Button onClick={() => go('agents')}>Back to agents</Button>}>Agent {a.id} belongs to project {a.projectId}, which your account has not been granted. Contact the project manager to be added.</Blocked></>
-  if (pid !== 'all' && a.projectId && a.projectId !== pid)
-    return <><PageHeader title={`Agent ${a.id}`} back={back} /><Blocked title="Agent belongs to a different project" actions={<><Button onClick={() => go('agents')}>Back to agents</Button><Button onClick={() => setPid('all')}>View all projects</Button></>}>Agent {a.id} is assigned to {a.projectId}, but you are working in {pid}. Data is isolated between projects to prevent using the wrong resources.</Blocked></>
-
-  const isPool = a.projectId === ''
-  const projRO = a.projectId ? guard.ro : false
+  if (detail.isPending) return <div aria-busy="true" aria-label="Loading agent"><PageSkeleton /></div>
+  if (detail.isError) {
+    const failure = (detail.error as AgentReadError).failure
+    if (failure.kind === 'forbidden' && failure.entity?.projectId)
+      return <><PageHeader title={`Agent ${route.id}`} back={back} /><Blocked title="Agent belongs to a different project" actions={<><Button onClick={() => go('agents')}>Back to agents</Button><Button onClick={() => setPid('all')}>View all projects</Button></>}>{failure.message} Data is isolated between projects to prevent using the wrong resources.</Blocked></>
+    return <><PageHeader title="Agent not found" back={back} /><Empty icon={Layers} title={`No agent “${route.id}”`} action={<Button onClick={() => go('agents')}>Back to agents</Button>}>The agent may have been removed, or your account has not been granted access to its project.</Empty></>
+  }
+  if (!read) return null
+  const a = read.agent
+  const isPool = !read.project
+  const projectLabel = read.project ? `${read.project.id} — ${read.project.name}` : POOL_LABEL
+  const projRO = read.project ? guard.ro : false
   const canManage = can('admin', a.projectId || undefined)
   const manageWhy = projRO ? guard.reason : !canManage ? 'Only Admins can disable or enable agents.' : ''
   const assignWhy = !isPool ? 'This agent is already assigned to a project.' : ''
-  const ops = db.operations.filter((o) => o.agents.includes(a.id) && accessible.some((p) => p.id === o.projectId))
-  const sess = db.sessions.filter((s) => s.agentId === a.id && accessible.some((p) => p.id === s.projectId))
-  const activeSess = sess.filter((s) => ['connected', 'available', 'awaiting'].includes(s.state))
-  const grp = db.groups.find((g) => g.name === a.group)
-  const branches = db.branches.filter((b) => b.agent === a.id && accessible.some((p) => p.id === b.projectId))
+  const activeSess = read.activeSessions
   const doDisable = () => confirm({
     title: `Disable ${a.id}?`, danger: true, confirmLabel: 'Disable agent', reasonLabel: 'Reason for disabling', reasonRequired: true,
     body: a.op ? <>This agent is used by operation <b>{a.op}</b>. Disabling it may move running steps on this agent to “Unknown”. The operation is not stopped automatically, so check it afterwards.</> : <>The agent cannot be selected for new operations until it is enabled again.</>,
@@ -579,10 +608,8 @@ function AgentDetail() {
     title: `Enable ${a.id}?`, confirmLabel: 'Enable agent', body: 'The agent can be selected for operations in its assigned project again.',
     onConfirm: () => { A.setAgentStatus(a.id, 'online'); toast(`${a.id} enabled.`) },
   })
-  const hist = [...db.audit.filter((x) => x.obj === a.id || x.obj.includes(a.id)).map((x) => ({ at: x.at, title: `${x.action} — ${x.actor}`, sub: x.reason ? `Reason: ${x.reason}` : x.result, tone: (x.result === 'Warning' ? 'warn' : 'accent') as 'warn' | 'accent' })),
-    ...(a.status === 'lost' ? [{ at: a.lastSeen, title: 'Disconnected — last heartbeat recorded', sub: 'Status reflects the most recent observation.', tone: 'bad' as const }] : []),
-    { at: a.lastSeen, title: `Latest heartbeat (${a.status === 'lost' ? 'last received' : 'normal'})`, sub: a.conn, tone: 'neutral' as const }]
-  const eligible = accessible.filter((p) => ACTIVE_PROJECT.includes(p.status))
+  const hist = read.history
+  const eligible = read.eligibleProjects
   const confidence = a.status === 'online' || a.status === 'idle' ? 'High: recent heartbeat (simulated)' : a.status === 'lost' ? 'Low: stale, heartbeat missing' : a.status === 'unhealthy' ? 'Medium: delayed heartbeats' : 'Unknown: not enough data'
   const lat = Array.from({ length: 6 }, (_, i) => 20 + ((hashNum(a.id) * (i + 2)) % 55))
   return (
@@ -590,7 +617,7 @@ function AgentDetail() {
       <PageHeader back={back}
         title={<span className="flex flex-wrap items-center gap-3"><Mono className="text-xl">{a.id}</Mono><span className="text-muted">{a.host}</span></span>}
         meta={<Status kind="agent" value={a.status} />}
-        sub={`${a.os} · version ${a.version} · ${a.ip} · ${isPool ? POOL_LABEL : pname(a.projectId)}`}
+        sub={`${a.os} · version ${a.version} · ${a.ip} · ${projectLabel}`}
         actions={<>
           <Button onClick={() => go('agent', { id: a.id, tab: 'log' })}>View Activity</Button>
           {a.op && <Button icon={ExternalLink} onClick={() => go('operation', { id: a.op! })}>View {a.op}</Button>}
@@ -603,7 +630,7 @@ function AgentDetail() {
       {a.status === 'unhealthy' && <Banner tone="warn" title="Agent is unhealthy">Heartbeats are delayed or intermittent. Last verified: {a.lastSeen}. Check the connectivity tab before relying on this agent.</Banner>}
       {a.status === 'disabled' && <Banner tone="warn" title="Agent is disabled">This agent cannot be selected for new operations. Use “Enable Agent” to turn it back on.</Banner>}
       {((isPool && assignWhy) || manageWhy) ? <div className="-mt-2 mb-4 flex flex-col gap-1">{isPool && assignWhy && <Locked reason={`Request Assignment: ${assignWhy}`} />}{manageWhy && <Locked reason={`Disable / enable: ${manageWhy}`} />}</div> : null}
-      <Tabs value={tab} onChange={(t) => go('agent', { id: a.id, tab: t })} tabs={[{ id: 'overview', label: 'Overview' }, { id: 'conn', label: 'Connectivity' }, { id: 'ops', label: 'Operations & Sessions', count: ops.length + sess.length }, { id: 'log', label: 'Event History' }, { id: 'perm', label: 'Policy' }]} />
+      <Tabs value={tab} onChange={(t) => go('agent', { id: a.id, tab: t })} tabs={[{ id: 'overview', label: 'Overview' }, { id: 'conn', label: 'Connectivity' }, { id: 'ops', label: 'Operations & Sessions', count: read.operations.length + activeSess.length }, { id: 'log', label: 'Event History' }, { id: 'perm', label: 'Policy' }]} />
       {tab === 'overview' && (
         <div className="grid gap-4 xl:grid-cols-3">
           <div className="space-y-4 xl:col-span-2"><Card><CardHeader title="Connection vs assignment" sub="Connectivity and allocation are independent states." />
@@ -611,7 +638,7 @@ function AgentDetail() {
               { k: 'Connection status', v: <Status kind="agent" value={a.status} /> },
               { k: 'Assignment status', v: isPool ? <span className="text-warn">Unassigned (shared pool)</span> : <span>Assigned to <Id>{a.projectId}</Id></span> },
               { k: 'Current reservation', v: a.op ? <span>Reserved by <IdL onClick={() => go('operation', { id: a.op! })}>{a.op}</IdL></span> : 'None' },
-              { k: 'Eligible projects', v: isPool ? (eligible.length ? eligible.map((p) => p.id).join(', ') : 'None approved or active') : a.projectId },
+              { k: 'Eligible projects', v: isPool ? (eligible.length ? eligible.join(', ') : 'None approved or active') : a.projectId },
               { k: 'Last verified', v: <span className={a.status === 'lost' ? 'text-bad' : ''}>{a.lastSeen}</span> },
               { k: 'Health confidence', v: confidence },
             ]} />
@@ -650,11 +677,11 @@ function AgentDetail() {
           </Card>
           {a.status === 'lost' && <Banner tone="warn" title="Stale data">Branch and session states below reflect the last observation before disconnect ({a.lastSeen}). Paused or Unknown branches are not completed and need re-run or reassignment.</Banner>}
           <Card pad={false} className="p-0"><div className="p-4 pb-0"><CardHeader title={`Branches handled by ${a.id}`} sub="Fan-out branches (Demo Data). Agents AG-xxx are separate from AI workers." /></div>
-            {!branches.length ? <p className="px-4 pb-4 text-sm text-muted">No fan-out branches are assigned to this agent.</p> : <ul className="divide-y divide-line">{branches.map((b) => (
+            {!read.branches.length ? <p className="px-4 pb-4 text-sm text-muted">No fan-out branches are assigned to this agent.</p> : <ul className="divide-y divide-line">{read.branches.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm"><IdL onClick={() => go('ai-branch', { id: b.id })}>{b.id}</IdL><span className="whitespace-nowrap rounded-full border border-line px-2 py-0.5 text-xs">{BRANCH_LABEL[b.state]}</span><span className="min-w-0 truncate text-muted" title={b.target}>{b.target}</span><span className="text-xs text-muted">{b.tool}</span><span className="ml-auto flex items-center gap-3 text-xs"><IdL onClick={() => go('operation', { id: b.opId })}>{b.opId}</IdL><IdL onClick={() => go('ai-fanout', { id: b.groupId })}>{b.groupId}</IdL></span></li>
             ))}</ul>}
           </Card>
-          <Table rows={ops} rowKey={(o) => o.id} onRow={(o) => go('operation', { id: o.id })} empty={<Empty icon={Layers} title="This agent has not joined any operation">Operations appear here once the agent is selected for a test run.</Empty>}
+          <Table rows={read.operations} rowKey={(o) => o.id} onRow={(o) => go('operation', { id: o.id })} empty={<Empty icon={Layers} title="This agent has not joined any operation">Operations appear here once the agent is selected for a test run.</Empty>}
             cols={[{ key: 'id', header: 'Operation', render: (o) => <Mono className="text-accent">{o.id}</Mono> }, { key: 'n', header: 'Name', render: (o) => o.name }, { key: 'p', header: 'Project', hideBelow: 'md', render: (o) => o.projectId }, { key: 's', header: 'Status', render: (o) => <Status kind="op" value={o.status} /> }, { key: 'st', header: 'Started', hideBelow: 'md', render: (o) => o.startedAt }]} />
         </div>
       )}
@@ -662,10 +689,10 @@ function AgentDetail() {
       {tab === 'perm' && (
         <Card><CardHeader title="Policy & permissions" />
           <DescList cols={2} items={[
-            { k: 'Allowed project', v: isPool ? POOL_LABEL : pname(a.projectId) }, { k: 'Group', v: a.group || '—' },
-            { k: 'Group policy', v: grp?.policy || 'No group policy applied' },
+            { k: 'Allowed project', v: isPool ? POOL_LABEL : projectLabel }, { k: 'Group', v: a.group || '—' },
+            { k: 'Group policy', v: read.group?.policy || 'No group policy applied' },
             { k: 'Concurrent use', v: 'One operation at a time' },
-            { k: 'Agent identifier (masked)', v: <span className="flex items-center gap-2"><Mono>{can('viewSensitive') && reveal ? `agt_${hashNum(a.id)}x9f${a.id.slice(-3)}` : '••••••••••••••'}</Mono>{can('viewSensitive') ? <button className="text-xs text-accent hover:underline" onClick={() => setReveal(!reveal)}>{reveal ? 'Hide' : 'Show'}</button> : <Locked reason={`The ${me.role} role cannot view this value`} />}</span> },
+            { k: 'Agent identifier (masked)', v: <span className="flex items-center gap-2"><Mono>{read.canViewSensitive && reveal ? `agt_${hashNum(a.id)}x9f${a.id.slice(-3)}` : '••••••••••••••'}</Mono>{read.canViewSensitive ? <button className="text-xs text-accent hover:underline" onClick={() => setReveal(!reveal)}>{reveal ? 'Hide' : 'Show'}</button> : <Locked reason={`The ${me.role} role cannot view this value`} />}</span> },
           ]} />
         </Card>
       )}
