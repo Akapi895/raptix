@@ -11,15 +11,19 @@
  * switch). Pool agents (projectId '') are shared inventory: visible in every
  * scope, never counted as a project's agents. Status and reservations
  * describe the last observed state — never a guarantee of execution ability.
- * Reads are pure projections — mutations stay with the legacy actions until
- * ticket 49 migrates allocation, and the health-failure replacement flow
- * stays with the operations features.
+ * Reads are pure projections; the allocation/group writes live in writes.ts
+ * (ticket 49), and the health-failure replacement flow stays with the
+ * operations features.
  */
 import { projectAccessible, can as policyCan } from '../../auth/policy'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
-import type { Agent, AgentStatus, BranchState, ProjectStatus } from '../../domain/entities'
-import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { Agent, AgentStatus, BranchState, Group, ProjectStatus } from '../../domain/entities'
+import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
+import {
+  assignAgentTransaction, removeFromGroupTransaction, saveGroupTransaction, unassignAgentTransaction,
+  type AssignmentInput, type GroupInput,
+} from './writes'
 
 /** Which slice of the scoped base the list returns ('all' also backs the connectivity tab). */
 export type AgentListMode = 'all' | 'project' | 'pool'
@@ -110,6 +114,16 @@ export interface AgentDetailRead {
 export interface AgentService {
   list(ctx: RequestContext, query?: AgentListQuery): Promise<ServiceResult<AgentListRead>>
   get(ctx: RequestContext, id: string): Promise<ServiceResult<AgentDetailRead>>
+  /* Ticket 49 appends: allocation/group writes — eligibility enforced at the
+     handler, ChangeSet published by the shared authority commit. */
+  /** Immediate assignment of a connected, unreserved pool agent (requests use 21's approval transaction). */
+  assign(ctx: RequestContext, agentId: string, input: AssignmentInput): Promise<ServiceResult<Agent>>
+  /** Returns an unreserved assigned agent to the shared pool (reason required). */
+  unassign(ctx: RequestContext, agentId: string, reason: string): Promise<ServiceResult<Agent>>
+  /** Creates or updates a group — rename + membership in one commit. */
+  saveGroup(ctx: RequestContext, input: GroupInput): Promise<ServiceResult<Group>>
+  /** Removes one agent from a group. */
+  removeFromGroup(ctx: RequestContext, groupId: string, agentId: string, reason?: string): Promise<ServiceResult<Group>>
 }
 
 const CONN: readonly AgentStatus[] = ['online', 'idle']
@@ -270,10 +284,17 @@ export function getAgent(db: Db, ctx: RequestContext, id: string): ServiceResult
 /** Builds the typed agent service; `guard` is the factory's superseded-scope read guard. */
 export function createAgentService(
   authority: DbAuthority,
+  clock: Clock,
   guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
 ): AgentService {
   return {
     list: (ctx, query) => guard(() => listAgents(authority.snapshot(), ctx, query)),
     get: (ctx, id) => guard(() => getAgent(authority.snapshot(), ctx, id)),
+    // Writes capture ctx at call time and commit once; they are never
+    // cancelled mid-flight (the superseded-scope guard only covers reads).
+    assign: (ctx, agentId, input) => Promise.resolve(assignAgentTransaction(authority, clock, ctx, agentId, input)),
+    unassign: (ctx, agentId, reason) => Promise.resolve(unassignAgentTransaction(authority, clock, ctx, agentId, reason)),
+    saveGroup: (ctx, input) => Promise.resolve(saveGroupTransaction(authority, clock, ctx, input)),
+    removeFromGroup: (ctx, groupId, agentId, reason) => Promise.resolve(removeFromGroupTransaction(authority, clock, ctx, groupId, agentId, reason)),
   }
 }

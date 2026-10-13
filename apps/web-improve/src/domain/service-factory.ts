@@ -86,7 +86,7 @@ export interface ConsoleServices {
   findings(actor: ActorRef, projectId: string): FindingService
   /** Typed AI chat + plan proposal handlers (ticket 38 — feature-local implementation). */
   chat(actor: ActorRef, projectId: string): ChatService
-  /** Typed agent fleet list/detail read handlers (ticket 48 — feature-local implementation). */
+  /** Typed agent fleet list/detail reads + allocation/group writes (tickets 48–49 — feature-local implementation). */
   agents(actor: ActorRef, projectId: string): AgentService
   /** Typed report catalog reads + draft creation (ticket 34 — feature-local implementation). */
   reports(actor: ActorRef, projectId: string): ReportService
@@ -172,7 +172,7 @@ export function createConsoleServices(): ConsoleServices {
   const forChat = (actor: ActorRef, projectId: string): ChatService =>
     createChatService(authority, clock, scopeGuard(actor, projectId))
   const forAgents = (actor: ActorRef, projectId: string): AgentService =>
-    createAgentService(authority, scopeGuard(actor, projectId))
+    createAgentService(authority, clock, scopeGuard(actor, projectId))
   const forReports = (actor: ActorRef, projectId: string): ReportService =>
     createReportService(authority, clock, scopeGuard(actor, projectId))
   const forBranches = (actor: ActorRef, projectId: string): BranchService =>
