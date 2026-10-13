@@ -124,16 +124,21 @@ authorization authority.
 
 ## Known raw reads/writes outside the router (owned by feature tickets 08+/14+)
 
-These pre-date the router and keep working because the URL format is
-unchanged, but they bypass the single-writer rule and must be converted to
-`store.go()`/the router by the ticket that owns the screen:
+These pre-date the router and kept working because the URL format was
+unchanged, but they bypassed the single-writer rule. The list is now empty —
+every screen navigates through `store.go()`/the router:
 
-- `src/screens/f-report.tsx:10` `hardGo` — `window.location.hash` write.
-- `src/screens/g-common.tsx:200` — guarded `window.location.hash` write to
-  `#/ai-trace/<id>?event=<id>` (uses a non-`tab` query param).
-- `src/screens/g-fanout.tsx:31,204-207` — `window.location.hash` writes and
-  `window.location.assign('#/…')` navigations.
-- `src/screens/g-trace.tsx:24,27` — raw `?event=` param read +
-  `history.replaceState` write.
-- `src/screens/g-fanout.tsx:396` — raw `/view=table/` hash read (vestigial;
-  the `?tab=table` alias is the live path).
+- `src/screens/f-report.tsx` `hardGo` — retired in ticket 61e (the raw
+  router-less fallback write and the duplicated seam logic are gone; the
+  report submit/preview/resubmit/return flows navigate through the store's
+  guarded `go`).
+- `src/screens/g-common.tsx` `useTraceLink` — retired in ticket 61e (writes
+  the `#/ai-trace/<encoded-id>` deep link through the guarded `go`).
+- `src/screens/g-fanout.tsx` — converted by the fanout/branches tickets.
+- `src/screens/g-trace.tsx` — converted by tickets 41/42 (route-path id read,
+  `?event=` duplicate retired).
+
+The only remaining `window.location.hash` write is inside the store's
+`navRaw` fallback for router-less mounts (tests), which is part of the
+single-writer seam itself. A grep assertion in `src/router/routes.test.tsx`
+keeps every other module clean.

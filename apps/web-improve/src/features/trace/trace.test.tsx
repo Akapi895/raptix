@@ -25,9 +25,10 @@ import { ConsoleProviders } from '../../state/query'
 import { StoreProvider, useServices, useStore, type Store } from '../../store'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import type { ToolState } from '../../data'
+import type { ToolEvent, ToolState } from '../../data'
 import { seed, toolFacets } from '../../data'
 import { AiTrace } from '../../screens/g-trace'
+import { ToolProposalCard } from '../../screens/g-common'
 import { listToolEvents, maskSensitive } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
@@ -291,5 +292,38 @@ describe('trace screen on the typed read (ticket 41)', () => {
     expect(src).not.toMatch(/hashParam|setHash\b/)
     expect(src).not.toContain('?event=')
     expect(src).toMatch(/from '\.\.\/features\/trace\/query'/)
+  })
+})
+
+/* ───────────── the shared trace-link seam (ticket 61e) ───────────── */
+/* `useTraceLink` navigates through the store's guarded `go` — the single-writer
+   seam — and must keep producing the exact `#/ai-trace/<encoded-id>` deep link
+   the retired raw hash write emitted. */
+describe('trace link through the guarded seam (ticket 61e)', () => {
+  function mountProposalCard(tool: ToolEvent) {
+    const view = render(
+      <StoreProvider>
+        <ConsoleProviders>
+          <ToolProposalCard tool={tool} />
+        </ConsoleProviders>
+      </StoreProvider>,
+    )
+    return view
+  }
+
+  it("the proposal card's View in Trace link lands on the event's path id", async () => {
+    const tool = seed().toolEvents.find((t) => t.id === 'TL-03')!
+    const view = mountProposalCard(tool)
+    fireEvent.click(screen.getByRole('button', { name: 'View in Trace' }))
+    await waitFor(() => expect(window.location.hash).toBe('#/ai-trace/TL-03'))
+    view.unmount()
+  })
+
+  it('encodes the event id in the deep link exactly as the retired raw write did', async () => {
+    const tool = { ...seed().toolEvents[0], id: 'TL 09/2' }
+    const view = mountProposalCard(tool)
+    fireEvent.click(screen.getByRole('button', { name: 'View in Trace' }))
+    await waitFor(() => expect(window.location.hash).toBe('#/ai-trace/TL%2009%2F2'))
+    view.unmount()
   })
 })
