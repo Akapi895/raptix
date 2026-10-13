@@ -15,6 +15,17 @@ import { createProjectTransaction } from './features/wizard/service'
 import {
   decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, withdrawApprovalTransaction,
 } from './features/approvals/service'
+// Ticket 22 append: closure governance (checklist derivation, request/confirm/
+// reopen) and the emergency-stop transitions are feature-local handlers; these
+// legacy entries delegate to them so the four-eyes rules, the gated resolve
+// and the immediate stop response have one implementation for both entry points.
+import {
+  confirmCloseTransaction, evaluateCloseChecklist, reopenProjectTransaction, requestCloseTransaction,
+} from './features/closure/service'
+import {
+  acknowledgeEmergencyStopTransaction, failEmergencyStopTransaction, finalizeEmergencyStopTransaction,
+  requestEmergencyStopTransaction, resolveStopTransaction, unknownEmergencyStopTransaction,
+} from './features/estop/service'
 // Ticket 37 append: the legacy export/delivery actions delegate to the typed
 // report handlers (one audited implementation for both entry points).
 import { deliverReportVersion, exportReportVersion, type DeliveryInput } from './features/reports/service'
@@ -116,23 +127,12 @@ export function computePreflight(db: Db, op: Operation): Check[] {
 export const preflightPass = (c: Check[]) => c.every((x) => x.state === 'pass')
 
 /* ───────────── Project closure checklist ───────────── */
-export function closureChecklist(db: Db, pid: string) {
-  const ops = db.operations.filter((o) => o.projectId === pid)
-  const fs = db.findings.filter((f) => f.projectId === pid)
-  const reps = db.reports.filter((r) => r.projectId === pid)
-  const appr = db.approvals.filter((a) => a.projectId === pid && a.status === 'pending' && a.type !== APR.close)
-  const running = ops.filter((o) => ['running', 'paused'].includes(o.status))
-  const openF = fs.filter((f) => ['draft', 'review', 'returned'].includes(f.status))
-  const delivered = reps.some((r) => r.status === 'delivered')
-  const live = db.sessions.filter((s) => s.projectId === pid && ['connected', 'available', 'awaiting', 'suspended', 'revoking'].includes(s.state))
-  return [
-    { id: 'c1', label: 'No running or paused operations', ok: running.length === 0, detail: running.length ? `Still open: ${running.map((o) => o.id).join(', ')}` : 'All operations have ended or are drafts', fix: { page: 'project', tab: 'operations', id: pid } as Route },
-    { id: 'c1b', label: 'No live C2 sessions', ok: live.length === 0, detail: live.length ? `Live: ${live.map((s) => s.id).join(', ')}` : 'No live sessions', fix: { page: 'c2', id: undefined } as Route },
-    { id: 'c2', label: 'Findings reviewed per policy', ok: openF.length === 0, detail: openF.length ? `${openF.length} findings not reviewed: ${openF.map((f) => f.id).join(', ')}` : `${fs.length} findings handled`, fix: { page: 'project', tab: 'findings', id: pid } as Route },
-    { id: 'c3', label: 'Final report approved and delivered', ok: delivered, detail: delivered ? 'A report is Delivered' : 'No report has been delivered', fix: { page: 'project', tab: 'reports', id: pid } as Route },
-    { id: 'c4', label: 'No outstanding required approvals', ok: appr.length === 0, detail: appr.length ? `${appr.length} requests pending` : 'No open requests', fix: { page: 'project', tab: 'team', id: pid } as Route },
-  ]
-}
+/* Ticket 22: the derivation moved to the closure handlers
+   (src/features/closure/service.ts) — one canonical, never-stored checklist
+   for the store consumers (completion %, close panel) and the typed
+   request/confirm handlers. The close console adds its agent-reservation
+   row through closePanelItems; the waiver stays a request-time input. */
+export const closureChecklist = (db: Db, pid: string) => evaluateCloseChecklist(db, pid)
 
 
 /* ───────────── V3: eligibility, readiness, completion ───────────── */
@@ -299,9 +299,9 @@ export interface Actions {
   approveReport: (id: string) => void
   exportReport: (id: string, format: 'PDF' | 'DOCX') => void
   deliverReport: (id: string, input: DeliveryInput) => Res
-  requestClose: (pid: string) => void
-  confirmClose: (approvalId: string) => void
-  reopen: (pid: string, reason: string) => void
+  requestClose: (pid: string, input?: { reason?: string; waiverNoFindings?: boolean }) => Res
+  confirmClose: (approvalId: string) => Res
+  reopen: (pid: string, reason: string) => Res
   toggleIntegration: (id: string) => void
   togglePolicy: (id: string) => void
   setPlaybookStatus: (id: string, status: 'approved' | 'draft' | 'review') => void
@@ -738,47 +738,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     stopOp: (opId, reason) => { const op = dbRef.current.operations.find((o) => o.id === opId)!; mutate((d) => { const o = d.operations.find((x) => x.id === opId)!; o.status = 'cancelled'; o.stopReason = reason; o.stopBy = me.name; o.stopAt = stamp(); o.steps.forEach((s) => { if (s.status === 'running') s.status = 'unknown'; if (s.status === 'pending') s.status = 'notrun' }); o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === opId) a.op = null }); d.sessions.forEach((s) => { if (s.opId === opId && ['connected', 'available', 'awaiting', 'suspended'].includes(s.state)) { s.state = 'terminated'; s.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated: operation stopped.' }) } }) }); audit('Stopped operation', opId, op.projectId, 'Success', reason) },
     estopOp: (opId, reason) => A.emergencyStop('operation', opId, reason),
+    /* Ticket 22: the stop transitions are typed handlers
+       (src/features/estop/service.ts). The request handler commits the
+       visible stop state (phase 'requested' + Pending audit + notice) in one
+       immediate commit — an emergency stop is always an action with an
+       immediate response, never a passive status. This entry keeps only the
+       demo's simulated outcome switch and the tracked delays (disposed on
+       demo reset), so the stop banner never shows success that did not
+       happen. */
     emergencyStop: (scope, id, reason) => {
-      const inScope = (o: { projectId: string; id: string }) => scope === 'workspace' || (scope === 'project' ? o.projectId === id : o.id === id)
-      const affected = dbRef.current.operations.filter((o) => inScope(o) && ['running', 'paused'].includes(o.status))
-      const affectedP = scope === 'operation' ? affected[0]?.projectId || '' : scope === 'project' ? id : ''
-      mutate((d) => { d.stopState = { scope, id, phase: 'requested', reason, at: stamp(), by: me.name } })
-      affected.forEach((o) => pushLog(o.id, { level: 'ERROR', agent: '—', stepId: '—', text: `EMERGENCY STOP requested by ${me.name}: ${reason} — waiting for agent acknowledgement` }))
-      audit('Emergency stop requested', scope === 'workspace' ? 'Workspace' : id, affectedP, 'Pending', reason)
-      notify(`Emergency stop requested (${scope}) by ${me.name} — awaiting acknowledgement`, affectedP, { name: 'settings', id: undefined }, 'update', 'system')
-      const applyStop = () => mutate((d) => {
-        d.operations.forEach((o) => {
-          if (inScope(o) && ['running', 'paused'].includes(o.status)) { o.status = 'estop'; o.stopReason = reason; o.stopBy = me.name; o.stopAt = stamp(); o.steps.forEach((s) => { if (s.status === 'running') s.status = 'unknown'; if (s.status === 'pending' || s.status === 'review') s.status = 'notrun' }) }
-        })
-        d.sessions.forEach((s) => {
-          const o = d.operations.find((x) => x.id === s.opId)
-          if ((scope === 'workspace' || (scope === 'project' && s.projectId === id) || (scope === 'operation' && s.opId === id)) && o && ['connected', 'available', 'suspended', 'awaiting'].includes(s.state)) { s.state = 'revoking'; s.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Emergency stop: session access is being revoked.' }) }
-        })
-      })
+      const res = requestEmergencyStopTransaction(services.authority, services.clock, actorCtx(scope === 'project' ? id : ''), { scope, id, reason })
+      if (!res.ok) return
+      const affectedP = res.data.projectId
+      res.data.operations.forEach((opId) => pushLog(opId, { level: 'ERROR', agent: '—', stepId: '—', text: `EMERGENCY STOP requested by ${me.name}: ${reason} — waiting for agent acknowledgement` }))
       const outcome = stopOutRef.current
       later(() => {
-        if (outcome === 'fail') { mutate((d) => { if (d.stopState) d.stopState.phase = 'failed' }); audit('Emergency stop failed', id, affectedP, 'Failed', 'No acknowledgement — agents did not confirm halt'); return }
-        if (outcome === 'unknown') { mutate((d) => { if (d.stopState) d.stopState.phase = 'unknown' }); audit('Emergency stop status unknown', id, affectedP, 'Unknown', 'Acknowledgement timed out'); return }
-        applyStop()
-        mutate((d) => { if (d.stopState) d.stopState.phase = 'acknowledged' })
-        audit('Emergency stop acknowledged', id, affectedP, 'Success', 'Agents confirmed halt')
-        later(() => {
-          mutate((d) => {
-            d.sessions.forEach((s) => { if (s.state === 'revoking') s.state = 'terminated' })
-            d.operations.forEach((o) => { if (o.status === 'estop') o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === o.id) a.op = null }) })
-            if (d.stopState) d.stopState.phase = 'stopped'
-          })
-        }, 2000)
+        if (outcome === 'fail') { failEmergencyStopTransaction(services.authority, services.clock, actorCtx(affectedP), { scope, id }); return }
+        if (outcome === 'unknown') { unknownEmergencyStopTransaction(services.authority, services.clock, actorCtx(affectedP), { scope, id }); return }
+        acknowledgeEmergencyStopTransaction(services.authority, services.clock, actorCtx(affectedP), { scope, id, reason })
+        later(() => { finalizeEmergencyStopTransaction(services.authority, services.clock, actorCtx(affectedP), { scope, id }) }, 2000)
       }, 1800)
     },
     retryStop: () => { const s = dbRef.current.stopState; if (!s) return; setStopOutcome('ack'); stopOutRef.current = 'ack'; A.emergencyStop(s.scope, s.id, s.reason + ' (retry)') },
-    resolveStop: (outcome) => {
-      const s = dbRef.current.stopState
-      if (outcome === 'dismiss') { mutate((d) => { d.stopState = null as any }); return }
-      if (!s) return
-      audit('Emergency stop confirmed manually', s.id, '', 'Success', 'Operator verified agents halted out-of-band')
-      mutate((d) => { if (d.stopState) d.stopState.phase = 'stopped' })
-    },
+    resolveStop: (outcome) => { resolveStopTransaction(services.authority, services.clock, actorCtx(''), outcome) },
     reviewStep: (opId, stepId, decision, note) => {
       const op = dbRef.current.operations.find((o) => o.id === opId); if (!op) return
       mutate((d) => {
@@ -888,9 +870,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const res = deliverReportVersion(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: 'all', corr: 'legacy' }, id, input)
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
-    requestClose: (pid_) => { mutate((d) => { d.approvals.unshift({ id: 'APR-' + ++d.counters.approval, projectId: pid_, type: APR.close, by: me.name, reviewer: 'Pat Kim', at: stamp(), status: 'pending', note: 'Requesting project closure — checklist complete.' }); const p = d.projects.find((x) => x.id === pid_)!; p.status = 'review' }); audit('Requested project closure', pid_, pid_); notify(`${pid_} requested closure — awaiting confirmation`, pid_, { name: 'project', id: pid_ }, 'todo', 'approvals') },
-    confirmClose: (apId) => { const ap = dbRef.current.approvals.find((x) => x.id === apId)!; mutate((d) => { const a = d.approvals.find((x) => x.id === apId)!; a.status = 'approved'; const p = d.projects.find((x) => x.id === a.projectId)!; p.status = 'closed'; p.closedAt = stamp(); p.updated = stamp() }); audit('Confirmed project closure', ap.projectId, ap.projectId, 'Success', 'Closure criteria met') },
-    reopen: (pid_, reason) => { mutate((d) => { const p = d.projects.find((x) => x.id === pid_)!; p.status = 'active'; p.closedAt = undefined; p.updated = stamp() }); audit('Reopened project', pid_, pid_, 'Success', reason) },
+    /* Ticket 22: closure request/confirm/reopen run through the feature-local
+       transaction handlers — the manager gate, the four-eyes confirmation,
+       the re-derived checklist at resolve and the audited reopen live there;
+       these entries only bridge the typed ServiceResult to the legacy Res. */
+    requestClose: (pid_, input) => {
+      const res = requestCloseTransaction(services.authority, services.clock, actorCtx(pid_), pid_, { reason: input?.reason ?? '', waiverNoFindings: input?.waiverNoFindings })
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
+    confirmClose: (apId) => {
+      const res = confirmCloseTransaction(services.authority, services.clock, actorCtx(''), apId)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
+    reopen: (pid_, reason) => {
+      const res = reopenProjectTransaction(services.authority, services.clock, actorCtx(pid_), pid_, reason)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
     toggleIntegration: (id) => mutate((d) => { const i = d.integrations.find((x) => x.id === id)!; i.status = i.status === 'connected' ? 'disconnected' : 'connected'; i.updated = stamp(); i.history.unshift(`${stamp()} — ${i.status === 'connected' ? 'Connected' : 'Disconnected'} by ${me.name}`) }),
     decidePlaybookRevision: (id, decision) => mutate((d) => { const p = d.playbooks.find((x) => x.id === id); if (!p || !p.revision) return; if (decision === 'approve') { p.version = p.revision.version; p.steps = p.revision.steps; p.techniques = p.revision.techniques; p.status = 'approved' } p.revision = undefined; p.updated = stamp() }),
     setPlaybookStatus: (id, status) => mutate((d) => { const p = d.playbooks.find((x) => x.id === id); if (p) { p.status = status; p.updated = stamp() } }),

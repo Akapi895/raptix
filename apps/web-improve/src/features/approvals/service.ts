@@ -138,7 +138,9 @@ export type ApprovalDecision = 'approved' | 'returned'
  * The reviewer's decision with the four-eyes policy owned by the handler.
  * Refusal order: unknown/foreign request → not-found; not pending →
  * conflict; missing `approve` role → forbidden; the request's own submitter
- * → forbidden (four-eyes); approving without the required review
+ * → forbidden (four-eyes); a closure request marked approved → conflict (it
+ * resolves only through ticket 22's gated closure confirmation, which
+ * re-derives the close checklist); approving without the required review
  * information (emergency contact, in-scope assets) → validation; returning
  * without a reason → validation. On success the decision, its dependent
  * entity changes (project state, admitted scope assets, assigned agent),
@@ -157,6 +159,11 @@ export function decideApprovalTransaction(authority: DbAuthority, clock: Clock, 
   }
   if (ctx.actor.id === approval.by) {
     return { ok: false, failure: { kind: 'forbidden', message: 'You submitted this request, so you cannot decide it yourself (four-eyes principle). Ask an independent reviewer.', entity: approvalRef(approval) } }
+  }
+  if (decision === 'approved' && approval.type === APR.close) {
+    // Ticket 22: closure resolves only through the gated closure confirmation —
+    // this path must never bypass the re-derived close checklist.
+    return { ok: false, failure: { kind: 'conflict', message: 'Project closure is confirmed only through the closure console, which independently re-checks the close policy before closing.', entity: approvalRef(approval) } }
   }
   if (decision === 'approved' && isGoverned(approval.type)) {
     if (!project.emergency.trim()) {
@@ -180,7 +187,6 @@ export function decideApprovalTransaction(authority: DbAuthority, clock: Clock, 
       if (a.type === APR.create) { pr.status = 'approved'; pr.roeStatus = 'approved' }
       if (a.type === APR.scope) pr.roeStatus = 'approved'
       if (a.type === APR.create || a.type === APR.scope) d.assets.forEach((x) => { if (x.projectId === pr.id && x.scope === 'pending') x.scope = 'in' })
-      if (a.type === APR.close) { pr.status = 'closed'; pr.closedAt = at }
       if (a.type.startsWith('Agent assignment')) { const ag = d.agents.find((x) => x.id === /AG-\d+/.exec(a.diff || '')?.[0]); if (ag && !ag.projectId) ag.projectId = pr.id }
     } else {
       if (a.type === APR.create) { pr.status = 'rejected'; pr.roeStatus = 'rejected' }
