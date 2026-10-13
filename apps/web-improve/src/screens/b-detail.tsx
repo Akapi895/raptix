@@ -14,18 +14,24 @@
  * bridged legacy actions until tickets 21–22 own their handlers.
  *
  * Old `?tab=` aliases keep resolving, tab state survives back/forward and
- * scope switches, and the shared dirty guard holds tab navigation. Secondary
- * panels (objectives, activity, operations, findings, reports, evidence,
- * audit, plans, sessions) keep their bridged legacy reads — the store
- * observes the same one database — until ticket 23 migrates them.
+ * scope switches, and the shared dirty guard holds tab navigation. All
+ * secondary panels (objectives, activity, operations, plans, sessions,
+ * findings, reports, evidence, audit, close) render the same typed
+ * `ProjectDetail` read (ticket 23): cross-entity slices come from the
+ * service's project-narrowed aggregate, evidence and the closure checklist
+ * are service-derived, and the Query change bridge refetches the view after
+ * every committed mutation — legacy actions included — so a panel can never
+ * show stale state. Closeout delegates ticket 22's policy derivation; no
+ * panel duplicates operation/report/grant enforcement.
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed, ChevronDown, Sparkles } from 'lucide-react'
 import { APR, planVer, type Project } from '../data'
-import { useServices, useStore, ROLE_LABEL, eligibility } from '../store'
+import { useServices, useStore, ROLE_LABEL } from '../store'
 import { useProjectStore } from '../state/stores'
 import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, Menu, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui'
+import type { DashboardAggregate, Eligibility } from './dashboard/domain'
 import { ScopeTab, TeamTab, CloseTab } from './b-detail2'
 import { useSubmitApproval, useReopen } from '../features/approvals/hooks'
 import { useProjectDetail } from './project-detail/use-project-detail'
@@ -201,17 +207,17 @@ function Detail({ d }: { d: ProjectDetail }) {
 
       {tab === 'overview' && <Overview d={d} via={via} setTab={setTab} />}
       {tab === 'scope' && <ScopeTab p={p} ds={ds} />}
-      {tab === 'objectives' && <Objectives p={p} />}
-      {tab === 'activity' && <Activity p={p} />}
+      {tab === 'objectives' && <Objectives p={p} ds={ds} />}
+      {tab === 'activity' && <Activity p={p} ds={ds} />}
       {tab === 'team' && <TeamTab p={p} ds={ds} />}
-      {tab === 'operations' && <OpsTab p={p} via={via} setTab={setTab} />}
-      {tab === 'plans' && <PlansTab p={p} />}
-      {tab === 'sessions' && <SessionsTab p={p} />}
-      {tab === 'findings' && <FindingsTab p={p} via={via} />}
-      {tab === 'reports' && <ReportsTab p={p} via={via} />}
-      {tab === 'evidence' && <EvidenceTab p={p} />}
-      {tab === 'audit' && <AuditTab p={p} />}
-      {tab === 'close' && <CloseTab p={p} setTab={setTab} />}
+      {tab === 'operations' && <OpsTab p={p} ds={ds} elig={elig} via={via} setTab={setTab} />}
+      {tab === 'plans' && <PlansTab p={p} ds={ds} />}
+      {tab === 'sessions' && <SessionsTab p={p} ds={ds} />}
+      {tab === 'findings' && <FindingsTab p={p} ds={ds} via={via} />}
+      {tab === 'reports' && <ReportsTab p={p} ds={ds} via={via} />}
+      {tab === 'evidence' && <EvidenceTab p={p} d={d} />}
+      {tab === 'audit' && <AuditTab p={p} ds={ds} />}
+      {tab === 'close' && <CloseTab p={p} d={d} setTab={setTab} />}
     </>
   )
 }
@@ -372,10 +378,10 @@ function Overview({ d, via, setTab }: { d: ProjectDetail; via: Via; setTab: (t: 
   )
 }
 
-/* ───────────── PR-06 Objectives (bridged legacy read — ticket 23 migrates) ───────────── */
-function Objectives({ p }: { p: Project }) {
-  const { db, go } = useStore()
-  const ops = db.operations.filter((o) => o.projectId === p.id)
+/* ───────────── PR-03/Objectives (ticket 23: typed aggregate slice) ───────────── */
+function Objectives({ p, ds }: { p: Project; ds: DashboardAggregate }) {
+  const { go } = useStore()
+  const ops = ds.operations.filter((o) => o.projectId === p.id)
   type O = Project['objectives'][number]
   const cols: Col<O>[] = [
     { key: 'text', header: 'Objective', render: (o) => <div className="max-w-sm py-2"><div className="font-medium">{o.text}</div></div> },
@@ -398,7 +404,7 @@ function Objectives({ p }: { p: Project }) {
   )
 }
 
-/* ───────────── PR-08 Activity (bridged legacy read — ticket 23 migrates) ───────────── */
+/* ───────────── PR-08 Activity (ticket 23: typed aggregate slice) ───────────── */
 const CATS: Record<string, { label: string; re: RegExp }> = {
   scope: { label: 'Scope / assets', re: /scope|asset/i },
   approval: { label: 'Approvals', re: /approv|return|submitted|decid/i },
@@ -407,10 +413,9 @@ const CATS: Record<string, { label: string; re: RegExp }> = {
   report: { label: 'Reports', re: /report/i },
   close: { label: 'Closure / reopen', re: /clos|reopen/i },
 }
-function Activity({ p }: { p: Project }) {
-  const { db } = useStore()
+function Activity({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const [cat, setCat] = useState('')
-  const list = db.audit.filter((a) => a.projectId === p.id && (!cat || CATS[cat].re.test(a.action)))
+  const list = ds.audit.filter((a) => a.projectId === p.id && (!cat || CATS[cat].re.test(a.action)))
   return (
     <>
       <FilterBar>
@@ -429,14 +434,13 @@ function Activity({ p }: { p: Project }) {
   )
 }
 
-/* ───────────── Context shortcuts (bridged legacy reads — ticket 23 migrates) ───────────── */
-function OpsTab({ p, via, setTab }: { p: Project; via: Via; setTab: (t: string) => void }) {
-  const { db, go, can } = useStore()
+/* ───────────── Context shortcuts (ticket 23: typed aggregate slices; eligibility is the service's derived label) ───────────── */
+function OpsTab({ p, ds, elig, via, setTab }: { p: Project; ds: DashboardAggregate; elig: Eligibility; via: Via; setTab: (t: string) => void }) {
+  const { go, can } = useStore()
   const guard = useGuard(p.id)
-  const ops = db.operations.filter((o) => o.projectId === p.id)
+  const ops = ds.operations.filter((o) => o.projectId === p.id)
   const pg = usePaged(ops, 8)
   const canOp = !guard.ro && can('run', p.id)
-  const elig = eligibility(db, p.id)
   type O = (typeof ops)[number]
   const cols: Col<O>[] = [
     { key: 'id', header: 'ID', render: (o) => <IdLink onClick={() => go('operation', { id: o.id })}>{o.id}</IdLink> },
@@ -482,10 +486,10 @@ function OpsTab({ p, via, setTab }: { p: Project; via: Via; setTab: (t: string) 
   )
 }
 
-function FindingsTab({ p, via }: { p: Project; via: Via }) {
-  const { db, go, can } = useStore()
+function FindingsTab({ p, ds, via }: { p: Project; ds: DashboardAggregate; via: Via }) {
+  const { go, can } = useStore()
   const guard = useGuard(p.id)
-  const fs = db.findings.filter((f) => f.projectId === p.id)
+  const fs = ds.findings.filter((f) => f.projectId === p.id)
   const pg = usePaged(fs, 8)
   const ok = !guard.ro && can('createFinding', p.id)
   type F = (typeof fs)[number]
@@ -509,10 +513,10 @@ function FindingsTab({ p, via }: { p: Project; via: Via }) {
   )
 }
 
-function ReportsTab({ p, via }: { p: Project; via: Via }) {
-  const { db, go, can } = useStore()
+function ReportsTab({ p, ds, via }: { p: Project; ds: DashboardAggregate; via: Via }) {
+  const { go, can } = useStore()
   const guard = useGuard(p.id)
-  const reps = db.reports.filter((r) => r.projectId === p.id)
+  const reps = ds.reports.filter((r) => r.projectId === p.id)
   const ok = !guard.ro && can('editReport', p.id)
   type R = (typeof reps)[number]
   const cols: Col<R>[] = [
@@ -534,9 +538,9 @@ function ReportsTab({ p, via }: { p: Project; via: Via }) {
   )
 }
 
-function EvidenceTab({ p }: { p: Project }) {
-  const { db, go, can, me } = useStore()
-  const evs = db.evidence.filter((e) => e.projectId === p.id)
+function EvidenceTab({ p, d }: { p: Project; d: ProjectDetail }) {
+  const { go, can, me } = useStore()
+  const evs = d.evidence.filter((e) => e.projectId === p.id)
   const sens = can('viewSensitive', p.id)
   type E = (typeof evs)[number]
   const cols: Col<E>[] = [
@@ -556,9 +560,9 @@ function EvidenceTab({ p }: { p: Project }) {
   )
 }
 
-function AuditTab({ p }: { p: Project }) {
-  const { db, me } = useStore()
-  const list = db.audit.filter((a) => a.projectId === p.id)
+function AuditTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
+  const { me } = useStore()
+  const list = ds.audit.filter((a) => a.projectId === p.id)
   const pg = usePaged(list, 10)
   type A = (typeof list)[number]
   if (me.role === 'viewer') return <Empty icon={Lock} title="Audit log is internal only">Client / Viewer roles cannot view the project audit log.</Empty>
@@ -580,11 +584,11 @@ function AuditTab({ p }: { p: Project }) {
   )
 }
 
-/* ───────────── AI Plans and C2 Sessions (bridged legacy reads — ticket 23 migrates) ───────────── */
-function PlansTab({ p }: { p: Project }) {
-  const { db, go } = useStore()
+/* ───────────── AI Plans and C2 Sessions (ticket 23: typed aggregate slices) ───────────── */
+function PlansTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
+  const { go } = useStore()
   const guard = useGuard(p.id)
-  const plans = db.plans.filter((x) => x.projectId === p.id)
+  const plans = ds.plans.filter((x) => x.projectId === p.id)
   const pg = usePaged(plans, 8)
   type P = (typeof plans)[number]
   const cols: Col<P>[] = [
@@ -607,9 +611,9 @@ function PlansTab({ p }: { p: Project }) {
   )
 }
 
-function SessionsTab({ p }: { p: Project }) {
-  const { db, go } = useStore()
-  const list = db.sessions.filter((x) => x.projectId === p.id)
+function SessionsTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
+  const { go } = useStore()
+  const list = ds.sessions.filter((x) => x.projectId === p.id)
   const pg = usePaged(list, 8)
   type S = (typeof list)[number]
   const cols: Col<S>[] = [
