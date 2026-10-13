@@ -1,0 +1,112 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, screen } from '@testing-library/react'
+
+vi.useFakeTimers()
+const { mountScreen } = await import('../test/helpers')
+const { hhmm } = await import('../store')
+const { minutesUntil, useGrantWatch, Console } = await import('../screens/h-session')
+
+afterEach(() => {
+  cleanup()
+  vi.clearAllTimers()
+  window.location.hash = ''
+})
+
+function GrantWatchProbe() {
+  useGrantWatch()
+  return null
+}
+
+describe('grant countdown against the simulated clock (requirement 50)', () => {
+  it('measures minutes between the ROE timestamp format and the module clock', () => {
+    expect(hhmm()).toBe('10:42')
+    expect(minutesUntil('Oct 13, 2026, 11:15 AM (UTC+7)', '10:42')).toBe(33)
+    expect(minutesUntil('Oct 13, 2026, 10:42 AM (UTC+7)', '10:42')).toBe(0)
+  })
+
+  it('a live grant survives several 15-second watch ticks and shows its remaining time', () => {
+    // setPid must run while the route is NOT a detail page: its redirect branch
+    // writes location.hash inside a state updater, which lands after go()'s write.
+    window.location.hash = '#/c2'
+    const view = mountScreen(Console, 'Taylor Chen')
+    act(() => {
+      view.store().setPid('RT-2026-014')
+      view.store().go('c2-console', { id: 'SS-041' })
+    })
+    expect(screen.getByText(/Expires in 33 min/)).toBeInTheDocument()
+    act(() => {
+      vi.advanceTimersByTime(90_000)
+    })
+    expect(screen.getByText(/Expires in 32 min/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Show host summary' })).toBeEnabled()
+    view.unmount()
+  })
+})
+
+describe('grant expiry (requirement 50/51 baseline: enforced by the mounted useGrantWatch)', () => {
+  it('the watch removes the grant at the deadline and the console locks its input', () => {
+    window.location.hash = '#/c2'
+    const view = mountScreen(Console, 'Taylor Chen')
+    act(() => {
+      view.store().setPid('RT-2026-014')
+      view.store().go('c2-console', { id: 'SS-041' })
+    })
+    expect(screen.getByRole('button', { name: 'Show host summary' })).toBeEnabled()
+    act(() => {
+      vi.advanceTimersByTime(1_980_000)
+    })
+    expect(screen.getByLabelText('Command input')).toBeDisabled()
+    expect(screen.getAllByText(/Access expired\. Request a new grant\./).length).toBeGreaterThan(0)
+    view.unmount()
+  })
+
+  it('expiry revokes the grant, expires the approved request, records the transcript line and warns the holder', () => {
+    const view = mountScreen(GrantWatchProbe, 'Taylor Chen')
+    const h = view.store()
+    expect(h.db.sessions.find((s) => s.id === 'SS-041')!.grants.map((g) => g.user)).toEqual(['Taylor Chen'])
+    act(() => {
+      vi.advanceTimersByTime(1_980_000)
+    })
+    const d = view.store().db
+    expect(d.sessions.find((s) => s.id === 'SS-041')!.grants).toEqual([])
+    expect(d.sessionRequests.find((r) => r.id === 'AR-011')?.status).toBe('expired')
+    expect(d.sessions.find((s) => s.id === 'SS-041')!.transcript.some((l) => l.text === 'Interactive grant for Taylor Chen expired.')).toBe(true)
+    expect(view.store().toasts.some((t) => t.text.includes('Your interactive grant on SS-041 expired'))).toBe(true)
+    view.unmount()
+  })
+
+  it('an in-flight command rechecks access before committing output (requirement 113 deadline semantics)', () => {
+    window.location.hash = '#/c2'
+    const view = mountScreen(Console, 'Taylor Chen')
+    act(() => {
+      view.store().setPid('RT-2026-014')
+      view.store().go('c2-console', { id: 'SS-041' })
+    })
+    const userLines = () => view.store().db.sessions.find((s) => s.id === 'SS-041')!.transcript.filter((l) => l.who === 'user').length
+    expect(userLines()).toBe(2)
+    fireEvent.click(screen.getByRole('button', { name: 'Show host summary' }))
+    expect(screen.getAllByText(/Busy — command in progress/).length).toBeGreaterThan(0)
+    act(() => {
+      view.store().A.expireGrant('SS-041', 'Taylor Chen')
+    })
+    act(() => {
+      vi.advanceTimersByTime(2500)
+    })
+    expect(view.store().toasts.some((t) => t.text === 'Command interrupted — access changed while it was running.')).toBe(true)
+    expect(userLines()).toBe(2)
+    view.unmount()
+  })
+})
+
+describe('useGrantWatch scope', () => {
+  it('a non-holder sees grants expire too, without a personal warning', () => {
+    const view = mountScreen(GrantWatchProbe, 'Alex Morgan')
+    act(() => {
+      vi.advanceTimersByTime(1_980_000)
+    })
+    const d = view.store().db
+    expect(d.sessions.find((s) => s.id === 'SS-041')!.grants).toEqual([])
+    expect(view.store().toasts.some((t) => t.text.includes('Your interactive grant'))).toBe(false)
+    view.unmount()
+  })
+})
