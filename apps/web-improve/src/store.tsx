@@ -73,6 +73,16 @@ import { changeAssetScopeTransaction, importAssetsTransaction } from './features
 // Ticket 49 append: the allocation/group entries delegate to the typed agent
 // write handlers so eligibility, gating and audit have one implementation.
 import { assignAgentTransaction, removeFromGroupTransaction, saveGroupTransaction } from './features/agents/writes'
+// Ticket 46 append: the session grant request/decision/revocation, the
+// interactive-command authorization and the single-grant expiry are
+// feature-local transactions (src/features/c2/grants); these legacy entries
+// delegate to them so the role/self-review gates, the required reasons, the
+// per-user time-bound grants and the handler-time deadline checks have one
+// implementation for both entry points.
+import {
+  decideSessionRequestTransaction, expireGrantTransaction, requestSessionAccessTransaction,
+  revokeGrantTransaction, sessionCommandTransaction,
+} from './features/c2/grants'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
@@ -312,12 +322,12 @@ export interface Actions {
   reassignBranch: (branchId: string, agentId: string, reason: string) => { ok: boolean; error?: string }
   cancelBranch: (branchId: string, reason: string) => void
   /* C2 & Sessions */
-  requestSessionAccess: (sessionId: string, mode: 'read-only' | 'interactive', duration: string, reason: string) => string
-  decideSessionRequest: (id: string, decision: 'approved' | 'rejected' | 'changes', note: string, minutes?: number) => void
+  requestSessionAccess: (sessionId: string, mode: 'read-only' | 'interactive', duration: string, reason: string) => Res & { id?: string }
+  decideSessionRequest: (id: string, decision: 'approved' | 'rejected' | 'changes', note: string, minutes?: number) => Res
   terminateSession: (sessionId: string, reason: string) => void
-  revokeGrant: (sessionId: string, user: string, reason?: string) => void
+  revokeGrant: (sessionId: string, user: string, reason?: string) => Res
   expireGrant: (sessionId: string, user: string) => void
-  sessionCommand: (sessionId: string, label: string) => void
+  sessionCommand: (sessionId: string, label: string) => Res
   setSessionState: (sessionId: string, state: Session['state']) => void
 }
 
@@ -380,6 +390,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const mutate = useCallback((fn: (d: Db) => void) => {
     services.authority.commit('legacy', fn)
     dbRef.current = services.authority.snapshot()
+  }, [services])
+
+  /* Canonical clock lockstep (ticket 46): the service clock advances with the
+     demo wall clock so scheduler-driven deadlines (the grant-expiry lifecycle)
+     continue without any C2 screen mounted. Under the test clock the interval
+     is fake-timer driven and stays in lockstep with `hhmm()`. */
+  useEffect(() => {
+    let last = Date.now()
+    const i = window.setInterval(() => {
+      const elapsed = Date.now() - last
+      last = Date.now()
+      if (elapsed > 0) services.clock.advance(elapsed)
+    }, 15_000)
+    return () => clearInterval(i)
   }, [services])
 
   /* Persona/auth, active project, theme, toasts and transient UI state are the
@@ -1006,28 +1030,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       audit('Cancelled branch', branchId, b.projectId, 'Success', reason)
     },
 
-    /* ── C2 & Sessions ── */
+  /* ── C2 & Sessions (ticket 46: grant lifecycle via the feature-local
+     transactions — the role/self-review gates, the required reasons, the
+     per-user time-bound grants and the handler-time deadline checks live in
+     src/features/c2/grants; these entries only bridge the typed results to
+     the legacy shapes and keep the termination-acknowledgement orchestration) ── */
     requestSessionAccess: (sessionId, mode, duration, reason) => {
-      const s = dbRef.current.sessions.find((x) => x.id === sessionId)!
-      const id = 'AR-' + String(dbRef.current.counters.request + 1).padStart(3, '0')
-      mutate((d) => { d.counters.request++; d.sessionRequests.unshift({ id, sessionId, projectId: s.projectId, by: me.name, reason, mode, duration, status: 'pending', at: stamp() }) })
-      audit('Requested session access', sessionId, s.projectId, 'Pending', reason)
-      notify(`Session access request ${id} is pending`, s.projectId, { name: 'c2-session', id: sessionId }, 'todo', 'sessions')
-      return id
+      const s = dbRef.current.sessions.find((x) => x.id === sessionId)
+      if (!s) return { ok: false, error: `Session ${sessionId} does not exist.` }
+      const res = requestSessionAccessTransaction(services.authority, services.clock, actorCtx(s.projectId), { sessionId, mode, duration, reason })
+      return res.ok ? { ok: true, id: res.data.requestId } : { ok: false, error: res.failure.message }
     },
     decideSessionRequest: (id, decision, note, minutes) => {
-      const r = dbRef.current.sessionRequests.find((x) => x.id === id)!
-      mutate((d) => {
-        const x = d.sessionRequests.find((y) => y.id === id)!; x.status = decision; x.decidedBy = me.name; x.note = note
-        if (decision === 'approved') {
-          const s = d.sessions.find((y) => y.id === x.sessionId)!
-          s.grants = s.grants.filter((g) => g.user !== x.by)
-          s.grants.push({ user: x.by, perm: x.mode, expires: 'Oct 13, 2026, ' + (() => { const m = nowMin() + (minutes ?? ((parseInt(x.duration) || 1) * 60)), h = Math.floor(m / 60) % 24; return `${h % 12 || 12}:${pad(m % 60)} ${h < 12 ? 'AM' : 'PM'}` })() + ' (UTC+7)', by: me.name })
-          s.transcript.push({ ts: hhmm() + ':00', who: 'system', text: `${x.mode} access granted to ${x.by} by ${me.name}.` })
-        }
-      })
-      audit(`${decision === 'approved' ? 'Approved' : decision === 'rejected' ? 'Rejected' : 'Requested changes on'} session access`, r.sessionId, r.projectId, 'Success', note)
-      notify(`Session access ${id} ${decision === 'changes' ? 'needs changes' : decision}`, r.projectId, { name: 'c2-session', id: r.sessionId }, 'update', 'sessions')
+      const r = dbRef.current.sessionRequests.find((x) => x.id === id)
+      if (!r) return { ok: false, error: `Access request ${id} does not exist.` }
+      const res = decideSessionRequestTransaction(services.authority, services.clock, actorCtx(r.projectId), { requestId: id, decision, note, minutes })
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     terminateSession: (sessionId, reason) => {
       const s = dbRef.current.sessions.find((x) => x.id === sessionId)!
@@ -1036,18 +1054,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       later(() => mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; if (x.state === 'revoking') { x.state = 'terminated'; x.grants = []; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated. All grants revoked.' }) } }), 2000)
     },
     revokeGrant: (sessionId, user, reason) => {
-      const s = dbRef.current.sessions.find((x) => x.id === sessionId)!
-      mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; x.grants = x.grants.filter((g) => g.user !== user); x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: `Access for ${user} revoked by ${me.name}.` }) })
-      audit('Revoked session access', sessionId, s.projectId, 'Success', reason || '')
+      const s = dbRef.current.sessions.find((x) => x.id === sessionId)
+      if (!s) return { ok: false, error: `Session ${sessionId} does not exist.` }
+      const res = revokeGrantTransaction(services.authority, services.clock, actorCtx(s.projectId), { sessionId, user, reason })
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     expireGrant: (sessionId, user) => {
-      const s = dbRef.current.sessions.find((x) => x.id === sessionId)!
-      mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; x.grants = x.grants.filter((g) => g.user !== user); d.sessionRequests.forEach((r) => { if (r.sessionId === sessionId && r.by === user && r.status === 'approved') r.status = 'expired' }); x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: `Interactive grant for ${user} expired.` }) })
-      audit('Session grant expired', sessionId, s.projectId, 'Warning')
+      const s = dbRef.current.sessions.find((x) => x.id === sessionId)
+      if (s) expireGrantTransaction(services.authority, services.clock, 'legacy', sessionId, user)
     },
     sessionCommand: (sessionId, label) => {
-      mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; x.last = stamp(); x.transcript.push({ ts: hhmm() + ':' + pad(new Date().getSeconds()), who: 'user', text: `[simulated] ${label}` }, { ts: hhmm() + ':' + pad(new Date().getSeconds()), who: 'target', text: 'Demo data — simulated, sanitized output.' }) })
-      audit('Session action (simulated)', sessionId, dbRef.current.sessions.find((x) => x.id === sessionId)!.projectId, 'Success', label)
+      const s = dbRef.current.sessions.find((x) => x.id === sessionId)
+      if (!s) return { ok: false, error: `Session ${sessionId} does not exist.` }
+      const res = sessionCommandTransaction(services.authority, services.clock, actorCtx(s.projectId), { sessionId, label })
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     setSessionState: (sessionId, state) => { mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId); if (x) x.state = state }) },
   }

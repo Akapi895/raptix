@@ -196,7 +196,8 @@ function Requests({ all }: { all: boolean }) {
   const submit = () => {
     if (!sel) return
     if (note.trim().length < MIN_REASON / 2) { setErr(true); return }
-    A.decideSessionRequest(sel.r.id, sel.d, note.trim(), sel.d === 'approved' ? parseInt(mins) : undefined)
+    const res = A.decideSessionRequest(sel.r.id, sel.d, note.trim(), sel.d === 'approved' ? parseInt(mins) : undefined)
+    if (!res.ok) { toast(res.error || 'The decision was refused.', 'bad'); return }
     toast(sel.d === 'approved' ? `${sel.r.id} approved for ${mins} minutes. The grant applies to ${sel.r.sessionId} only.` : `${sel.r.id} ${sel.d === 'changes' ? 'returned for changes' : 'rejected'}.`); setSel(null)
   }
   return (

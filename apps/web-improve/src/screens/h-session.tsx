@@ -40,8 +40,9 @@ export function RequestAccessDrawer({ session, open, onClose, initialMode = 'int
   const submit = () => {
     setTouched(true)
     if (!ok) return
-    const id = A.requestSessionAccess(session.id, mode, duration, reason.trim())
-    toast(`Request ${id} submitted — the approver has been notified.`)
+    const r = A.requestSessionAccess(session.id, mode, duration, reason.trim())
+    if (!r.ok) { toast(r.error || 'The request was refused.', 'bad'); return }
+    toast(`Request ${r.id} submitted — the approver has been notified.`)
     onClose()
     go('c2-session', { id: session.id })
   }
@@ -92,16 +93,28 @@ export function AccessChip({ a }: { a: AccessInfo }) {
   return <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-panel px-2 py-0.5 text-xs font-medium', TONE_CLS[a.tone])}><span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />{a.label}{a.detail && a.key !== 'none' && <span className="font-mono text-muted">· {a.detail}</span>}</span>
 }
 
-/** Expires any grant whose time has passed (checked on mount and every 15 s while a C2 screen is open). */
+/**
+ * Compatibility adapter (ticket 46): grant expiry is enforced by the canonical
+ * grant lifecycle in the service layer (src/features/c2/grants — a factory-
+ * registered sweep plus exact deadline callbacks, and the command handler's
+ * own deadline check), so this hook no longer expires anything. It keeps the
+ * mounted C2 screens' 15-second cadence for the countdown display and warns
+ * the holder when the lifecycle just expired their grant.
+ */
 export function useGrantWatch() {
-  const { db, A, toast, me } = useStore()
+  const { db, toast, me } = useStore()
   const [t, tick] = useState(0)
   useEffect(() => { const i = setInterval(() => tick((n) => n + 1), 15000); return () => clearInterval(i) }, [])
+  const held = useRef<Map<string, string>>(new Map())
   useEffect(() => {
-    db.sessions.forEach((s) => s.grants.forEach((g) => {
-      if (minutesUntil(g.expires, hhmm()) <= 0) { A.expireGrant(s.id, g.user); if (g.user === me.name) toast(`Your ${g.perm} grant on ${s.id} expired. Input is locked.`, 'warn') }
-    }))
-  }, [t, db.sessions]) // eslint-disable-line
+    const next = new Map<string, string>()
+    db.sessions.forEach((s) => {
+      const g = s.grants.find((x) => x.user === me.name)
+      if (g) next.set(s.id, g.perm)
+      else if (held.current.get(s.id) && s.transcript.some((l) => l.text.includes(`grant for ${me.name} expired`))) toast(`Your ${held.current.get(s.id)} grant on ${s.id} expired. Input is locked.`, 'warn')
+    })
+    held.current = next
+  }, [t, db.sessions, me.name]) // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 /* ───────── Revocation (with simulated failure) ───────── */
@@ -145,7 +158,8 @@ export function useRevoke() {
       toast(`Revocation failed — ${user} may still have access to ${s.id}.`, 'bad')
       return
     }
-    A.revokeGrant(s.id, user, reason)
+    const res = A.revokeGrant(s.id, user, reason)
+    if (!res.ok) { toast(res.error || 'The revocation was refused.', 'bad'); return }
     setSim({ fails: sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)) })
     toast(`Access revoked for ${user}.`, 'warn')
   }
@@ -344,7 +358,14 @@ export function Console() {
   const events = db.audit.filter((a) => a.obj === s.id && a.projectId === s.projectId)
   const run = (label: string) => {
     setBusy(label)
-    timer.current = window.setTimeout(() => { setBusy(null); if (stRef.current === 'interactive') A.sessionCommand(s.id, label); else toast('Command interrupted — access changed while it was running.', 'warn') }, BUSY_MS)
+    /* Ticket 46: the command handler re-checks the grant and its deadline at
+       commit time, so an in-flight command interrupted by expiry/revocation
+       is refused there and the interrupt is surfaced here. */
+    timer.current = window.setTimeout(() => {
+      setBusy(null)
+      const res = A.sessionCommand(s.id, label)
+      if (!res.ok) toast('Command interrupted — access changed while it was running.', 'warn')
+    }, BUSY_MS)
   }
   const mine = db.sessions.filter((x) => x.projectId === s.projectId && sessionPerm(db, me, x) !== 'none')
   const statusLabel = busyNow ? 'Busy — command in progress' : { interactive: 'Interactive authorized', readonly: 'Read-only', pending: 'Pending access', expired: 'Expired', revoked: 'Revoked', terminated: s.state === 'revoking' ? 'Termination requested' : 'Terminated', disconnected: 'Disconnected', denied: 'Policy denied', revokefail: 'Revocation failed' }[st]
