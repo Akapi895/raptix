@@ -7,15 +7,10 @@ import { closureEvidence, reportChecks, type NoFind, type RCheck, type ReportEdi
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import type { ServiceResult } from '../domain/service'
 
-/* The review checklist lives in the typed report service (one implementation
-   for the catalog, editor, preview and review screens); re-exported here for
-   the legacy catalog screen's import site. */
-export { reportChecks, closureEvidence, type NoFind, type RCheck }
-
 /* ───────── shared helpers ───────── */
 
 /** Persisted no-findings variant for a report */
-export function useNoFind(id: string): [NoFind | undefined, (v: NoFind) => void] {
+function useNoFind(id: string): [NoFind | undefined, (v: NoFind) => void] {
   const { persistFilters, setFilter } = useStore()
   const all = (persistFilters.repNoFind || {}) as Record<string, NoFind>
   return [all[id], (v) => setFilter('repNoFind', { ...all, [id]: v })]

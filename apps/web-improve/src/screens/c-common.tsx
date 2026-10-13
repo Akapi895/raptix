@@ -109,7 +109,6 @@ export const OpStatus = ({ value, size }: { value: string; size?: 'sm' | 'md' })
 /** Operation Runtime State (separate from AI mode, eligibility and policy). A step in review pauses new dispatch. */
 export const hasReview = (op: Operation) => (op.status === 'running' || op.status === 'paused') && op.steps.some((s) => s.status === 'review')
 export const runtimeLabel = (op: Operation) => (hasReview(op) ? 'Paused — Awaiting Review' : op.status === 'estop' ? 'Emergency stopped' : op.status === 'paused' ? 'Paused' : op.status === 'cancelled' ? 'Stopped' : op.status === 'done' ? 'Completed' : op.status === 'running' ? 'Running' : op.status.charAt(0).toUpperCase() + op.status.slice(1))
-export const opBranches = (db: Db, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId)
 export const stepBranches = (db: Db, opId: string, stepId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.stepId === stepId)
 export const failedBranches = (db: Db, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.state === 'failed')
 export const opGroups = (db: Db, opId: string) => db.branchGroups.filter((g) => g.opId === opId)

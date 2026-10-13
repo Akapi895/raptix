@@ -10,7 +10,7 @@
  * projects); dependency cycles terminate; keyboard focus reveals the same
  * node detail as pointer selection; the graph grants no execution
  * permissions; a committed ai-worker change refetches the Query-backed view;
- * the workspace entry point stays reachable through the forwarding export.
+ * the workspace Inspector renders the same view as its AI-team entry point.
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -19,7 +19,6 @@ import { StoreProvider, useServices, useStore, type Store } from '../../store'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { WorkerTeamView } from '../../screens/g-workers'
-import { AiTeamView } from '../../screens/g-fanout'
 import { seed } from '../../data'
 import { listWorkers } from './service'
 
@@ -197,13 +196,13 @@ describe('worker graph screen (ticket 44)', () => {
     h2.unmount()
   })
 
-  it('the workspace entry point stays reachable through the forwarding export', async () => {
-    // The g-fanout forwarding export resolves to the migrated view.
-    expect(AiTeamView).toBe(WorkerTeamView)
+  it('the workspace Inspector renders the same migrated team view as its AI-team entry point', async () => {
+    // The Inspector imports WorkerTeamView directly (the g-fanout forwarding
+    // export retired in ticket 66); the workspace view is the migrated one.
     render(
       <StoreProvider>
         <ConsoleProviders>
-          <AiTeamView projectId="RT-2026-014" />
+          <WorkerTeamView projectId="RT-2026-014" />
         </ConsoleProviders>
       </StoreProvider>,
     )

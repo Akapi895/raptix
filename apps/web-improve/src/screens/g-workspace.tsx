@@ -5,7 +5,8 @@ import { planVer } from '../data'
 import type { Conversation } from '../data'
 import { Button, DemoTag, IdLink, Status, cx } from '../ui'
 import { EligBadge, ExecBanner, MODES, Pill, ReplanPanel, useReplan, useTraceLink } from './g-common'
-import { AiTeamView, AllocationView, FanOutCard } from './g-fanout'
+import { AllocationView, FanOutCard } from './g-fanout'
+import { WorkerTeamView } from './g-workers'
 
 /* ───────────── Resizable panes ───────────── */
 export const RAIL = { def: 280, min: 220, max: 380 }
@@ -186,7 +187,7 @@ export function Inspector({ pid, conv }: { pid: string; conv?: Conversation }) {
         </>}
         {tab === 'agents' && <>
           <Sec><H>Agent allocation</H><AllocationView projectId={pid} /></Sec>
-          <Sec><H>AI Team (AI workers — not agents)</H><AiTeamView projectId={pid} /></Sec>
+          <Sec><H>AI Team (AI workers — not agents)</H><WorkerTeamView projectId={pid} /></Sec>
         </>}
         {tab === 'operations' && <>
           {orderedOps.length === 0 && <p className="py-3 text-xs text-muted">No operations in this project yet. Approve a plan to create one.</p>}
