@@ -1,5 +1,5 @@
 /**
- * Project wizard shell state (tickets 17/18, ADR-0067 —
+ * Project wizard shell state (tickets 17–19, ADR-0067 —
  * docs/adr/0067-web-console-service-domain-boundary.md).
  *
  * One React Hook Form instance owns the whole draft: back/forward retains
@@ -7,8 +7,9 @@
  * drives the shared unsaved-changes guard (`useDirty`), and every step
  * transition gates on that step's fields through the shared Zod schema (the
  * review step gates through the submit issues). Save-draft/create delegate
- * to the legacy store action, so the end-to-end creation flow and its audit
- * trail stay the one canonical path.
+ * to the legacy store action, which lands in the ticket-19 transaction
+ * handler — refusals surface as submit errors with the draft kept — so the
+ * end-to-end creation flow and its audit trail stay the one canonical path.
  */
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -82,7 +83,16 @@ export function useProjectWizard() {
     }
     if (submit && blocking.length) { setErr('Not ready to submit for approval: ' + blocking.map((b) => b.label).join('; ')); return }
     setErr(''); setSaving(true)
+    /* The single canonical creation path: the store action delegates to the
+     * ticket-19 transaction handler, which refuses unauthorized/invalid
+     * submissions with every entity unchanged ('' here). The typed draft
+     * stays in the form, so a refused submit can be fixed and retried. */
     const id = A.createProject(toLegacyProjectDraft(w), submit)
+    if (!id) {
+      setSaving(false)
+      setErr('The submission was rejected. Your draft is kept in the form — check the validation panel, then try again.')
+      return
+    }
     setDone(true)
     toast(submit ? `Created ${id} and submitted for approval` : `Saved draft ${id} with draft ROE-${id.slice(-3)}-v1`)
     setTimeout(() => go('project', { id, tab: submit ? 'team' : 'overview' }), 80)

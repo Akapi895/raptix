@@ -5,6 +5,9 @@ import { can as policyCan, projectAccessible, readOnlyContext } from './auth/pol
 import type { CanAction } from './domain/permissions'
 import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
 import { createChatHandlers } from './features/aichat/handlers'
+// Ticket 19 append: the project-creation transaction is feature-local
+// (src/features/wizard/service.ts); the legacy action delegates to it.
+import { createProjectTransaction } from './features/wizard/service'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
@@ -593,25 +596,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     markNoticesRead: () => mutate((d) => d.notices.forEach((n) => (n.read = true))),
 
     createProject: (dr, submit) => {
-      const id = dr.id
-      const hasScope = dr.assets.some((a) => a.scope === 'in') && !!dr.emergency && !!dr.window
-      const status = submit && hasScope ? 'pending' : 'draft'
-      mutate((d) => {
-        d.projects.unshift({
-          id, name: dr.name, client: dr.client, owner: dr.owner, type: dr.type, status, start: dr.start, end: dr.end, tz: dr.tz, desc: dr.desc, pinned: false,
-          roeStatus: status === 'pending' ? 'pending' : 'draft', roeVersion: `ROE-${id.slice(-3)}-v1`, window: dr.window, emergency: dr.emergency,
-          methods: ['Service discovery', 'Approved TTP simulation'], restrictions: dr.limits,
-          objectives: dr.objectives.filter((o) => o.text).map((o, i) => ({ id: 'o' + (i + 1), text: o.text, criteria: o.criteria, owner: dr.owner, progress: 0 })),
-          members: [{ user: dr.owner, role: 'manager', since: today() }, ...dr.members.filter((m) => m.user !== dr.owner).map((m) => ({ ...m, since: today() }))],
-          updated: stamp(),
-        })
-        dr.assets.forEach((a, i) => d.assets.push({ id: `AS-${id.slice(-3)}${i + 1}`, name: a.name, ident: a.ident, ip: '203.0.113.' + (100 + i), type: a.type, os: '—', owner: dr.client, projectId: id, scope: a.scope === 'out' ? 'out' : 'pending', source: 'Manual', updated: stamp() }))
-        if (status === 'pending') d.approvals.unshift({ id: 'APR-' + ++d.counters.approval, projectId: id, type: APR.create, by: dr.owner, reviewer: dr.approver, at: stamp(), status: 'pending', note: 'Requesting approval of ROE v1.', diff: `New ROE: ${dr.window}; ${dr.assets.filter((a) => a.scope === 'in').length} assets in scope.` })
-      })
-      audit(status === 'pending' ? 'Created project and submitted for approval' : 'Created draft project', id, id)
-      if (status === 'pending') notify(`${id} is waiting for your ROE approval`, id, { name: 'project', id }, 'todo', 'approvals')
-      setPidRaw(id)
-      return id
+      /* Ticket 19: the creation transaction (authorization, validation, the
+       * one atomic project/assets/approval/notice/audit commit) is owned by
+       * the feature-local handler; this legacy action stays the wizard's
+       * canonical entry and only wires the current persona + pid switch. */
+      const res = createProjectTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: '', corr: 'legacy' }, dr, submit)
+      if (!res.ok) return ''
+      setPidRaw(res.data.id)
+      return res.data.id
     },
     submitApproval: (projectId, type, note, diff) => {
       mutate((d) => {
