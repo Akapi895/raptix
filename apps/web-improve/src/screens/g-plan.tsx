@@ -5,6 +5,7 @@ import { planVer } from '../data'
 import type { Plan, PlanStep } from '../data'
 import { policyChecks } from '../features/plans/policy'
 import { effectivePlanStatus } from '../features/plans/service'
+import { PlanCompareError, usePlanCompare } from '../features/plans/compare'
 import type { Chk } from '../features/plans/policy'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui'
 import { NoProject, ReplanPanel, tz, useReplan } from './g-common'
@@ -24,23 +25,9 @@ function useCrumbs(plan: Plan, leaf?: string) {
   return c
 }
 
-/** Changes that invalidate an earlier approval (scope, tool, target, risk, concurrency, gates). */
-function reapprovalNotes(a: Plan, b: Plan, db: Db): string[] {
-  const out: string[] = []
-  const d = stepDiff(a, b)
-  const addA = b.assets.filter((x) => !a.assets.includes(x)), remA = a.assets.filter((x) => !b.assets.includes(x))
-  if (addA.length || remA.length) out.push(`Scope: target assets changed (${[...addA.map((x) => '+' + x), ...remA.map((x) => '-' + x)].join(', ')}).`)
-  if (d.added.length || d.removed.length) out.push(`Scope: ${d.added.length} step(s) added, ${d.removed.length} removed.`)
-  d.changed.forEach(({ step, f }) => f.forEach((x) => {
-    const k = x.split(' ')[0]
-    out.push(`${k === 'tool' ? 'Tool' : k === 'asset' ? 'Target' : k === 'risk' ? 'Risk' : k === 'agent' ? 'Agent' : 'Approval gate'} change on ${step.id}: ${x}.`)
-  }))
-  if (a.agents.length !== b.agents.length) {
-    const g = db.branchGroups.find((x) => x.planId === a.id)
-    out.push(`Concurrency: agent count ${a.agents.length} → ${b.agents.length}${g ? ` (branch group ${g.id} allows ${g.maxConcurrency} concurrent)` : ''}.`)
-  }
-  return out
-}
+/* Ticket 42: the revision-diff derivation (stepDiff/reapprovalNotes) moved to
+   the plans feature (src/features/plans/compare.ts) — the compare surfaces
+   read the derived diff through the typed service instead of the database. */
 
 function StepDrawer({ plan, stepId, onClose }: { plan: Plan; stepId?: string; onClose: () => void }) {
   const { db, go } = useStore()
@@ -119,11 +106,6 @@ function PlanGuard({ children, title }: { children: (plan: Plan) => React.ReactN
     return <><PageHeader title={title} /><Empty title="This plan belongs to another project" action={can ? <Button variant="primary" onClick={() => setPid(plan.projectId)}>Switch to {plan.projectId}</Button> : undefined}>{plan.id} is outside the selected project ({pid}). Plans are isolated per project.</Empty></>
   }
   return <>{children(plan)}</>
-}
-
-function PlanTabs({ plan, page }: { plan: Plan; page: string }) {
-  const { go } = useStore()
-  return <div className="mb-4"><Tabs value={page} onChange={(t) => go(t, { id: plan.id })} tabs={[{ id: 'ai-plan', label: 'Plan' }, { id: 'ai-plan-review', label: 'Approval review' }, { id: 'ai-plan-compare', label: 'Compare revision' }]} /></div>
 }
 
 function approvalState(p: Plan) {
@@ -547,7 +529,12 @@ function ReviewBody({ plan }: { plan: Plan }) {
   const allowed = can('approvePlan')
   const self = plan.requestedBy === me.name
   const step = plan.steps.find((x) => x.id === sel) || plan.steps[0]
-  const d = prev ? stepDiff(prev, plan) : undefined
+  /* Ticket 42: the review diff and re-approval notes derive from the typed
+     compare read — the same derivation the side-by-side route renders. */
+  const cmp = usePlanCompare(plan.id)
+  const cmpData = cmp.data && cmp.data.current.id === plan.id ? cmp.data : undefined
+  const d = prev && cmpData ? cmpData.diff : undefined
+  const notes = cmpData?.notes
   const online = plan.agents.filter((a) => db.agents.find((x) => x.id === a && (x.status === 'online' || x.status === 'idle'))).length
   const highest = plan.steps.some((s) => s.risk === 'high') ? 'high' : plan.steps.some((s) => s.risk === 'medium') ? 'medium' : 'low'
   const whyNo = (k: Decision) => !inReview ? `Plan is ${plan.status.replace('_', ' ')}; no decision is pending.` : !allowed ? `Your role (${me.role}) cannot decide AI plans. A reviewer or admin must do this.` : k === 'approved' && self ? 'You requested this plan; another reviewer must approve it.' : k === 'approved' && fails.length ? `${fails.length} policy check(s) FAIL: ${fails.map((f) => f.label).join(', ')}. Fix them or return the plan.` : ''
@@ -615,7 +602,7 @@ function ReviewBody({ plan }: { plan: Plan }) {
                 </div>
               )}
             </Card>
-            {prev && (() => { const n = reapprovalNotes(prev, plan, db); return <Card><CardHeader title="Re-approval notes" sub={n.length ? 'These changes are not covered by the earlier approval.' : undefined} />{n.length ? <ul className="list-disc space-y-0.5 pl-5 text-xs">{n.map((x) => <li key={x}>{x}</li>)}</ul> : <p className="text-sm text-muted">No scope, tool, target, risk or concurrency changes detected. A new approval is still required for this version.</p>}</Card> })()}
+            {prev && notes && <Card><CardHeader title="Re-approval notes" sub={notes.length ? 'These changes are not covered by the earlier approval.' : undefined} />{notes.length ? <ul className="list-disc space-y-0.5 pl-5 text-xs">{notes.map((x) => <li key={x}>{x}</li>)}</ul> : <p className="text-sm text-muted">No scope, tool, target, risk or concurrency changes detected. A new approval is still required for this version.</p>}</Card>}
             {db.branchGroups.filter((g) => g.planId === plan.id).map((g) => <div key={g.id}><FanOutCard groupId={g.id} /></div>)}
             {plan.risks.length > 0 && <Card><CardHeader title="Risks" /><ul className="list-disc space-y-1 pl-5 text-sm">{plan.risks.map((r) => <li key={r}>{r}</li>)}</ul></Card>}
           </div>
@@ -655,40 +642,24 @@ function ReviewBody({ plan }: { plan: Plan }) {
   )
 }
 
-function stepDiff(a: Plan, b: Plan) {
-  const key = (s: PlanStep) => s.id
-  const am = new Map(a.steps.map((s) => [key(s), s])); const bm = new Map(b.steps.map((s) => [key(s), s]))
-  const added = b.steps.filter((s) => !am.has(key(s)))
-  const removed = a.steps.filter((s) => !bm.has(key(s)))
-  const changed = b.steps.flatMap((s) => {
-    const o = am.get(key(s)); if (!o) return []
-    const f: string[] = []
-    if (o.asset !== s.asset) f.push(`asset ${o.asset} → ${s.asset}`)
-    if (o.agent !== s.agent) f.push(`agent ${o.agent} → ${s.agent}`)
-    if (o.tool !== s.tool) f.push(`tool ${o.tool} → ${s.tool}`)
-    if (o.risk !== s.risk) f.push(`risk ${o.risk} → ${s.risk}`)
-    if (o.needsApproval !== s.needsApproval) f.push(`approval ${o.needsApproval ? 'required' : 'not required'} → ${s.needsApproval ? 'required' : 'not required'}`)
-    return f.length ? [{ step: s, f }] : []
-  })
-  return { added, removed, changed }
-}
-
 export function AiPlanCompare() {
   return <PlanGuard title="Plan Revision Compare">{(plan) => <CompareBody plan={plan} />}</PlanGuard>
 }
 
+/** Ticket 42: the compare route renders the typed compare read (diff + notes derived from the stored revisions). */
 function CompareBody({ plan }: { plan: Plan }) {
-  const { db, go, A, can, toast } = useStore()
+  const { go, A, can, toast } = useStore()
+  const cmp = usePlanCompare(plan.id)
   const crumbs = useCrumbs(plan, 'Compare')
-  const succ = db.plans.find((x) => x.prevPlanId === plan.id)
-  const prev = plan.prevPlanId ? db.plans.find((x) => x.id === plan.prevPlanId) : undefined
-  const [oldP, newP] = prev ? [prev, plan] : succ ? [plan, succ] : [undefined, undefined]
-  if (!oldP || !newP) return <><PageHeader title="Plan Revision Compare" crumbs={crumbs} /><Empty title="No revision to compare" action={<Button onClick={() => go('ai-plan', { id: plan.id })}>Back to plan</Button>}>{plan.id} has no previous or later version.</Empty></>
-  const d = stepDiff(oldP, newP)
+  if (cmp.isPending) return <><PageHeader title="Plan Revision Compare" crumbs={crumbs} /><p className="py-3 text-sm text-muted" role="status">Loading comparison…</p></>
+  if (cmp.isError) {
+    const failure = (cmp.error as PlanCompareError).failure
+    return <><PageHeader title="Plan Revision Compare" crumbs={crumbs} /><Empty title={failure.kind === 'conflict' ? 'No revision to compare' : 'Could not load the comparison'} action={<Button onClick={() => go('ai-plan', { id: plan.id })}>Back to plan</Button>}>{failure.message}</Empty></>
+  }
+  const { previous: oldP, current: newP, diff: d, notes } = cmp.data
   const hi = (x: Plan) => x.steps.filter((s) => s.risk !== 'low').length
   const gated = (x: Plan) => x.steps.filter((s) => s.needsApproval).length
   const needsReapproval = newP.status !== 'approved'
-  const notes = reapprovalNotes(oldP, newP, db)
   const canReq = can('plan') && (newP.status === 'proposed' || newP.status === 'draft')
   return (
     <>
