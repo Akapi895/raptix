@@ -2,8 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Asset, type Agent, type Group, type Plan, type PlanStep, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent, type Conversation } from './data'
 import type { CanAction } from './domain/permissions'
 import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
+import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 
 export type { CanAction } from './domain/permissions'
+export type { CopilotCtx, Toast } from './state/stores'
 
 /* ───────────── Simulated clock (UTC+7) ───────────── */
 const T0 = Date.now()
@@ -193,8 +195,6 @@ export interface ConfirmOpts {
   reasonLabel?: string; reasonRequired?: boolean; cancelLabel?: string
   onConfirm: (reason: string) => void
 }
-export interface Toast { id: number; kind: 'ok' | 'warn' | 'bad' | 'info'; text: string }
-export interface CopilotCtx { kind: string; id?: string; label: string }
 
 /* ───────────── Context ───────────── */
 export interface Store {
@@ -361,6 +361,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const servicesRef = useRef<ConsoleServices | null>(null)
   if (!servicesRef.current) servicesRef.current = createConsoleServices()
   const services = servicesRef.current
+
+  /* The shared authorities are module singletons. Restoring their initial
+     values synchronously — before this mount's consumers read them — means
+     repeated provider mounts never inherit a previous mount's persona/
+     project/UI state (an effect would leave the first render stale). */
+  const initedRef = useRef(false)
+  if (!initedRef.current) {
+    initedRef.current = true
+    resetSharedStores()
+    useAuthStore.setState({ authed: !!window.location.hash && parseHash().page !== 'login' })
+  }
   const [db, setDb] = useState<Db>(() => services.authority.snapshot())
   const dbRef = useRef(db)
   dbRef.current = db
@@ -374,24 +385,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     dbRef.current = services.authority.snapshot()
   }, [services])
 
-  const [meName, setMeName] = useState('Alex Morgan')
+  /* Persona/auth, active project, theme, toasts and transient UI state are the
+     shared Zustand authorities (ticket 05); this context forwards to them so
+     legacy and migrated consumers observe one state. */
+  const meName = useAuthStore((s) => s.meName)
+  const setMeName = useAuthStore((s) => s.setMe)
   const me = USERS.find((u) => u.name === meName)!
-  const [authed, setAuthed] = useState(() => !!window.location.hash && parseHash().page !== 'login')
-  const [org, setOrg] = useState('Acme Security (Demo)')
+  const authed = useAuthStore((s) => s.authed)
+  const setAuthed = useAuthStore((s) => s.setAuthed)
+  const org = useAuthStore((s) => s.org)
+  const setOrg = useAuthStore((s) => s.setOrg)
   const [route, setRoute] = useState<Route>(() => parseHash())
-  const [pid, setPidRaw] = useState<string>('all')
-  const [theme, setThemeS] = useState<'dark' | 'light'>('light')
+  const pid = useProjectStore((s) => s.pid)
+  const setPidRaw = useProjectStore((s) => s.setPid)
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
+  const toasts = useToastStore((s) => s.toasts)
+  const toast = useToastStore((s) => s.toast)
   const [loading, setLoading] = useState(false)
-  const [toasts, setToasts] = useState<Toast[]>([])
   const [confirmState, setConfirmState] = useState<ConfirmOpts | null>(null)
   const [dirty, setDirtyS] = useState(false)
   const saveRef = useRef<(() => void) | undefined>(undefined)
   const [unsaved, setUnsaved] = useState<Store['unsaved']>(null)
-  const [switcherOpen, setSwitcherOpen] = useState(false)
-  const [noticesOpen, setNoticesOpenRaw] = useState(false)
-  const [copilotOpen, setCopilotOpenRaw] = useState(false)
-  const [copilotCtx, setCopilotCtx] = useState<CopilotCtx | null>(null)
-  const [aiMode, setAiMode] = useState<AiMode>('propose')
+  const ui = useUiStore((s) => s)
+  const switcherOpen = ui.switcherOpen
+  const setSwitcherOpen = ui.setSwitcherOpen
+  const noticesOpen = ui.noticesOpen
+  const setNoticesOpen = ui.setNoticesOpen
+  const copilotOpen = ui.copilotOpen
+  const copilotCtx = ui.copilotCtx
+  const setCopilotOpen = ui.setCopilotOpen
+  const aiMode = ui.aiMode
+  const setAiMode = ui.setAiMode
   const [stopOutcome, setStopOutcome] = useState<'ack' | 'fail' | 'unknown'>('ack')
   const stopOutRef = useRef(stopOutcome); stopOutRef.current = stopOutcome
   const [aiBusy, setAiBusy] = useState<string | null>(null)
@@ -408,20 +433,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [staleOps, setStaleOps] = useState<Record<string, boolean>>({})
   const [persistFilters, setPF] = useState<Record<string, any>>({})
   const setFilter = useCallback((k: string, v: any) => setPF((s) => ({ ...s, [k]: v })), [])
-
-  const setNoticesOpen = (b: boolean) => { setNoticesOpenRaw(b); if (b) setCopilotOpenRaw(false) }
-  const setCopilotOpen: Store['setCopilotOpen'] = (open, ctx) => { setCopilotOpenRaw(open); if (open) { setNoticesOpenRaw(false); if (ctx) setCopilotCtx(ctx) } }
-
-  const setTheme = (t: 'dark' | 'light') => {
-    setThemeS(t)
-    document.documentElement.classList.toggle('dark', t === 'dark')
-  }
-
-  const toast = useCallback((text: string, kind: Toast['kind'] = 'ok') => {
-    const id = Date.now() + Math.random()
-    setToasts((t) => [...t, { id, kind, text }])
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4200)
-  }, [])
 
   const accessible = useMemo(() => db.projects.filter((p) => canAccessProject(db, me, p.id)), [db, me])
   const project = pid === 'all' ? null : db.projects.find((p) => p.id === pid) || null
@@ -544,7 +555,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     dbRef.current = services.authority.snapshot()
     setLogs(buildLogs(dbRef.current))
     setStaleOps({}); setPF({}); setPidRaw('all'); setDirtyS(false); saveRef.current = undefined
-    setConfirmState(null); setUnsaved(null); setCopilotOpenRaw(false); setNoticesOpenRaw(false); setAiBusy(null)
+    setConfirmState(null); setUnsaved(null); setAiBusy(null)
+    useUiStore.getState().clearTransient()
+    useToastStore.getState().clear()
     toast(scenario === 'e2e01' ? 'Demo state reset — RT-2026-017 scenario dataset loaded.' : 'Demo state reset.', 'info')
   }
 
