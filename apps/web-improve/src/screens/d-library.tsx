@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, BookOpen, Eye, ClipboardCheck, Copy, Crosshair, ExternalLink, GitCompare, Layers, Play, Plus, Send, Sparkles, Upload, X } from 'lucide-react'
 import { useStore } from '../store'
 import { TACTICS, TECHNIQUES, type Playbook } from '../data'
-import { Banner, Button, Card, CardHeader, DescList, Empty, FilterBar, IdLink, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Timeline, useGuard, cx } from '../ui'
+import { Banner, Button, Card, CardHeader, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
 import { Id, IdL, MoreFilters, withLoading } from './d-shared'
-import { LibraryReadError, usePlaybookDetail, usePlaybookList, useTechniqueDetail } from '../features/library/query'
+import { LibraryReadError, usePlaybookDetail, usePlaybookList, usePlaybookReview, usePlaybookReviewQueue, useTechniqueDetail } from '../features/library/query'
 
 const tName = (id: string) => TECHNIQUES.find((t) => t.id === id)?.name ?? id
 
@@ -207,63 +207,134 @@ function PlaybookDetail() {
   )
 }
 
-/* ───────────── Playbook review (PB-V3-03 / V3-14 — legacy until ticket 53) ───────────── */
+/* ───────────── Playbook review (PB-V3-03 / V3-14, ticket 53: typed service) ───────────── */
 function PlaybookReview() {
-  const { db, route, go, can, confirm, toast, A, me } = useStore()
-  const p = db.playbooks.find((x) => x.id === route.id)
+  const { route, go, can, me, confirm, toast } = useStore()
+  const detail = usePlaybookDetail(route.id)
+  const queue = usePlaybookReviewQueue()
+  const review = usePlaybookReview()
+  const [ver, setVer] = useState('')
+  const [log, setLog] = useState('')
   const back = { label: 'Playbooks & TTPs', to: () => go('playbooks') }
-  if (!p) return <><PageHeader title="Playbook not found" back={back} /><Empty icon={BookOpen} title={`No playbook “${route.id}”`} action={<Button onClick={() => go('playbooks')}>Back to playbooks</Button>} /></>
-  const rev = p.revision
+  /* Deep link without an id: the review queue. */
+  if (!route.id) {
+    const items = queue.data?.items ?? []
+    return (
+      <>
+        <PageHeader title="Playbook review queue" sub="Pending revisions and initial versions awaiting a decision. The active version stays approved and in use until a reviewer decides." />
+        {queue.isPending ? <div aria-busy="true" aria-label="Loading review queue"><Skeleton className="h-64" /></div>
+          : queue.isError ? <Empty icon={AlertTriangle} title="Review queue could not be loaded" action={<Button onClick={() => queue.refetch()}>Retry</Button>}>{(queue.error as LibraryReadError).failure.message}</Empty>
+            : !items.length ? <Empty icon={ClipboardCheck} title="Nothing is waiting for review">Submitted revisions appear here until a reviewer approves or returns them.</Empty> : (
+              <ul className="space-y-2">
+                {items.map((it) => (
+                  <li key={it.playbookId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-panel px-4 py-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">{it.name} <Id className="text-muted">{it.playbookId} · v{it.pending.version} → v{it.activeVersion}</Id></div>
+                      <p className="mt-0.5 text-xs text-muted">{it.pending.kind === 'revision' ? 'Revision' : 'Initial version'} by {it.pending.by} · {it.pending.at}</p>
+                    </div>
+                    <Button size="sm" disabled={!it.canDecide} title={it.decideReason || `Review ${it.playbookId}`} onClick={() => go('playbook-review', { id: it.playbookId })}>Review</Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+      </>
+    )
+  }
+  if (detail.isPending) return <div aria-busy="true" aria-label="Loading review"><Skeleton className="h-96" /></div>
+  if (detail.isError || !detail.data) return <><PageHeader title="Playbook not found" back={back} /><Empty icon={BookOpen} title={`No playbook “${route.id}”`} action={<Button onClick={() => go('playbooks')}>Back to playbooks</Button>} /></>
+  const { playbook: p, pendingRevision: rev, usage } = detail.data
   const legacyReview = p.status === 'review'
-  if (!rev && !legacyReview)
+  const newVer = rev?.version || p.version
+  const author = rev?.by || p.owner
+  const usedOps = usage.operations.filter((o) => !['done', 'cancelled'].includes(o.status)).map((o) => o.id)
+  /* The decide gate mirrors the handler: role policy first, then author independence. */
+  const why = !can('approve') ? 'Only Reviewers and Admins can approve or return playbooks.' : author === me.name ? 'You cannot review your own revision. Ask another reviewer.' : ''
+  const decide = (decision: 'approve' | 'return') => confirm({
+    title: decision === 'approve' ? `Approve ${p.id} v${newVer}?` : `Return ${p.id} v${newVer} to draft?`,
+    danger: decision === 'return',
+    confirmLabel: decision === 'approve' ? 'Approve revision' : 'Return to Draft',
+    reasonLabel: decision === 'approve' ? 'Approval reason' : 'Reason for returning',
+    reasonRequired: true,
+    body: decision === 'approve'
+      ? <>v{newVer} becomes the approved version. v{p.version} is frozen as archived. {usedOps.length ? `${usedOps.join(', ')} stay pinned to v${p.version}; they do not change automatically.` : ''}</>
+      : <>The pending revision goes back to its author{rev ? ` (${rev.by})` : ''} with your reason. The approved v{p.version} is unaffected.</>,
+    onConfirm: (r) => {
+      review.decideRevision(p.id, decision, r).then((res) => {
+        if (!res.ok) { toast(res.failure.message, 'bad'); return }
+        toast(decision === 'approve' ? `${p.id} v${newVer} approved.` : `v${newVer} returned to draft.`, decision === 'approve' ? undefined : 'warn')
+        go('playbook', { id: p.id })
+      })
+    },
+  })
+  /* Nothing pending: reviewers get the empty state; editors propose the next
+     revision (version bump + changelog) or submit a draft for review — the
+     approved version is preserved until an independent approval. */
+  if (!rev && !legacyReview) {
+    const editWhy = !can('editScope') ? 'Only Red Team Managers and Admins can propose revisions.' : ''
+    const propose = () => {
+      review.proposeRevision(p.id, { version: ver, summary: log.split('\n') }).then((res) => {
+        if (!res.ok) { toast(res.failure.message, 'bad'); return }
+        toast(`Revision v${res.data.revision?.version} submitted — v${p.version} stays approved and in use.`, 'info')
+        setVer(''); setLog('')
+      })
+    }
+    const submitInitial = () => {
+      review.submitForReview(p.id).then((res) => {
+        if (!res.ok) { toast(res.failure.message, 'bad'); return }
+        toast(`${p.id} v${p.version} submitted for review.`, 'info')
+      })
+    }
     return (
       <>
         <PageHeader back={back} title={p.name} meta={<><PbStatus s={p.status} /><Id className="text-muted">{p.id} · v{p.version}</Id></>} sub="Nothing to review" />
         <Empty icon={ClipboardCheck} title={p.status === 'approved' ? `v${p.version} is approved: no pending revision` : 'This draft has not been submitted for review'} action={<Button onClick={() => go('playbook', { id: p.id })}>Open playbook (read-only)</Button>}>
           {p.status === 'approved' ? 'The approved version is read-only and cannot be approved again. A review opens only when a new revision is submitted.' : 'Ask the owner to request approval first. Until then it can only be previewed.'}
         </Empty>
+        {p.status === 'approved' && !editWhy && (
+          <Card className="mt-4"><CardHeader title={`Propose revision after v${p.version}`} sub="The approved version stays active until a reviewer approves the revision." />
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="New version" required hint={`Strict bump above v${p.version}, e.g. v${p.version.split('.')[0]}.${Number(p.version.split('.')[1]) + 1}`}><Input value={ver} onChange={(e) => setVer(e.target.value)} placeholder={`${p.version.split('.')[0]}.${Number(p.version.split('.')[1]) + 1}`} /></Field>
+              <Field label="Changelog" required hint="One entry per line. Recorded with the revision."><Textarea value={log} onChange={(e) => setLog(e.target.value)} placeholder={'Added step: validate audit-log forwarding (safe)'} /></Field>
+            </div>
+            <div className="mt-3"><Button variant="primary" icon={Send} disabled={!ver.trim() || !log.trim()} title={!ver.trim() || !log.trim() ? 'A version and a changelog entry are required.' : 'Submit the revision for review'} onClick={propose}>Submit revision</Button></div>
+          </Card>
+        )}
+        {p.status === 'draft' && !editWhy && (
+          <Card className="mt-4"><CardHeader title="Submit for review" sub="A draft cannot be used in operations until a reviewer approves it." />
+            <Button variant="primary" icon={Send} onClick={submitInitial}>Submit v{p.version} for review</Button>
+          </Card>
+        )}
+        {editWhy && <div className="mt-4"><Locked reason={editWhy} /></div>}
       </>
     )
-  const newVer = rev?.version || p.version
+  }
+  const oldSteps = p.steps
+  const oldTech = p.techniques
   const newSteps = rev?.steps || p.steps
   const newTech = rev?.techniques || p.techniques
-  const oldSteps = rev ? p.steps : p.steps.slice(0, Math.max(1, p.steps.length - 1))
-  const oldTech = rev ? p.techniques : p.techniques.slice(0, oldSteps.length)
   const added = newSteps.filter((s) => !oldSteps.includes(s))
   const removed = oldSteps.filter((s) => !newSteps.includes(s))
   const addedT = [...new Set(newTech.filter((t) => !oldTech.includes(t)))]
   const removedT = [...new Set(oldTech.filter((t) => !newTech.includes(t)))]
-  const changed = (rev?.summary || []).filter((x) => !/^added step/i.test(x))
-  const author = rev?.by || p.owner
-  const why = !can('approve') ? 'Only Reviewers and Admins can approve or return playbooks.' : author === me.name ? 'You cannot review your own revision. Ask another reviewer.' : ''
-  const usedOps = db.operations.filter((o) => o.playbookId === p.id && !['done', 'cancelled'].includes(o.status))
-  const done = (action: string, r: string) => { A.audit(action, `${p.id} v${newVer}`, '', 'Success', r); A.notify(`Playbook ${p.id} v${newVer}: ${action.toLowerCase()}`, '', { name: 'playbook', id: p.id }, 'todo') }
-  const approve = () => confirm({
-    title: `Approve ${p.id} v${newVer}?`, confirmLabel: 'Approve revision', reasonLabel: 'Approval reason', reasonRequired: true,
-    body: <>v{newVer} becomes the approved version. v{p.version} is frozen as archived. {usedOps.length ? `${usedOps.map((o) => o.id).join(', ')} stay pinned to v${p.version}; they do not change automatically.` : ''}</>,
-    onConfirm: (r) => { if (rev) A.decidePlaybookRevision(p.id, 'approve'); else A.setPlaybookStatus(p.id, 'approved'); done('Playbook approved', r); toast(`${p.id} v${newVer} approved.`); go('playbook', { id: p.id }) },
-  })
-  const ret = () => confirm({
-    title: `Return ${p.id} v${newVer} to draft?`, danger: true, confirmLabel: 'Return to Draft', reasonLabel: 'Reason for returning', reasonRequired: true,
-    body: <>The pending revision goes back to its author{rev ? ` (${rev.by})` : ''} with your reason. The approved v{p.version} is unaffected.</>,
-    onConfirm: (r) => { if (rev) A.decidePlaybookRevision(p.id, 'return'); else A.setPlaybookStatus(p.id, 'draft'); done('Playbook returned to draft', r); toast(`v${newVer} returned to draft.`, 'warn'); go('playbook', { id: p.id }) },
-  })
+  const changed = rev?.summary.filter((x) => !/^added step/i.test(x)) ?? []
   const risk = [...(addedT.length ? [`New techniques: ${addedT.map((t) => `${t} ${tName(t)}`).join(', ')}.`] : []), ...(rev?.summary.filter((x) => /approval|manual/i.test(x)) || []), 'All steps remain lab-only simulated actions; no command content is included.']
-  const timeline = [
-    { at: rev?.at || p.updated, title: `v${newVer}: pending review`, sub: author, tone: 'warn' as const },
-    { at: p.updated, title: `v${p.version}: approved (frozen)`, sub: p.owner, tone: 'ok' as const },
-  ]
+  const timeline = rev
+    ? [
+      { at: rev.at, title: `v${rev.version}: pending review`, sub: rev.by, tone: 'warn' as const },
+      { at: p.updated, title: `v${p.version}: approved (frozen)`, sub: p.owner, tone: 'ok' as const },
+    ]
+    : [{ at: p.updated, title: `v${p.version}: pending review (initial version)`, sub: p.owner, tone: 'warn' as const }]
   return (
     <>
-      <PageHeader back={back} title={`Review ${p.name}`} meta={<><Status kind="report" value="review" label="Pending review" /><Id className="text-muted">{p.id} v{newVer} vs v{p.version}</Id></>} sub={`Revision v${newVer} by ${author} is compared with the approved v${p.version}.`} />
-      <Banner tone="info" title={`v${p.version} is Approved and frozen`}>The currently approved version is read-only. This review applies only to the pending revision v{newVer}; approving it does not change operations already pinned to v{p.version}.</Banner>
+      <PageHeader back={back} title={`Review ${p.name}`} meta={<><Status kind="report" value="review" label="Pending review" /><Id className="text-muted">{p.id} v{newVer} vs v{p.version}</Id></>} sub={rev ? `Revision v${newVer} by ${author} is compared with the approved v${p.version}.` : `Initial version v${newVer} by ${author} awaits its first approval.`} />
+      {rev && <Banner tone="info" title={`v${p.version} is Approved and frozen`}>The currently approved version is read-only. This review applies only to the pending revision v{newVer}; approving it does not change operations already pinned to v{p.version}.</Banner>}
       {why && <div className="-mt-2 mb-4"><Locked reason={why} /></div>}
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="space-y-4 xl:col-span-2">
-          <Card><CardHeader title={`Step & technique diff: v${p.version} → v${newVer}`} sub="Step names only. No command content." />
+          <Card><CardHeader title={rev ? `Step & technique diff: v${p.version} → v${newVer}` : `Steps in reviewed v${newVer}`} sub="Step names only. No command content." />
             <div className="mb-3 flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-ok/10 px-2 py-0.5 text-ok">{added.length} added</span><span className="rounded-full bg-bad/10 px-2 py-0.5 text-bad">{removed.length} removed</span><span className="rounded-full bg-warn/10 px-2 py-0.5 text-warn">{changed.length} changed</span></div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div><div className="mb-1.5 text-xs font-medium text-muted">Approved v{p.version} (frozen)</div><ol className="space-y-1 rounded-lg border border-line p-3 text-sm">{oldSteps.map((s, i) => <li key={i} className={removed.includes(s) ? 'rounded bg-bad/10 px-1 text-bad line-through' : ''}>{i + 1}. {s}</li>)}</ol></div>
+              <div><div className="mb-1.5 text-xs font-medium text-muted">{rev ? `Approved v${p.version} (frozen)` : `Submitted v${p.version}`}</div><ol className="space-y-1 rounded-lg border border-line p-3 text-sm">{oldSteps.map((s, i) => <li key={i} className={removed.includes(s) ? 'rounded bg-bad/10 px-1 text-bad line-through' : ''}>{i + 1}. {s}</li>)}</ol></div>
               <div><div className="mb-1.5 text-xs font-medium text-muted">Pending v{newVer}</div><ol className="space-y-1 rounded-lg border border-line p-3 text-sm">{newSteps.map((s, i) => <li key={i} className={added.includes(s) ? 'rounded bg-ok/10 px-1 text-ok' : ''}>{i + 1}. {s}{added.includes(s) && <span className="ml-1 text-[11px]">(added)</span>}</li>)}</ol></div>
             </div>
             <ul className="mt-3 space-y-1 text-sm">
@@ -280,15 +351,15 @@ function PlaybookReview() {
             <DescList cols={2} items={[{ k: 'Goal', v: p.goal }, { k: 'Compatible OS', v: p.os.join(' / ') }]} />
           </Card>
           <Card><CardHeader title="Planned use" />
-            <p className="text-sm text-muted">{usedOps.length ? `Open operations ${usedOps.map((o) => o.id).join(', ')} are pinned to v${p.version} and are not affected by this review.` : 'No open operation references this playbook.'}</p>
+            <p className="text-sm text-muted">{usedOps.length ? `Open operations ${usedOps.join(', ')} are pinned to v${p.version} and are not affected by this review.` : 'No open operation references this playbook.'}</p>
           </Card>
         </div>
         <div className="space-y-4">
           <Card><CardHeader title="Decision" />
             <p className="mb-3 text-xs text-muted">A reason is required for both decisions.</p>
             <div className="flex flex-wrap gap-2">
-              <Button variant="primary" disabled={!!why} title={why || `Approve v${newVer}`} onClick={approve}>Approve v{newVer}</Button>
-              <Button variant="danger" disabled={!!why} title={why || 'Return the revision to its author as a draft'} onClick={ret}>Return to Draft</Button>
+              <Button variant="primary" disabled={!!why} title={why || `Approve v${newVer}`} onClick={() => decide('approve')}>Approve v{newVer}</Button>
+              <Button variant="danger" disabled={!!why} title={why || 'Return the revision to its author as a draft'} onClick={() => decide('return')}>Return to Draft</Button>
               <Button variant="ghost" onClick={() => go('playbook', { id: p.id })}>Back to playbook</Button>
             </div>
           </Card>
