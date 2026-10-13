@@ -20,6 +20,7 @@ import { createConsoleServices, type ConsoleServices } from '../../domain/servic
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { routes } from '../../screens/d'
 import { decideApprovalTransaction } from '../approvals/service'
+import { runOperationPreflight } from '../operations/service'
 import { changeAssetScopeTransaction, createAssetWriteHandlers, importAssetsTransaction, validateAssetRows } from './writes'
 import type { AssetImportRow } from './writes'
 
@@ -139,7 +140,9 @@ describe('atomic import through the governance transaction (invariant a, asset p
     h.run(() => h.store().A.assignAgent('AG-012', P14))
     let opId = ''
     h.run(() => { opId = h.store().A.createOperation({ name: 'Import probe', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' }) })
-    h.run(() => h.store().A.confirmPreflight(opId))
+    // Ticket 65 retired the A.confirmPreflight wrapper; the fixture runs the
+    // same typed handler the wrapper delegated to.
+    h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf(ALEX), opId) })
     return opId
   }
 

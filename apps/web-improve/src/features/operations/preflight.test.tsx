@@ -324,7 +324,7 @@ function mountProbe(me = 'Alex Morgan') {
 }
 
 describe('operation console (ticket 26 — screens)', () => {
-  it('bridge: a legacy preflight run reaches the typed detail read; a typed run reaches the legacy store', async () => {
+  it('bridge: a legacy draft edit reaches the typed detail read; a typed preflight run reaches the legacy store', async () => {
     const h = mountProbe('Taylor Chen')
     // Setup: the pool assignment is role-gated at the typed handler (ticket
     // 49), so the setup runs it as the manager persona; the bridge proof
@@ -334,13 +334,13 @@ describe('operation console (ticket 26 — screens)', () => {
     h.run(() => h.store().go('operation', { id: opId }))
     h.show(<routes.operation />)
     await waitFor(() => expect(screen.getByText('Bridge proof op')).toBeInTheDocument())
-    // Direction 1 — legacy action (same typed handler underneath) → the Query detail read refetches.
-    h.run(() => h.store().A.confirmPreflight(opId))
-    await waitFor(() => expect(screen.getByText('Ready')).toBeInTheDocument())
-    // Direction 2 — the typed handler run is observed by the legacy store projection.
-    h.run(() => h.store().A.updateOperation(opId, { name: 'Bridge proof op' })) // invalidates preflight → draft
+    // Direction 1 — legacy action (the store's delegating draft entry, which
+    // invalidates any preflight snapshot) → the Query detail read refetches.
+    h.run(() => h.store().A.updateOperation(opId, { name: 'Bridge proof op' }))
     await waitFor(() => expect(screen.getByText('Draft')).toBeInTheDocument())
+    // Direction 2 — the typed preflight run is observed by the legacy store projection.
     await act(async () => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf(TAYLOR, 'RT-2026-014'), opId) })
+    await waitFor(() => expect(screen.getByText('Ready')).toBeInTheDocument())
     const op = h.store().db.operations.find((o) => o.id === opId)!
     expect(op.status).toBe('ready')
     expect(op.preflightAt).toBeDefined()

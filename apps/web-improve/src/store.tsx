@@ -58,12 +58,14 @@ import { deliverReportVersion, exportReportVersion, type DeliveryInput } from '.
 // Ticket 26 append: the preflight derivation and the start gate live in the
 // operations feature; the legacy helpers/actions delegate to the same handlers.
 import { computePreflightChecks, PROJECT_TZ_OFFSET_MS, type Check } from './features/operations/preflight'
-// Ticket 27 append: the lifecycle control transitions are feature-local
-// handlers; these legacy entries delegate so the gates, the atomic agent
-// reservations and the audited outcomes have one implementation for both
-// entry points (the store keeps only the demo live-log mirrors).
+// Ticket 27: the lifecycle control transitions are feature-local
+// handlers; the remaining legacy entries delegate so the gates, the atomic
+// agent reservations and the audited outcomes have one implementation for
+// both entry points (the store keeps only the demo live-log mirrors). The
+// zero-caller confirmPreflight/startOp/reviewStep wrappers were retired by
+// ticket 65 — callers resolve the typed handlers directly.
 import {
-  completeOperation, pauseOperation, resumeOperation, reviewOperationStep, runOperationPreflight, startOperation, stopOperation,
+  completeOperation, pauseOperation, resumeOperation, stopOperation,
 } from './features/operations/service'
 // Ticket 49: the allocation/group entries delegate to the typed agent write
 // handlers so eligibility, gating and audit have one implementation.
@@ -259,8 +261,6 @@ export interface Actions {
   removeFromGroup: (groupId: string, agentId: string, reason?: string) => Res
   createOperation: (d: OpDraft & { planId?: string }) => string
   updateOperation: (id: string, d: Partial<OpDraft>) => void
-  confirmPreflight: (opId: string) => void
-  startOp: (opId: string) => void
   pauseOp: (opId: string, reason: string) => void
   resumeOp: (opId: string) => Res
   stopOp: (opId: string, reason: string) => void
@@ -269,7 +269,6 @@ export interface Actions {
   loseAgent: (agentId: string) => void
   restoreAgent: (agentId: string) => void
   fastForward: (opId: string) => void
-  reviewStep: (opId: string, stepId: string, decision: 'approve' | 'skip' | 'fail', note?: string) => void
   retryStop: () => void
   resolveStop: (outcome: 'confirmed-stopped' | 'dismiss') => void
   createFinding: (d: FindingDraft, submit: boolean) => string
@@ -708,24 +707,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       })
     },
-    confirmPreflight: (opId) => {
-      /* Ticket 26: the preflight run is the typed handler — the eight checks
-         are re-derived from canonical state there; this entry only binds the
-         current persona to the operation's own project. */
-      const op = dbRef.current.operations.find((o) => o.id === opId)
-      if (!op) return
-      runOperationPreflight(services.authority, services.clock, actorCtx(op.projectId), opId)
-    },
-    startOp: (opId) => {
-      const op = dbRef.current.operations.find((o) => o.id === opId)
-      /* Ticket 27: the transition is the typed handler — the ticket-26 gate
-         re-derives the checks (a refusal commits nothing) and ONE commit binds
-         the run state, the agent reservations, the first session, the plan
-         and the audit row. This entry keeps only the live-log mirror. */
-      if (!op) return
-      const res = startOperation(services.authority, services.clock, actorCtx(op.projectId), opId)
-      if (res.ok) pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation started — preflight passed, scope ' + dbRef.current.projects.find((p) => p.id === op.projectId)!.roeVersion })
-    },
+    /* Ticket 26/27: preflight runs and starts resolve through the typed
+       handlers (src/features/operations/service.ts) — ticket 65 retired the
+       zero-caller confirmPreflight/startOp wrappers; screens and tests invoke
+       runOperationPreflight/startOperation directly. The c-console controls
+       below keep their delegating entries (the demo live-log mirrors). */
     pauseOp: (opId, reason) => {
       const op = dbRef.current.operations.find((o) => o.id === opId)
       /* Ticket 27: the handler requires a reason and refuses non-running
@@ -776,16 +762,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     retryStop: () => { const s = dbRef.current.stopState; if (!s) return; setStopOutcome('ack'); stopOutRef.current = 'ack'; A.emergencyStop(s.scope, s.id, s.reason + ' (retry)') },
     resolveStop: (outcome) => { resolveStopTransaction(services.authority, services.clock, actorCtx(''), outcome) },
-    reviewStep: (opId, stepId, decision, note) => {
-      const op = dbRef.current.operations.find((o) => o.id === opId)
-      /* Ticket 29: the decision is the typed handler — role, read-only-context
-         and run-state gates reject unauthorized decisions independently of any
-         screen; this entry keeps only the live-log mirror. */
-      if (!op) return
-      const res = reviewOperationStep(services.authority, services.clock, actorCtx(op.projectId), opId, stepId, decision, note)
-      if (!res.ok) return
-      pushLog(opId, { level: 'INFO', agent: '—', stepId, text: `Step ${stepId} ${decision === 'approve' ? 'approved' : decision === 'skip' ? 'skipped' : 'rejected'} by ${me.name}` })
-    },
+    /* Ticket 29: step decisions resolve through the typed handler — ticket 65
+       retired the zero-caller reviewStep wrapper; the workspace screens and
+       tests invoke reviewOperationStep directly. */
     completeOp: (opId) => {
       const op = dbRef.current.operations.find((o) => o.id === opId)
       /* Ticket 27: the handler refuses a running step (baseline invariant) and

@@ -4,7 +4,7 @@
  * execution events (ok/fail) so missing/unknown data never invents lateral
  * movement or success. Nodes/edges keep step/session/evidence provenance;
  * keyboard and pointer selection expose the same details and links resolve
- * through the router; a legacy step review updates the graph without a
+ * through the router; a recorded step review updates the graph without a
  * reload; non-member reads are denied without an existence leak; late
  * responses for a superseded scope never restore old visibility.
  */
@@ -20,8 +20,12 @@ import type { ConsoleServices } from '../../domain/service-factory'
 import { analysisRoutes } from '../../screens/e-analysis'
 import { seed } from '../../data'
 import { pathOf } from './path'
+import { reviewOperationStep } from '../operations/service'
+import type { ActorRef } from '../../domain/service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
+
+const TAYLOR: ActorRef = { id: 'Taylor Chen', role: 'operator' }
 
 function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
   const store = useStore()
@@ -229,7 +233,7 @@ describe('attack-path graph (ticket 55)', () => {
     h.unmount()
   })
 
-  it('a legacy step review updates the graph without a reload', async () => {
+  it('a recorded step review updates the graph without a reload', async () => {
     const h = mountAnalysis('Taylor Chen')
     h.show()
     h.run(() => h.store().setPid('RT-2026-014'))
@@ -237,7 +241,9 @@ describe('attack-path graph (ticket 55)', () => {
     // S11 awaits review: its hop from S10 is planned, never observed.
     expect(screen.getByText('In review')).toBeInTheDocument()
     expect(screen.getByText('Planned — not executed: S10 → S11')).toBeInTheDocument()
-    h.run(() => h.store().A.reviewStep('OP-014', 'S11', 'approve'))
+    // Ticket 65 retired the A.reviewStep wrapper; the review commits through
+    // the same typed handler the wrapper delegated to.
+    h.run(() => { reviewOperationStep(h.svc().authority, h.svc().clock, { actor: TAYLOR, projectId: 'RT-2026-014', corr: 'legacy' }, 'OP-014', 'S11', 'approve') })
     // The recorded outcome makes the transition observed — via [operation]-key invalidation, no reload.
     await waitFor(() => expect(screen.getByText('Observed: S10 → S11')).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /Step S11/ })).toHaveTextContent('Succeeded')
