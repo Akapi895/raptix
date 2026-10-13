@@ -34,6 +34,7 @@ import { createAssetService, type AssetService } from '../features/assets/servic
 import { createWorkerService, type WorkerService } from '../features/workers/service'
 import { createNoticeService, type NoticeService } from '../features/notices/service'
 import { createResultsService, type ResultsService } from '../features/results/service'
+import { createTraceService, type TraceService } from '../features/trace/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -113,6 +114,8 @@ export interface ConsoleServices {
   notices(actor: ActorRef, projectId: string): NoticeService
   /** Typed operation results + execution graph read (ticket 30 — feature-local implementation). */
   results(actor: ActorRef, projectId: string): ResultsService
+  /** Typed tool-event trace reads with boundary-derived facets (ticket 41 — feature-local implementation). */
+  trace(actor: ActorRef, projectId: string): TraceService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -202,6 +205,8 @@ export function createConsoleServices(): ConsoleServices {
     createNoticeService(authority, clock, scopeGuard(actor, projectId))
   const forResults = (actor: ActorRef, projectId: string): ResultsService =>
     createResultsService(authority, scopeGuard(actor, projectId))
+  const forTrace = (actor: ActorRef, projectId: string): TraceService =>
+    createTraceService(authority, scopeGuard(actor, projectId))
 
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
@@ -246,6 +251,7 @@ export function createConsoleServices(): ConsoleServices {
     workers: forWorkers,
     notices: forNotices,
     results: forResults,
+    trace: forTrace,
     cancelScope,
     reset(variant) {
       scheduler.clear()
