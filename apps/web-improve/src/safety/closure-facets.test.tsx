@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen } from '@testing-library/react'
 import { toolFacets } from '../data'
-import type { Project } from '../data'
 
 vi.useFakeTimers()
 const { mountStore, mountScreen } = await import('../test/helpers')
 const { closureChecklist, useStore } = await import('../store')
 const { CloseTab } = await import('../screens/b-detail2')
+const { detailFor } = await import('../screens/project-detail/service')
 
 afterEach(() => {
   cleanup()
@@ -60,9 +60,9 @@ describe('closure checklist mirrors the store state (requirement 22)', () => {
 })
 
 const Tab = ({ pid }: { pid: string }) => {
-  const { db } = useStore()
-  const p = db.projects.find((x) => x.id === pid) as Project
-  return <CloseTab p={p} setTab={() => {}} />
+  const { db, me } = useStore()
+  const d = detailFor(db, { id: me.name, role: me.role }, pid)!
+  return <CloseTab p={d.project} d={d} setTab={() => {}} />
 }
 
 describe('requesting closure is manager-gated and blocked while the checklist fails (requirement 22)', () => {

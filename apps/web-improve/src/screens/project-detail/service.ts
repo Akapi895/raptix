@@ -18,6 +18,8 @@ import { aggregateFor } from '../dashboard/service'
 import { completion, eligibility, readiness } from '../dashboard/domain'
 import type { Completion, DashboardAggregate, Eligibility, Readiness } from '../dashboard/domain'
 import { projectAccessible } from '../../auth/policy'
+import { closePanelItems, noConfirmedFindings } from '../../features/closure/service'
+import type { CloseCheck } from '../../features/closure/service'
 import type { Db } from '../../data'
 import type { Evidence, Project } from '../../domain/entities'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
@@ -28,7 +30,7 @@ const SUPERSEDED = {
   failure: { kind: 'unavailable' as const, message: 'Request superseded by a scope change.' },
 }
 
-/** Everything the migrated detail shell and scope/team panels render from. */
+/** Everything the migrated detail shell and scope/team/close panels render from. */
 export interface ProjectDetail {
   project: Project
   /** Project-narrowed cross-entity slices (dashboard aggregate projection). */
@@ -38,6 +40,12 @@ export interface ProjectDetail {
   readiness: Readiness
   completion: Completion
   eligibility: Eligibility
+  /** Ticket 23: the close console's checklist (ticket 22's canonical derivation over the same snapshot). */
+  close: CloseCheck[]
+  /** The checklist as it evaluates when the documented no-findings waiver is requested at request time. */
+  closeWaived: CloseCheck[]
+  /** Waiver precondition from the closure service's own rule; panels never re-derive policy. */
+  noFindingsWaiverOk: boolean
 }
 
 /** Pure projection of one snapshot into the detail view; `undefined` when the project is unknown or out of scope (fail closed, no partial content). */
@@ -52,6 +60,9 @@ export function detailFor(db: Db, actor: ActorRef, id: string): ProjectDetail | 
     readiness: readiness(aggregate, id),
     completion: completion(aggregate, id),
     eligibility: eligibility(aggregate, id),
+    close: closePanelItems(db, id),
+    closeWaived: closePanelItems(db, id, { waiverNoFindings: true }),
+    noFindingsWaiverOk: noConfirmedFindings(db, id),
   }
 }
 

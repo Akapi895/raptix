@@ -2,16 +2,20 @@ import { useState } from 'react'
 import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
 import { useStore, ROLE_LABEL } from '../store'
 import { useReopen } from '../features/approvals/hooks'
-import { closePanelItems } from '../features/closure/service'
 import { APR, USERS, type Project, type Role, type Approval } from '../data'
 import type { DashboardAggregate } from './dashboard/domain'
+import type { ProjectDetail } from './project-detail/service'
 import { Banner, Button, Check, Card, CardHeader, DescList, Empty, Field, IconButton, IdLink, Input, Kpi, Locked, Modal, PersonaHint, Person, Progress, Segmented, Select, Status, Table, Textarea, useGuard, type Col } from '../ui'
 
 /* Ticket 21: ScopeTab/TeamTab mutations run through the ticket-21 approval
  * and scope-revision transaction handlers (via the delegating store actions),
  * so refusals render the handler's reason. Reads come from the detail
- * service's typed slices (the `ds` aggregate prop b-detail passes down);
- * secondary reads stay on the bridged legacy actions until ticket 23. */
+ * service's typed slices (the `ds` aggregate prop b-detail passes down).
+ * Ticket 23: the close console renders the service-derived checklist too —
+ * ticket 22's policy derivation over the same snapshot (base + waiver
+ * variants plus the waiver precondition) — and its counts come from the
+ * typed slices; the panel never reads the legacy store database and never
+ * duplicates the request/confirm handlers' enforcement. */
 
 /** Approval types the scope version history lists (typed, no `any`). */
 const CREATE_OR_SCOPE: readonly string[] = [APR.create, APR.scope]
@@ -341,23 +345,24 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 }
 
 /* ───────────── PR-09 Closure ───────────── */
-export function CloseTab({ p, setTab }: { p: Project; setTab: (t: string) => void }) {
-  const { db, me, go, can, A, confirm, toast } = useStore()
+export function CloseTab({ p, d, setTab }: { p: Project; d: ProjectDetail; setTab: (t: string) => void }) {
+  const { me, go, can, A, confirm, toast } = useStore()
   const guard = useGuard(p.id)
   const reopen = useReopen(p)
   const [modal, setModal] = useState(false)
   const [reason, setReason] = useState('')
   const [noFind, setNoFind] = useState(false)
-  const noFindingsOk = db.findings.filter((f) => f.projectId === p.id && ['confirmed', 'remediation', 'retest', 'resolved'].includes(f.status)).length === 0
-  /* Ticket 22: one canonical derivation (policy checklist + the agent-
-     reservation row + the documented no-findings waiver) shared with the
-     request/confirm handlers — the panel can never drift from the policy. */
-  const items = closePanelItems(db, p.id, { waiverNoFindings: noFind && noFindingsOk })
-  const ops = db.operations.filter((o) => o.projectId === p.id)
-  const fs = db.findings.filter((f) => f.projectId === p.id)
-  const reps = db.reports.filter((r) => r.projectId === p.id)
-  const evs = db.evidence.filter((e) => e.projectId === p.id)
-  const closePending = db.approvals.find((a) => a.projectId === p.id && a.type === APR.close && a.status === 'pending')
+  /* Ticket 22/23: the checklist is the closure service's canonical derivation
+     over the service read's snapshot — base variant plus the waiver variant
+     the request-time checkbox selects. The panel never re-derives policy. */
+  const ds = d.aggregate
+  const noFindingsOk = d.noFindingsWaiverOk
+  const items = noFind && noFindingsOk ? d.closeWaived : d.close
+  const ops = ds.operations.filter((o) => o.projectId === p.id)
+  const fs = ds.findings.filter((f) => f.projectId === p.id)
+  const reps = ds.reports.filter((r) => r.projectId === p.id)
+  const evs = d.evidence
+  const closePending = ds.approvals.find((a) => a.projectId === p.id && a.type === APR.close && a.status === 'pending')
   const objDone = p.objectives.filter((o) => o.progress >= 100).length
   const final = reps.find((r) => r.status === 'delivered') || reps[0]
   const closed = p.status === 'closed'
