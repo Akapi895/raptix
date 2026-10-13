@@ -14,14 +14,17 @@ import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { ConsoleProviders } from '../../state/query'
 import { StoreProvider, useServices, useStore, type Store } from '../../store'
 import type { ConsoleServices } from '../../domain/service-factory'
-import type { RequestContext } from '../../domain/service'
+import type { ActorRef, RequestContext } from '../../domain/service'
 import { routes } from '../../screens/d'
 import { hasRoute } from '../../router/registry'
 import { seed } from '../../data'
+import { changeAssetScopeTransaction, importAssetsTransaction } from './writes'
 import { getAsset, getAssetScope, listAssets } from './service'
 
 const P14 = 'RT-2026-014'
 const P15 = 'RT-2026-015'
+const ALEX: ActorRef = { id: 'Alex Morgan', role: 'manager' }
+const legacyCtx = (projectId: string): RequestContext => ({ actor: ALEX, projectId, corr: 'legacy' })
 
 beforeEach(() => { window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
@@ -106,11 +109,13 @@ describe('asset catalog (ticket 50)', () => {
     h.unmount()
   })
 
-  it('a legacy imported asset appears in the catalog without a reload', async () => {
+  it('an imported asset appears in the catalog without a reload', async () => {
     const h = mountAssets('assets')
     h.show()
     await waitFor(() => expect(screen.getByText('Page 1 of 3')).toBeInTheDocument())
-    h.run(() => h.store().A.addAssets(P14, [{ name: 'bridge-01', ident: 'bridge-01.example.test', type: 'Host', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'Manual' }]))
+    // Ticket 65 retired the A.addAssets wrapper; the import commits through
+    // the same feature transaction the wrapper forwarded to.
+    h.run(() => importAssetsTransaction(h.svc().authority, h.svc().clock, legacyCtx(P14), P14, [{ name: 'bridge-01', ident: 'bridge-01.example.test', type: 'Host', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'Manual' }]))
     await waitFor(() => expect(screen.getByText('22 records')).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Next page' }))
@@ -163,13 +168,13 @@ describe('asset detail (ticket 50)', () => {
     h.unmount()
   })
 
-  it('a legacy asset scope change appears in the new detail without a reload', async () => {
+  it('an asset scope change appears in the new detail without a reload', async () => {
     const h = mountAssets('asset')
     h.show()
     h.run(() => h.store().go('asset', { id: 'AS-0141' }))
     await waitFor(() => expect(screen.getAllByText('web-01').length).toBeGreaterThan(0))
     expect(screen.getAllByText('In Scope').length).toBeGreaterThan(0)
-    h.run(() => h.store().A.setAssetScope('AS-0141', 'out'))
+    h.run(() => changeAssetScopeTransaction(h.svc().authority, h.svc().clock, legacyCtx(''), 'AS-0141', 'out'))
     await waitFor(() => expect(screen.getAllByText('Out of Scope').length).toBeGreaterThan(0))
     expect(screen.getByText('Asset is not in approved scope')).toBeInTheDocument()
     h.unmount()

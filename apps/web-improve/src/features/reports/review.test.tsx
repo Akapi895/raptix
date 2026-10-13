@@ -25,7 +25,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { createHashRouter, RouterProvider } from 'react-router'
 import { ConsoleProviders } from '../../state/query'
 import { useProjectStore } from '../../state/stores'
-import { StoreProvider, useServices, useStore, closureChecklist, type Store } from '../../store'
+import { StoreProvider, useServices, useStore, type Store } from '../../store'
 import { setActiveRouter } from '../../router/active'
 import { RouteErrorBoundary, RouteHost } from '../../router/host'
 import type { ConsoleServices } from '../../domain/service-factory'
@@ -38,6 +38,7 @@ import {
   readReportReview, saveReportSection, submitReportVersion,
 } from './service'
 import { useDeliveryHistory } from './query'
+import { evaluateCloseChecklist } from '../closure/service'
 import type { DeliveryListRead } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); setActiveRouter(null); window.location.hash = '' })
@@ -316,11 +317,11 @@ describe('report export and delivery records (ticket 37)', () => {
 
   it('the closure checklist observes a typed delivery through the shared authority (closure consumer)', () => {
     const h = harness()
-    expect(closureChecklist(dbOf(h), P15).find((c) => c.id === 'c3')).toMatchObject({ ok: false, detail: 'No report has been delivered' })
+    expect(evaluateCloseChecklist(dbOf(h), P15).find((c) => c.id === 'c3')).toMatchObject({ ok: false, detail: 'No report has been delivered' })
     decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
     exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
     deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '', confirm: true })
-    const c3 = closureChecklist(dbOf(h), P15).find((c) => c.id === 'c3')!
+    const c3 = evaluateCloseChecklist(dbOf(h), P15).find((c) => c.id === 'c3')!
     expect(c3.ok).toBe(true)
     expect(c3.detail).toBe('A report is Delivered')
     h.authority.reset()

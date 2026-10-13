@@ -20,6 +20,7 @@ import { createConsoleServices, type ConsoleServices } from '../../domain/servic
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { routes } from '../../screens/d'
 import { decideApprovalTransaction } from '../approvals/service'
+import { runOperationPreflight } from '../operations/service'
 import { changeAssetScopeTransaction, createAssetWriteHandlers, importAssetsTransaction, validateAssetRows } from './writes'
 import type { AssetImportRow } from './writes'
 
@@ -139,7 +140,9 @@ describe('atomic import through the governance transaction (invariant a, asset p
     h.run(() => h.store().A.assignAgent('AG-012', P14))
     let opId = ''
     h.run(() => { opId = h.store().A.createOperation({ name: 'Import probe', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' }) })
-    h.run(() => h.store().A.confirmPreflight(opId))
+    // Ticket 65 retired the A.confirmPreflight wrapper; the fixture runs the
+    // same typed handler the wrapper delegated to.
+    h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf(ALEX), opId) })
     return opId
   }
 
@@ -265,10 +268,12 @@ describe('bridge both directions (ticket 51)', () => {
     h.unmount()
   })
 
-  it('a legacy A.addAssets mutation is observed by the new catalog without a reload', async () => {
+  it('a legacy-context import mutation is observed by the new catalog without a reload', async () => {
     const h = mountAssets('assets')
     await waitFor(() => expect(screen.getByText('Page 1 of 3')).toBeInTheDocument())
-    h.run(() => { h.store().A.addAssets(P14, [row({ name: 'legacy-bridge', ident: 'legacy-bridge.example.test' })]) })
+    // Ticket 65 retired the A.addAssets wrapper; the legacy-context entry is
+    // the same import transaction the wrapper forwarded to (corr 'legacy').
+    h.run(() => { importAssetsTransaction(h.svc().authority, h.svc().clock, { actor: ALEX, projectId: P14, corr: 'legacy' }, P14, [row({ name: 'legacy-bridge', ident: 'legacy-bridge.example.test' })]) })
     await waitFor(() => expect(screen.getByText('22 records')).toBeInTheDocument())
     h.unmount()
   })

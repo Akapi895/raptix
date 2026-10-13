@@ -4,7 +4,8 @@ import { toolFacets } from '../data'
 
 vi.useFakeTimers()
 const { mountStore, mountScreen } = await import('../test/helpers')
-const { closureChecklist, useStore } = await import('../store')
+const { evaluateCloseChecklist: closureChecklist } = await import('../features/closure/service')
+const { useStore } = await import('../store')
 const { CloseTab } = await import('../screens/b-detail2')
 const { detailFor } = await import('../screens/project-detail/service')
 

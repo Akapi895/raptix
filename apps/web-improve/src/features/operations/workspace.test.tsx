@@ -4,11 +4,12 @@
  * The live workspace (phases, step statuses, live log) derives from the ONE
  * canonical operation read (`useOperationDetail`), and the human
  * review-required gate is the typed `reviewOperationStep` handler: the
- * screens decide through typed mutations, the legacy `A.reviewStep` entry
- * delegates to the same handler, and every gate — role, read-only context,
- * run state, "the step must actually be awaiting review", the note required
- * for Skip/Reject — is enforced AT THE HANDLER, independently of any screen.
- * The store's live-log mirrors stay display-only.
+ * screens decide through typed mutations, and every gate — role, read-only
+ * context, run state, "the step must actually be awaiting review", the note
+ * required for Skip/Reject — is enforced AT THE HANDLER, independently of
+ * any screen. The store's live-log mirrors stay display-only. (Ticket 65
+ * retired the zero-caller A.reviewStep wrapper; reviews resolve the typed
+ * handler directly.)
  *
  * Regression coverage:
  * - the workspace derives from canonical state: typed 27-transitions and typed
@@ -20,8 +21,8 @@
  *   emergency-stop propagation across the workspace;
  * - step/evidence links resolve into migrated routes;
  * - late-response isolation for the superseded scope;
- * - bridge acceptance: a legacy mutation (A.pauseOp / A.reviewStep) observes
- *   the typed workspace, one dataset both ways.
+ * - bridge acceptance: a legacy mutation (A.pauseOp) and a typed review
+ *   decision observe the typed workspace, one dataset both ways.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -209,7 +210,7 @@ describe('live workspace (ticket 29 — screens)', () => {
     h.unmount()
   })
 
-  it('accepts legacy mutations from the other side of the bridge: A.pauseOp / A.reviewStep', async () => {
+  it('accepts mutations from both sides of the bridge: A.pauseOp and the typed review handler', async () => {
     const h = mountWorkspace()
     h.show()
     h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
@@ -219,8 +220,9 @@ describe('live workspace (ticket 29 — screens)', () => {
     expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.status).toBe('paused')
     h.run(() => h.store().A.resumeOp('OP-014'))
     expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.status).toBe('running')
-    // The legacy review action runs the typed handler too: the gate resolves.
-    h.run(() => h.store().A.reviewStep('OP-014', 'S11', 'fail', 'Wrong target window'))
+    // The review decision runs the typed handler too (ticket 65 retired the
+    // A.reviewStep wrapper): the gate resolves.
+    h.run(() => { reviewOperationStep(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), 'OP-014', 'S11', 'fail', 'Wrong target window') })
     await waitFor(() => expect(screen.queryByText('A human reviewer decides. The AI cannot approve, skip or reject.')).not.toBeInTheDocument())
     expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('fail')
     h.unmount()
