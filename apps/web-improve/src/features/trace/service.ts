@@ -24,7 +24,8 @@ import { projectAccessible } from '../../auth/policy'
 import { planVer, toolFacets } from '../../data'
 import type { Db, Facets, ToolEvent } from '../../data'
 import type { DbAuthority } from '../../domain/database'
-import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
+import { decideToolEventTransaction, type ToolDecision, type ToolDecisionOutcome } from './writes'
 
 /** Plan provenance resolved for trace links (version preserved). */
 export interface TracePlanRef {
@@ -61,6 +62,12 @@ export interface TraceListRead {
 export interface TraceService {
   /** Scope-checked trace rows with derived facets ('all' aggregates accessible projects). */
   list(ctx: RequestContext): Promise<ServiceResult<TraceListRead>>
+  /**
+   * The HITL decision on one pending proposal (ticket 42): role gate +
+   * four-eyes + the persisted resolution record live in the handler; a
+   * committed decision publishes the ChangeSet both bridges observe.
+   */
+  decide(ctx: RequestContext, id: string, decision: ToolDecision, reason: string): Promise<ServiceResult<ToolDecisionOutcome>>
 }
 
 const IP_LITERAL = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g
@@ -114,9 +121,13 @@ export function listToolEvents(db: Db, ctx: RequestContext): ServiceResult<Trace
 /** Builds the typed trace service; `guard` is the factory's superseded-scope read guard. */
 export function createTraceService(
   authority: DbAuthority,
+  clock: Clock,
   guard: <T>(produce: () => ServiceResult<T>) => Promise<ServiceResult<T>>,
 ): TraceService {
   return {
     list: (ctx) => guard(() => listToolEvents(authority.snapshot(), ctx)),
+    // The decision captures ctx at call time and commits once; it is never
+    // cancelled mid-flight (the superseded-scope guard only covers reads).
+    decide: (ctx, id, decision, reason) => Promise.resolve(decideToolEventTransaction(authority, clock, ctx, id, decision, reason)),
   }
 }

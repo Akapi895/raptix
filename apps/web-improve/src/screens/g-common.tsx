@@ -4,6 +4,7 @@ import { AlertTriangle, Ban, BarChart3, Bot, Check, FileText, GitBranch, Info, L
 import { eligibility, useDirty, useStore } from '../store'
 import { planVer, toolFacets } from '../data'
 import type { AiMode, ChatMsg, Conversation, Db, Plan, ToolEvent } from '../data'
+import { useTraceWrites } from '../features/trace/query'
 import { AiModeBadge, Banner, Button, DemoTag, Field, Gated, IdLink, Modal, Status, Tabs, Textarea, cx } from '../ui'
 
 export const MODES: { id: AiMode; label: string; hint: string }[] = [
@@ -194,17 +195,18 @@ export function PlanCard({ plan, compact }: { plan: Plan; compact?: boolean }) {
   )
 }
 
-/** Deep link to the trace page with the event highlighted (ai-trace?event=TL-xx). */
+/** Deep link to the trace page; the route path id highlights the event (ticket 41's router projection — the `?event=` duplicate retired in ticket 42). */
 export function useTraceLink() {
   const { guarded } = useStore()
-  return (id: string) => guarded(() => { window.location.hash = `#/ai-trace/${encodeURIComponent(id)}?event=${encodeURIComponent(id)}` })
+  return (id: string) => guarded(() => { window.location.hash = `#/ai-trace/${encodeURIComponent(id)}` })
 }
 
 const FACET_TONE: Record<string, keyof typeof TONE_CLS> = { Allowed: 'ok', Blocked: 'bad', 'Not evaluated': 'neutral', 'Not required': 'neutral', Pending: 'warn', Approved: 'ok', Denied: 'bad', 'Not executed': 'neutral', Running: 'cyan', Executed: 'ok', Failed: 'bad', Stopped: 'neutral' }
 
 /** Tool proposal: Proposed / Policy / Approval / Execution are four INDEPENDENT facets (Policy Allowed is not Executed). */
 export function ToolProposalCard({ tool, compact }: { tool: ToolEvent; compact?: boolean }) {
-  const { db, go, can, A, readOnly, toast } = useStore()
+  const { db, go, can, readOnly, toast } = useStore()
+  const writes = useTraceWrites()
   const trace = useTraceLink()
   const [decision, setDecision] = useState<'allowed' | 'denied' | null>(null)
   const [reason, setReason] = useState('')
@@ -214,6 +216,14 @@ export function ToolProposalCard({ tool, compact }: { tool: ToolEvent; compact?:
   const canDecide = can('approvePlan') && !readOnly(tool.projectId)
   const approver = plan?.reviewer || 'Pat Kim'
   const facet = (k: string, v: string) => <span className="inline-flex items-center gap-1"><span className="text-muted">{k}</span><Pill tone={FACET_TONE[v] || 'neutral'}>{v}</Pill></span>
+  const decide = (kind: 'allowed' | 'denied', note: string) => {
+    void writes.decide(tool.id, kind, note).then((res) => {
+      if (res.ok) {
+        toast(`${tool.id} ${kind === 'allowed' ? 'allowed — Policy Allowed, not executed' : 'denied'} (recorded).`, kind === 'allowed' ? 'ok' : 'warn')
+        setDecision(null); setReason('')
+      } else toast(res.failure.message, 'bad')
+    })
+  }
   return (
     <div className={cx('mt-2 rounded-lg border px-3 py-2', tool.state === 'denied' ? 'border-bad/30 bg-panel' : 'border-line bg-subtle')}>
       <div className="flex flex-wrap items-center gap-2 text-xs"><Terminal size={13} aria-hidden /><span className="font-mono font-semibold">{tool.tool}</span><span className="font-mono text-muted">{tool.id}</span><DemoTag /></div>
@@ -247,19 +257,17 @@ export function ToolProposalCard({ tool, compact }: { tool: ToolEvent; compact?:
             title={reason.trim() ? undefined : 'A decision reason is required.'}
             onClick={() => {
               if (!decision || !reason.trim()) return
-              A.decideTool(tool.id, decision, reason.trim())
-              toast(`${tool.id} ${decision === 'allowed' ? 'allowed and executed' : 'denied'} (simulated).`, decision === 'allowed' ? 'ok' : 'warn')
-              setDecision(null)
+              decide(decision, reason.trim())
             }}
           >
-            {decision === 'allowed' ? 'Allow simulated execution' : 'Deny tool call'}
+            {decision === 'allowed' ? 'Confirm allow' : 'Deny tool call'}
           </Button>
         </>}
       >
-        <Banner tone={decision === 'allowed' ? 'warn' : 'info'} title={decision === 'allowed' ? 'This changes execution state' : 'This blocks the proposed tool call'}>
+        <Banner tone="info" title={decision === 'allowed' ? 'This records the policy decision' : 'This blocks the proposed tool call'}>
           {decision === 'allowed'
-            ? `Allowing ${tool.tool} on ${tool.target} marks this demo tool call as executed. No real command will run.`
-            : `${tool.tool} on ${tool.target} will remain not executed.`}
+            ? `Allowing ${tool.tool} on ${tool.target} records Policy Allowed with your reason. It does not run anything — Execution stays Not executed.`
+            : `${tool.tool} on ${tool.target} stays blocked and never executed.`}
         </Banner>
         <Field label="Decision reason" required hint="Recorded in the audit trail.">
           <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Explain why this decision is appropriate…" />
