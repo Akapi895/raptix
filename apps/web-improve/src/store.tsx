@@ -1,5 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { seed, BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Asset, type Agent, type Group, type Plan, type PlanStep, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent, type Conversation } from './data'
+import type { CanAction } from './domain/permissions'
+
+export type { CanAction } from './domain/permissions'
 
 /* ───────────── Simulated clock (UTC+7) ───────────── */
 const T0 = Date.now()
@@ -193,7 +196,6 @@ export interface Toast { id: number; kind: 'ok' | 'warn' | 'bad' | 'info'; text:
 export interface CopilotCtx { kind: string; id?: string; label: string }
 
 /* ───────────── Context ───────────── */
-export type CanAction = 'createProject' | 'approve' | 'editScope' | 'run' | 'createFinding' | 'reviewFinding' | 'editReport' | 'approveReport' | 'requestClose' | 'confirmClose' | 'reopen' | 'admin' | 'viewSensitive' | 'estop' | 'plan' | 'approvePlan' | 'interactive' | 'approveAccess' | 'terminate'
 export interface Store {
   db: Db
   me: Persona; setMe: (n: string) => void
