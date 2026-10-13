@@ -1,0 +1,315 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix\\apps\\web-improve",
+  "files": [
+    {
+      "path": ".figma/make/analyze-routes",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".figma/make/deploy",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".figma/make/deploy-preview",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".figma/make/dev",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".figma/make/dev.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": ".figma/make/format",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".figma/make/import-assets.mjs",
+      "language": "javascript",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".figma/make/install",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".figma/make/langserver",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".figma/make/site.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": ".gitattributes",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".mise.toml",
+      "language": "toml",
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/config.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": "AGENTS.md",
+      "language": "markdown",
+      "fileCategory": "docs"
+    },
+    {
+      "path": "implementation-plan.md",
+      "language": "markdown",
+      "fileCategory": "docs"
+    },
+    {
+      "path": "index.html",
+      "language": "html",
+      "fileCategory": "markup"
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/App.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/data.ts",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/index.css",
+      "language": "css",
+      "fileCategory": "markup"
+    },
+    {
+      "path": "src/main.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/a-dashboard.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/a-login.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/a-system.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/a.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/ai-copilot.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/b-detail.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/b-detail2.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/b-wizard.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/b.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/c-common.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/c-console.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/c-results.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/c.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/d-agents.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/d-assets.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/d-library.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/d-shared.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/d.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/demo-guide.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/e-analysis.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/e-findings.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/e.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/f-report.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/f-settings.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/f.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/g-chat.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/g-common.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/g-fanout.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/g-plan.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/g-trace.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/g-workspace.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/g.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/h-session.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/h.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/screens/scenarios.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/shell.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/store.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/ui.tsx",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/vite-env.d.ts",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "tsconfig.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": "vite.config.ts",
+      "language": "typescript",
+      "fileCategory": "code"
+    }
+  ]
+}

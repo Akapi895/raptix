@@ -1,0 +1,19 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 0,
+  "edgesRestored": 256,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 80,
+  "complexityRemapped": 0,
+  "notes": [
+    "306 edge bi drop trong merge report KHONG phai dangling edge that: 4 batch (batch-4-part-1, batch-4-part-2, batch-5, batch-8) dung key `from`/`to` thay vi `source`/`target`, khien merge script doc source/target rong. Day la mot pattern dau ra LLM duy nhat, chiem 30.8% input edges (306/994) - dung ky quan cua buoc Step 1.",
+    "Da chuan hoa key (from->source, to->target) va doi chieu theo (source, target, type): phuc hoi 256 edge unique co day du 2 endpoint trong graph; 738 edge con lai trung key voi edge da co nen bi loai theo dedup. Tong cuoi: 994 edge, 0 dangling edge, 0 edge rong.",
+    "Khong can phuc hoi node nao: moi node ID duoc tham chieu trong ca 994 edge deu ton tai trong graph (batch union == graph, 431 node, khong co node bi drop).",
+    "Remap type cho 80 node co id prefix `function:` nhung type 'file' (loi dau ra LLM ngay trong batch goc, deu co lineRange va ten symbol) thanh type 'function'. Node types cuoi: file 54, function 369, config 6, document 2.",
+    "Complexity cua ca 431 node da hop le (simple 282 / moderate 115 / complex 34), khong can remap.",
+    "importMap: 149/149 cap import deu co `imports` edge tuong ung trong graph; node `.figma/make/site.json` ton tai duoi id `config:.figma/make/site.json` (ma merge script da recover dung) nen khong can them edge moi - crossBatchEdgesAdded = 0, khong them edge suy doan (speculative).",
+    "Giu nguyen 3 edge type 'related' tu batch-8 (vi du: file:src/index.css -> file:src/main.tsx) theo du lieu goc cua LLM.",
+    "Fixed section cua merge report OK: normalization ID la identity (0 node can sua ID, 0% < 30%), 50 imports edge recovery tu importMap chinh xac, dedup/dangling-drop hoat dong dung voi du lieu script nhin thay.",
+    "Edge types cuoi: contains 399, exports 213, imports 149, depends_on 50, calls 168, configures 5, documents 7, related 3."
+  ]
+}

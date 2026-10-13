@@ -1,0 +1,95 @@
+[
+  {
+    "order": 1,
+    "title": "Khởi động ứng dụng: từ HTML shell tới React",
+    "description": "Đây là điểm bắt đầu của app figma-make-app — một SPA React 19 + Vite 8 + Tailwind CSS v4. index.html là HTML shell chứa phần tử #root và thẻ script trỏ tới /src/main.tsx; main.tsx mount App vào #root với React.StrictMode và nạp stylesheet toàn cục từ index.css. package.json khai báo runtime deps (React 19, React DOM 19, lucide-react) cùng scripts dev/build của Vite, còn vite.config.ts bật plugin React + Tailwind, đặt alias '@' → ./src và chạy dev server trên cổng 8443 kèm bốn plugin tự viết cho Figma Make. Hiểu chuỗi này trước tiên giúp bạn biết mọi thứ khởi phát từ đâu trước khi bước vào kiến trúc React phía sau.",
+    "nodeIds": ["config:package.json", "file:index.html", "file:src/main.tsx", "file:vite.config.ts"]
+  },
+  {
+    "order": 2,
+    "title": "App.tsx: bảng định tuyến trung tâm của app",
+    "description": "Tiếp nối bước mount ở trên, App.tsx là điểm vào React: bọc toàn bộ app trong StoreProvider và điều hướng trang dựa trên route lưu trong store, không dùng react-router. Component Router đọc route và trạng thái đăng nhập từ useStore, cho phép trang scenarios/workspaces hiển thị ngoài Shell, fallback về Login khi chưa xác thực rồi render trang hiện tại bên trong Shell. App.tsx có fan-out cao nhất trong code (11 import) vì nó gom bảng định tuyến ROUTES từ các nhóm màn hình a–h và scenarios — đúng cấu trúc registry mà các bước sau sẽ lần lượt đi qua.",
+    "nodeIds": ["file:src/App.tsx"]
+  },
+  {
+    "order": 3,
+    "title": "data.ts: domain model và database demo",
+    "description": "Trước khi xem màn hình, cần biết dữ liệu nằm đâu: data.ts là kho định nghĩa type/interface domain của toàn ứng dụng (Project, Operation, Finding, Plan, Session, C2Node, Channel...). Hàm seed() tạo database giả lập đầy đủ cho chế độ demo và e2e, làm nền cho mọi thao tác phía sau. Với fan-in 31 — thuộc nhóm cao nhất project (chỉ sau store và ui) — đây là nguồn định hình 'hình dạng' dữ liệu mà store và 35 màn hình sẽ tiêu thụ.",
+    "nodeIds": ["file:src/data.ts"]
+  },
+  {
+    "order": 4,
+    "title": "store.tsx: React Context store trung tâm",
+    "description": "Dựa trên data.ts ở bước trước, store.tsx là trái tim của prototype với fan-in cao nhất (35): StoreProvider cung cấp React context chứa DB demo, điều hướng hash-based, persona/role, phân quyền, toasts/confirm cùng hàng chục action mô phỏng toàn bộ vòng đời dự án — plan, operation, session, finding, report và hội thoại AI, có cả vòng lặp runtime mô phỏng tiến trình operation theo interval. Mọi màn hình chỉ đọc state và gọi action qua hook useStore; state được mutate bất biến qua structuredClone, kèm guard unsaved-changes khi điều hướng. Đây là dependency chung mà tất cả các bước còn lại đều dựa vào.",
+    "languageLesson": "React Context store pattern: một StoreProvider duy nhất bọc app (từ App.tsx) và hook useStore để truy cập từ bất kỳ screen nào; cập nhật state bất biến bằng structuredClone; route cũng nằm trong store nên điều hướng go() là một action — không cần thư viện routing.",
+    "nodeIds": ["file:src/store.tsx"]
+  },
+  {
+    "order": 5,
+    "title": "ui.tsx & index.css: design system dùng chung",
+    "description": "Dựa trên nền state vừa học, bước này giới thiệu nền hiển thị: ui.tsx là thư viện UI dùng chung toàn app (fan-in 32) với bảng STATUS badge cho mọi loại trạng thái, Button/Card/PageHeader/Tabs/Table/Modal/Drawer, biểu đồ SVG (Donut, BarChart, LineChart) và bộ guard Gated/Locked/useGuard để gate theo quyền ngay ở tầng UI. index.css nạp font Inter + JetBrains Mono cùng Tailwind CSS v4, định nghĩa design tokens --c-* cho light/dark theme ánh xạ sang Tailwind qua @theme inline. Nắm được kho primitive này, bạn sẽ đọc hầu hết màn hình về sau rất nhanh vì chúng tái sử dụng đúng các khối này.",
+    "languageLesson": "Guard component pattern: Gated/Locked/useGuard đóng gói điều kiện RBAC thành wrapper khai báo thay vì rải if-else trong từng màn hình — cùng một tư duy policy-gate mà store.tsx thực hiện ở tầng action.",
+    "nodeIds": ["file:src/ui.tsx", "file:src/index.css"]
+  },
+  {
+    "order": 6,
+    "title": "shell.tsx: khung ứng dụng và các lớp phủ toàn cục",
+    "description": "Tiếp nối design system, shell.tsx dựng khung layout mà mọi trang nằm trong: sidebar điều hướng 12 mục có badge pending tính từ useBadges, topbar với global search/notifications/profile, project switcher, context ribbon, banner emergency-stop, modal toàn cục (confirm/unsaved changes) và toasts. Shell cũng ghép trực tiếp CopilotDrawer từ ai-copilot.tsx — drawer 'Ask AI' nổi toàn màn hình theo ngữ cảnh trang hiện tại, tự tạo conversation khi thiếu và chặn các hành động đề xuất theo vai trò, quyền và chế độ AI của hội thoại. Đây là nơi bạn cảm nhận được 'vỏ' ứng dụng trước khi đi vào từng màn hình nghiệp vụ.",
+    "nodeIds": ["file:src/shell.tsx", "file:src/screens/ai-copilot.tsx"]
+  },
+  {
+    "order": 7,
+    "title": "scenarios.tsx & demo-guide.tsx: cổng demo ngoài app",
+    "description": "Khác với các màn hình nằm trong Shell, scenarios.tsx là trang home của prototype hiển thị ngoài app (không cần login): launcher cho các demo E2E-01→11 và workflow AI WF-A→G, kèm bốn tab tài liệu hoá — interaction matrix, role matrix, state coverage và acceptance checklist. demo-guide.tsx cung cấp hệ walkthrough: GUIDES định nghĩa từng bước điều hướng kèm persona/dự án, launchGuide đặt persona rồi jump tới màn hình đầu tiên, còn panel DemoGuide tự chuyển bước khi người dùng mở đúng màn hình kế tiếp. Scenarios gọi thẳng jump/launchGuide/GUIDES từ demo-guide — một cặp cộng sinh chuyên về onboarding.",
+    "languageLesson": "useSyncExternalStore trên module-level state: trạng thái panel walkthrough sống ngoài React (không dùng localStorage) và component đăng ký theo dõi — mẫu 'external store' song song với Context store ở bước 4, đáng so sánh khi chọn pattern state.",
+    "nodeIds": ["file:src/screens/scenarios.tsx", "file:src/screens/demo-guide.tsx"]
+  },
+  {
+    "order": 8,
+    "title": "Nhóm A: đăng nhập, Command Center và trạng thái hệ thống",
+    "description": "Bắt đầu chuỗi nhóm màn hình a–h được App.tsx đăng ký ở bước 2: a.tsx là route registry map tên route (login, forbidden, command-center, tasks...) sang component. a-login.tsx xác thực demo dựa trên USERS và DEMO_PASSWORD từ seed data (bước 3) với persona quick picker; a-dashboard.tsx tổng hợp KPI, hàng đợi 'needs attention' và inbox phê duyệt cho approvals, plans, session access, findings và reports; a-system.tsx cung cấp các trang 403/404/500/offline dùng chung khung ErrorFrame cùng StatesGallery trình diễn mọi state UI chuẩn. Đây là 'cửa ngõ' người dùng và bảng điều khiển tổng quan của toàn bộ app.",
+    "nodeIds": ["file:src/screens/a.tsx", "file:src/screens/a-login.tsx", "file:src/screens/a-dashboard.tsx", "file:src/screens/a-system.tsx"]
+  },
+  {
+    "order": 9,
+    "title": "Nhóm B: vòng đời dự án",
+    "description": "Dựa trên persona đã đăng nhập ở nhóm A, nhóm Projects là nơi mọi thứ bắt đầu về nghiệp vụ: b.tsx liệt kê dự án với filter persist qua store, bảng Table + Pager, export CSV và pin/unpin, đồng thời khai báo routes của phân hệ. b-wizard.tsx tạo dự án mới 5 bước (basic details, objectives, scope, ROE & approvals, review) với validation riêng từng bước; b-detail.tsx điều hướng 13 tab của trang chi tiết qua MAIN_TABS/MORE_TABS dùng useGuard và eligibility để gate hành động, còn b-detail2.tsx tách các tab phức tạp (ScopeTab với luồng ROE re-approval, TeamTab, CloseTab closeout checklist). Pattern 'route registry + access gate' ở đây sẽ lặp lại ở mọi nhóm sau.",
+    "nodeIds": ["file:src/screens/b.tsx", "file:src/screens/b-wizard.tsx", "file:src/screens/b-detail.tsx", "file:src/screens/b-detail2.tsx"]
+  },
+  {
+    "order": 10,
+    "title": "Nhóm C: Operations — preflight, console và kết quả",
+    "description": "Dựa trên dự án đã lập ở nhóm B, nhóm C điều phối thực thi: c.tsx đăng ký trang danh sách operation (OP-01), wizard tạo/chỉnh sửa 5 bước (OP-02), trang preflight (OP-03) và lập lịch có phát hiện xung đột; c-common.tsx cung cấp OpGate kiểm tra quyền, hàm thời gian UTC+7 và bộ 8 preflight checks (specChecks) song song với computePreflight của store. c-console.tsx là buồng vận hành trực tiếp — live console, banner điều kiện ưu tiên, pause/resume/stop, StepDrawer inspect từng step và dialog Emergency Stop; c-results.tsx vẽ execution graph SVG từ các step đã chạy, tổng hợp outcome/evidence/findings và export JSON có mask dữ liệu sensitive.",
+    "nodeIds": ["file:src/screens/c.tsx", "file:src/screens/c-common.tsx", "file:src/screens/c-console.tsx", "file:src/screens/c-results.tsx"]
+  },
+  {
+    "order": 11,
+    "title": "Nhóm D: Agents, Assets & Library — nguồn lực",
+    "description": "Nhóm D quản lý 'nguồn lực' mà operations ở bước trước phụ thuộc: d-agents.tsx hiển thị fleet với 6 KPI, shared pool, connectivity & health và AssignDrawer xin phân bổ agent qua approval gate; d-assets.tsx quản lý asset với ScopeBadge giải thích scope, scope map SVG và luồng review approve/reject thay đổi scope; d-library.tsx là thư viện Playbooks & TTPs với catalog MITRE ATT&CK techniques nhóm theo tactic kèm detection status. d.tsx gộp agentRoutes, assetRoutes và libraryRoutes thành một barrel duy nhất cho router, còn d-shared.tsx chứa HOC withLoading cùng các hook hiển thị dùng chung cho cả ba phân hệ.",
+    "nodeIds": ["file:src/screens/d.tsx", "file:src/screens/d-agents.tsx", "file:src/screens/d-assets.tsx", "file:src/screens/d-library.tsx"]
+  },
+  {
+    "order": 12,
+    "title": "Nhóm E: Findings & Analysis — thu hoạch sau thực thi",
+    "description": "Sau khi operation chạy (bước 10), kết quả chảy về nhóm E: e-findings.tsx quản lý vòng đời finding (draft, review, confirmed, remediation, retest, resolved), xử lý AI suggestion với verify/dismiss kèm lý do và evidence inspector có masking dữ liệu nhạy cảm; e-analysis.tsx tổng hợp kết quả thực thi technique theo MITRE ATT&CK, trực quan hoá attack path dạng SVG, heatmap matrix và phân tích detection dựa trên trạng thái kết nối SIEM. e.tsx gộp analysisRoutes và findingRoutes thành registry duy nhất cho App đăng ký — tiếp nối đúng pattern registry của các nhóm a–d.",
+    "nodeIds": ["file:src/screens/e.tsx", "file:src/screens/e-findings.tsx", "file:src/screens/e-analysis.tsx"]
+  },
+  {
+    "order": 13,
+    "title": "Nhóm G: AI Operator — plan, hội thoại và minh bạch",
+    "description": "Nhóm AI là phần phức tạp nhất prototype, dựng trên g-common.tsx — bộ building block fan-in cao (6) với MODES/STARTERS, Thread, Composer, ToolProposalCard và hàm toolFlow tách policy–approval–execution. g-chat.tsx dựng workspace hội thoại với rail danh sách conversation và context inspector có thể resize; g-plan.tsx bảo vệ route bằng PlanGuard, duyệt plan qua ReviewBody (approve/return/reject) kèm policyChecks mô phỏng scope/ROE/agents/gates/window; g-trace.tsx liệt kê mọi tool event với facet Policy/Approval/Execution độc lập cho reviewer allow/deny và export transcript đã redact. Fan-out đa agent (g-fanout.tsx) và khung layout (g-workspace.tsx) cũng cùng tiêu thụ g-common.",
+    "nodeIds": ["file:src/screens/g-common.tsx", "file:src/screens/g-chat.tsx", "file:src/screens/g-plan.tsx", "file:src/screens/g-trace.tsx"]
+  },
+  {
+    "order": 14,
+    "title": "Nhóm F: Reports & Settings — phê duyệt và governance",
+    "description": "Điểm hội tụ cuối của vòng đời: f.tsx là trang Reports 3 tab (Reports/Templates/Delivery History) với KPI, bộ lọc persist và gallery template; f-report.tsx chứa toàn bộ luồng báo cáo (new → editor → preview → review) với reportChecks sinh blocker, chụp version snapshot kèm tác giả khi nộp, chặn tự duyệt báo cáo của chính mình và banner AiExclusion cảnh báo finding 'ai_suggested' chưa xác minh — nối trực tiếp với nhóm E và G ở các bước trước. f-settings.tsx là Organization Settings 10 tab (users & roles, policies, retention, audit log...), mỗi tab gate theo vai trò và ghi chú rõ mọi thay đổi demo chỉ là mô phỏng nhưng backend sẽ thực thi và audit.",
+    "nodeIds": ["file:src/screens/f.tsx", "file:src/screens/f-report.tsx", "file:src/screens/f-settings.tsx"]
+  },
+  {
+    "order": 15,
+    "title": "C2 & Sessions — kiểm soát truy cập runtime, và bản đồ tổng thể",
+    "description": "Bước chốt: h.tsx tổng quan C2 & Sessions với KPI hạ tầng, cảnh báo node degraded và emergency stop; h-session.tsx quản lý access grants (request/revoke/terminate) với đồng hồ hết hạn grant và console transcript có policy gate cho từng trạng thái truy cập — ví dụ cô đọng nhất về kiểm soát truy cập runtime của app. Cuối cùng, document:implementation-plan.md tổng hợp toàn cảnh nền tảng Red Team Management: domain model 20+ entities, 42 route, RBAC 6 vai trò, safety invariants và roadmap 5 phase — đọc sau khi đã đi hết code để đối chiếu bản đồ kiến trúc với những gì bạn vừa quan sát trong store, shell và các nhóm màn hình a–h.",
+    "nodeIds": ["file:src/screens/h.tsx", "file:src/screens/h-session.tsx", "document:implementation-plan.md"]
+  }
+]

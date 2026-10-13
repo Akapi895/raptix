@@ -1,0 +1,35 @@
+{
+  "issues": [],
+  "warnings": [
+    "Node 'file:.figma/make/analyze-routes' has no edges (orphan)",
+    "Node 'file:.figma/make/deploy' has no edges (orphan)",
+    "Node 'file:.figma/make/format' has no edges (orphan)",
+    "Node 'file:.figma/make/install' has no edges (orphan)",
+    "Node 'file:.figma/make/langserver' has no edges (orphan)",
+    "Node 'file:.gitattributes' has no edges (orphan)",
+    "Node 'config:.ua/config.json' has no edges (orphan)",
+    "Node 'file:src/vite-env.d.ts' has no edges (orphan)"
+  ],
+  "stats": {
+    "totalNodes": 431,
+    "totalEdges": 994,
+    "totalLayers": 6,
+    "tourSteps": 15,
+    "nodeTypes": {
+      "file": 54,
+      "function": 369,
+      "config": 6,
+      "document": 2
+    },
+    "edgeTypes": {
+      "contains": 399,
+      "exports": 213,
+      "imports": 149,
+      "depends_on": 50,
+      "calls": 168,
+      "configures": 5,
+      "documents": 7,
+      "related": 3
+    }
+  }
+}

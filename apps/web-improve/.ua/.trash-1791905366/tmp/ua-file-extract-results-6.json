@@ -1,0 +1,4360 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 3,
+  "filesSkipped": [],
+  "filesUnreadable": [],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 3,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 3,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "src/screens/e-analysis.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 872,
+      "nonEmptyLines": 841,
+      "functions": [
+        {
+          "name": "buildAna",
+          "startLine": 21,
+          "endLine": 55,
+          "params": [
+            "db",
+            "allOps",
+            "opId",
+            "agent",
+            "os"
+          ]
+        },
+        {
+          "name": "recFor",
+          "startLine": 69,
+          "endLine": 70,
+          "params": [
+            "t",
+            "st"
+          ]
+        },
+        {
+          "name": "useCreateFinding",
+          "startLine": 72,
+          "endLine": 85,
+          "params": []
+        },
+        {
+          "name": "CreateFindingBtn",
+          "startLine": 87,
+          "endLine": 91,
+          "params": [
+            "{ prefill, label = 'Create Finding', size = 'md', variant = 'secondary' }"
+          ]
+        },
+        {
+          "name": "EvidenceList",
+          "startLine": 93,
+          "endLine": 114,
+          "params": [
+            "{ ids }"
+          ]
+        },
+        {
+          "name": "Chip",
+          "startLine": 116,
+          "endLine": 123,
+          "params": [
+            "{ children, onRemove }"
+          ]
+        },
+        {
+          "name": "DetectBadge",
+          "startLine": 125,
+          "endLine": 127,
+          "params": [
+            "{ state }"
+          ]
+        },
+        {
+          "name": "Analysis",
+          "startLine": 130,
+          "endLine": 182,
+          "params": []
+        },
+        {
+          "name": "NoProjectData",
+          "startLine": 185,
+          "endLine": 210,
+          "params": []
+        },
+        {
+          "name": "NoOps",
+          "startLine": 212,
+          "endLine": 219,
+          "params": []
+        },
+        {
+          "name": "MiniChain",
+          "startLine": 222,
+          "endLine": 233,
+          "params": [
+            "{ op }"
+          ]
+        },
+        {
+          "name": "TacticBars",
+          "startLine": 235,
+          "endLine": 255,
+          "params": [
+            "{ ana }"
+          ]
+        },
+        {
+          "name": "CoverageBar",
+          "startLine": 257,
+          "endLine": 277,
+          "params": [
+            "{ ana }"
+          ]
+        },
+        {
+          "name": "OpTimeline",
+          "startLine": 279,
+          "endLine": 301,
+          "params": [
+            "{ ana }"
+          ]
+        },
+        {
+          "name": "Overview",
+          "startLine": 303,
+          "endLine": 421,
+          "params": [
+            "{ ana }"
+          ]
+        },
+        {
+          "name": "Chain",
+          "startLine": 429,
+          "endLine": 617,
+          "params": [
+            "{ ana, opId }"
+          ]
+        },
+        {
+          "name": "Matrix",
+          "startLine": 620,
+          "endLine": 722,
+          "params": [
+            "{ ana }"
+          ]
+        },
+        {
+          "name": "Detection",
+          "startLine": 725,
+          "endLine": 869,
+          "params": [
+            "{ ana, canAdmin }"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "analysisRoutes",
+          "line": 871,
+          "isDefault": false
+        },
+        {
+          "name": "Store",
+          "line": 872,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "buildAna",
+          "callee": "allOps.filter",
+          "lineNumber": 22
+        },
+        {
+          "caller": "buildAna",
+          "callee": "ops.forEach",
+          "lineNumber": 24
+        },
+        {
+          "caller": "buildAna",
+          "callee": "op.steps.forEach",
+          "lineNumber": 24
+        },
+        {
+          "caller": "buildAna",
+          "callee": "db.agents.find",
+          "lineNumber": 25
+        },
+        {
+          "caller": "buildAna",
+          "callee": "entries.push",
+          "lineNumber": 28
+        },
+        {
+          "caller": "buildAna",
+          "callee": "db.integrations.find",
+          "lineNumber": 30
+        },
+        {
+          "caller": "buildAna",
+          "callee": "entries.filter((e) => e.tested).forEach",
+          "lineNumber": 34
+        },
+        {
+          "caller": "buildAna",
+          "callee": "entries.filter",
+          "lineNumber": 34
+        },
+        {
+          "caller": "buildAna",
+          "callee": "byTech.set",
+          "lineNumber": 34
+        },
+        {
+          "caller": "buildAna",
+          "callee": "byTech.get",
+          "lineNumber": 34
+        },
+        {
+          "caller": "buildAna",
+          "callee": "TECHNIQUES.map",
+          "lineNumber": 35
+        },
+        {
+          "caller": "buildAna",
+          "callee": "byTech.get",
+          "lineNumber": 36
+        },
+        {
+          "caller": "buildAna",
+          "callee": "runs.map",
+          "lineNumber": 37
+        },
+        {
+          "caller": "buildAna",
+          "callee": "det",
+          "lineNumber": 37
+        },
+        {
+          "caller": "buildAna",
+          "callee": "entries.filter",
+          "lineNumber": 38
+        },
+        {
+          "caller": "buildAna",
+          "callee": "st.includes",
+          "lineNumber": 39
+        },
+        {
+          "caller": "buildAna",
+          "callee": "st.includes",
+          "lineNumber": 39
+        },
+        {
+          "caller": "buildAna",
+          "callee": "byTech.forEach",
+          "lineNumber": 43
+        },
+        {
+          "caller": "buildAna",
+          "callee": "TECHNIQUES.find",
+          "lineNumber": 44
+        },
+        {
+          "caller": "buildAna",
+          "callee": "[...new Set(runs.map((r) => r.op.projectId))].forEach",
+          "lineNumber": 46
+        },
+        {
+          "caller": "buildAna",
+          "callee": "runs.map",
+          "lineNumber": 46
+        },
+        {
+          "caller": "buildAna",
+          "callee": "pairs.push",
+          "lineNumber": 46
+        },
+        {
+          "caller": "buildAna",
+          "callee": "runs.filter",
+          "lineNumber": 46
+        },
+        {
+          "caller": "buildAna",
+          "callee": "det",
+          "lineNumber": 46
+        },
+        {
+          "caller": "buildAna",
+          "callee": "entries.filter((e) => e.tested).map",
+          "lineNumber": 48
+        },
+        {
+          "caller": "buildAna",
+          "callee": "entries.filter",
+          "lineNumber": 48
+        },
+        {
+          "caller": "buildAna",
+          "callee": "cells.filter",
+          "lineNumber": 51
+        },
+        {
+          "caller": "buildAna",
+          "callee": "cells.filter",
+          "lineNumber": 51
+        },
+        {
+          "caller": "buildAna",
+          "callee": "cells.filter",
+          "lineNumber": 52
+        },
+        {
+          "caller": "buildAna",
+          "callee": "cells.filter",
+          "lineNumber": 52
+        },
+        {
+          "caller": "buildAna",
+          "callee": "entries.filter((e) => e.step.evidence?.startsWith('EV-')).map",
+          "lineNumber": 53
+        },
+        {
+          "caller": "buildAna",
+          "callee": "entries.filter",
+          "lineNumber": 53
+        },
+        {
+          "caller": "buildAna",
+          "callee": "e.step.evidence?.startsWith",
+          "lineNumber": 53
+        },
+        {
+          "caller": "useCreateFinding",
+          "callee": "useStore",
+          "lineNumber": 73
+        },
+        {
+          "caller": "reason",
+          "callee": "readOnly",
+          "lineNumber": 75
+        },
+        {
+          "caller": "reason",
+          "callee": "can",
+          "lineNumber": 76
+        },
+        {
+          "caller": "start",
+          "callee": "setFilter",
+          "lineNumber": 80
+        },
+        {
+          "caller": "start",
+          "callee": "setPid",
+          "lineNumber": 81
+        },
+        {
+          "caller": "start",
+          "callee": "go",
+          "lineNumber": 82
+        },
+        {
+          "caller": "CreateFindingBtn",
+          "callee": "useCreateFinding",
+          "lineNumber": 88
+        },
+        {
+          "caller": "CreateFindingBtn",
+          "callee": "reason",
+          "lineNumber": 89
+        },
+        {
+          "caller": "CreateFindingBtn",
+          "callee": "start",
+          "lineNumber": 90
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "useStore",
+          "lineNumber": 94
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "ids.map",
+          "lineNumber": 98
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "db.evidence.find",
+          "lineNumber": 99
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "can",
+          "lineNumber": 101
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "go",
+          "lineNumber": 103
+        },
+        {
+          "caller": "Analysis",
+          "callee": "useStore",
+          "lineNumber": 131
+        },
+        {
+          "caller": "Analysis",
+          "callee": "scoped",
+          "lineNumber": 133
+        },
+        {
+          "caller": "Analysis",
+          "callee": "allOps.some",
+          "lineNumber": 136
+        },
+        {
+          "caller": "Analysis",
+          "callee": "useMemo",
+          "lineNumber": 137
+        },
+        {
+          "caller": "Analysis",
+          "callee": "buildAna",
+          "lineNumber": 137
+        },
+        {
+          "caller": "Analysis",
+          "callee": "scoped(db.agents).filter",
+          "lineNumber": 138
+        },
+        {
+          "caller": "Analysis",
+          "callee": "scoped",
+          "lineNumber": 138
+        },
+        {
+          "caller": "setOp",
+          "callee": "go",
+          "lineNumber": 139
+        },
+        {
+          "caller": "reset",
+          "callee": "setFilter",
+          "lineNumber": 140
+        },
+        {
+          "caller": "reset",
+          "callee": "setFilter",
+          "lineNumber": 140
+        },
+        {
+          "caller": "reset",
+          "callee": "setOp",
+          "lineNumber": 140
+        },
+        {
+          "caller": "Analysis",
+          "callee": "allOps.some",
+          "lineNumber": 142
+        },
+        {
+          "caller": "Analysis",
+          "callee": "o.steps.some",
+          "lineNumber": 142
+        },
+        {
+          "caller": "Analysis",
+          "callee": "setOp",
+          "lineNumber": 152
+        },
+        {
+          "caller": "Analysis",
+          "callee": "allOps.map",
+          "lineNumber": 154
+        },
+        {
+          "caller": "Analysis",
+          "callee": "setFilter",
+          "lineNumber": 156
+        },
+        {
+          "caller": "Analysis",
+          "callee": "agents.map",
+          "lineNumber": 158
+        },
+        {
+          "caller": "Analysis",
+          "callee": "setFilter",
+          "lineNumber": 160
+        },
+        {
+          "caller": "Analysis",
+          "callee": "setOp",
+          "lineNumber": 163
+        },
+        {
+          "caller": "Analysis",
+          "callee": "setFilter",
+          "lineNumber": 164
+        },
+        {
+          "caller": "Analysis",
+          "callee": "setFilter",
+          "lineNumber": 165
+        },
+        {
+          "caller": "Analysis",
+          "callee": "setOp",
+          "lineNumber": 169
+        },
+        {
+          "caller": "Analysis",
+          "callee": "go",
+          "lineNumber": 175
+        },
+        {
+          "caller": "Analysis",
+          "callee": "can",
+          "lineNumber": 178
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "useStore",
+          "lineNumber": 186
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "eligibility",
+          "lineNumber": 187
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "scoped",
+          "lineNumber": 188
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "go",
+          "lineNumber": 192
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "go",
+          "lineNumber": 192
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "ops.map((o) => o.id).join",
+          "lineNumber": 193
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "ops.map",
+          "lineNumber": 193
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "el.reasons.map",
+          "lineNumber": 199
+        },
+        {
+          "caller": "NoProjectData",
+          "callee": "go",
+          "lineNumber": 202
+        },
+        {
+          "caller": "NoOps",
+          "callee": "useStore",
+          "lineNumber": 213
+        },
+        {
+          "caller": "NoOps",
+          "callee": "go",
+          "lineNumber": 215
+        },
+        {
+          "caller": "MiniChain",
+          "callee": "Math.min",
+          "lineNumber": 225
+        },
+        {
+          "caller": "MiniChain",
+          "callee": "op.steps.filter",
+          "lineNumber": 228
+        },
+        {
+          "caller": "MiniChain",
+          "callee": "op.steps.slice(0, 12).map",
+          "lineNumber": 230
+        },
+        {
+          "caller": "MiniChain",
+          "callee": "op.steps.slice",
+          "lineNumber": 230
+        },
+        {
+          "caller": "MiniChain",
+          "callee": "col",
+          "lineNumber": 230
+        },
+        {
+          "caller": "MiniChain",
+          "callee": "col",
+          "lineNumber": 230
+        },
+        {
+          "caller": "TacticBars",
+          "callee": "TACTICS.map",
+          "lineNumber": 236
+        },
+        {
+          "caller": "TacticBars",
+          "callee": "TECHNIQUES.filter",
+          "lineNumber": 237
+        },
+        {
+          "caller": "TacticBars",
+          "callee": "all.filter",
+          "lineNumber": 238
+        },
+        {
+          "caller": "TacticBars",
+          "callee": "['detected', 'undetected', 'nodata'].includes",
+          "lineNumber": 238
+        },
+        {
+          "caller": "TacticBars",
+          "callee": "ana.cells.find",
+          "lineNumber": 238
+        },
+        {
+          "caller": "TacticBars",
+          "callee": "rows.map",
+          "lineNumber": 243
+        },
+        {
+          "caller": "CoverageBar",
+          "callee": "parts.reduce",
+          "lineNumber": 262
+        },
+        {
+          "caller": "CoverageBar",
+          "callee": "Math.round",
+          "lineNumber": 267
+        },
+        {
+          "caller": "CoverageBar",
+          "callee": "parts.map((p) => `${p.v} ${p.k}`).join",
+          "lineNumber": 268
+        },
+        {
+          "caller": "CoverageBar",
+          "callee": "parts.map",
+          "lineNumber": 268
+        },
+        {
+          "caller": "CoverageBar",
+          "callee": "parts.map",
+          "lineNumber": 270
+        },
+        {
+          "caller": "CoverageBar",
+          "callee": "parts.map",
+          "lineNumber": 273
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "useStore",
+          "lineNumber": 280
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "ana.ops.find",
+          "lineNumber": 281
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "ana.entries.some",
+          "lineNumber": 281
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "ana.entries.filter",
+          "lineNumber": 283
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "go",
+          "lineNumber": 286
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "go",
+          "lineNumber": 288
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "e.step.evidence?.startsWith",
+          "lineNumber": 296
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "ev.stopPropagation",
+          "lineNumber": 296
+        },
+        {
+          "caller": "OpTimeline",
+          "callee": "go",
+          "lineNumber": 296
+        },
+        {
+          "caller": "Overview",
+          "callee": "useStore",
+          "lineNumber": 304
+        },
+        {
+          "caller": "Overview",
+          "callee": "ana.entries.some",
+          "lineNumber": 305
+        },
+        {
+          "caller": "Overview",
+          "callee": "ana.entries.filter",
+          "lineNumber": 308
+        },
+        {
+          "caller": "Overview",
+          "callee": "/^(Sanitized output|Not run|Waiting|No output)/.test",
+          "lineNumber": 308
+        },
+        {
+          "caller": "Overview",
+          "callee": "ana.pairs.filter",
+          "lineNumber": 309
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 313
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 318
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 322
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 323
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 326
+        },
+        {
+          "caller": "Overview",
+          "callee": "ana.ops.filter((o) => o.steps.length).map",
+          "lineNumber": 345
+        },
+        {
+          "caller": "Overview",
+          "callee": "ana.ops.filter",
+          "lineNumber": 345
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 350
+        },
+        {
+          "caller": "Overview",
+          "callee": "o.steps.filter",
+          "lineNumber": 368
+        },
+        {
+          "caller": "Overview",
+          "callee": "o.steps.filter((s) => s.status === 'ok' || s.status === 'fail').map",
+          "lineNumber": 369
+        },
+        {
+          "caller": "Overview",
+          "callee": "o.steps.filter",
+          "lineNumber": 369
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 372
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 373
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 374
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 375
+        },
+        {
+          "caller": "Overview",
+          "callee": "go",
+          "lineNumber": 383
+        },
+        {
+          "caller": "Overview",
+          "callee": "review.map",
+          "lineNumber": 386
+        },
+        {
+          "caller": "Overview",
+          "callee": "flagged.map",
+          "lineNumber": 401
+        },
+        {
+          "caller": "Overview",
+          "callee": "scoped",
+          "lineNumber": 416
+        },
+        {
+          "caller": "Chain",
+          "callee": "useStore",
+          "lineNumber": 430
+        },
+        {
+          "caller": "Chain",
+          "callee": "ana.ops.filter",
+          "lineNumber": 431
+        },
+        {
+          "caller": "Chain",
+          "callee": "ana.entries.some",
+          "lineNumber": 431
+        },
+        {
+          "caller": "Chain",
+          "callee": "useState",
+          "lineNumber": 432
+        },
+        {
+          "caller": "Chain",
+          "callee": "useState",
+          "lineNumber": 433
+        },
+        {
+          "caller": "Chain",
+          "callee": "useState",
+          "lineNumber": 434
+        },
+        {
+          "caller": "Chain",
+          "callee": "useState",
+          "lineNumber": 435
+        },
+        {
+          "caller": "Chain",
+          "callee": "useState",
+          "lineNumber": 436
+        },
+        {
+          "caller": "Chain",
+          "callee": "useRef",
+          "lineNumber": 437
+        },
+        {
+          "caller": "Chain",
+          "callee": "useRef",
+          "lineNumber": 438
+        },
+        {
+          "caller": "Chain",
+          "callee": "withSteps.find",
+          "lineNumber": 439
+        },
+        {
+          "caller": "Chain",
+          "callee": "withSteps.find",
+          "lineNumber": 439
+        },
+        {
+          "caller": "Chain",
+          "callee": "ana.entries.some",
+          "lineNumber": 439
+        },
+        {
+          "caller": "Chain",
+          "callee": "ana.entries.filter((e) => e.op.id === op.id).map",
+          "lineNumber": 442
+        },
+        {
+          "caller": "Chain",
+          "callee": "ana.entries.filter",
+          "lineNumber": 442
+        },
+        {
+          "caller": "Chain",
+          "callee": "Math.max",
+          "lineNumber": 445
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.map((s) => s.asset).filter",
+          "lineNumber": 448
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.map",
+          "lineNumber": 448
+        },
+        {
+          "caller": "Chain",
+          "callee": "assetNames.map((n) => { const xs = steps.map((s, i) => (s.asset === n ? sx(i) : -1)).filter((x) => x >= 0); return { n, x: xs.reduce((a, b) => a + b, 0) / xs.length } }).sort",
+          "lineNumber": 449
+        },
+        {
+          "caller": "Chain",
+          "callee": "assetNames.map",
+          "lineNumber": 449
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.map((s, i) => (s.asset === n ? sx(i) : -1)).filter",
+          "lineNumber": 449
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.map",
+          "lineNumber": 449
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 449
+        },
+        {
+          "caller": "Chain",
+          "callee": "xs.reduce",
+          "lineNumber": 449
+        },
+        {
+          "caller": "ax",
+          "callee": "assetX.find",
+          "lineNumber": 451
+        },
+        {
+          "caller": "Chain",
+          "callee": "Math.max",
+          "lineNumber": 452
+        },
+        {
+          "caller": "Chain",
+          "callee": "assetX.at",
+          "lineNumber": 452
+        },
+        {
+          "caller": "fit",
+          "callee": "setZoom",
+          "lineNumber": 454
+        },
+        {
+          "caller": "fit",
+          "callee": "Math.max",
+          "lineNumber": 454
+        },
+        {
+          "caller": "fit",
+          "callee": "Math.min",
+          "lineNumber": 454
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter",
+          "lineNumber": 455
+        },
+        {
+          "caller": "download",
+          "callee": "getComputedStyle",
+          "lineNumber": 460
+        },
+        {
+          "caller": "download",
+          "callee": "new XMLSerializer().serializeToString(el).replace",
+          "lineNumber": 461
+        },
+        {
+          "caller": "download",
+          "callee": "new XMLSerializer().serializeToString",
+          "lineNumber": 461
+        },
+        {
+          "caller": "download",
+          "callee": "cs.getPropertyValue(v).trim",
+          "lineNumber": 461
+        },
+        {
+          "caller": "download",
+          "callee": "cs.getPropertyValue",
+          "lineNumber": 461
+        },
+        {
+          "caller": "download",
+          "callee": "src.replace",
+          "lineNumber": 462
+        },
+        {
+          "caller": "download",
+          "callee": "cs.getPropertyValue('--c-panel').trim",
+          "lineNumber": 462
+        },
+        {
+          "caller": "download",
+          "callee": "cs.getPropertyValue",
+          "lineNumber": 462
+        },
+        {
+          "caller": "download",
+          "callee": "document.createElement",
+          "lineNumber": 463
+        },
+        {
+          "caller": "download",
+          "callee": "URL.createObjectURL",
+          "lineNumber": 464
+        },
+        {
+          "caller": "download",
+          "callee": "a.click",
+          "lineNumber": 466
+        },
+        {
+          "caller": "download",
+          "callee": "toast",
+          "lineNumber": 467
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.find",
+          "lineNumber": 470
+        },
+        {
+          "caller": "Chain",
+          "callee": "db.assets.find",
+          "lineNumber": 471
+        },
+        {
+          "caller": "Chain",
+          "callee": "TECHNIQUES.find",
+          "lineNumber": 472
+        },
+        {
+          "caller": "close",
+          "callee": "setSel",
+          "lineNumber": 473
+        },
+        {
+          "caller": "Chain",
+          "callee": "setPick",
+          "lineNumber": 481
+        },
+        {
+          "caller": "Chain",
+          "callee": "setSel",
+          "lineNumber": 481
+        },
+        {
+          "caller": "Chain",
+          "callee": "withSteps.map",
+          "lineNumber": 482
+        },
+        {
+          "caller": "Chain",
+          "callee": "(['ok', 'fail', 'review', 'running', 'unknown', 'pending', 'notrun'] as const).map",
+          "lineNumber": 487
+        },
+        {
+          "caller": "Chain",
+          "callee": "setHide",
+          "lineNumber": 489
+        },
+        {
+          "caller": "Chain",
+          "callee": "setHl",
+          "lineNumber": 494
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter",
+          "lineNumber": 509
+        },
+        {
+          "caller": "Chain",
+          "callee": "setZoom",
+          "lineNumber": 510
+        },
+        {
+          "caller": "Chain",
+          "callee": "Math.max",
+          "lineNumber": 510
+        },
+        {
+          "caller": "Chain",
+          "callee": "(z - 0.15).toFixed",
+          "lineNumber": 510
+        },
+        {
+          "caller": "Chain",
+          "callee": "Math.round",
+          "lineNumber": 511
+        },
+        {
+          "caller": "Chain",
+          "callee": "setZoom",
+          "lineNumber": 512
+        },
+        {
+          "caller": "Chain",
+          "callee": "Math.min",
+          "lineNumber": 512
+        },
+        {
+          "caller": "Chain",
+          "callee": "(z + 0.15).toFixed",
+          "lineNumber": 512
+        },
+        {
+          "caller": "Chain",
+          "callee": "setZoom",
+          "lineNumber": 514
+        },
+        {
+          "caller": "Chain",
+          "callee": "setHl",
+          "lineNumber": 514
+        },
+        {
+          "caller": "Chain",
+          "callee": "setHide",
+          "lineNumber": 514
+        },
+        {
+          "caller": "Chain",
+          "callee": "setSel",
+          "lineNumber": 514
+        },
+        {
+          "caller": "Chain",
+          "callee": "can",
+          "lineNumber": 515
+        },
+        {
+          "caller": "Chain",
+          "callee": "can",
+          "lineNumber": 515
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter",
+          "lineNumber": 517
+        },
+        {
+          "caller": "Chain",
+          "callee": "[['Assets', Y.a], ['Execution steps', Y.s], ['Techniques', Y.t]].map",
+          "lineNumber": 521
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.map",
+          "lineNumber": 523
+        },
+        {
+          "caller": "Chain",
+          "callee": "ax",
+          "lineNumber": 524
+        },
+        {
+          "caller": "Chain",
+          "callee": "ax",
+          "lineNumber": 524
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 524
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 524
+        },
+        {
+          "caller": "Chain",
+          "callee": "tested",
+          "lineNumber": 524
+        },
+        {
+          "caller": "Chain",
+          "callee": "tested",
+          "lineNumber": 524
+        },
+        {
+          "caller": "Chain",
+          "callee": "dim",
+          "lineNumber": 524
+        },
+        {
+          "caller": "Chain",
+          "callee": "tested",
+          "lineNumber": 525
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.slice(1).map",
+          "lineNumber": 529
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.slice",
+          "lineNumber": 529
+        },
+        {
+          "caller": "Chain",
+          "callee": "tested",
+          "lineNumber": 530
+        },
+        {
+          "caller": "Chain",
+          "callee": "tested",
+          "lineNumber": 530
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 531
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 531
+        },
+        {
+          "caller": "Chain",
+          "callee": "dim",
+          "lineNumber": 531
+        },
+        {
+          "caller": "Chain",
+          "callee": "dim",
+          "lineNumber": 531
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.map",
+          "lineNumber": 534
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 534
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 534
+        },
+        {
+          "caller": "Chain",
+          "callee": "dim",
+          "lineNumber": 534
+        },
+        {
+          "caller": "Chain",
+          "callee": "assetX.map",
+          "lineNumber": 536
+        },
+        {
+          "caller": "Chain",
+          "callee": "setSel",
+          "lineNumber": 539
+        },
+        {
+          "caller": "Chain",
+          "callee": "setSel",
+          "lineNumber": 539
+        },
+        {
+          "caller": "Chain",
+          "callee": "a.n.slice",
+          "lineNumber": 541
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.map",
+          "lineNumber": 546
+        },
+        {
+          "caller": "Chain",
+          "callee": "dim",
+          "lineNumber": 550
+        },
+        {
+          "caller": "Chain",
+          "callee": "setSel",
+          "lineNumber": 550
+        },
+        {
+          "caller": "Chain",
+          "callee": "setSel",
+          "lineNumber": 550
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 551
+        },
+        {
+          "caller": "Chain",
+          "callee": "tested",
+          "lineNumber": 551
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 552
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 553
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 554
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.map",
+          "lineNumber": 560
+        },
+        {
+          "caller": "Chain",
+          "callee": "sx",
+          "lineNumber": 561
+        },
+        {
+          "caller": "Chain",
+          "callee": "dim",
+          "lineNumber": 564
+        },
+        {
+          "caller": "Chain",
+          "callee": "setSel",
+          "lineNumber": 564
+        },
+        {
+          "caller": "Chain",
+          "callee": "setSel",
+          "lineNumber": 564
+        },
+        {
+          "caller": "Chain",
+          "callee": "setHl",
+          "lineNumber": 579
+        },
+        {
+          "caller": "Chain",
+          "callee": "close",
+          "lineNumber": 579
+        },
+        {
+          "caller": "Chain",
+          "callee": "go",
+          "lineNumber": 580
+        },
+        {
+          "caller": "Chain",
+          "callee": "setHl",
+          "lineNumber": 585
+        },
+        {
+          "caller": "Chain",
+          "callee": "close",
+          "lineNumber": 585
+        },
+        {
+          "caller": "Chain",
+          "callee": "go",
+          "lineNumber": 586
+        },
+        {
+          "caller": "Chain",
+          "callee": "go",
+          "lineNumber": 588
+        },
+        {
+          "caller": "Chain",
+          "callee": "tested",
+          "lineNumber": 592
+        },
+        {
+          "caller": "Chain",
+          "callee": "[['Operation', op.id], ['Project', op.projectId], ['Asset', selStep.asset], ['Agent', selStep.agent], ['Timestamp', selStep.ts], ['Duration', selStep.dur], ['Technique', selStep.technique]].map",
+          "lineNumber": 594
+        },
+        {
+          "caller": "Chain",
+          "callee": "selStep.evidence.startsWith",
+          "lineNumber": 597
+        },
+        {
+          "caller": "Chain",
+          "callee": "[['ID', selAsset.id], ['Identifier', selAsset.ident], ['Type', selAsset.type], ['Operating system', selAsset.os]].map",
+          "lineNumber": 602
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter((s) => s.asset === sel.id).map((s) => s.id).join",
+          "lineNumber": 603
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter((s) => s.asset === sel.id).map",
+          "lineNumber": 603
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter",
+          "lineNumber": 603
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter((s) => s.technique === selTech.id).map((s) => s.id).join",
+          "lineNumber": 610
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter((s) => s.technique === selTech.id).map",
+          "lineNumber": 610
+        },
+        {
+          "caller": "Chain",
+          "callee": "steps.filter",
+          "lineNumber": 610
+        },
+        {
+          "caller": "Chain",
+          "callee": "go",
+          "lineNumber": 611
+        },
+        {
+          "caller": "Matrix",
+          "callee": "useStore",
+          "lineNumber": 621
+        },
+        {
+          "caller": "Matrix",
+          "callee": "useState",
+          "lineNumber": 622
+        },
+        {
+          "caller": "Matrix",
+          "callee": "useState",
+          "lineNumber": 623
+        },
+        {
+          "caller": "Matrix",
+          "callee": "useState",
+          "lineNumber": 624
+        },
+        {
+          "caller": "Matrix",
+          "callee": "useState",
+          "lineNumber": 625
+        },
+        {
+          "caller": "Matrix",
+          "callee": "ana.cells.filter",
+          "lineNumber": 626
+        },
+        {
+          "caller": "Matrix",
+          "callee": "ana.cells.find",
+          "lineNumber": 628
+        },
+        {
+          "caller": "match",
+          "callee": "(c.tech.id + ' ' + c.tech.name).toLowerCase().includes",
+          "lineNumber": 629
+        },
+        {
+          "caller": "match",
+          "callee": "(c.tech.id + ' ' + c.tech.name).toLowerCase",
+          "lineNumber": 629
+        },
+        {
+          "caller": "match",
+          "callee": "tq.toLowerCase",
+          "lineNumber": 629
+        },
+        {
+          "caller": "Matrix",
+          "callee": "setTac",
+          "lineNumber": 638
+        },
+        {
+          "caller": "Matrix",
+          "callee": "TACTICS.map",
+          "lineNumber": 638
+        },
+        {
+          "caller": "Matrix",
+          "callee": "(['detected', 'undetected', 'nodata', 'planned', 'untested'] as CellState[]).map",
+          "lineNumber": 642
+        },
+        {
+          "caller": "Matrix",
+          "callee": "cx",
+          "lineNumber": 644
+        },
+        {
+          "caller": "Matrix",
+          "callee": "TACTICS.filter((t) => !tac || t === tac).map",
+          "lineNumber": 650
+        },
+        {
+          "caller": "Matrix",
+          "callee": "TACTICS.filter",
+          "lineNumber": 650
+        },
+        {
+          "caller": "Matrix",
+          "callee": "ana.cells.filter((c) => c.tech.tactic === t && match(c)).map",
+          "lineNumber": 654
+        },
+        {
+          "caller": "Matrix",
+          "callee": "ana.cells.filter",
+          "lineNumber": 654
+        },
+        {
+          "caller": "Matrix",
+          "callee": "match",
+          "lineNumber": 654
+        },
+        {
+          "caller": "Matrix",
+          "callee": "setSel",
+          "lineNumber": 657
+        },
+        {
+          "caller": "Matrix",
+          "callee": "tip",
+          "lineNumber": 657
+        },
+        {
+          "caller": "Matrix",
+          "callee": "cx",
+          "lineNumber": 657
+        },
+        {
+          "caller": "Matrix",
+          "callee": "ana.cells.filter",
+          "lineNumber": 670
+        },
+        {
+          "caller": "Matrix",
+          "callee": "cx",
+          "lineNumber": 676
+        },
+        {
+          "caller": "Matrix",
+          "callee": "setSel",
+          "lineNumber": 681
+        },
+        {
+          "caller": "Matrix",
+          "callee": "[...new Set(cur.runs.map((r) => r.op.id))].map",
+          "lineNumber": 685
+        },
+        {
+          "caller": "Matrix",
+          "callee": "cur.runs.map",
+          "lineNumber": 685
+        },
+        {
+          "caller": "Matrix",
+          "callee": "go",
+          "lineNumber": 685
+        },
+        {
+          "caller": "Matrix",
+          "callee": "cur.tech.platforms.join",
+          "lineNumber": 695
+        },
+        {
+          "caller": "Matrix",
+          "callee": "[...cur.runs, ...cur.planned].map",
+          "lineNumber": 705
+        },
+        {
+          "caller": "Matrix",
+          "callee": "r.step.evidence?.startsWith",
+          "lineNumber": 709
+        },
+        {
+          "caller": "Matrix",
+          "callee": "go",
+          "lineNumber": 715
+        },
+        {
+          "caller": "Matrix",
+          "callee": "setFilter",
+          "lineNumber": 715
+        },
+        {
+          "caller": "Matrix",
+          "callee": "go",
+          "lineNumber": 715
+        },
+        {
+          "caller": "Detection",
+          "callee": "useStore",
+          "lineNumber": 726
+        },
+        {
+          "caller": "Detection",
+          "callee": "useState",
+          "lineNumber": 727
+        },
+        {
+          "caller": "Detection",
+          "callee": "useState",
+          "lineNumber": 728
+        },
+        {
+          "caller": "Detection",
+          "callee": "can",
+          "lineNumber": 729
+        },
+        {
+          "caller": "Detection",
+          "callee": "ana.pairs.filter",
+          "lineNumber": 733
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.filter",
+          "lineNumber": 734
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.filter",
+          "lineNumber": 735
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.filter",
+          "lineNumber": 736
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.filter",
+          "lineNumber": 738
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.filter",
+          "lineNumber": 739
+        },
+        {
+          "caller": "findingsOf",
+          "callee": "scoped(db.findings).filter",
+          "lineNumber": 740
+        },
+        {
+          "caller": "findingsOf",
+          "callee": "scoped",
+          "lineNumber": 740
+        },
+        {
+          "caller": "Detection",
+          "callee": "TACTICS.map((t) => { const ps = pairs.filter((p) => p.tech.tactic === t); return { t, d: ps.filter((p) => p.state === 'detected').length, u: ps.filter((p) => p.state === 'undetected').length, n: ps.filter((p) => p.state === 'nodata').length } }).filter",
+          "lineNumber": 741
+        },
+        {
+          "caller": "Detection",
+          "callee": "TACTICS.map",
+          "lineNumber": 741
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.filter",
+          "lineNumber": 741
+        },
+        {
+          "caller": "Detection",
+          "callee": "ps.filter",
+          "lineNumber": 741
+        },
+        {
+          "caller": "Detection",
+          "callee": "ps.filter",
+          "lineNumber": 741
+        },
+        {
+          "caller": "Detection",
+          "callee": "ps.filter",
+          "lineNumber": 741
+        },
+        {
+          "caller": "Detection",
+          "callee": "go",
+          "lineNumber": 747
+        },
+        {
+          "caller": "Detection",
+          "callee": "go",
+          "lineNumber": 751
+        },
+        {
+          "caller": "Detection",
+          "callee": "setTactic",
+          "lineNumber": 756
+        },
+        {
+          "caller": "Detection",
+          "callee": "TACTICS.map",
+          "lineNumber": 756
+        },
+        {
+          "caller": "Detection",
+          "callee": "setTactic",
+          "lineNumber": 757
+        },
+        {
+          "caller": "Detection",
+          "callee": "Math.round",
+          "lineNumber": 766
+        },
+        {
+          "caller": "Detection",
+          "callee": "byTactic.map",
+          "lineNumber": 778
+        },
+        {
+          "caller": "Detection",
+          "callee": "r.runs[0].op.startedAt.replace",
+          "lineNumber": 805
+        },
+        {
+          "caller": "Detection",
+          "callee": "r.runs[0].op.id.slice",
+          "lineNumber": 806
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.slice(0, 4).map((p) => `${p.runs[0].op.id}/${p.runs[0].step.id}`).join",
+          "lineNumber": 817
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.slice(0, 4).map",
+          "lineNumber": 817
+        },
+        {
+          "caller": "Detection",
+          "callee": "pairs.slice",
+          "lineNumber": 817
+        },
+        {
+          "caller": "Detection",
+          "callee": "findingsOf",
+          "lineNumber": 828
+        },
+        {
+          "caller": "Detection",
+          "callee": "f.map((x) => x.id).join",
+          "lineNumber": 828
+        },
+        {
+          "caller": "Detection",
+          "callee": "f.map",
+          "lineNumber": 828
+        },
+        {
+          "caller": "Detection",
+          "callee": "gaps.map",
+          "lineNumber": 835
+        },
+        {
+          "caller": "Detection",
+          "callee": "recFor",
+          "lineNumber": 839
+        },
+        {
+          "caller": "Detection",
+          "callee": "gapPrefill",
+          "lineNumber": 841
+        },
+        {
+          "caller": "Detection",
+          "callee": "setSel",
+          "lineNumber": 850
+        },
+        {
+          "caller": "Detection",
+          "callee": "gapPrefill",
+          "lineNumber": 851
+        },
+        {
+          "caller": "Detection",
+          "callee": "sel.runs.map((r) => r.step.evidence).filter",
+          "lineNumber": 858
+        },
+        {
+          "caller": "Detection",
+          "callee": "sel.runs.map",
+          "lineNumber": 858
+        },
+        {
+          "caller": "Detection",
+          "callee": "x.startsWith",
+          "lineNumber": 858
+        },
+        {
+          "caller": "Detection",
+          "callee": "findingsOf",
+          "lineNumber": 861
+        },
+        {
+          "caller": "Detection",
+          "callee": "findingsOf(sel).map",
+          "lineNumber": 861
+        },
+        {
+          "caller": "Detection",
+          "callee": "findingsOf",
+          "lineNumber": 861
+        },
+        {
+          "caller": "Detection",
+          "callee": "go",
+          "lineNumber": 861
+        },
+        {
+          "caller": "Detection",
+          "callee": "recFor",
+          "lineNumber": 863
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 2,
+        "functionCount": 18,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/screens/e-findings.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 885,
+      "nonEmptyLines": 853,
+      "functions": [
+        {
+          "name": "ts",
+          "startLine": 13,
+          "endLine": 18,
+          "params": [
+            "s"
+          ]
+        },
+        {
+          "name": "isVerified",
+          "startLine": 19,
+          "endLine": 19,
+          "params": [
+            "f"
+          ]
+        },
+        {
+          "name": "useCreateReason",
+          "startLine": 31,
+          "endLine": 38,
+          "params": [
+            "projectId"
+          ]
+        },
+        {
+          "name": "useAiActions",
+          "startLine": 42,
+          "endLine": 57,
+          "params": []
+        },
+        {
+          "name": "MoreFilters",
+          "startLine": 59,
+          "endLine": 72,
+          "params": [
+            "{ children, active }"
+          ]
+        },
+        {
+          "name": "FindingList",
+          "startLine": 74,
+          "endLine": 172,
+          "params": []
+        },
+        {
+          "name": "useFinding",
+          "startLine": 175,
+          "endLine": 194,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "MaskedName",
+          "startLine": 196,
+          "endLine": 199,
+          "params": [
+            "{ ev }"
+          ]
+        },
+        {
+          "name": "FindingForm",
+          "startLine": 204,
+          "endLine": 385,
+          "params": []
+        },
+        {
+          "name": "FindingDetail",
+          "startLine": 391,
+          "endLine": 551,
+          "params": []
+        },
+        {
+          "name": "AddToReport",
+          "startLine": 553,
+          "endLine": 574,
+          "params": [
+            "{ open, onClose, f, reports }"
+          ]
+        },
+        {
+          "name": "EvidenceTab",
+          "startLine": 578,
+          "endLine": 630,
+          "params": [
+            "{ f, ro }"
+          ]
+        },
+        {
+          "name": "UploadModal",
+          "startLine": 632,
+          "endLine": 660,
+          "params": [
+            "{ open, onClose, f }"
+          ]
+        },
+        {
+          "name": "EvidencePreview",
+          "startLine": 662,
+          "endLine": 688,
+          "params": [
+            "{ ev, f, onOp }"
+          ]
+        },
+        {
+          "name": "RetestTab",
+          "startLine": 694,
+          "endLine": 738,
+          "params": [
+            "{ f, ro, roReason }"
+          ]
+        },
+        {
+          "name": "fakeHash",
+          "startLine": 741,
+          "endLine": 746,
+          "params": [
+            "id"
+          ]
+        },
+        {
+          "name": "EvidenceList",
+          "startLine": 748,
+          "endLine": 776,
+          "params": []
+        },
+        {
+          "name": "EvidenceInspector",
+          "startLine": 778,
+          "endLine": 882,
+          "params": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "findingRoutes",
+          "line": 884,
+          "isDefault": false
+        },
+        {
+          "name": "Segmented",
+          "line": 885,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "ts",
+          "callee": "s.match",
+          "lineNumber": 14
+        },
+        {
+          "caller": "ts",
+          "callee": "Date.UTC",
+          "lineNumber": 17
+        },
+        {
+          "caller": "ts",
+          "callee": "MONTHS.indexOf",
+          "lineNumber": 17
+        },
+        {
+          "caller": "useCreateReason",
+          "callee": "useStore",
+          "lineNumber": 32
+        },
+        {
+          "caller": "useCreateReason",
+          "callee": "readOnly",
+          "lineNumber": 35
+        },
+        {
+          "caller": "useCreateReason",
+          "callee": "can",
+          "lineNumber": 36
+        },
+        {
+          "caller": "useAiActions",
+          "callee": "useStore",
+          "lineNumber": 43
+        },
+        {
+          "caller": "why",
+          "callee": "readOnly",
+          "lineNumber": 45
+        },
+        {
+          "caller": "why",
+          "callee": "can",
+          "lineNumber": 45
+        },
+        {
+          "caller": "verify",
+          "callee": "confirm",
+          "lineNumber": 46
+        },
+        {
+          "caller": "verify",
+          "callee": "A.setFindingStatus",
+          "lineNumber": 49
+        },
+        {
+          "caller": "verify",
+          "callee": "toast",
+          "lineNumber": 49
+        },
+        {
+          "caller": "verify",
+          "callee": "go",
+          "lineNumber": 49
+        },
+        {
+          "caller": "dismiss",
+          "callee": "confirm",
+          "lineNumber": 51
+        },
+        {
+          "caller": "dismiss",
+          "callee": "setFilter",
+          "lineNumber": 54
+        },
+        {
+          "caller": "dismiss",
+          "callee": "A.addFindingComment",
+          "lineNumber": 54
+        },
+        {
+          "caller": "dismiss",
+          "callee": "A.audit",
+          "lineNumber": 54
+        },
+        {
+          "caller": "dismiss",
+          "callee": "toast",
+          "lineNumber": 54
+        },
+        {
+          "caller": "useAiActions",
+          "callee": "setFilter",
+          "lineNumber": 56
+        },
+        {
+          "caller": "MoreFilters",
+          "callee": "useState",
+          "lineNumber": 60
+        },
+        {
+          "caller": "MoreFilters",
+          "callee": "setOpen",
+          "lineNumber": 63
+        },
+        {
+          "caller": "MoreFilters",
+          "callee": "setOpen",
+          "lineNumber": 67
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useStore",
+          "lineNumber": 75
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useAiActions",
+          "lineNumber": 76
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 77
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 78
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 79
+        },
+        {
+          "caller": "FindingList",
+          "callee": "TABS.some",
+          "lineNumber": 79
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 80
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 81
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 82
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 83
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 84
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useState",
+          "lineNumber": 85
+        },
+        {
+          "caller": "FindingList",
+          "callee": "useCreateReason",
+          "lineNumber": 86
+        },
+        {
+          "caller": "FindingList",
+          "callee": "scoped",
+          "lineNumber": 87
+        },
+        {
+          "caller": "FindingList",
+          "callee": "all.filter",
+          "lineNumber": 88
+        },
+        {
+          "caller": "FindingList",
+          "callee": "all.map",
+          "lineNumber": 89
+        },
+        {
+          "caller": "FindingList",
+          "callee": "all.map",
+          "lineNumber": 90
+        },
+        {
+          "caller": "FindingList",
+          "callee": "all.map((f) => f.op).filter",
+          "lineNumber": 91
+        },
+        {
+          "caller": "FindingList",
+          "callee": "all.map",
+          "lineNumber": 91
+        },
+        {
+          "caller": "FindingList",
+          "callee": "TABS.find",
+          "lineNumber": 92
+        },
+        {
+          "caller": "FindingList",
+          "callee": "all\n    .filter((f) => curTab.test(f) && (tab !== 'ai' || showDis || !ai.dismissed[f.id]) && (!q || (f.id + ' ' + f.title).toLowerCase().includes(q.toLowerCase())) && (!sev || f.severity === sev) && (!prj || f.projectId === prj) && (!owner || f.owner === owner) && (!asset || f.asset === asset) && (!opf || f.op === opf))\n    .sort",
+          "lineNumber": 93
+        },
+        {
+          "caller": "FindingList",
+          "callee": "all\n    .filter",
+          "lineNumber": 93
+        },
+        {
+          "caller": "FindingList",
+          "callee": "curTab.test",
+          "lineNumber": 94
+        },
+        {
+          "caller": "FindingList",
+          "callee": "(f.id + ' ' + f.title).toLowerCase().includes",
+          "lineNumber": 94
+        },
+        {
+          "caller": "FindingList",
+          "callee": "(f.id + ' ' + f.title).toLowerCase",
+          "lineNumber": 94
+        },
+        {
+          "caller": "FindingList",
+          "callee": "q.toLowerCase",
+          "lineNumber": 94
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ts",
+          "lineNumber": 95
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ts",
+          "lineNumber": 95
+        },
+        {
+          "caller": "FindingList",
+          "callee": "a.id.localeCompare",
+          "lineNumber": 95
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ts",
+          "lineNumber": 95
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ts",
+          "lineNumber": 95
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ts",
+          "lineNumber": 95
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ts",
+          "lineNumber": 95
+        },
+        {
+          "caller": "FindingList",
+          "callee": "usePaged",
+          "lineNumber": 96
+        },
+        {
+          "caller": "count",
+          "callee": "all.filter",
+          "lineNumber": 97
+        },
+        {
+          "caller": "count",
+          "callee": "t.test",
+          "lineNumber": 97
+        },
+        {
+          "caller": "vcount",
+          "callee": "verified.filter",
+          "lineNumber": 98
+        },
+        {
+          "caller": "FindingList",
+          "callee": "[prj, owner, asset, sort !== 'updated' ? sort : ''].filter",
+          "lineNumber": 99
+        },
+        {
+          "caller": "reset",
+          "callee": "setQ",
+          "lineNumber": 101
+        },
+        {
+          "caller": "reset",
+          "callee": "setSev",
+          "lineNumber": 101
+        },
+        {
+          "caller": "reset",
+          "callee": "setTab",
+          "lineNumber": 101
+        },
+        {
+          "caller": "reset",
+          "callee": "setPrj",
+          "lineNumber": 101
+        },
+        {
+          "caller": "reset",
+          "callee": "setOwner",
+          "lineNumber": 101
+        },
+        {
+          "caller": "reset",
+          "callee": "setAsset",
+          "lineNumber": 101
+        },
+        {
+          "caller": "reset",
+          "callee": "setOpf",
+          "lineNumber": 101
+        },
+        {
+          "caller": "reset",
+          "callee": "setSort",
+          "lineNumber": 101
+        },
+        {
+          "caller": "FindingList",
+          "callee": "count",
+          "lineNumber": 102
+        },
+        {
+          "caller": "FindingList",
+          "callee": "go",
+          "lineNumber": 109
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setSwitcherOpen",
+          "lineNumber": 112
+        },
+        {
+          "caller": "FindingList",
+          "callee": "SEVS.map",
+          "lineNumber": 118
+        },
+        {
+          "caller": "FindingList",
+          "callee": "verified.filter",
+          "lineNumber": 118
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setSev",
+          "lineNumber": 118
+        },
+        {
+          "caller": "FindingList",
+          "callee": "vcount",
+          "lineNumber": 119
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setTab",
+          "lineNumber": 119
+        },
+        {
+          "caller": "FindingList",
+          "callee": "vcount",
+          "lineNumber": 120
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setTab",
+          "lineNumber": 120
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setTab",
+          "lineNumber": 121
+        },
+        {
+          "caller": "FindingList",
+          "callee": "TABS.map",
+          "lineNumber": 123
+        },
+        {
+          "caller": "FindingList",
+          "callee": "count",
+          "lineNumber": 123
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setSev",
+          "lineNumber": 126
+        },
+        {
+          "caller": "FindingList",
+          "callee": "SEVS.map",
+          "lineNumber": 126
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setOpf",
+          "lineNumber": 127
+        },
+        {
+          "caller": "FindingList",
+          "callee": "opsList.map",
+          "lineNumber": 127
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setPrj",
+          "lineNumber": 129
+        },
+        {
+          "caller": "FindingList",
+          "callee": "accessible.map",
+          "lineNumber": 129
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setOwner",
+          "lineNumber": 130
+        },
+        {
+          "caller": "FindingList",
+          "callee": "owners.map",
+          "lineNumber": 130
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setAsset",
+          "lineNumber": 131
+        },
+        {
+          "caller": "FindingList",
+          "callee": "assets.map",
+          "lineNumber": 131
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setSort",
+          "lineNumber": 132
+        },
+        {
+          "caller": "FindingList",
+          "callee": "Object.keys",
+          "lineNumber": 138
+        },
+        {
+          "caller": "FindingList",
+          "callee": "setShowDis",
+          "lineNumber": 138
+        },
+        {
+          "caller": "FindingList",
+          "callee": "Object.keys",
+          "lineNumber": 138
+        },
+        {
+          "caller": "FindingList",
+          "callee": "go",
+          "lineNumber": 142
+        },
+        {
+          "caller": "FindingList",
+          "callee": "go",
+          "lineNumber": 144
+        },
+        {
+          "caller": "FindingList",
+          "callee": "db.projects.find",
+          "lineNumber": 151
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ai.why",
+          "lineNumber": 159
+        },
+        {
+          "caller": "FindingList",
+          "callee": "e.stopPropagation",
+          "lineNumber": 160
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ai.restore",
+          "lineNumber": 160
+        },
+        {
+          "caller": "FindingList",
+          "callee": "e.stopPropagation",
+          "lineNumber": 161
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ai.verify",
+          "lineNumber": 162
+        },
+        {
+          "caller": "FindingList",
+          "callee": "ai.dismiss",
+          "lineNumber": 163
+        },
+        {
+          "caller": "useFinding",
+          "callee": "useStore",
+          "lineNumber": 176
+        },
+        {
+          "caller": "useFinding",
+          "callee": "db.findings.find",
+          "lineNumber": 177
+        },
+        {
+          "caller": "useFinding",
+          "callee": "go",
+          "lineNumber": 179
+        },
+        {
+          "caller": "useFinding",
+          "callee": "canAccessProject",
+          "lineNumber": 181
+        },
+        {
+          "caller": "useFinding",
+          "callee": "go",
+          "lineNumber": 182
+        },
+        {
+          "caller": "useFinding",
+          "callee": "setPid",
+          "lineNumber": 187
+        },
+        {
+          "caller": "useFinding",
+          "callee": "setTimeout",
+          "lineNumber": 187
+        },
+        {
+          "caller": "useFinding",
+          "callee": "go",
+          "lineNumber": 187
+        },
+        {
+          "caller": "useFinding",
+          "callee": "setSwitcherOpen",
+          "lineNumber": 187
+        },
+        {
+          "caller": "MaskedName",
+          "callee": "useStore",
+          "lineNumber": 197
+        },
+        {
+          "caller": "MaskedName",
+          "callee": "can",
+          "lineNumber": 198
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useStore",
+          "lineNumber": 205
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "db.findings.find",
+          "lineNumber": 206
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useCreateReason",
+          "lineNumber": 208
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useGuard",
+          "lineNumber": 209
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useMemo",
+          "lineNumber": 210
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useEffect",
+          "lineNumber": 211
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "setFilter",
+          "lineNumber": 211
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "db.projects.find",
+          "lineNumber": 213
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "project?.members.filter((m) => m.role !== 'viewer').map",
+          "lineNumber": 214
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "project?.members.filter",
+          "lineNumber": 214
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useMemo",
+          "lineNumber": 216
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "(pf?.evidence || []).filter",
+          "lineNumber": 218
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "db.evidence.some",
+          "lineNumber": 218
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "members.includes",
+          "lineNumber": 218
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useState",
+          "lineNumber": 221
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useState",
+          "lineNumber": 222
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useState",
+          "lineNumber": 223
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useState",
+          "lineNumber": 224
+        },
+        {
+          "caller": "set",
+          "callee": "setD",
+          "lineNumber": 225
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "JSON.stringify",
+          "lineNumber": 226
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "JSON.stringify",
+          "lineNumber": 226
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "db.assets.filter",
+          "lineNumber": 228
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "db.operations.filter",
+          "lineNumber": 229
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "db.evidence.filter",
+          "lineNumber": 230
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "['draft', 'returned'].includes",
+          "lineNumber": 231
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.title.trim",
+          "lineNumber": 233
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.desc.trim",
+          "lineNumber": 235
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.impact.trim",
+          "lineNumber": 236
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.rec.trim",
+          "lineNumber": 237
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.severityReason.trim",
+          "lineNumber": 238
+        },
+        {
+          "caller": "draftPayload",
+          "callee": "d.title.trim",
+          "lineNumber": 242
+        },
+        {
+          "caller": "finish",
+          "callee": "setSaved",
+          "lineNumber": 244
+        },
+        {
+          "caller": "finish",
+          "callee": "toast",
+          "lineNumber": 245
+        },
+        {
+          "caller": "finish",
+          "callee": "setTimeout",
+          "lineNumber": 246
+        },
+        {
+          "caller": "finish",
+          "callee": "go",
+          "lineNumber": 246
+        },
+        {
+          "caller": "persist",
+          "callee": "A.updateFinding",
+          "lineNumber": 252
+        },
+        {
+          "caller": "persist",
+          "callee": "draftPayload",
+          "lineNumber": 252
+        },
+        {
+          "caller": "persist",
+          "callee": "d.evidence.filter((e) => !editing.evidence.includes(e)).forEach",
+          "lineNumber": 253
+        },
+        {
+          "caller": "persist",
+          "callee": "d.evidence.filter",
+          "lineNumber": 253
+        },
+        {
+          "caller": "persist",
+          "callee": "editing.evidence.includes",
+          "lineNumber": 253
+        },
+        {
+          "caller": "persist",
+          "callee": "A.attachEvidence",
+          "lineNumber": 253
+        },
+        {
+          "caller": "persist",
+          "callee": "d.severityReason.trim",
+          "lineNumber": 254
+        },
+        {
+          "caller": "persist",
+          "callee": "A.addFindingComment",
+          "lineNumber": 254
+        },
+        {
+          "caller": "persist",
+          "callee": "d.severityReason.trim",
+          "lineNumber": 254
+        },
+        {
+          "caller": "persist",
+          "callee": "A.setFindingStatus",
+          "lineNumber": 255
+        },
+        {
+          "caller": "persist",
+          "callee": "A.createFinding",
+          "lineNumber": 257
+        },
+        {
+          "caller": "persist",
+          "callee": "draftPayload",
+          "lineNumber": 257
+        },
+        {
+          "caller": "persist",
+          "callee": "d.severityReason.trim",
+          "lineNumber": 258
+        },
+        {
+          "caller": "persist",
+          "callee": "A.addFindingComment",
+          "lineNumber": 258
+        },
+        {
+          "caller": "persist",
+          "callee": "d.severityReason.trim",
+          "lineNumber": 258
+        },
+        {
+          "caller": "persist",
+          "callee": "finish",
+          "lineNumber": 260
+        },
+        {
+          "caller": "saveDraft",
+          "callee": "setTried",
+          "lineNumber": 264
+        },
+        {
+          "caller": "saveDraft",
+          "callee": "d.title.trim",
+          "lineNumber": 265
+        },
+        {
+          "caller": "saveDraft",
+          "callee": "toast",
+          "lineNumber": 265
+        },
+        {
+          "caller": "saveDraft",
+          "callee": "persist",
+          "lineNumber": 266
+        },
+        {
+          "caller": "submit",
+          "callee": "setTried",
+          "lineNumber": 269
+        },
+        {
+          "caller": "submit",
+          "callee": "Object.keys",
+          "lineNumber": 270
+        },
+        {
+          "caller": "submit",
+          "callee": "toast",
+          "lineNumber": 270
+        },
+        {
+          "caller": "submit",
+          "callee": "toast",
+          "lineNumber": 271
+        },
+        {
+          "caller": "submit",
+          "callee": "persist",
+          "lineNumber": 272
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "useDirty",
+          "lineNumber": 274
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.title.trim",
+          "lineNumber": 274
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "persist",
+          "lineNumber": 274
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "setSaved",
+          "lineNumber": 274
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "toast",
+          "lineNumber": 274
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "canAccessProject",
+          "lineNumber": 276
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "go",
+          "lineNumber": 276
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "setSwitcherOpen",
+          "lineNumber": 277
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "go",
+          "lineNumber": 278
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "go",
+          "lineNumber": 282
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "setSwitcherOpen",
+          "lineNumber": 283
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "[...editing.comments].reverse",
+          "lineNumber": 289
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "go",
+          "lineNumber": 297
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "go",
+          "lineNumber": 297
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "E",
+          "lineNumber": 315
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 315
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 317
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "SEVS.map",
+          "lineNumber": 317
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 320
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "[...new Set([...members, d.owner])].map",
+          "lineNumber": 320
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "E",
+          "lineNumber": 322
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 323
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "E",
+          "lineNumber": 330
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 331
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "assets.map",
+          "lineNumber": 331
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 334
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "ops.map",
+          "lineNumber": 334
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 337
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "TECHNIQUES.map",
+          "lineNumber": 337
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 339
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "E",
+          "lineNumber": 340
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 340
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "E",
+          "lineNumber": 341
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 341
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "E",
+          "lineNumber": 342
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 342
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "evs.map",
+          "lineNumber": 349
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "can",
+          "lineNumber": 351
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "cx",
+          "lineNumber": 353
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.evidence.includes",
+          "lineNumber": 354
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "set",
+          "lineNumber": 354
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.evidence.filter",
+          "lineNumber": 354
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "go",
+          "lineNumber": 369
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "go",
+          "lineNumber": 369
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "setPreview",
+          "lineNumber": 370
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "setPreview",
+          "lineNumber": 374
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "setPreview",
+          "lineNumber": 374
+        },
+        {
+          "caller": "FindingForm",
+          "callee": "d.evidence.join",
+          "lineNumber": 377
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "useStore",
+          "lineNumber": 392
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "useFinding",
+          "lineNumber": 393
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "useState",
+          "lineNumber": 394
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "useState",
+          "lineNumber": 395
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "useAiActions",
+          "lineNumber": 396
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "readOnly",
+          "lineNumber": 399
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "can",
+          "lineNumber": 400
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "can",
+          "lineNumber": 401
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "db.projects.find",
+          "lineNumber": 402
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "db.assets.find",
+          "lineNumber": 403
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "db.operations.find",
+          "lineNumber": 404
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "TECHNIQUES.find",
+          "lineNumber": 405
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "[...f.comments].reverse",
+          "lineNumber": 408
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "db.reports.filter",
+          "lineNumber": 409
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "['draft', 'returned'].includes",
+          "lineNumber": 409
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "db.reports.filter",
+          "lineNumber": 410
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "r.findings.includes",
+          "lineNumber": 410
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "can",
+          "lineNumber": 411
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "['draft', 'review', 'returned'].includes",
+          "lineNumber": 411
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "op?.steps.find",
+          "lineNumber": 413
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "f.evidence.includes",
+          "lineNumber": 413
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "op?.steps.find",
+          "lineNumber": 413
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "[...f.history].reverse().find",
+          "lineNumber": 414
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "[...f.history].reverse",
+          "lineNumber": 414
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "/Confirmed|Returned/.test",
+          "lineNumber": 414
+        },
+        {
+          "caller": "doSubmit",
+          "callee": "A.setFindingStatus",
+          "lineNumber": 415
+        },
+        {
+          "caller": "doSubmit",
+          "callee": "toast",
+          "lineNumber": 415
+        },
+        {
+          "caller": "approve",
+          "callee": "confirm",
+          "lineNumber": 416
+        },
+        {
+          "caller": "approve",
+          "callee": "A.setFindingStatus",
+          "lineNumber": 416
+        },
+        {
+          "caller": "approve",
+          "callee": "toast",
+          "lineNumber": 416
+        },
+        {
+          "caller": "sendBack",
+          "callee": "confirm",
+          "lineNumber": 417
+        },
+        {
+          "caller": "sendBack",
+          "callee": "A.setFindingStatus",
+          "lineNumber": 417
+        },
+        {
+          "caller": "sendBack",
+          "callee": "toast",
+          "lineNumber": 417
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "['draft', 'returned'].includes",
+          "lineNumber": 420
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "actions.push",
+          "lineNumber": 421
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 422
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "ai.why",
+          "lineNumber": 427
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "actions.push",
+          "lineNumber": 428
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "ai.dismiss",
+          "lineNumber": 429
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "ai.verify",
+          "lineNumber": 430
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "actions.push",
+          "lineNumber": 434
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "actions.push",
+          "lineNumber": 439
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "confirm",
+          "lineNumber": 439
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "A.setFindingStatus",
+          "lineNumber": 439
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "toast",
+          "lineNumber": 439
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "actions.push",
+          "lineNumber": 440
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "A.setFindingStatus",
+          "lineNumber": 440
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "toast",
+          "lineNumber": 440
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "actions.push",
+          "lineNumber": 441
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 441
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "actions.push",
+          "lineNumber": 442
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "setRep",
+          "lineNumber": 443
+        },
+        {
+          "caller": "postComment",
+          "callee": "note.trim",
+          "lineNumber": 446
+        },
+        {
+          "caller": "postComment",
+          "callee": "A.addFindingComment",
+          "lineNumber": 446
+        },
+        {
+          "caller": "postComment",
+          "callee": "note.trim",
+          "lineNumber": 446
+        },
+        {
+          "caller": "postComment",
+          "callee": "setNote",
+          "lineNumber": 446
+        },
+        {
+          "caller": "postComment",
+          "callee": "toast",
+          "lineNumber": 446
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 451
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 459
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "['draft', 'returned'].includes",
+          "lineNumber": 469
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 471
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 489
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "f.evidence.map",
+          "lineNumber": 490
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 490
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 491
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 494
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 495
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "inReport.map",
+          "lineNumber": 498
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "go",
+          "lineNumber": 498
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "f.evidence.map((id) => db.evidence.find((e) => e.id === id)).filter((e): e is Evidence => !!e).map",
+          "lineNumber": 505
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "f.evidence.map((id) => db.evidence.find((e) => e.id === id)).filter",
+          "lineNumber": 505
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "f.evidence.map",
+          "lineNumber": 505
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "db.evidence.find",
+          "lineNumber": 505
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "f.comments.map",
+          "lineNumber": 513
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "cx",
+          "lineNumber": 514
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "setNote",
+          "lineNumber": 521
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "note.trim",
+          "lineNumber": 522
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "note.trim",
+          "lineNumber": 522
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "FLOW.map",
+          "lineNumber": 530
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "cx",
+          "lineNumber": 533
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "cx",
+          "lineNumber": 534
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "[...f.history].reverse().map",
+          "lineNumber": 542
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "[...f.history].reverse",
+          "lineNumber": 542
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "/Returned/.test",
+          "lineNumber": 542
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "/Confirmed|Resolved|resolved/.test",
+          "lineNumber": 542
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "/review/i.test",
+          "lineNumber": 542
+        },
+        {
+          "caller": "FindingDetail",
+          "callee": "setRep",
+          "lineNumber": 548
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "useStore",
+          "lineNumber": 554
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "reports.map",
+          "lineNumber": 560
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "r.findings.includes",
+          "lineNumber": 561
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "A.setReportFindings",
+          "lineNumber": 565
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "toast",
+          "lineNumber": 565
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "onClose",
+          "lineNumber": 565
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "go",
+          "lineNumber": 565
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "setFilter",
+          "lineNumber": 571
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "onClose",
+          "lineNumber": 571
+        },
+        {
+          "caller": "AddToReport",
+          "callee": "go",
+          "lineNumber": 571
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "useStore",
+          "lineNumber": 579
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "useState",
+          "lineNumber": 580
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "useState",
+          "lineNumber": 581
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "useState",
+          "lineNumber": 582
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "f.evidence.map((id) => db.evidence.find((e) => e.id === id)).filter",
+          "lineNumber": 583
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "f.evidence.map",
+          "lineNumber": 583
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "db.evidence.find",
+          "lineNumber": 583
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "can",
+          "lineNumber": 584
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "db.evidence.filter",
+          "lineNumber": 586
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "f.evidence.includes",
+          "lineNumber": 586
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "setAttach",
+          "lineNumber": 592
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "setUp",
+          "lineNumber": 593
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "setUp",
+          "lineNumber": 597
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "setView",
+          "lineNumber": 607
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "go",
+          "lineNumber": 608
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "can",
+          "lineNumber": 608
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "can",
+          "lineNumber": 608
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "toast",
+          "lineNumber": 608
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "go",
+          "lineNumber": 609
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "setAttach",
+          "lineNumber": 611
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "setAttach",
+          "lineNumber": 611
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "candidates.map",
+          "lineNumber": 614
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "can",
+          "lineNumber": 616
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "A.attachEvidence",
+          "lineNumber": 620
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "toast",
+          "lineNumber": 620
+        },
+        {
+          "caller": "EvidenceTab",
+          "callee": "setUp",
+          "lineNumber": 627
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "useStore",
+          "lineNumber": 633
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "useState",
+          "lineNumber": 634
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "useState",
+          "lineNumber": 635
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "useState",
+          "lineNumber": 636
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "useState",
+          "lineNumber": 637
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "useState",
+          "lineNumber": 638
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "name.split('.').pop()?.toLowerCase",
+          "lineNumber": 639
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "name.split('.').pop",
+          "lineNumber": 639
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "name.split",
+          "lineNumber": 639
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "name.trim",
+          "lineNumber": 640
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "name.includes",
+          "lineNumber": 640
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "OK_EXT.includes",
+          "lineNumber": 640
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "OK_EXT.join",
+          "lineNumber": 640
+        },
+        {
+          "caller": "save",
+          "callee": "setTried",
+          "lineNumber": 642
+        },
+        {
+          "caller": "save",
+          "callee": "A.addEvidence",
+          "lineNumber": 644
+        },
+        {
+          "caller": "save",
+          "callee": "name.trim",
+          "lineNumber": 644
+        },
+        {
+          "caller": "save",
+          "callee": "A.attachEvidence",
+          "lineNumber": 645
+        },
+        {
+          "caller": "save",
+          "callee": "toast",
+          "lineNumber": 646
+        },
+        {
+          "caller": "save",
+          "callee": "name.trim",
+          "lineNumber": 646
+        },
+        {
+          "caller": "save",
+          "callee": "setName",
+          "lineNumber": 647
+        },
+        {
+          "caller": "save",
+          "callee": "setTried",
+          "lineNumber": 647
+        },
+        {
+          "caller": "save",
+          "callee": "setSens",
+          "lineNumber": 647
+        },
+        {
+          "caller": "save",
+          "callee": "onClose",
+          "lineNumber": 647
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "setName",
+          "lineNumber": 652
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "setKind",
+          "lineNumber": 653
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "['Image', 'Image (redacted)', 'Text', 'JSON', 'Log'].map",
+          "lineNumber": 653
+        },
+        {
+          "caller": "UploadModal",
+          "callee": "setSource",
+          "lineNumber": 654
+        },
+        {
+          "caller": "EvidencePreview",
+          "callee": "useStore",
+          "lineNumber": 663
+        },
+        {
+          "caller": "EvidencePreview",
+          "callee": "can",
+          "lineNumber": 664
+        },
+        {
+          "caller": "EvidencePreview",
+          "callee": "ev.kind.startsWith",
+          "lineNumber": 665
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "useStore",
+          "lineNumber": 695
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "useState",
+          "lineNumber": 696
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "useState",
+          "lineNumber": 697
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "useState",
+          "lineNumber": 698
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "['confirmed', 'remediation', 'retest', 'resolved'].includes",
+          "lineNumber": 699
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "can",
+          "lineNumber": 700
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "can",
+          "lineNumber": 700
+        },
+        {
+          "caller": "save",
+          "callee": "setTried",
+          "lineNumber": 703
+        },
+        {
+          "caller": "save",
+          "callee": "note.trim",
+          "lineNumber": 704
+        },
+        {
+          "caller": "save",
+          "callee": "A.addRetest",
+          "lineNumber": 705
+        },
+        {
+          "caller": "save",
+          "callee": "note.trim",
+          "lineNumber": 705
+        },
+        {
+          "caller": "save",
+          "callee": "A.setFindingStatus",
+          "lineNumber": 706
+        },
+        {
+          "caller": "save",
+          "callee": "note.trim",
+          "lineNumber": 706
+        },
+        {
+          "caller": "save",
+          "callee": "toast",
+          "lineNumber": 707
+        },
+        {
+          "caller": "save",
+          "callee": "setNote",
+          "lineNumber": 708
+        },
+        {
+          "caller": "save",
+          "callee": "setTried",
+          "lineNumber": 708
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "[...f.retests].reverse",
+          "lineNumber": 715
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "setResult",
+          "lineNumber": 730
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "note.trim",
+          "lineNumber": 731
+        },
+        {
+          "caller": "RetestTab",
+          "callee": "setNote",
+          "lineNumber": 731
+        },
+        {
+          "caller": "fakeHash",
+          "callee": "c.charCodeAt",
+          "lineNumber": 744
+        },
+        {
+          "caller": "fakeHash",
+          "callee": "Math.imul",
+          "lineNumber": 744
+        },
+        {
+          "caller": "fakeHash",
+          "callee": "out.push",
+          "lineNumber": 744
+        },
+        {
+          "caller": "fakeHash",
+          "callee": "(h >>> 0).toString(16).padStart",
+          "lineNumber": 744
+        },
+        {
+          "caller": "fakeHash",
+          "callee": "(h >>> 0).toString",
+          "lineNumber": 744
+        },
+        {
+          "caller": "fakeHash",
+          "callee": "out.join",
+          "lineNumber": 745
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "useStore",
+          "lineNumber": 749
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "useState",
+          "lineNumber": 750
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "useState",
+          "lineNumber": 751
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "scoped",
+          "lineNumber": 752
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "all.filter",
+          "lineNumber": 753
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "(e.id + ' ' + e.name + ' ' + e.source).toLowerCase().includes",
+          "lineNumber": 753
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "(e.id + ' ' + e.name + ' ' + e.source).toLowerCase",
+          "lineNumber": 753
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "q.toLowerCase",
+          "lineNumber": 753
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "setKind",
+          "lineNumber": 759
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "[...new Set(all.map((e) => e.kind))].map",
+          "lineNumber": 759
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "all.map",
+          "lineNumber": 759
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "go",
+          "lineNumber": 762
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "go",
+          "lineNumber": 763
+        },
+        {
+          "caller": "EvidenceList",
+          "callee": "can",
+          "lineNumber": 766
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "useStore",
+          "lineNumber": 779
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "useState",
+          "lineNumber": 780
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "useState",
+          "lineNumber": 781
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "db.evidence.find",
+          "lineNumber": 783
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 784
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "canAccessProject",
+          "lineNumber": 785
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 785
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "setPid",
+          "lineNumber": 787
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "setTimeout",
+          "lineNumber": 787
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 787
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "ev.source.split",
+          "lineNumber": 789
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "db.operations.find",
+          "lineNumber": 790
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "op?.steps.find",
+          "lineNumber": 791
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "db.findings.find",
+          "lineNumber": 792
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "f.evidence.includes",
+          "lineNumber": 792
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "db.agents.find",
+          "lineNumber": 793
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "db.sessions.find",
+          "lineNumber": 794
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "can",
+          "lineNumber": 795
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "can",
+          "lineNumber": 796
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "ev.kind.startsWith",
+          "lineNumber": 798
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "readOnly",
+          "lineNumber": 799
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "can",
+          "lineNumber": 800
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "fakeHash",
+          "lineNumber": 801
+        },
+        {
+          "caller": "toggle",
+          "callee": "confirm",
+          "lineNumber": 805
+        },
+        {
+          "caller": "toggle",
+          "callee": "setOrig",
+          "lineNumber": 805
+        },
+        {
+          "caller": "toggle",
+          "callee": "setLog",
+          "lineNumber": 805
+        },
+        {
+          "caller": "toggle",
+          "callee": "A.audit",
+          "lineNumber": 805
+        },
+        {
+          "caller": "toggle",
+          "callee": "setOrig",
+          "lineNumber": 806
+        },
+        {
+          "caller": "toggle",
+          "callee": "toast",
+          "lineNumber": 806
+        },
+        {
+          "caller": "createFinding",
+          "callee": "setFilter",
+          "lineNumber": 809
+        },
+        {
+          "caller": "createFinding",
+          "callee": "go",
+          "lineNumber": 810
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 822
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "can",
+          "lineNumber": 823
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "can",
+          "lineNumber": 843
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "can",
+          "lineNumber": 843
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "toast",
+          "lineNumber": 843
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "log.map",
+          "lineNumber": 852
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 861
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 862
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "hash.slice",
+          "lineNumber": 866
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 873
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 874
+        },
+        {
+          "caller": "EvidenceInspector",
+          "callee": "go",
+          "lineNumber": 875
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 2,
+        "functionCount": 18,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/screens/e.tsx",
+      "language": "typescript",
+      "fileCategory": "code",
+      "totalLines": 5,
+      "nonEmptyLines": 4,
+      "exports": [
+        {
+          "name": "routes",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

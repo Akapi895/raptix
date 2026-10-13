@@ -1,0 +1,106 @@
+[
+  {
+    "id": "layer:ui-screens",
+    "name": "Màn hình ứng dụng",
+    "description": "35 màn hình UI của dashboard quản lý vận hành red-team, chia theo nhóm a–h kèm scenarios, demo-guide và ai-copilot, tiêu thụ state qua store và tái sử dụng g-common/g-fanout.",
+    "nodeIds": [
+      "file:src/screens/a-dashboard.tsx",
+      "file:src/screens/a-login.tsx",
+      "file:src/screens/a-system.tsx",
+      "file:src/screens/a.tsx",
+      "file:src/screens/ai-copilot.tsx",
+      "file:src/screens/b-detail.tsx",
+      "file:src/screens/b-detail2.tsx",
+      "file:src/screens/b-wizard.tsx",
+      "file:src/screens/b.tsx",
+      "file:src/screens/c-common.tsx",
+      "file:src/screens/c-console.tsx",
+      "file:src/screens/c-results.tsx",
+      "file:src/screens/c.tsx",
+      "file:src/screens/d-agents.tsx",
+      "file:src/screens/d-assets.tsx",
+      "file:src/screens/d-library.tsx",
+      "file:src/screens/d-shared.tsx",
+      "file:src/screens/d.tsx",
+      "file:src/screens/demo-guide.tsx",
+      "file:src/screens/e-analysis.tsx",
+      "file:src/screens/e-findings.tsx",
+      "file:src/screens/e.tsx",
+      "file:src/screens/f-report.tsx",
+      "file:src/screens/f-settings.tsx",
+      "file:src/screens/f.tsx",
+      "file:src/screens/g-chat.tsx",
+      "file:src/screens/g-common.tsx",
+      "file:src/screens/g-fanout.tsx",
+      "file:src/screens/g-plan.tsx",
+      "file:src/screens/g-trace.tsx",
+      "file:src/screens/g-workspace.tsx",
+      "file:src/screens/g.tsx",
+      "file:src/screens/h-session.tsx",
+      "file:src/screens/h.tsx",
+      "file:src/screens/scenarios.tsx"
+    ]
+  },
+  {
+    "id": "layer:entry-routing",
+    "name": "Điểm vào & định tuyến",
+    "description": "index.html, main.tsx và App.tsx khởi tạo ứng dụng: HTML shell chứa #root, mount StoreProvider và bảng ROUTES điều hướng tới các nhóm màn hình.",
+    "nodeIds": [
+      "file:index.html",
+      "file:src/main.tsx",
+      "file:src/App.tsx"
+    ]
+  },
+  {
+    "id": "layer:design-system",
+    "name": "Hệ thống thiết kế & Shell",
+    "description": "ui.tsx (primitive dùng chung có fan-in 31), shell.tsx (khung layout điều hướng) và index.css (Tailwind v4, theme, @font-face) tạo nền tảng hiển thị chung.",
+    "nodeIds": [
+      "file:src/ui.tsx",
+      "file:src/shell.tsx",
+      "file:src/index.css"
+    ]
+  },
+  {
+    "id": "layer:state-data",
+    "name": "State & dữ liệu",
+    "description": "store.tsx là React Context store trung tâm (fan-in 34) và data.ts cung cấp types cùng seed(); mọi màn hình đọc/ghi state qua lớp này.",
+    "nodeIds": [
+      "file:src/store.tsx",
+      "file:src/data.ts"
+    ]
+  },
+  {
+    "id": "layer:config-tooling",
+    "name": "Cấu hình & công cụ build",
+    "description": "Cấu hình Vite/TypeScript/npm/mise, khai báo kiểu ambient và bộ wrapper script + JSON của Figma Make (.figma/make, .ua) phục vụ build, dev và import assets.",
+    "nodeIds": [
+      "file:vite.config.ts",
+      "file:src/vite-env.d.ts",
+      "file:.gitattributes",
+      "config:package.json",
+      "config:tsconfig.json",
+      "config:.mise.toml",
+      "config:.ua/config.json",
+      "file:.figma/make/analyze-routes",
+      "file:.figma/make/deploy",
+      "file:.figma/make/deploy-preview",
+      "file:.figma/make/dev",
+      "config:.figma/make/dev.json",
+      "file:.figma/make/format",
+      "file:.figma/make/import-assets.mjs",
+      "file:.figma/make/install",
+      "file:.figma/make/langserver",
+      "config:.figma/make/site.json"
+    ]
+  },
+  {
+    "id": "layer:documentation",
+    "name": "Tài liệu dự án",
+    "description": "AGENTS.md (hướng dẫn agent phát triển) và implementation-plan.md (kế hoạch triển khai) mô tả kiến trúc và quy ước cho các lớp code.",
+    "nodeIds": [
+      "document:AGENTS.md",
+      "document:implementation-plan.md"
+    ]
+  }
+]
