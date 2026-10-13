@@ -1,33 +1,39 @@
 /**
- * Tickets 17/18: the project wizard shell — five steps with stepper state,
+ * Tickets 17–19: the project wizard shell — five steps with stepper state,
  * information/objectives/scope/ROE steps validated through React Hook Form
  * + the shared Zod schema (invalid data cannot advance, errors render
  * inline, cross-field rules retained), back/forward retaining the same
- * draft, the dirty/unsaved-changes guard on navigation, and the five-step
- * creation flow still committing through the single legacy store action.
+ * draft, the dirty/unsaved-changes guard on navigation, and the creation
+ * flow committing through the single legacy store action over the
+ * ticket-19 transaction handler (review fail rows gate submission with
+ * reasons; the handler refuses unauthorized/invalid creations).
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { StoreProvider, useStore, type Store } from '../../store'
+import { StoreProvider, useServices, useStore, type ProjectDraft, type Store } from '../../store'
+import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { ProjectNew } from '../../screens/b-wizard'
-import { defaultWizardDraft, validateWizardStep } from './draft'
+import { defaultWizardDraft, toLegacyProjectDraft, validateWizardStep } from './draft'
+import { createProjectTransaction } from './service'
 
 afterEach(cleanup)
 
-function Probe({ ready }: { ready: (s: Store) => void }) {
-  ready(useStore())
+function Probe({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) {
+  ready(useStore(), useServices())
   return null
 }
 
 function mountWizard() {
   let store!: Store
+  let svc!: ConsoleServices
   const view = render(
     <StoreProvider>
-      <Probe ready={(s) => { store = s }} />
+      <Probe ready={(s, v) => { store = s; svc = v }} />
       <ProjectNew />
     </StoreProvider>,
   )
-  return { store: () => store, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return { store: () => store, svc: () => svc!, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
 }
 
 const fillInfo = () => {
@@ -370,5 +376,115 @@ describe('compat creation flow (single legacy path)', () => {
     expect(h.store().db.projects.length).toBe(6)
     expect(h.store().toasts.some((t) => t.text === 'Complete a valid Step 1 before saving a draft.')).toBe(true)
     expect(screen.getByLabelText(/Project Name/)).toBeInTheDocument()
+  })
+})
+
+describe('review gates, the submission transaction and handler refusals (ticket 19)', () => {
+  const walkToReview = async () => {
+    const h = mountWizard()
+    fillInfo()
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByLabelText(/Main Objective/)
+    fillObjectives()
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByLabelText(/Scope Description/)
+    fireEvent.change(screen.getByLabelText(/Scope Description/), { target: { value: 'Lab environment, restricted zone excluded.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByLabelText(/Requested Reviewer/)
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(await screen.findByText('Validation')).toBeInTheDocument()
+    return h
+  }
+  const addInScopeAsset = () => {
+    fireEvent.change(screen.getByLabelText('Asset name'), { target: { value: 'web-lab-01' } })
+    fireEvent.change(screen.getByLabelText(/Identifier \(synthetic FQDN/), { target: { value: 'web-lab-01.lab.local' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add Asset' }))
+  }
+
+  it('fail rows block submission with reasons; resolving them retries into exactly one entity set', async () => {
+    const h = await walkToReview()
+    expect(screen.getByRole('button', { name: 'Submit for Approval' })).toBeDisabled()
+    expect(screen.getByText(/Submit is blocked by:/)).toBeInTheDocument()
+    expect(screen.getAllByText('At least one in-scope asset').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Emergency contact provided').length).toBeGreaterThan(0)
+    expect(h.store().db.projects.length).toBe(6)
+
+    /* The failed attempt changed nothing: retry is permitted on the same draft. */
+    fireEvent.click(screen.getAllByRole('button', { name: 'Resolve' })[0])
+    expect(await screen.findByLabelText('Asset name')).toBeInTheDocument()
+    addInScopeAsset()
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByLabelText(/Emergency Contact/)
+    fireEvent.change(screen.getByLabelText(/Emergency Contact/), { target: { value: 'Robin Vale — +1 (555) 010-0100' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(await screen.findByText('Validation')).toBeInTheDocument()
+
+    const seen: ChangeSet[] = []
+    const off = h.svc().subscribe((cs) => seen.push(cs))
+    fireEvent.click(screen.getByRole('checkbox', { name: /I confirm the scope/ }))
+    const submit = screen.getByRole('button', { name: 'Submit for Approval' })
+    expect(submit).toBeEnabled()
+    fireEvent.click(submit)
+    await waitFor(() => expect(h.store().db.projects.length).toBe(7))
+
+    const created = h.store().db.projects.filter((p) => p.id === 'RT-2026-021')
+    expect(created).toHaveLength(1)
+    expect(created[0].status).toBe('pending')
+    expect(created[0].roeStatus).toBe('pending')
+    expect(created[0].members.map((m) => m.user)).toEqual(expect.arrayContaining(['Alex Morgan', 'Pat Kim']))
+    expect(h.store().db.assets.filter((a) => a.projectId === 'RT-2026-021')).toHaveLength(1)
+    const aprs = h.store().db.approvals.filter((a) => a.projectId === 'RT-2026-021' && a.type === 'Project creation')
+    expect(aprs).toHaveLength(1)
+    expect(aprs[0].status).toBe('pending')
+    expect(h.store().db.notices.some((n) => n.text === 'RT-2026-021 is waiting for your ROE approval' && n.projectId === 'RT-2026-021')).toBe(true)
+    expect(h.store().db.audit[0]).toMatchObject({ action: 'Created project and submitted for approval', obj: 'RT-2026-021', actor: 'Alex Morgan' })
+    off()
+
+    /* One atomic commit published every created entity together, and the
+     * submission switched pid to the new project as today. */
+    expect(seen).toHaveLength(1)
+    expect(seen[0].corr).toBe('legacy')
+    expect(seen[0].entities.map((e) => e.kind)).toEqual(expect.arrayContaining(['project', 'asset', 'approval', 'notice', 'audit']))
+    await waitFor(() => expect(h.store().pid).toBe('RT-2026-021'))
+    expect(h.store().toasts.some((t) => t.text === 'Created RT-2026-021 and submitted for approval')).toBe(true)
+  })
+
+  it('the creation handler refuses unauthorized actors and invalid drafts without committing', () => {
+    const svc = createConsoleServices()
+    const before = JSON.stringify(svc.authority.snapshot())
+    const ctx = (role: ActorRef['role']): RequestContext => ({ actor: { id: 'Taylor Chen', role }, projectId: '', corr: 'handler-probe' })
+    const valid = (): ProjectDraft => toLegacyProjectDraft({ ...defaultWizardDraft([], 'Taylor Chen'), name: 'Handler Probe', client: 'Probe Client (Demo)' })
+
+    expect(createProjectTransaction(svc.authority, svc.clock, ctx('analyst'), valid(), true))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden' }) })
+    expect(createProjectTransaction(svc.authority, svc.clock, ctx('viewer'), valid(), false))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden' }) })
+    expect(createProjectTransaction(svc.authority, svc.clock, ctx('manager'), { ...valid(), id: 'RT-2026-014' }, false))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('already exists') }) })
+    expect(createProjectTransaction(svc.authority, svc.clock, ctx('manager'), { ...valid(), id: 'wizard-q4' }, false))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'Code must look like RT-2026-016.' }) })
+    expect(createProjectTransaction(svc.authority, svc.clock, ctx('manager'), { ...valid(), name: '   ' }, false))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'Enter a project name.' }) })
+    expect(createProjectTransaction(svc.authority, svc.clock, ctx('manager'), { ...valid(), client: '' }, false))
+      .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'Select or enter a client / organization.' }) })
+
+    expect(JSON.stringify(svc.authority.snapshot())).toBe(before)
+    svc.dispose()
+  })
+
+  it('an unauthorized persona is gated in the UI and refused by the handler-backed action', async () => {
+    const h = mountWizard()
+    fillInfo()
+    await waitFor(() => expect(h.store().dirty).toBe(true))
+
+    h.run(() => { h.store().setMe('Casey Nguyen (Client)') })
+    expect(screen.getByText('You do not have permission to create projects')).toBeInTheDocument()
+
+    const draft: ProjectDraft = toLegacyProjectDraft({ ...defaultWizardDraft([], 'Casey Nguyen (Client)'), name: 'Viewer Probe', client: 'Probe Client (Demo)' })
+    let out!: string
+    h.run(() => { out = h.store().A.createProject(draft, false) })
+    expect(out).toBe('')
+    expect(h.store().db.projects.length).toBe(6)
+    expect(screen.getByText('You do not have permission to create projects')).toBeInTheDocument()
   })
 })

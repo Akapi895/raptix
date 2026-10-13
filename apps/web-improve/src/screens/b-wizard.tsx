@@ -1,5 +1,5 @@
 /**
- * Project creation wizard (tickets 17/18, ADR-0067 —
+ * Project creation wizard (tickets 17–19, ADR-0067 —
  * docs/adr/0067-web-console-service-domain-boundary.md).
  *
  * The wizard shell — stepper, step navigation, one validated draft with
@@ -7,9 +7,10 @@
  * `src/features/wizard/`. Steps 1 (information), 2 (objectives, RHF
  * `useFieldArray`), 3 (scope/ROE essentials and asset in/out lists) and 4
  * (ROE document, reviewer and members) render React Hook Form fields over
- * the shared Zod schema; step 5 keeps its legacy review body wired to the
- * same draft until ticket 19 migrates it. Save-draft and create commit
- * through the single legacy store action — no second creation path.
+ * the shared Zod schema; step 5 (review & create) lists the composed draft
+ * with pass/review/fail gates and submits through the handler-owned
+ * creation transaction (ticket 19) — save-draft and create both commit via
+ * the single legacy store action, no second creation path.
  */
 import { useState } from 'react'
 import { Controller, useFieldArray } from 'react-hook-form'
@@ -398,7 +399,7 @@ export function ProjectNew() {
             </div>
           )}
 
-          {/* ───── STEP 5 — compat (ticket 19) ───── */}
+          {/* ───── STEP 5 — review & submission (ticket 19) ───── */}
           {step === 4 && (
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
               <div className="space-y-4">
