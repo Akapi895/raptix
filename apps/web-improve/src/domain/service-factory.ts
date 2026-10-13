@@ -47,6 +47,10 @@ import { createAnalysisService, type AnalysisService } from '../features/analysi
 // invitations) are feature-local (src/features/settings/service.ts); the
 // factory only wires them into a scope.
 import { createSettingsService, type SettingsService } from '../features/settings/service'
+// Ticket 50 append: asset catalog/detail + scope-classification read
+// handlers are feature-local (src/features/assets/service.ts); the factory
+// only wires them into a scope.
+import { createAssetService, type AssetService } from '../features/assets/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -114,6 +118,8 @@ export interface ConsoleServices {
   analysis(actor: ActorRef, projectId: string): AnalysisService
   /** Typed organization settings handlers (ticket 56 — feature-local implementation). */
   settings(actor: ActorRef, projectId: string): SettingsService
+  /** Typed asset catalog/detail + scope-classification reads (ticket 50 — feature-local implementation). */
+  assets(actor: ActorRef, projectId: string): AssetService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -351,6 +357,27 @@ export function createConsoleServices(): ConsoleServices {
     return createSettingsService(authority, clock, guard)
   }
 
+  /* ── Ticket 50 append: asset catalog list/detail + scope-classification
+     reads. Same superseded-scope guard as forScope, so cancelScope covers
+     in-flight asset reads on a persona/project switch. Reads only —
+     import/scope mutations and tags/notes stay with the legacy actions
+     until ticket 51 migrates them. ── */
+  const forAssets = (actor: ActorRef, projectId: string): AssetService => {
+    const key = scopeKey(actor, projectId)
+    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
+      let superseded = false
+      const cancel = () => { superseded = true }
+      let set = inFlight.get(key)
+      if (!set) { set = new Set(); inFlight.set(key, set) }
+      set.add(cancel)
+      await Promise.resolve()
+      set.delete(cancel)
+      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
+      return produce()
+    }
+    return createAssetService(authority, guard)
+  }
+
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
     set?.forEach((cancel) => cancel())
@@ -386,6 +413,7 @@ export function createConsoleServices(): ConsoleServices {
     library: forLibrary,
     analysis: forAnalysis,
     settings: forSettings,
+    assets: forAssets,
     cancelScope,
     reset(variant) {
       scheduler.clear()

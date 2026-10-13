@@ -2,8 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
 import { useStore, useDirty } from '../store'
 import type { Asset } from '../data'
-import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, Timeline, useGuard, usePaged, cx } from '../ui'
+import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, PickProjectBanner, shortDate, Trunc, withLoading } from './d-shared'
+// Ticket 50: catalog list, asset detail and scope views read through the
+// typed asset service via Query (feature-local handlers).
+import { AssetReadError, useAssetDetail, useAssetList, useAssetScope } from '../features/assets/query'
+import type { AssetListItem, AssetScopeProject } from '../features/assets/service'
 
 const TYPES = ['Host', 'IP', 'URL', 'Application', 'Subnet']
 const SCOPES: Asset['scope'][] = ['in', 'out', 'pending', 'unclassified']
@@ -58,32 +62,37 @@ export function ScopeBadge({ a }: { a: Asset }) {
   )
 }
 
-/* ───────────── List (AS-01) ───────────── */
+/* ───────────── List (AS-01, ticket 50: typed service read + Query) ───────────── */
 function AssetList() {
-  const { db, scoped, go, pid, can, confirm, A, toast, setFilter, persistFilters } = useStore()
+  const { go, pid, can, confirm, A, toast, setFilter, persistFilters } = useStore()
   const guard = useGuard(pid === 'all' ? undefined : pid)
-  const all = scoped(db.assets)
   /* Filter convention: persistFilters['assets.scope'] = 'in' | 'out' | 'pending' | 'unclassified' ('in' = Approved In Scope) */
   const sc = (persistFilters['assets.scope'] as string) || ''
   const setSc = (v: string) => setFilter('assets.scope', v)
   const [q, setQ] = useState(''), [ty, setTy] = useState(''), [ow, setOw] = useState(''), [os, setOs] = useState('')
+  const [page, setPage] = useState(1)
   const [sel, setSel] = useState<string[]>([])
-  const rows = all.filter((a) => (!q || (a.name + a.ident + a.id + a.ip).toLowerCase().includes(q.toLowerCase())) && (!ty || a.type === ty) && (!sc || a.scope === sc) && (!ow || a.owner === ow) && (!os || a.os === os))
-  const pg = usePaged(rows, 10)
-  const owners = [...new Set(all.map((a) => a.owner))]
+  /* The one catalog read: scope-checked typed service; rows, scope KPIs and
+     filter options derive from the actor's accessible projects only. */
+  const list = useAssetList({ q: q || undefined, type: ty || undefined, scope: sc || undefined, owner: ow || undefined, os: os || undefined, page: page > 1 ? page : undefined })
+  useEffect(() => { setPage(1); setSel([]) }, [q, ty, sc, ow, os])
+  const read = list.data
+  const rows = read?.items ?? []
+  const owners = read?.owners ?? []
   const filtered = !!(q || ty || sc || ow || os)
   const clear = () => { setQ(''); setTy(''); setSc(''); setOw(''); setOs('') }
-  const selected = all.filter((a) => sel.includes(a.id))
-  const notIn = selected.filter((a) => a.scope !== 'in')
+  /* Selection is page-scoped (server-side pagination): a page or filter change resets it. */
+  const selected = rows.filter((r) => sel.includes(r.asset.id))
+  const notIn = selected.filter((r) => r.asset.scope !== 'in')
   const addWhy = pid === 'all' ? 'Select a specific project to add assets.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can add assets to scope.' : ''
   const toggle = (id: string, on: boolean) => setSel((s) => (on ? [...s, id] : s.filter((x) => x !== id)))
-  const allOnPage = pg.rows.length > 0 && pg.rows.every((r) => sel.includes(r.id))
+  const allOnPage = rows.length > 0 && rows.every((r) => sel.includes(r.asset.id))
   const bulkOut = () => confirm({
     title: `Mark ${selected.length} assets out of scope?`, danger: true, confirmLabel: 'Mark out of scope', reasonLabel: 'Reason', reasonRequired: true,
-    body: <>Out-of-scope assets will not appear in the target list of new operations{selected.some((a) => a.scope === 'in') ? '. Some are currently in approved scope; the change is recorded in the audit log.' : '.'}</>,
-    onConfirm: (r) => { selected.forEach((a) => A.setAssetScope(a.id, 'out')); A.audit('Marked out of scope (bulk)', selected.map((a) => a.id).join(', '), pid === 'all' ? selected[0].projectId : pid, 'Success', r); toast(`${selected.length} assets marked out of scope.`, 'warn'); setSel([]) },
+    body: <>Out-of-scope assets will not appear in the target list of new operations{selected.some((r) => r.asset.scope === 'in') ? '. Some are currently in approved scope; the change is recorded in the audit log.' : '.'}</>,
+    onConfirm: (r) => { selected.forEach((x) => A.setAssetScope(x.asset.id, 'out')); A.audit('Marked out of scope (bulk)', selected.map((x) => x.asset.id).join(', '), selected[0] ? selected[0].asset.projectId : pid, 'Success', r); toast(`${selected.length} assets marked out of scope.`, 'warn'); setSel([]) },
   })
-  const pickPlaybook = () => { setFilter('operation-new.assets', selected.filter((a) => a.scope === 'in').map((a) => a.id)); go('playbooks') }
+  const pickPlaybook = () => { setFilter('operation-new.assets', selected.filter((r) => r.asset.scope === 'in').map((r) => r.asset.id)); go('playbooks') }
   return (
     <>
       <PageHeader title="Assets" sub="Asset inventory and scope status by project. Assets outside approved scope cannot be selected as targets."
@@ -94,65 +103,72 @@ function AssetList() {
         </>} />
       {pid === 'all' && <PickProjectBanner what="add assets or change their scope (aggregated mode is read-only)" />}
       {addWhy && pid !== 'all' && <div className="-mt-2 mb-3"><Locked reason={`Add Asset: ${addWhy}`} /></div>}
-      <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {SCOPES.map((s) => <Kpi key={s} label={SCOPE_LABEL[s]} value={all.filter((a) => a.scope === s).length} tone={({ in: 'ok', out: 'bad', pending: 'warn', unclassified: 'neutral' } as const)[s]} onClick={() => setSc(sc === s ? '' : s)} sub={s === 'pending' ? 'Stays Pending until a reviewer approves, even if proposed in scope' : sc === s ? 'Filter active, click to clear' : 'Click to filter'} />)}
-      </div>
-      <FilterBar>
-        <SearchBox className="w-64" value={q} onChange={setQ} placeholder="Search name, IP, hostname or URL" />
-        <Select className="!w-44" aria-label="Scope" value={sc} onChange={(e) => setSc(e.target.value)}><option value="">All scope states</option>{SCOPES.map((s) => <option key={s} value={s}>{SCOPE_LABEL[s]}</option>)}</Select>
-        <Select className="!w-36" aria-label="Type" value={ty} onChange={(e) => setTy(e.target.value)}><option value="">All types</option>{TYPES.map((t) => <option key={t}>{t}</option>)}</Select>
-        <MoreFilters active={[ow, os].filter(Boolean).length}>
-          <Select aria-label="Owner" value={ow} onChange={(e) => setOw(e.target.value)}><option value="">All owners</option>{owners.map((o) => <option key={o}>{o}</option>)}</Select>
-          <Select aria-label="OS" value={os} onChange={(e) => setOs(e.target.value)}><option value="">All OS</option><option>Windows</option><option>Linux</option></Select>
-        </MoreFilters>
-        {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
-      </FilterBar>
-      {sel.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-2.5 text-sm">
-          <b>{sel.length} {sel.length === 1 ? 'asset' : 'assets'} selected</b>
-          {notIn.length > 0 && <span className="text-xs text-warn">{notIn.length} not in scope, so they will not be used as targets.</span>}
-          <span className="ml-auto flex flex-wrap gap-2">
-            <Button size="sm" icon={BookOpen} onClick={pickPlaybook} disabled={selected.length === notIn.length} title={selected.length === notIn.length ? 'None of the selected assets are in scope. Request a scope change first.' : 'Choose a playbook for the in-scope assets'}>Choose playbook</Button>
-            <Button size="sm" variant="danger" icon={Ban} onClick={bulkOut} disabled={!can('editScope') || guard.ro || pid === 'all'} title={pid === 'all' ? 'Select a specific project.' : guard.ro ? guard.reason : !can('editScope') ? 'Requires scope management permission.' : 'Mark out of scope'}>Mark out of scope</Button>
-            <Button size="sm" variant="ghost" onClick={() => setSel([])}>Clear selection</Button>
-          </span>
-        </div>
+      {list.isPending ? (
+        <div aria-busy="true" aria-label="Loading assets"><Skeleton className="h-96" /></div>
+      ) : list.isError ? (
+        <Empty icon={Server} title="Assets could not be loaded" action={<Button onClick={() => list.refetch()}>Retry</Button>}>
+          {(list.error as AssetReadError).failure.message}
+        </Empty>
+      ) : read && (
+        <>
+          <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+            {SCOPES.map((s) => <Kpi key={s} label={SCOPE_LABEL[s]} value={read.kpis[s]} tone={({ in: 'ok', out: 'bad', pending: 'warn', unclassified: 'neutral' } as const)[s]} onClick={() => setSc(sc === s ? '' : s)} sub={s === 'pending' ? 'Stays Pending until a reviewer approves, even if proposed in scope' : sc === s ? 'Filter active, click to clear' : 'Click to filter'} />)}
+          </div>
+          <FilterBar>
+            <SearchBox className="w-64" value={q} onChange={setQ} placeholder="Search name, IP, hostname or URL" />
+            <Select className="!w-44" aria-label="Scope" value={sc} onChange={(e) => setSc(e.target.value)}><option value="">All scope states</option>{SCOPES.map((s) => <option key={s} value={s}>{SCOPE_LABEL[s]}</option>)}</Select>
+            <Select className="!w-36" aria-label="Type" value={ty} onChange={(e) => setTy(e.target.value)}><option value="">All types</option>{TYPES.map((t) => <option key={t}>{t}</option>)}</Select>
+            <MoreFilters active={[ow, os].filter(Boolean).length}>
+              <Select aria-label="Owner" value={ow} onChange={(e) => setOw(e.target.value)}><option value="">All owners</option>{owners.map((o) => <option key={o}>{o}</option>)}</Select>
+              <Select aria-label="OS" value={os} onChange={(e) => setOs(e.target.value)}><option value="">All OS</option><option>Windows</option><option>Linux</option></Select>
+            </MoreFilters>
+            {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
+          </FilterBar>
+          {sel.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-2.5 text-sm">
+              <b>{sel.length} {sel.length === 1 ? 'asset' : 'assets'} selected</b>
+              {notIn.length > 0 && <span className="text-xs text-warn">{notIn.length} not in scope, so they will not be used as targets.</span>}
+              <span className="ml-auto flex flex-wrap gap-2">
+                <Button size="sm" icon={BookOpen} onClick={pickPlaybook} disabled={selected.length === notIn.length} title={selected.length === notIn.length ? 'None of the selected assets are in scope. Request a scope change first.' : 'Choose a playbook for the in-scope assets'}>Choose playbook</Button>
+                <Button size="sm" variant="danger" icon={Ban} onClick={bulkOut} disabled={!can('editScope') || guard.ro || pid === 'all'} title={pid === 'all' ? 'Select a specific project.' : guard.ro ? guard.reason : !can('editScope') ? 'Requires scope management permission.' : 'Mark out of scope'}>Mark out of scope</Button>
+                <Button size="sm" variant="ghost" onClick={() => setSel([])}>Clear selection</Button>
+              </span>
+            </div>
+          )}
+          {sc && <div className="-mt-2 mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">Filtered by scope: <b className="text-fg">{SCOPE_LABEL[sc as Asset['scope']] || sc}</b><button className="text-accent hover:underline" onClick={() => setSc('')}>Clear scope filter</button></div>}
+          <DTable
+            rows={rows} rowKey={(r) => r.asset.id} onRow={(r) => go('asset', { id: r.asset.id })}
+            empty={filtered ? <Empty icon={Server} title="No assets match the filters" action={<Button onClick={clear}>Clear filters</Button>}>Try relaxing the filters.</Empty> : <Empty icon={Server} title="0 assets in this project" action={<Button variant="primary" icon={Plus} disabled={!!addWhy} title={addWhy} onClick={() => go('asset-new')}>Add Asset</Button>}>No approved or pending assets yet, so no operation can pick a target. Add assets manually, import a CSV, or use Simulated Preview discovery; imports start as Pending Approval.</Empty>}
+            cols={[
+              { key: 'id', header: 'Asset ID', width: '110px', render: (r) => <Id className="text-accent">{r.asset.id}</Id> },
+              { key: 'sel', header: <Check checked={allOnPage} onChange={(v) => setSel(v ? rows.map((r) => r.asset.id) : [])} label={<span className="sr-only">Select all on this page</span>} />, width: '44px', render: (r) => <span onClick={(e) => e.stopPropagation()}><Check checked={sel.includes(r.asset.id)} onChange={(v) => toggle(r.asset.id, v)} label={<span className="sr-only">Select {r.asset.name}</span>} /></span> },
+              { key: 'n', header: 'Name', render: (r) => <Trunc max="max-w-[180px]">{r.asset.name}</Trunc> },
+              { key: 'i', header: 'Identifier', hideBelow: 'md', render: (r) => <div><span title={r.asset.ident} className="block max-w-[200px] truncate"><Mono className="text-muted">{r.asset.ident}</Mono></span><div><Mono className="text-xs text-muted">{r.asset.ip}</Mono></div></div> },
+              { key: 't', header: 'Type', hideBelow: 'md', render: (r) => r.asset.type },
+              { key: 'o', header: 'Owner', hideBelow: 'lg', render: (r) => <Trunc max="max-w-[140px]">{r.asset.owner}</Trunc> },
+              { key: 'env', header: 'Environment', hideBelow: 'lg', render: (r) => envOf(r.asset) },
+              { key: 'os', header: 'OS', hideBelow: 'lg', render: (r) => r.asset.os },
+              ...(pid === 'all' ? [{ key: 'p', header: 'Project', render: (r: AssetListItem) => <span className="text-xs">{r.projectId}</span> }] : []),
+              { key: 's', header: 'Scope', render: (r) => <ScopeBadge a={r.asset} /> },
+              { key: 'src', header: 'Data source', hideBelow: 'lg', render: (r) => r.asset.source },
+              { key: 'u', header: 'Last updated (UTC+7)', hideBelow: 'lg', render: (r) => <span className="whitespace-nowrap text-xs text-muted">{shortDate(r.asset.updated)}</span> },
+            ]}
+          />
+          <Pager page={read.page} pages={Math.max(1, Math.ceil(read.total / read.pageSize))} setPage={setPage} total={read.total} />
+          <p className="mt-3 text-xs text-muted">Assets marked “{SCOPE_LABEL.unclassified}” or “{SCOPE_LABEL.pending}” stay in the inventory but are never selected automatically for execution.</p>
+        </>
       )}
-      {sc && <div className="-mt-2 mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">Filtered by scope: <b className="text-fg">{SCOPE_LABEL[sc as Asset['scope']] || sc}</b><button className="text-accent hover:underline" onClick={() => setSc('')}>Clear scope filter</button></div>}
-      <DTable
-        rows={pg.rows} rowKey={(a) => a.id} onRow={(a) => go('asset', { id: a.id })}
-        empty={filtered ? <Empty icon={Server} title="No assets match the filters" action={<Button onClick={clear}>Clear filters</Button>}>Try relaxing the filters.</Empty> : <Empty icon={Server} title="0 assets in this project" action={<Button variant="primary" icon={Plus} disabled={!!addWhy} title={addWhy} onClick={() => go('asset-new')}>Add Asset</Button>}>No approved or pending assets yet, so no operation can pick a target. Add assets manually, import a CSV, or use Simulated Preview discovery; imports start as Pending Approval.</Empty>}
-        cols={[
-          { key: 'id', header: 'Asset ID', width: '110px', render: (a) => <Id className="text-accent">{a.id}</Id> },
-          { key: 'sel', header: <Check checked={allOnPage} onChange={(v) => setSel((s) => v ? [...new Set([...s, ...pg.rows.map((r) => r.id)])] : s.filter((x) => !pg.rows.some((r) => r.id === x)))} label={<span className="sr-only">Select all on this page</span>} />, width: '44px', render: (a) => <span onClick={(e) => e.stopPropagation()}><Check checked={sel.includes(a.id)} onChange={(v) => toggle(a.id, v)} label={<span className="sr-only">Select {a.name}</span>} /></span> },
-          { key: 'n', header: 'Name', render: (a) => <Trunc max="max-w-[180px]">{a.name}</Trunc> },
-          { key: 'i', header: 'Identifier', hideBelow: 'md', render: (a) => <div><span title={a.ident} className="block max-w-[200px] truncate"><Mono className="text-muted">{a.ident}</Mono></span><div><Mono className="text-xs text-muted">{a.ip}</Mono></div></div> },
-          { key: 't', header: 'Type', hideBelow: 'md', render: (a) => a.type },
-          { key: 'o', header: 'Owner', hideBelow: 'lg', render: (a) => <Trunc max="max-w-[140px]">{a.owner}</Trunc> },
-          { key: 'env', header: 'Environment', hideBelow: 'lg', render: (a) => envOf(a) },
-          { key: 'os', header: 'OS', hideBelow: 'lg', render: (a) => a.os },
-          ...(pid === 'all' ? [{ key: 'p', header: 'Project', render: (a: Asset) => <span className="text-xs">{a.projectId}</span> }] : []),
-          { key: 's', header: 'Scope', render: (a) => <ScopeBadge a={a} /> },
-          { key: 'src', header: 'Data source', hideBelow: 'lg', render: (a) => a.source },
-          { key: 'u', header: 'Last updated (UTC+7)', hideBelow: 'lg', render: (a) => <span className="whitespace-nowrap text-xs text-muted">{shortDate(a.updated)}</span> },
-        ]}
-      />
-      <Pager {...pg} />
-      <p className="mt-3 text-xs text-muted">Assets marked “{SCOPE_LABEL.unclassified}” or “{SCOPE_LABEL.pending}” stay in the inventory but are never selected automatically for execution.</p>
     </>
   )
 }
 
-/* ───────────── Scope diff & approval impact (AS-V3-03) ───────────── */
+/* ───────────── Scope diff & approval impact (AS-V3-03, ticket 50: typed scope read) ───────────── */
 const bumpV = (v: string) => (/v\d+$/.test(v) ? v.replace(/v(\d+)$/, (_, n) => 'v' + (+n + 1)) : `${v} (proposed)`)
-function ScopeDiff({ pending, proj, impactedOps }: { pending: Asset[]; proj?: { id: string; roeVersion: string; roeStatus: string; window: string }; impactedOps: string[] }) {
-  const { db, go } = useStore()
+function ScopeDiff({ pending, proj, impactedOps }: { pending: Asset[]; proj?: AssetScopeProject; impactedOps: string[] }) {
+  const { go } = useStore()
   if (!proj) return <Card className="mb-4"><p className="text-sm text-muted">Select a project to compare its approved ROE against the proposed version.</p></Card>
   const approved = proj.roeStatus === 'approved'
-  const plans = db.plans.filter((p) => p.projectId === proj.id && p.status === 'approved')
-  const ops = db.operations.filter((o) => o.projectId === proj.id && !['done', 'cancelled'].includes(o.status))
-  const ready = ops.filter((o) => o.status === 'ready'), running = ops.filter((o) => ['running', 'paused'].includes(o.status))
-  const apr = db.approvals.find((x) => x.projectId === proj.id && x.status === 'pending' && x.type === 'Scope change')
+  const apr = proj.pendingScopeApproval
   return (
     <Card className="mb-4">
       <CardHeader title="Scope diff & approval impact" sub={approved ? <>Approved <Mono>{proj.roeVersion}</Mono> vs proposed <Mono>{bumpV(proj.roeVersion)}</Mono></> : <>Current <Mono>{proj.roeVersion}</Mono> is {proj.roeStatus}; pending assets are reviewed together with the ROE.</>}
@@ -168,9 +184,9 @@ function ScopeDiff({ pending, proj, impactedOps }: { pending: Asset[]; proj?: { 
         </div>
         <DescList cols={1} items={[
           { k: 'Time window', v: <span>{proj.window} <span className="text-xs text-muted">(unchanged)</span></span> },
-          { k: 'Approved plans to re-validate', v: plans.length ? plans.map((p) => <span key={p.id} className="mr-2 whitespace-nowrap">{p.id} ({p.ver || `v${p.version}`})</span>) : 'None' },
-          { k: 'Ready operations', v: ready.length ? <span>{ready.map((o) => o.id).join(', ')}: returned to Draft, preflight must be re-run</span> : 'None' },
-          { k: 'Running operations', v: running.length ? <span>{running.map((o) => o.id).join(', ')}: keep running under current approved policy; new assets are not targetable until approved</span> : 'None' },
+          { k: 'Approved plans to re-validate', v: proj.plansToRevalidate.length ? proj.plansToRevalidate.map((p) => <span key={p.id} className="mr-2 whitespace-nowrap">{p.id} ({p.ver})</span>) : 'None' },
+          { k: 'Ready operations', v: proj.readyOps.length ? <span>{proj.readyOps.join(', ')}: returned to Draft, preflight must be re-run</span> : 'None' },
+          { k: 'Running operations', v: proj.runningOps.length ? <span>{proj.runningOps.join(', ')}: keep running under current approved policy; new assets are not targetable until approved</span> : 'None' },
           { k: 'Operations referencing pending assets', v: impactedOps.length ? impactedOps.join(', ') : 'None' },
         ]} />
       </div>
@@ -178,11 +194,14 @@ function ScopeDiff({ pending, proj, impactedOps }: { pending: Asset[]; proj?: { 
   )
 }
 
-/* ───────────── Scope map + review (AS-04, asset-scope) ───────────── */
+/* ───────────── Scope map + review (AS-04, asset-scope, ticket 50: typed scope read) ───────────── */
 function AssetScope() {
-  const { db, scoped, go, pid, can, A, confirm, toast, accessible } = useStore()
+  const { go, pid, can, A, confirm, toast } = useStore()
   const guard = useGuard(pid === 'all' ? undefined : pid)
-  const all = scoped(db.assets)
+  const scope = useAssetScope()
+  const read = scope.data
+  const all = read?.rows.map((r) => r.asset) ?? []
+  const impactedOf = (id: string) => read?.rows.find((r) => r.asset.id === id)?.impactedOps ?? []
   const [q, setQ] = useState(''), [zone, setZone] = useState<'' | Asset['scope']>(''), [view, setView] = useState<'map' | 'table'>('map')
   const [selId, setSelId] = useState('')
   const rows = all.filter((a) => (!q || (a.name + a.ident + a.ip).toLowerCase().includes(q.toLowerCase())))
@@ -190,10 +209,10 @@ function AssetScope() {
   const pending = all.filter((a) => a.scope === 'pending')
   const W = 760, H = 440
   const quad = (i: number) => ({ x: (i % 2) * (W / 2) + 8, y: Math.floor(i / 2) * (H / 2) + 8, w: W / 2 - 16, h: H / 2 - 16 })
-  const proj = pid !== 'all' ? db.projects.find((p) => p.id === pid) : sel ? db.projects.find((p) => p.id === sel.projectId) : undefined
+  /* The reviewed project: the active project when specific, the selected asset's project in aggregate. */
+  const proj = pid !== 'all' ? read?.projects.find((p) => p.id === pid) : sel ? read?.projects.find((p) => p.id === sel.projectId) : undefined
   const reviewWhy = pid === 'all' ? 'Select a specific project to review scope changes.' : guard.ro ? guard.reason : !can('approve') ? 'Only Reviewers and Admins can approve or reject scope changes.' : ''
   const reqWhy = pid === 'all' ? 'Select a specific project to request scope approval.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can request scope approval.' : ''
-  const impacted = (a: Asset) => db.operations.filter((o) => o.projectId === a.projectId && o.assets.includes(a.id) && !['done', 'cancelled'].includes(o.status))
   const approve = () => confirm({
     title: `Approve scope change for ${pending.length} ${pending.length === 1 ? 'asset' : 'assets'}?`, confirmLabel: 'Approve Change', reasonLabel: 'Approval note', reasonRequired: true,
     body: <>The assets below will become <b>In Scope</b> under {proj?.roeVersion}. Plans, checks and runbooks that referenced the previous scope will be marked for re-validation.</>,
@@ -209,7 +228,7 @@ function AssetScope() {
     body: <>A scope change request covering {pending.length || 'the selected'} pending {pending.length === 1 ? 'asset' : 'assets'} is sent to the reviewer. Nothing becomes in scope until it is approved.</>,
     onConfirm: (r) => { A.submitApproval(pid, 'Scope change', r, pending.map((a) => `${a.name} → in scope`).join(', ') || 'Scope review'); toast('Scope approval requested.', 'info') },
   })
-  const impactedOps = [...new Set(pending.flatMap((a) => impacted(a).map((o) => o.id)))]
+  const impactedOps = [...new Set(pending.flatMap((a) => impactedOf(a.id)))]
   return (
     <>
       <PageHeader back={{ label: 'Assets', to: () => go('assets') }} title="Scope Map & Review"
@@ -218,7 +237,13 @@ function AssetScope() {
         actions={<Button variant="primary" disabled={!!reqWhy || !pending.length} title={reqWhy || (!pending.length ? 'No pending assets. Propose a scope change on an asset first.' : 'Request scope approval')} onClick={requestApproval}>Request Scope Approval</Button>} />
       {pid === 'all' && <Banner tone="info">You are viewing all accessible projects. Select a project to review scope against that project's ROE.</Banner>}
       {reqWhy && pid !== 'all' && <div className="-mt-2 mb-3"><Locked reason={`Request Scope Approval: ${reqWhy}`} /></div>}
-      {!all.length ? <Empty icon={MapIcon} title="No assets to display" action={<Button onClick={() => go('assets')}>Back to assets</Button>}>There is no map or relationship data yet. Add assets first.</Empty> : (
+      {scope.isPending ? (
+        <div aria-busy="true" aria-label="Loading scope map"><Skeleton className="h-96" /></div>
+      ) : scope.isError || !read ? (
+        <Empty icon={MapIcon} title="Scope map could not be loaded" action={<Button onClick={() => scope.refetch()}>Retry</Button>}>
+          {scope.isError ? (scope.error as AssetReadError).failure.message : 'No scope data available.'}
+        </Empty>
+      ) : !all.length ? <Empty icon={MapIcon} title="No assets to display" action={<Button onClick={() => go('assets')}>Back to assets</Button>}>There is no map or relationship data yet. Add assets first.</Empty> : (
         <>
           <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)_320px]">
             <Card>
@@ -294,14 +319,14 @@ function AssetScope() {
                   { key: 'b', header: 'Before', render: () => <Status kind="scope" value="unclassified" size="sm" /> },
                   { key: 'af', header: 'After (if approved)', render: () => <Status kind="scope" value="in" size="sm" /> },
                   { key: 'j', header: 'Justification', hideBelow: 'md', render: (a) => <span className="text-xs text-muted">Proposed by {a.owner} via {a.source}</span> },
-                  { key: 'ops', header: 'Operations affected', hideBelow: 'lg', render: (a) => impacted(a).map((o) => o.id).join(', ') || <span className="text-muted">None</span> },
+                  { key: 'ops', header: 'Operations affected', hideBelow: 'lg', render: (a) => impactedOf(a.id).join(', ') || <span className="text-muted">None</span> },
                 ]} />
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <Button variant="primary" icon={CheckCircle2} disabled={!!reviewWhy} title={reviewWhy || 'Approve all pending scope changes'} onClick={approve}>Approve Change</Button>
                 <Button variant="danger" icon={Ban} disabled={!!reviewWhy} title={reviewWhy || 'Reject pending scope changes'} onClick={reject}>Reject</Button>
                 {reviewWhy && <Locked reason={reviewWhy} />}
               </div>
-              <p className="mt-2 text-xs text-muted">A reason is required for both approval and rejection. Accessible projects: {accessible.length}.</p>
+              <p className="mt-2 text-xs text-muted">A reason is required for both approval and rejection. Accessible projects: {read.accessibleCount}.</p>
             </>
           )}
         </>
@@ -461,23 +486,21 @@ function AssetNew() {
   )
 }
 
-/* ───────────── Asset detail (AS-03) ───────────── */
+/* ───────────── Asset detail (AS-03, ticket 50: typed service read + Query) ───────────── */
 function AssetDetail() {
-  const { db, route, go, pid, accessible, can, A, confirm, toast, setPid } = useStore()
-  const a = db.assets.find((x) => x.id === route.id)
+  const { route, go, pid, can, A, confirm, toast, setPid } = useStore()
+  const detail = useAssetDetail(route.id)
+  const read = detail.data
   const tab = route.tab === 'edit' ? 'overview' : route.tab || 'overview'
-  const guard = useGuard(a?.projectId)
+  const guard = useGuard(read?.project.id)
   const back = { label: 'Assets', to: () => go('assets') }
-  if (!a) return <><PageHeader title="Asset not found" back={back} /><Empty icon={Server} title={`No asset “${route.id}”`} action={<Button onClick={() => go('assets')}>Back to assets</Button>} /></>
-  if (!accessible.some((p) => p.id === a.projectId)) return <><PageHeader title="Asset not accessible" back={back} /><Blocked title="You do not have access to this asset" actions={<Button onClick={() => go('assets')}>Back to assets</Button>}>This asset belongs to project {a.projectId}, which your account has not been granted. Ask the project manager to add you.</Blocked></>
-  if (pid !== 'all' && a.projectId !== pid) return <><PageHeader title={`Asset ${a.id}`} back={back} /><Blocked title="Asset belongs to a different project" actions={<><Button onClick={() => go('assets')}>Back to assets</Button><Button onClick={() => setPid('all')}>View all projects</Button></>}>This asset belongs to {a.projectId}, but you are working in {pid}.</Blocked></>
-
-  const p = db.projects.find((x) => x.id === a.projectId)!
-  const ops = db.operations.filter((o) => o.projectId === a.projectId && o.assets.includes(a.id))
-  const fs = db.findings.filter((f) => f.projectId === a.projectId && f.asset === a.name)
-  const ev = db.evidence.filter((e) => fs.some((f) => f.evidence.includes(e.id)) || (e.opId && ops.some((o) => o.id === e.opId) && e.source.includes('/')))
-  const agents = db.agents.filter((g) => ops.some((o) => o.agents.includes(g.id)))
-  const apprs = db.approvals.filter((x) => x.projectId === a.projectId && ((x.diff || '').includes(a.name) || (x.diff || '').includes(a.id) || (x.type === 'Scope change' && a.scope === 'pending')))
+  if (detail.isPending) return <div aria-busy="true" aria-label="Loading asset"><Skeleton className="h-96" /></div>
+  if (detail.isError || !read) {
+    const failure = detail.isError ? (detail.error as AssetReadError).failure : undefined
+    if (failure?.kind === 'forbidden' && failure.entity?.projectId) return <><PageHeader title={`Asset ${route.id}`} back={back} /><Blocked title="Asset belongs to a different project" actions={<><Button onClick={() => go('assets')}>Back to assets</Button><Button onClick={() => setPid('all')}>View all projects</Button></>}>This asset belongs to {failure.entity.projectId}, but you are working in {pid}.</Blocked></>
+    return <><PageHeader title="Asset not found" back={back} /><Empty icon={Server} title={`No asset “${route.id}”`} action={<Button onClick={() => go('assets')}>Back to assets</Button>}>{failure?.message || 'No asset data available.'}</Empty></>
+  }
+  const { asset: a, project: p, operations: ops, findings: fs, evidence: ev, agents, approvals: apprs, techniques, history: hist, canViewSensitive } = read
   const approvedScope = p.roeStatus === 'approved' && ['approved', 'active'].includes(p.status)
   const why = guard.ro ? guard.reason : !can('editScope', a.projectId) ? 'Only Red Team Managers and Admins can change asset scope.' : ''
   const toOut = () => confirm({
@@ -490,10 +513,6 @@ function AssetDetail() {
     body: approvedScope ? <>The project has approved ROE {p.roeVersion}. The asset becomes <b>Pending Approval</b> and a “Scope change” request goes to the reviewer. It cannot be a target until approved.</> : <>The asset is proposed as in scope and waits for approval together with the project ROE.</>,
     onConfirm: (r) => { A.setAssetScope(a.id, 'pending'); if (approvedScope) A.submitApproval(a.projectId, 'Scope change', r, `${a.name} → in scope`); toast(approvedScope ? 'Scope change approval submitted.' : 'Asset proposed for scope.', 'info') },
   })
-  const hist = [
-    ...db.audit.filter((x) => x.obj.includes(a.id) || x.obj.split(', ').includes(a.name)).map((x) => ({ at: x.at, title: `${x.action} — ${x.actor}`, sub: x.reason ? `Reason: ${x.reason}` : x.result, tone: 'accent' as const })),
-    { at: a.updated, title: `Last updated (source: ${a.source})`, sub: `Current scope: ${SCOPE_LABEL[a.scope]}`, tone: 'neutral' as const },
-  ]
   return (
     <>
       <PageHeader back={back} title={<span className="flex flex-wrap items-center gap-3">{a.name}<Mono className="text-sm text-muted">{a.id}</Mono></span>} meta={<ScopeBadge a={a} />} sub={`${a.ident} · ${a.ip} · ${envOf(a)} · ROE ${p.roeVersion}`}
@@ -514,11 +533,13 @@ function AssetDetail() {
       </Card>}
       {tab === 'ops' && <Table rows={ops} rowKey={(o) => o.id} onRow={(o) => go('operation', { id: o.id })} empty={<Empty icon={Server} title="No operations use this asset yet" />} cols={[{ key: 'i', header: 'Operation', render: (o) => <Mono className="text-accent">{o.id}</Mono> }, { key: 'n', header: 'Name', render: (o) => o.name }, { key: 's', header: 'Status', render: (o) => <Status kind="op" value={o.status} /> }, { key: 'u', header: 'Updated', hideBelow: 'md', render: (o) => o.updated }]} />}
       {tab === 'findings' && <>
-        <Table rows={fs} rowKey={(f) => f.id} onRow={(f) => go('finding', { id: f.id })} empty={<Empty icon={Server} title="No related findings" action={<Button onClick={() => go('findings')}>Open Findings</Button>}>No findings are linked to this asset.</Empty>} cols={[{ key: 'i', header: 'ID', render: (f) => <Mono className="text-accent">{f.id}</Mono> }, { key: 't', header: 'Title', render: (f) => f.title }, { key: 'sv', header: 'Severity', render: (f) => <Status kind="sev" value={f.severity} /> }, { key: 's', header: 'Status', render: (f) => <Status kind="finding" value={f.status} /> }]} />
+        {techniques.length > 0 && <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">Techniques referenced:{techniques.map((t) => <IdL key={t.id} onClick={() => go('technique', { id: t.id })}>{t.id}</IdL>)}<span className="text-muted">{techniques.map((t) => t.name).join(', ')}</span></div>}
+        <Table rows={fs} rowKey={(f) => f.id} onRow={(f) => go('finding', { id: f.id })} empty={<Empty icon={Server} title="No related findings" action={<Button onClick={() => go('findings')}>Open Findings</Button>}>No findings are linked to this asset.</Empty>} cols={[{ key: 'i', header: 'ID', render: (f) => <Mono className="text-accent">{f.id}</Mono> }, { key: 't', header: 'Title', render: (f) => f.title }, { key: 'sv', header: 'Severity', render: (f) => <Status kind="sev" value={f.severity} /> }, { key: 's', header: 'Status', render: (f) => <Status kind="finding" value={f.status} /> }, { key: 'tec', header: 'Technique', hideBelow: 'md', render: (f) => f.technique ? <IdL onClick={() => go('technique', { id: f.technique })}>{f.technique}</IdL> : '—' }]} />
         <h3 className="mb-2 mt-5 text-[15px] font-semibold">Related evidence</h3>
-        {ev.length ? <div className="flex flex-wrap gap-3">{ev.map((e) => <IdL key={e.id} onClick={() => go('evidence', { id: e.id })}>{e.id}</IdL>)}</div> : <p className="text-sm text-muted">No evidence is linked to this asset.</p>}
+        {ev.length ? <div className="flex flex-wrap gap-3">{ev.map((e) => <span key={e.id} className="inline-flex items-center gap-2"><IdL onClick={() => go('evidence', { id: e.id })}>{e.id}</IdL><span className={cx('text-xs', e.masked ? 'text-warn' : 'text-muted')}>{e.masked ? 'Redacted (sensitive)' : `${e.name} · ${e.kind}`}</span></span>)}</div> : <p className="text-sm text-muted">No evidence is linked to this asset.</p>}
+        {!canViewSensitive && ev.some((e) => e.masked) && <p className="mt-2 text-xs text-muted">Sensitive evidence names are redacted for your role.</p>}
       </>}
-      {tab === 'agents' && <Table rows={agents} rowKey={(g) => g.id} onRow={(g) => go('agent', { id: g.id })} empty={<Empty icon={Server} title="No agents linked">No agent has run an operation that targets this asset.</Empty>} cols={[{ key: 'i', header: 'Agent', render: (g) => <Id className="text-accent">{g.id}</Id> }, { key: 'h', header: 'Hostname', render: (g) => <Mono>{g.host}</Mono> }, { key: 's', header: 'Connection', render: (g) => <Status kind="agent" value={g.status} /> }, { key: 'o', header: 'Operation', render: (g) => g.op ? <IdL onClick={() => go('operation', { id: g.op! })}>{g.op}</IdL> : '—' }]} />}
+      {tab === 'agents' && <Table rows={agents} rowKey={(g) => g.id} onRow={(g) => go('agent', { id: g.id })} empty={<Empty icon={Server} title="No agents linked">No agent has run an operation that targets this asset.</Empty>} cols={[{ key: 'i', header: 'Agent', render: (g) => <Id className="text-accent">{g.id}</Id> }, { key: 'h', header: 'Hostname', render: (g) => <Mono>{g.host}</Mono> }, { key: 's', header: 'Connection', render: (g) => <Status kind="agent" value={g.status} /> }, { key: 'o', header: 'Operation', render: (g) => g.op ? <IdL onClick={() => go('operation', { id: g.op })}>{g.op}</IdL> : '—' }]} />}
       {tab === 'approvals' && <>
         <Table rows={apprs} rowKey={(x) => x.id} onRow={(x) => go('approval', { id: x.id })} empty={<Empty icon={Server} title="No approval records for this asset">{a.scope === 'in' ? `Approved in scope under ${p.roeVersion}; the original ROE approval is on the project.` : 'Propose a scope change to start an approval. Pending never becomes In Scope without a reviewer.'}</Empty>} cols={[{ key: 'i', header: 'Request', render: (x) => <Id className="text-accent">{x.id}</Id> }, { key: 't', header: 'Type', render: (x) => <span className="whitespace-nowrap">{x.type}</span> }, { key: 'b', header: 'Requested by', render: (x) => x.by }, { key: 'r', header: 'Reviewer', render: (x) => x.reviewer }, { key: 'a', header: 'Date', render: (x) => <span className="whitespace-nowrap text-xs">{shortDate(x.at)}</span> }, { key: 's', header: 'Status', render: (x) => <span className="whitespace-nowrap capitalize">{x.status}</span> }]} />
         {a.scope === 'pending' && <p className="mt-3 text-xs text-warn">This asset stays Pending Approval until a reviewer approves the scope change; it is never promoted automatically.</p>}
