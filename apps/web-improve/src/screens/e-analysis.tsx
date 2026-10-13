@@ -1,6 +1,7 @@
 import { useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut, type LucideProps } from 'lucide-react'
-import { ROLE_LABEL, useStore, type Store } from '../store'
+import { useStore, type Store } from '../store'
+import { ROLE_LABEL } from '../auth/policy'
 import { eligibility } from '../features/operations/preflight'
 import { TACTICS, TECHNIQUES, type DetectState, type Operation, type Step, type StepStatus, type Technique } from '../data'
 import { Banner, Button, SearchBox, Card, CardHeader, Drawer, Empty, Kpi, Mono, PageHeader, Segmented, Select, Status, Table, Tabs, cx } from '../ui'

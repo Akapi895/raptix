@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRound, Lock, LogOut, MinusCircle, MoreHorizontal, OctagonX, Plug, RefreshCw, Save, ShieldAlert, ShieldCheck, Trash2, UserPlus, XCircle } from 'lucide-react'
-import { useStore, useDirty, ROLE_LABEL, today } from '../store'
+import { useStore, useDirty, today } from '../store'
+import { ROLE_LABEL } from '../auth/policy'
 import { USERS, TECHNIQUES, type Integration, type Policy, type Retention, type Role, type DetectState } from '../data'
 import { OrgReadError, useAudit, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites, useRetention, useRetentionWrites } from '../features/settings/query'
 import { auditCorr, type AuditRead, type IntegrationsRead, type OrgMembersRead, type OrgProfile, type OrgProfileRead, type PoliciesRead, type RetentionRead } from '../features/settings/service'
