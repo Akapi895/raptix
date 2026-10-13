@@ -16,7 +16,11 @@
  * a scope-checked handler that enforces the lifecycle's role/state policy
  * at the handler (never in the screen), commits once through the shared
  * authority and publishes the affected identities, so legacy consumers and
- * Query views observe the same change.
+ * Query views observe the same change. Ticket 33 adds the standalone
+ * evidence inspector reads: scoped list/detail over the same opaque
+ * references, producer links resolved from real record links and the
+ * simulated capture integrity, with masking and display gates decided at
+ * the handler so they hold no matter which screen linked the capture.
  */
 import { projectAccessible, projectLocked, can as policyCan } from '../../auth/policy'
 import type { CanAction } from '../../domain/permissions'
@@ -25,7 +29,7 @@ import { TECHNIQUES, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Evidence, Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'
-import type { EvidenceReference } from '../../domain/evidence'
+import type { CaptureIntegrity, EvidenceReference } from '../../domain/evidence'
 
 /** Filter/sort state for the findings inventory (all optional; empty = unfiltered). */
 export interface FindingListQuery {
@@ -128,6 +132,10 @@ export interface FindingService {
   uploadEvidence(ctx: RequestContext, input: EvidenceUploadInput): Promise<ServiceResult<Evidence>>
   /** Records one retest result; a "Resolved" result closes the finding. */
   recordRetest(ctx: RequestContext, id: string, input: RetestInput): Promise<ServiceResult<Finding>>
+  /** Standalone evidence list for the scope (ticket 33 — masking at the handler). */
+  listEvidence(ctx: RequestContext, query?: EvidenceListQuery): Promise<ServiceResult<EvidenceListRead>>
+  /** Standalone evidence detail for both route aliases (ticket 33). */
+  getEvidence(ctx: RequestContext, id: string): Promise<ServiceResult<EvidenceDetailRead>>
 }
 
 /** Category → statuses the tab covers; drafts also include returned findings. */
@@ -267,6 +275,157 @@ export function getFinding(db: Db, ctx: RequestContext, id: string): ServiceResu
       techniqueName: TECHNIQUES.find((t) => t.id === f.technique)?.name,
       inReports: db.reports.filter((r) => r.findings.includes(f.id)).map((r) => ({ id: r.id, title: r.title })),
       canViewSensitive: canSensitive,
+    },
+  }
+}
+
+/* ───────────── Evidence inspector reads (ticket 33) ───────────── */
+
+/** Filter state for the standalone evidence list (all optional; empty = unfiltered). */
+export interface EvidenceListQuery {
+  /** Case-insensitive substring over the opaque ref, type and source (and the name only where it is not withheld). */
+  q?: string
+  /** Exact content-type filter. */
+  kind?: string
+}
+
+/** One standalone evidence list read: masked rows + the type-filter options. */
+export interface EvidenceListRead {
+  items: EvidenceView[]
+  /** Distinct content types in the scoped base (the type filter's options). */
+  kinds: string[]
+}
+
+/**
+ * Producer lineage behind a capture (GLOSSARY: producer lineage), resolved
+ * from real record links — the capture's operation id, the step that carries
+ * the reference and the tool event that recorded it. The console never
+ * parses a reference or the display source string to guess at a producer.
+ */
+export interface EvidenceProducer {
+  /** Producing invocation identity (the recorded tool event), when one exists. */
+  invocation?: { id: string; tool: string; producer: string }
+  operation?: { id: string; name: string }
+  step?: { id: string; name: string; agent: string; asset: string; technique: string }
+  agent?: { id: string; host: string }
+  /** Interactive session the producing agent operated through. */
+  session?: { id: string }
+}
+
+/**
+ * One standalone evidence detail read: the masked view, producer links and
+ * the simulated capture integrity. Display gates are handler decisions, so
+ * they hold no matter which screen linked the capture.
+ */
+export interface EvidenceDetailRead {
+  evidence: EvidenceView
+  project: { id: string; name: string; client: string }
+  /** Simulated capture integrity (GLOSSARY): describes the retained capture, never the truth of a finding. */
+  integrity: CaptureIntegrity
+  producer?: EvidenceProducer
+  /** Findings referencing this capture (same project), with the link's recorded instant. */
+  findings: { id: string; status: FindingStatus; updated: string }[]
+  canViewSensitive: boolean
+  /** The simulated unmasked view additionally needs a role above Analyst. */
+  canViewOriginal: boolean
+}
+
+/** Simulated digest for the demo dataset (no real bytes are stored): a deterministic projection of the capture's identity. */
+function simulatedDigest(id: string): string {
+  let h = 2166136261
+  const out: string[] = []
+  for (let i = 0; i < 8; i++) {
+    for (const c of id + i) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) }
+    out.push((h >>> 0).toString(16).padStart(8, '0'))
+  }
+  return out.join('')
+}
+
+/**
+ * Pure standalone evidence list. Scope semantics mirror the findings list:
+ * a specific project reads only that project's captures and only for
+ * members (a non-member's read is `not-found`, no existence leak); `'all'`
+ * folds in only the actor's accessible projects. Masking is the handler's
+ * decision — a capture is masked (name withheld, reference visible) for
+ * roles without `viewSensitive` in its own project, and a masked row's
+ * search haystack excludes the withheld name so a query cannot unmask it.
+ */
+export function listEvidence(db: Db, ctx: RequestContext, query: EvidenceListQuery = {}): ServiceResult<EvidenceListRead> {
+  const aggregate = !ctx.projectId || ctx.projectId === 'all'
+  if (!aggregate) {
+    const project = db.projects.find((p) => p.id === ctx.projectId)
+    if (!project || !projectAccessible(project, ctx.actor)) {
+      return { ok: false, failure: { kind: 'not-found', message: 'Evidence for this project is not available for your account.' } }
+    }
+  }
+  const accessible = new Set(db.projects.filter((p) => projectAccessible(p, ctx.actor)).map((p) => p.id))
+  const base = db.evidence.filter((e) => (aggregate ? accessible.has(e.projectId) : e.projectId === ctx.projectId))
+  const q = (query.q || '').toLowerCase()
+  const items = base
+    .map((rec) => {
+      const project = db.projects.find((p) => p.id === rec.projectId)
+      const masked = rec.sensitive && !(project && policyCan(ctx.actor, 'viewSensitive', project))
+      const hay = (masked ? `${rec.id} ${rec.kind} ${rec.source}` : `${rec.id} ${rec.name} ${rec.source}`).toLowerCase()
+      return { rec, masked, hay }
+    })
+    .filter((x) => (!q || x.hay.includes(q)) && (!query.kind || x.rec.kind === query.kind))
+    .map(({ rec, masked }) => ({ ref: rec.id, name: masked ? undefined : rec.name, masked, kind: rec.kind, source: rec.source, at: rec.at, by: rec.by, projectId: rec.projectId, findingId: rec.findingId, opId: rec.opId, sensitive: rec.sensitive }))
+  return { ok: true, data: { items, kinds: [...new Set(base.map((e) => e.kind))].sort() } }
+}
+
+/**
+ * Pure standalone evidence detail (both route aliases). Refusal order
+ * mirrors the finding detail: missing/out-of-scope → `not-found` without a
+ * content leak; an accessible project outside the active context →
+ * `forbidden` with the owning project on the entity ref (the screen offers
+ * an explicit switch). Masking and the display/download gates are handler
+ * decisions; producer links resolve from real record links, never by
+ * parsing the source string.
+ */
+export function getEvidence(db: Db, ctx: RequestContext, id: string): ServiceResult<EvidenceDetailRead> {
+  const notFound = { ok: false as const, failure: { kind: 'not-found' as const, message: `Evidence ${id} does not exist or is not available for your account.`, entity: { kind: 'evidence' as const, id } } }
+  const rec = db.evidence.find((e) => e.id === id)
+  if (!rec) return notFound
+  const project = db.projects.find((p) => p.id === rec.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) return notFound
+  const aggregate = !ctx.projectId || ctx.projectId === 'all' || ctx.projectId === ''
+  if (!aggregate && ctx.projectId !== rec.projectId) {
+    return {
+      ok: false,
+      failure: {
+        kind: 'forbidden',
+        message: `Evidence ${id} belongs to project ${rec.projectId}. Switch to that project to view its content.`,
+        entity: { kind: 'evidence', id, projectId: rec.projectId },
+      },
+    }
+  }
+  const canSensitive = policyCan(ctx.actor, 'viewSensitive', project)
+  const masked = rec.sensitive && !canSensitive
+  const op = db.operations.find((o) => o.id === rec.opId)
+  const event = db.toolEvents.find((t) => t.evidence?.includes(rec.id))
+  // Direct step link first, else the producing invocation's recorded step.
+  const step = op?.steps.find((x) => x.evidence === rec.id) || op?.steps.find((x) => x.id === event?.stepId)
+  const agent = db.agents.find((a) => a.id === (step?.agent || event?.agentId))
+  const session = op && agent ? db.sessions.find((x) => x.opId === op.id && x.agentId === agent.id) : undefined
+  const findings = db.findings
+    .filter((f) => f.projectId === rec.projectId && (f.id === rec.findingId || f.evidence.includes(rec.id)))
+    .map((f) => ({ id: f.id, status: f.status, updated: f.updated }))
+  return {
+    ok: true,
+    data: {
+      evidence: { ref: rec.id, name: masked ? undefined : rec.name, masked, kind: rec.kind, source: rec.source, at: rec.at, by: rec.by, projectId: rec.projectId, findingId: rec.findingId, opId: rec.opId, sensitive: rec.sensitive },
+      project: { id: project.id, name: project.name, client: project.client },
+      integrity: { status: 'verified', digest: simulatedDigest(rec.id) },
+      producer: (op || event) ? {
+        invocation: event ? { id: event.id, tool: event.tool, producer: event.agentId || '—' } : undefined,
+        operation: op ? { id: op.id, name: op.name } : undefined,
+        step: step ? { id: step.id, name: step.name, agent: step.agent, asset: step.asset, technique: step.technique } : undefined,
+        agent: agent ? { id: agent.id, host: agent.host } : undefined,
+        session: session ? { id: session.id } : undefined,
+      } : undefined,
+      findings,
+      canViewSensitive: canSensitive,
+      canViewOriginal: canSensitive && ctx.actor.role !== 'analyst',
     },
   }
 }
@@ -596,5 +755,7 @@ export function createFindingService(
     attachEvidence: (ctx, findingId, evidenceId) => Promise.resolve(attachFindingEvidence(authority, clock, ctx, findingId, evidenceId)),
     uploadEvidence: (ctx, input) => Promise.resolve(uploadFindingEvidence(authority, clock, ctx, input)),
     recordRetest: (ctx, id, input) => Promise.resolve(recordFindingRetest(authority, clock, ctx, id, input)),
+    listEvidence: (ctx, query) => guard(() => listEvidence(authority.snapshot(), ctx, query)),
+    getEvidence: (ctx, id) => guard(() => getEvidence(authority.snapshot(), ctx, id)),
   }
 }
