@@ -21,13 +21,14 @@ import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
 import type {
   C2AuditQuery, C2AuditListRead, C2ChannelDetailRead, C2OverviewRead,
-  C2RequestListRead, C2SessionListRead, C2SessionQuery,
+  C2RequestListRead, C2SessionDetailRead, C2SessionListRead, C2SessionQuery,
 } from './service'
 
 /** Feature-local key namespaces (entity-kind-first for bridge invalidation). */
 export const c2Keys = {
   overview: (scope: QueryScope) => consoleKeys.view('session', scope, 'c2-overview'),
   sessions: (scope: QueryScope, query: C2SessionQuery) => consoleKeys.view('session', scope, 'c2-sessions', query),
+  session: (scope: QueryScope, id: string) => consoleKeys.entity('session', scope, id),
   requests: (scope: QueryScope) => consoleKeys.view('session-request', scope, 'c2-requests'),
   audit: (scope: QueryScope, query: C2AuditQuery) => consoleKeys.view('audit', scope, 'c2', query),
   channel: (scope: QueryScope, id: string) => consoleKeys.entity('channel', scope, id),
@@ -111,6 +112,26 @@ export function useC2Channel(id?: string) {
     queryKey: c2Keys.channel(scope, id || ''),
     queryFn: async (): Promise<C2ChannelDetailRead> => {
       const res = await services.c2(actorRef(scope.actor), scope.project).channel(ctxOf(scope, 'c2-channel'), id || '')
+      if (!res.ok) throw new C2ReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services && !!id,
+  })
+}
+
+/**
+ * Query-backed session detail (ticket 47). The key is `['session', scope, id]`,
+ * so every session ChangeSet — grant, command, deadline sweep, termination —
+ * refetches the mounted detail and console without a reload, and a persona or
+ * project switch reads a different cache entry.
+ */
+export function useC2Session(id?: string) {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: c2Keys.session(scope, id || ''),
+    queryFn: async (): Promise<C2SessionDetailRead> => {
+      const res = await services.c2(actorRef(scope.actor), scope.project).session(ctxOf(scope, 'c2-session'), id || '')
       if (!res.ok) throw new C2ReadError(res.failure)
       return res.data
     },
