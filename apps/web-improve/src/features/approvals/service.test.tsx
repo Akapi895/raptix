@@ -23,6 +23,7 @@ import { aggregateFor } from '../../screens/dashboard/service'
 import {
   decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, withdrawApprovalTransaction,
 } from './service'
+import { importAssetsTransaction } from '../assets/writes'
 
 afterEach(cleanup)
 
@@ -122,7 +123,7 @@ describe('approval decisions (ticket 21)', () => {
   it('an independent scope approval admits the pending scope and its pending assets', () => {
     const h = mountConsole()
     h.run(() => { h.store().A.editScope(P14, { window: 'Mon–Fri, 10:00 AM–4:00 PM (UTC+7)' }, 'Tighten the window') })
-    h.run(() => { h.store().A.addAssets(P14, [{ name: 'cloud-db-02', ident: 'db-02.fabrikam.example.test', type: 'Database', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'Manual' }]) })
+    h.run(() => { importAssetsTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), P14, [{ name: 'cloud-db-02', ident: 'db-02.fabrikam.example.test', type: 'Database', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'Manual' }]) })
     let d = h.store().db
     expect(d.assets.find((a) => a.projectId === P14 && a.name === 'cloud-db-02')?.scope).toBe('pending')
     const apr = d.approvals.find((a) => a.projectId === P14 && a.type === 'Scope change' && a.status === 'pending')!
@@ -235,7 +236,7 @@ describe('scope revisions invalidate at submission (invariant a)', () => {
 
   it('added assets stay pending on revision submission and are admitted only by the independent approval', () => {
     const h = mountConsole()
-    h.run(() => { h.store().A.addAssets(P14, [{ name: 'cloud-db-03', ident: 'db-03.fabrikam.example.test', type: 'Database', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'Manual' }]) })
+    h.run(() => { importAssetsTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), P14, [{ name: 'cloud-db-03', ident: 'db-03.fabrikam.example.test', type: 'Database', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'Manual' }]) })
     const d = h.store().db
     expect(d.assets.find((a) => a.projectId === P14 && a.name === 'cloud-db-03')?.scope).toBe('pending')
     expect(d.projects.find((x) => x.id === P14)?.roeVersion).toBe('ROE-014-v3')
