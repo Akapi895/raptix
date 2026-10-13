@@ -2,7 +2,16 @@ import { useState } from 'react'
 import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
 import { useStore, closureChecklist, ROLE_LABEL, type Route } from '../store'
 import { APR, USERS, type Project, type Role, type Approval } from '../data'
+import type { DashboardAggregate } from './dashboard/domain'
 import { Banner, Button, Check, Card, CardHeader, DescList, Empty, Field, IconButton, IdLink, Input, Kpi, Locked, Modal, PersonaHint, Person, Progress, Segmented, Select, Status, Table, Textarea, useGuard, type Col } from '../ui'
+
+/** Approval types the scope version history lists (typed, no `any`). */
+const CREATE_OR_SCOPE: readonly string[] = [APR.create, APR.scope]
+
+/* Ticket 20: ScopeTab/TeamTab reads come from the detail service's typed
+ * slices (the `ds` aggregate prop b-detail passes down — the same canonical
+ * read the shell rendered from); their mutations stay on the bridged legacy
+ * actions until tickets 21–22 own the approval/scope/closure handlers. */
 
 export function useSubmitApproval(p: Project) {
   const { db, A, toast } = useStore()
@@ -30,25 +39,25 @@ export function useReopen(p: Project) {
 
 /* ───────────── PR-04 Scope & ROE ───────────── */
 type Sub = 'in' | 'out' | 'roe' | 'docs' | 'hist'
-export function ScopeTab({ p }: { p: Project }) {
-  const { db, go, can, A, confirm, toast, setPid, pid } = useStore()
+export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
+  const { go, can, A, confirm, toast, setPid, pid } = useStore()
   const guard = useGuard(p.id)
   const [sub, setSub] = useState<Sub>('in')
   const [edit, setEdit] = useState(false)
-  const assets = db.assets.filter((a) => a.projectId === p.id)
+  const assets = ds.assets
   const list = sub === 'in' ? assets.filter((a) => a.scope !== 'out') : assets.filter((a) => a.scope === 'out')
   const editable = !guard.ro && can('editScope', p.id)
   const why = guard.ro ? guard.reason : 'Only a Red Team Manager or Organization Admin can edit scope.'
-  const scopePending = db.approvals.find((a) => a.projectId === p.id && a.type === APR.scope && a.status === 'pending')
-  const blocked = db.operations.filter((o) => o.projectId === p.id && ['draft', 'ready', 'pending'].includes(o.status))
-  const running = db.operations.filter((o) => o.projectId === p.id && o.status === 'running')
-  const hist = db.approvals.filter((a) => a.projectId === p.id && [APR.create, APR.scope].includes(a.type as any))
+  const scopePending = ds.approvals.find((a) => a.type === APR.scope && a.status === 'pending')
+  const blocked = ds.operations.filter((o) => ['draft', 'ready', 'pending'].includes(o.status))
+  const running = ds.operations.filter((o) => o.status === 'running')
+  const hist = ds.approvals.filter((a) => CREATE_OR_SCOPE.includes(a.type))
   const closedP = p.status === 'closed' || p.status === 'cancelled'
   const prevV = prevRoe(p.roeVersion)
   const impact = p.roeStatus !== 'approved' && prevV && ['approved', 'active', 'paused', 'review'].includes(p.status)
-    ? { prev: prevV, plans: db.plans.filter((x) => x.projectId === p.id && x.status === 'expired' && x.risks.some((r) => r.startsWith('Re-validation'))), draftOps: db.operations.filter((o) => o.projectId === p.id && ['draft', 'pending', 'ready'].includes(o.status)), running: db.operations.filter((o) => o.projectId === p.id && ['running', 'paused'].includes(o.status)) }
+    ? { prev: prevV, plans: ds.plans.filter((x) => x.status === 'expired' && x.risks.some((r) => r.startsWith('Re-validation'))), draftOps: ds.operations.filter((o) => ['draft', 'pending', 'ready'].includes(o.status)), running: ds.operations.filter((o) => ['running', 'paused'].includes(o.status)) }
     : null
-  const histAudit = db.audit.filter((a) => a.projectId === p.id && /scope|ROE/i.test(a.action))
+  const histAudit = ds.audit.filter((a) => /scope|ROE/i.test(a.action))
 
   type A = (typeof assets)[number]
   const cols: Col<A>[] = [
@@ -111,7 +120,7 @@ export function ScopeTab({ p }: { p: Project }) {
           {(sub === 'in' || sub === 'out') && (
             <Table cols={cols} rows={list} rowKey={(a) => a.id} onRow={(a) => go('asset', { id: a.id })} empty={<Empty title={sub === 'in' ? 'No in-scope assets' : 'No out-of-scope assets'}>{sub === 'in' ? 'At least one in-scope asset is required to submit for approval.' : 'Declare excluded assets to prevent accidental impact.'}</Empty>} />
           )}
-          {sub === 'roe' && <RoePanel p={p} download={download} />}
+          {sub === 'roe' && <RoePanel p={p} download={download} approvals={ds.approvals} />}
           {sub === 'docs' && (
             <Card>
               <CardHeader title="Related documents" />
@@ -135,7 +144,7 @@ export function ScopeTab({ p }: { p: Project }) {
           )}
         </div>
         <div className="space-y-5">
-          <RoePanel p={p} download={download} compact />
+          <RoePanel p={p} download={download} compact approvals={ds.approvals} />
           <Card>
             <CardHeader title="Affected operations (PRE-03)" sub="Operations that have not started need an approved ROE" />
             {blocked.length === 0 ? <p className="text-sm text-muted">No operations are blocked.</p> : (
@@ -151,7 +160,7 @@ export function ScopeTab({ p }: { p: Project }) {
         const needRe = ['approved', 'active'].includes(p.status) && p.roeStatus === 'approved'
         if (needRe) {
           setEdit(false)
-          confirm({ title: 'Edit an approved scope?', body: `This creates ${bumpRoeLabel(p.roeVersion)} as a new draft and sends it for approval. ${db.plans.filter((x) => x.projectId === p.id && x.status === 'approved').length} approved plan(s) will need re-approval and ${db.operations.filter((x) => x.projectId === p.id && x.status === 'ready').length} ready operation(s) return to Draft. Running operations continue under ${p.roeVersion} until the new version is approved.`, confirmLabel: 'Submit change', danger: true, reasonLabel: 'Reason for scope change', reasonRequired: true, onConfirm: (r) => { A.editScope(p.id, patch, r); toast(`${bumpRoeLabel(p.roeVersion)} created. Dependent plans and operations need re-validation`, 'warn') } })
+          confirm({ title: 'Edit an approved scope?', body: `This creates ${bumpRoeLabel(p.roeVersion)} as a new draft and sends it for approval. ${ds.plans.filter((x) => x.status === 'approved').length} approved plan(s) will need re-approval and ${ds.operations.filter((x) => x.status === 'ready').length} ready operation(s) return to Draft. Running operations continue under ${p.roeVersion} until the new version is approved.`, confirmLabel: 'Submit change', danger: true, reasonLabel: 'Reason for scope change', reasonRequired: true, onConfirm: (r) => { A.editScope(p.id, patch, r); toast(`${bumpRoeLabel(p.roeVersion)} created. Dependent plans and operations need re-validation`, 'warn') } })
         } else { A.editScope(p.id, patch); toast('Scope updated'); setEdit(false) }
       }} />}
     </>
@@ -196,8 +205,8 @@ function RoeCompare({ p, assets }: { p: Project; assets: { id: string; name: str
   )
 }
 
-function RoePanel({ p, download, compact }: { p: Project; download: () => void; compact?: boolean }) {
-  const approval = useStore().db.approvals.find((a) => a.projectId === p.id && [APR.create, APR.scope].includes(a.type as any))
+function RoePanel({ p, download, compact, approvals }: { p: Project; download: () => void; compact?: boolean; approvals: Approval[] }) {
+  const approval = approvals.find((a) => CREATE_OR_SCOPE.includes(a.type))
   return (
     <Card>
       <CardHeader title="Rules of Engagement (ROE)" actions={<Status kind="roe" value={p.roeStatus} />} />
@@ -240,8 +249,8 @@ function EditScope({ p, onClose, confirmReason }: { p: Project; onClose: () => v
 }
 
 /* ───────────── PR-05 / PR-07 Members & Approvals ───────────── */
-export function TeamTab({ p }: { p: Project }) {
-  const { db, me, go, can, A, confirm, toast } = useStore()
+export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
+  const { me, go, can, A, confirm, toast } = useStore()
   const guard = useGuard(p.id)
   const [err, setErr] = useState('')
   const [open, setOpen] = useState<string | null>(null)
@@ -249,7 +258,7 @@ export function TeamTab({ p }: { p: Project }) {
   const [nu, setNu] = useState<{ user: string; role: Role }>({ user: '', role: 'operator' })
   const canEdit = !guard.ro && can('editScope', p.id)
   const why = guard.ro ? guard.reason : 'Only a Red Team Manager or Organization Admin can manage members.'
-  const appr = db.approvals.filter((a) => a.projectId === p.id)
+  const appr = ds.approvals
   const pend = appr.filter((a) => a.status === 'pending')
   const mayApprove = can('approve', p.id)
   const names = Array.from(new Set(USERS.map((u) => u.name))).filter((n) => !p.members.some((m) => m.user === n) && n !== p.owner)
