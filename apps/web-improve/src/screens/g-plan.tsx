@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Plus, Rocket, Trash2, XCircle } from 'lucide-react'
-import { useDirty, useStore } from '../store'
+import { useDirty, useServices, useStore } from '../store'
 import { planVer } from '../data'
 import type { Plan, PlanStep } from '../data'
 import { policyChecks } from '../features/plans/policy'
+import { effectivePlanStatus } from '../features/plans/service'
 import type { Chk } from '../features/plans/policy'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui'
 import { NoProject, ReplanPanel, tz, useReplan } from './g-common'
@@ -563,6 +564,16 @@ function ReviewBody({ plan }: { plan: Plan }) {
     toast(`Operation ${r.opId} created. Complete preflight before starting.`, 'ok')
     go('preflight', { id: r.opId })
   }
+  /* Ticket 40: the Create Operation courtesy reflects the binding-time rule
+     the bridge handler enforces — an approval past its absolute deadline is
+     unusable even while the stored status still reads approved. The handler
+     re-checks at click time either way; this only surfaces the reason. */
+  const services = useServices()
+  const bridgeable = services ? effectivePlanStatus(plan, services.clock.now()) : plan.status
+  const expiredApproval = plan.status === 'approved' && bridgeable === 'expired'
+  const createWhyBridge = expiredApproval
+    ? `The approval expired ${plan.expires ? tz(plan.expires) : ''} — re-approve the plan before an operation can be created.`
+    : 'Your role cannot create operations.'
   const rows = db.audit.filter((a) => a.obj === plan.id)
   const expired = plan.status === 'expired'
   return (
@@ -622,7 +633,7 @@ function ReviewBody({ plan }: { plan: Plan }) {
           </> : plan.status === 'approved' ? <>
             <span className="text-sm">Approval is a precondition only — the operation still needs preflight.</span>
             {op && <Button onClick={() => go('operation', { id: op.id })}>Open {op.id}</Button>}
-            {!op && <Gated allowed={can('run')} reason="Your role cannot create operations."><Button variant="primary" icon={Rocket} onClick={create}>Create operation &amp; run preflight</Button></Gated>}
+            {!op && <Gated allowed={can('run') && !expiredApproval} reason={expiredApproval ? createWhyBridge : 'Your role cannot create operations.'}><Button variant="primary" icon={Rocket} onClick={create}>Create operation &amp; run preflight</Button></Gated>}
           </> : <span className="text-sm text-muted">No decision is pending for a plan in status “{plan.status.replace('_', ' ')}”.{(plan.status === 'draft' || plan.status === 'proposed') && <> <button className="text-accent hover:underline" onClick={() => go('ai-plan', { id: plan.id })}>Open the plan to request review →</button></>}</span>}
         </div>
       </div>

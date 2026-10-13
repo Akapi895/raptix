@@ -22,6 +22,10 @@ import type { Agent, Asset, Operation, Project } from '../../domain/entities'
 import type { Instant } from '../../domain/service'
 import type { Route } from '../../router/history'
 import { formatDemoInstant } from '../../domain/clock'
+// Ticket 40: PRE-07 consults the plans feature's approval-validity gate, so a
+// plan approval past its absolute 24h deadline fails the check at every
+// re-derivation (execution.md row b — integrated by 40).
+import { usableApproval } from '../plans/service'
 
 /** Project timezone offset (Asia/Ho_Chi_Minh, UTC+7): display/window checks only. */
 export const PROJECT_TZ_OFFSET_MS = 7 * 60 * 60 * 1000
@@ -142,7 +146,13 @@ export function computePreflightChecks(db: Db, op: Operation, now: Instant): Che
       if (op.planId) {
         if (!plan) return { code: 'PRE-07', label, state: 'fail', detail: `Linked plan ${op.planId} is missing. Re-link an approved plan.`, fix: 'Review plan', fixRoute: R('ai-plan-review', undefined, op.planId), reason: 'Execution is blocked: the linked plan record does not exist.' }
         const v = planVer(plan)
-        if (plan.status === 'approved' || plan.status === 'executed') return { code: 'PRE-07', label, state: 'pass', detail: `Plan ${plan.id} ${v} approved.` }
+        if (plan.status === 'approved' || plan.status === 'executed') {
+          /* Ticket 40: an approval past its absolute deadline is spent even
+           * while the stored status string still reads approved/expired. */
+          const gate = usableApproval(plan, now)
+          if (gate.ok) return { code: 'PRE-07', label, state: 'pass', detail: `Plan ${plan.id} ${v} approved.` }
+          return { code: 'PRE-07', label, state: 'fail', detail: gate.error, fix: 'Review plan', fixRoute: R('ai-plan-review', undefined, plan.id), reason: 'Execution is blocked: the plan approval expired — re-approve the plan.' }
+        }
         if (plan.status === 'in_review' || plan.status === 'proposed') return { code: 'PRE-07', label, state: 'review', detail: `AI plan ${plan.id} ${v} is ${plan.status.replace('_', ' ')} — approval required.`, fix: 'Review plan', fixRoute: R('ai-plan-review', undefined, plan.id), reason: 'Waiting for plan approval before execution.' }
         if (plan.status === 'rejected') return { code: 'PRE-07', label, state: 'fail', detail: `AI plan ${plan.id} ${v} was rejected — execution requires an approved plan.`, fix: 'Review plan', fixRoute: R('ai-plan-review', undefined, plan.id), reason: 'Execution is blocked: the linked plan approval was rejected.' }
         return { code: 'PRE-07', label, state: 'fail', detail: `AI plan ${plan.id} ${v} is ${plan.status.replace('_', ' ')} — a valid plan approval is required. Re-approve the plan under the current ROE.`, fix: 'Review plan', fixRoute: R('ai-plan-review', undefined, plan.id), reason: 'Execution is blocked: the plan approval is no longer valid.' }
