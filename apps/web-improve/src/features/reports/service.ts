@@ -21,7 +21,7 @@ import { USERS, type Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import type { ExportRec, Finding, FindingStatus, Project, Report, ReportStatus, Severity, Template } from '../../domain/entities'
+import type { ExportRec, Finding, FindingStatus, Project, Report, ReportSnapshot, ReportStatus, Role, Severity, Template } from '../../domain/entities'
 
 /** Finding statuses a formal report may include: confirmed or later. AI suggestions never qualify. */
 export const CONFIRMED_OR_LATER: FindingStatus[] = ['confirmed', 'remediation', 'retest', 'resolved']
@@ -520,6 +520,348 @@ export function setReportFindings(authority: DbAuthority, clock: Clock, ctx: Req
   return { ok: true, data: authority.snapshot().reports.find((x) => x.id === reportId)! }
 }
 
+/* ───────────── Review checklist (moved from the screen — one implementation) ───────────── */
+
+/** One review checklist row; `fail` blocks submit, `warn` is advisory. */
+export interface RCheck { id: string; label: string; state: 'pass' | 'fail' | 'warn'; detail: string }
+/** The report's no-findings closure variant (screen-owned UI state, passed explicitly to reads/writes). */
+export interface NoFind { on: boolean; note: string }
+
+/** Completion evidence used by the no-findings closure variant. */
+export function closureEvidence(db: Db, projectId: string) {
+  const ops = db.operations.filter((o) => o.projectId === projectId)
+  const run = ops.filter((o) => ['done', 'running', 'paused', 'estop'].includes(o.status) && o.steps.some((s) => s.status === 'ok' || s.status === 'fail'))
+  const ev = db.evidence.filter((e) => e.projectId === projectId)
+  return { ops, run, ev }
+}
+
+/** The submit/review checklist over the one database (catalog, editor, preview and review screens share it). */
+export function reportChecks(db: Db, r: Report, nf?: NoFind): RCheck[] {
+  const exec = r.sections.find((s) => /executive summary/i.test(s.title))
+  const linked = r.findings.map((id) => db.findings.find((f) => f.id === id)).filter(Boolean) as Finding[]
+  const unconf = linked.filter((f) => !CONFIRMED_OR_LATER.includes(f.status))
+  const empty = r.sections.filter((s) => !s.body.trim())
+  const tpl = db.templates.find((t) => t.name === r.template)
+  const ce = closureEvidence(db, r.projectId)
+  const nfMissing = [!(nf?.note || '').trim() || (nf?.note || '').trim().length < 20 ? 'a closure justification (at least 20 characters)' : '', ce.run.length === 0 ? 'at least one operation with recorded execution results' : '', ce.ev.length === 0 ? 'at least one evidence item or coverage observation' : '', linked.length ? 'unlinking the findings (a no-findings closure cannot list findings)' : ''].filter(Boolean)
+  const findChecks: RCheck[] = nf?.on
+    ? [{ id: 'find', label: 'No-findings closure is supported', state: nfMissing.length ? 'fail' : 'pass', detail: nfMissing.length ? `Needs ${nfMissing.join('; ')}.` : `Justification recorded, ${ce.run.length} operation(s) and ${ce.ev.length} evidence item(s) support the closure.` }]
+    : [
+      { id: 'find', label: 'At least one confirmed finding linked', state: r.findings.length ? 'pass' : 'fail', detail: r.findings.length ? `${r.findings.length} finding(s) linked.` : 'No confirmed findings are linked. Link one, or switch to the No-findings closure variant if the assessment found nothing.' },
+      { id: 'conf', label: 'Linked findings are confirmed', state: unconf.length ? 'fail' : 'pass', detail: unconf.length ? `Not confirmed: ${unconf.map((f) => f.id).join(', ')}` : linked.length ? 'All are confirmed or later.' : 'No findings to check.' },
+    ]
+  return [
+    { id: 'exec', label: 'Executive Summary present', state: exec && exec.body.trim() ? 'pass' : 'fail', detail: exec && exec.body.trim() ? 'Content is present.' : 'The Executive Summary section is empty.' },
+    ...findChecks,
+    { id: 'empty', label: 'Empty sections', state: empty.length ? 'warn' : 'pass', detail: empty.length ? `${empty.length} empty section(s): ${empty.map((s) => s.title).join(', ')}` : 'Every section has content.' },
+    { id: 'tpl', label: 'Template is published', state: tpl && tpl.status !== 'published' ? 'warn' : 'pass', detail: tpl && tpl.status !== 'published' ? `${tpl.name} is not approved, so formal delivery is blocked.` : 'Template is published.' },
+  ]
+}
+
+/* ───────────── Review read + transitions (ticket 36) ───────────── */
+
+/** One handler-computed action gate; empty reason = allowed. */
+export interface ReviewGate { allowed: boolean; reason: string }
+
+export interface ReportReviewRead {
+  report: Report
+  project: { id: string; client: string; type: string; roeVersion: string; roeStatus: Project['roeStatus'] }
+  /** Review checklist over the committed content. */
+  checks: RCheck[]
+  /** Linked findings with their evidence redaction markers (status included). */
+  linked: (LinkedFindingRow & { status: FindingStatus })[]
+  /** Export/delivery records for this report — the canonical delivery history. */
+  exports: ExportRec[]
+  gates: {
+    /** Approve/return decisions (four-eyes + reviewer role + state). */
+    decide: ReviewGate
+    /** Simulated PDF/DOCX export of the approved version. */
+    export: ReviewGate
+    /** Marking the locked version delivered. */
+    deliver: ReviewGate
+    /** Recording the recipient acknowledgement. */
+    ack: ReviewGate
+  }
+}
+
+/** The baseline export/delivery role gate: Manager, Reviewer or Admin. */
+const EXPORT_ROLES: readonly Role[] = ['admin', 'manager', 'reviewer']
+const reportRef = (r: Report) => ({ kind: 'report' as const, id: r.id, projectId: r.projectId })
+const readOnlyReason = (project: Project, ctx: RequestContext) =>
+  ctx.actor.role === 'viewer' ? 'The Viewer role has read-only access.' : `Project ${project.id} is closed or cancelled — reports are read-only.`
+
+/**
+ * Review read model: the report aggregate, its project, the checklist, the
+ * linked findings with redaction markers, this report's export/delivery
+ * records and the handler-computed action gates. Scope follows
+ * {@link resolveReport} (non-member → not-found without a leak; a member
+ * scoped elsewhere → forbidden with the owning project). `nf` is the
+ * report's no-findings variant; the checklist depends on it.
+ */
+export function readReportReview(db: Db, ctx: RequestContext, id: string, nf?: NoFind): ServiceResult<ReportReviewRead> {
+  const t = resolveReport(db, ctx, id)
+  if (!t.ok) return t
+  const { report, project } = t
+  const ro = projectLocked(project)
+  const roGate = (): ReviewGate => ({ allowed: false, reason: readOnlyReason(project, ctx) })
+  const checks = reportChecks(db, report, nf)
+  const exports = db.exportsList.filter((e) => e.reportId === report.id)
+  const roleExport = EXPORT_ROLES.includes(ctx.actor.role)
+  const tplPublished = db.templates.find((x) => x.name === report.template)?.status !== 'draft'
+  const statusOk = ['approved', 'exported'].includes(report.status)
+  // Every gate mirrors its handler's refusal order exactly: the read-only
+  // project context first, then the report state, then the role.
+  const decide: ReviewGate = ro
+    ? roGate()
+    : report.status !== 'review'
+      ? { allowed: false, reason: `A report can be decided only while it is In Review — ${report.id} is ${STATUS_EN[report.status]}.` }
+      : !can(ctx.actor, 'approveReport', project)
+        ? { allowed: false, reason: `Only a Reviewer can approve or return reports. This report is assigned to ${report.reviewer}.` }
+        : ctx.actor.id === report.author
+          ? { allowed: false, reason: 'The author cannot decide their own report (four-eyes principle).' }
+          : { allowed: true, reason: '' }
+  const exportGate: ReviewGate = ro
+    ? roGate()
+    : !statusOk
+      ? { allowed: false, reason: report.status === 'delivered' ? 'This report is already delivered. Create a new version to export changes.' : 'Export unlocks after the report is approved.' }
+      : !roleExport ? { allowed: false, reason: `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot export reports. Ask a Manager, Reviewer or Admin.` }
+      : { allowed: true, reason: '' }
+  const deliverGate: ReviewGate = ro
+    ? roGate()
+    : report.status === 'delivered'
+      ? { allowed: false, reason: 'Already delivered.' }
+      : !statusOk
+        ? { allowed: false, reason: 'Delivery unlocks after the report is approved and exported.' }
+        : !roleExport ? { allowed: false, reason: `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot mark delivery. Ask a Manager, Reviewer or Admin.` }
+        : !exports.some((e) => e.version === report.version) ? { allowed: false, reason: 'Export PDF or DOCX for this version first (step 2).' }
+        : !tplPublished ? { allowed: false, reason: 'The template is not approved, so formal delivery is blocked. Switch the report to a published template.' }
+        : { allowed: true, reason: '' }
+  const ackGate: ReviewGate = report.status !== 'delivered'
+    ? { allowed: false, reason: 'Only a delivered report can acknowledge receipt.' }
+    : ro ? roGate()
+    : !roleExport ? { allowed: false, reason: `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot record acknowledgements.` }
+    : { allowed: true, reason: '' }
+  return {
+    ok: true,
+    data: {
+      report,
+      project: { id: project.id, client: project.client, type: project.type, roeVersion: project.roeVersion, roeStatus: project.roeStatus },
+      checks,
+      linked: report.findings
+        .map((fid) => db.findings.find((f) => f.id === fid && f.projectId === project.id))
+        .filter((f): f is Finding => !!f)
+        .map((f) => ({
+          id: f.id, title: f.title, severity: f.severity, asset: f.asset, status: f.status,
+          evidence: f.evidence.map((ref) => ({ ref, sensitive: !!db.evidence.find((e) => e.id === ref && e.projectId === project.id)?.sensitive })),
+        })),
+      exports,
+      gates: { decide, export: exportGate, deliver: deliverGate, ack: ackGate },
+    },
+  }
+}
+
+/** Submit/resubmit input: the section bodies to snapshot for this version. */
+export interface ReportSubmitInput { bodies: Record<string, string> }
+
+/**
+ * Submits (or resubmits) a report for review in one atomic commit: the
+ * committed content is snapshotted for the version (ticket 36 version
+ * snapshots live in the one database, never in UI state), a returned report
+ * advances to the next minor version, and the review entry, audit row and
+ * reviewer notice share the commit. Refusals: read-only project or missing
+ * `editReport` role → forbidden; a non-draft state → conflict.
+ */
+export function submitReportVersion(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input: ReportSubmitInput): ServiceResult<Report> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, id)
+  if (!t.ok) return t
+  const { report, project } = t
+  if (projectLocked(project)) return { ok: false, failure: { kind: 'forbidden', message: readOnlyReason(project, ctx), entity: reportRef(report) } }
+  if (!can(ctx.actor, 'editReport', project)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot edit reports. Ask a Red Team Manager, Operator or Analyst to submit it.`, entity: reportRef(report) } }
+  }
+  if (!EDITABLE_REPORT.includes(report.status)) {
+    return { ok: false, failure: { kind: 'conflict', message: `This report is ${STATUS_EN[report.status]}, so it cannot be submitted for review.`, entity: reportRef(report) } }
+  }
+  const at = stampOf(clock)
+  const version = report.status === 'returned'
+    ? (() => { const [maj, min] = report.version.replace('v', '').split('.').map(Number); return `v${maj}.${min + 1}` })()
+    : report.version
+  const bodies = Object.fromEntries(report.sections.filter((s) => s.id in input.bodies).map((s) => [s.id, input.bodies[s.id] ?? s.body]))
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === id)!
+    r.status = 'review'
+    r.version = version
+    r.updated = at
+    r.reviews.push({ at, by: ctx.actor.id, action: 'Submitted for review', note: '', version })
+    const snapshots: ReportSnapshot[] = (r.snapshots || []).filter((x) => x.version !== version)
+    snapshots.push({ version, at, by: ctx.actor.id, bodies, findings: [...r.findings] })
+    r.snapshots = snapshots
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Submitted report for review', obj: id, projectId: r.projectId, result: 'Success', reason: '' })
+    d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + clock.now() % 10000, group: 'todo', category: 'reports', text: `${id} needs review`, projectId: r.projectId, at, read: false, to: { name: 'report-review', id } })
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === id)! }
+}
+
+/** The reviewer's decision on a report in review. */
+export type ReportDecision = 'approve' | 'return'
+
+/**
+ * The review decision (approve/return) with the four-eyes policy owned by
+ * the handler: the author can never decide their own report, only a
+ * Reviewer (`approveReport`) may decide, the report must be In Review, and
+ * the mandatory decision comment is recorded with the version in the
+ * canonical review history. Approval pins the submitted snapshot — later
+ * edits start a new draft and never mutate the approved content.
+ */
+export function decideReport(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, decision: ReportDecision, note: string): ServiceResult<Report> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, id)
+  if (!t.ok) return t
+  const { report, project } = t
+  if (projectLocked(project)) return { ok: false, failure: { kind: 'forbidden', message: readOnlyReason(project, ctx), entity: reportRef(report) } }
+  if (report.status !== 'review') {
+    return { ok: false, failure: { kind: 'conflict', message: `A report can be decided only while it is In Review — ${id} is ${STATUS_EN[report.status]}.`, entity: reportRef(report) } }
+  }
+  if (!can(ctx.actor, 'approveReport', project)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `Only a Reviewer can approve or return reports; the ${ROLE_TEXT[ctx.actor.role]} role cannot. Ask the assigned reviewer (${report.reviewer}) to act.`, entity: reportRef(report) } }
+  }
+  if (ctx.actor.id === report.author) {
+    return { ok: false, failure: { kind: 'forbidden', message: 'The author cannot decide their own report (four-eyes principle). Assign an independent reviewer.', entity: reportRef(report) } }
+  }
+  if (!note.trim()) {
+    return { ok: false, failure: { kind: 'validation', message: decision === 'approve' ? 'An approval reasoning is required and is recorded with the pinned version.' : 'A comment for the author is required to return a report.' } }
+  }
+  const at = stampOf(clock)
+  const approved = decision === 'approve'
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === id)!
+    r.status = approved ? 'approved' : 'returned'
+    r.updated = at
+    r.reviews.push({ at, by: ctx.actor.id, action: approved ? 'Approved' : 'Changes requested', note: note.trim(), version: r.version })
+    if (approved) {
+      // Pin the approved content: the submitted snapshot when one exists, otherwise
+      // the committed sections (a report that entered review through the legacy path).
+      const snapshots: ReportSnapshot[] = [...(r.snapshots || [])]
+      const i = snapshots.findIndex((s) => s.version === r.version)
+      if (i >= 0) snapshots[i] = { ...snapshots[i], pinned: true }
+      else snapshots.push({ version: r.version, at, by: ctx.actor.id, bodies: Object.fromEntries(r.sections.map((s) => [s.id, s.body])), findings: [...r.findings], pinned: true })
+      r.snapshots = snapshots
+    }
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: approved ? 'Approved report' : 'Requested report changes', obj: id, projectId: r.projectId, result: 'Success', reason: note.trim() })
+    if (!approved) d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + clock.now() % 10000, group: 'todo', category: 'reports', text: `${id} was returned for changes`, projectId: r.projectId, at, read: false, to: { name: 'report', id } })
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === id)! }
+}
+
+/** Simulated export checksum — identical format to the baseline export records. */
+const checksumOf = () => 'sha256:' + Math.random().toString(16).slice(2, 6) + '…' + Math.random().toString(16).slice(2, 6)
+
+/**
+ * Simulated PDF/DOCX export: requires an eligible approved version and an
+ * export-capable role, and records the export with its checksum on the
+ * export record (never on preview content). An approved report advances to
+ * exported; the export alone is not a delivery.
+ */
+export function exportReportVersion(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, format: 'PDF' | 'DOCX'): ServiceResult<{ report: Report; rec: ExportRec }> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, id)
+  if (!t.ok) return t
+  const { report, project } = t
+  if (projectLocked(project)) return { ok: false, failure: { kind: 'forbidden', message: readOnlyReason(project, ctx), entity: reportRef(report) } }
+  if (!['approved', 'exported'].includes(report.status)) {
+    return { ok: false, failure: { kind: 'conflict', message: report.status === 'delivered' ? 'This report is already delivered. Create a new version to export changes.' : 'Export unlocks after the report is approved. Submit it for review first.', entity: reportRef(report) } }
+  }
+  if (!EXPORT_ROLES.includes(ctx.actor.role)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot export reports. Ask a Manager, Reviewer or Admin.`, entity: reportRef(report) } }
+  }
+  const at = stampOf(clock)
+  const recId = 'EX-' + (91 + db.exportsList.length)
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === id)!
+    if (r.status === 'approved') r.status = 'exported'
+    d.exportsList.unshift({ id: recId, reportId: id, version: r.version, format, by: ctx.actor.id, at, recipient: '—', status: 'Completed', checksum: checksumOf() })
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: `Exported report (${format})`, obj: id, projectId: r.projectId, result: 'Success', reason: '' })
+  })
+  const next = authority.snapshot()
+  return { ok: true, data: { report: next.reports.find((x) => x.id === id)!, rec: next.exportsList.find((x) => x.id === recId)! } }
+}
+
+/** Delivery/handover input: who received the locked version, how, with what note. */
+export interface DeliveryInput { recipient: string; channel: string; notes: string }
+
+/**
+ * Marks the locked version delivered: requires an approved version, a valid
+ * export of that exact version, a published template and a recipient. The
+ * handover record (recipient/channel/notes) is stamped onto the delivered
+ * export records — the delivery history is the export history, and export
+ * alone is never delivery.
+ */
+export function deliverReportVersion(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input: DeliveryInput): ServiceResult<Report> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, id)
+  if (!t.ok) return t
+  const { report, project } = t
+  if (projectLocked(project)) return { ok: false, failure: { kind: 'forbidden', message: readOnlyReason(project, ctx), entity: reportRef(report) } }
+  if (report.status === 'delivered') {
+    return { ok: false, failure: { kind: 'conflict', message: 'This report is already delivered.', entity: reportRef(report) } }
+  }
+  if (!['approved', 'exported'].includes(report.status)) {
+    return { ok: false, failure: { kind: 'conflict', message: 'Cannot deliver: the report has not been approved.', entity: reportRef(report) } }
+  }
+  if (!EXPORT_ROLES.includes(ctx.actor.role)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot mark delivery. Ask a Manager, Reviewer or Admin.`, entity: reportRef(report) } }
+  }
+  if (!db.exportsList.some((e) => e.reportId === id && e.version === report.version)) {
+    return { ok: false, failure: { kind: 'validation', message: 'Cannot deliver: no valid export exists for this version. Export PDF/DOCX first.', entity: reportRef(report) } }
+  }
+  if (db.templates.find((x) => x.name === report.template)?.status === 'draft') {
+    return { ok: false, failure: { kind: 'validation', message: 'The template is not approved, so formal delivery is blocked. Switch the report to a published template.', entity: reportRef(report) } }
+  }
+  if (!input.recipient.trim()) {
+    return { ok: false, failure: { kind: 'validation', message: 'Enter the recipient.' } }
+  }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === id)!
+    r.status = 'delivered'
+    r.deliveredAt = at
+    r.updated = at
+    d.exportsList.filter((e) => e.reportId === id && e.version === r.version).forEach((e) => {
+      e.recipient = input.recipient.trim()
+      e.status = 'Delivered'
+      e.channel = input.channel
+      e.notes = input.notes
+    })
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Marked as delivered', obj: id, projectId: r.projectId, result: 'Success', reason: input.recipient.trim() })
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === id)! }
+}
+
+/** Records the recipient acknowledgement on the delivered export record. */
+export function acknowledgeDelivery(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<ExportRec> {
+  const db = authority.snapshot()
+  const t = resolveReport(db, ctx, id)
+  if (!t.ok) return t
+  const { report, project } = t
+  if (report.status !== 'delivered') {
+    return { ok: false, failure: { kind: 'conflict', message: 'Only a delivered report can acknowledge receipt.', entity: reportRef(report) } }
+  }
+  if (projectLocked(project) || !EXPORT_ROLES.includes(ctx.actor.role)) {
+    return { ok: false, failure: { kind: 'forbidden', message: projectLocked(project) ? readOnlyReason(project, ctx) : `Your role (${ROLE_TEXT[ctx.actor.role]}) cannot record acknowledgements.`, entity: reportRef(report) } }
+  }
+  const rec = db.exportsList.find((e) => e.reportId === id && e.status === 'Delivered')
+  if (!rec) return { ok: false, failure: { kind: 'validation', message: 'No delivery record to acknowledge.', entity: reportRef(report) } }
+  if (rec.ackAt) return { ok: true, data: rec }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const target = d.exportsList.find((e) => e.id === rec.id)!
+    target.ackAt = at
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Recorded delivery acknowledgement', obj: id, projectId: report.projectId, result: 'Success', reason: `Receipt confirmed by ${target.recipient}` })
+  })
+  return { ok: true, data: authority.snapshot().exportsList.find((x) => x.id === rec.id)! }
+}
+
 /** Builds the typed report service; `guard` is the factory's superseded-scope read guard.
  *  Reads observe scope cancellation; writes capture their context at call time and commit once. */
 export function createReportService(
@@ -540,6 +882,13 @@ export function createReportService(
     removeSection: (ctx: RequestContext, id: string, sectionId: string) => Promise.resolve(removeReportSection(authority, clock, ctx, id, sectionId)),
     reorderSections: (ctx: RequestContext, id: string, order: string[]) => Promise.resolve(reorderReportSections(authority, clock, ctx, id, order)),
     setFindings: (ctx: RequestContext, id: string, ids: string[]) => Promise.resolve(setReportFindings(authority, clock, ctx, id, ids)),
+    /* Ticket 36: review read + submit/approve/return + export/delivery. */
+    review: (ctx: RequestContext, id: string, nf?: NoFind) => guard(() => readReportReview(authority.snapshot(), ctx, id, nf)),
+    submit: (ctx: RequestContext, id: string, input: ReportSubmitInput) => Promise.resolve(submitReportVersion(authority, clock, ctx, id, input)),
+    decide: (ctx: RequestContext, id: string, decision: ReportDecision, note: string) => Promise.resolve(decideReport(authority, clock, ctx, id, decision, note)),
+    exportVersion: (ctx: RequestContext, id: string, format: 'PDF' | 'DOCX') => Promise.resolve(exportReportVersion(authority, clock, ctx, id, format)),
+    deliver: (ctx: RequestContext, id: string, input: DeliveryInput) => Promise.resolve(deliverReportVersion(authority, clock, ctx, id, input)),
+    acknowledge: (ctx: RequestContext, id: string) => Promise.resolve(acknowledgeDelivery(authority, clock, ctx, id)),
   }
 }
 
