@@ -78,6 +78,8 @@ export function createDatabaseAuthority(clock: Clock): DbAuthority {
       entities.push(...changedRefs(kind, before[key] as readonly Row[], next[key] as readonly Row[]))
     }
     if (json(before.stopState) !== json(next.stopState)) entities.push({ kind: 'stop-state', id: 'workspace' })
+    // Ticket 56: organization settings publish one workspace-level identity.
+    if (json(before.org) !== json(next.org)) entities.push({ kind: 'org', id: 'workspace' })
     return entities
   }
 

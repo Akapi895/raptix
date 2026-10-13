@@ -43,6 +43,10 @@ import { createLibraryService, type LibraryService } from '../features/library/s
 // feature-local (src/features/analysis/service.ts); the factory only wires
 // them into a scope.
 import { createAnalysisService, type AnalysisService } from '../features/analysis/service'
+// Ticket 56 append: organization settings handlers (profile, members,
+// invitations) are feature-local (src/features/settings/service.ts); the
+// factory only wires them into a scope.
+import { createSettingsService, type SettingsService } from '../features/settings/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -108,6 +112,8 @@ export interface ConsoleServices {
   library(actor: ActorRef, projectId: string): LibraryService
   /** Typed ATT&CK coverage + detection heatmap read handlers (ticket 54 — feature-local implementation). */
   analysis(actor: ActorRef, projectId: string): AnalysisService
+  /** Typed organization settings handlers (ticket 56 — feature-local implementation). */
+  settings(actor: ActorRef, projectId: string): SettingsService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -325,6 +331,26 @@ export function createConsoleServices(): ConsoleServices {
     return createBranchService(authority, clock, guard)
   }
 
+  /* ── Ticket 56 append: organization settings (profile read/update,
+     member role/status writes, invitations). Reads share the superseded-scope
+     guard so cancelScope covers in-flight settings reads on a persona/project
+     switch; writes capture their context at call time and commit once. ── */
+  const forSettings = (actor: ActorRef, projectId: string): SettingsService => {
+    const key = scopeKey(actor, projectId)
+    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
+      let superseded = false
+      const cancel = () => { superseded = true }
+      let set = inFlight.get(key)
+      if (!set) { set = new Set(); inFlight.set(key, set) }
+      set.add(cancel)
+      await Promise.resolve()
+      set.delete(cancel)
+      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
+      return produce()
+    }
+    return createSettingsService(authority, clock, guard)
+  }
+
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
     set?.forEach((cancel) => cancel())
@@ -359,6 +385,7 @@ export function createConsoleServices(): ConsoleServices {
     branches: forBranches,
     library: forLibrary,
     analysis: forAnalysis,
+    settings: forSettings,
     cancelScope,
     reset(variant) {
       scheduler.clear()
