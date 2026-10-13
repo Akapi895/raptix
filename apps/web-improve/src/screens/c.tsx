@@ -8,7 +8,7 @@ import type { PfCheck, PfSnap, PfState } from './c-common'
 import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, elapsed, pfOverall, specChecks, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
 import { AgentsTab, ConsoleTab, OpBanner, OpControls, OverviewTab, TimelineTab } from './c-console'
 import { GraphTab, ResultsTab } from './c-results'
-import { useCreateOperation, useOperationDetail, useOperationDraftOptions, useOperationList, useRunPreflight, useScheduleOperation, useUpdateOperation, OperationReadError } from '../features/operations/query'
+import { useCreateOperation, useOperationDetail, useOperationDraftOptions, useOperationList, useRunPreflight, useScheduleOperation, useStartOperation, useUpdateOperation, OperationReadError } from '../features/operations/query'
 import { PROJECT_TZ_OFFSET_MS, findScheduleConflicts, roeWindowIssue, scheduleInstantOf } from '../features/operations/service'
 import type { OperationCategory, OperationDetailRead, OperationWriteRead } from '../features/operations/service'
 import type { ServiceResult } from '../domain/service'
@@ -377,13 +377,17 @@ function OperationNew() {
 
 /* ═════════════ OP-03 — Preflight ═════════════ */
 function PreflightPage({ op }: { op: Operation }) {
-  const { db, go, A, toast, can, pid, route, persistFilters, setFilter, now } = useStore()
+  const { db, go, toast, can, pid, route, persistFilters, setFilter, now } = useStore()
   const { ro, reason } = useGuard(op.projectId)
   const [checking, setChecking] = useState(false)
   /* Ticket 26: the run goes through the typed handler — the eight checks are
      re-derived from canonical state at the handler, so the recorded snapshot
      can never outlive the records it was derived from. */
   const runPf = useRunPreflight()
+  /* Ticket 27: the start control is the typed lifecycle mutation — the gate
+     is re-derived at click time, so a policy change between render and click
+     is refused with its reason instead of starting. */
+  const startOp = useStartOperation()
   const p = db.projects.find((x) => x.id === op.projectId)!
   const pb = db.playbooks.find((x) => x.id === op.playbookId)
   const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
@@ -428,7 +432,14 @@ function PreflightPage({ op }: { op: Operation }) {
           <Button icon={RefreshCw} variant={snap && !invalid ? 'secondary' : 'primary'} disabled={!allowed || checking || started} title={runWhy} onClick={run}>{checking ? 'Checking…' : snap ? 'Run Preflight again' : 'Run Preflight'}</Button>
           <Button icon={CalendarClock} disabled={disabledEdit} title={started ? 'The operation has started and cannot be rescheduled.' : !allowed ? (ro ? reason : 'You cannot edit operations.') : undefined} onClick={() => go('operation-schedule', { id: op.id })}>Schedule</Button>
           <Button icon={Wrench} disabled={disabledEdit} title={started ? 'The operation has started and cannot be edited.' : !allowed ? (ro ? reason : 'You cannot edit operations.') : undefined} onClick={() => go('operation-new', { id: op.id })}>Edit Draft</Button>
-          <Button variant={ok ? 'primary' : 'secondary'} icon={Play} disabled={!ok} title={ok ? undefined : startWhy} onClick={() => { A.startOp(op.id); toast(`Operation ${op.id} started.`); go('operation', { id: op.id, tab: 'live' }) }}>Start Operation</Button>
+          <Button variant={ok ? 'primary' : 'secondary'} icon={Play} disabled={!ok || startOp.isPending} title={ok ? undefined : startWhy} onClick={() => startOp.mutate({ id: op.id }, { onSuccess: (r) => {
+            /* The handler re-derived the gate at click time; a refusal renders
+               its reason and the operation stays unstarted. A success binds
+               the reservations atomically and navigates to the live console. */
+            if (!r.ok) { toast(r.failure.message, 'bad'); return }
+            toast(`Operation ${op.id} started.`)
+            go('operation', { id: op.id, tab: 'live' })
+          } })}>Start Operation</Button>
         </>} />
       {ro && <Banner tone="info" icon={Lock}>{reason}</Banner>}
       {started && <Banner tone="info" title="Operation already started" action={<Button size="sm" onClick={() => go('operation', { id: op.id, tab: 'live' })}>Open Live Workspace</Button>}>The preflight result below is for reference only.</Banner>}
