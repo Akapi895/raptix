@@ -208,7 +208,6 @@ export function createConsoleServices(): ConsoleServices {
     createWorkerService(authority, scopeGuard(actor, projectId))
   const forNotices = (actor: ActorRef, projectId: string): NoticeService =>
     createNoticeService(authority, clock, scopeGuard(actor, projectId))
-<<<<<<< HEAD
   const forResults = (actor: ActorRef, projectId: string): ResultsService =>
     createResultsService(authority, scopeGuard(actor, projectId))
   const forTrace = (actor: ActorRef, projectId: string): TraceService =>
