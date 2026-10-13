@@ -8,7 +8,8 @@
  * passing preflight (ticket 26's re-derived gate) and with an expired linked
  * plan approval; role gates refuse with reasons; stopped/estopped operations
  * never resume. Both entry points — the typed mutations and the legacy
- * A.startOp/A.stopOp/A.completeOp bridge — run the same handlers.
+ * A.stopOp/A.completeOp bridge — run the same handlers (the zero-caller
+ * A.confirmPreflight/A.startOp wrappers were retired by ticket 65).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -299,8 +300,10 @@ describe('operation controls (ticket 27 — screens)', () => {
     const h = mountProbe('Alex Morgan')
     h.run(() => { h.store().setPid(P14); h.store().A.assignAgent('AG-012', P14) })
     const opId = h.store().A.createOperation({ name: 'Legacy stop bridge op', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
-    h.run(() => { h.store().A.confirmPreflight(opId) })
-    h.run(() => { h.store().A.startOp(opId) })
+    // Ticket 65 retired the A.confirmPreflight/A.startOp wrappers; the setup
+    // runs the same typed handlers they delegated to.
+    h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), opId) })
+    h.run(() => { startOperation(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), opId) })
     h.show(<>
       <FleetBusy />
       <routes.operations />

@@ -24,6 +24,7 @@ import {
   decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, withdrawApprovalTransaction,
 } from './service'
 import { importAssetsTransaction } from '../assets/writes'
+import { runOperationPreflight, startOperation } from '../operations/service'
 
 afterEach(cleanup)
 
@@ -68,7 +69,9 @@ const newReadyOperation = (h: ReturnType<typeof mountConsole>) => {
   h.run(() => h.store().A.assignAgent('AG-012', P14))
   let opId = ''
   h.run(() => { opId = h.store().A.createOperation({ name: 'Approvals probe', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' }) })
-  h.run(() => h.store().A.confirmPreflight(opId))
+  // Ticket 65 retired the A.confirmPreflight wrapper; the fixture runs the
+  // same typed handler the wrapper delegated to.
+  h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf(ALEX), opId) })
   return opId
 }
 
@@ -199,7 +202,7 @@ describe('scope revisions invalidate at submission (invariant a)', () => {
     // The reset draft is blocked: preflight denies the ROE and start refuses.
     const op = d.operations.find((o) => o.id === opId)!
     expect(computePreflight(d, op).find((c) => c.code === 'PRE-02')?.state).toBe('fail')
-    h.run(() => { h.store().A.startOp(opId) })
+    h.run(() => { startOperation(h.svc().authority, h.svc().clock, ctxOf(ALEX), opId) })
     expect(d.operations.find((o) => o.id === opId)?.status).toBe('draft')
     h.unmount()
   })

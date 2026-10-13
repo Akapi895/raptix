@@ -3,8 +3,13 @@ import { act, cleanup, render } from '@testing-library/react'
 import { computePreflight, StoreProvider, useServices, useStore, type Store } from '../store'
 import type { ConsoleServices } from '../domain/service-factory'
 import { importAssetsTransaction } from '../features/assets/writes'
+import { runOperationPreflight, startOperation } from '../features/operations/service'
+import type { ActorRef, RequestContext } from '../domain/service'
 
 afterEach(cleanup)
+
+const ALEX: ActorRef = { id: 'Alex Morgan', role: 'manager' }
+const ctxOf = (projectId: string): RequestContext => ({ actor: ALEX, projectId, corr: 'legacy' })
 
 function Probe({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) {
   ready(useStore(), useServices())
@@ -55,7 +60,7 @@ describe('scope revisions invalidate at submission (requirement a / spec scope r
     const h = mountIsolation()
     h.run(() => h.store().A.assignAgent('AG-012', 'RT-2026-014'))
     const opId = newOp(h.store)
-    h.run(() => h.store().A.confirmPreflight(opId))
+    h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf('RT-2026-014'), opId) })
     expect(h.store().db.operations.find((o) => o.id === opId)?.status).toBe('ready')
     h.run(() => h.store().A.editScope('RT-2026-014', { window: 'Mon–Fri, 10:00 AM–4:00 PM (UTC+7)' }, 'Tighten the window'))
     const d = h.store().db
@@ -76,14 +81,14 @@ describe('scope revisions invalidate at submission (requirement a / spec scope r
     const h = mountIsolation()
     h.run(() => h.store().A.assignAgent('AG-012', 'RT-2026-014'))
     const opId = newOp(h.store)
-    h.run(() => h.store().A.confirmPreflight(opId))
+    h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf('RT-2026-014'), opId) })
     h.run(() => h.store().A.editScope('RT-2026-014', { window: 'Mon–Fri, 10:00 AM–4:00 PM (UTC+7)' }, 'Tighten the window'))
     const d = h.store().db
     const op = d.operations.find((o) => o.id === opId)!
     const roe = computePreflight(d, op).find((c) => c.code === 'PRE-02')!
     expect(roe.state).toBe('fail')
     expect(roe.detail).toContain('waiting for re-approval')
-    h.run(() => h.store().A.startOp(opId))
+    h.run(() => { startOperation(h.svc().authority, h.svc().clock, ctxOf('RT-2026-014'), opId) })
     expect(h.store().db.operations.find((o) => o.id === opId)?.status).toBe('draft')
     h.unmount()
   })
@@ -94,7 +99,7 @@ describe('scope revisions invalidate at submission (requirement a / spec scope r
     h.run(() => {
       // Ticket 65 retired the A.addAssets wrapper; the import runs through the
       // same feature transaction (current persona captured at call time).
-      res = importAssetsTransaction(h.svc().authority, h.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'RT-2026-015', corr: 'legacy' }, 'RT-2026-015', [{ name: 'cloud-db-01', ident: 'db-01.fabrikam.example.test', type: 'Database', os: 'Linux', owner: 'Cloud Team B', scope: 'in', source: 'Manual' }])
+      res = importAssetsTransaction(h.svc().authority, h.svc().clock, ctxOf('RT-2026-015'), 'RT-2026-015', [{ name: 'cloud-db-01', ident: 'db-01.fabrikam.example.test', type: 'Database', os: 'Linux', owner: 'Cloud Team B', scope: 'in', source: 'Manual' }])
     })
     expect(res.ok && res.data.needsApproval).toBe(true)
     let d = h.store().db
