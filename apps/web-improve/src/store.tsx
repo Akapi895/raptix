@@ -481,7 +481,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     policyCan({ id: me.name, role: me.role }, a, db.projects.find((x) => x.id === (projectId || pid)))
 
   /* dirty guard */
-  const setDirty = useCallback((on: boolean, save?: () => void) => { setDirtyS(on); saveRef.current = on ? save : undefined }, [])
+  const setDirty = useCallback((on: boolean, save?: () => void) => {
+    /* The ref is updated here too: a post-write redirect clears its dirty
+       state and navigates in the same tick (f-report's submit — "dirty
+       cleared first, the unsaved guard must not hold the redirect"), before
+       the state update re-renders. Without this the guard would read the
+       stale committed-but-not-yet-refetched dirty flag and hold the
+       navigation behind the unsaved-changes modal. */
+    dirtyRef.current = on
+    setDirtyS(on); saveRef.current = on ? save : undefined
+  }, [])
   const dirtyRef = useRef(false)
   dirtyRef.current = dirty
   const guarded = useCallback((fn: () => void) => {

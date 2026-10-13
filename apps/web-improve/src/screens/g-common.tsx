@@ -195,10 +195,10 @@ export function PlanCard({ plan, compact }: { plan: Plan; compact?: boolean }) {
   )
 }
 
-/** Deep link to the trace page; the route path id highlights the event (ticket 41's router projection — the `?event=` duplicate retired in ticket 42). */
+/** Deep link to the trace page; the route path id highlights the event (ticket 41's router projection — the `?event=` duplicate retired in ticket 42). Written through the store's guarded `go` — the single-writer navigation seam (ticket 61e); `go` serializes to the same `#/ai-trace/<encoded-id>` URL the raw hash write used to produce. */
 export function useTraceLink() {
-  const { guarded } = useStore()
-  return (id: string) => guarded(() => { window.location.hash = `#/ai-trace/${encodeURIComponent(id)}` })
+  const { go } = useStore()
+  return (id: string) => go('ai-trace', { id })
 }
 
 const FACET_TONE: Record<string, keyof typeof TONE_CLS> = { Allowed: 'ok', Blocked: 'bad', 'Not evaluated': 'neutral', 'Not required': 'neutral', Pending: 'warn', Approved: 'ok', Denied: 'bad', 'Not executed': 'neutral', Running: 'cyan', Executed: 'ok', Failed: 'bad', Stopped: 'neutral' }

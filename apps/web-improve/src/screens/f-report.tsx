@@ -3,8 +3,6 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, Download, Eye, FileText, Histor
 import { useStore, useDirty, sevLabel } from '../store'
 import type { Report } from '../data'
 import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui'
-import { getActiveRouter } from '../router/active'
-import { toHash, toHref } from '../router/history'
 import { closureEvidence, reportChecks, type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead } from '../features/reports/service'
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import type { ServiceResult } from '../domain/service'
@@ -15,15 +13,6 @@ import type { ServiceResult } from '../domain/service'
 export { reportChecks, closureEvidence, type NoFind, type RCheck }
 
 /* ───────── shared helpers ───────── */
-/** Post-submit navigation: written through the active router (ticket 07 — the
- *  router is the single location writer; the raw hash write used to land
- *  after later navigations). The fallback branch only serves router-less
- *  mounts (tests), mirroring the store's navRaw. */
-const hardGo = (page: string, id?: string) => {
-  const router = getActiveRouter()
-  if (router) router.navigate(toHref({ page, id }))
-  else window.location.hash = toHash({ page, id })
-}
 
 /** Persisted no-findings variant for a report */
 export function useNoFind(id: string): [NoFind | undefined, (v: NoFind) => void] {
@@ -314,7 +303,7 @@ const SUGGEST = (title: string, client: string, roe: string) => `AI draft sugges
  * unsaved-changes guard.
  */
 function EditorInner({ d }: { d: ReportEditorRead }) {
-  const { db, can, go, toast, confirm } = useStore()
+  const { db, can, go, toast, confirm, setDirty } = useStore()
   const writes = useReportWrites()
   const r = d.report
   const project = d.project
@@ -395,7 +384,12 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
     writes.submit(r.id, { bodies: Object.fromEntries(merged.sections.map((x) => [x.id, x.body])) }).then((res) => {
       if (!res.ok) { toast(res.failure.message, 'bad'); return }
       toast(r.status === 'returned' ? `Resubmitted ${r.id} as a new version for ${r.reviewer}` : `Submitted ${r.id} to ${r.reviewer} for review`)
-      hardGo('report-review', r.id)
+      /* The submit committed the merged bodies, so the draft store realigns
+         with the read and the dirty state is cleared before navigating —
+         the unsaved-changes guard must not hold the post-submit redirect. */
+      setDrafts({})
+      setDirty(false)
+      go('report-review', { id: r.id })
     })
   }
   const confirmedLinked = d.findings.filter((f) => f.reportable && f.linked)
@@ -632,7 +626,7 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
       <ReportHead r={r} tab="preview" sub="Print-style preview. Export and delivery are separate steps after approval."
         actions={<>
           <Button icon={ArrowLeft} onClick={() => go('report', { id: r.id })}>Back to editor</Button>
-          {(r.status === 'draft' || r.status === 'returned') && <Button icon={Send} variant="primary" disabled={!!submitWhy} title={submitWhy || undefined} onClick={() => { writes.submit(r.id, { bodies: Object.fromEntries(r.sections.map((x) => [x.id, x.body])) }).then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { toast(`Submitted ${r.id} for review`); hardGo('report-review', r.id) } }) }}>{r.status === 'returned' ? 'Resubmit for Review' : 'Submit for Review'}</Button>}
+          {(r.status === 'draft' || r.status === 'returned') && <Button icon={Send} variant="primary" disabled={!!submitWhy} title={submitWhy || undefined} onClick={() => { writes.submit(r.id, { bodies: Object.fromEntries(r.sections.map((x) => [x.id, x.body])) }).then((res) => { if (!res.ok) toast(res.failure.message, 'bad'); else { toast(`Submitted ${r.id} for review`); go('report-review', { id: r.id }) } }) }}>{r.status === 'returned' ? 'Resubmit for Review' : 'Submit for Review'}</Button>}
         </>} />
       <AiExclusion projectId={r.projectId} />
       {missing > 0 && <Banner tone="warn" title={`${missing} section(s) are missing content`}>Missing fields are highlighted in the pages below.</Banner>}
@@ -735,7 +729,7 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
       onOk()
     })
   const approve = () => confirm({ title: `Approve ${r.id} (${r.version})?`, body: 'Approval only unlocks export. Exporting PDF/DOCX and marking delivery are separate steps that follow.', confirmLabel: 'Approve Report', reasonLabel: 'Approval reasoning (recorded with the pinned version)', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'approve', note), () => toast(`Approved ${r.id} ${r.version}. Not exported or delivered yet.`)) })
-  const ret = () => confirm({ title: `Return ${r.id} with comments`, body: 'The report goes back to its author. Your comment is saved in the review history and is never deleted.', confirmLabel: 'Return with Comments', danger: true, reasonLabel: 'Comments for the author', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'return', note), () => { toast(`Returned ${r.id} to ${r.author}`, 'warn'); hardGo('report', r.id) }) })
+  const ret = () => confirm({ title: `Return ${r.id} with comments`, body: 'The report goes back to its author. Your comment is saved in the review history and is never deleted.', confirmLabel: 'Return with Comments', danger: true, reasonLabel: 'Comments for the author', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'return', note), () => { toast(`Returned ${r.id} to ${r.author}`, 'warn'); go('report', { id: r.id }) }) })
   const doExport = (f: 'PDF' | 'DOCX') => runWrite(() => writes.exportVersion(r.id, f).then((res) => (res.ok ? { ok: true as const, data: res.data.report } : res)), () => toast(`Exported ${f} for ${r.version}. Not delivered yet.`))
   const deliver = () => runWrite(() => writes.deliver(r.id, { recipient: recipient.trim(), channel, notes, confirm: confirmed }), () => toast(`Marked ${r.id} as delivered to ${recipient.trim()}`))
 
