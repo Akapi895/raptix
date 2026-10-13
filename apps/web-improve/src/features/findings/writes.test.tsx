@@ -22,7 +22,7 @@ import type { Finding } from '../../domain/entities'
 import type { FindingDetailRead } from './service'
 import { routes } from '../../screens/e'
 import {
-  saveFinding, transitionFinding,
+  attachFindingEvidence, recordFindingRetest, saveFinding, transitionFinding, uploadFindingEvidence,
 } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
@@ -192,17 +192,88 @@ describe('AI suggestions import as drafts only (invariant 5, requirement 34)', (
     h.authority.reset()
   })
 
-  it('an imported draft is curated like any draft: content saved, then submitted by a human', () => {
+  it('an imported draft is curated like any draft: evidence attached, then submitted by a human', () => {
     const h = harness()
     transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), 'FD-012', 'draft')
-    const saved = saveFinding(h.authority, h.clock, ctxOf(taylor, P14), 'FD-012', { ...draftInput, evidence: ['EV-014-01'] })
-    expect(saved.ok).toBe(true)
+    attachFindingEvidence(h.authority, h.clock, ctxOf(taylor, P14), 'FD-012', 'EV-014-01')
     const res = transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), 'FD-012', 'review')
     expect(res.ok).toBe(true)
     if (res.ok) expect(res.data.status).toBe('review')
     h.authority.reset()
   })
 })
+
+describe('evidence attachment scope, masking and uploads', () => {
+  it('refuses cross-project references and evidence another finding holds', () => {
+    const h = harness()
+    expect(attachFindingEvidence(h.authority, h.clock, ctxOf(taylor, P14), 'FD-011', 'EV-301')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: expect.stringContaining('not part of project RT-2026-014') }) })
+    expect(attachFindingEvidence(h.authority, h.clock, ctxOf(taylor, P14), 'FD-012', 'EV-014-02')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: expect.stringContaining('already linked to FD-011') }) })
+    h.authority.reset()
+  })
+
+  it('links an unlinked capture in one commit; viewers are denied', () => {
+    const h = harness()
+    const res = attachFindingEvidence(h.authority, h.clock, ctxOf(taylor, P14), 'FD-011', 'EV-014-01')
+    expect(res.ok).toBe(true)
+    if (res.ok) expect(res.data.evidence).toContain('EV-014-01')
+    expect(h.authority.snapshot().evidence.find((e) => e.id === 'EV-014-01')!.findingId).toBe('FD-011')
+    expect(attachFindingEvidence(h.authority, h.clock, ctxOf(casey, P14), 'FD-011', 'EV-014-01')).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: 'The Client / Viewer role cannot add evidence.' }) })
+    h.authority.reset()
+  })
+
+  it('uploads record the capture inside the finding\'s own project and link it', () => {
+    const h = harness()
+    const res = uploadFindingEvidence(h.authority, h.clock, ctxOf(taylor, P14), { findingId: 'FD-011', name: 'probe-upload.png', kind: 'Image', source: 'OP-014 / manual', sensitive: false })
+    expect(res.ok).toBe(true)
+    if (res.ok) {
+      expect(res.data).toMatchObject({ projectId: P14, findingId: 'FD-011', name: 'probe-upload.png' })
+      expect(statusOf(h, 'FD-011').evidence).toContain(res.data.id)
+    }
+    expect(h.authority.snapshot().audit[0]).toMatchObject({ action: 'Uploaded evidence', obj: res.ok ? res.data.id : '' })
+    h.authority.reset()
+  })
+})
+
+describe('retest recording (ticket 32)', () => {
+  function toRetest(h: ReturnType<typeof harness>): string {
+    const id = createDraft(h)
+    transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), id, 'review')
+    transitionFinding(h.authority, h.clock, ctxOf(pat, P14), id, 'confirmed')
+    transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), id, 'remediation')
+    transitionFinding(h.authority, h.clock, ctxOf(taylor, P14), id, 'retest')
+    return id
+  }
+  it('a Resolved result closes the finding; a failed retest returns it to remediation', () => {
+    const h = harness()
+    const id = toRetest(h)
+    const fixed = recordFindingRetest(h.authority, h.clock, ctxOf(taylor, P14), id, { result: 'Resolved', note: 'Least privilege applied.' })
+    expect(fixed.ok).toBe(true)
+    if (fixed.ok) {
+      expect(fixed.data.status).toBe('resolved')
+      expect(fixed.data.retests.at(-1)).toMatchObject({ result: 'Resolved', by: 'Taylor Chen' })
+    }
+    h.authority.reset()
+
+    const h2 = harness()
+    const id2 = toRetest(h2)
+    const persists = recordFindingRetest(h2.authority, h2.clock, ctxOf(taylor, P14), id2, { result: 'Persists', note: 'Privilege still present.' })
+    expect(persists.ok).toBe(true)
+    if (persists.ok) expect(persists.data.status).toBe('remediation')
+    expect(statusOf(h2, id2).history.at(-1)?.text).toContain('Retest not passed (Persists)')
+    h2.authority.reset()
+  })
+  it('retests are gated to confirmed stages, need notes and the right roles', () => {
+    const h = harness()
+    // A draft finding is not confirmed yet — retest is a stage conflict.
+    const draftId = createDraft(h)
+    expect(recordFindingRetest(h.authority, h.clock, ctxOf(taylor, P14), draftId, { result: 'Resolved', note: 'n' })).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('only available after the finding has been confirmed') }) })
+    const id = toRetest(h)
+    expect(recordFindingRetest(h.authority, h.clock, ctxOf(taylor, P14), id, { result: 'Resolved', note: '   ' })).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'Enter notes about the retest.' }) })
+    expect(recordFindingRetest(h.authority, h.clock, ctxOf(casey, P14), id, { result: 'Resolved', note: 'n' })).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: 'The Client / Viewer role cannot record retests.' }) })
+    h.authority.reset()
+  })
+})
+
 /* ───────────── bridge harness (legacy store + services, one authority) ───────────── */
 function BridgeProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
   ready(useStore(), useServices())
