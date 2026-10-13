@@ -25,6 +25,17 @@ import { parseDemoInstant, formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, Asset, Operation, Plan, Playbook, Project, Step } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
+import {
+  PROJECT_TZ_OFFSET_MS, scheduleInstantOf, scheduleLabelOf, roeWindowIssue,
+  computePreflightChecks, preflightPass, eligibility, type Check, type EligKind,
+} from './preflight'
+
+/* Ticket 26: the schedule/window helpers and the preflight policy live in
+ * ./preflight; they are re-exported here so established `./service` import
+ * sites (screens, tests) keep one import surface. */
+export { PROJECT_TZ_OFFSET_MS, scheduleInstantOf, scheduleLabelOf, roeWindowIssue }
+
+const pad2 = (n: number) => String(n).padStart(2, '0')
 
 /** Audit display labels for the actor's role (kept local to avoid a store cycle). */
 const ROLE_LABEL: Record<string, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
@@ -54,6 +65,8 @@ export interface OperationListItem {
   /** Playbook name when no plan label is available. */
   playbookName?: string
   roeVersion?: string
+  /** Project-level execution eligibility label, derived from canonical state (ticket 26). */
+  eligibility: { kind: EligKind; label: string }
 }
 
 /** Approved plan ready to become an operation (legacy bridge action still creates it). */
@@ -81,6 +94,12 @@ export interface OperationService {
   update(ctx: RequestContext, id: string, patch: OperationDraftPatch): Promise<ServiceResult<OperationWriteRead>>
   /** Writes the schedule as a normalized absolute instant with window/conflict validation (ticket 25). */
   schedule(ctx: RequestContext, id: string, at: 'now' | string): Promise<ServiceResult<OperationWriteRead>>
+  /** Scope-checked detail read: the canonical bundle the console detail page renders (ticket 26). */
+  detail(ctx: RequestContext, id: string): Promise<ServiceResult<OperationDetailRead>>
+  /** Runs preflight: the eight checks are re-derived from canonical state at the handler (ticket 26). */
+  preflight(ctx: RequestContext, id: string): Promise<ServiceResult<PreflightRunRead>>
+  /** The start gate: re-derived checks; a refusal names the failed check and reason (ticket 26). */
+  startGate(ctx: RequestContext, id: string): Promise<ServiceResult<OperationStartRead>>
 }
 
 /** Category → statuses the category pill covers ("needs" also takes review-pending drafts). */
@@ -135,11 +154,13 @@ export function listOperations(db: Db, ctx: RequestContext, query: OperationList
   const projectById = new Map(db.projects.map((p) => [p.id, p]))
   const items: OperationListItem[] = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((op) => {
     const pl = op.planId ? planById.get(op.planId) : undefined
+    const el = eligibility(db, op.projectId)
     return {
       op,
       planLabel: pl ? `${pl.id} ${planVer(pl)}` : undefined,
       playbookName: !pl ? playbookById.get(op.playbookId)?.name : undefined,
       roeVersion: projectById.get(op.projectId)?.roeVersion,
+      eligibility: { kind: el.kind, label: el.label },
     }
   })
   const scopePlans = aggregate ? db.plans.filter((pl) => accessible.has(pl.projectId)) : db.plans.filter((pl) => pl.projectId === pid)
@@ -171,50 +192,13 @@ export function createOperationService(
     create: (ctx, input) => Promise.resolve(createOperationDraft(authority, clock, ctx, input)),
     update: (ctx, id, patch) => Promise.resolve(updateOperationDraft(authority, clock, ctx, id, patch)),
     schedule: (ctx, id, at) => Promise.resolve(scheduleOperation(authority, clock, ctx, id, at)),
+    detail: (ctx, id) => Promise.resolve(operationDetail(authority.snapshot(), ctx, id)),
+    preflight: (ctx, id) => Promise.resolve(runOperationPreflight(authority, clock, ctx, id)),
+    startGate: (ctx, id) => Promise.resolve(operationStartGate(authority, clock, ctx, id)),
   }
 }
 
 /* ═════════════ Ticket 25 — schedule instants, draft options, creation/edit/schedule ═════════════ */
-
-/** Project timezone offset (Asia/Ho_Chi_Minh, UTC+7): display/window checks only. */
-export const PROJECT_TZ_OFFSET_MS = 7 * 60 * 60 * 1000
-
-const pad2 = (n: number) => String(n).padStart(2, '0')
-
-/**
- * Normalizes a datetime-local value at the service boundary: the absolute
- * instant (true epoch ms) of that wall-clock time in the project timezone.
- * Undefined for anything that is not a real calendar instant.
- */
-export function scheduleInstantOf(v: string | undefined): Instant | undefined {
-  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec((v || '').trim())
-  if (!m) return undefined
-  const [y, mo, d, h, mi] = [+m[1], +m[2], +m[3], +m[4], +m[5]]
-  if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59) return undefined
-  const instant = Date.UTC(y, mo - 1, d, h, mi) - PROJECT_TZ_OFFSET_MS
-  const wall = new Date(instant + PROJECT_TZ_OFFSET_MS)
-  if (wall.getUTCMonth() !== mo - 1 || wall.getUTCDate() !== d) return undefined
-  return instant
-}
-
-/** UTC+7 wall-clock projection of an instant — the canonical `Operation.schedule` string. */
-export function scheduleLabelOf(instant: Instant): string {
-  const w = new Date(instant + PROJECT_TZ_OFFSET_MS)
-  return `${w.getUTCFullYear()}-${pad2(w.getUTCMonth() + 1)}-${pad2(w.getUTCDate())}T${pad2(w.getUTCHours())}:${pad2(w.getUTCMinutes())}`
-}
-
-/**
- * The one ROE window rule (Mon–Fri, 9:00 AM–5:00 PM project time) over an
- * absolute instant. The screen-layer helper delegates its wall-clock input.
- */
-export function roeWindowIssue(project: Pick<Project, 'window'> | undefined, instant: Instant): string {
-  const w = new Date(instant + PROJECT_TZ_OFFSET_MS)
-  const day = w.getUTCDay()
-  const hour = w.getUTCHours() + w.getUTCMinutes() / 60
-  return day >= 1 && day <= 5 && hour >= 9 && hour < 17
-    ? ''
-    : `Start time is outside the ROE window (${project?.window || 'Mon–Fri, 9:00 AM–5:00 PM (UTC+7)'}).`
-}
 
 /** Estimated duration of a draft/operation in minutes (legacy step-load heuristic). */
 export const draftMinutes = (steps: number) => Math.max(20, (steps || 8) * 7)
@@ -559,4 +543,141 @@ export function scheduleOperation(authority: DbAuthority, clock: Clock, ctx: Req
     d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: label ? 'Scheduled operation' : 'Cleared operation schedule', obj: id, projectId: project.id, result: 'Success', reason: label ? `Start ${label} (UTC+7)` : 'Manual start after preflight' })
   })
   return { ok: true, data: { op: authority.snapshot().operations.find((o) => o.id === id)!, scheduleInstant: instant } }
+}
+
+/* ═════════════ Ticket 26 — console detail read, preflight run and start gate ═════════════ */
+
+/**
+ * The canonical bundle the operation console detail page renders: the
+ * operation with its steps, the project, the linked plan/playbook/conversation
+ * and the branch groups. One scope-checked read — a non-member's read is
+ * `not-found` with no existence leak, and a member reading from the wrong
+ * specific project is pointed back to the operation's own project via the
+ * failure entity (no data crosses).
+ */
+export interface OperationDetailRead {
+  op: Operation
+  project: Project
+  plan?: Plan
+  planLabel?: string
+  playbook?: Playbook
+  /** Conversation linked through the plan (undefined for planless operations). */
+  conversation?: Db['conversations'][number]
+  branchGroups: Db['branchGroups']
+  /** Project-level execution eligibility label derived from canonical state. */
+  eligibility: { kind: EligKind; label: string }
+}
+
+export function operationDetail(db: Db, ctx: RequestContext, id: string): ServiceResult<OperationDetailRead> {
+  const op = db.operations.find((o) => o.id === id)
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
+  }
+  const project = db.projects.find((p) => p.id === op.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
+  }
+  const plan = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
+  return {
+    ok: true,
+    data: {
+      op,
+      project,
+      plan,
+      planLabel: plan ? `${plan.id} ${planVer(plan)}` : undefined,
+      playbook: db.playbooks.find((x) => x.id === op.playbookId),
+      conversation: plan ? db.conversations.find((c) => c.id === plan.conversationId) : undefined,
+      branchGroups: db.branchGroups.filter((g) => g.opId === op.id),
+      eligibility: (({ kind, label }) => ({ kind, label }))(eligibility(db, op.projectId)),
+    },
+  }
+}
+
+/** The committed outcome of one preflight run: re-derived checks plus the op. */
+export interface PreflightRunRead { op: Operation; checks: Check[]; pass: boolean; at: Instant }
+
+/**
+ * Runs preflight at the handler: the eight checks are RE-DERIVED from
+ * canonical state at this instant — never read from a stored snapshot — and
+ * the outcome (ready/draft, `preflightAt`, audit row) commits atomically. A
+ * scope revision that invalidated the operation (ticket 21) is therefore
+ * observed here: the re-run fails its check until the ROE is re-approved.
+ */
+export function runOperationPreflight(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<PreflightRunRead> {
+  const db = authority.snapshot()
+  const op = db.operations.find((o) => o.id === id)
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
+  }
+  const project = db.projects.find((p) => p.id === op.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
+  }
+  if (readOnlyContext(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; preflight cannot be run.` } }
+  }
+  if (!can({ id: ctx.actor.id, role: ctx.actor.role }, 'run', project)) {
+    return { ok: false, failure: { kind: 'forbidden', message: 'Only a Manager or Operator can run preflight.' } }
+  }
+  if (IN_FLIGHT.includes(op.status)) {
+    return { ok: false, failure: { kind: 'validation', message: `Operation ${op.id} is ${op.status === 'estop' ? 'emergency stopped' : op.status} — preflight applies to Draft or Ready operations.` } }
+  }
+  const checks = computePreflightChecks(db, op, clock.now())
+  const pass = preflightPass(checks)
+  authority.commit(ctx.corr, (d) => {
+    const o = d.operations.find((x) => x.id === id)!
+    o.preflightAt = formatDemoInstant(clock.now())
+    if (o.status === 'draft' || o.status === 'ready' || o.status === 'pending') o.status = pass ? 'ready' : 'draft'
+    o.updated = formatDemoInstant(clock.now())
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Ran preflight', obj: id, projectId: project.id, result: pass ? 'Passed' : 'Failed', reason: pass ? 'All eight checks passed' : checks.filter((c) => c.state !== 'pass').map((c) => c.code).join(', ') + ' failed' })
+  })
+  return { ok: true, data: { op: authority.snapshot().operations.find((o) => o.id === id)!, checks, pass, at: clock.now() } }
+}
+
+/** The start gate outcome: the operation is eligible; the start transition itself stays with ticket 27. */
+export interface OperationStartRead { op: Operation; checks: Check[] }
+
+/**
+ * The execution gate: re-derives the eight checks from canonical state at the
+ * handler and refuses start with the first failing check's code, detail and
+ * fix. This is the site the spec's "preflight gates execution" invariant
+ * lives at — a stale snapshot or a scope revision cleared after the check can
+ * never admit a start, because nothing is trusted but the current records.
+ */
+export function operationStartGate(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string): ServiceResult<OperationStartRead> {
+  const db = authority.snapshot()
+  const op = db.operations.find((o) => o.id === id)
+  if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
+  if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
+    return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: { kind: 'operation', id: op.id, projectId: op.projectId } } }
+  }
+  const project = db.projects.find((p) => p.id === op.projectId)
+  if (!project || !projectAccessible(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
+  }
+  if (readOnlyContext(project, ctx.actor)) {
+    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; operations cannot be started.` } }
+  }
+  if (!can({ id: ctx.actor.id, role: ctx.actor.role }, 'run', project)) {
+    return { ok: false, failure: { kind: 'forbidden', message: 'Only a Manager or Operator can start operations.' } }
+  }
+  if (IN_FLIGHT.includes(op.status)) {
+    return { ok: false, failure: { kind: 'validation', message: `Operation ${op.id} is ${op.status === 'estop' ? 'emergency stopped' : op.status} — it has already started.` } }
+  }
+  const checks = computePreflightChecks(db, op, clock.now())
+  const firstBad = checks.find((c) => c.state !== 'pass')
+  if (firstBad) {
+    const why = firstBad.reason || firstBad.detail
+    return {
+      ok: false,
+      failure: {
+        kind: 'validation',
+        message: `${firstBad.code} ${firstBad.state === 'review' ? 'is waiting' : 'failed'}: ${firstBad.detail} ${why}`.trim(),
+        entity: { kind: 'operation', id: op.id, projectId: op.projectId },
+      },
+    }
+  }
+  return { ok: true, data: { op, checks } }
 }
