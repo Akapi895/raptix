@@ -17,43 +17,20 @@ import type { Project, SeedVariant } from '../data'
 import { projectAccessible } from '../auth/policy'
 import { MockClock, Scheduler, formatDemoInstant } from './clock'
 import { createDatabaseAuthority, type DbAuthority } from './database'
-// Ticket 24 append: operations inventory list/read handlers are feature-local
-// (src/features/operations/service.ts); the factory only wires them into a scope.
+// Feature appends: every feature service is feature-local (src/features/*);
+// the factory only wires each one into a scope with the shared guard.
 import { createOperationService, type OperationService } from '../features/operations/service'
-// Ticket 31 append: findings inventory list/detail read handlers are feature-local
-// (src/features/findings/service.ts); the factory only wires them into a scope.
 import { createFindingService, type FindingService } from '../features/findings/service'
-// Ticket 38 append: AI chat + plan proposal handlers are feature-local
-// (src/features/aichat/service.ts); the factory only wires them into a scope.
 import { createChatService, type ChatService } from '../features/aichat/service'
-// Ticket 48 append: agent fleet list/detail read handlers are feature-local
-// (src/features/agents/service.ts); the factory only wires them into a scope.
 import { createAgentService, type AgentService } from '../features/agents/service'
-// Ticket 34 append: report catalog reads + validated draft creation are
-// feature-local (src/features/reports/service.ts); the factory wires the scope.
 import { createReportService, type ReportService } from '../features/reports/service'
-// Ticket 43 append: branch group reads + branch action writes are feature-local
-// (src/features/branches/service.ts); the factory only wires them into a scope.
 import { createBranchService, type BranchService } from '../features/branches/service'
-// Ticket 52 append: tradecraft library reads (playbooks + techniques) are
-// feature-local (src/features/library/service.ts); the factory only wires
-// them into a scope.
 import { createLibraryService, type LibraryService } from '../features/library/service'
-// Ticket 54 append: ATT&CK coverage + detection heatmap read handlers are
-// feature-local (src/features/analysis/service.ts); the factory only wires
-// them into a scope.
 import { createAnalysisService, type AnalysisService } from '../features/analysis/service'
-// Ticket 56 append: organization settings handlers (profile, members,
-// invitations) are feature-local (src/features/settings/service.ts); the
-// factory only wires them into a scope.
 import { createSettingsService, type SettingsService } from '../features/settings/service'
-// Ticket 50 append: asset catalog/detail + scope-classification read
-// handlers are feature-local (src/features/assets/service.ts); the factory
-// only wires them into a scope.
 import { createAssetService, type AssetService } from '../features/assets/service'
-// Ticket 44 append: AI worker dependency read model is feature-local
-// (src/features/workers/service.ts); the factory only wires it into a scope.
 import { createWorkerService, type WorkerService } from '../features/workers/service'
+import { createNoticeService, type NoticeService } from '../features/notices/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -125,6 +102,8 @@ export interface ConsoleServices {
   assets(actor: ActorRef, projectId: string): AssetService
   /** Typed AI worker dependency graph read (ticket 44 — feature-local implementation). */
   workers(actor: ActorRef, projectId: string): WorkerService
+  /** Typed notice center handlers (ticket 59 — feature-local implementation). */
+  notices(actor: ActorRef, projectId: string): NoticeService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -144,11 +123,14 @@ export function createConsoleServices(): ConsoleServices {
   const inFlight = new Map<string, Set<() => void>>()
   const scopeKey = (actor: ActorRef, projectId: string) => `${actor.id} ${projectId}`
 
-  const forScope = (actor: ActorRef, projectId: string): ProjectService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
+  /* Shared superseded-scope guard: every feature wiring passes reads through
+   * this, so cancelScope covers all in-flight feature reads on a persona/
+   * project switch. Writes never cancel mid-flight. */
+  const scopeGuard = (actor: ActorRef, projectId: string) =>
+    async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
       let superseded = false
       const cancel = () => { superseded = true }
+      const key = scopeKey(actor, projectId)
       let set = inFlight.get(key)
       if (!set) { set = new Set(); inFlight.set(key, set) }
       set.add(cancel)
@@ -157,6 +139,9 @@ export function createConsoleServices(): ConsoleServices {
       if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
       return produce()
     }
+
+  const forScope = (actor: ActorRef, projectId: string): ProjectService => {
+    const guard = scopeGuard(actor, projectId)
     return {
       get: (ctx, id) => guard(() => readProject(authority.snapshot(), ctx, id)),
       list: (ctx, page) => guard(() => listProjects(authority.snapshot(), ctx, page)),
@@ -180,227 +165,30 @@ export function createConsoleServices(): ConsoleServices {
     }
   }
 
-  /* ── Ticket 24 append: operations inventory list/read. Same superseded-scope
-     guard as forScope, so the ScopeCancelBridge's cancelScope covers in-flight
-     operation reads on a persona/project switch. Ticket 25 appends the
-     creation/scheduling writes; the clock stamps commits and validates
-     schedule instants. ── */
-  const forOperations = (actor: ActorRef, projectId: string): OperationService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createOperationService(authority, clock, guard)
-  }
-
-  /* ── Ticket 31/32 append: findings inventory reads + write handlers
-     (forms, lifecycle transitions, AI draft import, evidence attachment,
-     retests). Same superseded-scope guard as forScope for reads; mutations
-     capture their context at call time and commit once, publishing the
-     ChangeSet both bridges observe. ── */
-  const forFindings = (actor: ActorRef, projectId: string): FindingService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createFindingService(authority, clock, guard)
-  }
-
-  /* ── Ticket 38 append: AI chat + plan proposals. Reads share the
-     superseded-scope guard so cancelScope covers in-flight conversation
-     reads on a persona/project switch; writes commit synchronously through
-     the authority with the context captured at call time. ── */
-  const forChat = (actor: ActorRef, projectId: string): ChatService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createChatService(authority, clock, guard)
-  }
-
-  /* ── Ticket 48 append: agent fleet list/detail reads. Same superseded-scope
-     guard as forScope, so the ScopeCancelBridge's cancelScope covers in-flight
-     agent reads on a persona/project switch. ── */
-  const forAgents = (actor: ActorRef, projectId: string): AgentService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createAgentService(authority, guard)
-  }
-
-  /* ── Ticket 54 append: ATT&CK coverage + detection heatmap read. Same
-     superseded-scope guard as forScope, so the ScopeCancelBridge's
-     cancelScope covers in-flight coverage reads on a persona/project switch. ── */
-  const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createAnalysisService(authority, guard)
-  }
-
-  /* ── Ticket 52 append: tradecraft library reads (playbook list/detail,
-     technique detail). Same superseded-scope guard as forScope, so the
-     ScopeCancelBridge's cancelScope covers in-flight library reads on a
-     persona/project switch. Reads only — tradecraft mutations stay with the
-     legacy actions until ticket 53 migrates review. ── */
-  const forLibrary = (actor: ActorRef, projectId: string): LibraryService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createLibraryService(authority, guard)
-  }
-
-  /* ── Ticket 34 append: report catalog reads (list/templates/delivery
-     history/draft options) + the validated draft creation. Same
-     superseded-scope guard as forScope, so cancelScope covers in-flight
-     report reads on a persona/project switch; the create captures its
-     context at call time and commits once through the authority. ── */
-  const forReports = (actor: ActorRef, projectId: string): ReportService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createReportService(authority, clock, guard)
-  }
-
-  /* ── Ticket 43 append: branch groups + branch actions. Reads share the
-     superseded-scope guard so cancelScope covers in-flight branch reads on a
-     persona/project switch; retry/reassign/cancel capture their context at
-     call time and bind to the addressed branch's own project. ── */
-  const forBranches = (actor: ActorRef, projectId: string): BranchService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createBranchService(authority, clock, guard)
-  }
-
-  /* ── Ticket 56 append: organization settings (profile read/update,
-     member role/status writes, invitations). Reads share the superseded-scope
-     guard so cancelScope covers in-flight settings reads on a persona/project
-     switch; writes capture their context at call time and commit once. ── */
-  const forSettings = (actor: ActorRef, projectId: string): SettingsService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createSettingsService(authority, clock, guard)
-  }
-
-  /* ── Ticket 50 append: asset catalog list/detail + scope-classification
-     reads. Same superseded-scope guard as forScope, so cancelScope covers
-     in-flight asset reads on a persona/project switch. Reads only —
-     import/scope mutations and tags/notes stay with the legacy actions
-     until ticket 51 migrates them. ── */
-  const forAssets = (actor: ActorRef, projectId: string): AssetService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createAssetService(authority, guard)
-  }
-
-  /* ── Ticket 44 append: AI worker dependency graph read. Same superseded-scope
-     guard as forScope, so cancelScope covers in-flight worker reads on a
-     persona/project switch. Read-only — workers have no console actions. ── */
-  const forWorkers = (actor: ActorRef, projectId: string): WorkerService => {
-    const key = scopeKey(actor, projectId)
-    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
-      let superseded = false
-      const cancel = () => { superseded = true }
-      let set = inFlight.get(key)
-      if (!set) { set = new Set(); inFlight.set(key, set) }
-      set.add(cancel)
-      await Promise.resolve()
-      set.delete(cancel)
-      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
-      return produce()
-    }
-    return createWorkerService(authority, guard)
-  }
+  const forOperations = (actor: ActorRef, projectId: string): OperationService =>
+    createOperationService(authority, clock, scopeGuard(actor, projectId))
+  const forFindings = (actor: ActorRef, projectId: string): FindingService =>
+    createFindingService(authority, clock, scopeGuard(actor, projectId))
+  const forChat = (actor: ActorRef, projectId: string): ChatService =>
+    createChatService(authority, clock, scopeGuard(actor, projectId))
+  const forAgents = (actor: ActorRef, projectId: string): AgentService =>
+    createAgentService(authority, scopeGuard(actor, projectId))
+  const forReports = (actor: ActorRef, projectId: string): ReportService =>
+    createReportService(authority, clock, scopeGuard(actor, projectId))
+  const forBranches = (actor: ActorRef, projectId: string): BranchService =>
+    createBranchService(authority, clock, scopeGuard(actor, projectId))
+  const forLibrary = (actor: ActorRef, projectId: string): LibraryService =>
+    createLibraryService(authority, scopeGuard(actor, projectId))
+  const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService =>
+    createAnalysisService(authority, scopeGuard(actor, projectId))
+  const forSettings = (actor: ActorRef, projectId: string): SettingsService =>
+    createSettingsService(authority, clock, scopeGuard(actor, projectId))
+  const forAssets = (actor: ActorRef, projectId: string): AssetService =>
+    createAssetService(authority, scopeGuard(actor, projectId))
+  const forWorkers = (actor: ActorRef, projectId: string): WorkerService =>
+    createWorkerService(authority, scopeGuard(actor, projectId))
+  const forNotices = (actor: ActorRef, projectId: string): NoticeService =>
+    createNoticeService(authority, clock, scopeGuard(actor, projectId))
 
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
@@ -437,11 +225,9 @@ export function createConsoleServices(): ConsoleServices {
     library: forLibrary,
     analysis: forAnalysis,
     settings: forSettings,
-<<<<<<< HEAD
     assets: forAssets,
-=======
     workers: forWorkers,
->>>>>>> wi/44-branchexport
+    notices: forNotices,
     cancelScope,
     reset(variant) {
       scheduler.clear()
