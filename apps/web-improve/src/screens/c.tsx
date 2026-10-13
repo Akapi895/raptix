@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type ComponentType } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { AlertTriangle, ArrowRight, GitBranch, MessageSquare, CalendarClock, CheckCircle2, ClipboardCheck, Lock, Play, Plus, Radio, RefreshCw, ShieldAlert, SlidersHorizontal, ShieldCheck, ShieldX, Wrench, X, Save } from 'lucide-react'
-import { ApprovalBanner, Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Mono, Pager, PageHeader, Person, PersonaHint, Progress, SearchBox, Segmented, Select, Skeleton, Status, Stepper, Table, Tabs, Textarea, Toggle, usePaged, useGuard, cx } from '../ui'
+import { ApprovalBanner, Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Mono, Pager, PageHeader, Person, PersonaHint, Progress, SearchBox, Segmented, Select, Skeleton, Status, Stepper, Table, Tabs, Textarea, Toggle, useGuard, cx } from '../ui'
 import { computePreflight, eligibility, preflightPass, useDirty, useStore } from '../store'
 import { planVer } from '../data'
 import type { Operation } from '../data'
@@ -8,26 +8,30 @@ import type { PfCheck, PfSnap, PfState } from './c-common'
 import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, opConversation, opGroups, elapsed, pfOverall, specChecks, findConflicts, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
 import { AgentsTab, ConsoleTab, OpBanner, OpControls, OverviewTab, TimelineTab } from './c-console'
 import { GraphTab, ResultsTab } from './c-results'
+import { useOperationList, OperationReadError } from '../features/operations/query'
+import type { OperationCategory } from '../features/operations/service'
 
 const SELECT_PROJECT = 'Select a project to continue'
 const STATUS_OPTS: [string, string][] = [['draft', 'Draft'], ['ready', 'Ready'], ['running', 'Running'], ['paused', 'Paused'], ['done', 'Completed'], ['cancelled', 'Stopped'], ['estop', 'Emergency stopped'], ['error', 'Error']]
 
-/* ═════════════ OP-01 — Operations list ═════════════ */
+/* ═════════════ OP-01 — Operations list (ticket 24: typed service read + Query) ═════════════ */
 function Operations() {
-  const { db, scoped, pid, project, go, persistFilters, setFilter, setSwitcherOpen, can, loading, A, toast } = useStore()
+  const { db, pid, project, go, persistFilters, setFilter, setSwitcherOpen, can, A, toast } = useStore()
   const f = { q: '', status: '', project: '', owner: '', ...(persistFilters.ops || {}) }
   const set = (patch: Partial<typeof f>) => setFilter('ops', { ...f, ...patch })
   const statusF: string = (persistFilters['operations.status'] as string) || f.status
   const techF: string = (persistFilters['operations.technique'] as string) || ''
   const [more, setMore] = useState(false)
-  const all = scoped(db.operations)
-  const owners = [...new Set(all.map((o) => o.owner))]
-  const CATS: [string, string, string[]][] = [['', 'All', []], ['draft', 'Draft', ['draft']], ['needs', 'Needs approval', ['pending']], ['running', 'Running', ['running', 'paused']], ['done', 'Completed', ['done']]]
-  const cat = CATS.find((c) => c[0] === statusF)
-  const rows = useMemo(() => all.filter((o) =>
-    (!statusF || (cat ? cat[2].includes(o.status) || (statusF === 'needs' && o.status === 'draft' && !!o.planId && db.plans.find((p) => p.id === o.planId)?.status === 'in_review') : o.status === statusF)) && (!techF || o.steps.some((s) => s.technique === techF)) && (!f.project || o.projectId === f.project) && (!f.owner || o.owner === f.owner) && (!f.q || (o.id + o.name).toLowerCase().includes(f.q.toLowerCase()))),
-  [all, f.q, statusF, techF, f.project, f.owner, cat, db.plans])
-  const pg = usePaged(rows, 10)
+  const [page, setPage] = useState(1)
+  /* The one list read: scope-checked typed service; rows, counts, options and
+     ready plans all derive from accessible canonical operations only. */
+  const list = useOperationList({ status: statusF, technique: techF, q: f.q, project: f.project, owner: f.owner, page })
+  const read = list.data
+  const rows = read?.items ?? []
+  const pages = read ? Math.max(1, Math.ceil(read.total / read.pageSize)) : 1
+  const cur = Math.min(page, pages)
+  const count = (v: string) => read?.counts[(v || 'all') as OperationCategory]
+  const owners = read?.owners ?? []
   const { ro, reason } = useGuard(project?.id)
   const allProjects = pid === 'all'
   const canCreate = !allProjects && can('run') && !ro
@@ -48,9 +52,9 @@ function Operations() {
         <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1">{elig.reasons.map((r) => <li key={r.text} className="text-sm">{r.text}{r.to && <> · <button className="text-accent underline" onClick={() => go(r.to!.page, { id: r.to!.id, tab: r.to!.tab })}>Fix</button></>}</li>)}</ul>
       </Banner>}
       {(() => {
-        const ready = !allProjects ? scoped(db.plans).filter((pl) => pl.status === 'approved' && !(pl.opId && db.operations.some((o) => o.id === pl.opId))) : []
+        const ready = allProjects ? [] : read?.readyPlans ?? []
         return ready.length > 0 && <Banner tone="info" icon={ClipboardCheck} title={`${ready.length} approved plan${ready.length === 1 ? '' : 's'} ready for an operation`}>
-          <ul className="mt-1 space-y-1.5">{ready.map((pl) => <li key={pl.id} className="flex flex-wrap items-center gap-2 text-sm"><IdLink onClick={() => go('ai-plan-review', { id: pl.id })}>{pl.id} {planVer(pl)}</IdLink><span className="min-w-0 truncate">{pl.title}</span>
+          <ul className="mt-1 space-y-1.5">{ready.map((pl) => <li key={pl.id} className="flex flex-wrap items-center gap-2 text-sm"><IdLink onClick={() => go('ai-plan-review', { id: pl.id })}>{pl.id} {pl.ver}</IdLink><span className="min-w-0 truncate">{pl.title}</span>
             <Button size="sm" variant="primary" disabled={!canCreate} title={canCreate ? 'Creates a draft operation from this approved plan. Preflight still has to pass before it can start.' : createWhy} onClick={() => { const r = A.executePlan(pl.id); if (r.ok && r.opId) { toast(`Draft ${r.opId} created from ${pl.id}. Run preflight before starting.`); go('operation', { id: r.opId, tab: 'overview' }) } else toast(r.error || 'Cannot create the operation.', 'bad') }}>Create Operation from plan</Button></li>)}</ul>
         </Banner>
       })()}
@@ -58,14 +62,17 @@ function Operations() {
       <FilterBar>
         <SearchBox value={f.q} onChange={(v) => set({ q: v })} placeholder="Search by ID or name…" className="w-60 max-w-full" />
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Operation category">
-          {CATS.map(([v, l]) => <button key={v} onClick={() => setStatus(v)} aria-pressed={statusF === v} className={cx('h-9 whitespace-nowrap rounded-full border px-3 text-xs font-medium transition', statusF === v ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted hover:bg-hover')}>{l}</button>)}
+          {[['', 'All'], ['draft', 'Draft'], ['needs', 'Needs approval'], ['running', 'Running'], ['done', 'Completed']].map(([v, l]) => {
+            const n = count(v)
+            return <button key={v} onClick={() => setStatus(v)} aria-pressed={statusF === v} className={cx('h-9 whitespace-nowrap rounded-full border px-3 text-xs font-medium transition', statusF === v ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted hover:bg-hover')}>{l}{n !== undefined ? ` ${n}` : ''}</button>
+          })}
         </div>
         <div className="relative">
           <Button icon={SlidersHorizontal} onClick={() => setMore(!more)} aria-expanded={more}>More filters{nMore ? ` (${nMore})` : ''}</Button>
           {more && (
             <div className="absolute left-0 top-full z-30 mt-1.5 w-72 space-y-3 rounded-xl border border-line bg-panel p-4 shadow-xl">
               <Field label="Owner"><Select aria-label="Filter by owner" value={f.owner} onChange={(e) => set({ owner: e.target.value })}><option value="">All owners</option>{owners.map((o) => <option key={o}>{o}</option>)}</Select></Field>
-              {allProjects && <Field label="Project"><Select aria-label="Filter by project" value={f.project} onChange={(e) => set({ project: e.target.value })}><option value="">All projects</option>{[...new Set(all.map((o) => o.projectId))].map((p) => <option key={p}>{p}</option>)}</Select></Field>}
+              {allProjects && <Field label="Project"><Select aria-label="Filter by project" value={f.project} onChange={(e) => set({ project: e.target.value })}><option value="">All projects</option>{(read?.projects ?? []).map((p) => <option key={p}>{p}</option>)}</Select></Field>}
               <Field label="Detailed status"><Select aria-label="Filter by status" value={STATUS_OPTS.some((s) => s[0] === statusF) ? statusF : ''} onChange={(e) => setStatus(e.target.value)}><option value="">Any</option>{STATUS_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
               <div className="flex justify-between"><Button size="sm" variant="ghost" onClick={clear}>Clear all</Button><Button size="sm" onClick={() => setMore(false)}>Done</Button></div>
             </div>
@@ -73,24 +80,31 @@ function Operations() {
         </div>
         {filtered && <Button variant="ghost" icon={X} onClick={clear}>Clear filters</Button>}
       </FilterBar>
-      {loading ? <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}</div> : (
+      {list.isError ? (
+        <Empty icon={ShieldAlert} title="Operations could not be loaded" action={<Button onClick={() => list.refetch()}>Retry</Button>}>
+          {list.error instanceof OperationReadError ? list.error.failure.message : 'Something went wrong while loading operations.'}
+        </Empty>
+      ) : list.isPending ? (
+        <div className="space-y-2" aria-busy="true">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}</div>
+      ) : (
         <>
-          <Table rows={pg.rows} rowKey={(o) => o.id} onRow={(o) => go('operation', { id: o.id, tab: 'overview' })}
+          <Table rows={rows} rowKey={(it) => it.op.id} onRow={(it) => go('operation', { id: it.op.id, tab: 'overview' })}
             empty={<Empty icon={Radio} title={filtered ? 'No operations match the filters' : 'No operations in this project'} action={filtered ? <Button onClick={clear}>Clear filters</Button> : canCreate ? <Button variant="primary" icon={Plus} onClick={() => go('operation-new')}>Create Draft Operation</Button> : undefined}>{filtered ? 'Try relaxing the filters.' : allProjects ? SELECT_PROJECT + ' to draft an operation.' : 'You can draft an operation now. It cannot run until the ROE is approved, assets are in scope and agents are connected.'}</Empty>}
             cols={[
-              { key: 'id', header: 'ID', className: 'whitespace-nowrap', render: (o) => <span className="whitespace-nowrap"><IdLink onClick={() => go('operation', { id: o.id, tab: 'overview' })}>{o.id}</IdLink></span> },
-              { key: 'n', header: 'Operation', render: (o) => { const pl = o.planId ? db.plans.find((x) => x.id === o.planId) : undefined; const pr = db.projects.find((x) => x.id === o.projectId); return <div className="min-w-56"><div className="font-medium">{o.name}</div><div className="text-xs text-muted">{pl ? <span className="whitespace-nowrap">Plan {pl.id} {planVer(pl)}</span> : db.playbooks.find((p) => p.id === o.playbookId)?.name || 'No plan or playbook yet'}{pr ? <span className="whitespace-nowrap"> · {pr.roeVersion}</span> : ''}{allProjects && <span className="whitespace-nowrap"> · {o.projectId}</span>}</div></div> } },
-              { key: 's', header: 'Status', className: 'whitespace-nowrap', render: (o) => <RuntimeStatus op={o} size="sm" /> },
-              { key: 'o', header: 'Owner', hideBelow: 'lg', className: 'whitespace-nowrap', render: (o) => o.owner },
-              { key: 'pr', header: 'Progress', width: '190px', render: (o) => {
+              { key: 'id', header: 'ID', className: 'whitespace-nowrap', render: (it) => <span className="whitespace-nowrap"><IdLink onClick={() => go('operation', { id: it.op.id, tab: 'overview' })}>{it.op.id}</IdLink></span> },
+              { key: 'n', header: 'Operation', render: (it) => <div className="min-w-56"><div className="font-medium">{it.op.name}</div><div className="text-xs text-muted">{it.planLabel ? <span className="whitespace-nowrap">Plan {it.planLabel}</span> : it.playbookName || 'No plan or playbook yet'}{it.roeVersion ? <span className="whitespace-nowrap"> · {it.roeVersion}</span> : ''}{allProjects && <span className="whitespace-nowrap"> · {it.op.projectId}</span>}</div></div> },
+              { key: 's', header: 'Status', className: 'whitespace-nowrap', render: (it) => <RuntimeStatus op={it.op} size="sm" /> },
+              { key: 'o', header: 'Owner', hideBelow: 'lg', className: 'whitespace-nowrap', render: (it) => it.op.owner },
+              { key: 'pr', header: 'Progress', width: '190px', render: (it) => {
+                const o = it.op
                 const c = stepCounts(o.steps); const v = progressOf(o.steps)
                 if (noRunning(o)) { const e = eligibility(db, o.projectId); return <div className="text-xs"><div className="whitespace-nowrap text-muted">Not started{o.steps.length ? ` · ${o.steps.length} steps planned` : ' · no steps yet'}</div><div className={cx('whitespace-nowrap', e.kind === 'locked' ? 'text-bad' : 'text-muted')}>{e.label}</div></div> }
                 return v == null ? <span className="text-xs text-muted">No data yet</span> : <div><div className="mb-1 whitespace-nowrap text-xs font-medium">{c.ok + c.fail}/{c.total} steps{c.review ? <span className="ml-1 font-normal text-warn">· {c.review} needs review</span> : ''}</div><Progress value={v} tone={c.fail || c.review ? 'warn' : 'accent'} label={`Progress ${o.id}`} /></div> } },
-              { key: 'a', header: 'Agents', hideBelow: 'md', render: (o) => o.agents.length },
-              { key: 'st', header: 'Started', hideBelow: 'lg', className: 'whitespace-nowrap', render: (o) => <Mono className="whitespace-nowrap text-muted">{o.startedAt}</Mono> },
-              { key: 'ac', header: '', className: 'whitespace-nowrap', render: (o) => (o.status === 'running' || o.status === 'paused') ? <Button size="sm" icon={Radio} onClick={(e) => { e.stopPropagation(); go('operation', { id: o.id, tab: 'live' }) }}>Open Live Workspace</Button> : noRunning(o) ? <Button size="sm" onClick={(e) => { e.stopPropagation(); go('operation-new', { id: o.id }) }}>Edit Draft</Button> : <ArrowRight size={16} className="text-neutral" aria-hidden /> },
+              { key: 'a', header: 'Agents', hideBelow: 'md', render: (it) => it.op.agents.length },
+              { key: 'st', header: 'Started', hideBelow: 'lg', className: 'whitespace-nowrap', render: (it) => <Mono className="whitespace-nowrap text-muted">{it.op.startedAt}</Mono> },
+              { key: 'ac', header: '', className: 'whitespace-nowrap', render: (it) => (it.op.status === 'running' || it.op.status === 'paused') ? <Button size="sm" icon={Radio} onClick={(e) => { e.stopPropagation(); go('operation', { id: it.op.id, tab: 'live' }) }}>Open Live Workspace</Button> : noRunning(it.op) ? <Button size="sm" onClick={(e) => { e.stopPropagation(); go('operation-new', { id: it.op.id }) }}>Edit Draft</Button> : <ArrowRight size={16} className="text-neutral" aria-hidden /> },
             ]} />
-          <Pager {...pg} />
+          <Pager page={cur} pages={pages} setPage={setPage} total={read?.total ?? 0} />
         </>
       )}
     </div>
