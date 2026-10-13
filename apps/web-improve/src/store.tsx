@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Asset, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
+import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
 import { can as policyCan, projectAccessible, readOnlyContext } from './auth/policy'
 import type { CanAction } from './domain/permissions'
@@ -39,7 +39,7 @@ import { createProjectTransaction } from './features/wizard/service'
 // legacy entries delegate to them so refusals and invalidation have one
 // implementation for both entry points.
 import {
-  decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, withdrawApprovalTransaction,
+  decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction,
 } from './features/approvals/service'
 // Ticket 22 append: closure governance (checklist derivation, request/confirm/
 // reopen) and the emergency-stop transitions are feature-local handlers; these
@@ -65,14 +65,12 @@ import { computePreflightChecks, PROJECT_TZ_OFFSET_MS, type Check } from './feat
 import {
   completeOperation, pauseOperation, resumeOperation, reviewOperationStep, runOperationPreflight, startOperation, stopOperation,
 } from './features/operations/service'
-// Ticket 51 append: the asset import transaction (validated, atomic, through
-// ticket 21's governance transaction) and the role-gated scope change are
-// feature-local (src/features/assets/writes.ts); these legacy entries
-// delegate to them so validation, gating and audit have one implementation.
-import { changeAssetScopeTransaction, importAssetsTransaction } from './features/assets/writes'
-// Ticket 49 append: the allocation/group entries delegate to the typed agent
-// write handlers so eligibility, gating and audit have one implementation.
+// Ticket 49: the allocation/group entries delegate to the typed agent write
+// handlers so eligibility, gating and audit have one implementation.
 import { assignAgentTransaction, removeFromGroupTransaction, saveGroupTransaction } from './features/agents/writes'
+// Ticket 51: asset import/scope changes are feature-local transactions
+// (src/features/assets/writes.ts); ticket 65 removed the last store entries
+// that forwarded to them, so the store no longer imports the handlers.
 // Ticket 46 append: the session grant request/decision/revocation, the
 // interactive-command authorization and the single-grant expiry are
 // feature-local transactions (src/features/c2/grants); these legacy entries
@@ -98,7 +96,7 @@ export function hhmm() {
   const m = nowMin()
   return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`
 }
-export function hhmm12() {
+const hhmm12 = () => {
   const m = nowMin(), h = Math.floor(m / 60) % 24
   return `${h % 12 || 12}:${pad(m % 60)} ${h < 12 ? 'AM' : 'PM'}`
 }
@@ -125,11 +123,6 @@ export function sessionPerm(db: Db, me: Persona, s: Session): SessionPerm {
   return g ? g.perm : 'read-only'
 }
 
-export const nextProjectId = (db: Db, prefix = 'RT') => {
-  const nums = db.projects.map((p) => p.id.match(/-(\d{3})$/)).filter(Boolean).map((m) => parseInt(m![1]))
-  return `${prefix}-2026-${String(Math.max(0, ...nums) + 1).padStart(3, '0')}`
-}
-
 /* ───────────── Preflight (8 checks) ───────────── */
 /* Ticket 26: the deterministic policy lives in the operations feature
    (src/features/operations/preflight.ts) — the legacy helper delegates to the
@@ -142,12 +135,13 @@ export function computePreflight(db: Db, op: Operation): Check[] {
 }
 
 /* ───────────── Project closure checklist ───────────── */
-/* Ticket 22: the derivation moved to the closure handlers
+/* Ticket 22: the derivation lives in the closure handlers
    (src/features/closure/service.ts) — one canonical, never-stored checklist
    for the store consumers (completion %, close panel) and the typed
-   request/confirm handlers. The close console adds its agent-reservation
-   row through closePanelItems; the waiver stays a request-time input. */
-export const closureChecklist = (db: Db, pid: string) => evaluateCloseChecklist(db, pid)
+   request/confirm handlers. Ticket 65 retires the store's re-export; the
+   remaining consumer (completion) resolves the canonical derivation
+   directly. The close console adds its agent-reservation row through
+   closePanelItems; the waiver stays a request-time input. */
 
 
 /* ───────────── V3: eligibility, readiness, completion ───────────── */
@@ -187,7 +181,7 @@ export function completion(db: Db, pid: string) {
   const reps = db.reports.filter((r) => r.projectId === pid)
   const delivered = reps.some((r) => r.status === 'delivered')
   const repLabel = delivered ? 'Delivered' : reps.length ? reps.map((r) => r.status).sort()[0].replace(/^./, (c) => c.toUpperCase()) : 'None'
-  const chk = closureChecklist(db, pid)
+  const chk = evaluateCloseChecklist(db, pid)
   const closeDone = chk.filter((c) => c.ok).length
   const pct = Math.round(objPct * 0.5 + (delivered ? 30 : reps.some((r) => ['approved', 'exported'].includes(r.status)) ? 20 : 0) + (closeDone / chk.length) * 20)
   return { pct, objPct, ops: ops.length, opsDone, confirmed, suggested, inReview, repLabel, delivered, closeDone, closeTotal: chk.length }
@@ -256,12 +250,9 @@ export interface Actions {
   markNoticesRead: () => void
   createProject: (d: ProjectDraft, submit: boolean) => string
   submitApproval: (projectId: string, type: string, note: string, diff?: string) => Res
-  withdrawApproval: (id: string) => Res
   decideApproval: (id: string, decision: 'approved' | 'returned', note: string) => Res
   editScope: (projectId: string, patch: Partial<Pick<Project, 'window' | 'emergency' | 'methods' | 'restrictions' | 'desc'>>, reason?: string) => Res
   updateProject: (projectId: string, patch: Partial<Project>) => void
-  addAssets: (projectId: string, list: { name: string; ident: string; type: string; os: string; owner: string; scope: 'in' | 'out'; source: string; ip?: string }[]) => { ok: boolean; needsApproval: boolean; error?: string }
-  setAssetScope: (assetId: string, scope: Asset['scope']) => void
   assignAgent: (agentId: string, projectId: string) => Res
   setAgentStatus: (agentId: string, s: Agent['status']) => void
   saveGroup: (g: Partial<Group> & { name: string; projectId: string }) => string
@@ -273,7 +264,6 @@ export interface Actions {
   pauseOp: (opId: string, reason: string) => void
   resumeOp: (opId: string) => Res
   stopOp: (opId: string, reason: string) => void
-  estopOp: (opId: string, reason: string) => void
   emergencyStop: (scope: 'operation' | 'project' | 'workspace', id: string, reason: string) => void
   completeOp: (opId: string) => Res
   loseAgent: (agentId: string) => void
@@ -646,16 +636,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setPidRaw(res.data.id)
       return res.data.id
     },
-    /* Ticket 21: submit/withdraw/decide run through the feature-local
+    /* Ticket 21: submit/decide run through the feature-local
        transaction handlers — the four-eyes refusals, the review-information
        checks and the atomic commit live there; this entry only bridges the
-       typed ServiceResult to the legacy Res shape. */
+       typed ServiceResult to the legacy Res shape. (Ticket 65 retired the
+       zero-caller withdrawApproval wrapper: the submitter-side withdrawal is
+       the withdrawApprovalTransaction feature entry.) */
     submitApproval: (projectId, type, note, diff) => {
       const res = submitApprovalTransaction(services.authority, services.clock, actorCtx(projectId), { projectId, type, note, diff })
-      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
-    },
-    withdrawApproval: (id) => {
-      const res = withdrawApprovalTransaction(services.authority, services.clock, actorCtx(''), id)
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     decideApproval: (id, decision, note) => {
@@ -667,21 +655,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     updateProject: (projectId, patch) => mutate((d) => { const p = d.projects.find((x) => x.id === projectId)!; Object.assign(p, patch); p.updated = stamp() }),
-    /* Ticket 51: the import path runs through the feature-local import
-       transaction — every row is validated before anything commits (one
-       invalid/duplicate row refuses the batch), then ticket 21's governance
-       transaction commits the valid batch atomically (added assets stay
-       pending; a governed scope invalidates at submission). */
-    addAssets: (projectId, list) => {
-      const res = importAssetsTransaction(services.authority, services.clock, actorCtx(projectId), projectId, list)
-      return res.ok
-        ? { ok: true, needsApproval: res.data.needsApproval }
-        : { ok: false, needsApproval: false, error: res.failure.message }
-    },
-    /* Ticket 51: scope changes run through the role-gated transaction — the
-       handler owns the read-only/role refusals, the audited reason and the
-       governed-ROE scope-change request for pending proposals. */
-    setAssetScope: (assetId, scope) => { changeAssetScopeTransaction(services.authority, services.clock, actorCtx(''), assetId, scope) },
+    /* Ticket 51: the import path and the scope changes run through the
+       feature-local transactions (src/features/assets/writes.ts) — ticket 65
+       retired the zero-caller addAssets/setAssetScope wrappers; the catalog
+       screens and tests resolve importAssetsTransaction and
+       changeAssetScopeTransaction directly. */
     /* Ticket 49: allocation/group entries delegate to the typed transactions
        (src/features/agents/writes) — eligibility (connected, unreserved,
        pool-only, active/approved target), the role gates, the pending-request
@@ -775,7 +753,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!op) return
       stopOperation(services.authority, services.clock, actorCtx(op.projectId), opId, reason)
     },
-    estopOp: (opId, reason) => A.emergencyStop('operation', opId, reason),
     /* Ticket 22: the stop transitions are typed handlers
        (src/features/estop/service.ts). The request handler commits the
        visible stop state (phase 'requested' + Pending audit + notice) in one

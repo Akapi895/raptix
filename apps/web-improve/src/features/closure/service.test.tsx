@@ -13,7 +13,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, closureChecklist, type Store } from '../../store'
+import { StoreProvider, useServices, useStore, completion, type Store } from '../../store'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { DbAuthority } from '../../domain/database'
@@ -72,11 +72,13 @@ const pendingCloseOf = (authority: DbAuthority, pid = P16) =>
   authority.snapshot().approvals.find((a) => a.projectId === pid && a.type === APR.close && a.status === 'pending')!
 
 describe('closure checklist derivation (ticket 22)', () => {
-  it('the canonical derivation agrees with the legacy store export for the seeded projects', () => {
+  it('the canonical derivation drives the store completion consumers for the seeded projects', () => {
     const svc = createConsoleServices()
     const db = svc.authority.snapshot()
     for (const pid of ['RT-2026-014', P16, 'RT-2026-009']) {
-      expect(JSON.stringify(evaluateCloseChecklist(db, pid))).toBe(JSON.stringify(closureChecklist(db, pid)))
+      const chk = evaluateCloseChecklist(db, pid)
+      expect(completion(db, pid)).toMatchObject({ closeDone: chk.filter((c) => c.ok).length, closeTotal: chk.length })
+      expect(JSON.stringify(evaluateCloseChecklist(db, pid))).toBe(JSON.stringify(chk))
     }
     svc.dispose()
   })

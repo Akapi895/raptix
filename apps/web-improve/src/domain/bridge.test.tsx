@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
 import { seed, type Project, type Role } from '../data'
 import { StoreProvider, useServices, useStore, type Store } from '../store'
+import { changeAssetScopeTransaction } from '../features/assets/writes'
 import { DEMO_ANCHOR, formatDemoInstant, parseDemoInstant } from './clock'
 import { createConsoleServices, type ConsoleServices } from './service-factory'
 import type { ActorRef, ChangeSet, RequestContext, ServiceResult } from './service'
@@ -142,14 +143,16 @@ describe('bridge: legacy context and services share the one authority', () => {
     view.unmount()
   })
 
-  it('a legacy mutation is observed by a service subscriber with coherent ids/counters', () => {
+  it('a legacy-context mutation is observed by a service subscriber with coherent ids/counters', () => {
     const view = mountBridge()
     const seen: ChangeSet[] = []
     const stop = view.svc().subscribe((cs) => seen.push(cs))
     const auditBefore = view.store().db.counters.audit
     // Ticket 51: the delegated scope change commits the flip and its audit in
-    // ONE ChangeSet (the transaction owns the atomicity).
-    view.run(() => { view.store().A.setAssetScope('AS-0141', 'out') })
+    // ONE ChangeSet (the transaction owns the atomicity). Ticket 65 retired
+    // the zero-caller A.setAssetScope wrapper; the legacy-context entry is
+    // the same transaction the wrapper forwarded to (corr 'legacy').
+    view.run(() => { changeAssetScopeTransaction(view.svc().authority, view.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: '', corr: 'legacy' }, 'AS-0141', 'out') })
     expect(seen.map((cs) => cs.corr)).toEqual(['legacy'])
     expect(seen[0].entities).toContainEqual({ kind: 'asset', id: 'AS-0141', projectId: 'RT-2026-014' })
     expect(seen[0].entities.some((e) => e.kind === 'audit')).toBe(true)
