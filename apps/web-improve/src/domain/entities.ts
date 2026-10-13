@@ -126,4 +126,5 @@ export interface OrgProfile {
   defWorkspace: string
 }
 /** Organization/workspace settings persisted for the demo session in the one database. */
-export interface OrgState { profile: OrgProfile; members: Record<string, OrgMemberOverride>; invites: OrgInvite[] }
+export interface OrgState { profile: OrgProfile; members: Record<string, OrgMemberOverride>; invites: OrgInvite[]
+  /** Retention ids under an active legal hold (ticket 58; blocks scheduled deletion). */ holds: string[] }
