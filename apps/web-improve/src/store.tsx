@@ -32,7 +32,13 @@ import { deliverReportVersion, exportReportVersion, type DeliveryInput } from '.
 // Ticket 26 append: the preflight derivation and the start gate live in the
 // operations feature; the legacy helpers/actions delegate to the same handlers.
 import { computePreflightChecks, PROJECT_TZ_OFFSET_MS, type Check } from './features/operations/preflight'
-import { operationStartGate, runOperationPreflight } from './features/operations/service'
+// Ticket 27 append: the lifecycle control transitions are feature-local
+// handlers; these legacy entries delegate so the gates, the atomic agent
+// reservations and the audited outcomes have one implementation for both
+// entry points (the store keeps only the demo live-log mirrors).
+import {
+  completeOperation, pauseOperation, resumeOperation, runOperationPreflight, startOperation, stopOperation,
+} from './features/operations/service'
 // Ticket 51 append: the asset import transaction (validated, atomic, through
 // ticket 21's governance transaction) and the role-gated scope change are
 // feature-local (src/features/assets/writes.ts); these legacy entries
@@ -537,15 +543,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const stepsFrom = (names: string[], techs: string[], agents: string[], assets: string[]): Step[] =>
     names.map((name, i) => ({ id: 'S' + pad(i + 1), name, agent: agents.length ? agents[i % agents.length] : '—', asset: assets.length ? assets[i % assets.length] : '—', technique: techs[i % techs.length], status: 'notrun' as const, ts: '—', dur: '—', output: 'Not run.' }))
 
-  const newSession = (d: Db, o: Operation) => {
-    const ag = d.agents.find((a) => a.id === o.agents[0])
-    const asset = d.assets.find((a) => a.id === o.assets[0])
-    const ch = d.channels.find((c) => c.projectId === o.projectId) || d.channels[0]
-    const id = 'SS-' + String(++d.counters.session).padStart(3, '0')
-    d.sessions.unshift({ id, projectId: o.projectId, opId: o.id, agentId: ag?.id || '—', asset: asset?.name || '—', kind: 'reverse', channelId: ch?.id || '—', account: 'svc-demo', integrity: 'Standard', state: 'connected', started: stamp(), last: stamp(), grants: [], transcript: [{ ts: hhmm() + ':00', who: 'system', text: `Session established via ${ch?.name || 'channel'} (demo).` }] })
-    o.sessionId = id
-    return id
-  }
+  /* Ticket 27: the demo's first-session creation moved into the typed start
+     handler (startSession) — the run state, the reservations and the session
+     commit in one atomic ChangeSet. The step auto-advance simulation below
+     stays here: it is the demo's execution outcome engine, not a control. */
 
   /* ───────── AI chat (ticket 38) ─────────
      Conversations, mode selection and simulated proposal generation are owned
@@ -667,36 +668,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     startOp: (opId) => {
       const op = dbRef.current.operations.find((o) => o.id === opId)
-      /* Ticket 26: the gate is re-derived from canonical state at the handler;
-         a refusal (failing check, role, already started) commits nothing. */
-      const gate = op ? operationStartGate(services.authority, services.clock, actorCtx(op.projectId), opId) : { ok: false as const }
-      if (!gate.ok || !op) return
-      mutate((d) => {
-        const o = d.operations.find((x) => x.id === opId)!
-        o.status = 'running'; o.startedAt = stamp(); o.updated = stamp()
-        o.steps.forEach((s, i) => { s.status = i === 0 ? 'running' : 'pending'; s.ts = i === 0 ? hhmm() : '—' })
-        o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid)!; a.op = opId })
-        const p = d.projects.find((x) => x.id === o.projectId)!
-        if (p.status === 'approved') p.status = 'active'
-        if (!o.sessionId) newSession(d, o)
-        const pl = o.planId ? d.plans.find((x) => x.id === o.planId) : undefined
-        if (pl && pl.status === 'approved') pl.status = 'executed'
-      })
-      audit('Started operation', opId, op.projectId, 'Success', 'Preflight passed')
-      pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation started — preflight passed, scope ' + dbRef.current.projects.find((p) => p.id === op.projectId)!.roeVersion })
+      /* Ticket 27: the transition is the typed handler — the ticket-26 gate
+         re-derives the checks (a refusal commits nothing) and ONE commit binds
+         the run state, the agent reservations, the first session, the plan
+         and the audit row. This entry keeps only the live-log mirror. */
+      if (!op) return
+      const res = startOperation(services.authority, services.clock, actorCtx(op.projectId), opId)
+      if (res.ok) pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation started — preflight passed, scope ' + dbRef.current.projects.find((p) => p.id === op.projectId)!.roeVersion })
     },
-    pauseOp: (opId, reason) => { const op = dbRef.current.operations.find((o) => o.id === opId)!; mutate((d) => { const o = d.operations.find((x) => x.id === opId)!; o.status = 'paused'; o.stopReason = reason; o.stopBy = me.name; o.stopAt = stamp(); o.updated = stamp() }); audit('Paused operation', opId, op.projectId, 'Success', reason); pushLog(opId, { level: 'WARN', agent: '—', stepId: '—', text: `Operation paused by ${me.name}` }) },
+    pauseOp: (opId, reason) => {
+      const op = dbRef.current.operations.find((o) => o.id === opId)
+      /* Ticket 27: the handler requires a reason and refuses non-running
+         operations; the pause state and its attribution commit atomically. */
+      if (!op) return
+      const res = pauseOperation(services.authority, services.clock, actorCtx(op.projectId), opId, reason)
+      if (res.ok) pushLog(opId, { level: 'WARN', agent: '—', stepId: '—', text: `Operation paused by ${me.name}` })
+    },
     resumeOp: (opId) => {
-      const op = dbRef.current.operations.find((o) => o.id === opId)!
-      const lost = op.agents.filter((a) => dbRef.current.agents.find((x) => x.id === a)?.status !== 'online')
-      if (lost.length) return { ok: false, error: `Cannot resume: ${lost.join(', ')} not connected. Restore the connection or replace the agent.` }
-      const pl = op.planId ? dbRef.current.plans.find((x) => x.id === op.planId) : undefined
-      if (pl && !['approved', 'executed'].includes(pl.status)) return { ok: false, error: `Cannot resume: revised plan ${pl.id} ${pl.ver ?? 'v' + pl.version} needs re-approval.` }
-      mutate((d) => { const o = d.operations.find((x) => x.id === opId)!; o.status = 'running'; o.stopReason = undefined; o.updated = stamp() })
-      audit('Resumed operation', opId, op.projectId); pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: `Operation resumed by ${me.name}` })
+      const op = dbRef.current.operations.find((o) => o.id === opId)
+      /* Ticket 27: the handler enforces the rechecks (connected agents,
+         approved plan, only paused resumes — stopped never resumes). */
+      if (!op) return { ok: false, error: 'Operation not found.' }
+      const res = resumeOperation(services.authority, services.clock, actorCtx(op.projectId), opId)
+      if (!res.ok) return { ok: false, error: res.failure.message }
+      pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: `Operation resumed by ${me.name}` })
       return { ok: true }
     },
-    stopOp: (opId, reason) => { const op = dbRef.current.operations.find((o) => o.id === opId)!; mutate((d) => { const o = d.operations.find((x) => x.id === opId)!; o.status = 'cancelled'; o.stopReason = reason; o.stopBy = me.name; o.stopAt = stamp(); o.steps.forEach((s) => { if (s.status === 'running') s.status = 'unknown'; if (s.status === 'pending') s.status = 'notrun' }); o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === opId) a.op = null }); d.sessions.forEach((s) => { if (s.opId === opId && ['connected', 'available', 'awaiting', 'suspended'].includes(s.state)) { s.state = 'terminated'; s.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated: operation stopped.' }) } }) }); audit('Stopped operation', opId, op.projectId, 'Success', reason) },
+    stopOp: (opId, reason) => {
+      const op = dbRef.current.operations.find((o) => o.id === opId)
+      /* Ticket 27: the normal stop releases the agent reservations and
+         terminates the linked sessions in the same atomic commit as the
+         stopped state — one ChangeSet, so the fleet and the operation views
+         agree. The reason is required and audited by the handler. */
+      if (!op) return
+      stopOperation(services.authority, services.clock, actorCtx(op.projectId), opId, reason)
+    },
     estopOp: (opId, reason) => A.emergencyStop('operation', opId, reason),
     /* Ticket 22: the stop transitions are typed handlers
        (src/features/estop/service.ts). The request handler commits the
@@ -733,16 +739,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pushLog(opId, { level: 'INFO', agent: '—', stepId, text: `Step ${stepId} ${decision === 'approve' ? 'approved' : decision === 'skip' ? 'skipped' : 'rejected'} by ${me.name}` })
     },
     completeOp: (opId) => {
-      const op = dbRef.current.operations.find((o) => o.id === opId)!
-      if (op.steps.some((s) => s.status === 'running')) return { ok: false, error: 'Cannot complete: a step is still running. Wait for it to finish or use Pause.' }
-      mutate((d) => {
-        const o = d.operations.find((x) => x.id === opId)!
-        o.status = 'done'; o.updated = stamp()
-        o.steps.forEach((s) => { if (s.status === 'pending') s.status = 'notrun' })
-        o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === opId) a.op = null })
-        d.sessions.forEach((s) => { if (s.opId === opId && ['connected', 'available', 'suspended'].includes(s.state)) { s.state = 'terminated'; s.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated at operation completion.' }) } })
-      })
-      audit('Completed operation', opId, op.projectId); pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation completed' })
+      const op = dbRef.current.operations.find((o) => o.id === opId)
+      /* Ticket 27: the handler refuses a running step (baseline invariant) and
+         releases the reservations and linked sessions in the same commit. */
+      if (!op) return { ok: false, error: 'Operation not found.' }
+      const res = completeOperation(services.authority, services.clock, actorCtx(op.projectId), opId)
+      if (!res.ok) return { ok: false, error: res.failure.message }
+      pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation completed' })
       return { ok: true }
     },
     loseAgent: (agentId) => {
