@@ -2,7 +2,6 @@ import { useRef, useState, useEffect, type ComponentType, type ReactNode } from 
 import { FolderOpen, Lock, SlidersHorizontal } from 'lucide-react'
 import { useStore } from '../store'
 import { Banner, Button, Empty, Mono, PageSkeleton, cx } from '../ui'
-import type { Agent } from '../data'
 
 /** Wraps a screen: shows a skeleton while the project is switching */
 export function withLoading(C: ComponentType): ComponentType {
@@ -15,18 +14,6 @@ export function withLoading(C: ComponentType): ComponentType {
 export const hashNum = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7)
 
 export const POOL_LABEL = 'Unassigned (shared pool)'
-
-export function useProjectName() {
-  const { db } = useStore()
-  return (id: string) => (id ? `${id} — ${db.projects.find((p) => p.id === id)?.name ?? ''}` : POOL_LABEL)
-}
-
-/** Agents for the selected project; pool agents (projectId '') are always listed */
-export function useVisibleAgents(): Agent[] {
-  const { db, pid, accessible } = useStore()
-  const ids = new Set(accessible.map((p) => p.id))
-  return db.agents.filter((a) => (pid === 'all' ? a.projectId === '' || ids.has(a.projectId) : a.projectId === pid || a.projectId === ''))
-}
 
 /** Banner asking for a specific project while in "All Projects" mode */
 export function PickProjectBanner({ what }: { what: ReactNode }) {
@@ -41,8 +28,6 @@ export function PickProjectBanner({ what }: { what: ReactNode }) {
 export function Blocked({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
   return <Empty icon={Lock} title={title} action={actions}>{children}</Empty>
 }
-
-export const wsLabel = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
 
 /** Non-wrapping mono ID */
 export const Id = ({ children, className }: { children: ReactNode; className?: string }) => <Mono className={cx('whitespace-nowrap', className)}>{children}</Mono>
