@@ -102,6 +102,7 @@ export type ListResult<T> = ServiceResult<Page<T>>
  * seed collections so bridge snapshots and Query keys stay aligned.
  */
 export type EntityKind =
+  | 'org'
   | 'project'
   | 'operation'
   | 'step'

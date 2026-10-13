@@ -111,3 +111,15 @@ export interface Session {
 export interface SessionRequest { id: string; sessionId: string; projectId: string; by: string; reason: string; mode: 'read-only' | 'interactive'; duration: string; status: 'pending' | 'approved' | 'rejected' | 'changes' | 'expired'; at: string; decidedBy?: string; note?: string }
 export type StopPhase = 'requested' | 'acknowledged' | 'failed' | 'unknown' | 'stopping' | 'stopped'
 export interface StopState { scope: 'operation' | 'project' | 'workspace'; id: string; phase: StopPhase; reason: string; at: string; by: string }
+
+/* ───────────── Organization settings (ticket 56) ───────────── */
+/** Per-member overrides authored in settings; the seeded roles stay in USERS. */
+export interface OrgMemberOverride { role?: Role; locked?: boolean; revoked?: boolean }
+export interface OrgInvite { id: string; email: string; role: Role; project: string; days: string; note: string; at: string }
+export interface OrgProfile {
+  name: string; tz: string; dateFmt: string; landing: string; contact: string; policy: string
+  /** Workspace chosen as the sign-in default (WS-02 in the demo dataset). */
+  defWorkspace: string
+}
+/** Organization/workspace settings persisted for the demo session in the one database. */
+export interface OrgState { profile: OrgProfile; members: Record<string, OrgMemberOverride>; invites: OrgInvite[] }
