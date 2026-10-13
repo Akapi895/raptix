@@ -10,7 +10,8 @@ import { useEffect, useState } from 'react'
 import {
   AlertTriangle, Clock, FolderKanban, Info, Layers, Loader2, Lock, MoreHorizontal, OctagonX, Phone, RotateCcw, Settings, type LucideIcon,
 } from 'lucide-react'
-import { ROLE_LABEL, eligibility, useStore } from '../store'
+import { ROLE_LABEL, useStore } from '../store'
+import { eligibility } from '../features/operations/preflight'
 import { Banner, Button, Check, Field, Modal, Status, Textarea, cx } from '../ui'
 import { Pop } from './pop'
 
