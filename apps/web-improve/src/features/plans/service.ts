@@ -73,8 +73,8 @@ export function usableApproval(plan: Plan, now: Instant): { ok: true; expiresAt?
   return { ok: true, expiresAt: at }
 }
 
-/** Resolves a plan with its project; foreign reads are not-found (no existence leak). */
-function resolvePlan(db: Db, ctx: RequestContext, id: string): { ok: true; plan: Plan; project: Project } | { ok: false; failure: ServiceFailure } {
+/** Resolves a plan with its project; foreign reads are not-found (no existence leak). Ticket 42's compare read shares this scope rule. */
+export function resolvePlan(db: Db, ctx: RequestContext, id: string): { ok: true; plan: Plan; project: Project } | { ok: false; failure: ServiceFailure } {
   const plan = db.plans.find((x) => x.id === id)
   const project = plan ? db.projects.find((x) => x.id === plan.projectId) : undefined
   if (!plan || !project || !projectAccessible(project, ctx.actor)) {

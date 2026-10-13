@@ -1,9 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Columns3, Download, ExternalLink, Filter, X } from 'lucide-react'
-import { useStore } from '../store'
-import { planVer, toolFacets } from '../data'
+import { useServices, useStore } from '../store'
+import { actorRef } from '../auth/persona'
+import { planVer } from '../data'
 import type { Audit, Conversation, Facets, ToolEvent } from '../data'
+import { useQueryScope } from '../state/keys'
+import { createChatHandlers } from '../features/aichat/handlers'
+import { AiHistoryReadError, useAiAudit, useAiHistory } from '../features/aichat/query'
+import type { ActorType, HistoryConversation } from '../features/aichat/history'
+import { modeLabel } from '../features/aichat/history'
 import { TraceReadError, useTraceEvents, useTraceWrites } from '../features/trace/query'
 import type { TraceRow } from '../features/trace/service'
 import type { ToolDecisionOutcome } from '../features/trace/writes'
@@ -339,21 +345,35 @@ function Inspector({ row, canDecide, why, onAllow, onDeny }: { row: TraceRow; ca
 }
 
 /* ───────────── AI History ───────────── */
+/* Ticket 42: the history archive (plans/conversations/audit), its search and
+   pagination, the actor-type derivation and the sensitive masking live in the
+   aichat feature (src/features/aichat/history.ts) — this screen renders the
+   typed read with zero db.* access on the route. */
 const STORE_KEY = 'raptix.ai-history.return'
-const actorType = (a: Audit) => (a.actor === 'AI Operator' ? 'AI' : a.role === 'System' ? 'System' : 'Human')
-const eventType = (a: Audit) => (/plan/i.test(a.action) ? 'AI plan decision' : /blocked|tool/i.test(a.action) ? 'Tool policy decision' : /session/i.test(a.action) ? 'Session access' : /operation/i.test(a.action) ? 'Operation lifecycle' : 'Other')
-const redact = (s: string) => s.replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '[ip redacted]').replace(/(password|secret|token|key)\s*[=:]\s*\S+/gi, '$1=[redacted]')
+const AUDIT_PAGE = 10
+const typeTone = (t: string) => (t === 'AI' ? 'cyan' : t === 'System' ? 'neutral' : 'ok') as 'cyan' | 'neutral' | 'ok'
 
 export function AiHistory() {
-  const { db, pid, go, can, toast } = useStore()
+  const { pid, go, can, toast } = useStore()
+  const services = useServices()
+  const qscope = useQueryScope()
+  /* Pin/unpin goes through the typed ChatService write; the read's key embeds
+     the scope, so the committed pin's ChangeSet refetches the archive. */
+  const chat = useMemo(
+    () => createChatHandlers(services, actorRef(qscope.actor), qscope.project),
+    [services, qscope.actor, qscope.project],
+  )
   const [tab, setTab] = useState('plans')
   const [open, setOpen] = useState<string>()
-  const [aud, setAud] = useState<string>()
+  const [audId, setAudId] = useState<string>()
   const [scope, setScope] = useState<'ai' | 'all'>('ai')
   const [at, setAt] = useState('all')
   const [q, setQ] = useState('')
+  const [page, setPage] = useState(1)
+  const hist = useAiHistory({ q, actorType: at as ActorType | 'all', aiOnly: scope === 'ai', page: { page, pageSize: AUDIT_PAGE } })
+  const audQ = useAiAudit(audId)
   useEffect(() => {
-    setOpen(undefined); setAud(undefined); setQ(''); setAt('all')
+    setOpen(undefined); setAudId(undefined); setQ(''); setAt('all'); setPage(1)
     let saved: { pid: string; tab: string; y: number } | undefined
     try { saved = JSON.parse(sessionStorage.getItem(STORE_KEY) || 'null') ?? undefined } catch { /* ignore */ }
     if (saved && saved.pid === pid) {
@@ -361,28 +381,35 @@ export function AiHistory() {
       window.setTimeout(() => document.querySelector('main')?.scrollTo?.(0, saved!.y), 60)
     } else setTab('plans')
   }, [pid])
-  if (pid === 'all') return <><PageHeader title="Conversation History & Provenance" /><AiSubNav current="ai-history" /><NoProject /></>
-  const plans = db.plans.filter((p) => p.projectId === pid)
-  const convs = db.conversations.filter((c) => c.projectId === pid)
-  const projAudit = db.audit.filter((a) => a.projectId === pid)
-  const aiAudit = projAudit.filter((a) => a.actor === 'AI Operator' || /AI plan|plan|tool|Blocked/i.test(a.action))
-  const nq = q.trim().toLowerCase()
-  const audit = (scope === 'ai' ? aiAudit : projAudit).filter((a) => (at === 'all' || actorType(a) === at) && (!nq || `${a.id} ${a.actor} ${a.action} ${a.obj} ${a.corr || ''}`.toLowerCase().includes(nq)))
-  const conv = convs.find((c) => c.id === open)
-  const au = projAudit.find((a) => a.id === aud)
+  const header = <PageHeader title="Conversation History & Provenance" crumbs={[{ label: 'AI Operator', to: () => go('ai-operator') }, { label: 'History' }]} sub={`AI activity for ${pid} only. Conversations from other projects are never merged or cached here. Demo Data.`} />
+  if (pid === 'all') return <>{header}<AiSubNav current="ai-history" /><NoProject /></>
+  if (hist.isPending) return <>{header}<AiSubNav current="ai-history" /><p className="py-3 text-sm text-muted" role="status">Loading history…</p></>
+  if (hist.isError) {
+    const f = (hist.error as AiHistoryReadError).failure
+    return <>{header}<AiSubNav current="ai-history" /><Empty title="Could not load history" action={<Button onClick={() => hist.refetch()}>Retry</Button>}>{f.message}</Empty></>
+  }
+  const { plans, conversations, counts, audit, context } = hist.data
+  const convs = conversations.map((h) => h.conversation)
+  const byId = new Map(conversations.map((h) => [h.conversation.id, h]))
+  const hc = open ? byId.get(open) : undefined
+  const pages = Math.max(1, Math.ceil(audit.total / audit.pageSize))
   const exp = can('viewSensitive')
-  const tools = (id: string) => db.toolEvents.filter((t) => t.conversationId === id && t.projectId === pid)
-  const planIds = (c: Conversation) => [...new Set(c.messages.filter((m) => m.planId).map((m) => m.planId!))]
-  const modeLabel = (c: Conversation) => (c.mode === 'execution' ? 'Approved Execution' : c.mode === 'propose' ? 'Propose' : 'Observe')
   const openOriginal = (c: Conversation) => {
     sessionStorage.setItem(STORE_KEY, JSON.stringify({ pid, tab: 'conv', y: document.querySelector('main')?.scrollTop || 0 }))
     go('ai-operator', { id: c.id })
   }
-  const exportTranscript = (c: Conversation) => {
-    const body = [`# ${c.title} (${c.id}) — redacted transcript`, `Project ${pid} · Mode ${modeLabel(c)} · Demo Data`, '', ...c.messages.map((m) => `[${m.at}] ${m.role.toUpperCase()}: ${redact(m.text)}`)].join('\n')
+  /* The archive's message texts are already masked at the service boundary. */
+  const exportTranscript = (h: HistoryConversation) => {
+    const c = h.conversation
+    const body = [`# ${c.title} (${c.id}) — redacted transcript`, `Project ${pid} · Mode ${modeLabel(c.mode)} · Demo Data`, '', ...c.messages.map((m) => `[${m.at}] ${m.role.toUpperCase()}: ${m.text}`)].join('\n')
     const url = URL.createObjectURL(new Blob([body], { type: 'text/plain' }))
     const a = document.createElement('a'); a.href = url; a.download = `${c.id}-redacted.txt`; a.click(); URL.revokeObjectURL(url)
     toast('Redacted transcript downloaded (demo). Limited to your project access.', 'ok')
+  }
+  const pin = (c: Conversation) => {
+    const res = chat.setPinned(c.id)
+    if (res.ok) toast(c.pinned ? `${c.id} unpinned.` : `${c.id} pinned.`, 'info')
+    else toast(res.failure.message, 'bad')
   }
   const hasCompare = (id: string) => plans.some((p) => p.id === id && p.prevPlanId) || plans.some((p) => p.prevPlanId === id)
   const related = (a: Audit): ReactNode => {
@@ -390,12 +417,12 @@ export function AiHistory() {
     const to = /^PL-/.test(o) ? () => go('ai-plan', { id: o }) : /^OP-/.test(o) ? () => go('operation', { id: o }) : /^TL-/.test(o) ? () => go('ai-trace', { id: o }) : /^AG-/.test(o) ? () => go('agent', { id: o }) : /^(SS|CH)-/.test(o) ? () => go('project', { id: a.projectId, tab: 'sessions' }) : /^RT-|^PT-/.test(o) ? () => go('project', { id: o }) : /^[a-z0-9-]+$/.test(o) && !/^[A-Z]/.test(o) ? () => go('assets') : undefined
     return to ? <IdLink onClick={to}>{o}</IdLink> : <Mono className="whitespace-nowrap">{o}</Mono>
   }
-  const typeTone = (t: string) => (t === 'AI' ? 'cyan' : t === 'System' ? 'neutral' : 'ok') as 'cyan' | 'neutral' | 'ok'
+  const au = audQ.data
   return (
     <>
-      <PageHeader title="Conversation History & Provenance" crumbs={[{ label: 'AI Operator', to: () => go('ai-operator') }, { label: 'History' }]} sub={`AI activity for ${pid} only. Conversations from other projects are never merged or cached here. Demo Data.`} />
+      {header}
       <AiSubNav current="ai-history" />
-      <Tabs value={tab} onChange={setTab} tabs={[{ id: 'plans', label: 'Plans', count: plans.length }, { id: 'conv', label: 'Conversations', count: convs.length }, { id: 'audit', label: 'AI Audit', count: aiAudit.length }]} />
+      <Tabs value={tab} onChange={setTab} tabs={[{ id: 'plans', label: 'Plans', count: plans.length }, { id: 'conv', label: 'Conversations', count: convs.length }, { id: 'audit', label: 'AI Audit', count: counts.ai }]} />
       <div className="mt-4">
         {tab === 'plans' && <Table rows={plans} rowKey={(p) => p.id} onRow={(p) => go('ai-plan', { id: p.id })} empty={<Empty title="No AI plans yet" action={<Button variant="primary" onClick={() => go('ai-operator')}>Open AI Operator</Button>}>Ask the AI to propose a plan in Propose mode.</Empty>} cols={[
           { key: 'id', header: 'Plan', render: (p) => <Mono className="whitespace-nowrap">{p.id}</Mono> }, { key: 't', header: 'Title', render: (p) => <span className="whitespace-nowrap">{p.title}</span> }, { key: 'v', header: 'Version', render: (p) => <span className="whitespace-nowrap">{planVer(p)}</span> },
@@ -409,67 +436,79 @@ export function AiHistory() {
         {tab === 'conv' && <Table rows={convs} rowKey={(c) => c.id} onRow={(c) => setOpen(c.id)} empty={<Empty title="No conversations yet for this project" action={<Button variant="primary" onClick={() => go('ai-operator')}>Open AI Operator</Button>}>Start one from the AI Operator workspace.</Empty>} cols={[
           { key: 'id', header: 'Conversation', render: (c) => <div className="min-w-[180px]"><div>{c.title}</div><Mono className="whitespace-nowrap text-muted">{c.id}</Mono></div> },
           { key: 'a', header: 'Actor', render: (c) => <span className="whitespace-nowrap">{c.owner}</span> }, { key: 'mo', header: 'Model', render: () => <span className="whitespace-nowrap text-xs">raptix-ai-demo-1</span> },
-          { key: 'm', header: 'Mode', render: (c) => <span className="whitespace-nowrap">{modeLabel(c)}</span> },
-          { key: 'p', header: 'Plans', render: (c) => planIds(c).length ? <span className="inline-flex gap-1.5">{planIds(c).map((id) => <IdLink key={id} onClick={() => go('ai-plan', { id })}>{id}</IdLink>)}</span> : '—' },
-          { key: 'ta', header: 'Tool approvals', render: (c) => tools(c.id).length },
+          { key: 'm', header: 'Mode', render: (c) => <span className="whitespace-nowrap">{modeLabel(c.mode)}</span> },
+          { key: 'p', header: 'Plans', render: (c) => { const ann = byId.get(c.id)?.plans ?? []; return ann.length ? <span className="inline-flex gap-1.5">{ann.map((a) => <IdLink key={a.id} onClick={() => go('ai-plan', { id: a.id })}>{a.id}</IdLink>)}</span> : '—' } },
+          { key: 'ta', header: 'Tool approvals', render: (c) => byId.get(c.id)?.toolApprovals.length ?? 0 },
           { key: 'r', header: 'Retention', render: () => <span className="whitespace-nowrap">90 days</span> }, { key: 'u', header: 'Last activity', render: (c) => <span className="whitespace-nowrap text-xs">{tz(c.updated)}</span> },
-          { key: 'ac', header: 'Actions', render: (c) => <span className="flex gap-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}><Button size="sm" onClick={() => openOriginal(c)}>Open</Button><Button size="sm" onClick={() => setOpen(c.id)}>View Provenance</Button></span> },
+          { key: 'ac', header: 'Actions', render: (c) => <span className="flex gap-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" onClick={() => openOriginal(c)}>Open</Button>
+            <Button size="sm" onClick={() => setOpen(c.id)}>View Provenance</Button>
+            <Button size="sm" aria-pressed={!!c.pinned} aria-label={c.pinned ? `Unpin ${c.title}` : `Pin ${c.title}`} onClick={() => pin(c)}>{c.pinned ? 'Unpin' : 'Pin'}</Button>
+          </span> },
         ]} />}
         {tab === 'audit' && <>
           <div className="mb-3 flex flex-wrap items-center gap-3">
-            <Segmented options={[{ id: 'ai' as const, label: `AI-related (${aiAudit.length})` }, { id: 'all' as const, label: `All project events (${projAudit.length})` }]} value={scope} onChange={setScope} />
+            <Segmented options={[{ id: 'ai' as const, label: `AI-related (${counts.ai})` }, { id: 'all' as const, label: `All project events (${counts.all})` }]} value={scope} onChange={setScope} />
             <SearchBox value={q} onChange={setQ} placeholder="Search event, actor, object, correlation" className="w-72" />
             <Select aria-label="Actor type" className="w-40" value={at} onChange={(e) => setAt(e.target.value)}><option value="all">All actor types</option><option>Human</option><option>AI</option><option>System</option></Select>
             <DemoTag />
           </div>
-          <Table rows={audit} rowKey={(a) => a.id} onRow={(a) => setAud(a.id)} empty={<Empty title="No audit events match" action={<Button onClick={() => { setQ(''); setAt('all'); setScope('all') }}>Show all project events</Button>}>AI proposals, blocks and plan decisions are recorded here. Adjust the filters to see more.</Empty>} cols={[
-            { key: 'id', header: 'Event ID', render: (a) => <Mono className="whitespace-nowrap font-semibold">{a.id}</Mono> },
-            { key: 'ac', header: 'Actor', render: (a) => <span className="whitespace-nowrap">{a.actor}</span> },
-            { key: 'ty', header: 'Actor type', render: (a) => <Pill tone={typeTone(actorType(a))}>{actorType(a)}</Pill> },
-            { key: 'et', header: 'Event type', render: (a) => <span className="whitespace-nowrap">{eventType(a)}</span> },
-            { key: 'pr', header: 'Project', render: (a) => <IdLink onClick={() => go('project', { id: a.projectId })}>{a.projectId}</IdLink> },
-            { key: 'o', header: 'Related object', render: (a) => related(a) },
-            { key: 'at', header: 'Timestamp', render: (a) => <span className="whitespace-nowrap text-xs">{tz(a.at)}</span> },
-            { key: 'r', header: 'Result', render: (a) => <span className="whitespace-nowrap">{a.result}</span> },
-            { key: 'co', header: 'Correlation ID', render: (a) => a.corr ? <Mono className="whitespace-nowrap">{a.corr}</Mono> : '—' },
+          <Table rows={audit.items} rowKey={(a) => a.audit.id} onRow={(a) => setAudId(a.audit.id)} empty={<Empty title="No audit events match" action={<Button onClick={() => { setQ(''); setAt('all'); setScope('all') }}>Show all project events</Button>}>AI proposals, blocks and plan decisions are recorded here. Adjust the filters to see more.</Empty>} cols={[
+            { key: 'id', header: 'Event ID', render: (a) => <Mono className="whitespace-nowrap font-semibold">{a.audit.id}</Mono> },
+            { key: 'ac', header: 'Actor', render: (a) => <span className="whitespace-nowrap">{a.audit.actor}</span> },
+            { key: 'ty', header: 'Actor type', render: (a) => <Pill tone={typeTone(a.actorType)}>{a.actorType}</Pill> },
+            { key: 'et', header: 'Event type', render: (a) => <span className="whitespace-nowrap">{a.eventType}</span> },
+            { key: 'pr', header: 'Project', render: (a) => <IdLink onClick={() => go('project', { id: a.audit.projectId })}>{a.audit.projectId}</IdLink> },
+            { key: 'o', header: 'Related object', render: (a) => related(a.audit) },
+            { key: 'at', header: 'Timestamp', render: (a) => <span className="whitespace-nowrap text-xs">{tz(a.audit.at)}</span> },
+            { key: 'r', header: 'Result', render: (a) => <span className="whitespace-nowrap">{a.audit.result}</span> },
+            { key: 'co', header: 'Correlation ID', render: (a) => a.audit.corr ? <Mono className="whitespace-nowrap">{a.audit.corr}</Mono> : '—' },
           ]} />
+          {audit.total > 0 && <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+            <span>Showing {audit.items.length} of {audit.total} event{audit.total === 1 ? '' : 's'}</span>
+            <Button size="sm" disabled={audit.page <= 1} title={audit.page <= 1 ? 'This is the first page.' : undefined} onClick={() => setPage(audit.page - 1)}>Previous</Button>
+            <span>Page {audit.page} of {pages}</span>
+            <Button size="sm" disabled={audit.page >= pages} title={audit.page >= pages ? 'This is the last page.' : undefined} onClick={() => setPage(audit.page + 1)}>Next</Button>
+          </div>}
         </>}
       </div>
 
-      <Drawer open={!!conv} onClose={() => setOpen(undefined)} width={640} title={conv ? `Provenance — ${conv.title}` : ''}
+      <Drawer open={!!open} onClose={() => setOpen(undefined)} width={640} title={hc ? `Provenance — ${hc.conversation.title}` : ''}
         footer={<div className="flex flex-wrap gap-2">
-          {conv && <Button onClick={() => openOriginal(conv)}>Open original conversation</Button>}
-          <Gated allowed={exp} reason="Exporting transcripts needs sensitive-data permission (Manager, Reviewer or Admin)."><Button icon={Download} onClick={() => conv && exportTranscript(conv)}>Export Transcript (redacted)</Button></Gated>
+          {hc && <Button onClick={() => openOriginal(hc.conversation)}>Open original conversation</Button>}
+          <Gated allowed={exp} reason="Exporting transcripts needs sensitive-data permission (Manager, Reviewer or Admin)."><Button icon={Download} onClick={() => hc && exportTranscript(hc)}>Export Transcript (redacted)</Button></Gated>
         </div>}>
-        {conv && <div className="space-y-4">
+        {hc && <div className="space-y-4">
           <Card><CardHeader title="Provenance" sub="Export is redacted and limited to what your access allows" /><DescList cols={1} items={[
-            { k: 'Conversation', v: <Mono>{conv.id}</Mono> }, { k: 'Actor', v: conv.owner }, { k: 'Model', v: 'raptix-ai-demo-1 (v1.0)' },
-            { k: 'Conversation mode', v: <>{modeLabel(conv)} <span className="text-xs text-muted">(per-conversation; does not mean execution is active)</span></> },
-            { k: 'Context snapshot', v: `${pid} project record, ROE ${db.projects.find((p) => p.id === pid)?.roeVersion}, ${db.assets.filter((a) => a.projectId === pid && a.scope === 'in').length} approved assets, ${db.agents.filter((a) => a.projectId === pid).length} project agents — as of ${tz(conv.updated)}` },
+            { k: 'Conversation', v: <Mono>{hc.conversation.id}</Mono> }, { k: 'Actor', v: hc.conversation.owner }, { k: 'Model', v: 'raptix-ai-demo-1 (v1.0)' },
+            { k: 'Conversation mode', v: <>{modeLabel(hc.conversation.mode)} <span className="text-xs text-muted">(per-conversation; does not mean execution is active)</span></> },
+            { k: 'Context snapshot', v: `${pid} project record, ROE ${context.roeVersion ?? '—'}, ${context.inScopeAssets} approved assets, ${context.agents} project agents — as of ${tz(hc.conversation.updated)}` },
             { k: 'Sources', v: 'Project record, ROE, assets, agent health, operation results (this project only)' },
-            { k: 'Artifacts', v: planIds(conv).length ? <span className="inline-flex gap-2">{planIds(conv).map((id) => <IdLink key={id} onClick={() => go('ai-plan', { id })}>{id}</IdLink>)}</span> : 'None' },
-            { k: 'Tool approvals', v: tools(conv.id).length ? <ul className="space-y-0.5 text-xs">{tools(conv.id).map((t) => { const f = toolFacets(t); return <li key={t.id}><IdLink onClick={() => go('ai-trace', { id: t.id })}>{t.id}</IdLink> {t.tool} — policy {f.policy}, approval {f.approval}, {f.exec}</li> })}</ul> : 'None' },
+            { k: 'Artifacts', v: hc.plans.length ? <span className="inline-flex flex-wrap gap-2">{hc.plans.map((a) => <IdLink key={a.id} onClick={() => go('ai-plan', { id: a.id })}>{a.id} {a.version}</IdLink>)}</span> : 'None' },
+            { k: 'Tool approvals', v: hc.toolApprovals.length ? <ul className="space-y-0.5 text-xs">{hc.toolApprovals.map((t) => <li key={t.id}><IdLink onClick={() => go('ai-trace', { id: t.id })}>{t.id}</IdLink> {t.tool} — policy {t.facets.policy}, approval {t.facets.approval}, {t.facets.exec}</li>)}</ul> : 'None' },
             { k: 'Retention', v: '90 days, then redacted archive' },
           ]} /></Card>
-          <Thread conv={conv} compact />
+          <Thread conv={hc.conversation} compact />
         </div>}
       </Drawer>
 
-      <Drawer open={!!au} onClose={() => setAud(undefined)} width={520} title={au ? `Audit Inspector — ${au.id}` : ''}>
+      <Drawer open={!!audId} onClose={() => setAudId(undefined)} width={520} title={au ? `Audit Inspector — ${au.audit.id}` : audId ? 'Audit Inspector' : ''}>
+        {audId && audQ.isPending && <p className="py-3 text-sm text-muted" role="status">Loading audit event…</p>}
+        {audId && audQ.isError && <Empty title="Audit event unavailable" action={<Button onClick={() => setAudId(undefined)}>Close</Button>}>{(audQ.error as AiHistoryReadError).failure.message}</Empty>}
         {au && <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2"><Pill tone={typeTone(actorType(au))}>{actorType(au)}</Pill><DemoTag /></div>
+          <div className="flex flex-wrap items-center gap-2"><Pill tone={typeTone(au.actorType)}>{au.actorType}</Pill><DemoTag /></div>
           <Card><DescList cols={1} items={[
-            { k: 'Event ID', v: <Mono>{au.id}</Mono> }, { k: 'Actor', v: `${au.actor} (${au.role})` }, { k: 'Event type', v: eventType(au) }, { k: 'Action', v: au.action },
-            { k: 'Project', v: <IdLink onClick={() => go('project', { id: au.projectId })}>{au.projectId}</IdLink> }, { k: 'Related object', v: related(au) },
-            { k: 'Timestamp', v: tz(au.at) }, { k: 'Result', v: au.result }, { k: 'Reason', v: au.reason || '—' }, { k: 'Correlation ID', v: au.corr ? <Mono>{au.corr}</Mono> : 'None' },
+            { k: 'Event ID', v: <Mono>{au.audit.id}</Mono> }, { k: 'Actor', v: `${au.audit.actor} (${au.audit.role})` }, { k: 'Event type', v: au.eventType }, { k: 'Action', v: au.audit.action },
+            { k: 'Project', v: <IdLink onClick={() => go('project', { id: au.audit.projectId })}>{au.audit.projectId}</IdLink> }, { k: 'Related object', v: related(au.audit) },
+            { k: 'Timestamp', v: tz(au.audit.at) }, { k: 'Result', v: au.audit.result }, { k: 'Reason', v: au.audit.reason || '—' }, { k: 'Correlation ID', v: au.audit.corr ? <Mono>{au.audit.corr}</Mono> : 'None' },
           ]} /></Card>
-          {au.corr ? (
-            <Card><CardHeader title="Related events" sub={`Same correlation ID ${au.corr}`} /><ul className="space-y-1 text-sm">
-              {projAudit.filter((x) => x.corr === au.corr && x.id !== au.id).map((x) => <li key={x.id}><IdLink onClick={() => setAud(x.id)}>{x.id}</IdLink> <span className="text-muted">{x.actor} — {x.action}</span></li>)}
-              {db.toolEvents.filter((t) => t.corr === au.corr && t.projectId === pid).map((t) => <li key={t.id}><IdLink onClick={() => go('ai-trace', { id: t.id })}>{t.id}</IdLink> <span className="text-muted">tool event — {t.tool}</span></li>)}
+          {au.related && (au.related.audits.length > 0 || au.related.tools.length > 0) ? (
+            <Card><CardHeader title="Related events" sub={`Same correlation ID ${au.audit.corr}`} /><ul className="space-y-1 text-sm">
+              {au.related.audits.map((x) => <li key={x.id}><IdLink onClick={() => setAudId(x.id)}>{x.id}</IdLink> <span className="text-muted">{x.actor} — {x.action}</span></li>)}
+              {au.related.tools.map((t) => <li key={t.id}><IdLink onClick={() => go('ai-trace', { id: t.id })}>{t.id}</IdLink> <span className="text-muted">tool event — {t.tool}</span></li>)}
             </ul></Card>
           ) : <p className="text-xs text-muted">This event has no correlation ID, so no related events are linked.</p>}
-          <div className="flex gap-2"><Button onClick={() => { void navigator.clipboard?.writeText(au.id); toast('ID copied.', 'ok') }}>Copy ID</Button><Button icon={X} onClick={() => setAud(undefined)}>Close</Button></div>
+          <div className="flex gap-2"><Button onClick={() => { void navigator.clipboard?.writeText(au.audit.id); toast('ID copied.', 'ok') }}>Copy ID</Button><Button icon={X} onClick={() => setAudId(undefined)}>Close</Button></div>
         </div>}
       </Drawer>
     </>

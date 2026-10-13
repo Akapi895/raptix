@@ -22,8 +22,10 @@ import { createDatabaseAuthority, type DbAuthority } from './database'
 import { createOperationService, type OperationService } from '../features/operations/service'
 import { createFindingService, type FindingService } from '../features/findings/service'
 import { createChatService, type ChatService } from '../features/aichat/service'
+import { createAiHistoryService, type AiHistoryService } from '../features/aichat/history'
 import { createPlanService, type PlanService } from '../features/plans/service'
 import { createPlanBridgeService, type PlanBridgeService } from '../features/plans/bridge'
+import { createPlanCompareService, type PlanCompareService } from '../features/plans/compare'
 import { createAgentService, type AgentService } from '../features/agents/service'
 import { createReportService, type ReportService } from '../features/reports/service'
 import { createBranchService, type BranchService } from '../features/branches/service'
@@ -96,10 +98,14 @@ export interface ConsoleServices {
   findings(actor: ActorRef, projectId: string): FindingService
   /** Typed AI chat + plan proposal handlers (ticket 38 — feature-local implementation). */
   chat(actor: ActorRef, projectId: string): ChatService
+  /** Typed conversation-history/provenance reads (ticket 42 — feature-local implementation). */
+  aiHistory(actor: ActorRef, projectId: string): AiHistoryService
   /** Typed plan workbench + approval/expiry handlers (ticket 39 — feature-local implementation). */
   plans(actor: ActorRef, projectId: string): PlanService
   /** Typed plan→operation bridge (ticket 40 — feature-local implementation). */
   plansBridge(actor: ActorRef, projectId: string): PlanBridgeService
+  /** Typed plan revision-compare reads (ticket 42 — feature-local implementation). */
+  plansCompare(actor: ActorRef, projectId: string): PlanCompareService
   /** Typed agent fleet list/detail reads + allocation/group writes (tickets 48–49 — feature-local implementation). */
   agents(actor: ActorRef, projectId: string): AgentService
   /** Typed report catalog reads + draft creation (ticket 34 — feature-local implementation). */
@@ -191,6 +197,8 @@ export function createConsoleServices(): ConsoleServices {
     createFindingService(authority, clock, scopeGuard(actor, projectId))
   const forChat = (actor: ActorRef, projectId: string): ChatService =>
     createChatService(authority, clock, scopeGuard(actor, projectId))
+  const forAiHistory = (actor: ActorRef, projectId: string): AiHistoryService =>
+    createAiHistoryService(authority, scopeGuard(actor, projectId))
   const forPlans = (actor: ActorRef, projectId: string): PlanService =>
     createPlanService(authority, clock, scopeGuard(actor, projectId))
   const forAgents = (actor: ActorRef, projectId: string): AgentService =>
@@ -248,10 +256,13 @@ export function createConsoleServices(): ConsoleServices {
     operations: forOperations,
     findings: forFindings,
     chat: forChat,
+    aiHistory: forAiHistory,
     plans: forPlans,
     // Ticket 40: the bridge is write-only over the shared authority — no
     // scope-guarded reads, so the wiring needs no per-scope state.
     plansBridge: () => createPlanBridgeService(authority, clock),
+    // Ticket 42: the compare read shares the plans feature's scope rules.
+    plansCompare: (actor, projectId) => createPlanCompareService(authority, scopeGuard(actor, projectId)),
     agents: forAgents,
     reports: forReports,
     branches: forBranches,
