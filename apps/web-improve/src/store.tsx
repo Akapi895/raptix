@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { USERS, APR, type Db, type Project, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
+import { USERS, APR, type Db, type Project, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
 import { can as policyCan, projectAccessible, readOnlyContext, ROLE_LABEL } from './auth/policy'
 import type { CanAction } from './domain/permissions'
@@ -116,12 +116,6 @@ type Persona = (typeof USERS)[number]
 /** Membership policy seam (ticket 06): forwards to the shared permissions interface. */
 export function canAccessProject(db: Db, me: Persona, projectId: string) {
   return projectAccessible(db.projects.find((x) => x.id === projectId), { id: me.name, role: me.role })
-}
-
-export function sessionPerm(db: Db, me: Persona, s: Session): SessionPerm {
-  if (me.role === 'viewer' || !canAccessProject(db, me, s.projectId)) return 'none'
-  const g = s.grants.find((x) => x.user === me.name)
-  return g ? g.perm : 'read-only'
 }
 
 /* ───────────── Project closure checklist ───────────── */
