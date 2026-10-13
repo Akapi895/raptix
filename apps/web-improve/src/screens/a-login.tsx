@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ArrowLeft, Building2, Check, Crosshair, KeyRound, Loader2, LogIn, ShieldCheck, Eye, EyeOff, LifeBuoy, Lock, FlaskConical } from 'lucide-react'
 import { ROLE_LABEL, useStore } from '../store'
 import { USERS } from '../data'
+import { switchPersona } from '../auth/persona'
 import { Banner, Button, Field, Input, Avatar, cx } from '../ui'
 
 const ORGS = [
@@ -14,7 +15,7 @@ type Stage = 'form' | 'mfa' | 'sso' | 'org'
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function Login() {
-  const { login, setMe, me } = useStore()
+  const { login, me } = useStore()
   const [stage, setStage] = useState<Stage>('form')
   const [email, setEmail] = useState('alex.morgan@acme-security.example.test')
   const [pw, setPw] = useState(DEMO_PASSWORD)
@@ -38,7 +39,7 @@ export function Login() {
       if (/^locked@/i.test(email.trim())) { setErr('This account is locked after 5 failed attempts. Contact your organization admin to unlock it.'); return }
       const u = USERS.find((x) => x.email.toLowerCase() === email.trim().toLowerCase())
       if (!u || pw !== DEMO_PASSWORD) { setErr(`Incorrect email or password. Check your details; in this demo the password is ${DEMO_PASSWORD}.`); return }
-      setMe(u.name)
+      switchPersona(u.name)
       setStage(u.role === 'admin' ? 'mfa' : 'org')
     })
   }
@@ -52,9 +53,9 @@ export function Login() {
     if (r === 'fail') { setStage('form'); setErr('SSO failed: the identity provider did not return a valid assertion. Try again or sign in with email and password.'); return }
     if (r === 'locked') { setStage('form'); setErr('SSO account is locked by your identity provider. Contact your organization admin.'); return }
     const u = USERS.find((x) => x.email.toLowerCase() === email.trim().toLowerCase()) || USERS.find((x) => x.name === me.name) || USERS[0]
-    setMe(u.name); setEmail(u.email); setStage(u.role === 'admin' ? 'mfa' : 'org')
+    switchPersona(u.name); setEmail(u.email); setStage(u.role === 'admin' ? 'mfa' : 'org')
   }, 700)
-  const quick = (name: string) => { setMe(name); login(ORG_NAME) }
+  const quick = (name: string) => { switchPersona(name); login(ORG_NAME) }
 
   const u = USERS.find((x) => x.name === me.name)!
 

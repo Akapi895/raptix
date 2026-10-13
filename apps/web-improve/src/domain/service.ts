@@ -33,7 +33,7 @@ export type Deadline = Instant
 
 /** Who a request acts as. Backed by the shared auth authority, not UI state. */
 export interface ActorRef {
-  /** Actor display id (persona name until ticket 06 introduces stable ids). */
+  /** Actor display id — the persona name is the demo dataset's stable identity; the auth authority (src/auth) resolves roles for it. */
   id: string
   role: Role
 }
