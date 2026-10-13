@@ -1,120 +1,18 @@
-﻿import { useEffect, useState, type ReactNode } from 'react'
-import { Activity, Lock, ShieldAlert } from 'lucide-react'
-import { useStore, type Route } from './store'
-import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from './ui'
-import { CopilotDrawer } from './screens/ai-copilot'
-import { DemoGuide } from './screens/demo-guide'
-import { isWide } from './shell/nav'
-import { Sidebar } from './shell/sidebar'
-import { Topbar } from './shell/header'
-import { ContextRibbon, StopBanner } from './shell/context-ribbon'
-
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Navigation + sidebar: extracted in src/shell/nav.ts + sidebar.tsx (ticket 08a) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Project switcher + global search: extracted in src/shell/project-switcher.tsx + search.tsx (ticket 08b) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Header (AI mode, workspace, notices, profile): extracted in src/shell/pop.tsx + header.tsx with ticket 59/60 slots (ticket 08c) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Context ribbon + emergency stop: extracted in src/shell/context-ribbon.tsx (ticket 08d) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Global modals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-function GlobalModals() {
-  const { confirmState, closeConfirm, unsaved, closeUnsaved, toast } = useStore()
-  const [reason, setReason] = useState('')
-  const [err, setErr] = useState('')
-  useEffect(() => { setReason(''); setErr('') }, [confirmState])
-  return (
-    <>
-      <Modal
-        open={!!confirmState} onClose={closeConfirm} title={confirmState?.title} danger={confirmState?.danger}
-        footer={confirmState && (
-          <>
-            <Button variant="ghost" onClick={closeConfirm}>{confirmState.cancelLabel || 'Cancel'}</Button>
-            <Button variant={confirmState.danger ? 'destructive' : 'primary'} onClick={() => {
-              if (confirmState.reasonRequired && reason.trim().length < 5) { setErr('Please enter a reason (at least 5 characters). It will be recorded in the audit log.'); return }
-              const f = confirmState.onConfirm; closeConfirm(); f(reason.trim())
-            }}>{confirmState.confirmLabel}</Button>
-          </>
-        )}
-      >
-        {confirmState && (
-          <div className="space-y-4">
-            <div className="text-muted">{confirmState.body}</div>
-            {confirmState.reasonLabel && <Field label={confirmState.reasonLabel} required={confirmState.reasonRequired} error={err}><Textarea value={reason} onChange={(e) => { setReason(e.target.value); setErr('') }} autoFocus placeholder="Enter a reasonâ€¦" /></Field>}
-            <p className="text-xs text-neutral">This action is recorded in the audit log.</p>
-          </div>
-        )}
-      </Modal>
-      <Modal
-        open={!!unsaved} onClose={closeUnsaved} title="Unsaved changes"
-        footer={unsaved && (
-          <>
-            <Button variant="ghost" onClick={closeUnsaved}>Stay</Button>
-            <Button variant="danger" onClick={() => { const n = unsaved.next; closeUnsaved(); n() }}>Discard &amp; Leave</Button>
-            <Button variant="primary" onClick={() => { const u = unsaved; closeUnsaved(); u.save?.(); toast('Draft saved.'); u.next() }}>Save Draft</Button>
-          </>
-        )}
-      >
-        <p className="text-muted">You have unsaved changes in this form. If you leave now, they will be lost.</p>
-      </Modal>
-    </>
-  )
-}
-function Toasts() {
-  const { toasts } = useStore()
-  return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2" aria-live="polite">
-      {toasts.map((t) => (
-        <div key={t.id} className={cx('pointer-events-auto flex items-start gap-2 rounded-xl border bg-panel px-4 py-3 text-sm shadow-xl', { ok: 'border-ok/50', warn: 'border-warn/50', bad: 'border-bad/50', info: 'border-cyan/50' }[t.kind])}>
-          <span className={cx('mt-0.5 font-semibold', { ok: 'text-ok', warn: 'text-warn', bad: 'text-bad', info: 'text-cyan' }[t.kind])} aria-hidden>{t.kind === 'ok' ? 'âœ“' : t.kind === 'info' ? 'â„¹' : '!'}</span>{t.text}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-export function Shell({ children }: { children: ReactNode }) {
-  const s = useStore()
-  const { project, loading, me, go, route, copilotOpen, setNoticesOpen, setSwitcherOpen } = s
-  const [collapsed, setCollapsed] = useState(false)
-  const [mobile, setMobile] = useState(false)
-  useEffect(() => { document.title = 'Raptix â€” AI Red Team Platform' }, [])
-  useEffect(() => { if (copilotOpen) setNoticesOpen(false) }, [copilotOpen, setNoticesOpen])
-  const wide = isWide(route)
-  return (
-    <div className="flex h-full bg-bg text-fg">
-      <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus() }} className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[200] focus:rounded-[10px] focus:bg-accent focus:px-4 focus:py-2 focus:text-white">Skip to main content</a>
-      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobile} closeMobile={() => setMobile(false)} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar openMobile={() => setMobile(true)} />
-        <ContextRibbon openSwitcher={() => setSwitcherOpen(true)} />
-        <StopBanner />
-        {project && (project.status === 'closed' || project.status === 'cancelled') && (
-          <div className="px-4 pt-4 lg:px-8">
-            <Banner tone="warn" icon={Lock} title={`Project ${project.id} is ${project.status === 'closed' ? 'closed' : 'cancelled'} â€” read-only`} action={me.role === 'admin' ? <Button size="sm" onClick={() => go('project', { id: project.id, tab: 'overview' })}>Reopen project</Button> : undefined}>
-              Operations, scope edits and finding changes are disabled. Data and reports remain viewable.
-            </Banner>
-          </div>
-        )}
-        <main id="main" data-wide={wide ? '' : undefined} className={cx('no-scrollbar min-h-0 flex-1 overflow-y-auto', wide ? 'p-0' : 'px-5 py-6 lg:px-8')} tabIndex={-1}>
-          <div className={wide ? 'h-full' : 'mx-auto max-w-[1360px]'}>{loading ? <LoadingState /> : children}</div>
-        </main>
-      </div>
-      <CopilotDrawer />
-      <GlobalModals />
-      <Toasts />
-      <DemoGuide />
-    </div>
-  )
-}
-function LoadingState() {
-  return (
-    <div aria-busy="true" role="status" className="animate-pulse">
-      <div className="mb-3 h-7 w-64 rounded bg-hover" /><div className="mb-8 h-4 w-96 max-w-full rounded bg-hover" />
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-24 rounded-xl bg-hover" />)}</div>
-      <div className="h-72 rounded-xl bg-hover" />
-      <span className="sr-only">Switching project contextâ€¦</span>
-    </div>
-  )
-}
-export type { Route }
-export { Tabs, Segmented, Activity, ShieldAlert }
+﻿/**
+ * Shell compatibility barrel (ticket 08e).
+ *
+ * The shell monolith was extracted into `src/shell/*` across tickets 08a–08e;
+ * this module remains so existing `./shell` imports keep resolving and later
+ * feature tickets can import the composition pieces from one place. `Shell`
+ * (with the ticket 59/60 slot props) is the mount-point export; everything
+ * else is re-exported from its extraction module without reimplementation.
+ */
+export { Shell, type ShellSlots } from './shell/shell'
+export { NAV, isWide, useBadges } from './shell/nav'
+export { Sidebar } from './shell/sidebar'
+export { ProjectSwitcher } from './shell/project-switcher'
+export { GlobalSearch } from './shell/search'
+export { Topbar, type HeaderSlots } from './shell/header'
+export { Pop } from './shell/pop'
+export { ContextRibbon, StopBanner } from './shell/context-ribbon'
+export type { Route } from './router/history'
