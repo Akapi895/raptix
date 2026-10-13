@@ -1,12 +1,30 @@
-import { useMemo, useState } from 'react'
+/**
+ * Fanout surfaces (ticket 43, ADR-0067 —
+ * docs/adr/0067-web-console-service-domain-boundary.md).
+ *
+ * The execution graph, branch inspector and branch actions run on the typed
+ * branch service (src/features/branches): group/branch reads go through the
+ * scope-keyed Query binding (ChangeSet invalidation and cancel-on-switch come
+ * from the shared bridges), and retry/reassign/cancel are typed mutations that
+ * publish a ChangeSet both the legacy store and Query consumers observe.
+ * Retry/reassign are requests — the UI never presents them as execution, and
+ * the handlers preserve the source branch's approval/preflight waiting states.
+ * Navigation goes through the router (`go`) — there are no raw hash writers
+ * left on this surface. FanOutCard/AllocationView/AiTeamView keep their
+ * legacy seams for their consumers (tickets 39–44 own the shared workspace).
+ */
+import { useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
-import { AlertTriangle, Ban, CheckCircle2, CircleDashed, Clock, HelpCircle, Layers, Loader2, PauseCircle, RotateCcw, ShieldQuestion, Users, XCircle } from 'lucide-react'
+import { Ban, CheckCircle2, CircleDashed, Clock, HelpCircle, Layers, Loader2, PauseCircle, RotateCcw, ShieldQuestion, Users, XCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { allocation, groupSummary, useStore } from '../store'
-import { BRANCH_LABEL, BRANCH_TERMINAL, toolFacets } from '../data'
+import { BRANCH_LABEL, BRANCH_TERMINAL } from '../data'
 import type { Agent, Branch, BranchState, WorkerState } from '../data'
-import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Kpi, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Textarea, Timeline, cx } from '../ui'
-import { NoProject, tz } from './g-common'
+import { BranchReadError, useBranch, useBranchGroup, useBranchGroups, useCancelBranch, useReassignBranch, useRetryBranch } from '../features/branches/query'
+import type { BranchCounts, BranchRow } from '../features/branches/service'
+import type { BranchGroup } from '../domain/entities'
+import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Kpi, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Table, Textarea, Timeline, cx } from '../ui'
+import { tz } from './g-common'
 
 /* ───────── shared helpers ───────── */
 const TONE: Record<string, string> = {
@@ -28,7 +46,6 @@ export function BranchStatus({ state }: { state: string }) {
 }
 const isConn = (a?: Agent) => !!a && (a.status === 'online' || a.status === 'idle')
 const APPROVAL_LABEL: Record<Branch['approval'], string> = { none: 'Not required', pending: 'Pending', approved: 'Approved', denied: 'Denied' }
-const goTrace = (ev?: string) => { window.location.hash = ev ? `#/ai-trace?event=${encodeURIComponent(ev)}` : '#/ai-trace' }
 
 function useLinks() {
   const { go, db } = useStore()
@@ -36,7 +53,7 @@ function useLinks() {
     agent: (id: string) => <IdLink onClick={() => go('agent', { id })}>{id}</IdLink>,
     op: (id: string) => <IdLink onClick={() => go('operation', { id })}>{id}</IdLink>,
     ev: (id: string) => <IdLink onClick={() => go('evidence', { id })}>{id}</IdLink>,
-    tl: (id: string) => <IdLink onClick={() => goTrace(id)}>{id}</IdLink>,
+    tl: (id: string) => <IdLink onClick={() => go('ai-trace', { id })}>{id}</IdLink>,
     branch: (id: string) => <IdLink onClick={() => go('ai-branch', { id })}>{id}</IdLink>,
     plan: (id: string) => <IdLink onClick={() => go('ai-plan', { id })}>{id}</IdLink>,
     target: (name: string) => {
@@ -44,13 +61,6 @@ function useLinks() {
       return a ? <IdLink onClick={() => go('asset', { id: a.id })}>{name}</IdLink> : <Mono>{name}</Mono>
     },
   }
-}
-
-/** Proposed valid replacement for a branch whose agent is disconnected. */
-function replacementFor(db: ReturnType<typeof useStore>['db'], b: Branch) {
-  const cands = db.agents.filter((a) => a.projectId === b.projectId && isConn(a) && a.id !== b.agent)
-  const load = (id: string) => db.branches.filter((x) => x.agent === id && !BRANCH_TERMINAL.includes(x.state)).length
-  return cands.sort((x, y) => load(x.id) - load(y.id))[0]
 }
 
 /* ───────── Compact card ───────── */
@@ -73,7 +83,7 @@ export function FanOutCard({ groupId }: { groupId: string }) {
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={() => go('ai-fanout', { id: g.id, tab: 'table' })}>View Branches</Button>
         <Button size="sm" variant="primary" onClick={() => go('ai-fanout', { id: g.id, tab: 'graph' })}>Open Execution Graph</Button>
-        <Button size="sm" onClick={() => goTrace()}>View Trace</Button>
+        <Button size="sm" onClick={() => go('ai-trace')}>View Trace</Button>
       </div>
       <p className="mt-2 text-xs text-muted">Demo Data — simulated branch states; progress is shown only when measured.</p>
     </Card>
@@ -144,15 +154,23 @@ export function AllocationView({ projectId }: { projectId: string }) {
 }
 
 /* ───────── Branch detail (drawer + page share) ───────── */
-function BranchBody({ b }: { b: Branch }) {
-  const { db, can } = useStore()
+function BranchBody({ id }: { id: string }) {
+  const { go, can } = useStore()
   const L = useLinks()
+  const q = useBranch(id)
+  const retry = useRetryBranch()
+  const reassign = useReassignBranch()
+  const cancel = useCancelBranch()
   const [modal, setModal] = useState<'retry' | 'reassign' | 'cancel' | null>(null)
-  const tool = db.toolEvents.find((t) => t.id === b.toolEventId)
-  const f = tool ? toolFacets(tool) : null
-  const agent = db.agents.find((a) => a.id === b.agent)
-  const lost = !!agent && !isConn(agent)
-  const repl = lost ? replacementFor(db, b) : undefined
+  if (q.isPending) return <p className="py-6 text-sm text-muted">Loading branch…</p>
+  if (q.isError) {
+    const f = (q.error as BranchReadError).failure
+    return <Empty icon={f.kind === 'forbidden' ? ShieldQuestion : undefined} title={f.kind === 'forbidden' ? 'Branch belongs to another project' : 'Branch not found'} action={f.kind === 'forbidden' ? <Button onClick={() => go('ai-operator')}>Back to AI Operator</Button> : undefined}>{f.message}</Empty>
+  }
+  const d = q.data
+  const b = d.branch
+  const lost = !d.agentConnected
+  const repl = d.replacement
   const allowed = can('run', b.projectId)
   const why = 'Your role cannot run or modify operations in this project.'
   const terminal = BRANCH_TERMINAL.includes(b.state)
@@ -161,8 +179,7 @@ function BranchBody({ b }: { b: Branch }) {
   const reOk = !['completed', 'cancelled'].includes(b.state) && !b.pendingRequest
   const reWhy = b.pendingRequest ? `A ${b.pendingRequest} request is already pending approval.` : `A ${BRANCH_LABEL[b.state]} branch cannot be reassigned.`
   const cancelOk = !terminal
-  const audits = db.audit.filter((a) => a.obj === b.id || a.corr === b.corr)
-  const timeline = [...b.timeline.map((t) => ({ at: tz(t.at), title: t.text })), ...[]]
+  const timeline = b.timeline.map((t) => ({ at: tz(t.at), title: t.text }))
   const act = (ok: boolean, whyNot: string, el: ReactNode) => <Gated allowed={allowed && ok} reason={!allowed ? why : whyNot}>{el}</Gated>
   return (
     <div className="space-y-4">
@@ -183,14 +200,14 @@ function BranchBody({ b }: { b: Branch }) {
         { k: 'Duration', v: b.dur || 'Unknown' }, { k: 'Progress', v: b.progress != null ? `${b.progress}% (measured)` : 'Unknown' },
       ]} />
       <section><h4 className="mb-1 text-sm font-semibold">Tool events</h4>
-        {tool ? <div className="flex flex-wrap items-center gap-2 text-sm">{L.tl(tool.id)}<Mono>{tool.tool}</Mono></div> : <p className="text-sm text-muted">No tool event recorded yet.</p>}</section>
+        {d.toolEvent ? <div className="flex flex-wrap items-center gap-2 text-sm">{L.tl(d.toolEvent.id)}<Mono>{d.toolEvent.tool}</Mono></div> : <p className="text-sm text-muted">No tool event recorded yet.</p>}</section>
       <section><h4 className="mb-1 text-sm font-semibold">Policy decision</h4>
         <p className="text-sm">{b.policy}</p>
-        {f ? <div className="mt-1 flex flex-wrap gap-2 text-xs"><span>Policy: <b>{f.policy}</b></span><span>Approval: <b>{f.approval}</b></span><span>Execution: <b>{f.exec}</b></span></div> : <p className="text-xs text-muted">Not evaluated.</p>}
+        {d.facets ? <div className="mt-1 flex flex-wrap gap-2 text-xs"><span>Policy: <b>{d.facets.policy}</b></span><span>Approval: <b>{d.facets.approval}</b></span><span>Execution: <b>{d.facets.exec}</b></span></div> : <p className="text-xs text-muted">Not evaluated.</p>}
         <p className="mt-1 text-xs text-muted">Policy Allowed is not the same as Executed.</p></section>
       <section><h4 className="mb-1 text-sm font-semibold">Approval history</h4>
         <div className="text-sm">Current approval: <b>{APPROVAL_LABEL[b.approval]}</b></div>
-        {audits.length ? <ul className="mt-1 space-y-1 text-xs text-muted">{audits.map((a) => <li key={a.id}><Mono>{a.id}</Mono> · {a.action} · {a.actor} · {a.result}{a.reason ? ` — ${a.reason}` : ''}</li>)}</ul> : <p className="text-xs text-muted">No approval decisions recorded for this branch.</p>}</section>
+        {d.audits.length ? <ul className="mt-1 space-y-1 text-xs text-muted">{d.audits.map((a) => <li key={a.id}><Mono>{a.id}</Mono> · {a.action} · {a.actor} · {a.result}{a.reason ? ` — ${a.reason}` : ''}</li>)}</ul> : <p className="text-xs text-muted">No approval decisions recorded for this branch.</p>}</section>
       <section><h4 className="mb-1 text-sm font-semibold">Output summary</h4>
         <p className="text-sm">{b.output || (terminal ? 'No output.' : 'No output yet.')}</p></section>
       <section><h4 className="mb-1 text-sm font-semibold">Evidence</h4>
@@ -201,10 +218,10 @@ function BranchBody({ b }: { b: Branch }) {
       <section><h4 className="mb-1 text-sm font-semibold">Assignment log</h4>
         <Timeline items={b.assignLog.map((t) => ({ at: tz(t.at), title: t.text }))} /></section>
       <div className="flex flex-wrap gap-2 border-t border-line pt-3">
-        <Button size="sm" onClick={() => L && window.location.assign(`#/agent/${b.agent}`)}>View Agent</Button>
-        <Button size="sm" onClick={() => { const a = db.assets.find((x) => x.name === b.target || x.ident === b.target); window.location.assign(a ? `#/asset/${a.id}` : '#/assets') }}>View Target</Button>
-        <Button size="sm" onClick={() => goTrace(b.toolEventId)}>View Trace</Button>
-        <Button size="sm" disabled={!b.evidence.length} title={b.evidence.length ? undefined : 'This branch has no evidence.'} onClick={() => window.location.assign(`#/evidence/${b.evidence[0]}`)}>View Evidence</Button>
+        <Button size="sm" onClick={() => go('agent', { id: b.agent })}>View Agent</Button>
+        <Button size="sm" onClick={() => go(d.assetId ? 'asset' : 'assets', d.assetId ? { id: d.assetId } : undefined)}>View Target</Button>
+        <Button size="sm" onClick={() => go('ai-trace', b.toolEventId ? { id: b.toolEventId } : undefined)}>View Trace</Button>
+        <Button size="sm" disabled={!b.evidence.length} title={b.evidence.length ? undefined : 'This branch has no evidence.'} onClick={() => go('evidence', { id: b.evidence[0] })}>View Evidence</Button>
       </div>
       <div className="flex flex-wrap gap-2">
         {act(retryOk, retryWhy, <Button size="sm" icon={RotateCcw} onClick={() => setModal('retry')}>Request Retry</Button>)}
@@ -212,9 +229,9 @@ function BranchBody({ b }: { b: Branch }) {
         {act(cancelOk, `A ${BRANCH_LABEL[b.state]} branch is already finished and cannot be cancelled.`, <Button size="sm" variant="danger" onClick={() => setModal('cancel')}>Cancel Branch</Button>)}
       </div>
       <p className="text-xs text-muted">Retry and reassignment never bypass approval or preflight. No real commands are executed.</p>
-      <RetryModal b={b} open={modal === 'retry'} onClose={() => setModal(null)} />
-      <ReassignModal b={b} open={modal === 'reassign'} onClose={() => setModal(null)} />
-      <CancelModal b={b} open={modal === 'cancel'} onClose={() => setModal(null)} />
+      <RetryModal id={b.id} open={modal === 'retry'} onClose={() => setModal(null)} run={retry} />
+      <ReassignModal id={b.id} current={b.agent} candidates={d.reassignCandidates} open={modal === 'reassign'} onClose={() => setModal(null)} run={reassign} />
+      <CancelModal id={b.id} groupSize={d.groupSize} stepId={b.stepId} open={modal === 'cancel'} onClose={() => setModal(null)} run={cancel} />
     </div>
   )
 }
@@ -223,42 +240,55 @@ function IdLinkGroup({ id }: { id: string }) {
   return <IdLink onClick={() => go('ai-fanout', { id })}>{id}</IdLink>
 }
 
-function RetryModal({ b, open, onClose }: { b: Branch; open: boolean; onClose: () => void }) {
-  const { A, toast } = useStore()
+type RetryRun = ReturnType<typeof useRetryBranch>
+type ReassignRun = ReturnType<typeof useReassignBranch>
+type CancelRun = ReturnType<typeof useCancelBranch>
+
+function RetryModal({ id, open, onClose, run }: { id: string; open: boolean; onClose: () => void; run: RetryRun }) {
+  const { toast } = useStore()
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
   const submit = () => {
     if (!reason.trim()) return setErr('A reason is required.')
-    A.requestBranchRetry(b.id, reason.trim()); toast(`Retry requested for ${b.id}. Pending approval — nothing has run.`); setReason(''); setErr(''); onClose()
+    run.mutate({ id, reason: reason.trim() }, {
+      onSuccess: (res) => {
+        if (!res.ok) return setErr(res.failure.message)
+        toast(`Retry requested for ${id}. Pending approval — nothing has run.`)
+        setReason(''); setErr(''); onClose()
+      },
+    })
   }
   return (
-    <Modal open={open} onClose={onClose} title={`Request retry — ${b.id}`} footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" onClick={submit}>Submit request</Button></>}>
+    <Modal open={open} onClose={onClose} title={`Request retry — ${id}`} footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" onClick={submit}>Submit request</Button></>}>
       <p className="mb-3 text-sm text-muted">The retry is queued as <b>pending approval</b>. It must pass approval and preflight again before anything can run.</p>
       <Field label="Reason" required error={err}><Textarea value={reason} onChange={(e) => { setReason(e.target.value); setErr('') }} placeholder="Why should this branch be retried?" /></Field>
     </Modal>
   )
 }
-function ReassignModal({ b, open, onClose }: { b: Branch; open: boolean; onClose: () => void }) {
-  const { db, A, toast } = useStore()
+function ReassignModal({ id, current, candidates, open, onClose, run }: { id: string; current: string; candidates: { id: string; host: string; connected: boolean }[]; open: boolean; onClose: () => void; run: ReassignRun }) {
+  const { toast } = useStore()
   const [agent, setAgent] = useState('')
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
-  const cands = db.agents.filter((a) => a.projectId === b.projectId && a.id !== b.agent)
   const submit = () => {
     if (!agent) return setErr('Choose an agent.')
     if (!reason.trim()) return setErr('A reason is required.')
-    const r = A.reassignBranch(b.id, agent, reason.trim())
-    if (!r.ok) return setErr(r.error || 'Reassignment is not allowed.')
-    toast(`Reassignment of ${b.id} to ${agent} requested. Pending approval.`); setAgent(''); setReason(''); setErr(''); onClose()
+    run.mutate({ id, agentId: agent, reason: reason.trim() }, {
+      onSuccess: (res) => {
+        if (!res.ok) return setErr(res.failure.message)
+        toast(`Reassignment of ${id} to ${agent} requested. Pending approval.`)
+        setAgent(''); setReason(''); setErr(''); onClose()
+      },
+    })
   }
   return (
-    <Modal open={open} onClose={onClose} title={`Request reassignment — ${b.id}`} footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" onClick={submit}>Submit request</Button></>}>
-      <p className="mb-3 text-sm text-muted">Currently assigned to <Mono>{b.agent}</Mono>. The old assignment stays in the assignment log. Only connected agents assigned to this project are eligible.</p>
+    <Modal open={open} onClose={onClose} title={`Request reassignment — ${id}`} footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" onClick={submit}>Submit request</Button></>}>
+      <p className="mb-3 text-sm text-muted">Currently assigned to <Mono>{current}</Mono>. The old assignment stays in the assignment log. Only connected agents assigned to this project are eligible.</p>
       <div className="space-y-3">
         <Field label="New agent" required>
           <Select value={agent} onChange={(e) => { setAgent(e.target.value); setErr('') }}>
             <option value="">Select an agent…</option>
-            {cands.map((a) => <option key={a.id} value={a.id}>{a.id} · {a.host}{isConn(a) ? '' : ' (disconnected)'}</option>)}
+            {candidates.map((a) => <option key={a.id} value={a.id}>{a.id} · {a.host}{a.connected ? '' : ' (disconnected)'}</option>)}
           </Select>
         </Field>
         <Field label="Reason" required><Textarea value={reason} onChange={(e) => { setReason(e.target.value); setErr('') }} placeholder="Why reassign this branch?" /></Field>
@@ -267,54 +297,68 @@ function ReassignModal({ b, open, onClose }: { b: Branch; open: boolean; onClose
     </Modal>
   )
 }
-function CancelModal({ b, open, onClose }: { b: Branch; open: boolean; onClose: () => void }) {
-  const { A, toast, db } = useStore()
+function CancelModal({ id, groupSize, stepId, open, onClose, run }: { id: string; groupSize: number; stepId: string; open: boolean; onClose: () => void; run: CancelRun }) {
+  const { toast } = useStore()
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
-  const g = groupSummary(db, b.groupId)
   const submit = () => {
     if (!reason.trim()) return setErr('A reason is required.')
-    A.cancelBranch(b.id, reason.trim()); toast(`${b.id} cancelled.`); setReason(''); setErr(''); onClose()
+    run.mutate({ id, reason: reason.trim() }, {
+      onSuccess: (res) => {
+        if (!res.ok) return setErr(res.failure.message)
+        toast(`${id} cancelled.`)
+        setReason(''); setErr(''); onClose()
+      },
+    })
   }
   return (
-    <Modal danger open={open} onClose={onClose} title={`Cancel branch — ${b.id}`} footer={<><Button onClick={onClose}>Keep branch</Button><Button variant="danger" onClick={submit}>Cancel branch</Button></>}>
-      <Banner tone="warn" title="Impact">Cancelling stops this branch only; the other {g.total - 1} branches continue. The fan-in step {b.stepId === 'S12' ? '' : 'S12 '}will be missing this branch's result, so the group can end as Partially Completed, not Completed.</Banner>
+    <Modal danger open={open} onClose={onClose} title={`Cancel branch — ${id}`} footer={<><Button onClick={onClose}>Keep branch</Button><Button variant="danger" onClick={submit}>Cancel branch</Button></>}>
+      <Banner tone="warn" title="Impact">Cancelling stops this branch only; the other {groupSize - 1} branches continue. The fan-in step {stepId === 'S12' ? '' : 'S12 '}will be missing this branch's result, so the group can end as Partially Completed, not Completed.</Banner>
       <div className="mt-3"><Field label="Reason" required error={err}><Textarea value={reason} onChange={(e) => { setReason(e.target.value); setErr('') }} placeholder="Why cancel this branch?" /></Field></div>
     </Modal>
   )
 }
 
 export function BranchDrawer({ branchId, onClose }: { branchId: string; onClose: () => void }) {
-  const { db, go } = useStore()
-  const b = db.branches.find((x) => x.id === branchId)
+  const { go } = useStore()
   return (
     <Drawer open onClose={onClose} width={560} title={<span className="flex items-center gap-2">Branch Inspector <Mono>{branchId}</Mono></span>}
       footer={<Button onClick={() => go('ai-branch', { id: branchId })}>Open full page</Button>}>
-      {b ? <BranchBody b={b} /> : <Empty title="Branch not found">{branchId} does not exist.</Empty>}
+      <BranchBody id={branchId} />
     </Drawer>
   )
 }
 
 export function BranchPage() {
-  const { db, route, go, pid } = useStore()
-  const b = db.branches.find((x) => x.id === route.id)
-  const crumbs = [{ label: 'AI Operator', to: () => go('ai-operator') }, { label: 'Execution Graph', to: () => go('ai-fanout', { id: b?.groupId || 'BG-014-01' }) }, { label: route.id || 'Branch' }]
-  if (!b) return <><PageHeader title="Branch Inspector" crumbs={crumbs} /><Empty title="Branch not found" action={<Button onClick={() => go('ai-fanout', { id: 'BG-014-01' })}>Back to Execution Graph</Button>}>{route.id || 'No branch'} does not exist or was removed.</Empty></>
-  if (pid !== 'all' && b.projectId !== pid) return <><PageHeader title="Branch Inspector" crumbs={crumbs} /><Empty icon={ShieldQuestion} title="Branch belongs to another project" action={<Button onClick={() => go('ai-operator')}>Back to AI Operator</Button>}>Switch project to view {b.id}.</Empty></>
+  const { route, go } = useStore()
+  const crumbs = [{ label: 'AI Operator', to: () => go('ai-operator') }, { label: 'Execution Graph', to: () => go('ai-fanout', { id: 'BG-014-01' }) }, { label: route.id || 'Branch' }]
+  const q = useBranch(route.id || '')
+  if (q.isPending) return <><PageHeader title="Branch Inspector" crumbs={crumbs} /><p className="text-sm text-muted">Loading branch…</p></>
+  if (q.isError) {
+    const f = (q.error as BranchReadError).failure
+    return (
+      <>
+        <PageHeader title="Branch Inspector" crumbs={crumbs} />
+        <Empty icon={f.kind === 'forbidden' ? ShieldQuestion : undefined} title={f.kind === 'forbidden' ? 'Branch belongs to another project' : 'Branch not found'}
+          action={f.kind === 'forbidden' ? <Button onClick={() => go('ai-operator')}>Back to AI Operator</Button> : <Button onClick={() => go('ai-fanout', { id: 'BG-014-01' })}>Back to Execution Graph</Button>}>
+          {f.message}
+        </Empty>
+      </>
+    )
+  }
+  const b = q.data.branch
   return (
     <>
       <PageHeader title={<span className="flex items-center gap-2">Branch <Mono>{b.id}</Mono></span>} crumbs={crumbs} back={{ label: 'Execution Graph', to: () => go('ai-fanout', { id: b.groupId }) }} />
-      <Card><BranchBody b={b} /></Card>
+      <Card><BranchBody id={b.id} /></Card>
     </>
   )
 }
 
 /* ───────── Execution graph ───────── */
 const NW = 176, NH = 64, LH = 92, COLW = 200
-function Graph({ groupId, onSelect }: { groupId: string; onSelect: (id: string) => void }) {
-  const { db } = useStore()
-  const g = db.branchGroups.find((x) => x.id === groupId)!
-  const bs = db.branches.filter((b) => b.groupId === groupId)
+function Graph({ group, rows, onSelect }: { group: BranchGroup; rows: BranchRow[]; onSelect: (id: string) => void }) {
+  const bs = rows.map((r) => r.branch)
   const lanes = [...new Set(bs.map((b) => b.agent))]
   const idx: Record<string, number> = {}
   const pos = bs.map((b) => { const l = lanes.indexOf(b.agent); const i = (idx[b.agent] = (idx[b.agent] ?? -1) + 1); return { b, x: 220 + i * COLW, y: 28 + l * LH } })
@@ -336,7 +380,7 @@ function Graph({ groupId, onSelect }: { groupId: string; onSelect: (id: string) 
           {pos.map((p) => edge(p.x + NW, p.y + NH / 2, aggX, midY + NH / 2, p.b.state !== 'completed', 'b' + p.b.id))}
         </svg>
         <div className="absolute rounded-lg border border-line bg-panel p-2 text-xs" style={{ left: 20, top: midY, width: NW, height: NH }}>
-          <div className="font-semibold">Parent step {g.parentStep}</div><div className="text-muted">Fan-out · max {g.maxConcurrency} concurrent</div></div>
+          <div className="font-semibold">Parent step {group.parentStep}</div><div className="text-muted">Fan-out · max {group.maxConcurrency} concurrent</div></div>
         {pos.map(({ b, x, y }) => (
           <button key={b.id} onClick={() => onSelect(b.id)} aria-label={`Open branch ${b.id}, ${BRANCH_LABEL[b.state]}`} className={nodeCls(b.state)} style={{ left: x, top: y, width: NW, height: NH }}>
             <div className="flex items-center justify-between gap-1"><Mono className="!text-xs">{b.id}</Mono><span className="whitespace-nowrap font-medium">{BRANCH_LABEL[b.state]}</span></div>
@@ -344,41 +388,39 @@ function Graph({ groupId, onSelect }: { groupId: string; onSelect: (id: string) 
           </button>
         ))}
         <div className="absolute rounded-lg border border-line bg-panel p-2 text-xs" style={{ left: aggX, top: midY, width: NW, height: NH }}>
-          <div className="font-semibold">Fan-in step {g.aggStep}</div><div className="text-muted">Aggregation — waits for all branches</div></div>
+          <div className="font-semibold">Fan-in step {group.aggStep}</div><div className="text-muted">Aggregation — waits for all branches</div></div>
       </div>
     </div>
   )
 }
 
 /* ───────── Fan-in panel + results inspector ───────── */
-function FanIn({ groupId }: { groupId: string }) {
-  const { db } = useStore()
+function FanIn({ counts, rows }: { counts: BranchCounts; rows: BranchRow[] }) {
   const L = useLinks()
-  const s = groupSummary(db, groupId)
   const [open, setOpen] = useState(false)
-  const complete = s.open === 0 && s.failed === 0 && s.missing === 0
-  const evidence = s.bs.flatMap((b) => b.evidence)
-  const status = complete ? 'Completed' : s.open > 0 ? 'Waiting for branches' : 'Partially Completed'
+  const complete = counts.open === 0 && counts.failed === 0 && counts.missing === 0
+  const evidence = rows.flatMap((r) => r.branch.evidence)
+  const status = complete ? 'Completed' : counts.open > 0 ? 'Waiting for branches' : 'Partially Completed'
   return (
     <Card>
-      <CardHeader title="Fan-in" sub={`Aggregation step — ${s.done} of ${s.total} branches returned results`} actions={<Button size="sm" variant="primary" onClick={() => setOpen(true)}>View Aggregated Results</Button>} />
+      <CardHeader title="Fan-in" sub={`Aggregation step — ${counts.done} of ${counts.total} branches returned results`} actions={<Button size="sm" variant="primary" onClick={() => setOpen(true)}>View Aggregated Results</Button>} />
       <DescList cols={3} items={[
-        { k: 'Completed', v: s.done }, { k: 'Failed', v: <span className={s.failed ? 'text-bad' : ''}>{s.failed}</span> }, { k: 'Missing results', v: s.missing },
+        { k: 'Completed', v: counts.done }, { k: 'Failed', v: <span className={counts.failed ? 'text-bad' : ''}>{counts.failed}</span> }, { k: 'Missing results', v: counts.missing },
         { k: 'Evidence items', v: evidence.length }, { k: 'Conflicts', v: complete ? 'None reported' : 'Not assessed' }, { k: 'Confidence', v: 'Not assessed' },
         { k: 'Fan-in status', v: <b>{status}</b> },
       ]} />
       {!complete && <p className="mt-2 text-xs text-muted">Partially Completed is not Completed. A failed or missing branch never makes the operation a success.</p>}
       <Drawer open={open} onClose={() => setOpen(false)} width={520} title="Aggregated Results Inspector">
         <div className="space-y-4">
-          <Banner tone={complete ? 'ok' : 'warn'} title={status}>{complete ? 'All branches returned results.' : `${s.missing} branch(es) have no final result. Aggregated data below is incomplete. Confidence not assessed.`}</Banner>
+          <Banner tone={complete ? 'ok' : 'warn'} title={status}>{complete ? 'All branches returned results.' : `${counts.missing} branch(es) have no final result. Aggregated data below is incomplete. Confidence not assessed.`}</Banner>
           <section><h4 className="mb-1 text-sm font-semibold">Completed branches</h4>
-            {s.bs.filter((b) => b.state === 'completed').map((b) => <div key={b.id} className="mb-2 text-sm"><div className="flex items-center gap-2">{L.branch(b.id)}<span className="text-muted">{b.tool} → {b.target}</span></div><div className="text-muted">{b.output}</div></div>)}
-            {!s.done && <p className="text-sm text-muted">None yet.</p>}</section>
+            {rows.filter((r) => r.branch.state === 'completed').map((r) => <div key={r.branch.id} className="mb-2 text-sm"><div className="flex items-center gap-2">{L.branch(r.branch.id)}<span className="text-muted">{r.branch.tool} → {r.branch.target}</span></div><div className="text-muted">{r.branch.output}</div></div>)}
+            {!counts.done && <p className="text-sm text-muted">None yet.</p>}</section>
           <section><h4 className="mb-1 text-sm font-semibold">Failed branches</h4>
-            {s.bs.filter((b) => b.state === 'failed').map((b) => <div key={b.id} className="mb-2 text-sm"><div className="flex items-center gap-2">{L.branch(b.id)}<BranchStatus state={b.state} /></div><div className="text-bad">{b.error}</div></div>)}
-            {!s.failed && <p className="text-sm text-muted">None.</p>}</section>
+            {rows.filter((r) => r.branch.state === 'failed').map((r) => <div key={r.branch.id} className="mb-2 text-sm"><div className="flex items-center gap-2">{L.branch(r.branch.id)}<BranchStatus state={r.branch.state} /></div><div className="text-bad">{r.branch.error}</div></div>)}
+            {!counts.failed && <p className="text-sm text-muted">None.</p>}</section>
           <section><h4 className="mb-1 text-sm font-semibold">Missing / pending</h4>
-            {s.bs.filter((b) => !['completed', 'failed'].includes(b.state)).map((b) => <div key={b.id} className="mb-1 flex items-center gap-2 text-sm">{L.branch(b.id)}<BranchStatus state={b.state} /></div>)}
+            {rows.filter((r) => !['completed', 'failed'].includes(r.branch.state)).map((r) => <div key={r.branch.id} className="mb-1 flex items-center gap-2 text-sm">{L.branch(r.branch.id)}<BranchStatus state={r.branch.state} /></div>)}
           </section>
           <section><h4 className="mb-1 text-sm font-semibold">Evidence</h4>
             {evidence.length ? <div className="flex flex-wrap gap-3">{evidence.map((e) => <span key={e}>{L.ev(e)}</span>)}</div> : <p className="text-sm text-muted">No evidence.</p>}</section>
@@ -391,44 +433,60 @@ function FanIn({ groupId }: { groupId: string }) {
 /* ───────── Fan-out page ───────── */
 const ALL = 'all'
 export function FanOutPage() {
-  const { db, route, go, pid, can } = useStore()
+  const { route, go } = useStore()
   const L = useLinks()
-  const initial = route.tab === 'table' || /view=table/.test(window.location.hash) ? 'table' : 'graph'
-  const [view, setView] = useState<'graph' | 'table'>(initial)
+  const groupsQ = useBranchGroups()
+  const gid = route.id || groupsQ.data?.groups[0]?.group.id
+  const q = useBranchGroup(gid)
+  const [view, setView] = useState<'graph' | 'table'>(route.tab === 'table' ? 'table' : 'graph')
   const [sel, setSel] = useState<string | null>(null)
-  const [q, setQ] = useState(''); const [st, setSt] = useState(ALL); const [ag, setAg] = useState(ALL); const [tg, setTg] = useState(ALL); const [tl, setTl] = useState(ALL); const [ap, setAp] = useState(ALL)
-  const gid = route.id || db.branchGroups.find((g) => pid === 'all' || g.projectId === pid)?.id
-  const g = db.branchGroups.find((x) => x.id === gid)
+  const [qf, setQf] = useState(''); const [st, setSt] = useState(ALL); const [ag, setAg] = useState(ALL); const [tg, setTg] = useState(ALL); const [tl, setTl] = useState(ALL); const [ap, setAp] = useState(ALL)
   const crumbs = [{ label: 'AI Operator', to: () => go('ai-operator') }, { label: 'Execution Graph' }]
-  const bs = useMemo(() => db.branches.filter((b) => b.groupId === gid), [db.branches, gid])
-  if (!g) return <><PageHeader title="Execution Graph" crumbs={crumbs} />{pid === 'all' ? <NoProject /> : <Empty icon={Layers} title="No branch group in this project" action={<Button onClick={() => go('ai-operator')}>Back to AI Operator</Button>}>Fan-out appears when an approved plan has parallel branches.</Empty>}</>
-  if (pid !== 'all' && g.projectId !== pid) return <><PageHeader title="Execution Graph" crumbs={crumbs} /><Empty icon={ShieldQuestion} title="Branch group belongs to another project" action={<Button onClick={() => go('ai-operator')}>Back to AI Operator</Button>}>Switch project to view {g.id}.</Empty></>
-  const s = groupSummary(db, g.id)
-  const agents = [...new Set(bs.map((b) => b.agent))], targets = [...new Set(bs.map((b) => b.target))], tools = [...new Set(bs.map((b) => b.tool))]
-  const rows = bs.filter((b) => (st === ALL || b.state === st) && (ag === ALL || b.agent === ag) && (tg === ALL || b.target === tg) && (tl === ALL || b.tool === tl) && (ap === ALL || b.approval === ap) && (!q.trim() || `${b.id} ${b.tool} ${b.target} ${b.agent}`.toLowerCase().includes(q.trim().toLowerCase())))
-  const filtered = st !== ALL || ag !== ALL || tg !== ALL || tl !== ALL || ap !== ALL || !!q
-  const reset = () => { setQ(''); setSt(ALL); setAg(ALL); setTg(ALL); setTl(ALL); setAp(ALL) }
-  const lostBr = bs.filter((b) => { const a = db.agents.find((x) => x.id === b.agent); return !!a && !isConn(a) && ['paused', 'unknown'].includes(b.state) })
-  const lostAgents = [...new Set(lostBr.map((b) => b.agent))]
-  const pending = bs.filter((b) => b.approval === 'pending').length
+  if (groupsQ.isError || q.isError) {
+    const f = ((groupsQ.error || q.error) as BranchReadError | undefined)?.failure
+    return (
+      <>
+        <PageHeader title="Execution Graph" crumbs={crumbs} />
+        {f?.kind === 'not-found' && !route.id
+          ? <Empty icon={Layers} title="No branch group in this project" action={<Button onClick={() => go('ai-operator')}>Back to AI Operator</Button>}>Fan-out appears when an approved plan has parallel branches.</Empty>
+          : <Empty icon={f?.kind === 'forbidden' ? ShieldQuestion : Layers} title={f?.kind === 'forbidden' ? 'Branch group belongs to another project' : 'Could not load the execution graph'} action={<Button onClick={() => (q.isError ? q.refetch() : groupsQ.refetch())}>Retry</Button>}>{f?.message}</Empty>}
+      </>
+    )
+  }
+  if (!gid) {
+    return (
+      <>
+        <PageHeader title="Execution Graph" crumbs={crumbs} />
+        <Empty icon={Layers} title="No branch group in this project" action={<Button onClick={() => go('ai-operator')}>Back to AI Operator</Button>}>Fan-out appears when an approved plan has parallel branches.</Empty>
+      </>
+    )
+  }
+  if (!q.data) return <><PageHeader title="Execution Graph" crumbs={crumbs} /><p className="text-sm text-muted">Loading branch groups…</p></>
+  const { group: g, rows: bs, counts: s, overall } = q.data
+  const agents = [...new Set(bs.map((r) => r.branch.agent))], targets = [...new Set(bs.map((r) => r.branch.target))], tools = [...new Set(bs.map((r) => r.branch.tool))]
+  const rows = bs.map((r) => r.branch).filter((b) => (st === ALL || b.state === st) && (ag === ALL || b.agent === ag) && (tg === ALL || b.target === tg) && (tl === ALL || b.tool === tl) && (ap === ALL || b.approval === ap) && (!qf.trim() || `${b.id} ${b.tool} ${b.target} ${b.agent}`.toLowerCase().includes(qf.trim().toLowerCase())))
+  const filtered = st !== ALL || ag !== ALL || tg !== ALL || tl !== ALL || ap !== ALL || !!qf
+  const reset = () => { setQf(''); setSt(ALL); setAg(ALL); setTg(ALL); setTl(ALL); setAp(ALL) }
+  const lostBr = bs.filter((r) => !r.agentConnected && ['paused', 'unknown'].includes(r.branch.state))
+  const lostAgents = [...new Set(lostBr.map((r) => r.branch.agent))]
+  const pending = bs.filter((r) => r.branch.approval === 'pending').length
   const sel_ = <T extends string>(v: string, set: (x: string) => void, label: string, opts: T[], fmt: (x: T) => string = (x) => x) => (
     <Select aria-label={label} value={v} onChange={(e) => set(e.target.value)} className="!w-40"><option value={ALL}>{label}: all</option>{opts.map((o) => <option key={o} value={o}>{fmt(o)}</option>)}</Select>
   )
   const opState = s.open > 0 ? 'In progress' : s.failed ? 'Partially Completed' : 'Completed'
-  void can
   return (
     <>
       <PageHeader title={<span className="flex items-center gap-2">Execution Graph <Mono>{g.id}</Mono></span>} crumbs={crumbs} back={{ label: 'AI Operator', to: () => go('ai-operator') }} meta={<span className="text-xs text-muted">Demo Data — simulated</span>} />
       {lostAgents.length > 0 && (
         <div className="mb-4"><Banner tone="bad" title={`Group impact — agent ${lostAgents.join(', ')} disconnected`}>
-          {lostBr.length} branch(es) are Paused or Unknown and will not auto-complete. {lostBr.map((b) => { const r = replacementFor(db, b); return <span key={b.id}>{L.branch(b.id)}: {r ? <>proposed replacement {L.agent(r.id)}</> : 'no eligible replacement'}. </span> })}
+          {lostBr.length} branch(es) are Paused or Unknown and will not auto-complete. {lostBr.map((r) => <span key={r.branch.id}>{L.branch(r.branch.id)}: {r.replacement ? <>proposed replacement {L.agent(r.replacement.id)}</> : 'no eligible replacement'}. </span> )}
           Open a branch to request reassignment (approval required).</Banner></div>
       )}
       <div className="space-y-4">
         <Card>
           <DescList cols={3} items={[
             { k: 'Group ID', v: <Mono>{g.id}</Mono> }, { k: 'Plan', v: <span className="flex items-center gap-2">{L.plan(g.planId)} {g.planVer}</span> }, { k: 'Operation', v: L.op(g.opId) },
-            { k: 'Parent step', v: g.parentStep }, { k: 'Fan-in step', v: g.aggStep }, { k: 'Overall state', v: <b>{s.overall}</b> },
+            { k: 'Parent step', v: g.parentStep }, { k: 'Fan-in step', v: g.aggStep }, { k: 'Overall state', v: <b>{overall}</b> },
             { k: 'Objective', v: g.objective }, { k: 'Branches', v: s.total }, { k: 'Allocated agents', v: <span className="flex flex-wrap gap-2">{agents.map((a) => <span key={a}>{L.agent(a)}</span>)}</span> },
             { k: 'Running / completed / failed', v: `${s.running} / ${s.done} / ${s.failed}` }, { k: 'Approvals', v: `${pending} pending of ${s.total}` }, { k: 'Operation outcome', v: opState },
             { k: 'Policy constraints', v: <ul className="list-disc pl-4">{g.policy.map((p) => <li key={p}>{p}</li>)}</ul> },
@@ -437,12 +495,12 @@ export function FanOutPage() {
         </Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Segmented options={[{ id: 'graph', label: 'Graph' }, { id: 'table', label: 'Table' }]} value={view} onChange={setView} />
-          <div className="flex gap-2"><Button size="sm" onClick={() => goTrace()}>View Trace</Button><Button size="sm" onClick={() => go('operation', { id: g.opId })}>Open Operation</Button></div>
+          <div className="flex gap-2"><Button size="sm" onClick={() => go('ai-trace')}>View Trace</Button><Button size="sm" onClick={() => go('operation', { id: g.opId })}>Open Operation</Button></div>
         </div>
-        {view === 'graph' ? <Graph groupId={g.id} onSelect={setSel} /> : (
+        {view === 'graph' ? <Graph group={g} rows={bs} onSelect={setSel} /> : (
           <>
             <div className="flex flex-wrap items-center gap-2">
-              <SearchBox value={q} onChange={setQ} placeholder="Search branch ID, tool, target" className="w-64" />
+              <SearchBox value={qf} onChange={setQf} placeholder="Search branch ID, tool, target" className="w-64" />
               {sel_(st, setSt, 'Status', ['pending', 'queued', 'waiting_approval', 'running', 'completed', 'failed', 'blocked', 'paused', 'cancelled', 'unknown'] as BranchState[], (x) => BRANCH_LABEL[x])}
               {sel_(ag, setAg, 'Agent', agents)}{sel_(tg, setTg, 'Target', targets)}{sel_(tl, setTl, 'Tool', tools)}
               {sel_(ap, setAp, 'Approval', ['none', 'pending', 'approved', 'denied'] as Branch['approval'][], (x) => APPROVAL_LABEL[x])}
@@ -465,7 +523,7 @@ export function FanOutPage() {
               ]} />
           </>
         )}
-        <FanIn groupId={g.id} />
+        <FanIn counts={s} rows={bs} />
       </div>
       {sel && <BranchDrawer branchId={sel} onClose={() => setSel(null)} />}
     </>
@@ -498,4 +556,3 @@ export function AiTeamView({ projectId }: { projectId: string }) {
 }
 
 export const routes: Record<string, ComponentType> = { 'ai-fanout': FanOutPage, 'ai-branch': BranchPage }
-void AlertTriangle; void Status
