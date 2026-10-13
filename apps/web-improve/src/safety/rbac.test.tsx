@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import { seed, USERS } from '../data'
 import type { Role } from '../data'
-import { canAccessProject, type CanAction } from '../store'
+import { canAccessProject } from '../store'
+import type { CanAction } from '../domain/permissions'
 import { mountStore } from '../test/helpers'
 
 afterEach(cleanup)
