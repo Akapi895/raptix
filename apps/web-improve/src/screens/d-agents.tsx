@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { USERS, type Agent, type Group } from '../data'
 import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from './d-shared'
-import { AgentReadError, useAgentDetail, useAgentList } from '../features/agents/query'
+import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../features/agents/query'
 import type { AgentKpi } from '../features/agents/service'
 import { BRANCH_LABEL } from '../data'
 
@@ -29,9 +29,10 @@ function Heartbeat({ a }: { a: Agent }) {
   )
 }
 
-/* ───────────── Group modal (AG-03) ───────────── */
+/* ───────────── Group modal (AG-03, ticket 49: typed write handler) ───────────── */
 function GroupModal({ group, onClose }: { group: Group | null; onClose: () => void }) {
-  const { db, pid, accessible, A, toast, confirm, me } = useStore()
+  const { db, pid, accessible, toast, confirm, me } = useStore()
+  const saveGroup = useSaveGroup()
   const projs = accessible.filter((p) => !['closed', 'cancelled'].includes(p.status))
   const [f, setF] = useState({
     name: group?.name || '', projectId: group?.projectId || (pid !== 'all' ? pid : ''), desc: group?.desc || '', agents: group?.agents || [] as string[],
@@ -44,11 +45,17 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
   const removed = group ? group.agents.filter((x) => !f.agents.includes(x)) : []
   const removedInUse = removed.map((id) => db.agents.find((a) => a.id === id)).filter((a): a is Agent => !!a && !!a.op)
 
-  const commit = () => {
-    const id = A.saveGroup({ ...(group ? { id: group.id } : {}), name: f.name.trim(), projectId: f.projectId, desc: f.desc, agents: f.agents, owner: f.owner, policy: f.policy })
-    removed.forEach((aid) => A.removeFromGroup(id, aid))
-    toast(group ? `Group ${f.name} updated.` : `Group ${f.name} created (${id}).`)
-    onClose()
+  /* One typed commit: create/update (rename + membership, pool members
+     auto-assigned) with the confirm reason audited; the handler owns the
+     eligibility rules — refusal reasons surface as a toast. */
+  const commit = (r: string) => {
+    saveGroup.mutate({ id: group?.id, name: f.name.trim(), projectId: f.projectId, desc: f.desc, agents: f.agents, owner: f.owner, policy: f.policy, reason: r }, {
+      onSuccess: (res) => {
+        if (!res.ok) { toast(res.failure.message, 'warn'); return }
+        toast(group ? `Group ${f.name} updated.` : `Group ${f.name} created (${res.data.id}).`)
+        onClose()
+      },
+    })
   }
   const save = () => {
     setTried(true)
@@ -57,9 +64,9 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
       confirm({
         title: 'Remove agents that are in use?', danger: true, confirmLabel: 'Remove from group anyway', reasonLabel: 'Reason', reasonRequired: true,
         body: <>{removedInUse.map((a) => `${a.id} (running ${a.op})`).join(', ')} {removedInUse.length === 1 ? 'is' : 'are'} currently used by an operation. Removing from the group does <b>not</b> stop the operation and the target is not changed silently, but it changes the group usage policy. Confirm the impact.</>,
-        onConfirm: (r) => { A.audit('Removed in-use agent from group', removedInUse.map((a) => a.id).join(', '), f.projectId, 'Success', r); commit() },
+        onConfirm: (r) => commit(r),
       })
-    else commit()
+    else commit('')
   }
   return (
     <Modal open onClose={onClose} title={group ? `Edit group ${group.name}` : 'Create agent group'} width={640}
@@ -94,10 +101,11 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
   )
 }
 
-/* ───────────── Request assignment drawer (AG-V3-03) ───────────── */
+/* ───────────── Request assignment drawer (AG-V3-03, ticket 49: typed immediate assign) ───────────── */
 const isAssignReq = (t: string) => t.startsWith('Agent assignment')
 function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose: () => void }) {
   const { db, pid, accessible, A, toast, go, can } = useStore()
+  const assign = useAssignAgent()
   const pool = db.agents.filter((a) => a.projectId === '')
   const [agentId, setAgentId] = useState(fixed?.id || pool.find((a) => (a.status === 'online' || a.status === 'idle') && !a.op)?.id || '')
   const agent = db.agents.find((a) => a.id === agentId) || null
@@ -133,13 +141,19 @@ function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose:
     toast(`Assignment of ${agent.id} requested. It takes effect only after ${reviewer} approves.`, 'info')
     setSent({ agentId: agent.id, projectId, reviewer, duration })
   }
+  /* The immediate path is the typed handler (eligibility enforced there —
+     the checks above stay presentation); the request path is ticket 21's
+     approval transaction, so pending review never silently allocates. */
   const immediate = () => {
     setTried(true)
     if (immWhy || !agent) return
-    A.assignAgent(agent.id, projectId)
-    A.audit('Agent assignment details', agent.id, projectId, 'Success', `Assigned immediately. Duration: ${duration}${opId ? `; intended operation ${opId}` : ''}; reviewer ${reviewer}`)
-    toast(`${agent.id} assigned to ${projectId}.`)
-    onClose()
+    assign.mutate({ agentId: agent.id, projectId, note: `Assigned immediately. Duration: ${duration}${opId ? `; intended operation ${opId}` : ''}; reviewer ${reviewer}` }, {
+      onSuccess: (res) => {
+        if (!res.ok) { toast(res.failure.message, 'warn'); return }
+        toast(`${res.data.id} assigned to ${projectId}.`)
+        onClose()
+      },
+    })
   }
   const alt = pool.filter((a) => a.id !== agent?.id && !a.op && (a.status === 'online' || a.status === 'idle') && a.os === agent?.os)
   if (sent) {
@@ -298,7 +312,8 @@ function FailurePanel({ a }: { a: Agent }) {
 type FleetRow = Agent & { sessions: number; pending?: { id: string; by: string; at: string; reviewer: string } }
 
 function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project' | 'pool'; onNewGroup: () => void; newGroupWhy: string; onAssign: (a: Agent | null) => void }) {
-  const { go, pid, can } = useStore()
+  const { go, pid, can, confirm, toast } = useStore()
+  const release = useUnassignAgent()
   const [q, setQ] = useState(''), [st, setSt] = useState(''), [os, setOs] = useState(''), [pj, setPj] = useState(''), [gr, setGr] = useState(''), [kpi, setKpi] = useState<'' | AgentKpi>('')
   const [page, setPage] = useState(1)
   /* The one fleet read: scope-checked typed service; rows, KPI pills, filter
@@ -323,6 +338,16 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
   const tk = (k: AgentKpi) => () => setKpi(kpi === k ? '' : k)
   const ks = (v: AgentKpi, d: string) => kpi === v ? 'Filter active, click to clear' : d
   const assignWhy = (a: FleetRow) => a.projectId ? 'Already assigned to a project.' : a.op ? `Reserved by ${a.op}.` : !isConn(a) ? `${STATUS_LABEL[a.status]}: a non-connected agent is never available or auto-assigned.` : a.pending ? `${a.pending.id} is already pending review.` : ''
+  /* Ticket 49: return-to-pool is the typed unassign (reason required at the
+     handler; reserved agents are refused until their operation ends). */
+  const releaseWhy = (a: FleetRow) => !can('editScope') ? 'Only Red Team Managers and Admins can change allocation.' : a.op ? `Reserved by ${a.op} — the reservation must end first.` : ''
+  const doRelease = (a: FleetRow) => confirm({
+    title: `Return ${a.id} to the shared pool?`, confirmLabel: 'Return to pool', danger: true, reasonLabel: 'Reason', reasonRequired: true,
+    body: <>{a.id} ({a.host}) is assigned to <b>{a.projectId}</b>. Returning it to the shared pool makes it available to every project's assignment flow again; its group membership is kept. Committed reservations of running operations are never affected by this screen.</>,
+    onConfirm: (r) => release.mutate({ agentId: a.id, reason: r }, {
+      onSuccess: (res) => { if (res.ok) toast(`${a.id} returned to the shared pool.`); else toast(res.failure.message, 'warn') },
+    }),
+  })
   const scopeName = pid === 'all' ? 'the projects you can access' : pid
   const poolAvail = k?.poolAvailable ?? 0
   return (
@@ -377,7 +402,9 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
               { key: 'act', header: 'Actions', render: (a) => (
                 <span className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                   <Button size="sm" variant="ghost" onClick={() => go('agent', { id: a.id })}>View</Button>
-                  {!a.projectId && <Button size="sm" className="whitespace-nowrap" disabled={!!assignWhy(a)} title={assignWhy(a) || 'Request assignment to a project (approval-gated)'} onClick={() => onAssign(a)}>Request assignment</Button>}
+                  {!a.projectId
+                    ? <Button size="sm" className="whitespace-nowrap" disabled={!!assignWhy(a)} title={assignWhy(a) || 'Request assignment to a project (approval-gated)'} onClick={() => onAssign(a)}>Request assignment</Button>
+                    : <Button size="sm" variant="ghost" className="whitespace-nowrap" disabled={!!releaseWhy(a)} title={releaseWhy(a) || 'Return to the shared pool (reason required)'} onClick={() => doRelease(a)}>Return to pool</Button>}
                 </span>
               ) },
             ]}
@@ -391,9 +418,10 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
 }
 
 
-/* ───────────── Groups (AG-03) ───────────── */
+/* ───────────── Groups (AG-03, ticket 49: typed membership writes) ───────────── */
 function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: Group) => void; newWhy: string }) {
-  const { db, scoped, go, pid, A, confirm, toast, setFilter, can } = useStore()
+  const { db, scoped, go, pid, confirm, toast, setFilter, can } = useStore()
+  const removeMember = useRemoveFromGroup()
   const groups = scoped(db.groups)
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const canEdit = can('editScope') && !guard.ro && pid !== 'all'
@@ -403,7 +431,9 @@ function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: G
     confirm({
       title: `Remove ${aid} from ${g.name}?`, confirmLabel: 'Remove from group', danger: !!a?.op, reasonLabel: 'Reason', reasonRequired: !!a?.op,
       body: a?.op ? <>This agent is used by operation <b>{a.op}</b>. Removing it from the group does not stop the operation and does not change its target silently, but it affects the group usage policy. Confirm the impact before continuing.</> : <>The agent will no longer belong to this group. No operation is using it.</>,
-      onConfirm: (r) => { A.removeFromGroup(g.id, aid); if (a?.op) A.audit('Removed in-use agent from group', aid, g.projectId, 'Success', r); toast(`${aid} removed from ${g.name}.`) },
+      onConfirm: (r) => removeMember.mutate({ groupId: g.id, agentId: aid, reason: r }, {
+        onSuccess: (res) => { if (res.ok) toast(`${aid} removed from ${g.name}.`); else toast(res.failure.message, 'warn') },
+      }),
     })
   }
   return (

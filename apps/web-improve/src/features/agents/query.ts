@@ -10,13 +10,20 @@
  * these views without a reload — and a persona/project switch cancels the
  * superseded scope's reads before a delayed response can restore old
  * visibility.
+ * Mutations capture the actor/project scope at call time, so a switch never
+ * retargets an in-flight write; the handler additionally binds every write
+ * to the addressed agent/group's own project (ticket 49). A committed write
+ * publishes the `agent`/`agent-group` ChangeSet identities, so fleet and
+ * detail views refetch without a reload.
  */
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
 import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
-import type { ServiceFailure } from '../../domain/service'
+import type { ServiceFailure, ServiceResult } from '../../domain/service'
+import type { Agent, Group } from '../../domain/entities'
 import type { AgentDetailRead, AgentListQuery, AgentListRead } from './service'
+import type { AssignmentInput, GroupInput } from './writes'
 
 /** Feature-local key namespaces: ['agent', scope, 'list', query] / ['agent', scope, id]. */
 export const agentKeys = {
@@ -65,5 +72,56 @@ export function useAgentDetail(id?: string) {
       return res.data
     },
     enabled: !!services && !!id,
+  })
+}
+
+let corrSeq = 0
+const corr = (act: string) => `agent-${act}-${++corrSeq}`
+
+/** Immediate assignment through the typed handler; the ServiceResult (success or typed failure) is returned to onSuccess. */
+export function useAssignAgent() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { agentId: string; projectId: string; note?: string }): Promise<ServiceResult<Agent>> => {
+      const actor = actorRef(scope.actor)
+      return services.agents(actor, scope.project).assign({ actor, projectId: scope.project, corr: corr('assign') }, v.agentId, { projectId: v.projectId, note: v.note } satisfies AssignmentInput)
+    },
+  })
+}
+
+/** Returns an assigned agent to the shared pool through the typed handler. */
+export function useUnassignAgent() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { agentId: string; reason: string }): Promise<ServiceResult<Agent>> => {
+      const actor = actorRef(scope.actor)
+      return services.agents(actor, scope.project).unassign({ actor, projectId: scope.project, corr: corr('unassign') }, v.agentId, v.reason)
+    },
+  })
+}
+
+/** Group create/rename/membership through the typed handler. */
+export function useSaveGroup() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: GroupInput): Promise<ServiceResult<Group>> => {
+      const actor = actorRef(scope.actor)
+      return services.agents(actor, scope.project).saveGroup({ actor, projectId: scope.project, corr: corr('group-save') }, v)
+    },
+  })
+}
+
+/** Removes one agent from a group through the typed handler. */
+export function useRemoveFromGroup() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { groupId: string; agentId: string; reason?: string }): Promise<ServiceResult<Group>> => {
+      const actor = actorRef(scope.actor)
+      return services.agents(actor, scope.project).removeFromGroup({ actor, projectId: scope.project, corr: corr('group-remove') }, v.groupId, v.agentId, v.reason)
+    },
   })
 }
