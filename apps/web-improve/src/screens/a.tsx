@@ -1,6 +1,9 @@
 import type { ComponentType } from 'react'
 import { Login } from './a-login'
-import { Forbidden, NotFound, Offline, ServerError, SessionExpired, StatesGallery } from './a-system'
+/* Ticket 61a: the error pages own their semantic module (src/screens/system);
+   the states gallery follows in 61b. */
+import { Forbidden, NotFound, Offline, ServerError, SessionExpired } from './system/pages'
+import { StatesGallery } from './a-system'
 import { Dashboard, MyTasks } from './a-dashboard'
 
 export const routes: Record<string, ComponentType> = {
