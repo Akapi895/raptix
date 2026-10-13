@@ -18,7 +18,8 @@ import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Finding } from '../../domain/entities'
 import type {
-  EvidenceUploadInput, FindingDetailRead, FindingListQuery, FindingListRead,
+  EvidenceDetailRead, EvidenceListQuery, EvidenceListRead, EvidenceUploadInput,
+  FindingDetailRead, FindingListQuery, FindingListRead,
   FindingSaveInput, FindingTransitionTarget, RetestInput,
 } from './service'
 
@@ -26,6 +27,12 @@ import type {
 export const findingKeys = {
   list: (scope: QueryScope, query: FindingListQuery) => consoleKeys.view('finding', scope, 'list', query),
   detail: (scope: QueryScope, id: string) => consoleKeys.entity('finding', scope, id),
+}
+
+/** Evidence-inspector key namespaces (ticket 33): ['evidence', scope, 'list', query] / ['evidence', scope, id]. */
+export const evidenceKeys = {
+  list: (scope: QueryScope, query: EvidenceListQuery) => consoleKeys.view('evidence', scope, 'list', query),
+  detail: (scope: QueryScope, id: string) => consoleKeys.entity('evidence', scope, id),
 }
 
 /** A service failure rethrown as the query error, so screens render the kind and message. */
@@ -66,6 +73,55 @@ export function useFindingDetail(id?: string) {
         .findings(actor, scope.project)
         .get({ actor, projectId: scope.project, corr: 'finding-detail' }, id || '')
       if (!res.ok) throw new FindingReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services && !!id,
+  })
+}
+
+/** A service failure rethrown as the query error, so screens render the kind and message. */
+export class EvidenceReadError extends Error {
+  constructor(readonly failure: ServiceFailure) {
+    super(failure.message)
+    this.name = 'EvidenceReadError'
+  }
+}
+
+/** Query-backed standalone evidence list (ticket 33) for the current auth/project scope. */
+export function useEvidenceList(query: EvidenceListQuery) {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: evidenceKeys.list(scope, query),
+    queryFn: async (): Promise<EvidenceListRead> => {
+      const actor = actorRef(scope.actor)
+      const res = await services
+        .findings(actor, scope.project)
+        .listEvidence({ actor, projectId: scope.project, corr: 'evidence-list' }, query)
+      if (!res.ok) throw new EvidenceReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/**
+ * Query-backed standalone evidence detail (ticket 33): masked view, producer
+ * links and simulated capture integrity. The key embeds the auth scope and
+ * is invalidated by evidence ChangeSets — an evidence attach/upload (ticket
+ * 32's handlers) refetches the linked views without a reload.
+ */
+export function useEvidenceDetail(id?: string) {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: evidenceKeys.detail(scope, id || ''),
+    queryFn: async (): Promise<EvidenceDetailRead> => {
+      const actor = actorRef(scope.actor)
+      const res = await services
+        .findings(actor, scope.project)
+        .getEvidence({ actor, projectId: scope.project, corr: 'evidence-detail' }, id || '')
+      if (!res.ok) throw new EvidenceReadError(res.failure)
       return res.data
     },
     enabled: !!services && !!id,
