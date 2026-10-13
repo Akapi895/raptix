@@ -10,8 +10,9 @@
  */
 import { useMemo } from 'react'
 import { QueryClient } from '@tanstack/react-query'
-import { USERS, type Role } from '../data'
+import type { Role } from '../domain/entities'
 import type { EntityKind } from '../domain/service'
+import { personaRole } from '../auth/persona'
 import { useAuthStore, useProjectStore } from './stores'
 
 /** Actor/authorization/project scope embedded in every console Query key. */
@@ -26,7 +27,7 @@ export interface QueryScope {
 export function useQueryScope(): QueryScope {
   const meName = useAuthStore((s) => s.meName)
   const pid = useProjectStore((s) => s.pid)
-  const role = USERS.find((u) => u.name === meName)?.role ?? 'viewer'
+  const role = personaRole(meName)
   return useMemo(() => ({ actor: meName, role, project: pid }), [meName, role, pid])
 }
 
