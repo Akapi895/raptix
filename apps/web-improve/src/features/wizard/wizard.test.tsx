@@ -292,6 +292,12 @@ describe('migrated scope/ROE steps (ticket 18)', () => {
 
     const apr = h.store().db.approvals.find((a) => a.projectId === 'RT-2026-021' && a.type === 'Project creation')
     expect(apr?.status).toBe('pending')
+    // Four-eyes (ticket 21): the submitting manager cannot decide their own request.
+    let self!: { ok: boolean; error?: string }
+    h.run(() => { self = h.store().A.decideApproval(apr!.id, 'approved', 'ok') })
+    expect(self.ok).toBe(false)
+    expect(self.error).toContain('Only a Reviewer or Organization Admin')
+    h.run(() => { h.store().setMe('Pat Kim') })
     h.run(() => { h.store().A.decideApproval(apr!.id, 'approved', 'ok') })
     expect(h.store().db.projects[0].status).toBe('approved')
     expect(h.store().db.assets.find((a) => a.projectId === 'RT-2026-021')!.scope).toBe('in')
