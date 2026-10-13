@@ -1,15 +1,14 @@
 /**
- * Project wizard draft: schema, step map and compat adapters (ticket 17,
+ * Project wizard draft: schema, step map and compat adapters (tickets 17/18,
  * ADR-0067 — docs/adr/0067-web-console-service-domain-boundary.md).
  *
- * One typed draft powers all five steps. The information and objectives
- * steps validate through the Zod schema below (React Hook Form +
- * zodResolver in the shell hook); scope/ROE/assets/team keep their legacy
- * validators as `compat` step definitions until tickets 18/19 migrate them
- * onto the same schema — the seam is each step's optional `fields` (migrated)
- * versus `validator` (compat). Creation still commits through the single
- * legacy store action (`A.createProject`) via {@link toLegacyProjectDraft};
- * no second project creation path or database is introduced.
+ * One typed draft powers all five steps. The information, objectives,
+ * scope/ROE and assets steps validate through the Zod schema below (React
+ * Hook Form + zodResolver in the shell hook); the review step stays
+ * presentation-only and gates submission through `reviewIssues` until
+ * ticket 19. Creation still commits through the single legacy store action
+ * (`A.createProject`) via {@link toLegacyProjectDraft}; no second project
+ * creation path or database is introduced.
  */
 import { z } from 'zod'
 import type { ProjectDraft } from '../../store'
@@ -40,6 +39,8 @@ export const fmtDate = (iso: string) => {
 /* ── Step field groups ── */
 export const INFO_FIELDS = ['name', 'id', 'client', 'type', 'desc', 'start', 'end', 'tz', 'owner', 'tags'] as const
 export const OBJECTIVE_FIELDS = ['goal', 'objectives', 'success', 'metrics', 'unit', 'reportReq'] as const
+export const SCOPE_FIELDS = ['scopeDesc', 'window', 'sensitivity', 'assets'] as const
+export const ROE_FIELDS = ['limits', 'emergency', 'channel', 'approver', 'roeFile', 'members'] as const
 
 const infoFields = {
   name: z.string().trim().min(1, 'Enter a project name.'),
@@ -61,22 +62,28 @@ const objectiveFields = {
   unit: z.string(),
   reportReq: z.string(),
 }
-/* Compat (tickets 18/19): permissive until the scope/ROE/assets/team steps
- * migrate onto real constraints in this schema. */
-const compatFields = {
-  scopeDesc: z.string(),
-  window: z.string(),
+/* Scope/ROE/assets steps (ticket 18): constraints migrated verbatim from the
+ * legacy screen validators. Emergency contact, ROE file and in-scope assets
+ * stay optional at the schema level on purpose — they gate submission (the
+ * review panel's fail rows), never draft creation or step progression. */
+const scopeFields = {
+  scopeDesc: z.string().trim().min(1, 'Describe the testing scope.'),
+  window: z.string().trim().min(1, 'Enter the permitted testing days and hours.'),
   sensitivity: z.string(),
+  assets: z.array(z.object({ name: z.string(), ident: z.string(), type: z.string(), scope: z.enum(['in', 'out']) })),
+}
+const roeFields = {
   limits: z.array(z.string()),
   emergency: z.string(),
   channel: z.string(),
-  roeFile: z.string(),
+  /* The approver's relational rules (different from the owner, on the member
+   * list) are cross-field and live in makeWizardSchema below. */
   approver: z.string(),
-  assets: z.array(z.object({ name: z.string(), ident: z.string(), type: z.string(), scope: z.enum(['in', 'out']) })),
+  roeFile: z.string(),
   members: z.array(z.object({ user: z.string(), role: z.string() })),
 }
 
-export const wizardSchema = z.object({ ...infoFields, ...objectiveFields, ...compatFields })
+export const wizardSchema = z.object({ ...infoFields, ...objectiveFields, ...scopeFields, ...roeFields })
 export type WizardDraft = z.infer<typeof wizardSchema>
 
 const dupIdMessage = (ids: readonly string[], w: WizardDraft) =>
@@ -84,16 +91,20 @@ const dupIdMessage = (ids: readonly string[], w: WizardDraft) =>
 
 /**
  * The one resolver schema, built per wizard mount: cross-field rules (date
- * order, objective presence, duplicate code) run identically for RHF and the
- * step validators. `when` keeps the refines independent of the required-field
- * checks, matching the legacy per-field validators. `ids` freezes at mount —
- * the wizard cannot create projects mid-flow.
+ * order, objective presence, duplicate code, requested-reviewer validity) run
+ * identically for RHF and the step validators. `when` keeps the refines
+ * independent of the required-field checks, matching the legacy per-field
+ * validators. `ids` freezes at mount — the wizard cannot create projects
+ * mid-flow.
  */
 export const makeWizardSchema = (ids: readonly string[]) =>
   wizardSchema.superRefine((w, ctx) => {
     if (w.start && w.end && w.end < w.start) ctx.addIssue({ code: 'custom', path: ['end'], message: 'End date cannot be before the start date.' })
     if (!w.objectives.some((o) => o.text.trim())) ctx.addIssue({ code: 'custom', path: ['objectives'], message: 'Add at least one specific objective.' })
     if (ids.includes(w.id)) ctx.addIssue({ code: 'custom', path: ['id'], message: dupIdMessage(ids, w) })
+    if (!w.approver) ctx.addIssue({ code: 'custom', path: ['approver'], message: 'Choose a requested reviewer.' })
+    else if (w.approver === w.owner) ctx.addIssue({ code: 'custom', path: ['approver'], message: 'The reviewer must be different from the owner.' })
+    else if (!w.members.some((m) => m.user === w.approver)) ctx.addIssue({ code: 'custom', path: ['approver'], message: 'The requested reviewer must be on the member list.' })
   }, { when: () => true })
 
 export const defaultWizardDraft = (ids: readonly string[], me: string): WizardDraft => ({
@@ -117,28 +128,11 @@ const issuesFor = (w: WizardDraft, ids: readonly string[], fields: readonly stri
   return e
 }
 
-/* Compat validators, verbatim from the legacy screen until 18/19 migrate
- * them into the schema above. */
-export const scopeIssues = (w: WizardDraft): Record<string, string> => {
-  const e: Record<string, string> = {}
-  if (!w.scopeDesc.trim()) e.scopeDesc = 'Describe the testing scope.'
-  if (!w.window.trim()) e.window = 'Enter the permitted testing days and hours.'
-  return e
-}
-export const roeIssues = (w: WizardDraft): Record<string, string> => {
-  const e: Record<string, string> = {}
-  if (!w.approver) e.approver = 'Choose a requested reviewer.'
-  else if (w.approver === w.owner) e.approver = 'The reviewer must be different from the owner.'
-  else if (!w.members.some((m) => m.user === w.approver)) e.approver = 'The requested reviewer must be on the member list.'
-  return e
-}
-
-/** One step's errors from the shared schema (migrated) or legacy validator (compat). */
+/** One step's errors from the shared schema. */
 export const validateWizardStep = (i: number, w: WizardDraft, ids: readonly string[]): Record<string, string> => {
   const def = WIZARD_STEPS[i]
   if (!def || i === WIZARD_STEPS.length - 1) return {}
-  if (def.fields) return issuesFor(w, ids, def.fields)
-  return def.validator ? def.validator(w) : {}
+  return def.fields ? issuesFor(w, ids, def.fields) : {}
 }
 
 /* ── Step map ── */
@@ -146,16 +140,14 @@ export type WizardField = Extract<keyof WizardDraft, string>
 export interface WizardStepDef {
   id: 'info' | 'objectives' | 'scope' | 'roe' | 'review'
   name: string
-  /** Migrated steps validate these fields through the shared Zod schema. */
+  /** Steps 1–4 validate these fields through the shared Zod schema. */
   fields?: readonly WizardField[]
-  /** Compat steps keep their legacy validator until their owner ticket lands. */
-  validator?: (w: WizardDraft) => Record<string, string>
 }
 export const WIZARD_STEPS: readonly WizardStepDef[] = [
   { id: 'info', name: '1. Basic Details', fields: INFO_FIELDS },
   { id: 'objectives', name: '2. Objectives', fields: OBJECTIVE_FIELDS },
-  { id: 'scope', name: '3. Scope', validator: scopeIssues },
-  { id: 'roe', name: '4. ROE & Approvals', validator: roeIssues },
+  { id: 'scope', name: '3. Scope', fields: SCOPE_FIELDS },
+  { id: 'roe', name: '4. ROE & Approvals', fields: ROE_FIELDS },
   { id: 'review', name: '5. Review & Create' },
 ]
 
