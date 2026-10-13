@@ -133,7 +133,9 @@ export function createConsoleServices(): ConsoleServices {
 
   /* ── Ticket 24 append: operations inventory list/read. Same superseded-scope
      guard as forScope, so the ScopeCancelBridge's cancelScope covers in-flight
-     operation reads on a persona/project switch. ── */
+     operation reads on a persona/project switch. Ticket 25 appends the
+     creation/scheduling writes; the clock stamps commits and validates
+     schedule instants. ── */
   const forOperations = (actor: ActorRef, projectId: string): OperationService => {
     const key = scopeKey(actor, projectId)
     const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
@@ -147,7 +149,7 @@ export function createConsoleServices(): ConsoleServices {
       if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
       return produce()
     }
-    return createOperationService(authority, guard)
+    return createOperationService(authority, clock, guard)
   }
 
   /* ── Ticket 31 append: findings inventory list/detail reads. Same
