@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Ban, Bot, Clock, Copy, Eye, FileText, Loader2, Lock, OctagonX, Radio, ShieldCheck, TerminalSquare, Unplug } from 'lucide-react'
-import { useStore, hhmm } from '../store'
+import { useStore } from '../store'
 import type { Session } from '../data'
 import { C2ReadError, useC2Session, useC2Sessions } from '../features/c2/query'
+import { hhmm } from '../features/c2/service'
 import type { C2AccessInfo } from '../features/c2/service'
 import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui'
 

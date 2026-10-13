@@ -14,7 +14,8 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, computePreflight, type Store } from '../../store'
+import { StoreProvider, useServices, useStore, type Store } from '../../store'
+import { computePreflightChecks } from '../operations/preflight'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { parseDemoInstant } from '../../domain/clock'
@@ -201,7 +202,7 @@ describe('scope revisions invalidate at submission (invariant a)', () => {
     expect(running.preflightAt).toBeDefined()
     // The reset draft is blocked: preflight denies the ROE and start refuses.
     const op = d.operations.find((o) => o.id === opId)!
-    expect(computePreflight(d, op).find((c) => c.code === 'PRE-02')?.state).toBe('fail')
+    expect(computePreflightChecks(d, op, h.svc().clock.now()).find((c) => c.code === 'PRE-02')?.state).toBe('fail')
     h.run(() => { startOperation(h.svc().authority, h.svc().clock, ctxOf(ALEX), opId) })
     expect(d.operations.find((o) => o.id === opId)?.status).toBe('draft')
     h.unmount()

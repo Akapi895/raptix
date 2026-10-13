@@ -15,7 +15,8 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, computePreflight, type Store } from '../../store'
+import { StoreProvider, useServices, useStore, type Store } from '../../store'
+import { computePreflightChecks } from '../operations/preflight'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { routes } from '../../screens/d'
@@ -183,7 +184,7 @@ describe('atomic import through the governance transaction (invariant a, asset p
     h.run(() => { opId = h.store().A.createOperation({ name: 'Pending target probe', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: [importedId], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' }) })
 
     // Still pending: preflight refuses the target (PRE-03) before any approval.
-    const before = computePreflight(h.store().db, h.store().db.operations.find((o) => o.id === opId)!)
+    const before = computePreflightChecks(h.store().db, h.store().db.operations.find((o) => o.id === opId)!, h.svc().clock.now())
     expect(before.find((c) => c.code === 'PRE-03')?.state).toBe('fail')
     expect(before.find((c) => c.code === 'PRE-03')?.detail).toContain('hook-01')
 
@@ -194,7 +195,7 @@ describe('atomic import through the governance transaction (invariant a, asset p
     act(() => { decided = decideApprovalTransaction(h.svc().authority, h.svc().clock, ctxOf(PAT), apr.id, 'approved', 'Accepted into scope') })
     expect(decided.ok).toBe(true)
     expect(h.store().db.assets.find((a) => a.id === importedId)?.scope).toBe('in')
-    expect(computePreflight(h.store().db, h.store().db.operations.find((o) => o.id === opId)!).find((c) => c.code === 'PRE-03')?.state).toBe('pass')
+    expect(computePreflightChecks(h.store().db, h.store().db.operations.find((o) => o.id === opId)!, h.svc().clock.now()).find((c) => c.code === 'PRE-03')?.state).toBe('pass')
     h.unmount()
   })
 })

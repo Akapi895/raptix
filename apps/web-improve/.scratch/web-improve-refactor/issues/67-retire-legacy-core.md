@@ -2,14 +2,14 @@
 
 **What to build:** Remove residual Context/store/hash-router/UI forwarding infrastructure after all screen consumers are gone; keep the canonical database/services/providers as the final architecture.
 **Blocked by:** 66.
-**Status:** in-progress — first contraction batch (the dead legacy core) landed on `wi/67-retirelegacy`; the remaining live Context/store surface is enumerated below and needs further bounded batches.
+**Status:** in-progress — batch 1 (the dead legacy core) and the continuation batches 2–6 (the enumerated residual helpers/labels/re-exports) landed on `wi/67-retirelegacy` / `wi/67b-retirelegacy`; the remaining live Context seam (`useStore` ×106 files, `StoreProvider` ×61) and its live delegating `A.*` entries are enumerated below and need further per-feature batches.
 **Owner:** Final core contraction.
 **Contract:** [execution.md](../execution.md).
 
-- [ ] No component/test/demo reads the old store/database or writes location outside the router; remaining compatibility definitions have zero callers. *(Batch 1 retired every zero-caller legacy-core definition; the live Context seam (`useStore` ×100 files, `StoreProvider` ×54) and its live delegating `A.*` entries remain for later batches.)*
+- [ ] No component/test/demo reads the old store/database or writes location outside the router; remaining compatibility definitions have zero callers. *(Batch 1 retired every zero-caller legacy-core definition; the continuation batches 2–6 retired the enumerated residual helpers (computePreflight, allocation/groupSummary, hhmm, today, completion, sessionPerm, sevLabel, ROLE_LABEL) and the Route/CanAction/CopilotCtx type re-exports. The live Context seam (`useStore` ×106 files, `StoreProvider` ×61) and its live delegating `A.*` entries remain for per-feature batches.)*
 - [ ] Final seed/reset/timers/subscriptions belong to canonical services; removal does not reseed data or break observable events. *(Already owned by the canonical services since ticket 04 — `services.reset`/clock/authority; batch 1 removed only zero-caller definitions, so no seed/reset/timer path changed — bridge/reset/grant suites stay green.)*
-- [x] Runtime deletion is measured and split if needed; no oversized monolith deletion is assumed exempt. *(Split into three commits: 1 + 4 + 8 touched files, +4/−49, +23/−38, +19/−15 — each batch far under the caps; total +38/−94 runtime lines over 10 files.)*
-- [ ] Typecheck/lint/test/build pass with zero remaining migration diagnostics and final-interface invariant coverage only. *(All four pass — typecheck 0, lint 0 errors with 182→179 warnings and a file-level diff proving 0 new findings, 926 tests green, build ✓. Outstanding diagnostics are the pre-existing screen-level debt owned by ticket 69.)*
+- [x] Runtime deletion is measured and split if needed; no oversized monolith deletion is assumed exempt. *(Six batches over the two branches: batch 1 = 1 + 4 + 8 touched files, +4/−49, +23/−38, +19/−15; continuation batches 2–6 = 8 + 10 + 5 + 9 + 3 + 3 touched files, +48/−41, +21/−9, +10/−14, +80/−66, +8/−11, +14/−11 — each batch far under the caps; continuation total +181/−152 runtime lines over 28 files.)*
+- [ ] Typecheck/lint/test/build pass with zero remaining migration diagnostics and final-interface invariant coverage only. *(All four pass on both branches — typecheck 0, lint 0 errors with 182 warnings at the ticket base → 179 after batch 1 → 171 after the continuation (a per-file diff over the 28 touched files proves 0 new findings: every file equal except `store.tsx` 21→13 and `h-session.tsx` 9→9 after the C2 relocation), 926 tests green, build ✓. Outstanding diagnostics are the pre-existing screen-level debt owned by ticket 69.)*
 
 ## Retired definitions (batch 1, three commits)
 
@@ -41,23 +41,69 @@
    from `features/operations/preflight` — the exact function the re-export
    forwarded to; the store's last pure forwarding export is gone.
 
+## Retired definitions (continuation batches 2–6, `wi/67b-retirelegacy`)
+
+Every retired definition was either moved to its semantic home with all
+consumers re-pointed, or deleted with its only consumer owning it; the
+observable behavior (demo-clock anchor, labels, derivations) is unchanged.
+
+1. `39c812f` — the store's `computePreflight` demo-anchor wrapper (8 files,
+   +48/−41). The 7 callers (`c`, `c-common.specChecks`, `c-console`,
+   `approvals/service.test`, `assets/writes.test`, `safety/isolation.test`,
+   `safety/preflight.test`) now call `computePreflightChecks` from
+   `features/operations/preflight` at the factory clock's instant
+   (`services.clock.now()` in mounted code; a `MockClock` — the factory's own
+   class and demo anchor — in the static-seed preflight suite). `specChecks`
+   takes the explicit `now: Instant`. The PRE-04 anchor is unchanged: the
+   wrapper's `Date.UTC(2026, 9, 13, 0, nowMin()) − PROJECT_TZ_OFFSET_MS` and
+   the factory clock's `DEMO_ANCHOR` (Oct 13, 2026, 10:42 AM UTC+7) agree.
+2. `392a791` + `19a5ec0` — `ROLE_LABEL` moved to the auth policy authority
+   (`src/auth/policy.ts`, the 6-role matrix module; 15 files, +31/−23). All 9
+   screen/shell consumers import it from there; the store's definition is
+   deleted (the store's audit action imports the canonical map).
+3. `19a5ec0` — the store's dead type re-exports (same commit): `Route`
+   (`c-common`, `shell` now import `router/history`), `CanAction`
+   (`rbac.test` imports `domain/permissions`), `CopilotCtx` (`shell/header`
+   imports `state/stores`). Zero callers left on the store's re-exports.
+4. `ae78c53` — single-consumer helpers moved to their consumers (9 files,
+   +80/−66): `allocation`/`groupSummary` are local to `g-fanout` (their only
+   consumer); `completion` is local to `closure/service.test` (the canonical
+   checklist consumer); `sevLabel` moved to the findings feature
+   (`features/findings/service`) with `e-findings`/`f-report` re-pointed;
+   `hhmm` left the store's export surface (the session console resolves it
+   from the C2 feature — see 6); `today` dropped from `f-settings` (it was
+   only a `{void today}` unused-import marker; the store keeps its internal
+   demo-date constant for `togglePolicy`).
+5. `e57ebcd` — `sessionPerm` retired (3 files, +8/−11): `c-console`'s session
+   cards and `shell/search` resolve `sessionPermOf(db, ctx, s)` from
+   `features/c2/service` — the same derivation (viewer ⇒ none, membership
+   gate, grant ⇒ grant perm, else read-only) with an explicit request context.
+6. `220431f` — the demo wall-clock label `hhmm` hosted in the C2 feature
+   service (`features/c2/service.ts`, 3 files, +14/−11): React-free home for
+   the grant-countdown clock (the `accessOf` formatter already owns the
+   `expires` vocabulary); `h-session` and `safety/grants.test` (the
+   `10:42` anchor lockstep assertion) import it from there, keeping the
+   `shell.test` lint profile at its base count.
+
 ## Residual legacy-core inventory (later batches, owners TBD)
 
-Every remaining store export has ≥1 importer (grep-census after batch 1):
+After batches 1–6 the store's export surface is exactly the live Context seam
+plus the documented membership seam (grep census on `wi/67b-retirelegacy`):
+`StoreProvider` (61 files), `useStore` (106), `useServices` (25 — canonical),
+`useDirty` (8), `canAccessProject` (4 — ticket 06 policy seam), the `Store` and
+`ProjectDraft` types, and the live delegating `A.*` entries with callers:
 
-- The Context bridge itself: `useStore` (100 files), `StoreProvider` (54),
-  `Store`/`useServices`/`useDirty` — per-feature migration to
-  `useServices`/Query + typed actions, then retirement.
+- The Context bridge itself: `useStore`/`StoreProvider`/`useDirty` —
+  per-feature migration to `useServices`/Query + typed actions, then retirement.
 - Live delegating `A.*` entries with callers (estop orchestration, operation
   controls + demo log mirrors, C2 termination, demo simulations) — migrate
   per feature, keeping the observable log/toast behavior.
-- Single-consumer helpers: `allocation`/`groupSummary` (`g-fanout`),
-  `hhmm` (`h-session`), `today` (`f-settings`), `completion`
-  (`closure/service.test` — the canonical-checklist consumer),
-  `computePreflight` (7 callers; the demo-anchor wrapper — callers must move
-  to `computePreflightChecks` + the factory clock, watch the PRE-04 anchor),
-  `sessionPerm` (2), `sevLabel` (2), `ROLE_LABEL` (9), `Route`/`CanAction`/
-  `CopilotCtx` re-exports (1–2 each).
+- Known non-store duplication (out of this ticket's ledger, noted for owners):
+  12 feature modules still hold private copies of the ROLE_LABEL map
+  (`agents/writes`, `approvals/service`, `assets/writes`, `branches/service`,
+  `c2/grants`, `closure/service`, `estop/service`, `operations/service`,
+  `plans/bridge`, `plans/service`, `trace/writes`, `wizard/service`) — they can
+  resolve the canonical `auth/policy` map in their own tickets.
 
 ## Evidence
 
@@ -90,3 +136,46 @@ Every remaining store export has ≥1 importer (grep-census after batch 1):
   eligibility/preflight derivations are pinned by the preflight feature,
   dashboard, portfolio, workspace and safety suites, and `npm run build`
   covers the module graph).
+
+### Continuation (batches 2–6, `wi/67b-retirelegacy`)
+
+- `npm run typecheck` — 0 diagnostics (after every commit).
+- `npm run lint` — 0 errors; 179 warnings after batch 1 → 171. File-level
+  diff over the 28 touched files (base checked out at `e3c0fe9` and linted in
+  place per file, then restored; worktree clean after): every file unchanged
+  except `store.tsx` (21 → 13, the deleted exports' refresh warnings removed)
+  — 0 new findings. (`h-session.tsx` briefly gained a react-refresh finding
+  for the relocated `hhmm` export; hosting it in the React-free C2 feature
+  service restored the file to its base count of 9.)
+- `npm test -- --run` — 926 tests / 69 files green. The known pre-existing
+  parallel-load flake (recorded by tickets 22/65/66 and batch 1) surfaced in
+  2 of 9 full runs as the same file (`shell/shell.test.tsx`); it passes in
+  isolation (12/12) and in the consecutive green full runs, and no timer/
+  fake-clock assertion was changed by these batches (the grant countdown test
+  now imports `hhmm` from the C2 feature service and still asserts the
+  `10:42` anchor lockstep).
+- `npm run build` — succeeds (pre-existing chunk-size warning only).
+- Grep proof (post-continuation tree): the store's retired exports
+  `export function (computePreflight|allocation|groupSummary|completion|sessionPerm|hhmm)|export const (sevLabel|ROLE_LABEL|today)|export type \{ (CanAction|CopilotCtx|Route)`
+  → 0 hits in `store.tsx`; the store's remaining export surface is exactly
+  `canAccessProject`, `Store`, `ProjectDraft`, `useStore`, `useServices`,
+  `StoreProvider`, `useDirty`. Consumer resolution: 9 files import
+  `ROLE_LABEL` from `../auth/policy` (plus the store's internal audit use);
+  `computePreflightChecks` resolves at the preflight feature (11 files);
+  `sessionPermOf` at `c-console`/`search`; `sevLabel` from
+  `features/findings/service` at `e-findings`/`f-report`; `hhmm` from
+  `features/c2/service` at `h-session`/`grants.test` (the store keeps an
+  unexported internal copy for its demo log mirrors); `allocation`/
+  `groupSummary` exist only inside `g-fanout`; `completion` only inside
+  `closure/service.test`.
+- Behavior-identical evidence: every retired definition moved with its
+  consumers to the exact semantic function it forwards to (`computePreflight`
+  → `computePreflightChecks` at the same demo anchor; `sessionPerm` →
+  `sessionPermOf`, same rule; `sevLabel`/`ROLE_LABEL` byte-identical maps) or
+  is owned by its only consumer (allocation/groupSummary/completion/hhmm).
+  No route, seed, timer, subscription or observable event path changed; the
+  grant-countdown and preflight anchor assertions pass unchanged.
+- Browser route exercise: skipped — preview HTTP check optional per AGENTS.md
+  § Windows Temporary Process Safety (same verification gap as batch 1; the
+  migrated derivations are pinned by the preflight, closure, agents, C2 and
+  safety suites, and `npm run build` covers the module graph).

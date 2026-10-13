@@ -11,7 +11,8 @@
  */
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { Activity, Lock, ShieldAlert } from 'lucide-react'
-import { useStore, type Route } from '../store'
+import { useStore } from '../store'
+import type { Route } from '../router/history'
 import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from '../ui'
 import { CopilotDrawer } from '../features/copilot/drawer'
 import { DemoGuide } from '../screens/demo/guide'

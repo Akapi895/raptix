@@ -1,8 +1,8 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { AlertTriangle, ArrowRight, GitBranch, MessageSquare, CalendarClock, CheckCircle2, ClipboardCheck, Lock, Play, Plus, Radio, RefreshCw, ShieldAlert, SlidersHorizontal, ShieldCheck, ShieldX, Wrench, X, Save } from 'lucide-react'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Mono, Pager, PageHeader, Person, PersonaHint, Progress, SearchBox, Segmented, Select, Skeleton, Status, Stepper, Table, Tabs, Textarea, Toggle, useGuard, cx } from '../ui'
-import { computePreflight, useDirty, useStore } from '../store'
-import { eligibility, preflightPass } from '../features/operations/preflight'
+import { useDirty, useServices, useStore } from '../store'
+import { computePreflightChecks, eligibility, preflightPass } from '../features/operations/preflight'
 import { planVer } from '../data'
 import type { Operation } from '../data'
 import type { PfCheck, PfSnap, PfState } from './c-common'
@@ -379,6 +379,7 @@ function OperationNew() {
 /* ═════════════ OP-03 — Preflight ═════════════ */
 function PreflightPage({ op }: { op: Operation }) {
   const { db, go, toast, can, pid, route, persistFilters, setFilter, now } = useStore()
+  const { clock } = useServices()
   const { ro, reason } = useGuard(op.projectId)
   const [checking, setChecking] = useState(false)
   /* Ticket 26: the run goes through the typed handler — the eight checks are
@@ -392,8 +393,9 @@ function PreflightPage({ op }: { op: Operation }) {
   const p = db.projects.find((x) => x.id === op.projectId)!
   const pb = db.playbooks.find((x) => x.id === op.playbookId)
   const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
-  const live = specChecks(db, op)
-  const engine = computePreflight(db, op)
+  const pfNow = clock.now()
+  const live = specChecks(db, op, pfNow)
+  const engine = computePreflightChecks(db, op, pfNow)
   const enginePass = preflightPass(engine)
   const snap = persistFilters['preflight.' + op.id] as PfSnap | undefined
   const planV = pl ? planVer(pl) : '—'
@@ -416,7 +418,7 @@ function PreflightPage({ op }: { op: Operation }) {
       /* A refusal (role, in-flight, superseded scope) surfaces its reason and
          records nothing; a run re-derives the checks and commits atomically. */
       if (!r.ok) { toast(r.failure.message, 'bad'); return }
-      const cs = specChecks(db, op)
+      const cs = specChecks(db, op, clock.now())
       setFilter('preflight.' + op.id, { at: now(), roe: p.roeVersion, plan: planV, checks: cs } as PfSnap)
       toast(pfOverall(cs) === 'fail' ? 'Preflight finished with failures. Start is unavailable.' : 'Preflight snapshot recorded.', pfOverall(cs) === 'fail' ? 'bad' : 'info')
     } })

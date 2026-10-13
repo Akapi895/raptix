@@ -5,7 +5,8 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CornerDownLeft, History, Search } from 'lucide-react'
-import { sessionPerm, useStore } from '../store'
+import { useStore } from '../store'
+import { sessionPermOf } from '../features/c2/service'
 import { IconButton, cx } from '../ui'
 import { NAV } from './nav'
 
@@ -35,7 +36,7 @@ export function GlobalSearch() {
     const pName = (id: string) => id
     const ags = scoped((d.agents || []) as { projectId: string; id: string; host: string; status: string }[])
     const plans = scoped((d.plans || []) as { projectId: string; id: string; title: string; status: string; ver?: string; version: number }[])
-    const sess = scoped((d.sessions || []) as any[]).filter((x) => sessionPerm(db, me, x) !== 'none')
+    const sess = scoped((d.sessions || []) as any[]).filter((x) => sessionPermOf(db, { actor: { id: me.name, role: me.role }, projectId: x.projectId, corr: 'legacy' }, x) !== 'none')
     const all: Hit[] = [
       ...accessible.filter((p) => m(p.id, p.name, p.client)).map((p) => ({ group: 'Projects', id: p.id, label: p.name, meta: `${p.status} · ${p.client}`, to: () => go('project', { id: p.id }) })),
       ...scoped(db.operations).filter((o) => m(o.id, o.name)).map((o) => ({ group: 'Operations', id: o.id, label: o.name, meta: `${o.status} · ${pName(o.projectId)}`, to: () => go('operation', { id: o.id }) })),
