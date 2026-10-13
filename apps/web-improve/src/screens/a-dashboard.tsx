@@ -1,8 +1,8 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FileBarChart, FolderKanban, Inbox, KeyRound, Plus, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow, type LucideIcon } from 'lucide-react'
-import { useStore, sevLabel } from '../store'
+import { useStore } from '../store'
 import { APR } from '../data'
-import type { Plan, Report, SessionRequest, Approval, Severity } from '../data'
+import type { Severity } from '../data'
 import { actorRef } from '../auth/persona'
 import { useAuthStore, useProjectStore, useUiStore } from '../state/stores'
 import { AiModeBadge, Banner, Button, Card, CardHeader, DemoTag, Donut, Empty, Gated, IdLink, Kpi, Legend, Mono, PageHeader, PageSkeleton, Progress, Segmented, STATUS, Status, Timeline, cx } from '../ui'
@@ -10,36 +10,14 @@ import type { CanAction } from '../domain/permissions'
 import { useConsoleGo, useDashboard, type ConsoleGo } from './dashboard/use-dashboard'
 import { attentionItems, canDo, completion, dashboardKpis, eligibility, formatCountdown, grantMinutesLeft, openFindings, opProgress, readiness } from './dashboard/domain'
 import type { AttnSource, DashboardAggregate } from './dashboard/domain'
+import { useTasks } from './tasks/use-tasks'
+import { minutesLeft, TASK_KINDS } from './tasks/domain'
+import type { TaskItem, TaskKind } from './tasks/domain'
 
 const SEV_COLOR: Record<Severity, string> = { critical: 'var(--c-bad)', high: '#F2894F', medium: 'var(--c-warn)', low: 'var(--c-cyan)', info: 'var(--c-neutral)' }
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const SELECT_PROJECT = 'Select a project to continue'
 const ATTN_ICON: Record<AttnSource, LucideIcon> = { agent: WifiOff, plan: Sparkles, request: KeyRound, roe: ShieldAlert, c2: Server }
-
-/* ───────── Shared derived data (legacy path, MyTasks until ticket 15) ───────── */
-function useCC() {
-  const s = useStore()
-  const { db, scoped } = s
-  return useMemo(() => {
-    const projects = s.accessible.filter((p) => s.pid === 'all' || p.id === s.pid)
-    const ops = scoped(db.operations)
-    const agents = scoped(db.agents)
-    const sessions = scoped(db.sessions)
-    const findings = scoped(db.findings)
-    const reports = scoped(db.reports)
-    const plans = scoped(db.plans)
-    const requests = scoped(db.sessionRequests)
-    const approvals = scoped(db.approvals)
-    return {
-      projects, ops, agents, sessions, findings, reports, plans, requests, approvals, audit: scoped(db.audit), c2: db.c2Nodes.filter((n) => s.pid === 'all' || n.projectIds.includes(s.pid)),
-      pendingApprovals: approvals.filter((a) => a.status === 'pending'),
-      pendingPlans: plans.filter((p) => p.status === 'in_review' || p.status === 'proposed'),
-      pendingRequests: requests.filter((r) => r.status === 'pending'),
-      reviewReports: reports.filter((r) => r.status === 'review'),
-      reviewFindings: findings.filter((f) => f.status === 'review'),
-    }
-  }, [db, s.pid, s.accessible, scoped])
-}
 
 /* ───────── Command Center (ticket 14: typed aggregate reads + Query + shared scope) ───────── */
 const ErrorNotice = ({ message, retry }: { message?: string; retry: () => void }) => (
@@ -358,91 +336,67 @@ function ProjectPanels({ ds, pid, go, now, meName }: { ds: DashboardAggregate; p
   )
 }
 
-/* ───────── My Tasks (approvals inbox; ticket 15 migrates this route) ───────── */
-type TaskKind = 'project' | 'scope' | 'closure' | 'plan' | 'access' | 'report' | 'finding'
-interface Task { id: string; kind: TaskKind; label: string; title: string; sub: string; project: string; by: string; at: string; allowed: boolean; why: string; open: () => void; actions: ReactNode }
+/* ───────── My Tasks (ticket 15: typed aggregate reads + Query + shared scope) ───────── */
+const KIND_LABEL: Record<TaskKind, string> = { project: 'Projects', scope: 'Scope', closure: 'Closure', plan: 'Plans', access: 'Access', report: 'Reports', finding: 'Findings' }
 
 export function MyTasks() {
-  const s = useStore()
-  const { go, can, confirm, toast, A, me } = s
-  const d = useCC()
+  const go = useConsoleGo()
+  const pid = useProjectStore((s) => s.pid)
+  const { data, isError, error, refetch, now } = useTasks()
+  const { A, confirm, toast } = useStore()
   const [kind, setKind] = useState<'all' | TaskKind>('all')
   const [mineOnly, setMineOnly] = useState(false)
-  const all = s.pid === 'all'
+  const all = pid === 'all'
+
+  if (!data) {
+    return (
+      <div>
+        <PageHeader title="Tasks & Approval Inbox" sub="Approvals and reviews waiting for a decision." />
+        {isError ? <ErrorNotice message={error?.message} retry={refetch} /> : <PageSkeleton />}
+      </div>
+    )
+  }
+  const { tasks, counts, mine } = data.summary
 
   const decide = (title: string, confirmLabel: string, danger: boolean, fn: (reason: string) => { ok: boolean; error?: string } | void, okMsg: string, reasonRequired: boolean) =>
     confirm({ title, body: 'Your decision and reason are recorded in the audit log.', confirmLabel, danger, reasonLabel: reasonRequired ? 'Reason (required)' : 'Reason (optional)', reasonRequired, onConfirm: (reason) => { const r = fn(reason); if (r && !r.ok) toast(r.error || 'Could not complete the decision.', 'bad'); else toast(okMsg, 'ok') } })
 
-  const apprTask = (a: Approval): Task => {
-    const closure = a.type === APR.close
-    const allowed = closure ? can('confirmClose', a.projectId) : can('approve', a.projectId)
-    const kind: TaskKind = closure ? 'closure' : a.type === APR.scope ? 'scope' : 'project'
-    return {
-      id: a.id, kind, label: a.type, title: `${a.type} — ${a.projectId}`, sub: a.diff || a.note || 'No details provided.', project: a.projectId, by: a.by, at: a.at, allowed,
-      why: closure ? 'Closure is confirmed by a Reviewer or Organization Admin.' : 'Project and scope approvals require the Reviewer or Organization Admin role.',
-      open: () => go('project', { id: a.projectId }),
-      actions: <>
-        <Gated allowed={allowed} reason={closure ? 'Closure is confirmed by a Reviewer or Organization Admin.' : 'Project and scope approvals require the Reviewer or Organization Admin role.'}>
-          <Button size="sm" variant="primary" onClick={() => decide(`Approve ${a.type.toLowerCase()}`, 'Approve', false, (r) => A.decideApproval(a.id, 'approved', r), `${a.id} approved.`, false)}>Approve</Button>
-        </Gated>
-        <Gated allowed={allowed} reason="Return requires the same approver role.">
-          <Button size="sm" onClick={() => decide(`Return ${a.type.toLowerCase()} for changes`, 'Return', true, (r) => A.decideApproval(a.id, 'returned', r), `${a.id} returned for changes.`, true)}>Return</Button>
-        </Gated>
-      </>,
-    }
-  }
-  const planTask = (p: Plan): Task => {
-    const allowed = can('approvePlan', p.projectId) && p.requestedBy !== me.name
-    const why = p.requestedBy === me.name ? 'You requested this plan. Another reviewer must decide.' : 'Plan approval requires the Reviewer or Organization Admin role.'
-    return {
-      id: p.id, kind: 'plan', label: 'Plan approval', title: `${p.id} — ${p.title}`, sub: `${p.steps.length} steps · ${p.steps.filter((x) => x.needsApproval).length} need explicit approval · ROE ${p.roeVersion}`, project: p.projectId, by: p.requestedBy, at: p.updated, allowed, why,
-      open: () => go('ai-plan-review', { id: p.id }),
-      actions: <>
-        <Gated allowed={allowed} reason={why}><Button size="sm" variant="primary" onClick={() => decide(`Approve plan ${p.id}`, 'Approve plan', false, (r) => A.decidePlan(p.id, 'approved', r), `Plan ${p.id} approved.`, false)}>Approve</Button></Gated>
-        <Gated allowed={allowed} reason={why}><Button size="sm" onClick={() => decide(`Reject plan ${p.id}`, 'Reject plan', true, (r) => A.decidePlan(p.id, 'rejected', r), `Plan ${p.id} rejected.`, true)}>Reject</Button></Gated>
-      </>,
-    }
-  }
-  const reqTask = (r: SessionRequest): Task => {
-    const allowed = can('approveAccess', r.projectId)
-    const why = 'Session access is decided by a Red Team Manager or Organization Admin.'
-    return {
-      id: r.id, kind: 'access', label: 'Session access', title: `${r.id} — ${r.mode} access to ${r.sessionId}`, sub: `${r.duration} · ${r.reason}`, project: r.projectId, by: r.by, at: r.at, allowed, why,
-      open: () => go('c2-session', { id: r.sessionId }),
-      actions: <>
-        <Gated allowed={allowed} reason={why}><Button size="sm" variant="primary" onClick={() => decide(`Approve ${r.mode} access`, 'Approve access', false, (n) => { A.decideSessionRequest(r.id, 'approved', n) }, `Access ${r.id} approved.`, false)}>Approve</Button></Gated>
-        <Gated allowed={allowed} reason={why}><Button size="sm" onClick={() => decide('Request changes', 'Request changes', false, (n) => { A.decideSessionRequest(r.id, 'changes', n) }, `Changes requested on ${r.id}.`, true)}>Request changes</Button></Gated>
-        <Gated allowed={allowed} reason={why}><Button size="sm" onClick={() => decide('Reject access request', 'Reject', true, (n) => { A.decideSessionRequest(r.id, 'rejected', n) }, `Access ${r.id} rejected.`, true)}>Reject</Button></Gated>
-      </>,
-    }
-  }
-  const repTask = (r: Report): Task => {
-    const allowed = can('approveReport', r.projectId)
-    return {
-      id: r.id, kind: 'report', label: 'Report review', title: `${r.id} — ${r.title}`, sub: `Version ${r.version} · reviewer ${r.reviewer}`, project: r.projectId, by: r.author, at: r.updated, allowed, why: 'Report approval requires the Reviewer role.',
-      open: () => go('report-review', { id: r.id }),
-      actions: <Gated allowed={allowed} reason="Report approval requires the Reviewer role."><Button size="sm" variant="primary" onClick={() => go('report-review', { id: r.id })}>Review report</Button></Gated>,
-    }
-  }
-  const findTasks: Task[] = d.reviewFindings.map((f) => ({
-    id: f.id, kind: 'finding', label: 'Finding review', title: `${f.id} — ${f.title}`, sub: `${sevLabel[f.severity]} · ${f.asset}`, project: f.projectId, by: f.owner, at: f.updated, allowed: can('reviewFinding', f.projectId), why: 'Finding review requires a Manager or Reviewer.', open: () => go('finding', { id: f.id }),
-    actions: <Gated allowed={can('reviewFinding', f.projectId)} reason="Finding review requires a Manager or Reviewer."><Button size="sm" variant="primary" onClick={() => go('finding', { id: f.id })}>Review finding</Button></Gated>,
-  }))
 
-  const tasks: Task[] = [...d.pendingApprovals.map(apprTask), ...d.pendingPlans.map(planTask), ...d.pendingRequests.map(reqTask), ...d.reviewReports.map(repTask), ...findTasks]
-  const mine = tasks.filter((t) => t.allowed)
+  const open = (t: TaskItem) => () => go(t.to.page, { id: t.to.id, tab: t.to.tab })
+
+  const actions = (t: TaskItem): ReactNode => {
+    if (t.kind === 'plan') return <>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={() => decide(`Approve plan ${t.id}`, 'Approve plan', false, (r) => A.decidePlan(t.id, 'approved', r), `Plan ${t.id} approved.`, false)}>Approve</Button></Gated>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide(`Reject plan ${t.id}`, 'Reject plan', true, (r) => A.decidePlan(t.id, 'rejected', r), `Plan ${t.id} rejected.`, true)}>Reject</Button></Gated>
+    </>
+    if (t.kind === 'access') return <>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={() => decide(`Approve session access ${t.id}`, 'Approve access', false, (n) => { A.decideSessionRequest(t.id, 'approved', n) }, `Access ${t.id} approved.`, false)}>Approve</Button></Gated>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide('Request changes', 'Request changes', false, (n) => { A.decideSessionRequest(t.id, 'changes', n) }, `Changes requested on ${t.id}.`, true)}>Request changes</Button></Gated>
+      <Gated allowed={t.allowed} reason={t.why}><Button size="sm" onClick={() => decide('Reject access request', 'Reject', true, (n) => { A.decideSessionRequest(t.id, 'rejected', n) }, `Access ${t.id} rejected.`, true)}>Reject</Button></Gated>
+    </>
+    if (t.kind === 'report') return <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={open(t)}>Review report</Button></Gated>
+    if (t.kind === 'finding') return <Gated allowed={t.allowed} reason={t.why}><Button size="sm" variant="primary" onClick={open(t)}>Review finding</Button></Gated>
+    return <>
+      <Gated allowed={t.allowed} reason={t.why}>
+        <Button size="sm" variant="primary" onClick={() => decide(`Approve ${t.label.toLowerCase()}`, 'Approve', false, (r) => A.decideApproval(t.id, 'approved', r), `${t.id} approved.`, false)}>Approve</Button>
+      </Gated>
+      <Gated allowed={t.allowed} reason="Return requires the same approver role.">
+        <Button size="sm" onClick={() => decide(`Return ${t.label.toLowerCase()} for changes`, 'Return', true, (r) => A.decideApproval(t.id, 'returned', r), `${t.id} returned for changes.`, true)}>Return</Button>
+      </Gated>
+    </>
+  }
+
   const rows = tasks.filter((t) => (kind === 'all' || t.kind === kind) && (!mineOnly || t.allowed))
-  const count = (k: TaskKind) => tasks.filter((t) => t.kind === k).length
 
   return (
     <div>
-      <PageHeader title="Tasks & Approval Inbox" sub="Approvals and reviews waiting for a decision. Approve or return happens with scope and reason; items your role cannot decide explain why." meta={<span className="rounded-full border border-line bg-subtle px-2 py-0.5 text-xs text-muted">{mine.length} actionable by you</span>} />
+      <PageHeader title="Tasks & Approval Inbox" sub="Approvals and reviews waiting for a decision. Approve or return happens with scope and reason; items your role cannot decide explain why." meta={<span className="rounded-full border border-line bg-subtle px-2 py-0.5 text-xs text-muted">{mine} actionable by you</span>} />
+      {isError && <ErrorNotice message={error?.message} retry={refetch} />}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Segmented value={kind} onChange={setKind} options={[
-          { id: 'all', label: `All (${tasks.length})` }, { id: 'project', label: `Projects (${count('project')})` }, { id: 'scope', label: `Scope (${count('scope')})` }, { id: 'closure', label: `Closure (${count('closure')})` },
-          { id: 'plan', label: `Plans (${count('plan')})` }, { id: 'access', label: `Access (${count('access')})` }, { id: 'report', label: `Reports (${count('report')})` }, { id: 'finding', label: `Findings (${count('finding')})` },
+          { id: 'all', label: `All (${tasks.length})` }, ...TASK_KINDS.map((k) => ({ id: k, label: `${KIND_LABEL[k]} (${counts[k]})` })),
         ]} />
-        <Segmented value={mineOnly ? 'mine' : 'all'} onChange={(v) => setMineOnly(v === 'mine')} options={[{ id: 'all', label: 'All tasks' }, { id: 'mine', label: `Assigned to me (${mine.length})` }]} />
+        <Segmented value={mineOnly ? 'mine' : 'all'} onChange={(v) => setMineOnly(v === 'mine')} options={[{ id: 'all', label: 'All tasks' }, { id: 'mine', label: `Assigned to me (${mine})` }]} />
         {all && <span className="text-xs text-muted">Showing tasks across all accessible projects.</span>}
       </div>
       {rows.length === 0 ? (
@@ -458,13 +412,17 @@ export function MyTasks() {
                       <span className="rounded-full border border-line bg-subtle px-2 py-0.5 text-xs font-medium text-muted">{t.label}</span>
                       <Status kind="approval" value="pending" size="sm" />
                       {!t.allowed && <span className="text-xs text-muted">Read-only for your role</span>}
+                      {t.expiresAt !== undefined && (() => {
+                        const mins = minutesLeft(t.expiresAt, now)
+                        return <span className={cx('text-xs tabular-nums', mins !== undefined && mins <= 0 ? 'font-medium text-warn' : 'text-muted')}>{formatCountdown(mins)}</span>
+                      })()}
                     </div>
-                    <button onClick={t.open} className="text-left text-sm font-semibold hover:underline">{t.title}</button>
+                    <button onClick={open(t)} className="text-left text-sm font-semibold hover:underline">{t.title}</button>
                     <p className="mt-0.5 text-sm text-muted">{t.sub}</p>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted"><span>Project <Mono>{t.project}</Mono></span><span>From {t.by}</span><span>{t.at}</span></div>
-                    {!t.allowed && <p className="mt-2 text-xs text-muted"><AlertTriangle size={12} className="mr-1 inline text-warn" aria-hidden />{t.why} <button onClick={t.open} className="text-accent hover:underline">View details</button></p>}
+                    {!t.allowed && <p className="mt-2 text-xs text-muted"><AlertTriangle size={12} className="mr-1 inline text-warn" aria-hidden />{t.why} <button onClick={open(t)} className="text-accent hover:underline">View details</button></p>}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">{t.actions}<Button size="sm" variant="ghost" onClick={t.open}>Details</Button></div>
+                  <div className="flex flex-wrap items-center gap-2">{actions(t)}<Button size="sm" variant="ghost" onClick={open(t)}>Details</Button></div>
                 </div>
               </Card>
             </li>
