@@ -1,0 +1,12 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix\\apps\\web-improve",
+  "batchFiles": [
+    { "path": ".mise.toml", "language": "toml", "sizeLines": 3, "fileCategory": "config" },
+    { "path": "AGENTS.md", "language": "markdown", "sizeLines": 35, "fileCategory": "docs" },
+    { "path": "implementation-plan.md", "language": "markdown", "sizeLines": 1196, "fileCategory": "docs" },
+    { "path": "index.html", "language": "html", "sizeLines": 16, "fileCategory": "markup" },
+    { "path": "package.json", "language": "json", "sizeLines": 28, "fileCategory": "config" },
+    { "path": "tsconfig.json", "language": "json", "sizeLines": 23, "fileCategory": "config" }
+  ],
+  "batchImportData": {}
+}

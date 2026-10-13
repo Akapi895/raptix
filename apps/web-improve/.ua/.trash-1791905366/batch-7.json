@@ -1,0 +1,144 @@
+{
+  "nodes": [
+    {
+      "id": "config:.mise.toml",
+      "type": "config",
+      "name": ".mise.toml",
+      "filePath": ".mise.toml",
+      "summary": "Cấu hình mise khai báo phiên bản toolchain cho dự án: Node.js 22 và pnpm 10.34.3, giúp môi trường phát triển đồng nhất giữa các máy.",
+      "tags": ["toolchain", "mise", "nodejs", "pnpm", "config"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:AGENTS.md",
+      "type": "document",
+      "name": "AGENTS.md",
+      "filePath": "AGENTS.md",
+      "summary": "Tài liệu hướng dẫn agent mô tả cấu trúc chuẩn của app React + Vite + Tailwind CSS v4 chạy trong Figma Make: dev server trên $PORT, các file chính (src/main.tsx, src/App.tsx, vite.config.ts, .mise.toml), dependency và quy ước styling Tailwind v4.",
+      "tags": ["agents-guide", "project-structure", "tailwind-v4", "vite", "documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:implementation-plan.md",
+      "type": "document",
+      "name": "implementation-plan.md",
+      "filePath": "implementation-plan.md",
+      "summary": "Implementation plan chi tiết cho nền tảng Red Team Management: phân tích hiện trạng (domain model 20+ entities, 42 route, RBAC 6 vai trò, safety invariants), kiến trúc đề xuất với Zustand store slices, TanStack Query, mock service layer, cùng roadmap 5 phase kèm acceptance criteria và testing checklist.",
+      "tags": ["implementation-plan", "architecture", "rbac", "roadmap", "red-team"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:index.html",
+      "type": "file",
+      "name": "index.html",
+      "filePath": "index.html",
+      "summary": "HTML shell của Vite chứa phần tử #root và thẻ script type=module trỏ tới /src/main.tsx, kèm các placeholder figma: cho lang, title và vùng head/body injection của Figma Make.",
+      "tags": ["html-shell", "vite-entry", "figma-make", "root-element"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "package.json",
+      "summary": "Manifest của app figma-make-app (type module): khai báo scripts dev/build/preview của Vite cùng oxfmt, runtime deps React 19, React DOM 19 và lucide-react, dev deps Vite 8, TypeScript 5.7, @vitejs/plugin-react và Tailwind CSS v4.",
+      "tags": ["package-manifest", "vite-scripts", "react-19", "dependencies", "npm"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:tsconfig.json",
+      "type": "config",
+      "name": "tsconfig.json",
+      "filePath": "tsconfig.json",
+      "summary": "Cấu hình TypeScript strict với moduleResolution bundler: target ES2020, JSX react-jsx, noEmit, path alias @/* → ./src/*, include src và vite.config.ts.",
+      "tags": ["typescript", "strict-mode", "path-alias", "compiler-options"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:package.json",
+      "target": "file:src/main.tsx",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:package.json",
+      "target": "file:vite.config.ts",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:tsconfig.json",
+      "target": "file:src/main.tsx",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.mise.toml",
+      "target": "config:package.json",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "document:implementation-plan.md",
+      "target": "file:src/store.tsx",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:implementation-plan.md",
+      "target": "file:src/data.ts",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:implementation-plan.md",
+      "target": "file:src/ui.tsx",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:implementation-plan.md",
+      "target": "file:src/shell.tsx",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:implementation-plan.md",
+      "target": "file:src/App.tsx",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:AGENTS.md",
+      "target": "file:src/main.tsx",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:AGENTS.md",
+      "target": "file:src/App.tsx",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:src/main.tsx",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    }
+  ]
+}

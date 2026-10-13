@@ -1,0 +1,7475 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "b500187f96ce84d07a373fe08c350bbf63794843",
+  "generatedAt": "2026-10-13T08:29:21.913Z",
+  "files": {
+    ".figma/make/analyze-routes": {
+      "filePath": ".figma/make/analyze-routes",
+      "contentHash": "7a81578bcfa5ba5f2105d7165e0cd2d8d1c6151d2a0c5ba766b3ef1c824ee788",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": false
+    },
+    ".figma/make/deploy": {
+      "filePath": ".figma/make/deploy",
+      "contentHash": "fe35b0aff744f5aa8bb16eb1590c720ff6b0ff4bce9ede78f73e02bbfd7e7f3f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": false
+    },
+    ".figma/make/deploy-preview": {
+      "filePath": ".figma/make/deploy-preview",
+      "contentHash": "3b82ce85bad03ce7b0e4e288a6e40e5caf119c41a392de3d3420ff17c42d0e8b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 6,
+      "hasStructuralAnalysis": false
+    },
+    ".figma/make/dev": {
+      "filePath": ".figma/make/dev",
+      "contentHash": "91f795e632539988b0fe3de57084839f41a827ba5c274590388f7d0650ec2314",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": false
+    },
+    ".figma/make/dev.json": {
+      "filePath": ".figma/make/dev.json",
+      "contentHash": "e78b91a2a63456a6eab9756c3fb6d767dfe3673adcef1dcfe4f52c010238c3e7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": false
+    },
+    ".figma/make/format": {
+      "filePath": ".figma/make/format",
+      "contentHash": "254598ef0d1a61c3abc2a426c7065487ca140c8f9b90e4d66ea05dff20832335",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": false
+    },
+    ".figma/make/import-assets.mjs": {
+      "filePath": ".figma/make/import-assets.mjs",
+      "contentHash": "19832cfcff92cdb381cee823ca4b41213f4128d82a6c7a0465040cb48dd717c1",
+      "functions": [
+        {
+          "name": "currentAssets",
+          "params": [
+            "root",
+            "excludedDirectories"
+          ],
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "frontendAssets",
+          "params": [],
+          "exported": true,
+          "lineCount": 38
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:fs",
+          "specifiers": [
+            "constants",
+            "existsSync",
+            "readdirSync"
+          ]
+        },
+        {
+          "source": "node:fs/promises",
+          "specifiers": [
+            "copyFile",
+            "mkdir"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        }
+      ],
+      "exports": [
+        "frontendAssets"
+      ],
+      "totalLines": 83,
+      "hasStructuralAnalysis": true
+    },
+    ".figma/make/install": {
+      "filePath": ".figma/make/install",
+      "contentHash": "90705d33ffd6b0700def7f2f304fd24ae04e17af5fc7d8437df44cf546d64891",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 5,
+      "hasStructuralAnalysis": false
+    },
+    ".figma/make/langserver": {
+      "filePath": ".figma/make/langserver",
+      "contentHash": "e6b9034d28bbc82e6333a3b77f8d5fd593ac54eeed7e4e76569329fdbb534fff",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": false
+    },
+    ".figma/make/site.json": {
+      "filePath": ".figma/make/site.json",
+      "contentHash": "7e8751bab7c255c6807b00084841d2f873f30fe6561497a2407e929666b39015",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 10,
+      "hasStructuralAnalysis": false
+    },
+    ".gitattributes": {
+      "filePath": ".gitattributes",
+      "contentHash": "fdd53ecc7bf79a69d3ef228ec98e0151f10e02702b90b553f04785b61db68354",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 147,
+      "hasStructuralAnalysis": false
+    },
+    ".mise.toml": {
+      "filePath": ".mise.toml",
+      "contentHash": "6d2834ef5f78a7dc4c384570a62b895137fdf63df171d237f0747932bd001435",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": false
+    },
+    ".ua/config.json": {
+      "filePath": ".ua/config.json",
+      "contentHash": "9971b84575d40d2ddf0ceb814b190becc259b128dad479e9357dd6819d36d12e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": false
+    },
+    "AGENTS.md": {
+      "filePath": "AGENTS.md",
+      "contentHash": "977113fedb2fecd71bc0301f758281d9b05a36ddaaf642920df77797432e027a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 36,
+      "hasStructuralAnalysis": false
+    },
+    "implementation-plan.md": {
+      "filePath": "implementation-plan.md",
+      "contentHash": "760363aa8a2a79786d14d169a295be05470b16f7d39303c68f0e69aa775bc479",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1197,
+      "hasStructuralAnalysis": false
+    },
+    "index.html": {
+      "filePath": "index.html",
+      "contentHash": "768eac67e6271681de61c23f1c94a6bf688607bbad2d0bccafd8f4bfe789a079",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 17,
+      "hasStructuralAnalysis": false
+    },
+    "package.json": {
+      "filePath": "package.json",
+      "contentHash": "5dfd04ddac0535808886e8f20c97486ec8b25034d471c6481d91eabb69f9a164",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 29,
+      "hasStructuralAnalysis": false
+    },
+    "src/App.tsx": {
+      "filePath": "src/App.tsx",
+      "contentHash": "a01161d50765f47f2b2947a9206040f50d848f92f2a73331ad46c5aad75a0c7b",
+      "functions": [
+        {
+          "name": "Router",
+          "params": [],
+          "exported": false,
+          "lineCount": 16
+        },
+        {
+          "name": "App",
+          "params": [],
+          "exported": true,
+          "lineCount": 7
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "Suspense",
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "./store",
+          "specifiers": [
+            "StoreProvider",
+            "useStore"
+          ]
+        },
+        {
+          "source": "./shell",
+          "specifiers": [
+            "Shell"
+          ]
+        },
+        {
+          "source": "./screens/a",
+          "specifiers": [
+            "a"
+          ]
+        },
+        {
+          "source": "./screens/b",
+          "specifiers": [
+            "b"
+          ]
+        },
+        {
+          "source": "./screens/c",
+          "specifiers": [
+            "c"
+          ]
+        },
+        {
+          "source": "./screens/d",
+          "specifiers": [
+            "d"
+          ]
+        },
+        {
+          "source": "./screens/e",
+          "specifiers": [
+            "e"
+          ]
+        },
+        {
+          "source": "./screens/f",
+          "specifiers": [
+            "f"
+          ]
+        },
+        {
+          "source": "./screens/g",
+          "specifiers": [
+            "g"
+          ]
+        },
+        {
+          "source": "./screens/h",
+          "specifiers": [
+            "h"
+          ]
+        },
+        {
+          "source": "./screens/scenarios",
+          "specifiers": [
+            "s"
+          ]
+        }
+      ],
+      "exports": [
+        "App"
+      ],
+      "totalLines": 40,
+      "hasStructuralAnalysis": true
+    },
+    "src/data.ts": {
+      "filePath": "src/data.ts",
+      "contentHash": "7773005ed5d6901390ac11e5c4cedb4d7fdcf7d751686d504814d9d9fde41490",
+      "functions": [
+        {
+          "name": "toolFacets",
+          "params": [
+            "t"
+          ],
+          "returnType": "Facets",
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "planVer",
+          "params": [
+            "p"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "D",
+          "params": [
+            "md",
+            "hm"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "s",
+          "params": [
+            "id",
+            "name",
+            "agent",
+            "asset",
+            "technique",
+            "status",
+            "ts",
+            "dur",
+            "output",
+            "evidence"
+          ],
+          "returnType": "Step",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "seed",
+          "params": [
+            "variant"
+          ],
+          "exported": true,
+          "lineCount": 314
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "APR",
+        "BRANCH_LABEL",
+        "BRANCH_TERMINAL",
+        "toolFacets",
+        "planVer",
+        "USERS",
+        "TACTICS",
+        "TECHNIQUES",
+        "seed"
+      ],
+      "totalLines": 468,
+      "hasStructuralAnalysis": true
+    },
+    "src/index.css": {
+      "filePath": "src/index.css",
+      "contentHash": "865e2f18da1521c4bae873dd80b0d745537cc26ed247e5d98b86a0ef30468075",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 113,
+      "hasStructuralAnalysis": false
+    },
+    "src/main.tsx": {
+      "filePath": "src/main.tsx",
+      "contentHash": "5f49dce6e6cc4b5d678cf529ef892af0ab7dfa6afb300b11ad559224019b8b05",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "React"
+          ]
+        },
+        {
+          "source": "react-dom/client",
+          "specifiers": [
+            "ReactDOM"
+          ]
+        },
+        {
+          "source": "./App",
+          "specifiers": [
+            "App"
+          ]
+        },
+        {
+          "source": "./index.css",
+          "specifiers": []
+        }
+      ],
+      "exports": [],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/a-dashboard.tsx": {
+      "filePath": "src/screens/a-dashboard.tsx",
+      "contentHash": "8dca62c06b8fd4327413daa7d57e6afa746972c242d73a9b7dc4edfb20eb321c",
+      "functions": [
+        {
+          "name": "useCC",
+          "params": [],
+          "exported": false,
+          "lineCount": 23
+        },
+        {
+          "name": "opProgress",
+          "params": [
+            "steps"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "Dashboard",
+          "params": [],
+          "exported": true,
+          "lineCount": 139
+        },
+        {
+          "name": "minsLeft",
+          "params": [
+            "expires"
+          ],
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "fmtLeft",
+          "params": [
+            "n"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "Pill",
+          "params": [
+            "{ children, tone = 'neutral' }"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "Row",
+          "params": [
+            "{ onClick, children }"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "ProjectPanels",
+          "params": [
+            "{ pid }"
+          ],
+          "exported": false,
+          "lineCount": 150
+        },
+        {
+          "name": "MyTasks",
+          "params": [],
+          "exported": true,
+          "lineCount": 112
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo",
+            "useState",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Activity",
+            "AlertTriangle",
+            "ArrowRight",
+            "Bug",
+            "CheckCircle2",
+            "ClipboardCheck",
+            "FileBarChart",
+            "FolderKanban",
+            "Inbox",
+            "KeyRound",
+            "Plus",
+            "Radar",
+            "Server",
+            "ShieldAlert",
+            "ShieldCheck",
+            "Sparkles",
+            "Terminal",
+            "WifiOff",
+            "Workflow"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "sevLabel",
+            "readiness",
+            "completion",
+            "eligibility",
+            "hhmm"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "APR"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Plan",
+            "Report",
+            "SessionRequest",
+            "Approval",
+            "Severity"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "AiModeBadge",
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "DemoTag",
+            "Donut",
+            "Empty",
+            "Gated",
+            "IdLink",
+            "Kpi",
+            "Legend",
+            "Mono",
+            "PageHeader",
+            "Progress",
+            "Segmented",
+            "Status",
+            "Timeline",
+            "cx"
+          ]
+        }
+      ],
+      "exports": [
+        "Dashboard",
+        "MyTasks"
+      ],
+      "totalLines": 466,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/a-login.tsx": {
+      "filePath": "src/screens/a-login.tsx",
+      "contentHash": "0db73db04b7ddbfcfcc92cccd3f5dece8cb8def4767cdcdc48eb2f3b8093c185",
+      "functions": [
+        {
+          "name": "Login",
+          "params": [],
+          "exported": true,
+          "lineCount": 162
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "ArrowLeft",
+            "Building2",
+            "Check",
+            "Crosshair",
+            "KeyRound",
+            "Loader2",
+            "LogIn",
+            "ShieldCheck",
+            "Eye",
+            "EyeOff",
+            "LifeBuoy",
+            "Lock",
+            "FlaskConical"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "ROLE_LABEL",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "USERS"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Field",
+            "Input",
+            "Avatar",
+            "cx"
+          ]
+        }
+      ],
+      "exports": [
+        "Login"
+      ],
+      "totalLines": 178,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/a-system.tsx": {
+      "filePath": "src/screens/a-system.tsx",
+      "contentHash": "886493c6b481d048c427d9fa94072668829a746855e07f37b0e05c4af8e9c8d0",
+      "functions": [
+        {
+          "name": "ErrorFrame",
+          "params": [
+            "{ code, icon: I, tone, title, desc, reason, children, actions }"
+          ],
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "Forbidden",
+          "params": [],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "NotFound",
+          "params": [],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "ServerError",
+          "params": [],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "Offline",
+          "params": [],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "SessionExpired",
+          "params": [],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "Sample",
+          "params": [
+            "{ title, desc, children }"
+          ],
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "StatesGallery",
+          "params": [],
+          "exported": true,
+          "lineCount": 78
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useState",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "ArrowLeft",
+            "Clock",
+            "FileSearch",
+            "FolderKanban",
+            "Home",
+            "LifeBuoy",
+            "Loader2",
+            "Lock",
+            "LogIn",
+            "RefreshCw",
+            "ShieldOff",
+            "ServerCrash",
+            "UserCog",
+            "WifiOff",
+            "Inbox",
+            "Eye",
+            "Plug",
+            "Database",
+            "Filter"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "ROLE_LABEL",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "USERS"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Empty",
+            "PageHeader",
+            "Skeleton",
+            "Status",
+            "STATUS",
+            "Table",
+            "Mono",
+            "StatusKind"
+          ]
+        }
+      ],
+      "exports": [
+        "Forbidden",
+        "NotFound",
+        "ServerError",
+        "Offline",
+        "SessionExpired",
+        "StatesGallery"
+      ],
+      "totalLines": 220,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/a.tsx": {
+      "filePath": "src/screens/a.tsx",
+      "contentHash": "9ca5eafc8adc88132ec09086839900aed2314e3e803cf35da5531d38a4f5e40b",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "./a-login",
+          "specifiers": [
+            "Login"
+          ]
+        },
+        {
+          "source": "./a-system",
+          "specifiers": [
+            "Forbidden",
+            "NotFound",
+            "Offline",
+            "ServerError",
+            "SessionExpired",
+            "StatesGallery"
+          ]
+        },
+        {
+          "source": "./a-dashboard",
+          "specifiers": [
+            "Dashboard",
+            "MyTasks"
+          ]
+        }
+      ],
+      "exports": [
+        "routes"
+      ],
+      "totalLines": 17,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/ai-copilot.tsx": {
+      "filePath": "src/screens/ai-copilot.tsx",
+      "contentHash": "685a69fd2de6bcc16032a033b32089f2a8a7a6a02c91379c25f866b39074b3d9",
+      "functions": [
+        {
+          "name": "has",
+          "params": [
+            "kind",
+            "...ks"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "pick",
+          "params": [
+            "kind"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "CopilotDrawer",
+          "params": [],
+          "exported": true,
+          "lineCount": 91
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useRef",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "ExternalLink",
+            "Sparkles",
+            "X"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "AiModeBadge",
+            "Button",
+            "Gated",
+            "IconButton",
+            "Modal"
+          ]
+        },
+        {
+          "source": "./g-common",
+          "specifiers": [
+            "Composer",
+            "EligBadge",
+            "NoProject",
+            "Thread"
+          ]
+        }
+      ],
+      "exports": [
+        "CopilotDrawer"
+      ],
+      "totalLines": 114,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/b-detail.tsx": {
+      "filePath": "src/screens/b-detail.tsx",
+      "contentHash": "4fa4b5c92b068dabf7ab69621e5ac64d8b9de7281b646bed62f31e2198dba5db",
+      "functions": [
+        {
+          "name": "parseDate",
+          "params": [
+            "s"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "Blocked",
+          "params": [
+            "{ kind, id }"
+          ],
+          "exported": false,
+          "lineCount": 16
+        },
+        {
+          "name": "ProjectPage",
+          "params": [],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "Detail",
+          "params": [
+            "{ p }"
+          ],
+          "exported": false,
+          "lineCount": 104
+        },
+        {
+          "name": "Overview",
+          "params": [
+            "{ p, via, setTab }"
+          ],
+          "exported": false,
+          "lineCount": 150
+        },
+        {
+          "name": "Objectives",
+          "params": [
+            "{ p }"
+          ],
+          "exported": false,
+          "lineCount": 24
+        },
+        {
+          "name": "Activity",
+          "params": [
+            "{ p }"
+          ],
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "OpsTab",
+          "params": [
+            "{ p, via, setTab }"
+          ],
+          "exported": false,
+          "lineCount": 51
+        },
+        {
+          "name": "FindingsTab",
+          "params": [
+            "{ p, via }"
+          ],
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "ReportsTab",
+          "params": [
+            "{ p, via }"
+          ],
+          "exported": false,
+          "lineCount": 24
+        },
+        {
+          "name": "EvidenceTab",
+          "params": [
+            "{ p }"
+          ],
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "AuditTab",
+          "params": [
+            "{ p }"
+          ],
+          "exported": false,
+          "lineCount": 23
+        },
+        {
+          "name": "PlansTab",
+          "params": [
+            "{ p }"
+          ],
+          "exported": false,
+          "lineCount": 25
+        },
+        {
+          "name": "SessionsTab",
+          "params": [
+            "{ p }"
+          ],
+          "exported": false,
+          "lineCount": 21
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Lock",
+            "Pin",
+            "PinOff",
+            "Plus",
+            "SearchX",
+            "ShieldOff",
+            "Send",
+            "ArrowRight",
+            "CheckCircle2",
+            "CircleDashed",
+            "ChevronDown",
+            "Sparkles"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "canAccessProject",
+            "ROLE_LABEL",
+            "eligibility",
+            "readiness",
+            "completion"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "APR",
+            "planVer",
+            "Project"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Empty",
+            "FilterBar",
+            "IconButton",
+            "IdLink",
+            "Kpi",
+            "Menu",
+            "PageHeader",
+            "Pager",
+            "Person",
+            "Progress",
+            "Select",
+            "Status",
+            "Sev",
+            "Table",
+            "Tabs",
+            "Timeline",
+            "usePaged",
+            "useGuard",
+            "Col"
+          ]
+        },
+        {
+          "source": "./b-detail2",
+          "specifiers": [
+            "ScopeTab",
+            "TeamTab",
+            "CloseTab",
+            "useSubmitApproval",
+            "useReopen"
+          ]
+        }
+      ],
+      "exports": [
+        "parseDate",
+        "NOW",
+        "MAIN_TABS",
+        "MORE_TABS",
+        "TAB_LIST",
+        "ProjectPage"
+      ],
+      "totalLines": 563,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/b-detail2.tsx": {
+      "filePath": "src/screens/b-detail2.tsx",
+      "contentHash": "0cdc9549ff782e1ce65ce181be959606ab5006feb03e14ee784cb3bf37802c28",
+      "functions": [
+        {
+          "name": "useSubmitApproval",
+          "params": [
+            "p"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "useReopen",
+          "params": [
+            "p"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "ScopeTab",
+          "params": [
+            "{ p }"
+          ],
+          "exported": true,
+          "lineCount": 127
+        },
+        {
+          "name": "prevRoe",
+          "params": [
+            "v"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "bumpRoeLabel",
+          "params": [
+            "v"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "RoeCompare",
+          "params": [
+            "{ p, assets }"
+          ],
+          "exported": false,
+          "lineCount": 33
+        },
+        {
+          "name": "RoePanel",
+          "params": [
+            "{ p, download, compact }"
+          ],
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "EditScope",
+          "params": [
+            "{ p, onClose, confirmReason }"
+          ],
+          "exported": false,
+          "lineCount": 23
+        },
+        {
+          "name": "TeamTab",
+          "params": [
+            "{ p }"
+          ],
+          "exported": true,
+          "lineCount": 98
+        },
+        {
+          "name": "CloseTab",
+          "params": [
+            "{ p, setTab }"
+          ],
+          "exported": true,
+          "lineCount": 104
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Download",
+            "FileText",
+            "Lock",
+            "Pencil",
+            "Plus",
+            "Trash2",
+            "ChevronDown",
+            "ChevronRight",
+            "CheckCircle2",
+            "XCircle"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "closureChecklist",
+            "ROLE_LABEL",
+            "Route"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "APR",
+            "USERS",
+            "Project",
+            "Role",
+            "Approval"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Check",
+            "Card",
+            "CardHeader",
+            "DescList",
+            "Empty",
+            "Field",
+            "IconButton",
+            "IdLink",
+            "Input",
+            "Kpi",
+            "Locked",
+            "Modal",
+            "PersonaHint",
+            "Person",
+            "Progress",
+            "Segmented",
+            "Select",
+            "Status",
+            "Table",
+            "Textarea",
+            "useGuard",
+            "Col"
+          ]
+        }
+      ],
+      "exports": [
+        "useSubmitApproval",
+        "useReopen",
+        "ScopeTab",
+        "TeamTab",
+        "CloseTab"
+      ],
+      "totalLines": 447,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/b-wizard.tsx": {
+      "filePath": "src/screens/b-wizard.tsx",
+      "contentHash": "bf731ead0cc5f51f4c0c3f631097e34566213b9aaaa9b68585e40fc87e6b4019",
+      "functions": [
+        {
+          "name": "fmtDate",
+          "params": [
+            "iso"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "nextId",
+          "params": [
+            "ids",
+            "type"
+          ],
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "ProjectNew",
+          "params": [],
+          "exported": true,
+          "lineCount": 543
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo",
+            "useRef",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "ArrowDown",
+            "ArrowUp",
+            "CheckIcon",
+            "FileText",
+            "Lock",
+            "Plus",
+            "Trash2",
+            "Upload",
+            "X"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "useDirty",
+            "ROLE_LABEL",
+            "ProjectDraft"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "USERS",
+            "Role"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Check",
+            "DescList",
+            "Empty",
+            "Field",
+            "IconButton",
+            "Input",
+            "PageHeader",
+            "Select",
+            "Status",
+            "Tabs",
+            "Textarea",
+            "cx"
+          ]
+        }
+      ],
+      "exports": [
+        "ProjectNew"
+      ],
+      "totalLines": 574,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/b.tsx": {
+      "filePath": "src/screens/b.tsx",
+      "contentHash": "e33654caf4a23fcb2f4df7737083336e12ee4959cb8f0a4ca70187d5d7749f6e",
+      "functions": [
+        {
+          "name": "ProjectsPage",
+          "params": [],
+          "exported": false,
+          "lineCount": 106
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo",
+            "useState",
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Download",
+            "Eye",
+            "MoreHorizontal",
+            "Pencil",
+            "Pin",
+            "PinOff",
+            "Plus",
+            "FolderPlus",
+            "SlidersHorizontal"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "eligibility"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Project"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Button",
+            "Empty",
+            "FilterBar",
+            "IdLink",
+            "Menu",
+            "PageHeader",
+            "Pager",
+            "Person",
+            "SearchBox",
+            "Select",
+            "Status",
+            "Table",
+            "usePaged",
+            "Locked",
+            "Col"
+          ]
+        },
+        {
+          "source": "./b-wizard",
+          "specifiers": [
+            "ProjectNew"
+          ]
+        },
+        {
+          "source": "./b-detail",
+          "specifiers": [
+            "ProjectPage"
+          ]
+        }
+      ],
+      "exports": [
+        "routes"
+      ],
+      "totalLines": 119,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/c-common.tsx": {
+      "filePath": "src/screens/c-common.tsx",
+      "contentHash": "555f586eca5dcb10185bf81cbafbcc13e94fccb8533138e8589da105ad9940b0",
+      "functions": [
+        {
+          "name": "OpGate",
+          "params": [
+            "{ C }"
+          ],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "parseStamp",
+          "params": [
+            "s"
+          ],
+          "returnType": "number | null",
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "schedMs",
+          "params": [
+            "v"
+          ],
+          "returnType": "number | null",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "fmtMs",
+          "params": [
+            "ms"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "fmtSched",
+          "params": [
+            "v"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "fmtMin",
+          "params": [
+            "m"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "elapsed",
+          "params": [
+            "op",
+            "nowStamp"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "windowIssue",
+          "params": [
+            "p",
+            "ms"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "stepCounts",
+          "params": [
+            "steps"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "progressOf",
+          "params": [
+            "steps"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "useFrozen",
+          "params": [
+            "value",
+            "frozen"
+          ],
+          "returnType": "T",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "OpStatus",
+          "params": [
+            "{ value, size }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "hasReview",
+          "params": [
+            "op"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "runtimeLabel",
+          "params": [
+            "op"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "opBranches",
+          "params": [
+            "db",
+            "opId"
+          ],
+          "returnType": "Branch[]",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "stepBranches",
+          "params": [
+            "db",
+            "opId",
+            "stepId"
+          ],
+          "returnType": "Branch[]",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "failedBranches",
+          "params": [
+            "db",
+            "opId"
+          ],
+          "returnType": "Branch[]",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "opGroups",
+          "params": [
+            "db",
+            "opId"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "opConversation",
+          "params": [
+            "db",
+            "op"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "RuntimeStatus",
+          "params": [
+            "{ op, size }"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "planApprovalState",
+          "params": [
+            "pl"
+          ],
+          "returnType": "'none' | 'waiting' | 'approved' | 'rejected' | 'expired'",
+          "exported": true,
+          "lineCount": 2
+        },
+        {
+          "name": "stepMinutes",
+          "params": [
+            "op"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "occupancy",
+          "params": [
+            "op",
+            "nowMs"
+          ],
+          "returnType": "Occupancy | null",
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "findConflicts",
+          "params": [
+            "db",
+            "cand",
+            "nowMs"
+          ],
+          "returnType": "Conflict[]",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "pfOverall",
+          "params": [
+            "cs"
+          ],
+          "returnType": "PfState",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "specChecks",
+          "params": [
+            "db",
+            "op"
+          ],
+          "returnType": "PfCheck[]",
+          "exported": true,
+          "lineCount": 33
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useRef",
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Eye",
+            "Lock",
+            "ShieldX",
+            "SearchX",
+            "GitBranch"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Button",
+            "Empty",
+            "Status"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "canAccessProject",
+            "computePreflight",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "Route"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "planVer"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Branch",
+            "Db",
+            "Operation",
+            "Plan",
+            "Project",
+            "Step"
+          ]
+        }
+      ],
+      "exports": [
+        "OpGate",
+        "parseStamp",
+        "schedMs",
+        "fmtMs",
+        "fmtSched",
+        "elapsed",
+        "windowIssue",
+        "stepCounts",
+        "progressOf",
+        "MASK",
+        "useFrozen",
+        "STEP_BORDER",
+        "OpStatus",
+        "hasReview",
+        "runtimeLabel",
+        "opBranches",
+        "stepBranches",
+        "failedBranches",
+        "opGroups",
+        "opConversation",
+        "RuntimeStatus",
+        "planApprovalState",
+        "stepMinutes",
+        "occupancy",
+        "findConflicts",
+        "PF_LABEL",
+        "PF_TONE",
+        "pfOverall",
+        "specChecks"
+      ],
+      "totalLines": 209,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/c-console.tsx": {
+      "filePath": "src/screens/c-console.tsx",
+      "contentHash": "844ac684c30ad9c701d6ed3e88a7fa1519118c7f606ad817c87b281ad8738442",
+      "functions": [
+        {
+          "name": "StopProgress",
+          "params": [
+            "{ op }"
+          ],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "EmergencyStopDialog",
+          "params": [
+            "{ op, open, onClose }"
+          ],
+          "exported": true,
+          "lineCount": 45
+        },
+        {
+          "name": "StopStatePanel",
+          "params": [
+            "{ op }"
+          ],
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "OpBanner",
+          "params": [
+            "{ op }"
+          ],
+          "exported": true,
+          "lineCount": 36
+        },
+        {
+          "name": "OpControls",
+          "params": [
+            "{ op, onError, size = 'md' }"
+          ],
+          "exported": true,
+          "lineCount": 67
+        },
+        {
+          "name": "SessionCards",
+          "params": [
+            "{ op }"
+          ],
+          "exported": false,
+          "lineCount": 22
+        },
+        {
+          "name": "PlanCard",
+          "params": [
+            "{ op }"
+          ],
+          "exported": false,
+          "lineCount": 16
+        },
+        {
+          "name": "OverviewTab",
+          "params": [
+            "{ op }"
+          ],
+          "exported": true,
+          "lineCount": 120
+        },
+        {
+          "name": "StepDrawer",
+          "params": [
+            "{ op, step, onClose, logs }"
+          ],
+          "exported": true,
+          "lineCount": 79
+        },
+        {
+          "name": "evCat",
+          "params": [
+            "l"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "ConsoleTab",
+          "params": [
+            "{ op: liveOp }"
+          ],
+          "exported": true,
+          "lineCount": 190
+        },
+        {
+          "name": "AgentsTab",
+          "params": [
+            "{ op }"
+          ],
+          "exported": true,
+          "lineCount": 39
+        },
+        {
+          "name": "TimelineTab",
+          "params": [
+            "{ op }"
+          ],
+          "exported": true,
+          "lineCount": 46
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useMemo",
+            "useRef",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Eye",
+            "GitBranch",
+            "MessageSquare",
+            "Activity",
+            "AlertTriangle",
+            "CheckCircle2",
+            "CircleDot",
+            "Clock",
+            "Download",
+            "FlaskConical",
+            "Flag",
+            "Gauge",
+            "HelpCircle",
+            "Lightbulb",
+            "OctagonX",
+            "PanelRightClose",
+            "PanelRightOpen",
+            "Pause",
+            "Play",
+            "Radio",
+            "ShieldAlert",
+            "Sparkles",
+            "Square",
+            "Users",
+            "Video",
+            "WifiOff",
+            "XCircle"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Check",
+            "DemoTag",
+            "Field",
+            "Modal",
+            "Tabs",
+            "Textarea",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Gated",
+            "IdLink",
+            "Kpi",
+            "ApprovalBanner",
+            "Mono",
+            "Person",
+            "Progress",
+            "ConsolePane",
+            "SearchBox",
+            "Select",
+            "Status",
+            "Table",
+            "Timeline",
+            "Toggle",
+            "useGuard",
+            "cx"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "computePreflight",
+            "preflightPass",
+            "sessionPerm",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "BRANCH_LABEL",
+            "planVer",
+            "toolFacets"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Agent",
+            "Operation",
+            "Step"
+          ]
+        },
+        {
+          "source": "./c-common",
+          "specifiers": [
+            "MASK",
+            "OpStatus",
+            "RuntimeStatus",
+            "failedBranches",
+            "hasReview",
+            "opConversation",
+            "opGroups",
+            "parseStamp",
+            "runtimeLabel",
+            "stepBranches",
+            "windowIssue",
+            "elapsed",
+            "planApprovalState",
+            "progressOf",
+            "stepCounts",
+            "useFrozen"
+          ]
+        },
+        {
+          "source": "./g-fanout",
+          "specifiers": [
+            "FanOutCard"
+          ]
+        }
+      ],
+      "exports": [
+        "StopProgress",
+        "EmergencyStopDialog",
+        "StopStatePanel",
+        "OpBanner",
+        "OpControls",
+        "OverviewTab",
+        "StepDrawer",
+        "ConsoleTab",
+        "AgentsTab",
+        "TimelineTab",
+        "Activity",
+        "HelpCircle"
+      ],
+      "totalLines": 754,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/c-results.tsx": {
+      "filePath": "src/screens/c-results.tsx",
+      "contentHash": "11f96ac2c8e7b53a6e526d1d1cb98503403df19b4f9c79a44dbd464a2e550755",
+      "functions": [
+        {
+          "name": "download",
+          "params": [
+            "name",
+            "text",
+            "mime"
+          ],
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "GraphTab",
+          "params": [
+            "{ op }"
+          ],
+          "exported": true,
+          "lineCount": 72
+        },
+        {
+          "name": "ResultsTab",
+          "params": [
+            "{ op }"
+          ],
+          "exported": true,
+          "lineCount": 135
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useRef",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Download",
+            "FilePlus2",
+            "Maximize2",
+            "Network",
+            "Paperclip",
+            "Plus",
+            "Minus",
+            "ShieldAlert"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Check",
+            "DemoTag",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "IdLink",
+            "Input",
+            "Modal",
+            "Mono",
+            "SearchBox",
+            "Select",
+            "Status",
+            "STATUS",
+            "Table",
+            "useGuard",
+            "cx"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "TECHNIQUES",
+            "Operation",
+            "Step"
+          ]
+        },
+        {
+          "source": "./c-common",
+          "specifiers": [
+            "MASK",
+            "STEP_BORDER",
+            "failedBranches",
+            "stepBranches",
+            "stepCounts"
+          ]
+        },
+        {
+          "source": "./c-console",
+          "specifiers": [
+            "StepDrawer"
+          ]
+        }
+      ],
+      "exports": [
+        "GraphTab",
+        "ResultsTab"
+      ],
+      "totalLines": 230,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/c.tsx": {
+      "filePath": "src/screens/c.tsx",
+      "contentHash": "6f05a76e778464b87cd89615eebfddd44e1715c476d259476759c207b2efef48",
+      "functions": [
+        {
+          "name": "Operations",
+          "params": [],
+          "exported": false,
+          "lineCount": 83
+        },
+        {
+          "name": "ConflictPanel",
+          "params": [
+            "{ db, id, agents, assets, at, mins, windowText }"
+          ],
+          "exported": false,
+          "lineCount": 32
+        },
+        {
+          "name": "blockingConflicts",
+          "params": [
+            "db",
+            "id",
+            "agents",
+            "assets",
+            "at",
+            "mins",
+            "nowMs"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "OperationNew",
+          "params": [],
+          "exported": false,
+          "lineCount": 196
+        },
+        {
+          "name": "PreflightPage",
+          "params": [
+            "{ op }"
+          ],
+          "exported": false,
+          "lineCount": 109
+        },
+        {
+          "name": "SchedulePage",
+          "params": [
+            "{ op }"
+          ],
+          "exported": false,
+          "lineCount": 54
+        },
+        {
+          "name": "OperationDetail",
+          "params": [
+            "{ op }"
+          ],
+          "exported": false,
+          "lineCount": 37
+        },
+        {
+          "name": "OpLinks",
+          "params": [
+            "{ op }"
+          ],
+          "exported": false,
+          "lineCount": 16
+        },
+        {
+          "name": "Detail",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "Preflight",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "Schedule",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useMemo",
+            "useState",
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "ArrowRight",
+            "GitBranch",
+            "MessageSquare",
+            "CalendarClock",
+            "CheckCircle2",
+            "ClipboardCheck",
+            "Lock",
+            "Play",
+            "Plus",
+            "Radio",
+            "RefreshCw",
+            "ShieldAlert",
+            "SlidersHorizontal",
+            "ShieldCheck",
+            "ShieldX",
+            "Wrench",
+            "X",
+            "Save"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "ApprovalBanner",
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Check",
+            "DescList",
+            "Empty",
+            "Field",
+            "FilterBar",
+            "IdLink",
+            "Input",
+            "Mono",
+            "Pager",
+            "PageHeader",
+            "Person",
+            "PersonaHint",
+            "Progress",
+            "SearchBox",
+            "Segmented",
+            "Select",
+            "Skeleton",
+            "Status",
+            "Stepper",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "Toggle",
+            "usePaged",
+            "useGuard",
+            "cx"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "computePreflight",
+            "eligibility",
+            "preflightPass",
+            "useDirty",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "planVer"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Operation"
+          ]
+        },
+        {
+          "source": "./c-common",
+          "specifiers": [
+            "PfCheck",
+            "PfSnap",
+            "PfState"
+          ]
+        },
+        {
+          "source": "./c-common",
+          "specifiers": [
+            "runtimeText",
+            "PF_LABEL",
+            "PF_TONE",
+            "OpGate",
+            "OpStatus",
+            "RuntimeStatus",
+            "opConversation",
+            "opGroups",
+            "elapsed",
+            "pfOverall",
+            "specChecks",
+            "findConflicts",
+            "fmtMs",
+            "fmtSched",
+            "parseStamp",
+            "planApprovalState",
+            "progressOf",
+            "schedMs",
+            "stepCounts",
+            "stepMinutes",
+            "windowIssue"
+          ]
+        },
+        {
+          "source": "./c-console",
+          "specifiers": [
+            "AgentsTab",
+            "ConsoleTab",
+            "OpBanner",
+            "OpControls",
+            "OverviewTab",
+            "TimelineTab"
+          ]
+        },
+        {
+          "source": "./c-results",
+          "specifiers": [
+            "GraphTab",
+            "ResultsTab"
+          ]
+        }
+      ],
+      "exports": [
+        "routes",
+        "elapsed"
+      ],
+      "totalLines": 579,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/d-agents.tsx": {
+      "filePath": "src/screens/d-agents.tsx",
+      "contentHash": "7543a06f4554adbe25c766c3b79f9bc45e0204c918a245478a196d50a3e80125",
+      "functions": [
+        {
+          "name": "Heartbeat",
+          "params": [
+            "{ a }"
+          ],
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "GroupModal",
+          "params": [
+            "{ group, onClose }"
+          ],
+          "exported": false,
+          "lineCount": 63
+        },
+        {
+          "name": "isAssignReq",
+          "params": [
+            "t"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "AssignDrawer",
+          "params": [
+            "{ agent: fixed, onClose }"
+          ],
+          "exported": false,
+          "lineCount": 114
+        },
+        {
+          "name": "FailurePanel",
+          "params": [
+            "{ a }"
+          ],
+          "exported": false,
+          "lineCount": 70
+        },
+        {
+          "name": "FleetList",
+          "params": [
+            "{ mode, onNewGroup, newGroupWhy, onAssign }"
+          ],
+          "exported": false,
+          "lineCount": 81
+        },
+        {
+          "name": "GroupsTab",
+          "params": [
+            "{ onNew, onEdit, newWhy }"
+          ],
+          "exported": false,
+          "lineCount": 65
+        },
+        {
+          "name": "HealthTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 77
+        },
+        {
+          "name": "Agents",
+          "params": [],
+          "exported": false,
+          "lineCount": 20
+        },
+        {
+          "name": "AgentDetail",
+          "params": [],
+          "exported": false,
+          "lineCount": 128
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Activity",
+            "AlertTriangle",
+            "ExternalLink",
+            "FolderPlus",
+            "Layers",
+            "Pencil",
+            "Plus",
+            "Power",
+            "RefreshCw",
+            "ShieldAlert",
+            "Trash2",
+            "UserPlus",
+            "Wifi",
+            "WifiOff",
+            "X",
+            "Zap"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "USERS",
+            "Agent",
+            "Group"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Check",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "FilterBar",
+            "IdLink",
+            "Input",
+            "Kpi",
+            "LineChart",
+            "Locked",
+            "Modal",
+            "PageHeader",
+            "Pager",
+            "SearchBox",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "Timeline",
+            "useGuard",
+            "usePaged",
+            "Mono",
+            "cx"
+          ]
+        },
+        {
+          "source": "./d-shared",
+          "specifiers": [
+            "Blocked",
+            "DTable",
+            "hashNum",
+            "Id",
+            "IdL",
+            "MoreFilters",
+            "POOL_LABEL",
+            "shortDate",
+            "Trunc",
+            "useProjectName",
+            "useVisibleAgents",
+            "withLoading"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "BRANCH_LABEL"
+          ]
+        }
+      ],
+      "exports": [
+        "agentRoutes"
+      ],
+      "totalLines": 678,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/d-assets.tsx": {
+      "filePath": "src/screens/d-assets.tsx",
+      "contentHash": "8d3c4d2e78c36dea80000beb3be238eb9077ee3fe7144583e43b6e0aaa99de83",
+      "functions": [
+        {
+          "name": "envOf",
+          "params": [
+            "a"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "okIp",
+          "params": [
+            "s"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "validateIdent",
+          "params": [
+            "type",
+            "ident"
+          ],
+          "returnType": "string",
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "ScopeBadge",
+          "params": [
+            "{ a }"
+          ],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "AssetList",
+          "params": [],
+          "exported": false,
+          "lineCount": 83
+        },
+        {
+          "name": "bumpV",
+          "params": [
+            "v"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "ScopeDiff",
+          "params": [
+            "{ pending, proj, impactedOps }"
+          ],
+          "exported": false,
+          "lineCount": 32
+        },
+        {
+          "name": "AssetScope",
+          "params": [],
+          "exported": false,
+          "lineCount": 130
+        },
+        {
+          "name": "ImportPreview",
+          "params": [
+            "{ rows, setRows, onConfirm, disabled, why, existing }"
+          ],
+          "exported": false,
+          "lineCount": 28
+        },
+        {
+          "name": "AssetNew",
+          "params": [],
+          "exported": false,
+          "lineCount": 118
+        },
+        {
+          "name": "AssetDetail",
+          "params": [],
+          "exported": false,
+          "lineCount": 65
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useRef",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Ban",
+            "BookOpen",
+            "CheckCircle2",
+            "FileUp",
+            "MapIcon",
+            "Plus",
+            "Radar",
+            "Server",
+            "Upload",
+            "X"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "useDirty"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Asset"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Check",
+            "DescList",
+            "Empty",
+            "Field",
+            "FilterBar",
+            "IdLink",
+            "Input",
+            "Kpi",
+            "Locked",
+            "Mono",
+            "PageHeader",
+            "Pager",
+            "SearchBox",
+            "Segmented",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "Timeline",
+            "useGuard",
+            "usePaged",
+            "cx"
+          ]
+        },
+        {
+          "source": "./d-shared",
+          "specifiers": [
+            "Blocked",
+            "DTable",
+            "hashNum",
+            "Id",
+            "IdL",
+            "MoreFilters",
+            "PickProjectBanner",
+            "shortDate",
+            "Trunc",
+            "withLoading"
+          ]
+        }
+      ],
+      "exports": [
+        "validateIdent",
+        "ScopeBadge",
+        "assetRoutes"
+      ],
+      "totalLines": 537,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/d-library.tsx": {
+      "filePath": "src/screens/d-library.tsx",
+      "contentHash": "463821aaeedb805d3fed751ad8b33772eaf901331943004ec0fb841e9a37ac06",
+      "functions": [
+        {
+          "name": "tName",
+          "params": [
+            "id"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "tTactic",
+          "params": [
+            "id"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "PbStatus",
+          "params": [
+            "{ s }"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "Playbooks",
+          "params": [],
+          "exported": false,
+          "lineCount": 76
+        },
+        {
+          "name": "PlaybookDetail",
+          "params": [],
+          "exported": false,
+          "lineCount": 108
+        },
+        {
+          "name": "PlaybookReview",
+          "params": [],
+          "exported": false,
+          "lineCount": 90
+        },
+        {
+          "name": "TechniqueDetail",
+          "params": [],
+          "exported": false,
+          "lineCount": 56
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "BookOpen",
+            "Eye",
+            "ClipboardCheck",
+            "Copy",
+            "Crosshair",
+            "ExternalLink",
+            "GitCompare",
+            "Layers",
+            "Play",
+            "Plus",
+            "Send",
+            "Sparkles",
+            "Upload",
+            "X"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "TACTICS",
+            "TECHNIQUES",
+            "Playbook"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "DescList",
+            "Empty",
+            "FilterBar",
+            "IdLink",
+            "Kpi",
+            "Locked",
+            "Mono",
+            "PageHeader",
+            "SearchBox",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "Timeline",
+            "useGuard",
+            "cx"
+          ]
+        },
+        {
+          "source": "./d-shared",
+          "specifiers": [
+            "Id",
+            "IdL",
+            "MoreFilters",
+            "withLoading"
+          ]
+        }
+      ],
+      "exports": [
+        "libraryRoutes"
+      ],
+      "totalLines": 354,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/d-shared.tsx": {
+      "filePath": "src/screens/d-shared.tsx",
+      "contentHash": "011ead2a8d636dd94468fbf1a06d52bc94f8bbad71a01e6318bca1b5fd39c01b",
+      "functions": [
+        {
+          "name": "withLoading",
+          "params": [
+            "C"
+          ],
+          "returnType": "ComponentType",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "hashNum",
+          "params": [
+            "s"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "useProjectName",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "useVisibleAgents",
+          "params": [],
+          "returnType": "Agent[]",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "PickProjectBanner",
+          "params": [
+            "{ what }"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "Blocked",
+          "params": [
+            "{ title, children, actions }"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "wsLabel",
+          "params": [
+            "n",
+            "one"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "Id",
+          "params": [
+            "{ children, className }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "IdL",
+          "params": [
+            "{ children, onClick }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "MoreFilters",
+          "params": [
+            "{ children, active = 0 }"
+          ],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "DTable",
+          "params": [
+            "{ cols, rows, rowKey, onRow, empty, selectedKey }"
+          ],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "Trunc",
+          "params": [
+            "{ children, max = 'max-w-[180px]' }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "shortDate",
+          "params": [
+            "s"
+          ],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useRef",
+            "useState",
+            "useEffect",
+            "ComponentType",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "FolderOpen",
+            "Lock",
+            "SlidersHorizontal"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Empty",
+            "Mono",
+            "PageSkeleton",
+            "cx"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Agent"
+          ]
+        }
+      ],
+      "exports": [
+        "withLoading",
+        "hashNum",
+        "POOL_LABEL",
+        "useProjectName",
+        "useVisibleAgents",
+        "PickProjectBanner",
+        "Blocked",
+        "wsLabel",
+        "Id",
+        "IdL",
+        "MoreFilters",
+        "DTable",
+        "Trunc",
+        "shortDate"
+      ],
+      "totalLines": 102,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/d.tsx": {
+      "filePath": "src/screens/d.tsx",
+      "contentHash": "a0124bb4653b29de07e94c072a5520d7ec71ebe1e0e4a1001d428058777fc192",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "./d-agents",
+          "specifiers": [
+            "agentRoutes"
+          ]
+        },
+        {
+          "source": "./d-assets",
+          "specifiers": [
+            "assetRoutes"
+          ]
+        },
+        {
+          "source": "./d-library",
+          "specifiers": [
+            "libraryRoutes"
+          ]
+        }
+      ],
+      "exports": [
+        "routes"
+      ],
+      "totalLines": 7,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/demo-guide.tsx": {
+      "filePath": "src/screens/demo-guide.tsx",
+      "contentHash": "2a5bcb1b5d4f4fdfbc63e178bbb1736c3c6e22d07801d3fd5db8f6df112b3297",
+      "functions": [
+        {
+          "name": "s",
+          "params": [
+            "t",
+            "act",
+            "why",
+            "to",
+            "persona",
+            "pid"
+          ],
+          "returnType": "GStep",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "sr",
+          "params": [
+            "t",
+            "act",
+            "why",
+            "to",
+            "runLabel",
+            "run",
+            "persona",
+            "pid"
+          ],
+          "returnType": "GStep",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "setGs",
+          "params": [
+            "n"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "useGs",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "stopGuide",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "jump",
+          "params": [
+            "getS",
+            "to",
+            "persona",
+            "pid"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "stepArgs",
+          "params": [
+            "g",
+            "i"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "launchGuide",
+          "params": [
+            "getS",
+            "id",
+            "at"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "same",
+          "params": [
+            "a",
+            "b"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "DemoGuide",
+          "params": [],
+          "exported": true,
+          "lineCount": 62
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useRef",
+            "useSyncExternalStore"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "ChevronDown",
+            "ChevronLeft",
+            "ChevronRight",
+            "Compass",
+            "X"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        }
+      ],
+      "exports": [
+        "GUIDES",
+        "stopGuide",
+        "jump",
+        "launchGuide",
+        "DemoGuide"
+      ],
+      "totalLines": 340,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/e-analysis.tsx": {
+      "filePath": "src/screens/e-analysis.tsx",
+      "contentHash": "3f20e2cdecddb5c26af4312b8df35861bb2927a452343492c97d0e8884219e3a",
+      "functions": [
+        {
+          "name": "buildAna",
+          "params": [
+            "db",
+            "allOps",
+            "opId",
+            "agent",
+            "os"
+          ],
+          "returnType": "Ana",
+          "exported": false,
+          "lineCount": 35
+        },
+        {
+          "name": "recFor",
+          "params": [
+            "t",
+            "st"
+          ],
+          "exported": false,
+          "lineCount": 2
+        },
+        {
+          "name": "useCreateFinding",
+          "params": [],
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "CreateFindingBtn",
+          "params": [
+            "{ prefill, label = 'Create Finding', size = 'md', variant = 'secondary' }"
+          ],
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "EvidenceList",
+          "params": [
+            "{ ids }"
+          ],
+          "exported": false,
+          "lineCount": 22
+        },
+        {
+          "name": "Chip",
+          "params": [
+            "{ children, onRemove }"
+          ],
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "DetectBadge",
+          "params": [
+            "{ state }"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "Analysis",
+          "params": [],
+          "exported": false,
+          "lineCount": 53
+        },
+        {
+          "name": "NoProjectData",
+          "params": [],
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "NoOps",
+          "params": [],
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "MiniChain",
+          "params": [
+            "{ op }"
+          ],
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "TacticBars",
+          "params": [
+            "{ ana }"
+          ],
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "CoverageBar",
+          "params": [
+            "{ ana }"
+          ],
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "OpTimeline",
+          "params": [
+            "{ ana }"
+          ],
+          "exported": false,
+          "lineCount": 23
+        },
+        {
+          "name": "Overview",
+          "params": [
+            "{ ana }"
+          ],
+          "exported": false,
+          "lineCount": 119
+        },
+        {
+          "name": "Chain",
+          "params": [
+            "{ ana, opId }"
+          ],
+          "exported": false,
+          "lineCount": 189
+        },
+        {
+          "name": "Matrix",
+          "params": [
+            "{ ana }"
+          ],
+          "exported": false,
+          "lineCount": 103
+        },
+        {
+          "name": "Detection",
+          "params": [
+            "{ ana, canAdmin }"
+          ],
+          "exported": false,
+          "lineCount": 145
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo",
+            "useRef",
+            "useState",
+            "ComponentType",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "Bug",
+            "Clock",
+            "Sparkles",
+            "CheckCircle2",
+            "CircleDashed",
+            "Crosshair",
+            "Download",
+            "ExternalLink",
+            "Eye",
+            "Grid3x3",
+            "Lock",
+            "Maximize2",
+            "MinusCircle",
+            "Network",
+            "Plug",
+            "Radar",
+            "RotateCcw",
+            "ShieldAlert",
+            "X",
+            "XCircle",
+            "ZoomIn",
+            "ZoomOut"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "ROLE_LABEL",
+            "eligibility",
+            "useStore",
+            "Store"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "TACTICS",
+            "TECHNIQUES",
+            "DetectState",
+            "Operation",
+            "Step",
+            "Technique"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "SearchBox",
+            "Card",
+            "CardHeader",
+            "Drawer",
+            "Empty",
+            "Kpi",
+            "Mono",
+            "PageHeader",
+            "Segmented",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "cx"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Db"
+          ]
+        }
+      ],
+      "exports": [
+        "analysisRoutes",
+        "Store"
+      ],
+      "totalLines": 873,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/e-findings.tsx": {
+      "filePath": "src/screens/e-findings.tsx",
+      "contentHash": "819efac03ef124fb70c7c2b75f6d303fed5d811c1024f1a9cbac053532ca8174",
+      "functions": [
+        {
+          "name": "ts",
+          "params": [
+            "s"
+          ],
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "isVerified",
+          "params": [
+            "f"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "useCreateReason",
+          "params": [
+            "projectId"
+          ],
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "useAiActions",
+          "params": [],
+          "exported": false,
+          "lineCount": 16
+        },
+        {
+          "name": "MoreFilters",
+          "params": [
+            "{ children, active }"
+          ],
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "FindingList",
+          "params": [],
+          "exported": false,
+          "lineCount": 99
+        },
+        {
+          "name": "useFinding",
+          "params": [
+            "id"
+          ],
+          "returnType": "{ f?: Finding; blocked?: ReactNode }",
+          "exported": false,
+          "lineCount": 20
+        },
+        {
+          "name": "MaskedName",
+          "params": [
+            "{ ev }"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "FindingForm",
+          "params": [],
+          "exported": false,
+          "lineCount": 182
+        },
+        {
+          "name": "FindingDetail",
+          "params": [],
+          "exported": false,
+          "lineCount": 161
+        },
+        {
+          "name": "AddToReport",
+          "params": [
+            "{ open, onClose, f, reports }"
+          ],
+          "exported": false,
+          "lineCount": 22
+        },
+        {
+          "name": "EvidenceTab",
+          "params": [
+            "{ f, ro }"
+          ],
+          "exported": false,
+          "lineCount": 53
+        },
+        {
+          "name": "UploadModal",
+          "params": [
+            "{ open, onClose, f }"
+          ],
+          "exported": false,
+          "lineCount": 29
+        },
+        {
+          "name": "EvidencePreview",
+          "params": [
+            "{ ev, f, onOp }"
+          ],
+          "exported": false,
+          "lineCount": 27
+        },
+        {
+          "name": "RetestTab",
+          "params": [
+            "{ f, ro, roReason }"
+          ],
+          "exported": false,
+          "lineCount": 45
+        },
+        {
+          "name": "fakeHash",
+          "params": [
+            "id"
+          ],
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "EvidenceList",
+          "params": [],
+          "exported": false,
+          "lineCount": 29
+        },
+        {
+          "name": "EvidenceInspector",
+          "params": [],
+          "exported": false,
+          "lineCount": 105
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useMemo",
+            "useState",
+            "ComponentType",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "Bug",
+            "Download",
+            "ExternalLink",
+            "FileImage",
+            "FilePlus2",
+            "FileText",
+            "Link2",
+            "Lock",
+            "Sparkles",
+            "Eye",
+            "EyeOff",
+            "Fingerprint",
+            "X",
+            "Search",
+            "Paperclip",
+            "Pencil",
+            "Plus",
+            "RotateCcw",
+            "Send",
+            "ShieldCheck",
+            "Upload"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "ROLE_LABEL",
+            "canAccessProject",
+            "sevLabel",
+            "useDirty",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "TECHNIQUES",
+            "Evidence",
+            "Finding",
+            "FindingStatus",
+            "Severity"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Check",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "FilterBar",
+            "Input",
+            "Kpi",
+            "Locked",
+            "Modal",
+            "Mono",
+            "PageHeader",
+            "Pager",
+            "Person",
+            "PersonaHint",
+            "SearchBox",
+            "Segmented",
+            "Select",
+            "Sev",
+            "Status",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "Timeline",
+            "cx",
+            "usePaged",
+            "useGuard"
+          ]
+        }
+      ],
+      "exports": [
+        "findingRoutes",
+        "Segmented"
+      ],
+      "totalLines": 886,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/e.tsx": {
+      "filePath": "src/screens/e.tsx",
+      "contentHash": "154d1e06cf981b2362f0e5acb1724ecf707b63f57d66a57096098253b5838d76",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "./e-analysis",
+          "specifiers": [
+            "analysisRoutes"
+          ]
+        },
+        {
+          "source": "./e-findings",
+          "specifiers": [
+            "findingRoutes"
+          ]
+        }
+      ],
+      "exports": [
+        "routes"
+      ],
+      "totalLines": 6,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/f-report.tsx": {
+      "filePath": "src/screens/f-report.tsx",
+      "contentHash": "290ab946863380caf79e795b0aae3305684e7c1842cb0f33c6944fa010b26ab8",
+      "functions": [
+        {
+          "name": "hardGo",
+          "params": [
+            "page",
+            "id"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "closureEvidence",
+          "params": [
+            "db",
+            "projectId"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "reportChecks",
+          "params": [
+            "db",
+            "r",
+            "nf"
+          ],
+          "returnType": "RCheck[]",
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "useNoFind",
+          "params": [
+            "id"
+          ],
+          "returnType": "[NoFind | undefined, (v: NoFind) => void]",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "AiExclusion",
+          "params": [
+            "{ projectId }"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "useSnaps",
+          "params": [
+            "id"
+          ],
+          "returnType": "Snap[]",
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "useSubmitter",
+          "params": [],
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "DiffView",
+          "params": [
+            "{ sections, a, b, aLabel, bLabel, af, bf }"
+          ],
+          "exported": false,
+          "lineCount": 19
+        },
+        {
+          "name": "CheckList",
+          "params": [
+            "{ checks }"
+          ],
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "useGate",
+          "params": [
+            "id"
+          ],
+          "returnType": "{ r?: Report; block?: ReactNode }",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "ReportHead",
+          "params": [
+            "{ r, sub, actions, tab }"
+          ],
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "ReportNew",
+          "params": [],
+          "exported": true,
+          "lineCount": 125
+        },
+        {
+          "name": "ReportEditor",
+          "params": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "SUGGEST",
+          "params": [
+            "title",
+            "client",
+            "roe"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "EditorInner",
+          "params": [
+            "{ r }"
+          ],
+          "exported": false,
+          "lineCount": 215
+        },
+        {
+          "name": "ReportPreview",
+          "params": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "PreviewInner",
+          "params": [
+            "{ r }"
+          ],
+          "exported": false,
+          "lineCount": 97
+        },
+        {
+          "name": "Missing",
+          "params": [
+            "{ children }"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "ReportReview",
+          "params": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "ReviewInner",
+          "params": [
+            "{ r }"
+          ],
+          "exported": false,
+          "lineCount": 186
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useMemo",
+            "useRef",
+            "useState",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "ArrowLeft",
+            "CheckCircle2",
+            "Download",
+            "Eye",
+            "FileText",
+            "History",
+            "Lock",
+            "RotateCcw",
+            "Save",
+            "Send",
+            "ShieldCheck",
+            "Wand2",
+            "XCircle",
+            "ListChecks",
+            "Plus",
+            "Table2"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "useDirty",
+            "sevLabel",
+            "stamp"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Report",
+            "Finding"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "USERS"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "Check",
+            "Drawer",
+            "Empty",
+            "Field",
+            "Input",
+            "Mono",
+            "PageHeader",
+            "PersonaHint",
+            "Segmented",
+            "Select",
+            "Sev",
+            "Status",
+            "Stepper",
+            "Table",
+            "Textarea",
+            "Timeline",
+            "cx",
+            "useGuard"
+          ]
+        }
+      ],
+      "exports": [
+        "CONFIRMED_OR_LATER",
+        "closureEvidence",
+        "reportChecks",
+        "useNoFind",
+        "AiExclusion",
+        "ReportNew",
+        "ReportEditor",
+        "ReportPreview",
+        "ReportReview"
+      ],
+      "totalLines": 804,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/f-settings.tsx": {
+      "filePath": "src/screens/f-settings.tsx",
+      "contentHash": "5c4028a07453f2f66b8adb89829a8a1232c6232b8920254195b06052cd993fdf",
+      "functions": [
+        {
+          "name": "Forbidden",
+          "params": [
+            "{ reason }"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "ReadOnlyNote",
+          "params": [
+            "{ children }"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "SettingsPage",
+          "params": [],
+          "exported": true,
+          "lineCount": 47
+        },
+        {
+          "name": "OrgTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 43
+        },
+        {
+          "name": "corr",
+          "params": [
+            "a"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "actorType",
+          "params": [
+            "a"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "utcOf",
+          "params": [
+            "at"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "UsersTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 92
+        },
+        {
+          "name": "IntegrationsTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 41
+        },
+        {
+          "name": "ApprovalMatrix",
+          "params": [],
+          "exported": false,
+          "lineCount": 31
+        },
+        {
+          "name": "PoliciesTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "PolicyList",
+          "params": [],
+          "exported": false,
+          "lineCount": 70
+        },
+        {
+          "name": "RetentionTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 34
+        },
+        {
+          "name": "TemplatesTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "DetectionTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 19
+        },
+        {
+          "name": "AuditTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 70
+        },
+        {
+          "name": "NotifTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 48
+        },
+        {
+          "name": "SecurityTab",
+          "params": [],
+          "exported": false,
+          "lineCount": 31
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo",
+            "useState",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "Bell",
+            "CheckCircle2",
+            "CircleHelp",
+            "Clock",
+            "Download",
+            "KeyRound",
+            "Lock",
+            "LogOut",
+            "MinusCircle",
+            "MoreHorizontal",
+            "OctagonX",
+            "Plug",
+            "RefreshCw",
+            "Save",
+            "ShieldAlert",
+            "ShieldCheck",
+            "Trash2",
+            "UserPlus",
+            "XCircle"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "useDirty",
+            "ROLE_LABEL",
+            "stamp",
+            "today"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "USERS",
+            "TECHNIQUES",
+            "Role",
+            "DetectState"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Avatar",
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "FilterBar",
+            "Input",
+            "Menu",
+            "Modal",
+            "Mono",
+            "PageHeader",
+            "Pager",
+            "SearchBox",
+            "Segmented",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "Timeline",
+            "Toggle",
+            "cx",
+            "usePaged"
+          ]
+        }
+      ],
+      "exports": [
+        "SettingsPage"
+      ],
+      "totalLines": 623,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/f.tsx": {
+      "filePath": "src/screens/f.tsx",
+      "contentHash": "eea64a8afde6cb2da405c859d69870f3231c94ebccad779a2ce5318f1957ca7c",
+      "functions": [
+        {
+          "name": "ReportsPage",
+          "params": [],
+          "exported": false,
+          "lineCount": 28
+        },
+        {
+          "name": "ReportList",
+          "params": [
+            "{ reports }"
+          ],
+          "exported": false,
+          "lineCount": 54
+        },
+        {
+          "name": "Templates",
+          "params": [],
+          "exported": false,
+          "lineCount": 51
+        },
+        {
+          "name": "Exports",
+          "params": [],
+          "exported": false,
+          "lineCount": 36
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useState",
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Copy",
+            "Download",
+            "Eye",
+            "FileText",
+            "History",
+            "Lock",
+            "Plus",
+            "Rocket",
+            "Send",
+            "Upload"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Report",
+            "Template"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "Drawer",
+            "Empty",
+            "FilterBar",
+            "IdLink",
+            "Kpi",
+            "Mono",
+            "PageHeader",
+            "Pager",
+            "SearchBox",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "cx",
+            "usePaged"
+          ]
+        },
+        {
+          "source": "./f-report",
+          "specifiers": [
+            "ReportNew",
+            "ReportEditor",
+            "ReportPreview",
+            "ReportReview",
+            "AiExclusion",
+            "reportChecks",
+            "NoFind"
+          ]
+        },
+        {
+          "source": "./f-settings",
+          "specifiers": [
+            "SettingsPage"
+          ]
+        }
+      ],
+      "exports": [
+        "routes"
+      ],
+      "totalLines": 199,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/g-chat.tsx": {
+      "filePath": "src/screens/g-chat.tsx",
+      "contentHash": "3e0f2412f8c8a88d122774ec6a7f6d85e1dd68e84f1501dee5d3de4fccbb6fac",
+      "functions": [
+        {
+          "name": "readOpen",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "AiOperator",
+          "params": [],
+          "exported": true,
+          "lineCount": 78
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "ListTree",
+            "PanelRight",
+            "Plus",
+            "Sparkles"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "eligibility",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Drawer",
+            "Empty",
+            "PageHeader"
+          ]
+        },
+        {
+          "source": "./g-common",
+          "specifiers": [
+            "AiSubNav",
+            "Composer",
+            "NoProject",
+            "Pill",
+            "STARTERS",
+            "Thread"
+          ]
+        },
+        {
+          "source": "./g-workspace",
+          "specifiers": [
+            "ConvBanner",
+            "ConversationHeader",
+            "INSP",
+            "Inspector",
+            "LeftRail",
+            "RAIL",
+            "Separator",
+            "useResizable",
+            "useViewportW"
+          ]
+        }
+      ],
+      "exports": [
+        "AiOperator"
+      ],
+      "totalLines": 89,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/g-common.tsx": {
+      "filePath": "src/screens/g-common.tsx",
+      "contentHash": "871029bc08d7772f8d5ea2861d2c4c0bd1b1af6225835a0d596b22c25ae2e34c",
+      "functions": [
+        {
+          "name": "moveRadio",
+          "params": [
+            "e"
+          ],
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "tz",
+          "params": [
+            "t"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "Pill",
+          "params": [
+            "{ tone = 'neutral', children }"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "EligBadge",
+          "params": [
+            "{ pid }"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "toolFlow",
+          "params": [
+            "e",
+            "db"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "execTone",
+          "params": [
+            "s"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "useReplan",
+          "params": [
+            "pid"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "ReplanPanel",
+          "params": [
+            "{ pid, compact }"
+          ],
+          "exported": true,
+          "lineCount": 49
+        },
+        {
+          "name": "bumpLabel",
+          "params": [
+            "p"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "ExecBanner",
+          "params": [
+            "{ conv }"
+          ],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "AiSubNav",
+          "params": [
+            "{ current }"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "NoProject",
+          "params": [
+            "{ compact }"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "PlanCard",
+          "params": [
+            "{ plan, compact }"
+          ],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "useTraceLink",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "ToolProposalCard",
+          "params": [
+            "{ tool, compact }"
+          ],
+          "exported": true,
+          "lineCount": 65
+        },
+        {
+          "name": "Msg",
+          "params": [
+            "{ m, compact }"
+          ],
+          "exported": false,
+          "lineCount": 45
+        },
+        {
+          "name": "Thread",
+          "params": [
+            "{ conv, compact }"
+          ],
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "Composer",
+          "params": [
+            "{ conv, suggestions = STARTERS, compact }"
+          ],
+          "exported": true,
+          "lineCount": 37
+        },
+        {
+          "name": "ModeSwitch",
+          "params": [
+            "{ conv }"
+          ],
+          "exported": true,
+          "lineCount": 16
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "./g-fanout",
+          "specifiers": [
+            "FanOutCard"
+          ]
+        },
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useRef",
+            "useState",
+            "ReactKeyboardEvent"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "Ban",
+            "BarChart3",
+            "Bot",
+            "Check",
+            "FileText",
+            "GitBranch",
+            "Info",
+            "Lock",
+            "Send",
+            "ShieldCheck",
+            "Terminal",
+            "User",
+            "Cog",
+            "X"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "eligibility",
+            "useDirty",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "planVer",
+            "toolFacets"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "AiMode",
+            "ChatMsg",
+            "Conversation",
+            "Db",
+            "Plan",
+            "ToolEvent"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "AiModeBadge",
+            "Banner",
+            "Button",
+            "DemoTag",
+            "Field",
+            "Gated",
+            "IdLink",
+            "Modal",
+            "Status",
+            "Tabs",
+            "Textarea",
+            "cx"
+          ]
+        }
+      ],
+      "exports": [
+        "MODES",
+        "STARTERS",
+        "tz",
+        "Pill",
+        "EligBadge",
+        "toolFlow",
+        "execTone",
+        "useReplan",
+        "ReplanPanel",
+        "ExecBanner",
+        "AiSubNav",
+        "NoProject",
+        "PlanCard",
+        "useTraceLink",
+        "ToolProposalCard",
+        "Thread",
+        "Composer",
+        "ModeSwitch"
+      ],
+      "totalLines": 398,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/g-fanout.tsx": {
+      "filePath": "src/screens/g-fanout.tsx",
+      "contentHash": "66d90d17a35093bdb6172de29f25341ecc8f7e27512abb004c2f052bb784643b",
+      "functions": [
+        {
+          "name": "BranchStatus",
+          "params": [
+            "{ state }"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "isConn",
+          "params": [
+            "a"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "goTrace",
+          "params": [
+            "ev"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "useLinks",
+          "params": [],
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "replacementFor",
+          "params": [
+            "db",
+            "b"
+          ],
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "FanOutCard",
+          "params": [
+            "{ groupId }"
+          ],
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "AllocationView",
+          "params": [
+            "{ projectId }"
+          ],
+          "exported": true,
+          "lineCount": 60
+        },
+        {
+          "name": "BranchBody",
+          "params": [
+            "{ b }"
+          ],
+          "exported": false,
+          "lineCount": 74
+        },
+        {
+          "name": "IdLinkGroup",
+          "params": [
+            "{ id }"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "RetryModal",
+          "params": [
+            "{ b, open, onClose }"
+          ],
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "ReassignModal",
+          "params": [
+            "{ b, open, onClose }"
+          ],
+          "exported": false,
+          "lineCount": 29
+        },
+        {
+          "name": "CancelModal",
+          "params": [
+            "{ b, open, onClose }"
+          ],
+          "exported": false,
+          "lineCount": 16
+        },
+        {
+          "name": "BranchDrawer",
+          "params": [
+            "{ branchId, onClose }"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "BranchPage",
+          "params": [],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "Graph",
+          "params": [
+            "{ groupId, onSelect }"
+          ],
+          "exported": false,
+          "lineCount": 38
+        },
+        {
+          "name": "FanIn",
+          "params": [
+            "{ groupId }"
+          ],
+          "exported": false,
+          "lineCount": 36
+        },
+        {
+          "name": "FanOutPage",
+          "params": [],
+          "exported": true,
+          "lineCount": 81
+        },
+        {
+          "name": "AiTeamView",
+          "params": [
+            "{ projectId }"
+          ],
+          "exported": true,
+          "lineCount": 22
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo",
+            "useState"
+          ]
+        },
+        {
+          "source": "react",
+          "specifiers": [
+            "ComponentType",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "Ban",
+            "CheckCircle2",
+            "CircleDashed",
+            "Clock",
+            "HelpCircle",
+            "Layers",
+            "Loader2",
+            "PauseCircle",
+            "RotateCcw",
+            "ShieldQuestion",
+            "Users",
+            "XCircle"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "LucideIcon"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "allocation",
+            "groupSummary",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "BRANCH_LABEL",
+            "BRANCH_TERMINAL",
+            "toolFacets"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Agent",
+            "Branch",
+            "BranchState",
+            "WorkerState"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "Gated",
+            "IdLink",
+            "Kpi",
+            "Modal",
+            "Mono",
+            "PageHeader",
+            "SearchBox",
+            "Segmented",
+            "Select",
+            "Status",
+            "Table",
+            "Textarea",
+            "Timeline",
+            "cx"
+          ]
+        },
+        {
+          "source": "./g-common",
+          "specifiers": [
+            "NoProject",
+            "tz"
+          ]
+        }
+      ],
+      "exports": [
+        "BranchStatus",
+        "FanOutCard",
+        "AllocationView",
+        "BranchDrawer",
+        "BranchPage",
+        "FanOutPage",
+        "AiTeamView",
+        "routes"
+      ],
+      "totalLines": 502,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/g-plan.tsx": {
+      "filePath": "src/screens/g-plan.tsx",
+      "contentHash": "6cd6a6fb18fa594ebc3ecc29e1bad5cfa859406c0ce804ced1943587129268e1",
+      "functions": [
+        {
+          "name": "useCrumbs",
+          "params": [
+            "plan",
+            "leaf"
+          ],
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "reapprovalNotes",
+          "params": [
+            "a",
+            "b",
+            "db"
+          ],
+          "returnType": "string[]",
+          "exported": false,
+          "lineCount": 16
+        },
+        {
+          "name": "StepDrawer",
+          "params": [
+            "{ plan, stepId, onClose }"
+          ],
+          "exported": false,
+          "lineCount": 31
+        },
+        {
+          "name": "versionChain",
+          "params": [
+            "plan",
+            "db"
+          ],
+          "returnType": "Plan[]",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "Risk",
+          "params": [
+            "{ v }"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "usePlan",
+          "params": [],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "PlanGuard",
+          "params": [
+            "{ children, title }"
+          ],
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "PlanTabs",
+          "params": [
+            "{ plan, page }"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "approvalState",
+          "params": [
+            "p"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "Validation",
+          "params": [
+            "{ plan }"
+          ],
+          "exported": false,
+          "lineCount": 22
+        },
+        {
+          "name": "ReviseDialog",
+          "params": [
+            "{ plan, open, onClose }"
+          ],
+          "exported": false,
+          "lineCount": 34
+        },
+        {
+          "name": "Builder",
+          "params": [
+            "{ plan, onRevise, request }"
+          ],
+          "exported": false,
+          "lineCount": 89
+        },
+        {
+          "name": "AiPlan",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "PlanDetail",
+          "params": [
+            "{ plan }"
+          ],
+          "exported": false,
+          "lineCount": 157
+        },
+        {
+          "name": "AiPlanReview",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "policyChecks",
+          "params": [
+            "plan",
+            "db"
+          ],
+          "returnType": "Chk[]",
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "PolicyChecks",
+          "params": [
+            "{ plan }"
+          ],
+          "exported": false,
+          "lineCount": 19
+        },
+        {
+          "name": "stepState",
+          "params": [
+            "s",
+            "plan",
+            "db"
+          ],
+          "returnType": "'pass' | 'warn' | 'fail'",
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "phasesOf",
+          "params": [
+            "steps"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "detailOf",
+          "params": [
+            "s",
+            "steps",
+            "db"
+          ],
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "StepGroups",
+          "params": [
+            "{ plan, steps, sel, onSel, edit, move, remove }"
+          ],
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "ApprovalImpact",
+          "params": [
+            "{ s, plan }"
+          ],
+          "exported": false,
+          "lineCount": 6
+        },
+        {
+          "name": "ReviewBody",
+          "params": [
+            "{ plan }"
+          ],
+          "exported": false,
+          "lineCount": 114
+        },
+        {
+          "name": "stepDiff",
+          "params": [
+            "a",
+            "b"
+          ],
+          "exported": false,
+          "lineCount": 17
+        },
+        {
+          "name": "AiPlanCompare",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "CompareBody",
+          "params": [
+            "{ plan }"
+          ],
+          "exported": false,
+          "lineCount": 57
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useState"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "ArrowDown",
+            "ArrowUp",
+            "CheckCircle2",
+            "Plus",
+            "Rocket",
+            "Trash2",
+            "XCircle"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useDirty",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "planVer"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Plan",
+            "PlanStep"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "ApprovalBanner",
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "Gated",
+            "IdLink",
+            "Input",
+            "Modal",
+            "PageHeader",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "Check",
+            "Mono",
+            "cx"
+          ]
+        },
+        {
+          "source": "./g-common",
+          "specifiers": [
+            "NoProject",
+            "ReplanPanel",
+            "tz",
+            "useReplan"
+          ]
+        },
+        {
+          "source": "./g-fanout",
+          "specifiers": [
+            "FanOutCard"
+          ]
+        }
+      ],
+      "exports": [
+        "usePlan",
+        "AiPlan",
+        "AiPlanReview",
+        "policyChecks",
+        "AiPlanCompare"
+      ],
+      "totalLines": 735,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/g-trace.tsx": {
+      "filePath": "src/screens/g-trace.tsx",
+      "contentHash": "0c928febb28530937eaae8e2bef59010328fcde6f02fc43827e0fcad6e856990",
+      "functions": [
+        {
+          "name": "bucket",
+          "params": [
+            "e"
+          ],
+          "returnType": "Bucket",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "polTone",
+          "params": [
+            "p"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "apprTone",
+          "params": [
+            "a"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "exTone",
+          "params": [
+            "x"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "dur",
+          "params": [
+            "ms"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "hashParam",
+          "params": [
+            "k"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "setHash",
+          "params": [
+            "view",
+            "ev"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "Pop",
+          "params": [
+            "{ label, icon: I, badge, children, width = 260 }"
+          ],
+          "exported": false,
+          "lineCount": 17
+        },
+        {
+          "name": "AiTrace",
+          "params": [],
+          "exported": true,
+          "lineCount": 140
+        },
+        {
+          "name": "Dash",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "Grouped",
+          "params": [
+            "{ events, view, sel, open, stepName }"
+          ],
+          "exported": false,
+          "lineCount": 36
+        },
+        {
+          "name": "Inspector",
+          "params": [
+            "{ ev, canDecide, why, onAllow, onDeny }"
+          ],
+          "exported": false,
+          "lineCount": 89
+        },
+        {
+          "name": "actorType",
+          "params": [
+            "a"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "eventType",
+          "params": [
+            "a"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "redact",
+          "params": [
+            "s"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "AiHistory",
+          "params": [],
+          "exported": true,
+          "lineCount": 131
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useRef",
+            "useState"
+          ]
+        },
+        {
+          "source": "react",
+          "specifiers": [
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Columns3",
+            "Download",
+            "ExternalLink",
+            "Filter",
+            "X"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "planVer",
+            "toolFacets"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Audit",
+            "Conversation",
+            "Facets",
+            "ToolEvent"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "DemoTag",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "Gated",
+            "IdLink",
+            "Mono",
+            "PageHeader",
+            "SearchBox",
+            "Segmented",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "cx"
+          ]
+        },
+        {
+          "source": "./g-common",
+          "specifiers": [
+            "AiSubNav",
+            "NoProject",
+            "Pill",
+            "ReplanPanel",
+            "Thread",
+            "tz"
+          ]
+        }
+      ],
+      "exports": [
+        "AiTrace",
+        "AiHistory"
+      ],
+      "totalLines": 465,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/g-workspace.tsx": {
+      "filePath": "src/screens/g-workspace.tsx",
+      "contentHash": "195f13dc68f1a5cab7319e1bf362e6fd0d5544c217060e0ff4b970ea446f4831",
+      "functions": [
+        {
+          "name": "clamp",
+          "params": [
+            "v",
+            "min",
+            "max"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "readLS",
+          "params": [
+            "k"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "writeLS",
+          "params": [
+            "k",
+            "v"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "moveChoice",
+          "params": [
+            "e",
+            "role"
+          ],
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "useViewportW",
+          "params": [],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "useResizable",
+          "params": [
+            "key",
+            "cfg"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "Separator",
+          "params": [
+            "{ label, side, r, cfg }"
+          ],
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "LeftRail",
+          "params": [
+            "{ pid, selId, onNew, onPicked }"
+          ],
+          "exported": true,
+          "lineCount": 66
+        },
+        {
+          "name": "H",
+          "params": [
+            "{ children }"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "Sec",
+          "params": [
+            "{ children }"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "Inspector",
+          "params": [
+            "{ pid, conv }"
+          ],
+          "exported": true,
+          "lineCount": 82
+        },
+        {
+          "name": "ConversationHeader",
+          "params": [
+            "{ conv, onMode }"
+          ],
+          "exported": true,
+          "lineCount": 28
+        },
+        {
+          "name": "ConvBanner",
+          "params": [
+            "{ conv }"
+          ],
+          "exported": true,
+          "lineCount": 5
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useCallback",
+            "useEffect",
+            "useRef",
+            "useState",
+            "ReactKeyboardEvent",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Bot",
+            "FileText",
+            "MessageSquare",
+            "Pin",
+            "PinOff",
+            "Plus",
+            "ShieldCheck"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "eligibility",
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "planVer"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Conversation"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Button",
+            "DemoTag",
+            "IdLink",
+            "Status",
+            "cx"
+          ]
+        },
+        {
+          "source": "./g-common",
+          "specifiers": [
+            "EligBadge",
+            "ExecBanner",
+            "MODES",
+            "Pill",
+            "ReplanPanel",
+            "useReplan",
+            "useTraceLink"
+          ]
+        },
+        {
+          "source": "./g-fanout",
+          "specifiers": [
+            "AiTeamView",
+            "AllocationView",
+            "FanOutCard"
+          ]
+        }
+      ],
+      "exports": [
+        "RAIL",
+        "INSP",
+        "useViewportW",
+        "useResizable",
+        "Separator",
+        "LeftRail",
+        "Inspector",
+        "ConversationHeader",
+        "ConvBanner"
+      ],
+      "totalLines": 268,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/g.tsx": {
+      "filePath": "src/screens/g.tsx",
+      "contentHash": "034381a21c64efe5201adb4efdf4d56c49641b68df63669e6b8afc4d4356958c",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "./g-chat",
+          "specifiers": [
+            "AiOperator"
+          ]
+        },
+        {
+          "source": "./g-plan",
+          "specifiers": [
+            "AiPlan",
+            "AiPlanCompare",
+            "AiPlanReview"
+          ]
+        },
+        {
+          "source": "./g-fanout",
+          "specifiers": [
+            "fanout"
+          ]
+        },
+        {
+          "source": "./g-trace",
+          "specifiers": [
+            "AiHistory",
+            "AiTrace"
+          ]
+        }
+      ],
+      "exports": [
+        "routes"
+      ],
+      "totalLines": 16,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/h-session.tsx": {
+      "filePath": "src/screens/h-session.tsx",
+      "contentHash": "fdbdf927533b339ab2ede8da3e84b48897f9e523fdd297c3779ce9aafbfe17dd",
+      "functions": [
+        {
+          "name": "kindLabel",
+          "params": [
+            "k"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "minutesUntil",
+          "params": [
+            "exp",
+            "nowHHMM"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "useSession",
+          "params": [
+            "id"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "RequestAccessDrawer",
+          "params": [
+            "{ session, open, onClose, initialMode = 'interactive' }"
+          ],
+          "exported": true,
+          "lineCount": 45
+        },
+        {
+          "name": "accessOf",
+          "params": [
+            "db",
+            "me",
+            "s"
+          ],
+          "returnType": "AccessInfo",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "AccessChip",
+          "params": [
+            "{ a }"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "useGrantWatch",
+          "params": [],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "setSim",
+          "params": [
+            "p"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "useRevokeSim",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "setFailNext",
+          "params": [
+            "v"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "useTerminate",
+          "params": [],
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "useRevoke",
+          "params": [],
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "Row",
+          "params": [
+            "{ children }"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "SessionDetail",
+          "params": [],
+          "exported": true,
+          "lineCount": 122
+        },
+        {
+          "name": "TLine",
+          "params": [
+            "{ l }"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "Console",
+          "params": [],
+          "exported": true,
+          "lineCount": 146
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useRef",
+            "useState",
+            "useSyncExternalStore",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Ban",
+            "Bot",
+            "Clock",
+            "Copy",
+            "Eye",
+            "FileText",
+            "Loader2",
+            "Lock",
+            "OctagonX",
+            "Radio",
+            "ShieldCheck",
+            "TerminalSquare",
+            "Unplug"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "sessionPerm",
+            "hhmm"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Db",
+            "Session"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "Persona"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "DemoTag",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "Gated",
+            "IdLink",
+            "Locked",
+            "Mono",
+            "PageHeader",
+            "Person",
+            "Segmented",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "ConsolePane",
+            "cx"
+          ]
+        }
+      ],
+      "exports": [
+        "SELECT_PROJECT",
+        "MIN_REASON",
+        "kindLabel",
+        "minutesUntil",
+        "useSession",
+        "RequestAccessDrawer",
+        "accessOf",
+        "AccessChip",
+        "useGrantWatch",
+        "useRevokeSim",
+        "setFailNext",
+        "useTerminate",
+        "useRevoke",
+        "SessionDetail",
+        "TLine",
+        "Console"
+      ],
+      "totalLines": 445,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/h.tsx": {
+      "filePath": "src/screens/h.tsx",
+      "contentHash": "a38a4df16bf343e7ec1e6b139830057f71540f08583ae500a39a237b00940777",
+      "functions": [
+        {
+          "name": "short",
+          "params": [
+            "t"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "C2Overview",
+          "params": [],
+          "exported": false,
+          "lineCount": 51
+        },
+        {
+          "name": "Infra",
+          "params": [
+            "{ nodes, noC2 }"
+          ],
+          "exported": false,
+          "lineCount": 36
+        },
+        {
+          "name": "Channels",
+          "params": [
+            "{ rows, noC2 }"
+          ],
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "Sessions",
+          "params": [
+            "{ rows, all }"
+          ],
+          "exported": false,
+          "lineCount": 53
+        },
+        {
+          "name": "Requests",
+          "params": [
+            "{ rows, all }"
+          ],
+          "exported": false,
+          "lineCount": 41
+        },
+        {
+          "name": "AuditViewer",
+          "params": [],
+          "exported": false,
+          "lineCount": 25
+        },
+        {
+          "name": "ChannelDetail",
+          "params": [],
+          "exported": false,
+          "lineCount": 30
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useMemo",
+            "useState",
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Activity",
+            "ClipboardCheck",
+            "Download",
+            "Eye",
+            "Lock",
+            "OctagonX",
+            "Radio",
+            "RadioTower",
+            "ShieldAlert",
+            "SlidersHorizontal",
+            "TerminalSquare",
+            "TriangleAlert"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore",
+            "sessionPerm"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "Session",
+            "SessionRequest"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "Card",
+            "CardHeader",
+            "DescList",
+            "Drawer",
+            "Empty",
+            "Field",
+            "FilterBar",
+            "Gated",
+            "IdLink",
+            "Kpi",
+            "Mono",
+            "PageHeader",
+            "Person",
+            "Progress",
+            "SearchBox",
+            "Segmented",
+            "Select",
+            "Status",
+            "Table",
+            "Tabs",
+            "Textarea",
+            "Timeline",
+            "usePaged",
+            "Pager",
+            "DemoTag",
+            "Modal",
+            "cx"
+          ]
+        },
+        {
+          "source": "./h-session",
+          "specifiers": [
+            "AccessChip",
+            "Console",
+            "RequestAccessDrawer",
+            "SELECT_PROJECT",
+            "SessionDetail",
+            "accessOf",
+            "kindLabel",
+            "useGrantWatch",
+            "useTerminate",
+            "MIN_REASON"
+          ]
+        }
+      ],
+      "exports": [
+        "routes"
+      ],
+      "totalLines": 267,
+      "hasStructuralAnalysis": true
+    },
+    "src/screens/scenarios.tsx": {
+      "filePath": "src/screens/scenarios.tsx",
+      "contentHash": "36aec8c5d369cd9ae6e25c29edc28619b2dd1588a06102c93b2073298a5296a0",
+      "functions": [
+        {
+          "name": "Brand",
+          "params": [],
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "ScenariosPage",
+          "params": [],
+          "exported": false,
+          "lineCount": 189
+        },
+        {
+          "name": "WorkspacesPage",
+          "params": [],
+          "exported": false,
+          "lineCount": 38
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useRef",
+            "useState",
+            "ComponentType"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "ArrowRight",
+            "Building2",
+            "ExternalLink",
+            "FlaskConical",
+            "LogIn",
+            "Play",
+            "RotateCcw",
+            "Search",
+            "Target",
+            "UserRound"
+          ]
+        },
+        {
+          "source": "../store",
+          "specifiers": [
+            "useStore"
+          ]
+        },
+        {
+          "source": "../data",
+          "specifiers": [
+            "USERS"
+          ]
+        },
+        {
+          "source": "../ui",
+          "specifiers": [
+            "Avatar",
+            "Button",
+            "Card",
+            "Input",
+            "Tabs"
+          ]
+        },
+        {
+          "source": "./demo-guide",
+          "specifiers": [
+            "GUIDES",
+            "jump",
+            "launchGuide",
+            "Dest"
+          ]
+        }
+      ],
+      "exports": [
+        "routes"
+      ],
+      "totalLines": 363,
+      "hasStructuralAnalysis": true
+    },
+    "src/shell.tsx": {
+      "filePath": "src/shell.tsx",
+      "contentHash": "78d7e7ecaa2e9ce560dca663de709ccce81510d2a70109d78197d77255a2479d",
+      "functions": [
+        {
+          "name": "useS",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "isWide",
+          "params": [
+            "r"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "useBadges",
+          "params": [],
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "Sidebar",
+          "params": [
+            "{ collapsed, setCollapsed, mobileOpen, closeMobile }"
+          ],
+          "exported": false,
+          "lineCount": 67
+        },
+        {
+          "name": "ProjectSwitcher",
+          "params": [],
+          "exported": false,
+          "lineCount": 81
+        },
+        {
+          "name": "GlobalSearch",
+          "params": [],
+          "exported": false,
+          "lineCount": 94
+        },
+        {
+          "name": "Pop",
+          "params": [
+            "{ open, onClose, label, align = 'left', width = 340, children }"
+          ],
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "AiStatus",
+          "params": [],
+          "exported": false,
+          "lineCount": 29
+        },
+        {
+          "name": "WorkspaceSwitcher",
+          "params": [],
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "catOf",
+          "params": [
+            "n"
+          ],
+          "returnType": "Chip",
+          "exported": false,
+          "lineCount": 18
+        },
+        {
+          "name": "Notices",
+          "params": [],
+          "exported": false,
+          "lineCount": 45
+        },
+        {
+          "name": "ProfileMenu",
+          "params": [],
+          "exported": false,
+          "lineCount": 56
+        },
+        {
+          "name": "Topbar",
+          "params": [
+            "{ openMobile }"
+          ],
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "EmergencyStop",
+          "params": [
+            "{ open, onClose }"
+          ],
+          "exported": false,
+          "lineCount": 41
+        },
+        {
+          "name": "StopBanner",
+          "params": [],
+          "exported": false,
+          "lineCount": 25
+        },
+        {
+          "name": "eligLabel",
+          "params": [
+            "e"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "EligBadge",
+          "params": [
+            "{ pid }"
+          ],
+          "exported": false,
+          "lineCount": 27
+        },
+        {
+          "name": "ContextRibbon",
+          "params": [
+            "{ openSwitcher }"
+          ],
+          "exported": false,
+          "lineCount": 31
+        },
+        {
+          "name": "opRuntime",
+          "params": [
+            "db",
+            "pid"
+          ],
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "ProjectHeader",
+          "params": [
+            "{ project }"
+          ],
+          "exported": false,
+          "lineCount": 75
+        },
+        {
+          "name": "GlobalModals",
+          "params": [],
+          "exported": false,
+          "lineCount": 42
+        },
+        {
+          "name": "Toasts",
+          "params": [],
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "Shell",
+          "params": [
+            "{ children }"
+          ],
+          "exported": true,
+          "lineCount": 34
+        },
+        {
+          "name": "LoadingState",
+          "params": [],
+          "exported": false,
+          "lineCount": 10
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useMemo",
+            "useRef",
+            "useState",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "Activity",
+            "Bell",
+            "BookOpen",
+            "Bot",
+            "CheckCheck",
+            "ChevronDown",
+            "Crosshair",
+            "FileText",
+            "FolderKanban",
+            "Layers",
+            "LayoutDashboard",
+            "LogOut",
+            "MenuIcon",
+            "Moon",
+            "Network",
+            "OctagonX",
+            "PanelLeftClose",
+            "PanelLeftOpen",
+            "Pin",
+            "RadioTower",
+            "Phone",
+            "MoreHorizontal",
+            "Building2",
+            "Clock",
+            "AlertTriangle",
+            "FlaskConical",
+            "RotateCcw",
+            "Info",
+            "XIcon",
+            "Search",
+            "Server",
+            "Settings",
+            "ShieldAlert",
+            "Sparkles",
+            "Sun",
+            "Lock",
+            "CheckIcon",
+            "Loader2",
+            "Monitor",
+            "Home",
+            "History",
+            "CornerDownLeft",
+            "LucideIcon"
+          ]
+        },
+        {
+          "source": "./store",
+          "specifiers": [
+            "ROLE_LABEL",
+            "useStore",
+            "eligibility",
+            "sessionPerm",
+            "Route",
+            "Store"
+          ]
+        },
+        {
+          "source": "./data",
+          "specifiers": [
+            "USERS"
+          ]
+        },
+        {
+          "source": "./ui",
+          "specifiers": [
+            "Banner",
+            "Button",
+            "IconButton",
+            "Modal",
+            "Field",
+            "Textarea",
+            "Status",
+            "SearchBox",
+            "Tabs",
+            "Segmented",
+            "Avatar",
+            "Check",
+            "cx"
+          ]
+        },
+        {
+          "source": "./screens/ai-copilot",
+          "specifiers": [
+            "CopilotDrawer"
+          ]
+        },
+        {
+          "source": "./screens/demo-guide",
+          "specifiers": [
+            "DemoGuide"
+          ]
+        }
+      ],
+      "exports": [
+        "NAV",
+        "Shell",
+        "Route",
+        "Tabs",
+        "Segmented",
+        "Activity",
+        "ShieldAlert"
+      ],
+      "totalLines": 873,
+      "hasStructuralAnalysis": true
+    },
+    "src/store.tsx": {
+      "filePath": "src/store.tsx",
+      "contentHash": "60faa8d4d044546f8c4462f3e71d3ebf2b03b8aadb72f791ba74017843fe4709",
+      "functions": [
+        {
+          "name": "pad",
+          "params": [
+            "n"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "nowMin",
+          "params": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "hhmm",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "hhmm12",
+          "params": [],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "stamp",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "today",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "parseHash",
+          "params": [],
+          "returnType": "Route",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "toHash",
+          "params": [
+            "r"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "canAccessProject",
+          "params": [
+            "db",
+            "me",
+            "projectId"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "sessionPerm",
+          "params": [
+            "db",
+            "me",
+            "s"
+          ],
+          "returnType": "SessionPerm",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "nextProjectId",
+          "params": [
+            "db",
+            "prefix"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "computePreflight",
+          "params": [
+            "db",
+            "op"
+          ],
+          "returnType": "Check[]",
+          "exported": true,
+          "lineCount": 45
+        },
+        {
+          "name": "preflightPass",
+          "params": [
+            "c"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "closureChecklist",
+          "params": [
+            "db",
+            "pid"
+          ],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "projectAgentsOnline",
+          "params": [
+            "db",
+            "pid"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "eligibility",
+          "params": [
+            "db",
+            "pid"
+          ],
+          "returnType": "{ kind: EligKind; label: string; tone: 'ok' | 'warn' | 'bad' | 'neutral' | 'cyan'; reasons: Reason[] }",
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "readiness",
+          "params": [
+            "db",
+            "pid"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "completion",
+          "params": [
+            "db",
+            "pid"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "useStore",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "allocation",
+          "params": [
+            "db",
+            "projectId"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "groupSummary",
+          "params": [
+            "db",
+            "groupId"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "bumpRoe",
+          "params": [
+            "v"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "bumpVer",
+          "params": [
+            "p"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "StoreProvider",
+          "params": [
+            "{ children }"
+          ],
+          "exported": true,
+          "lineCount": 861
+        },
+        {
+          "name": "useDirty",
+          "params": [
+            "isDirty",
+            "save"
+          ],
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "createContext",
+            "useCallback",
+            "useContext",
+            "useEffect",
+            "useMemo",
+            "useRef",
+            "useState",
+            "ReactNode"
+          ]
+        },
+        {
+          "source": "./data",
+          "specifiers": [
+            "seed",
+            "BRANCH_TERMINAL",
+            "BranchState",
+            "USERS",
+            "APR",
+            "Db",
+            "Project",
+            "Operation",
+            "Step",
+            "Finding",
+            "Role",
+            "Asset",
+            "Agent",
+            "Group",
+            "Plan",
+            "PlanStep",
+            "PlanStatus",
+            "AiMode",
+            "Session",
+            "SessionPerm",
+            "SeedVariant",
+            "ToolEvent",
+            "Conversation"
+          ]
+        }
+      ],
+      "exports": [
+        "hhmm",
+        "hhmm12",
+        "stamp",
+        "today",
+        "ROLE_LABEL",
+        "canAccessProject",
+        "sessionPerm",
+        "nextProjectId",
+        "computePreflight",
+        "preflightPass",
+        "closureChecklist",
+        "projectAgentsOnline",
+        "eligibility",
+        "readiness",
+        "completion",
+        "useStore",
+        "allocation",
+        "groupSummary",
+        "StoreProvider",
+        "useDirty",
+        "sevLabel",
+        "PlanStatus",
+        "ToolEvent"
+      ],
+      "totalLines": 1225,
+      "hasStructuralAnalysis": true
+    },
+    "src/ui.tsx": {
+      "filePath": "src/ui.tsx",
+      "contentHash": "e52a9b2b113a6feb7fc740f90db4f83846b6503e019f4242a33d05728541b1e7",
+      "functions": [
+        {
+          "name": "cx",
+          "params": [
+            "...a"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "S",
+          "params": [
+            "label",
+            "tone",
+            "icon"
+          ],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "Status",
+          "params": [
+            "{ kind, value, size = 'md', label }"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "Sev",
+          "params": [
+            "{ v }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "toneText",
+          "params": [
+            "t"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "AiModeBadge",
+          "params": [
+            "{ mode }"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "ApprovalBanner",
+          "params": [
+            "{ state, title, children, action }"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "DemoTag",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "ConsolePane",
+          "params": [
+            "{ children, className }"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "ReasonCode",
+          "params": [
+            "{ code }"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "Button",
+          "params": [
+            "{ variant = 'secondary', size = 'md', icon: I, children, className, disabled, title, ...r }"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "IconButton",
+          "params": [
+            "{ icon: I, label, className, ...r }"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "Card",
+          "params": [
+            "{ children, className, pad = true }"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "CardHeader",
+          "params": [
+            "{ title, sub, actions }"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "PageHeader",
+          "params": [
+            "{ title, sub, actions, back, meta, crumbs }"
+          ],
+          "exported": true,
+          "lineCount": 31
+        },
+        {
+          "name": "Tabs",
+          "params": [
+            "{ tabs, value, onChange }"
+          ],
+          "exported": true,
+          "lineCount": 26
+        },
+        {
+          "name": "Segmented",
+          "params": [
+            "{ options, value, onChange }"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "Banner",
+          "params": [
+            "{ tone = 'info', title, children, action, icon }"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "Empty",
+          "params": [
+            "{ icon: I = FileText, title, children, action }"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "Skeleton",
+          "params": [
+            "{ className }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "PageSkeleton",
+          "params": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "Field",
+          "params": [
+            "{ label, hint, error, required, children, className }"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "Input",
+          "params": [
+            "{ className, ...r }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "Textarea",
+          "params": [
+            "{ className, ...r }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "Select",
+          "params": [
+            "{ className, children, ...r }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "SearchBox",
+          "params": [
+            "{ value, onChange, placeholder = 'Search…', className }"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "Check",
+          "params": [
+            "{ checked, onChange, label, disabled }"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "Toggle",
+          "params": [
+            "{ on, onChange, label, disabled }"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "FilterBar",
+          "params": [
+            "{ children, right }"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "Table",
+          "params": [
+            "{ cols, rows, rowKey, onRow, empty, dense, selectedKey }"
+          ],
+          "exported": true,
+          "lineCount": 25
+        },
+        {
+          "name": "usePaged",
+          "params": [
+            "rows",
+            "size"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "Pager",
+          "params": [
+            "{ page, pages, setPage, total }"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "useDialogFocus",
+          "params": [
+            "open",
+            "onClose"
+          ],
+          "exported": false,
+          "lineCount": 45
+        },
+        {
+          "name": "Modal",
+          "params": [
+            "{ open, onClose, title, children, footer, width = 520, danger }"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "Drawer",
+          "params": [
+            "{ open, onClose, title, children, footer, width = 480 }"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "Menu",
+          "params": [
+            "{ trigger, items, align = 'right' }"
+          ],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "Mono",
+          "params": [
+            "{ children, className }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "IdLink",
+          "params": [
+            "{ children, onClick }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "DescList",
+          "params": [
+            "{ items, cols = 2 }"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "Kpi",
+          "params": [
+            "{ label, value, sub, tone, onClick, icon: I }"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "Progress",
+          "params": [
+            "{ value, tone = 'accent', label }"
+          ],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "Avatar",
+          "params": [
+            "{ name, size = 28 }"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "Person",
+          "params": [
+            "{ name }"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "Timeline",
+          "params": [
+            "{ items }"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "Stepper",
+          "params": [
+            "{ steps, current, onJump }"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "Donut",
+          "params": [
+            "{ data, size = 140, center }"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "Legend",
+          "params": [
+            "{ data }"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "BarChart",
+          "params": [
+            "{ data, height = 160, color = 'var(--c-accent)' }"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "LineChart",
+          "params": [
+            "{ series, labels, height = 160 }"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "Gated",
+          "params": [
+            "{ allowed, reason, children }"
+          ],
+          "exported": true,
+          "lineCount": 19
+        },
+        {
+          "name": "Locked",
+          "params": [
+            "{ reason }"
+          ],
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "useGuard",
+          "params": [
+            "projectId"
+          ],
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "PersonaHint",
+          "params": [
+            "{ need, persona, children }"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "useDebounced",
+          "params": [
+            "v",
+            "ms"
+          ],
+          "exported": true,
+          "lineCount": 5
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "react",
+          "specifiers": [
+            "useEffect",
+            "useId",
+            "useMemo",
+            "useRef",
+            "useState",
+            "ButtonHTMLAttributes",
+            "InputHTMLAttributes",
+            "ReactKeyboardEvent",
+            "ReactNode",
+            "SelectHTMLAttributes",
+            "TextareaHTMLAttributes"
+          ]
+        },
+        {
+          "source": "lucide-react",
+          "specifiers": [
+            "AlertTriangle",
+            "CheckCircle2",
+            "ChevronLeft",
+            "ChevronRight",
+            "Circle",
+            "CircleDashed",
+            "CircleDot",
+            "Clock",
+            "Eye",
+            "FileText",
+            "HelpCircle",
+            "Info",
+            "Lock",
+            "Loader2",
+            "MinusCircle",
+            "OctagonX",
+            "PauseCircle",
+            "PlayCircle",
+            "Search",
+            "Send",
+            "ShieldCheck",
+            "ShieldOff",
+            "ShieldAlert",
+            "X",
+            "XCircle",
+            "RotateCcw",
+            "Archive",
+            "Ban",
+            "Wifi",
+            "WifiOff",
+            "Power",
+            "FlaskConical",
+            "Lightbulb",
+            "Zap",
+            "TerminalSquare",
+            "Wrench",
+            "LucideIcon"
+          ]
+        },
+        {
+          "source": "./store",
+          "specifiers": [
+            "useStore"
+          ]
+        }
+      ],
+      "exports": [
+        "cx",
+        "STATUS",
+        "Status",
+        "Sev",
+        "toneText",
+        "AiModeBadge",
+        "ApprovalBanner",
+        "DemoTag",
+        "ConsolePane",
+        "ReasonCode",
+        "Button",
+        "IconButton",
+        "Card",
+        "CardHeader",
+        "PageHeader",
+        "Tabs",
+        "Segmented",
+        "Banner",
+        "Empty",
+        "Skeleton",
+        "PageSkeleton",
+        "Field",
+        "Input",
+        "Textarea",
+        "Select",
+        "SearchBox",
+        "Check",
+        "Toggle",
+        "FilterBar",
+        "Table",
+        "usePaged",
+        "Pager",
+        "Modal",
+        "Drawer",
+        "Menu",
+        "Mono",
+        "IdLink",
+        "DescList",
+        "Kpi",
+        "Progress",
+        "Avatar",
+        "Person",
+        "Timeline",
+        "Stepper",
+        "Donut",
+        "Legend",
+        "BarChart",
+        "LineChart",
+        "Gated",
+        "Locked",
+        "useGuard",
+        "PersonaHint",
+        "useDebounced",
+        "useMemoList"
+      ],
+      "totalLines": 631,
+      "hasStructuralAnalysis": true
+    },
+    "src/vite-env.d.ts": {
+      "filePath": "src/vite-env.d.ts",
+      "contentHash": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "tsconfig.json": {
+      "filePath": "tsconfig.json",
+      "contentHash": "9a1e96d63eaccd5416b2f78ecaccf2b3a27ca71e213fa5859cf5349c66123bf9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 24,
+      "hasStructuralAnalysis": false
+    },
+    "vite.config.ts": {
+      "filePath": "vite.config.ts",
+      "contentHash": "2cabf93e584fce29aa6105b6e0af8d4f7d5e0e80d1b959bb183a196f97614267",
+      "functions": [
+        {
+          "name": "figmaSiteConfiguration",
+          "params": [
+            "config"
+          ],
+          "returnType": "Plugin",
+          "exported": false,
+          "lineCount": 141
+        },
+        {
+          "name": "figmaErrorOverlayReplay",
+          "params": [],
+          "returnType": "Plugin",
+          "exported": false,
+          "lineCount": 29
+        },
+        {
+          "name": "figmaReactRefreshBoundaryFallback",
+          "params": [],
+          "returnType": "Plugin",
+          "exported": false,
+          "lineCount": 54
+        },
+        {
+          "name": "figmaMakeKitPlugin",
+          "params": [
+            "options"
+          ],
+          "returnType": "Plugin",
+          "exported": false,
+          "lineCount": 48
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "vite",
+          "specifiers": [
+            "defineConfig",
+            "HtmlTagDescriptor",
+            "Plugin"
+          ]
+        },
+        {
+          "source": "@vitejs/plugin-react",
+          "specifiers": [
+            "react"
+          ]
+        },
+        {
+          "source": "@tailwindcss/vite",
+          "specifiers": [
+            "tailwindcss"
+          ]
+        },
+        {
+          "source": "node:path",
+          "specifiers": [
+            "path"
+          ]
+        },
+        {
+          "source": "./.figma/make/site.json",
+          "specifiers": [
+            "siteConfiguration"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 389,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

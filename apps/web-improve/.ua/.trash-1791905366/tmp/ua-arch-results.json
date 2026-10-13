@@ -1,0 +1,581 @@
+{
+ "directoryGroups": {
+  "src": {
+   "fileCount": 8,
+   "nodeIds": [
+    "file:src/App.tsx",
+    "file:src/main.tsx",
+    "file:src/shell.tsx",
+    "file:src/store.tsx",
+    "file:src/ui.tsx",
+    "file:src/data.ts",
+    "file:src/index.css",
+    "file:src/vite-env.d.ts"
+   ],
+   "types": {
+    "file": 8
+   }
+  },
+  "screens": {
+   "fileCount": 35,
+   "nodeIds": [
+    "file:src/screens/ai-copilot.tsx",
+    "file:src/screens/demo-guide.tsx",
+    "file:src/screens/f-report.tsx",
+    "file:src/screens/f-settings.tsx",
+    "file:src/screens/f.tsx",
+    "file:src/screens/scenarios.tsx",
+    "file:src/screens/b-detail.tsx",
+    "file:src/screens/b-detail2.tsx",
+    "file:src/screens/b-wizard.tsx",
+    "file:src/screens/b.tsx",
+    "file:src/screens/d-agents.tsx",
+    "file:src/screens/d-assets.tsx",
+    "file:src/screens/d-library.tsx",
+    "file:src/screens/d-shared.tsx",
+    "file:src/screens/d.tsx",
+    "file:src/screens/a-dashboard.tsx",
+    "file:src/screens/a-login.tsx",
+    "file:src/screens/a-system.tsx",
+    "file:src/screens/a.tsx",
+    "file:src/screens/h-session.tsx",
+    "file:src/screens/h.tsx",
+    "file:src/screens/g-chat.tsx",
+    "file:src/screens/g-common.tsx",
+    "file:src/screens/g-fanout.tsx",
+    "file:src/screens/g-plan.tsx",
+    "file:src/screens/g-trace.tsx",
+    "file:src/screens/g-workspace.tsx",
+    "file:src/screens/g.tsx",
+    "file:src/screens/c-common.tsx",
+    "file:src/screens/c-console.tsx",
+    "file:src/screens/c-results.tsx",
+    "file:src/screens/c.tsx",
+    "file:src/screens/e-analysis.tsx",
+    "file:src/screens/e-findings.tsx",
+    "file:src/screens/e.tsx"
+   ],
+   "types": {
+    "file": 35
+   }
+  },
+  ".": {
+   "fileCount": 8,
+   "nodeIds": [
+    "config:.mise.toml",
+    "document:AGENTS.md",
+    "document:implementation-plan.md",
+    "file:index.html",
+    "config:package.json",
+    "config:tsconfig.json",
+    "file:.gitattributes",
+    "file:vite.config.ts"
+   ],
+   "types": {
+    "config": 3,
+    "document": 2,
+    "file": 3
+   }
+  },
+  ".figma/make": {
+   "fileCount": 10,
+   "nodeIds": [
+    "file:.figma/make/analyze-routes",
+    "file:.figma/make/deploy",
+    "file:.figma/make/deploy-preview",
+    "file:.figma/make/dev",
+    "config:.figma/make/dev.json",
+    "file:.figma/make/format",
+    "file:.figma/make/import-assets.mjs",
+    "file:.figma/make/install",
+    "file:.figma/make/langserver",
+    "config:.figma/make/site.json"
+   ],
+   "types": {
+    "file": 8,
+    "config": 2
+   }
+  },
+  ".ua": {
+   "fileCount": 1,
+   "nodeIds": [
+    "config:.ua/config.json"
+   ],
+   "types": {
+    "config": 1
+   }
+  }
+ },
+ "nodeTypeGroups": {
+  "file": [
+   "file:src/App.tsx",
+   "file:src/main.tsx",
+   "file:src/screens/ai-copilot.tsx",
+   "file:src/screens/demo-guide.tsx",
+   "file:src/screens/f-report.tsx",
+   "file:src/screens/f-settings.tsx",
+   "file:src/screens/f.tsx",
+   "file:src/screens/scenarios.tsx",
+   "file:src/shell.tsx",
+   "file:src/store.tsx",
+   "file:src/screens/b-detail.tsx",
+   "file:src/screens/b-detail2.tsx",
+   "file:src/screens/b-wizard.tsx",
+   "file:src/screens/b.tsx",
+   "file:src/screens/d-agents.tsx",
+   "file:src/screens/d-assets.tsx",
+   "file:src/screens/d-library.tsx",
+   "file:src/screens/d-shared.tsx",
+   "file:src/screens/d.tsx",
+   "file:src/ui.tsx",
+   "file:src/data.ts",
+   "file:src/screens/a-dashboard.tsx",
+   "file:src/screens/a-login.tsx",
+   "file:src/screens/a-system.tsx",
+   "file:src/screens/a.tsx",
+   "file:src/screens/h-session.tsx",
+   "file:src/screens/h.tsx",
+   "file:src/screens/g-chat.tsx",
+   "file:src/screens/g-common.tsx",
+   "file:src/screens/g-fanout.tsx",
+   "file:src/screens/g-plan.tsx",
+   "file:src/screens/g-trace.tsx",
+   "file:src/screens/g-workspace.tsx",
+   "file:src/screens/g.tsx",
+   "file:src/screens/c-common.tsx",
+   "file:src/screens/c-console.tsx",
+   "file:src/screens/c-results.tsx",
+   "file:src/screens/c.tsx",
+   "file:src/screens/e-analysis.tsx",
+   "file:src/screens/e-findings.tsx",
+   "file:src/screens/e.tsx",
+   "file:index.html",
+   "file:.figma/make/analyze-routes",
+   "file:.figma/make/deploy",
+   "file:.figma/make/deploy-preview",
+   "file:.figma/make/dev",
+   "file:.figma/make/format",
+   "file:.figma/make/import-assets.mjs",
+   "file:.figma/make/install",
+   "file:.figma/make/langserver",
+   "file:.gitattributes",
+   "file:src/index.css",
+   "file:src/vite-env.d.ts",
+   "file:vite.config.ts"
+  ],
+  "config": [
+   "config:.mise.toml",
+   "config:package.json",
+   "config:tsconfig.json",
+   "config:.figma/make/dev.json",
+   "config:.figma/make/site.json",
+   "config:.ua/config.json"
+  ],
+  "document": [
+   "document:AGENTS.md",
+   "document:implementation-plan.md"
+  ]
+ },
+ "crossCategoryEdges": [
+  {
+   "source": "config:package.json",
+   "target": "file:src/main.tsx",
+   "type": "configures",
+   "fromType": "config",
+   "toType": "file"
+  },
+  {
+   "source": "config:package.json",
+   "target": "file:vite.config.ts",
+   "type": "configures",
+   "fromType": "config",
+   "toType": "file"
+  },
+  {
+   "source": "config:tsconfig.json",
+   "target": "file:src/main.tsx",
+   "type": "configures",
+   "fromType": "config",
+   "toType": "file"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/store.tsx",
+   "type": "documents",
+   "fromType": "document",
+   "toType": "file"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/data.ts",
+   "type": "documents",
+   "fromType": "document",
+   "toType": "file"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/ui.tsx",
+   "type": "documents",
+   "fromType": "document",
+   "toType": "file"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/shell.tsx",
+   "type": "documents",
+   "fromType": "document",
+   "toType": "file"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/App.tsx",
+   "type": "documents",
+   "fromType": "document",
+   "toType": "file"
+  },
+  {
+   "source": "document:AGENTS.md",
+   "target": "file:src/main.tsx",
+   "type": "documents",
+   "fromType": "document",
+   "toType": "file"
+  },
+  {
+   "source": "document:AGENTS.md",
+   "target": "file:src/App.tsx",
+   "type": "documents",
+   "fromType": "document",
+   "toType": "file"
+  },
+  {
+   "source": "file:vite.config.ts",
+   "target": "config:.figma/make/site.json",
+   "type": "imports",
+   "fromType": "file",
+   "toType": "config"
+  },
+  {
+   "source": "config:.figma/make/dev.json",
+   "target": "file:.figma/make/dev",
+   "type": "related",
+   "fromType": "config",
+   "toType": "file"
+  }
+ ],
+ "interGroupImports": {
+  "src->screens": 11,
+  "screens->src": 89,
+  ".->.figma/make": 1
+ },
+ "interGroupAllEdges": {
+  "src->screens": 11,
+  "screens->src": 89,
+  ".->src": 11,
+  ".->.figma/make": 2
+ },
+ "intraGroupDensity": {
+  "src": {
+   "fileCount": 8,
+   "intraImports": 9,
+   "intraAllEdges": 10,
+   "importDensity": 0.3214,
+   "allEdgeDensity": 0.3571
+  },
+  "screens": {
+   "fileCount": 35,
+   "intraImports": 39,
+   "intraAllEdges": 39,
+   "importDensity": 0.0655,
+   "allEdgeDensity": 0.0655
+  },
+  ".": {
+   "fileCount": 8,
+   "intraImports": 0,
+   "intraAllEdges": 2,
+   "importDensity": 0,
+   "allEdgeDensity": 0.0714
+  },
+  ".figma/make": {
+   "fileCount": 10,
+   "intraImports": 0,
+   "intraAllEdges": 1,
+   "importDensity": 0,
+   "allEdgeDensity": 0.0222
+  },
+  ".ua": {
+   "fileCount": 1,
+   "intraImports": 0,
+   "intraAllEdges": 0,
+   "importDensity": 0,
+   "allEdgeDensity": 0
+  }
+ },
+ "patternMatches": [
+  {
+   "pattern": "screens-directory-ui-layer",
+   "evidence": "35 files under src/screens/ grouped as one UI screens layer"
+  },
+  {
+   "pattern": "central-store-context",
+   "evidence": "src/store.tsx is imported by 34 files (central React Context store)"
+  },
+  {
+   "pattern": "shared-ui-primitives",
+   "evidence": "src/ui.tsx is imported by 31 files (shared design-system primitives)"
+  },
+  {
+   "pattern": "seed-data-module",
+   "evidence": "src/data.ts imported by 30 files; store imports data: true"
+  },
+  {
+   "pattern": "entry-point-routing",
+   "evidence": "main.tsx mounts app; App.tsx holds ROUTES table + route switch"
+  },
+  {
+   "pattern": "config-tooling-layer",
+   "evidence": "6 config nodes (package.json, tsconfig.json, vite.config.ts-area, .figma/make, .mise.toml, .ua/config.json)"
+  },
+  {
+   "pattern": "docs-layer",
+   "evidence": "2 document nodes (AGENTS.md, implementation-plan.md)"
+  },
+  {
+   "pattern": "global-stylesheet",
+   "evidence": "src/index.css = Tailwind CSS v4 entry with @font-face/theme"
+  }
+ ],
+ "deploymentTopology": {
+  "model": "single-page-static-spa",
+  "buildTool": "vite-8",
+  "framework": "react-19",
+  "styling": "tailwindcss-v4",
+  "entries": [
+   "src/main.tsx",
+   "index.html"
+  ],
+  "serverRuntime": "none-detected (no backend/service/table/endpoint nodes)",
+  "notes": "Static build output of Vite; Figma Make wrapper scripts under .figma/make; npm scripts in package.json"
+ },
+ "dataPipeline": {
+  "chain": [
+   "src/data.ts -> src/store.tsx",
+   "src/store.tsx -> src/App.tsx"
+  ],
+  "screensImportingStore": 31,
+  "screensImportingDataDirectly": 28,
+  "description": "Unidirectional flow: data.ts (types + seed data) -> store.tsx (React Context store) -> screens via hook; ui.tsx/shell.tsx consume store for navigation/theme"
+ },
+ "docCoverage": {
+  "totalFileNodes": 62,
+  "nodesWithSummary": 62,
+  "summaryCoverage": 100,
+  "documentNodes": [
+   "document:AGENTS.md",
+   "document:implementation-plan.md"
+  ],
+  "documentsEdges": 7,
+  "docEdgeTargets": [
+   "file:src/store.tsx",
+   "file:src/data.ts",
+   "file:src/ui.tsx",
+   "file:src/shell.tsx",
+   "file:src/App.tsx",
+   "file:src/main.tsx"
+  ]
+ },
+ "dependencyDirection": {
+  "orientation": "UI (screens) -> state/data -> base; higher tier imports lower tier",
+  "upwardImports": 90,
+  "lateralImports": 48,
+  "downwardImports": 11,
+  "violations": [
+   "file:src/App.tsx -> file:src/screens/a.tsx",
+   "file:src/App.tsx -> file:src/screens/b.tsx",
+   "file:src/App.tsx -> file:src/screens/c.tsx",
+   "file:src/App.tsx -> file:src/screens/d.tsx",
+   "file:src/App.tsx -> file:src/screens/e.tsx",
+   "file:src/App.tsx -> file:src/screens/f.tsx",
+   "file:src/App.tsx -> file:src/screens/g.tsx",
+   "file:src/App.tsx -> file:src/screens/h.tsx",
+   "file:src/App.tsx -> file:src/screens/scenarios.tsx",
+   "file:src/shell.tsx -> file:src/screens/ai-copilot.tsx",
+   "file:src/shell.tsx -> file:src/screens/demo-guide.tsx"
+  ],
+  "matrix": {
+   "src->screens": 11,
+   "screens->src": 89,
+   ".->.figma/make": 1
+  }
+ },
+ "fileStats": {
+  "totalFileNodes": 62,
+  "byType": {
+   "file": 54,
+   "config": 6,
+   "document": 2
+  },
+  "totalFileLevelEdges": 165,
+  "imports": 149,
+  "isolatedNodes": [
+   "file:.figma/make/analyze-routes",
+   "file:.figma/make/deploy",
+   "file:.figma/make/format",
+   "file:.figma/make/import-assets.mjs",
+   "file:.figma/make/install",
+   "file:.figma/make/langserver",
+   "file:.gitattributes",
+   "config:.ua/config.json",
+   "file:src/vite-env.d.ts"
+  ],
+  "topFanIn": [
+   {
+    "id": "file:src/store.tsx",
+    "imports": 34
+   },
+   {
+    "id": "file:src/ui.tsx",
+    "imports": 31
+   },
+   {
+    "id": "file:src/data.ts",
+    "imports": 30
+   },
+   {
+    "id": "file:src/screens/g-common.tsx",
+    "imports": 6
+   },
+   {
+    "id": "file:src/screens/g-fanout.tsx",
+    "imports": 5
+   },
+   {
+    "id": "file:src/screens/d-shared.tsx",
+    "imports": 3
+   },
+   {
+    "id": "file:src/screens/c-common.tsx",
+    "imports": 3
+   },
+   {
+    "id": "file:src/screens/demo-guide.tsx",
+    "imports": 2
+   },
+   {
+    "id": "file:src/screens/c-console.tsx",
+    "imports": 2
+   },
+   {
+    "id": "file:src/screens/a.tsx",
+    "imports": 1
+   },
+   {
+    "id": "file:src/screens/b.tsx",
+    "imports": 1
+   },
+   {
+    "id": "file:src/screens/c.tsx",
+    "imports": 1
+   }
+  ]
+ },
+ "fileFanIn": {
+  "file:src/screens/a.tsx": 1,
+  "file:src/screens/b.tsx": 1,
+  "file:src/screens/c.tsx": 1,
+  "file:src/screens/d.tsx": 1,
+  "file:src/screens/e.tsx": 1,
+  "file:src/screens/f.tsx": 1,
+  "file:src/screens/g.tsx": 1,
+  "file:src/screens/h.tsx": 1,
+  "file:src/screens/scenarios.tsx": 1,
+  "file:src/shell.tsx": 2,
+  "file:src/store.tsx": 35,
+  "file:src/App.tsx": 3,
+  "file:src/index.css": 1,
+  "file:src/screens/g-common.tsx": 6,
+  "file:src/ui.tsx": 32,
+  "file:src/data.ts": 31,
+  "file:src/screens/f-report.tsx": 1,
+  "file:src/screens/f-settings.tsx": 1,
+  "file:src/screens/demo-guide.tsx": 2,
+  "file:src/screens/ai-copilot.tsx": 1,
+  "file:src/screens/b-detail2.tsx": 1,
+  "file:src/screens/b-detail.tsx": 1,
+  "file:src/screens/b-wizard.tsx": 1,
+  "file:src/screens/d-shared.tsx": 3,
+  "file:src/screens/d-agents.tsx": 1,
+  "file:src/screens/d-assets.tsx": 1,
+  "file:src/screens/d-library.tsx": 1,
+  "file:src/screens/a-dashboard.tsx": 1,
+  "file:src/screens/a-login.tsx": 1,
+  "file:src/screens/a-system.tsx": 1,
+  "file:src/screens/h-session.tsx": 1,
+  "file:src/screens/e-analysis.tsx": 1,
+  "file:src/screens/e-findings.tsx": 1,
+  "file:src/main.tsx": 6,
+  "file:vite.config.ts": 1,
+  "config:package.json": 1,
+  "file:src/screens/c-common.tsx": 3,
+  "file:src/screens/g-fanout.tsx": 5,
+  "file:src/screens/c-console.tsx": 2,
+  "file:src/screens/c-results.tsx": 1,
+  "file:src/screens/g-workspace.tsx": 1,
+  "file:src/screens/g-chat.tsx": 1,
+  "file:src/screens/g-plan.tsx": 1,
+  "file:src/screens/g-trace.tsx": 1,
+  "config:.figma/make/site.json": 1,
+  "file:.figma/make/dev": 1,
+  "file:.figma/make/deploy-preview": 1
+ },
+ "fileFanOut": {
+  "file:src/App.tsx": 11,
+  "file:src/main.tsx": 2,
+  "file:src/screens/ai-copilot.tsx": 3,
+  "file:src/screens/demo-guide.tsx": 1,
+  "file:src/screens/f-report.tsx": 3,
+  "file:src/screens/f-settings.tsx": 3,
+  "file:src/screens/f.tsx": 5,
+  "file:src/screens/scenarios.tsx": 4,
+  "file:src/shell.tsx": 5,
+  "file:src/store.tsx": 1,
+  "file:src/screens/b-detail.tsx": 4,
+  "file:src/screens/b-detail2.tsx": 3,
+  "file:src/screens/b-wizard.tsx": 3,
+  "file:src/screens/b.tsx": 5,
+  "file:src/screens/d-agents.tsx": 4,
+  "file:src/screens/d-assets.tsx": 4,
+  "file:src/screens/d-library.tsx": 4,
+  "file:src/screens/d-shared.tsx": 3,
+  "file:src/screens/d.tsx": 3,
+  "file:src/ui.tsx": 1,
+  "file:src/screens/a-dashboard.tsx": 3,
+  "file:src/screens/a-login.tsx": 3,
+  "file:src/screens/a-system.tsx": 3,
+  "file:src/screens/a.tsx": 3,
+  "file:src/screens/h-session.tsx": 3,
+  "file:src/screens/h.tsx": 4,
+  "file:src/screens/e-analysis.tsx": 3,
+  "file:src/screens/e-findings.tsx": 3,
+  "file:src/screens/e.tsx": 2,
+  "config:package.json": 2,
+  "config:tsconfig.json": 1,
+  "config:.mise.toml": 1,
+  "document:implementation-plan.md": 5,
+  "document:AGENTS.md": 2,
+  "file:index.html": 1,
+  "file:src/screens/c-common.tsx": 3,
+  "file:src/screens/c-console.tsx": 5,
+  "file:src/screens/c-results.tsx": 5,
+  "file:src/screens/c.tsx": 6,
+  "file:src/screens/g-chat.tsx": 4,
+  "file:src/screens/g-common.tsx": 4,
+  "file:src/screens/g-fanout.tsx": 4,
+  "file:src/screens/g-plan.tsx": 5,
+  "file:src/screens/g-trace.tsx": 4,
+  "file:src/screens/g-workspace.tsx": 5,
+  "file:src/screens/g.tsx": 4,
+  "file:vite.config.ts": 3,
+  "file:src/index.css": 1,
+  "config:.figma/make/dev.json": 1
+ }
+}

@@ -1,0 +1,1335 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/screens/b-detail.tsx",
+      "type": "file",
+      "name": "b-detail.tsx",
+      "filePath": "src/screens/b-detail.tsx",
+      "summary": "Trang chi tiết dự án của phân hệ Projects: kiểm tra quyền truy cập, điều hướng 13 tab (overview, scope & ROE, operations, plans, findings, reports, evidence, audit, team, sessions, close) qua MAIN_TABS/MORE_TABS, banner trạng thái phê duyệt/đóng và các tab hiển thị dữ liệu read-only lọc theo projectId.",
+      "tags": [
+        "react-screen",
+        "project-detail",
+        "tabs",
+        "routing"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Tách tab phức tạp (scope/team/close) sang file b-detail2.tsx; dùng useGuard và eligibility để gate hành động."
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:parseDate",
+      "type": "function",
+      "name": "parseDate",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        8,
+        8
+      ],
+      "summary": "Chuyển chuỗi ngày của dự án thành Date, cắt phần giờ; trả về ngày fallback 13/10/2026 khi parse thất bại.",
+      "tags": [
+        "date",
+        "parsing",
+        "helper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:Blocked",
+      "type": "function",
+      "name": "Blocked",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        22,
+        37
+      ],
+      "summary": "Màn hình bị chặn khi project không tồn tại hoặc người dùng không có quyền truy cập, không bao giờ lộ dữ liệu dự án, kèm nút quay về Projects hoặc Command Center.",
+      "tags": [
+        "empty-state",
+        "access-control",
+        "guard"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:ProjectPage",
+      "type": "function",
+      "name": "ProjectPage",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        39,
+        46
+      ],
+      "summary": "Entry route của trang chi tiết dự án: tra cứu project theo route id, chặn bằng Blocked khi không tìm thấy hoặc không có quyền (canAccessProject), sau đó render Detail.",
+      "tags": [
+        "react-screen",
+        "routing",
+        "guard"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:Detail",
+      "type": "function",
+      "name": "Detail",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        48,
+        151
+      ],
+      "summary": "Khung chính của trang dự án: đồng bộ project switcher, gom operations/findings/reports/evidence/plans/sessions/approvals, banner trạng thái phê duyệt và tab bar (MAIN_TABS + menu More) điều hướng qua route.",
+      "tags": [
+        "react-component",
+        "tabs",
+        "routing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:Overview",
+      "type": "function",
+      "name": "Overview",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        156,
+        305
+      ],
+      "summary": "Tab Overview (PR-03): KPI operations/agents/findings/reports, progress readiness và completion, eligibility kèm lý do chặn, objectives, schedule progress, suggested actions và activity gần nhất.",
+      "tags": [
+        "dashboard",
+        "kpi",
+        "readiness"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:Objectives",
+      "type": "function",
+      "name": "Objectives",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        308,
+        331
+      ],
+      "summary": "Tab Objectives (PR-06): bảng mục tiêu với tiến độ, owner, success criteria và các operation liên quan được filter theo owner.",
+      "tags": [
+        "table",
+        "objectives",
+        "progress"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:Activity",
+      "type": "function",
+      "name": "Activity",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        342,
+        362
+      ],
+      "summary": "Tab Activity (PR-08): timeline audit của dự án với bộ lọc theo loại sự kiện (scope, approval, operation, finding, report, close) dựa trên regex trong CATS.",
+      "tags": [
+        "timeline",
+        "audit",
+        "filter"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:OpsTab",
+      "type": "function",
+      "name": "OpsTab",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        365,
+        415
+      ],
+      "summary": "Tab Operations: bảng operations của dự án với kết quả steps, cảnh báo run bị khóa theo eligibility, nút mở draft/preflight và tạo operation có guard permission.",
+      "tags": [
+        "table",
+        "operations",
+        "permission"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:FindingsTab",
+      "type": "function",
+      "name": "FindingsTab",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        417,
+        442
+      ],
+      "summary": "Tab Findings: bảng findings của dự án hiển thị severity, trạng thái, asset, owner và nút tạo finding theo permission createFinding.",
+      "tags": [
+        "table",
+        "findings",
+        "permission"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:ReportsTab",
+      "type": "function",
+      "name": "ReportsTab",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        444,
+        467
+      ],
+      "summary": "Tab Reports: bảng reports của dự án với version, author, reviewer và nút tạo report draft theo permission editReport.",
+      "tags": [
+        "table",
+        "reports",
+        "permission"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:EvidenceTab",
+      "type": "function",
+      "name": "EvidenceTab",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        469,
+        489
+      ],
+      "summary": "Tab Evidence: bảng evidence của dự án, redact tên file và loại với dữ liệu sensitive khi người dùng không có quyền viewSensitive.",
+      "tags": [
+        "table",
+        "evidence",
+        "redaction"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:AuditTab",
+      "type": "function",
+      "name": "AuditTab",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        491,
+        513
+      ],
+      "summary": "Tab Audit: audit log bất biến của dự án (ai, khi nào, làm gì, vì sao), ẩn hoàn toàn với role viewer, phân trang qua usePaged.",
+      "tags": [
+        "audit-log",
+        "table",
+        "permission"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:PlansTab",
+      "type": "function",
+      "name": "PlansTab",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        516,
+        540
+      ],
+      "summary": "Tab AI Plans (read-only): bảng plans do AI đề xuất kèm version qua planVer, cảnh báo re-validation và link sang ai-plan-review.",
+      "tags": [
+        "table",
+        "ai-plans",
+        "read-only"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail.tsx:SessionsTab",
+      "type": "function",
+      "name": "SessionsTab",
+      "filePath": "src/screens/b-detail.tsx",
+      "lineRange": [
+        542,
+        562
+      ],
+      "summary": "Tab C2 Sessions (read-only): bảng sessions của dự án với loại reverse/web shell mô phỏng, link tới chi tiết session và operation.",
+      "tags": [
+        "table",
+        "c2-sessions",
+        "read-only"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/screens/b-detail2.tsx",
+      "type": "file",
+      "name": "b-detail2.tsx",
+      "filePath": "src/screens/b-detail2.tsx",
+      "summary": "Các tab phức tạp của trang chi tiết dự án: ScopeTab (so sánh và chỉnh sửa ROE với luồng re-approval), TeamTab (members và approvals) và CloseTab (closeout checklist), cùng hai hook useSubmitApproval và useReopen dùng chung.",
+      "tags": [
+        "scope",
+        "approvals",
+        "closure",
+        "hooks"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Xử lý các business rule PRE-03, PRE-08 và bump ROE version khi sửa scope đã approved."
+    },
+    {
+      "id": "function:src/screens/b-detail2.tsx:useSubmitApproval",
+      "type": "function",
+      "name": "useSubmitApproval",
+      "filePath": "src/screens/b-detail2.tsx",
+      "lineRange": [
+        7,
+        21
+      ],
+      "summary": "Hook chuẩn bị submit dự án/ROE để phê duyệt: gom các issue còn thiếu (in-scope asset, emergency contact, assessment window) và trả về submit() gọi A.submitApproval kèm toast.",
+      "tags": [
+        "hook",
+        "approval",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail2.tsx:useReopen",
+      "type": "function",
+      "name": "useReopen",
+      "filePath": "src/screens/b-detail2.tsx",
+      "lineRange": [
+        23,
+        29
+      ],
+      "summary": "Hook trả về callback mở confirm dialog yêu cầu lý do bắt buộc để reopen dự án đã đóng, gọi A.reopen và ghi audit log.",
+      "tags": [
+        "hook",
+        "reopen",
+        "confirm-dialog"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail2.tsx:ScopeTab",
+      "type": "function",
+      "name": "ScopeTab",
+      "filePath": "src/screens/b-detail2.tsx",
+      "lineRange": [
+        33,
+        159
+      ],
+      "summary": "Tab Scope & ROE (PR-04): so sánh ROE effective vs proposed qua RoeCompare, bảng in/out scope, panel ROE, documents, version history, cảnh báo PRE-03/PRE-08 và modal EditScope với luồng re-approval khi ROE đã approved.",
+      "tags": [
+        "scope",
+        "roe",
+        "approval"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/b-detail2.tsx:RoeCompare",
+      "type": "function",
+      "name": "RoeCompare",
+      "filePath": "src/screens/b-detail2.tsx",
+      "lineRange": [
+        165,
+        197
+      ],
+      "summary": "So sánh phiên bản ROE đang hiệu lực với bản proposed (PR-V3-04): assets added/removed, assessment window, emergency contact và impact lên plans/operations.",
+      "tags": [
+        "diff",
+        "roe",
+        "comparison"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail2.tsx:RoePanel",
+      "type": "function",
+      "name": "RoePanel",
+      "filePath": "src/screens/b-detail2.tsx",
+      "lineRange": [
+        199,
+        216
+      ],
+      "summary": "Card hiển thị Rules of Engagement: version, assessment window, emergency contact, reviewer, allowed activities, restrictions và nút download PDF mô phỏng.",
+      "tags": [
+        "roe",
+        "card",
+        "display"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail2.tsx:EditScope",
+      "type": "function",
+      "name": "EditScope",
+      "filePath": "src/screens/b-detail2.tsx",
+      "lineRange": [
+        218,
+        240
+      ],
+      "summary": "Modal chỉnh sửa Scope & ROE (window, emergency contact, methods, restrictions, description) với validation bắt buộc, phát hiện dirty và callback confirmReason để xử lý re-approval.",
+      "tags": [
+        "modal",
+        "form",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/b-detail2.tsx:TeamTab",
+      "type": "function",
+      "name": "TeamTab",
+      "filePath": "src/screens/b-detail2.tsx",
+      "lineRange": [
+        243,
+        340
+      ],
+      "summary": "Tab Members & Approvals (PR-05/07): danh sách approval requests với hành động approve/return/request-info có confirm, quản lý thành viên (đổi role, xóa, thêm) và PersonaHint khi role không đủ duyệt.",
+      "tags": [
+        "members",
+        "approvals",
+        "rbac"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/b-detail2.tsx:CloseTab",
+      "type": "function",
+      "name": "CloseTab",
+      "filePath": "src/screens/b-detail2.tsx",
+      "lineRange": [
+        343,
+        446
+      ],
+      "summary": "Tab Closeout (PR-09): KPI tổng kết, closeout checklist từ closureChecklist kèm agent reservations và no-findings waiver, luồng request/approve closure với lý do bắt buộc, modal Close Project.",
+      "tags": [
+        "closure",
+        "checklist",
+        "approval"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/screens/b-wizard.tsx",
+      "type": "file",
+      "name": "b-wizard.tsx",
+      "filePath": "src/screens/b-wizard.tsx",
+      "summary": "Wizard tạo dự án mới 5 bước (basic details, objectives, scope, ROE & approvals, review) với validation riêng từng bước, đề xuất project code, scope check, quản lý members theo role rank và hai luồng kết quả Create Draft hoặc Submit for Approval.",
+      "tags": [
+        "wizard",
+        "form",
+        "validation",
+        "projects"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Dùng useDirty để chặn mất dữ liệu và navigator.onLine check trước khi tạo."
+    },
+    {
+      "id": "function:src/screens/b-wizard.tsx:ProjectNew",
+      "type": "function",
+      "name": "ProjectNew",
+      "filePath": "src/screens/b-wizard.tsx",
+      "lineRange": [
+        31,
+        573
+      ],
+      "summary": "Wizard 5 bước tạo dự án mới: step navigation với validation từng bước (v0–v3), quản lý objectives/assets/members/restrictions, scope check, ROE presets, validation panel với hai outcome Create Draft và Submit for Approval, useDirty bảo vệ dữ liệu form.",
+      "tags": [
+        "wizard",
+        "form",
+        "validation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/screens/b.tsx",
+      "type": "file",
+      "name": "b.tsx",
+      "filePath": "src/screens/b.tsx",
+      "summary": "Trang danh sách dự án với filter persist qua store, bảng Table + Pager, export CSV (BOM + escape), pin/unpin và định nghĩa routes map cho cả phân hệ Projects (projects, project-new, project).",
+      "tags": [
+        "react-screen",
+        "table",
+        "export-csv",
+        "routing"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "routes nối ProjectNew (wizard) và ProjectPage (chi tiết) vào router của App."
+    },
+    {
+      "id": "function:src/screens/b.tsx:ProjectsPage",
+      "type": "function",
+      "name": "ProjectsPage",
+      "filePath": "src/screens/b.tsx",
+      "lineRange": [
+        11,
+        116
+      ],
+      "summary": "Trang danh sách dự án: filter persist theo q/status/type/owner/client, bảng projects với eligibility và pin, export CSV, menu hành động theo hàng, phân trang và ràng buộc tạo dự án theo role.",
+      "tags": [
+        "react-screen",
+        "table",
+        "filtering"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/screens/d-agents.tsx",
+      "type": "file",
+      "name": "d-agents.tsx",
+      "filePath": "src/screens/d-agents.tsx",
+      "summary": "Phân hệ Agents: fleet list với 6 KPI và bộ lọc, shared pool, quản lý agent groups (GroupModal/GroupsTab), connectivity & health (Heartbeat, LineChart, remediation), AssignDrawer xin phân bổ qua approval gate, FailurePanel xử lý agent mất kết nối và AgentDetail nhiều tab.",
+      "tags": [
+        "agents",
+        "fleet",
+        "health",
+        "approval-gate"
+      ],
+      "complexity": "complex",
+      "languageNotes": "agentRoutes bọc Agents và AgentDetail bằng withLoading để hiển thị skeleton khi đổi project."
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:Heartbeat",
+      "type": "function",
+      "name": "Heartbeat",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        15,
+        29
+      ],
+      "summary": "SVG 24 cột mô phỏng heartbeat của agent, tô đỏ khi lost (mất mẫu gần đây) và vàng khi unhealthy (delayed), chiều cao cột sinh từ hashNum(a.id).",
+      "tags": [
+        "svg",
+        "visualization",
+        "simulated"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:GroupModal",
+      "type": "function",
+      "name": "GroupModal",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        32,
+        94
+      ],
+      "summary": "Modal tạo/sửa agent group (AG-03): chọn project cho phép, usage policy, group manager, chọn agents chưa thuộc group; yêu cầu confirm riêng khi gỡ agent đang bị operation sử dụng.",
+      "tags": [
+        "modal",
+        "groups",
+        "agents"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:AssignDrawer",
+      "type": "function",
+      "name": "AssignDrawer",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        98,
+        211
+      ],
+      "summary": "Drawer xin phân bổ agent (AG-V3-03): eligibility checks (connected, không conflict reservation, ở pool, project approved/active), luồng Request assignment qua approval hoặc Assign immediately, cảnh báo pending/conflict và gợi ý agent thay thế cùng OS.",
+      "tags": [
+        "drawer",
+        "assignment",
+        "approval-gate"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:FailurePanel",
+      "type": "function",
+      "name": "FailurePanel",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        223,
+        292
+      ],
+      "summary": "Panel xử lý agent mất kết nối (AG-V3-04/E2E-05): impact lên steps của các operation đang mở theo STEP_IMPACT, đề xuất restore kết nối hoặc replace agent cùng project, request replacement từ shared pool.",
+      "tags": [
+        "failure-handling",
+        "agents",
+        "operations"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:FleetList",
+      "type": "function",
+      "name": "FleetList",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        296,
+        376
+      ],
+      "summary": "Danh sách fleet (AG-V3-01): 6 KPI lọc nhanh (connected/lost/assigned/pool/busy/attention), search + MoreFilters, DTable agents với cột pending-assignment và nút request assignment có lý do chặn.",
+      "tags": [
+        "table",
+        "fleet",
+        "filtering"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:GroupsTab",
+      "type": "function",
+      "name": "GroupsTab",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        380,
+        444
+      ],
+      "summary": "Tab quản lý agent groups (AG-03): card mỗi group với usage policy, availability, thành viên, gỡ agent khỏi group có confirm khi đang bị operation dùng, và liên kết sang operations/operation-new.",
+      "tags": [
+        "groups",
+        "cards",
+        "agents"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:HealthTab",
+      "type": "function",
+      "name": "HealthTab",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        447,
+        523
+      ],
+      "summary": "Tab connectivity & health (AG-04): LineChart agents 24 giờ, health score, bảng agent lost/delayed với Heartbeat bars, latency mô phỏng, lỗi version cũ và bảng khuyến nghị remediation.",
+      "tags": [
+        "health",
+        "chart",
+        "connectivity"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:Agents",
+      "type": "function",
+      "name": "Agents",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        526,
+        545
+      ],
+      "summary": "Trang Agents chính: chọn tab list/pool/groups/health qua route, hiển thị GroupModal và AssignDrawer, khóa tạo group theo useGuard và permission editScope.",
+      "tags": [
+        "react-screen",
+        "tabs",
+        "routing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/screens/d-agents.tsx:AgentDetail",
+      "type": "function",
+      "name": "AgentDetail",
+      "filePath": "src/screens/d-agents.tsx",
+      "lineRange": [
+        548,
+        675
+      ],
+      "summary": "Chi tiết agent (AG-02): chặn khi không tồn tại/không có quyền/thuộc project khác, các tab overview/connectivity/ops/log/policy, disable/enable agent, simulate disconnect, request assignment và AssignDrawer.",
+      "tags": [
+        "detail-page",
+        "agents",
+        "tabs"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:parseDate",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:parseDate",
+      "type": "exports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:Blocked",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:ProjectPage",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:ProjectPage",
+      "type": "exports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:Detail",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:Overview",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:Objectives",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:Activity",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:OpsTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:FindingsTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:ReportsTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:EvidenceTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:AuditTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:PlansTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail.tsx:SessionsTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "file:src/data.ts",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "file:src/screens/b-detail2.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "file:src/store.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "file:src/ui.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail2.tsx:useSubmitApproval",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail2.tsx:useReopen",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail2.tsx:ScopeTab",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail2.tsx:TeamTab",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/screens/b-detail2.tsx:CloseTab",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/ui.tsx:useGuard",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/ui.tsx:Table",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/ui.tsx:usePaged",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/store.tsx:useStore",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/store.tsx:eligibility",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/store.tsx:readiness",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/store.tsx:completion",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail.tsx",
+      "target": "function:src/store.tsx:canAccessProject",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:useSubmitApproval",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:useSubmitApproval",
+      "type": "exports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:useReopen",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:useReopen",
+      "type": "exports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:ScopeTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:RoeCompare",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:RoePanel",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:EditScope",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:TeamTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:TeamTab",
+      "type": "exports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:CloseTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/screens/b-detail2.tsx:CloseTab",
+      "type": "exports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "file:src/data.ts",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "file:src/store.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "file:src/ui.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/ui.tsx:useGuard",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/ui.tsx:Modal",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/store.tsx:useStore",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-detail2.tsx",
+      "target": "function:src/store.tsx:closureChecklist",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-wizard.tsx",
+      "target": "function:src/screens/b-wizard.tsx:ProjectNew",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-wizard.tsx",
+      "target": "function:src/screens/b-wizard.tsx:ProjectNew",
+      "type": "exports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-wizard.tsx",
+      "target": "file:src/data.ts",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-wizard.tsx",
+      "target": "file:src/store.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-wizard.tsx",
+      "target": "file:src/ui.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-wizard.tsx",
+      "target": "function:src/store.tsx:useStore",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b-wizard.tsx",
+      "target": "function:src/store.tsx:useDirty",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "function:src/screens/b.tsx:ProjectsPage",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "file:src/data.ts",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "file:src/screens/b-detail.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "file:src/screens/b-wizard.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "file:src/store.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "file:src/ui.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "function:src/screens/b-wizard.tsx:ProjectNew",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "function:src/screens/b-detail.tsx:ProjectPage",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "function:src/ui.tsx:Table",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "function:src/ui.tsx:PageHeader",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "function:src/ui.tsx:usePaged",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "function:src/store.tsx:useStore",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/b.tsx",
+      "target": "function:src/store.tsx:eligibility",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:Heartbeat",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:GroupModal",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:AssignDrawer",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:FailurePanel",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:FleetList",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:GroupsTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:HealthTab",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:Agents",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-agents.tsx:AgentDetail",
+      "type": "contains",
+      "weight": 1,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "file:src/data.ts",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "file:src/screens/d-shared.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "file:src/store.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "file:src/ui.tsx",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:withLoading",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:useVisibleAgents",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:useProjectName",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:Blocked",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:DTable",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:hashNum",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:Id",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:IdL",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:MoreFilters",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:shortDate",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/screens/d-shared.tsx:Trunc",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/ui.tsx:useGuard",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/ui.tsx:usePaged",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "file:src/screens/d-agents.tsx",
+      "target": "function:src/store.tsx:useStore",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    }
+  ]
+}

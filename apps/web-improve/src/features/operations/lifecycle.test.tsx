@@ -273,7 +273,7 @@ function FleetBusy() {
 
 describe('operation controls (ticket 27 — screens)', () => {
   it('the typed Start control starts through the handler; the fleet and the legacy store observe one commit', async () => {
-    const h = mountProbe('Taylor Chen')
+    const h = mountProbe('Alex Morgan')
     h.run(() => { h.store().setPid(P14); h.store().A.assignAgent('AG-012', P14) })
     const opId = h.store().A.createOperation({ name: 'Control bridge op', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
     h.run(() => { h.store().go('preflight', { id: opId }) })
@@ -296,7 +296,7 @@ describe('operation controls (ticket 27 — screens)', () => {
   })
 
   it('a legacy A.stopOp releases the reservation observed by the typed fleet read', async () => {
-    const h = mountProbe('Taylor Chen')
+    const h = mountProbe('Alex Morgan')
     h.run(() => { h.store().setPid(P14); h.store().A.assignAgent('AG-012', P14) })
     const opId = h.store().A.createOperation({ name: 'Legacy stop bridge op', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
     h.run(() => { h.store().A.confirmPreflight(opId) })
@@ -342,7 +342,7 @@ describe('operation controls (ticket 27 — screens)', () => {
   })
 
   it('a refused start renders its reason through the toast channel, keeping the operation unstarted', async () => {
-    const h = mountProbe('Taylor Chen')
+    const h = mountProbe('Alex Morgan')
     h.run(() => { h.store().setPid(P14); h.store().A.assignAgent('AG-012', P14) })
     const opId = h.store().A.createOperation({ name: 'Refusal render op', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
     h.run(() => { h.store().go('preflight', { id: opId }) })

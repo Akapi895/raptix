@@ -1,0 +1,2172 @@
+{
+ "nodes": [
+  {
+   "id": "file:src/App.tsx",
+   "type": "file",
+   "name": "App.tsx",
+   "filePath": "src/App.tsx",
+   "summary": "Điểm vào ứng dụng React: bọc toàn bộ app trong StoreProvider và điều hướng trang dựa trên route lưu trong store, gom bảng định tuyến ROUTES từ các nhóm màn hình a–h và scenarios.",
+   "tags": [
+    "entry-point",
+    "routing",
+    "react",
+    "app-root"
+   ],
+   "complexity": "simple",
+   "languageNotes": "App là default export; Router render bên trong Shell với Suspense."
+  },
+  {
+   "id": "file:src/main.tsx",
+   "type": "file",
+   "name": "main.tsx",
+   "filePath": "src/main.tsx",
+   "summary": "Entrypoint Vite/React: mount App vào phần tử #root với React.StrictMode và nạp stylesheet toàn cục từ index.css.",
+   "tags": [
+    "entry-point",
+    "bootstrap",
+    "react-dom"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Không export gì; file khởi động duy nhất của bundle."
+  },
+  {
+   "id": "file:src/screens/ai-copilot.tsx",
+   "type": "file",
+   "name": "ai-copilot.tsx",
+   "filePath": "src/screens/ai-copilot.tsx",
+   "summary": "Drawer 'Ask AI' nổi toàn màn hình theo ngữ cảnh trang hiện tại: gợi ý câu hỏi theo loại đối tượng, tự tạo conversation khi thiếu và chặn các hành động đề xuất theo vai trò, quyền và chế độ AI của hội thoại.",
+   "tags": [
+    "ai-copilot",
+    "drawer",
+    "react-component",
+    "accessibility"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/screens/demo-guide.tsx",
+   "type": "file",
+   "name": "demo-guide.tsx",
+   "filePath": "src/screens/demo-guide.tsx",
+   "summary": "Hệ thống walkthrough demo: định nghĩa bộ guide E2E-01→11 và WF-A→G với từng bước điều hướng kèm persona/dự án, cùng panel hướng dẫn nổi ở góc dưới trái tự động chuyển bước khi người dùng tự mở đúng màn hình kế tiếp.",
+   "tags": [
+    "demo-walkthrough",
+    "guides",
+    "onboarding",
+    "external-store"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Export GUIDES (dữ liệu), stopGuide, jump, launchGuide, DemoGuide; trạng thái panel dùng useSyncExternalStore trên module-level state, không dùng localStorage."
+  },
+  {
+   "id": "file:src/screens/f-report.tsx",
+   "type": "file",
+   "name": "f-report.tsx",
+   "filePath": "src/screens/f-report.tsx",
+   "summary": "Toàn bộ luồng báo cáo đánh giá (tạo mới, editor, preview, review): gate ngữ cảnh dự án, kiểm tra chính sách qua reportChecks, biến thể closure không-findings, export/delivery với checksum và chống tự duyệt báo cáo của chính mình.",
+   "tags": [
+    "reports",
+    "workflow",
+    "policy-checks",
+    "react"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Export cả helper dùng chung (closureEvidence, reportChecks, useNoFind, AiExclusion) được f.tsx tái sử dụng; version snapshot lưu qua persistFilters của store."
+  },
+  {
+   "id": "file:src/screens/f-settings.tsx",
+   "type": "file",
+   "name": "f-settings.tsx",
+   "filePath": "src/screens/f-settings.tsx",
+   "summary": "Trang Organization Settings với 10 tab (tổ chức, users & roles, integrations, policies, retention, templates, detection, audit log, notifications, security); mỗi tab được gate theo vai trò kèm lý do và ghi chú rõ mọi thay đổi ở demo chỉ là mô phỏng nhưng backend sẽ thực thi và audit.",
+   "tags": [
+    "settings",
+    "rbac",
+    "organization",
+    "tabs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/screens/f.tsx",
+   "type": "file",
+   "name": "f.tsx",
+   "filePath": "src/screens/f.tsx",
+   "summary": "Module route nhóm Reports/Settings: trang danh sách báo cáo với KPI, bộ lọc và bảng phân trang, gallery template, lịch sử export/delivery, cùng bảng routes nối các trang báo cáo (new/editor/preview/review) với SettingsPage.",
+   "tags": [
+    "reports",
+    "routing",
+    "list-view",
+    "registry"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "Export duy nhất là routes record; các component bên trong không export trực tiếp."
+  },
+  {
+   "id": "file:src/screens/scenarios.tsx",
+   "type": "file",
+   "name": "scenarios.tsx",
+   "filePath": "src/screens/scenarios.tsx",
+   "summary": "Trang home của prototype hiển thị ngoài app (không cần login): launcher cho các demo E2E-01→11 và workflow AI WF-A→G, kèm bốn tab tài liệu hoá — interaction matrix, role matrix, state coverage và acceptance checklist với trạng thái kiểm thử được ghi bảo thủ.",
+   "tags": [
+    "demo-launcher",
+    "documentation",
+    "prototype",
+    "routing"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Export routes gồm 'scenarios' và 'workspaces'; dùng jump/launchGuide/GUIDES từ demo-guide để đặt persona + dự án trước khi điều hướng vào app."
+  },
+  {
+   "id": "file:src/shell.tsx",
+   "type": "file",
+   "name": "shell.tsx",
+   "filePath": "src/shell.tsx",
+   "summary": "Khung ứng dụng (app shell): sidebar điều hướng 12 mục có badge, topbar với global search/notifications/profile, project switcher, context ribbon, banner và dialog emergency-stop, modal toàn cục (confirm/unsaved changes), toast cùng tích hợp CopilotDrawer và DemoGuide.",
+   "tags": [
+    "app-shell",
+    "navigation",
+    "layout",
+    "react"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Export NAV, Shell và type Route; Tabs/Segmented/Activity/ShieldAlert ở cuối file chỉ là re-export từ ui.tsx, không phải định nghĩa mới."
+  },
+  {
+   "id": "file:src/store.tsx",
+   "type": "file",
+   "name": "store.tsx",
+   "filePath": "src/store.tsx",
+   "summary": "Store trung tâm của prototype: React context cung cấp DB demo (seed từ data.ts), điều hướng hash-based, persona/role, phân quyền, toasts/confirm, cùng hàng chục action mô phỏng toàn bộ vòng đời dự án, plan, operation, session, finding, report và hội thoại AI.",
+   "tags": [
+    "state-management",
+    "context",
+    "simulation",
+    "routing"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Export utility thời gian (hhmm, hhmm12, stamp, today), predicate chính sách (canAccessProject, sessionPerm, computePreflight, preflightPass, closureChecklist, eligibility, readiness, completion, allocation, groupSummary) và hook useStore/useDirty; PlanStatus/ToolEvent chỉ là re-export type từ data.ts."
+  },
+  {
+   "id": "file:src/screens/b-detail.tsx",
+   "type": "file",
+   "name": "b-detail.tsx",
+   "filePath": "src/screens/b-detail.tsx",
+   "summary": "Trang chi tiết dự án của phân hệ Projects: kiểm tra quyền truy cập, điều hướng 13 tab (overview, scope & ROE, operations, plans, findings, reports, evidence, audit, team, sessions, close) qua MAIN_TABS/MORE_TABS, banner trạng thái phê duyệt/đóng và các tab hiển thị dữ liệu read-only lọc theo projectId.",
+   "tags": [
+    "react-screen",
+    "project-detail",
+    "tabs",
+    "routing"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Tách tab phức tạp (scope/team/close) sang file b-detail2.tsx; dùng useGuard và eligibility để gate hành động."
+  },
+  {
+   "id": "file:src/screens/b-detail2.tsx",
+   "type": "file",
+   "name": "b-detail2.tsx",
+   "filePath": "src/screens/b-detail2.tsx",
+   "summary": "Các tab phức tạp của trang chi tiết dự án: ScopeTab (so sánh và chỉnh sửa ROE với luồng re-approval), TeamTab (members và approvals) và CloseTab (closeout checklist), cùng hai hook useSubmitApproval và useReopen dùng chung.",
+   "tags": [
+    "scope",
+    "approvals",
+    "closure",
+    "hooks"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Xử lý các business rule PRE-03, PRE-08 và bump ROE version khi sửa scope đã approved."
+  },
+  {
+   "id": "file:src/screens/b-wizard.tsx",
+   "type": "file",
+   "name": "b-wizard.tsx",
+   "filePath": "src/screens/b-wizard.tsx",
+   "summary": "Wizard tạo dự án mới 5 bước (basic details, objectives, scope, ROE & approvals, review) với validation riêng từng bước, đề xuất project code, scope check, quản lý members theo role rank và hai luồng kết quả Create Draft hoặc Submit for Approval.",
+   "tags": [
+    "wizard",
+    "form",
+    "validation",
+    "projects"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Dùng useDirty để chặn mất dữ liệu và navigator.onLine check trước khi tạo."
+  },
+  {
+   "id": "file:src/screens/b.tsx",
+   "type": "file",
+   "name": "b.tsx",
+   "filePath": "src/screens/b.tsx",
+   "summary": "Trang danh sách dự án với filter persist qua store, bảng Table + Pager, export CSV (BOM + escape), pin/unpin và định nghĩa routes map cho cả phân hệ Projects (projects, project-new, project).",
+   "tags": [
+    "react-screen",
+    "table",
+    "export-csv",
+    "routing"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "routes nối ProjectNew (wizard) và ProjectPage (chi tiết) vào router của App."
+  },
+  {
+   "id": "file:src/screens/d-agents.tsx",
+   "type": "file",
+   "name": "d-agents.tsx",
+   "filePath": "src/screens/d-agents.tsx",
+   "summary": "Phân hệ Agents: fleet list với 6 KPI và bộ lọc, shared pool, quản lý agent groups (GroupModal/GroupsTab), connectivity & health (Heartbeat, LineChart, remediation), AssignDrawer xin phân bổ qua approval gate, FailurePanel xử lý agent mất kết nối và AgentDetail nhiều tab.",
+   "tags": [
+    "agents",
+    "fleet",
+    "health",
+    "approval-gate"
+   ],
+   "complexity": "complex",
+   "languageNotes": "agentRoutes bọc Agents và AgentDetail bằng withLoading để hiển thị skeleton khi đổi project."
+  },
+  {
+   "id": "file:src/screens/d-assets.tsx",
+   "type": "file",
+   "name": "d-assets.tsx",
+   "filePath": "src/screens/d-assets.tsx",
+   "summary": "Phân hệ Assets: danh sách với ScopeBadge giải thích scope, scope map SVG + review approve/reject thay đổi scope, thêm asset thủ công/CSV/discovery mô phỏng qua validateIdent và ImportPreview, trang chi tiết asset với các tab liên quan operations/agents/findings/approvals.",
+   "tags": [
+    "assets",
+    "scope",
+    "import",
+    "validation"
+   ],
+   "complexity": "complex",
+   "languageNotes": "validateIdent và ScopeBadge được export để dùng lại; assetRoutes map assets/asset-new/asset-scope/asset."
+  },
+  {
+   "id": "file:src/screens/d-library.tsx",
+   "type": "file",
+   "name": "d-library.tsx",
+   "filePath": "src/screens/d-library.tsx",
+   "summary": "Thư viện Playbooks & TTPs: danh sách playbook/adversary profile theo tab, catalog MITRE ATT&CK techniques nhóm theo tactic với detection status, chi tiết playbook với compatibility checks và version lock, màn review revision (diff steps) và chi tiết technique.",
+   "tags": [
+    "playbooks",
+    "mitre-attack",
+    "review",
+    "library"
+   ],
+   "complexity": "complex",
+   "languageNotes": "libraryRoutes map playbooks/playbook/technique/playbook-review qua withLoading."
+  },
+  {
+   "id": "file:src/screens/d-shared.tsx",
+   "type": "file",
+   "name": "d-shared.tsx",
+   "filePath": "src/screens/d-shared.tsx",
+   "summary": "Tiện ích dùng chung cho các màn hình phân hệ D (Agents/Assets/Library): HOC withLoading, hooks useProjectName/useVisibleAgents, banner PickProjectBanner, Blocked, popover MoreFilters, bảng DTable sticky và các helper hiển thị Id/IdL/Trunc/shortDate/hashNum.",
+   "tags": [
+    "shared-components",
+    "hooks",
+    "table",
+    "helpers"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "POOL_LABEL là hằng nhãn cho agent chưa gán project."
+  },
+  {
+   "id": "file:src/screens/d.tsx",
+   "type": "file",
+   "name": "d.tsx",
+   "filePath": "src/screens/d.tsx",
+   "summary": "Barrel route của phân hệ Agents/Assets/Library: gộp agentRoutes, assetRoutes và libraryRoutes thành một routes map duy nhất cho router.",
+   "tags": [
+    "routing",
+    "barrel",
+    "routes"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/ui.tsx",
+   "type": "file",
+   "name": "ui.tsx",
+   "filePath": "src/ui.tsx",
+   "summary": "Thư viện UI dùng chung toàn app: bảng STATUS badge cho mọi loại trạng thái, Button/Card/PageHeader/Tabs/Table/Modal/Drawer/Menu, biểu đồ SVG (Donut, BarChart, LineChart), guard Gated/Locked/useGuard/PersonaHint và các hook usePaged/useDialogFocus/useDebounced.",
+   "tags": [
+    "ui-kit",
+    "components",
+    "hooks",
+    "accessibility"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Dùng useStore chỉ trong các guard (useGuard, PersonaHint); phần còn lại là component thuần."
+  },
+  {
+   "id": "file:src/data.ts",
+   "type": "file",
+   "name": "data.ts",
+   "filePath": "src/data.ts",
+   "summary": "Kho định nghĩa type/interface domain của toàn ứng dụng (Project, Operation, Finding, Plan, Session, C2Node, Channel...) kèm seed data demo; hàm seed() tạo database giả lập đầy đủ cho chế độ demo và e2e.",
+   "tags": [
+    "seed-data",
+    "domain-types",
+    "demo-data",
+    "mitre-attack",
+    "data-model"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Gần như toàn bộ file là khai báo type/interface TypeScript; các hàm D, s, mkSteps chỉ là helper nội bộ của seed() và không được export."
+  },
+  {
+   "id": "file:src/screens/a-dashboard.tsx",
+   "type": "file",
+   "name": "a-dashboard.tsx",
+   "filePath": "src/screens/a-dashboard.tsx",
+   "summary": "Command Center và trang My Tasks: tổng hợp KPI, hàng đợi needs attention, panel readiness/completion theo project và inbox phê duyệt cho approvals, plans, session access, findings và reports.",
+   "tags": [
+    "dashboard",
+    "kpi",
+    "approval-inbox",
+    "rbac",
+    "react"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/screens/a-login.tsx",
+   "type": "file",
+   "name": "a-login.tsx",
+   "filePath": "src/screens/a-login.tsx",
+   "summary": "Màn hình đăng nhập demo: form email/password, SSO và MFA giả lập, chọn workspace và persona quick picker; xác thực dựa trên USERS và DEMO_PASSWORD từ seed data.",
+   "tags": [
+    "login",
+    "authentication",
+    "sso",
+    "mfa",
+    "demo"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:src/screens/a-system.tsx",
+   "type": "file",
+   "name": "a-system.tsx",
+   "filePath": "src/screens/a-system.tsx",
+   "summary": "Bộ trang trạng thái hệ thống: 403/404/500/offline/session-expired dùng chung khung ErrorFrame, cùng StatesGallery trình diễn mọi state UI chuẩn (loading, empty, error, read-only, stale, partial data) và status legend.",
+   "tags": [
+    "error-pages",
+    "states-gallery",
+    "ui-states",
+    "system"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/screens/a.tsx",
+   "type": "file",
+   "name": "a.tsx",
+   "filePath": "src/screens/a.tsx",
+   "summary": "Route registry cho nhóm màn hình auth/system/dashboard: map tên route (login, forbidden, command-center, tasks...) sang component tương ứng.",
+   "tags": [
+    "routes",
+    "registry",
+    "screens"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Chỉ export object routes dạng Record<string, ComponentType>, không chứa logic riêng."
+  },
+  {
+   "id": "file:src/screens/h-session.tsx",
+   "type": "file",
+   "name": "h-session.tsx",
+   "filePath": "src/screens/h-session.tsx",
+   "summary": "Chi tiết session C2 và interactive console: quản lý access grants (request/revoke/terminate), simulated revocation failure, đồng hồ hết hạn grant và console transcript với policy gate cho từng trạng thái truy cập.",
+   "tags": [
+    "c2",
+    "sessions",
+    "access-control",
+    "console",
+    "rbac"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/screens/h.tsx",
+   "type": "file",
+   "name": "h.tsx",
+   "filePath": "src/screens/h.tsx",
+   "summary": "Tổng quan C2 & Sessions: KPI hạ tầng, cảnh báo node degraded và emergency stop, các tab infrastructure/channels/sessions/requests/audit, chi tiết channel, cùng routes registry cho c2, c2-channel, c2-session và c2-console.",
+   "tags": [
+    "c2",
+    "infrastructure",
+    "audit",
+    "routes"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/screens/g-chat.tsx",
+   "type": "file",
+   "name": "g-chat.tsx",
+   "filePath": "src/screens/g-chat.tsx",
+   "summary": "Màn hình AI Operator của demo app: dựng workspace hội thoại AI với rail danh sách conversation, khung chat (Thread + Composer) và context inspector có thể resize; xử lý riêng trạng thái All Projects, read-only và eligibility bị khoá.",
+   "tags": [
+    "screen",
+    "ai-operator",
+    "chat",
+    "layout",
+    "react-hooks"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "React function component dùng hook useStore từ store và các hook layout useResizable/useViewportW; trạng thái mở inspector được lưu localStorage."
+  },
+  {
+   "id": "file:src/screens/g-common.tsx",
+   "type": "file",
+   "name": "g-common.tsx",
+   "filePath": "src/screens/g-common.tsx",
+   "summary": "Bộ building block dùng chung cho nhóm màn hình AI: hằng số MODES/STARTERS, Pill và badge eligibility, hàm toolFlow tách policy–approval–execution, hook useReplan phát hiện lỗi chạy, ReplanPanel, ExecBanner, AiSubNav, PlanCard, ToolProposalCard, Thread, Composer và ModeSwitch.",
+   "tags": [
+    "shared-components",
+    "chat",
+    "tool-proposal",
+    "replan",
+    "hooks"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Toàn bộ là React function components và custom hooks; kiểu dữ liệu (ToolEvent, Plan, Conversation, Db) import từ src/data."
+  },
+  {
+   "id": "file:src/screens/g-fanout.tsx",
+   "type": "file",
+   "name": "g-fanout.tsx",
+   "filePath": "src/screens/g-fanout.tsx",
+   "summary": "Màn hình fan-out đa agent: FanOutCard nhúng trong chat, AllocationView phân bổ agent, BranchBody dùng chung cho drawer/page kèm modal retry/reassign/cancel, execution graph SVG theo lane, panel fan-in và bảng branch; export routes cho 'ai-fanout' và 'ai-branch'.",
+   "tags": [
+    "fanout",
+    "branches",
+    "allocation",
+    "execution-graph",
+    "screen"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Component React thuần; graph vẽ bằng SVG paths inline, trạng thái branch lấy từ BRANCH_LABEL/BRANCH_TERMINAL trong src/data."
+  },
+  {
+   "id": "file:src/screens/g-plan.tsx",
+   "type": "file",
+   "name": "g-plan.tsx",
+   "filePath": "src/screens/g-plan.tsx",
+   "summary": "Cụm trang quản lý plan của AI Operator: PlanGuard bảo vệ route, PlanDetail với 8 tab (builder/overview/steps/branches/assets/risk/refs/history), ReviewBody duyệt plan (approve/return/reject), CompareBody so sánh revision và policyChecks mô phỏng kiểm tra scope/ROE/agents/gates/window.",
+   "tags": [
+    "plan",
+    "approval-review",
+    "revision-diff",
+    "policy-checks",
+    "screen"
+   ],
+   "complexity": "complex",
+   "languageNotes": "File lớn nhất của batch; các trang đều đi qua PlanGuard để kiểm tra route/project; version chain dựng từ prevPlanId."
+  },
+  {
+   "id": "file:src/screens/g-trace.tsx",
+   "type": "file",
+   "name": "g-trace.tsx",
+   "filePath": "src/screens/g-trace.tsx",
+   "summary": "Hai màn hình minh bạch AI: AiTrace liệt kê mọi tool event với facet Policy/Approval/Execution độc lập, bộ lọc và inspector cho reviewer allow/deny; AiHistory duyệt plans, conversations, audit trail kèm provenance và export transcript đã redact.",
+   "tags": [
+    "tool-trace",
+    "audit",
+    "provenance",
+    "history",
+    "screen"
+   ],
+   "complexity": "complex",
+   "languageNotes": "State view/event được đồng bộ với URL hash qua hashParam/setHash; redact() che IP và secret trước khi export."
+  },
+  {
+   "id": "file:src/screens/g-workspace.tsx",
+   "type": "file",
+   "name": "g-workspace.tsx",
+   "filePath": "src/screens/g-workspace.tsx",
+   "summary": "Khung layout của AI workspace: các hook và component resizable (useResizable, Separator), LeftRail danh sách conversation/plan/tool approval, Inspector ngữ cảnh 5 tab, ConversationHeader với mode radiogroup và ConvBanner chọn đúng một banner.",
+   "tags": [
+    "layout",
+    "resizable",
+    "left-rail",
+    "inspector",
+    "screen"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Chiều rộng pane persist trong localStorage qua readLS/writeLS; moveChoice dùng chung cho tablist và radiogroup."
+  },
+  {
+   "id": "file:src/screens/g.tsx",
+   "type": "file",
+   "name": "g.tsx",
+   "filePath": "src/screens/g.tsx",
+   "summary": "Registry route của nhóm màn hình AI: map các id route ('ai-operator', 'ai-plan', 'ai-plan-review', 'ai-plan-compare', 'ai-trace', 'ai-history') tới component tương ứng và merge routes fan-out ('ai-fanout', 'ai-branch').",
+   "tags": [
+    "routes",
+    "registry",
+    "ai",
+    "entrypoint"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Chỉ export hằng số routes (Record<string, ComponentType>) được App.tsx merge vào bảng route tổng."
+  },
+  {
+   "id": "file:src/screens/c-common.tsx",
+   "type": "file",
+   "name": "c-common.tsx",
+   "filePath": "src/screens/c-common.tsx",
+   "summary": "Module tiện ích dùng chung cho các màn hình Operation: OpGate kiểm tra quyền truy cập, bộ hàm parse/định dạng thời gian UTC+7, runtime state, phát hiện xung đột lịch (scheduling conflicts) và bộ 8 preflight checks (specChecks).",
+   "tags": [
+    "shared-helpers",
+    "operations",
+    "preflight",
+    "scheduling",
+    "timezone"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "Gần như mọi helper đều được export để tái sử dụng ở c-console.tsx, c-results.tsx và c.tsx; thời gian được encode dưới dạng UTC ms nhưng hiển thị theo múi giờ UTC+7."
+  },
+  {
+   "id": "file:src/screens/c-console.tsx",
+   "type": "file",
+   "name": "c-console.tsx",
+   "filePath": "src/screens/c-console.tsx",
+   "summary": "Các tab vận hành trực tiếp của Operation: live console (ConsoleTab), banner điều kiện ưu tiên (OpBanner), điều khiển pause/resume/stop/emergency stop, StepDrawer inspect từng step, tab agents và timeline kèm dialog Emergency Stop.",
+   "tags": [
+    "live-console",
+    "emergency-stop",
+    "operations",
+    "review-gate",
+    "tabs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/screens/c-results.tsx",
+   "type": "file",
+   "name": "c-results.tsx",
+   "filePath": "src/screens/c-results.tsx",
+   "summary": "Tab kết quả của Operation: GraphTab vẽ execution graph SVG từ các step đã chạy, ResultsTab tổng hợp outcome, evidence, findings, reviewer sign-off và export JSON có mask dữ liệu sensitive.",
+   "tags": [
+    "results",
+    "evidence",
+    "execution-graph",
+    "export",
+    "findings"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/screens/c.tsx",
+   "type": "file",
+   "name": "c.tsx",
+   "filePath": "src/screens/c.tsx",
+   "summary": "Trang Operations chính: danh sách operation (OP-01), wizard tạo/chỉnh sửa 5 bước (OP-02), trang preflight (OP-03), trang lập lịch có phát hiện xung đột và OperationDetail điều phối các tab; export object routes để đăng ký router.",
+   "tags": [
+    "operations",
+    "wizard",
+    "preflight",
+    "scheduling",
+    "routing"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:src/screens/e-analysis.tsx",
+   "type": "file",
+   "name": "e-analysis.tsx",
+   "filePath": "src/screens/e-analysis.tsx",
+   "summary": "Màn hình Analysis: tổng hợp kết quả thực thi technique theo MITRE ATT&CK, trực quan hóa attack path dạng SVG, heatmap matrix và phân tích detection dựa trên trạng thái kết nối SIEM. Xuất analysisRoutes để đăng ký route 'analysis'.",
+   "tags": [
+    "analysis-screen",
+    "mitre-attack",
+    "svg-visualization",
+    "detection-coverage",
+    "react"
+   ],
+   "complexity": "complex",
+   "languageNotes": "File lớn 872 dòng, gồm các visualization SVG (Chain, Matrix) và hàm tổng hợp dữ liệu buildAna chạy trong useMemo."
+  },
+  {
+   "id": "file:src/screens/e-findings.tsx",
+   "type": "file",
+   "name": "e-findings.tsx",
+   "filePath": "src/screens/e-findings.tsx",
+   "summary": "Màn hình Findings & Evidence: quản lý vòng đời finding (draft, review, confirmed, remediation, retest, resolved), xử lý AI suggestion (verify/dismiss kèm lý do), upload và inspector evidence với masking dữ liệu nhạy cảm. Xuất findingRoutes và re-export Segmented.",
+   "tags": [
+    "findings",
+    "evidence",
+    "lifecycle",
+    "ai-suggestions",
+    "react"
+   ],
+   "complexity": "complex",
+   "languageNotes": "File lớn 885 dòng, 5 route: findings, finding-new, finding, evidence và evidence-inspector."
+  },
+  {
+   "id": "file:src/screens/e.tsx",
+   "type": "file",
+   "name": "e.tsx",
+   "filePath": "src/screens/e.tsx",
+   "summary": "Registry route cho nhóm màn hình phân tích: gộp analysisRoutes và findingRoutes thành object routes duy nhất để App đăng ký điều hướng.",
+   "tags": [
+    "routes",
+    "registry",
+    "entrypoint"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "config:.mise.toml",
+   "type": "config",
+   "name": ".mise.toml",
+   "filePath": ".mise.toml",
+   "summary": "Cấu hình mise khai báo phiên bản toolchain cho dự án: Node.js 22 và pnpm 10.34.3, giúp môi trường phát triển đồng nhất giữa các máy.",
+   "tags": [
+    "toolchain",
+    "mise",
+    "nodejs",
+    "pnpm",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:AGENTS.md",
+   "type": "document",
+   "name": "AGENTS.md",
+   "filePath": "AGENTS.md",
+   "summary": "Tài liệu hướng dẫn agent mô tả cấu trúc chuẩn của app React + Vite + Tailwind CSS v4 chạy trong Figma Make: dev server trên $PORT, các file chính (src/main.tsx, src/App.tsx, vite.config.ts, .mise.toml), dependency và quy ước styling Tailwind v4.",
+   "tags": [
+    "agents-guide",
+    "project-structure",
+    "tailwind-v4",
+    "vite",
+    "documentation"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "document:implementation-plan.md",
+   "type": "document",
+   "name": "implementation-plan.md",
+   "filePath": "implementation-plan.md",
+   "summary": "Implementation plan chi tiết cho nền tảng Red Team Management: phân tích hiện trạng (domain model 20+ entities, 42 route, RBAC 6 vai trò, safety invariants), kiến trúc đề xuất với Zustand store slices, TanStack Query, mock service layer, cùng roadmap 5 phase kèm acceptance criteria và testing checklist.",
+   "tags": [
+    "implementation-plan",
+    "architecture",
+    "rbac",
+    "roadmap",
+    "red-team"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:index.html",
+   "type": "file",
+   "name": "index.html",
+   "filePath": "index.html",
+   "summary": "HTML shell của Vite chứa phần tử #root và thẻ script type=module trỏ tới /src/main.tsx, kèm các placeholder figma: cho lang, title và vùng head/body injection của Figma Make.",
+   "tags": [
+    "html-shell",
+    "vite-entry",
+    "figma-make",
+    "root-element"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "config:package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "package.json",
+   "summary": "Manifest của app figma-make-app (type module): khai báo scripts dev/build/preview của Vite cùng oxfmt, runtime deps React 19, React DOM 19 và lucide-react, dev deps Vite 8, TypeScript 5.7, @vitejs/plugin-react và Tailwind CSS v4.",
+   "tags": [
+    "package-manifest",
+    "vite-scripts",
+    "react-19",
+    "dependencies",
+    "npm"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "config:tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "tsconfig.json",
+   "summary": "Cấu hình TypeScript strict với moduleResolution bundler: target ES2020, JSX react-jsx, noEmit, path alias @/* → ./src/*, include src và vite.config.ts.",
+   "tags": [
+    "typescript",
+    "strict-mode",
+    "path-alias",
+    "compiler-options"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.figma/make/analyze-routes",
+   "type": "file",
+   "name": "analyze-routes",
+   "filePath": ".figma/make/analyze-routes",
+   "summary": "Shell script bash 4 dòng bọc lệnh `figma-analyze routes \"$@\"`, dùng để phân tích các route của ứng dụng trong môi trường Figma Make.",
+   "tags": [
+    "shell-script",
+    "figma-make",
+    "routes-analysis",
+    "tooling"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Script POSIX với `set -euo pipefail`, chỉ exec một lệnh duy nhất; không có parser tree-sitter nên được phân tích thủ công."
+  },
+  {
+   "id": "file:.figma/make/deploy",
+   "type": "file",
+   "name": "deploy",
+   "filePath": ".figma/make/deploy",
+   "summary": "Shell script build production (`pnpm run build`) rồi deploy thư mục `dist` lên Figma Make bằng lệnh `figma make deploy --build-dir dist`.",
+   "tags": [
+    "shell-script",
+    "figma-make",
+    "deploy",
+    "build"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Script bash hai bước build + deploy, được phân tích thủ công do không có parser tree-sitter."
+  },
+  {
+   "id": "file:.figma/make/deploy-preview",
+   "type": "file",
+   "name": "deploy-preview",
+   "filePath": ".figma/make/deploy-preview",
+   "summary": "Shell script build ở chế độ development (`pnpm run build --mode development`) để phát sinh sourcemap inline, sau đó deploy bản cached preview qua `figma make deploy-preview`.",
+   "tags": [
+    "shell-script",
+    "figma-make",
+    "deploy-preview",
+    "sourcemap"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Cờ `--mode development` được vite.config.ts đọc để bật sourcemap; script được phân tích thủ công (no tree-sitter parser)."
+  },
+  {
+   "id": "file:.figma/make/dev",
+   "type": "file",
+   "name": "dev",
+   "filePath": ".figma/make/dev",
+   "summary": "Shell script khởi động dev server của dự án qua `pnpm run dev`, đóng vai trò entry point môi trường phát triển cho Figma Make.",
+   "tags": [
+    "shell-script",
+    "figma-make",
+    "dev-server",
+    "pnpm"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Script bash một lệnh với `set -euo pipefail`; được phân tích thủ công (no tree-sitter parser)."
+  },
+  {
+   "id": "config:.figma/make/dev.json",
+   "type": "config",
+   "name": "dev.json",
+   "filePath": ".figma/make/dev.json",
+   "summary": "Cấu hình watch của Figma Make: glob `installOn` (package.json, pnpm-lock.yaml) kích hoạt install và restart dev server; `restartOn` để trống vì mã nguồn src/** đã được Vite HMR theo dõi riêng.",
+   "tags": [
+    "config",
+    "json",
+    "figma-make",
+    "watch",
+    "toolchain"
+   ],
+   "complexity": "simple",
+   "languageNotes": "JSON có chú thích (jsonc-style); chỉ liệt kê file ảnh hưởng toolchain/dependency, không liệt kê mã nguồn ứng dụng để tránh restart thừa."
+  },
+  {
+   "id": "file:.figma/make/format",
+   "type": "file",
+   "name": "format",
+   "filePath": ".figma/make/format",
+   "summary": "Shell script gọi `pnpm run format -- \"$@\"` để format mã nguồn, chuyển tiếp mọi tham số dòng lệnh trong môi trường Figma Make.",
+   "tags": [
+    "shell-script",
+    "figma-make",
+    "formatting",
+    "pnpm"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Script bash 4 dòng, forward tham số qua `--`; phân tích thủ công (no tree-sitter parser)."
+  },
+  {
+   "id": "file:.figma/make/import-assets.mjs",
+   "type": "file",
+   "name": "import-assets.mjs",
+   "filePath": ".figma/make/import-assets.mjs",
+   "summary": "Định nghĩa vite plugin `figma-frontend-import-assets`: quét toàn bộ asset của dự án (loại trừ node_modules/dist và file cấu hình), đăng ký các file .html làm rollup input và sao chép asset sang thư mục build ở pha writeBundle.",
+   "tags": [
+    "vite-plugin",
+    "javascript",
+    "assets",
+    "build-tooling"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "Export duy nhất `frontendAssets` là plugin factory; hàm nội bộ `currentAssets` duyệt cây thư mục đệ quy dùng node:fs."
+  },
+  {
+   "id": "file:.figma/make/install",
+   "type": "file",
+   "name": "install",
+   "filePath": ".figma/make/install",
+   "summary": "Shell script cài đặt dependencies bằng `pnpm install --prefer-offline --no-frozen-lockfile`, dùng khi bootstrap hoặc khi dev.json kích hoạt install lại.",
+   "tags": [
+    "shell-script",
+    "figma-make",
+    "install",
+    "pnpm"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Script bash một lệnh; phân tích thủ công (no tree-sitter parser)."
+  },
+  {
+   "id": "file:.figma/make/langserver",
+   "type": "file",
+   "name": "langserver",
+   "filePath": ".figma/make/langserver",
+   "summary": "Shell script chạy TypeScript language server vtsls (qua `pnpm dlx --package=@vtsls/language-server@^0.3.0 vtsls --stdio`) để phục vụ các tính năng IDE trong Figma Make.",
+   "tags": [
+    "shell-script",
+    "language-server",
+    "vtsls",
+    "typescript"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Script 3 dòng dùng pnpm dlx để chạy language server tạm thời không cần cài vào dependencies; phân tích thủ công."
+  },
+  {
+   "id": "config:.figma/make/site.json",
+   "type": "config",
+   "name": "site.json",
+   "filePath": ".figma/make/site.json",
+   "summary": "Cấu hình site của Figma Make: mô tả ứng dụng, tắt robots index (noindex) và các tùy chọn accessibility (addBypassLinks và ignoreReducedMotion đều false).",
+   "tags": [
+    "config",
+    "json",
+    "site-metadata",
+    "seo",
+    "accessibility"
+   ],
+   "complexity": "simple",
+   "languageNotes": "Được vite.config.ts import trực tiếp làm đầu vào cho plugin figmaSiteConfiguration."
+  },
+  {
+   "id": "file:.gitattributes",
+   "type": "file",
+   "name": ".gitattributes",
+   "filePath": ".gitattributes",
+   "summary": "Quy tắc Git LFS cho toàn repo: định tuyến các file ảnh, video, audio, 3D, archive, tài liệu/font, dữ liệu ML, database, executable, build artifact và CAD vào LFS (filter=lfs diff=lfs merge=lfs -text).",
+   "tags": [
+    "git",
+    "git-lfs",
+    "gitattributes",
+    "binary-files"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "File cấu hình git ~140 pattern theo nhóm; không có parser tree-sitter nên được phân tích thủ công."
+  },
+  {
+   "id": "config:.ua/config.json",
+   "type": "config",
+   "name": "config.json",
+   "filePath": ".ua/config.json",
+   "summary": "Cấu hình công cụ phân tích .ua: tắt autoUpdate và đặt outputLanguage là tiếng Việt (vi) cho kết quả phân tích codebase.",
+   "tags": [
+    "config",
+    "json",
+    "tooling",
+    "ua"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:src/index.css",
+   "type": "file",
+   "name": "index.css",
+   "filePath": "src/index.css",
+   "summary": "CSS toàn cục của ứng dụng: import font Google (Inter, JetBrains Mono) và Tailwind CSS v4, định nghĩa design tokens --c-* cho light/dark theme, ánh xạ sang Tailwind qua @theme inline cùng các style nền cho body, scrollbar và focus-visible.",
+   "tags": [
+    "css",
+    "tailwind-v4",
+    "theme",
+    "design-tokens",
+    "global-styles"
+   ],
+   "complexity": "moderate",
+   "languageNotes": "Dùng @theme inline của Tailwind v4 để map biến --color-*/--font-* vào utilities; html/body/#root bị khóa overflow hidden."
+  },
+  {
+   "id": "file:src/vite-env.d.ts",
+   "type": "file",
+   "name": "vite-env.d.ts",
+   "filePath": "src/vite-env.d.ts",
+   "summary": "File khai báo kiểu TypeScript một dòng, tham chiếu `vite/client` để cung cấp kiểu cho import.meta.env và asset imports của Vite.",
+   "tags": [
+    "typescript",
+    "type-definitions",
+    "vite",
+    "client-types"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:vite.config.ts",
+   "type": "file",
+   "name": "vite.config.ts",
+   "filePath": "vite.config.ts",
+   "summary": "Cấu hình Vite của ứng dụng: bật plugin React + Tailwind, alias `@` → ./src, dev/preview server trên PORT 8443 với host từ FIGMA_DEV_SERVER_HOST, sourcemap inline khi mode development, và cài bốn plugin tự viết cho site configuration, error overlay replay, React refresh boundary fallback và Figma Make kit.",
+   "tags": [
+    "vite-config",
+    "typescript",
+    "plugins",
+    "build-tooling"
+   ],
+   "complexity": "complex",
+   "languageNotes": "Export default là một defineConfig nhận mode; các plugin factory bên dưới là hàm nội bộ, không được export trực tiếp."
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/a.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/b.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/c.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/d.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/e.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/f.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/g.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/h.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/screens/scenarios.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/shell.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/App.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/main.tsx",
+   "target": "file:src/App.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/main.tsx",
+   "target": "file:src/index.css",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/ai-copilot.tsx",
+   "target": "file:src/screens/g-common.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/ai-copilot.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/ai-copilot.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/demo-guide.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f-report.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f-report.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f-report.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f-settings.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f-settings.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f-settings.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f.tsx",
+   "target": "file:src/screens/f-report.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f.tsx",
+   "target": "file:src/screens/f-settings.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/f.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/scenarios.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/scenarios.tsx",
+   "target": "file:src/screens/demo-guide.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/scenarios.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/scenarios.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/shell.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/shell.tsx",
+   "target": "file:src/screens/ai-copilot.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/shell.tsx",
+   "target": "file:src/screens/demo-guide.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/shell.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/shell.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/store.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-detail.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-detail.tsx",
+   "target": "file:src/screens/b-detail2.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-detail.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-detail.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-detail2.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-detail2.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-detail2.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-wizard.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-wizard.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b-wizard.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b.tsx",
+   "target": "file:src/screens/b-detail.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b.tsx",
+   "target": "file:src/screens/b-wizard.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/b.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-agents.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-agents.tsx",
+   "target": "file:src/screens/d-shared.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-agents.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-agents.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-assets.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-assets.tsx",
+   "target": "file:src/screens/d-shared.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-assets.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-assets.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-library.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-library.tsx",
+   "target": "file:src/screens/d-shared.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-library.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-library.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-shared.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-shared.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d-shared.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d.tsx",
+   "target": "file:src/screens/d-agents.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d.tsx",
+   "target": "file:src/screens/d-assets.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/d.tsx",
+   "target": "file:src/screens/d-library.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/ui.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-dashboard.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-dashboard.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-dashboard.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-login.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-login.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-login.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-system.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-system.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a-system.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a.tsx",
+   "target": "file:src/screens/a-dashboard.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a.tsx",
+   "target": "file:src/screens/a-login.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/a.tsx",
+   "target": "file:src/screens/a-system.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/h-session.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/h-session.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/h-session.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/h.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/h.tsx",
+   "target": "file:src/screens/h-session.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/h.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/h.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/e-analysis.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/e-analysis.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/e-analysis.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/e-findings.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/e-findings.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/e-findings.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/e.tsx",
+   "target": "file:src/screens/e-analysis.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/e.tsx",
+   "target": "file:src/screens/e-findings.tsx",
+   "type": "imports",
+   "weight": 0.7,
+   "direction": "forward"
+  },
+  {
+   "source": "config:package.json",
+   "target": "file:src/main.tsx",
+   "type": "configures",
+   "weight": 0.6,
+   "direction": "forward"
+  },
+  {
+   "source": "config:package.json",
+   "target": "file:vite.config.ts",
+   "type": "configures",
+   "weight": 0.6,
+   "direction": "forward"
+  },
+  {
+   "source": "config:tsconfig.json",
+   "target": "file:src/main.tsx",
+   "type": "configures",
+   "weight": 0.6,
+   "direction": "forward"
+  },
+  {
+   "source": "config:.mise.toml",
+   "target": "config:package.json",
+   "type": "configures",
+   "weight": 0.6,
+   "direction": "forward"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/store.tsx",
+   "type": "documents",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/data.ts",
+   "type": "documents",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/ui.tsx",
+   "type": "documents",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/shell.tsx",
+   "type": "documents",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "document:implementation-plan.md",
+   "target": "file:src/App.tsx",
+   "type": "documents",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "document:AGENTS.md",
+   "target": "file:src/main.tsx",
+   "type": "documents",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "document:AGENTS.md",
+   "target": "file:src/App.tsx",
+   "type": "documents",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "file:index.html",
+   "target": "file:src/main.tsx",
+   "type": "depends_on",
+   "weight": 0.6,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/screens/c-common.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-common.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-common.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-console.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-console.tsx",
+   "target": "file:src/screens/c-common.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-console.tsx",
+   "target": "file:src/screens/g-fanout.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-console.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-console.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-results.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-results.tsx",
+   "target": "file:src/screens/c-common.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-results.tsx",
+   "target": "file:src/screens/c-console.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-results.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c-results.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c.tsx",
+   "target": "file:src/screens/c-common.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c.tsx",
+   "target": "file:src/screens/c-console.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c.tsx",
+   "target": "file:src/screens/c-results.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/c.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-chat.tsx",
+   "target": "file:src/screens/g-common.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-chat.tsx",
+   "target": "file:src/screens/g-workspace.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-chat.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-chat.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-common.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-common.tsx",
+   "target": "file:src/screens/g-fanout.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-common.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-common.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-fanout.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-fanout.tsx",
+   "target": "file:src/screens/g-common.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-fanout.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-fanout.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-plan.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-plan.tsx",
+   "target": "file:src/screens/g-common.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-plan.tsx",
+   "target": "file:src/screens/g-fanout.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-plan.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-plan.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-trace.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-trace.tsx",
+   "target": "file:src/screens/g-common.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-trace.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-trace.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-workspace.tsx",
+   "target": "file:src/data.ts",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-workspace.tsx",
+   "target": "file:src/screens/g-common.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-workspace.tsx",
+   "target": "file:src/screens/g-fanout.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-workspace.tsx",
+   "target": "file:src/store.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g-workspace.tsx",
+   "target": "file:src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g.tsx",
+   "target": "file:src/screens/g-chat.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g.tsx",
+   "target": "file:src/screens/g-fanout.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g.tsx",
+   "target": "file:src/screens/g-plan.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:src/screens/g.tsx",
+   "target": "file:src/screens/g-trace.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:vite.config.ts",
+   "target": "config:.figma/make/site.json",
+   "type": "imports",
+   "direction": "forward",
+   "weight": 0.7,
+   "recoveredFromImportMap": true
+  },
+  {
+   "source": "file:vite.config.ts",
+   "target": "file:src/main.tsx",
+   "type": "configures",
+   "weight": 0.6,
+   "direction": "forward"
+  },
+  {
+   "source": "file:src/index.css",
+   "target": "file:src/main.tsx",
+   "type": "related",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "config:.figma/make/dev.json",
+   "target": "file:.figma/make/dev",
+   "type": "related",
+   "weight": 0.5,
+   "direction": "forward"
+  },
+  {
+   "source": "file:vite.config.ts",
+   "target": "file:.figma/make/deploy-preview",
+   "type": "related",
+   "weight": 0.5,
+   "direction": "forward"
+  }
+ ],
+ "layers": [
+  {
+   "id": "layer:ui-screens",
+   "name": "Màn hình ứng dụng",
+   "description": "35 màn hình UI của dashboard quản lý vận hành red-team, chia theo nhóm a–h kèm scenarios, demo-guide và ai-copilot, tiêu thụ state qua store và tái sử dụng g-common/g-fanout."
+  },
+  {
+   "id": "layer:entry-routing",
+   "name": "Điểm vào & định tuyến",
+   "description": "index.html, main.tsx và App.tsx khởi tạo ứng dụng: HTML shell chứa #root, mount StoreProvider và bảng ROUTES điều hướng tới các nhóm màn hình."
+  },
+  {
+   "id": "layer:design-system",
+   "name": "Hệ thống thiết kế & Shell",
+   "description": "ui.tsx (primitive dùng chung có fan-in 31), shell.tsx (khung layout điều hướng) và index.css (Tailwind v4, theme, @font-face) tạo nền tảng hiển thị chung."
+  },
+  {
+   "id": "layer:state-data",
+   "name": "State & dữ liệu",
+   "description": "store.tsx là React Context store trung tâm (fan-in 34) và data.ts cung cấp types cùng seed(); mọi màn hình đọc/ghi state qua lớp này."
+  },
+  {
+   "id": "layer:config-tooling",
+   "name": "Cấu hình & công cụ build",
+   "description": "Cấu hình Vite/TypeScript/npm/mise, khai báo kiểu ambient và bộ wrapper script + JSON của Figma Make (.figma/make, .ua) phục vụ build, dev và import assets."
+  },
+  {
+   "id": "layer:documentation",
+   "name": "Tài liệu dự án",
+   "description": "AGENTS.md (hướng dẫn agent phát triển) và implementation-plan.md (kế hoạch triển khai) mô tả kiến trúc và quy ước cho các lớp code."
+  }
+ ]
+}

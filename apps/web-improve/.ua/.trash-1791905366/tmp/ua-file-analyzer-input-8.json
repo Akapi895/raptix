@@ -1,0 +1,39 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix\\apps\\web-improve",
+  "batchFiles": [
+    { "path": ".figma/make/analyze-routes", "language": "unknown", "sizeLines": 4, "fileCategory": "code" },
+    { "path": ".figma/make/deploy", "language": "unknown", "sizeLines": 4, "fileCategory": "code" },
+    { "path": ".figma/make/deploy-preview", "language": "unknown", "sizeLines": 5, "fileCategory": "code" },
+    { "path": ".figma/make/dev", "language": "unknown", "sizeLines": 4, "fileCategory": "code" },
+    { "path": ".figma/make/dev.json", "language": "json", "sizeLines": 22, "fileCategory": "config" },
+    { "path": ".figma/make/format", "language": "unknown", "sizeLines": 4, "fileCategory": "code" },
+    { "path": ".figma/make/import-assets.mjs", "language": "javascript", "sizeLines": 82, "fileCategory": "code" },
+    { "path": ".figma/make/install", "language": "unknown", "sizeLines": 4, "fileCategory": "code" },
+    { "path": ".figma/make/langserver", "language": "unknown", "sizeLines": 3, "fileCategory": "code" },
+    { "path": ".figma/make/site.json", "language": "json", "sizeLines": 9, "fileCategory": "config" },
+    { "path": ".gitattributes", "language": "unknown", "sizeLines": 146, "fileCategory": "code" },
+    { "path": ".ua/config.json", "language": "json", "sizeLines": 3, "fileCategory": "config" },
+    { "path": "src/index.css", "language": "css", "sizeLines": 112, "fileCategory": "markup" },
+    { "path": "src/vite-env.d.ts", "language": "typescript", "sizeLines": 1, "fileCategory": "code" },
+    { "path": "vite.config.ts", "language": "typescript", "sizeLines": 388, "fileCategory": "code" }
+  ],
+  "batchImportData": {
+    ".figma/make/analyze-routes": [],
+    ".figma/make/deploy": [],
+    ".figma/make/deploy-preview": [],
+    ".figma/make/dev": [],
+    ".figma/make/dev.json": [],
+    ".figma/make/format": [],
+    ".figma/make/import-assets.mjs": [],
+    ".figma/make/install": [],
+    ".figma/make/langserver": [],
+    ".figma/make/site.json": [],
+    ".gitattributes": [],
+    ".ua/config.json": [],
+    "src/index.css": [],
+    "src/vite-env.d.ts": [],
+    "vite.config.ts": [
+      ".figma/make/site.json"
+    ]
+  }
+}

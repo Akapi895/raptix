@@ -1,0 +1,295 @@
+{
+  "nodes": [
+    {
+      "id": "file:.figma/make/analyze-routes",
+      "type": "file",
+      "name": "analyze-routes",
+      "filePath": ".figma/make/analyze-routes",
+      "summary": "Shell script bash 4 dòng bọc lệnh `figma-analyze routes \"$@\"`, dùng để phân tích các route của ứng dụng trong môi trường Figma Make.",
+      "tags": ["shell-script", "figma-make", "routes-analysis", "tooling"],
+      "complexity": "simple",
+      "languageNotes": "Script POSIX với `set -euo pipefail`, chỉ exec một lệnh duy nhất; không có parser tree-sitter nên được phân tích thủ công."
+    },
+    {
+      "id": "file:.figma/make/deploy",
+      "type": "file",
+      "name": "deploy",
+      "filePath": ".figma/make/deploy",
+      "summary": "Shell script build production (`pnpm run build`) rồi deploy thư mục `dist` lên Figma Make bằng lệnh `figma make deploy --build-dir dist`.",
+      "tags": ["shell-script", "figma-make", "deploy", "build"],
+      "complexity": "simple",
+      "languageNotes": "Script bash hai bước build + deploy, được phân tích thủ công do không có parser tree-sitter."
+    },
+    {
+      "id": "file:.figma/make/deploy-preview",
+      "type": "file",
+      "name": "deploy-preview",
+      "filePath": ".figma/make/deploy-preview",
+      "summary": "Shell script build ở chế độ development (`pnpm run build --mode development`) để phát sinh sourcemap inline, sau đó deploy bản cached preview qua `figma make deploy-preview`.",
+      "tags": ["shell-script", "figma-make", "deploy-preview", "sourcemap"],
+      "complexity": "simple",
+      "languageNotes": "Cờ `--mode development` được vite.config.ts đọc để bật sourcemap; script được phân tích thủ công (no tree-sitter parser)."
+    },
+    {
+      "id": "file:.figma/make/dev",
+      "type": "file",
+      "name": "dev",
+      "filePath": ".figma/make/dev",
+      "summary": "Shell script khởi động dev server của dự án qua `pnpm run dev`, đóng vai trò entry point môi trường phát triển cho Figma Make.",
+      "tags": ["shell-script", "figma-make", "dev-server", "pnpm"],
+      "complexity": "simple",
+      "languageNotes": "Script bash một lệnh với `set -euo pipefail`; được phân tích thủ công (no tree-sitter parser)."
+    },
+    {
+      "id": "config:.figma/make/dev.json",
+      "type": "config",
+      "name": "dev.json",
+      "filePath": ".figma/make/dev.json",
+      "summary": "Cấu hình watch của Figma Make: glob `installOn` (package.json, pnpm-lock.yaml) kích hoạt install và restart dev server; `restartOn` để trống vì mã nguồn src/** đã được Vite HMR theo dõi riêng.",
+      "tags": ["config", "json", "figma-make", "watch", "toolchain"],
+      "complexity": "simple",
+      "languageNotes": "JSON có chú thích (jsonc-style); chỉ liệt kê file ảnh hưởng toolchain/dependency, không liệt kê mã nguồn ứng dụng để tránh restart thừa."
+    },
+    {
+      "id": "file:.figma/make/format",
+      "type": "file",
+      "name": "format",
+      "filePath": ".figma/make/format",
+      "summary": "Shell script gọi `pnpm run format -- \"$@\"` để format mã nguồn, chuyển tiếp mọi tham số dòng lệnh trong môi trường Figma Make.",
+      "tags": ["shell-script", "figma-make", "formatting", "pnpm"],
+      "complexity": "simple",
+      "languageNotes": "Script bash 4 dòng, forward tham số qua `--`; phân tích thủ công (no tree-sitter parser)."
+    },
+    {
+      "id": "file:.figma/make/import-assets.mjs",
+      "type": "file",
+      "name": "import-assets.mjs",
+      "filePath": ".figma/make/import-assets.mjs",
+      "summary": "Định nghĩa vite plugin `figma-frontend-import-assets`: quét toàn bộ asset của dự án (loại trừ node_modules/dist và file cấu hình), đăng ký các file .html làm rollup input và sao chép asset sang thư mục build ở pha writeBundle.",
+      "tags": ["vite-plugin", "javascript", "assets", "build-tooling"],
+      "complexity": "moderate",
+      "languageNotes": "Export duy nhất `frontendAssets` là plugin factory; hàm nội bộ `currentAssets` duyệt cây thư mục đệ quy dùng node:fs."
+    },
+    {
+      "id": "function:.figma/make/import-assets.mjs:currentAssets",
+      "type": "function",
+      "name": "currentAssets",
+      "filePath": ".figma/make/import-assets.mjs",
+      "summary": "Hàm nội bộ đệ quy (qua closure `visit`) liệt kê mọi file asset từ thư mục gốc, bỏ qua thư mục ẩn, node_modules/dist/build/coverage, package con có package.json riêng và các file metadata/cấu hình dự án.",
+      "tags": ["helper", "filesystem", "recursive-scan", "assets"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:.figma/make/import-assets.mjs:frontendAssets",
+      "type": "function",
+      "name": "frontendAssets",
+      "filePath": ".figma/make/import-assets.mjs",
+      "summary": "Vite plugin factory được export: đọc config để xác định root/outDir/publicDir, đưa mọi file .html vào rollupOptions.input và copy toàn bộ asset còn lại vào outDir ở writeBundle (bỏ qua lỗi EEXIST khi file đã tồn tại).",
+      "tags": ["vite-plugin", "factory", "assets-copy", "rollup"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:.figma/make/install",
+      "type": "file",
+      "name": "install",
+      "filePath": ".figma/make/install",
+      "summary": "Shell script cài đặt dependencies bằng `pnpm install --prefer-offline --no-frozen-lockfile`, dùng khi bootstrap hoặc khi dev.json kích hoạt install lại.",
+      "tags": ["shell-script", "figma-make", "install", "pnpm"],
+      "complexity": "simple",
+      "languageNotes": "Script bash một lệnh; phân tích thủ công (no tree-sitter parser)."
+    },
+    {
+      "id": "file:.figma/make/langserver",
+      "type": "file",
+      "name": "langserver",
+      "filePath": ".figma/make/langserver",
+      "summary": "Shell script chạy TypeScript language server vtsls (qua `pnpm dlx --package=@vtsls/language-server@^0.3.0 vtsls --stdio`) để phục vụ các tính năng IDE trong Figma Make.",
+      "tags": ["shell-script", "language-server", "vtsls", "typescript"],
+      "complexity": "simple",
+      "languageNotes": "Script 3 dòng dùng pnpm dlx để chạy language server tạm thời không cần cài vào dependencies; phân tích thủ công."
+    },
+    {
+      "id": "config:.figma/make/site.json",
+      "type": "config",
+      "name": "site.json",
+      "filePath": ".figma/make/site.json",
+      "summary": "Cấu hình site của Figma Make: mô tả ứng dụng, tắt robots index (noindex) và các tùy chọn accessibility (addBypassLinks và ignoreReducedMotion đều false).",
+      "tags": ["config", "json", "site-metadata", "seo", "accessibility"],
+      "complexity": "simple",
+      "languageNotes": "Được vite.config.ts import trực tiếp làm đầu vào cho plugin figmaSiteConfiguration."
+    },
+    {
+      "id": "file:.gitattributes",
+      "type": "file",
+      "name": ".gitattributes",
+      "filePath": ".gitattributes",
+      "summary": "Quy tắc Git LFS cho toàn repo: định tuyến các file ảnh, video, audio, 3D, archive, tài liệu/font, dữ liệu ML, database, executable, build artifact và CAD vào LFS (filter=lfs diff=lfs merge=lfs -text).",
+      "tags": ["git", "git-lfs", "gitattributes", "binary-files"],
+      "complexity": "moderate",
+      "languageNotes": "File cấu hình git ~140 pattern theo nhóm; không có parser tree-sitter nên được phân tích thủ công."
+    },
+    {
+      "id": "config:.ua/config.json",
+      "type": "config",
+      "name": "config.json",
+      "filePath": ".ua/config.json",
+      "summary": "Cấu hình công cụ phân tích .ua: tắt autoUpdate và đặt outputLanguage là tiếng Việt (vi) cho kết quả phân tích codebase.",
+      "tags": ["config", "json", "tooling", "ua"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/index.css",
+      "type": "file",
+      "name": "index.css",
+      "filePath": "src/index.css",
+      "summary": "CSS toàn cục của ứng dụng: import font Google (Inter, JetBrains Mono) và Tailwind CSS v4, định nghĩa design tokens --c-* cho light/dark theme, ánh xạ sang Tailwind qua @theme inline cùng các style nền cho body, scrollbar và focus-visible.",
+      "tags": ["css", "tailwind-v4", "theme", "design-tokens", "global-styles"],
+      "complexity": "moderate",
+      "languageNotes": "Dùng @theme inline của Tailwind v4 để map biến --color-*/--font-* vào utilities; html/body/#root bị khóa overflow hidden."
+    },
+    {
+      "id": "file:src/vite-env.d.ts",
+      "type": "file",
+      "name": "vite-env.d.ts",
+      "filePath": "src/vite-env.d.ts",
+      "summary": "File khai báo kiểu TypeScript một dòng, tham chiếu `vite/client` để cung cấp kiểu cho import.meta.env và asset imports của Vite.",
+      "tags": ["typescript", "type-definitions", "vite", "client-types"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:vite.config.ts",
+      "type": "file",
+      "name": "vite.config.ts",
+      "filePath": "vite.config.ts",
+      "summary": "Cấu hình Vite của ứng dụng: bật plugin React + Tailwind, alias `@` → ./src, dev/preview server trên PORT 8443 với host từ FIGMA_DEV_SERVER_HOST, sourcemap inline khi mode development, và cài bốn plugin tự viết cho site configuration, error overlay replay, React refresh boundary fallback và Figma Make kit.",
+      "tags": ["vite-config", "typescript", "plugins", "build-tooling"],
+      "complexity": "complex",
+      "languageNotes": "Export default là một defineConfig nhận mode; các plugin factory bên dưới là hàm nội bộ, không được export trực tiếp."
+    },
+    {
+      "id": "function:vite.config.ts:figmaSiteConfiguration",
+      "type": "function",
+      "name": "figmaSiteConfiguration",
+      "filePath": "vite.config.ts",
+      "summary": "Vite plugin áp dụng .figma/make/site.json vào HTML shell: thay các comment slot (lang, title, custom scripts head/body), chèn meta description/og/twitter, favicon, Google Analytics gtag, sinh robots.txt khi noindex và thêm skip-to-content link nếu bật accessibility.",
+      "tags": ["vite-plugin", "html-transform", "seo", "analytics"],
+      "complexity": "moderate",
+      "languageNotes": "Dùng transformIndexHtml order 'pre', configureServer middleware cho /robots.txt và generateBundle để emit asset robots.txt."
+    },
+    {
+      "id": "function:vite.config.ts:figmaErrorOverlayReplay",
+      "type": "function",
+      "name": "figmaErrorOverlayReplay",
+      "filePath": "vite.config.ts",
+      "summary": "Vite plugin serve-only can thiệp server.ws.send để lưu error payload mới nhất và phát lại cho mọi client kết nối sau; cache được xóa khi nhận update/full-reload để overlay lỗi không bị treo sau khi build đã sửa.",
+      "tags": ["vite-plugin", "hmr", "websocket", "error-overlay"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:vite.config.ts:figmaReactRefreshBoundaryFallback",
+      "type": "function",
+      "name": "figmaReactRefreshBoundaryFallback",
+      "filePath": "vite.config.ts",
+      "summary": "Vite plugin theo dõi module từng có React Refresh boundary rồi mất đi (ví dụ khi bị thay bằng re-export-only); khi module đó cập nhật, plugin invalidate module graph và gửi full-reload thay vì để HMR giữ cây component cũ.",
+      "tags": ["vite-plugin", "hmr", "react-refresh", "module-graph"],
+      "complexity": "moderate",
+      "languageNotes": "Track boundary qua transform, handleHotUpdate duyệt importers và server.moduleGraph.invalidateModule; enforce 'post'."
+    },
+    {
+      "id": "function:vite.config.ts:figmaMakeKitPlugin",
+      "type": "function",
+      "name": "figmaMakeKitPlugin",
+      "filePath": "vite.config.ts",
+      "summary": "Vite plugin dev-only phục vụ trang /.figma/make/kit.html với virtual module `virtual:figma-stories` (import.meta.glob theo storiesGlob) gắn vào window.__FIGMA__, cho phép bề mặt thiết kế Figma import và mount từng story vào grid riêng.",
+      "tags": ["vite-plugin", "virtual-module", "stories", "dev-only"],
+      "complexity": "simple",
+      "languageNotes": "apply 'serve' nên bị loại khỏi build production; dùng resolveId/load cho virtual module và middleware cho route HTML."
+    }
+  ],
+  "edges": [
+    {
+      "from": "file:.figma/make/import-assets.mjs",
+      "to": "function:.figma/make/import-assets.mjs:currentAssets",
+      "type": "contains",
+      "weight": 1.0,
+      "direction": "forward"
+    },
+    {
+      "from": "file:.figma/make/import-assets.mjs",
+      "to": "function:.figma/make/import-assets.mjs:frontendAssets",
+      "type": "contains",
+      "weight": 1.0,
+      "direction": "forward"
+    },
+    {
+      "from": "file:vite.config.ts",
+      "to": "function:vite.config.ts:figmaSiteConfiguration",
+      "type": "contains",
+      "weight": 1.0,
+      "direction": "forward"
+    },
+    {
+      "from": "file:vite.config.ts",
+      "to": "function:vite.config.ts:figmaErrorOverlayReplay",
+      "type": "contains",
+      "weight": 1.0,
+      "direction": "forward"
+    },
+    {
+      "from": "file:vite.config.ts",
+      "to": "function:vite.config.ts:figmaReactRefreshBoundaryFallback",
+      "type": "contains",
+      "weight": 1.0,
+      "direction": "forward"
+    },
+    {
+      "from": "file:vite.config.ts",
+      "to": "function:vite.config.ts:figmaMakeKitPlugin",
+      "type": "contains",
+      "weight": 1.0,
+      "direction": "forward"
+    },
+    {
+      "from": "file:.figma/make/import-assets.mjs",
+      "to": "function:.figma/make/import-assets.mjs:frontendAssets",
+      "type": "exports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "from": "file:vite.config.ts",
+      "to": "config:.figma/make/site.json",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "from": "file:vite.config.ts",
+      "to": "file:src/main.tsx",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "from": "file:src/index.css",
+      "to": "file:src/main.tsx",
+      "type": "related",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "from": "config:.figma/make/dev.json",
+      "to": "file:.figma/make/dev",
+      "type": "related",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "from": "file:vite.config.ts",
+      "to": "file:.figma/make/deploy-preview",
+      "type": "related",
+      "weight": 0.5,
+      "direction": "forward"
+    }
+  ]
+}

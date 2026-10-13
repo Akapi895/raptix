@@ -1,0 +1,71 @@
+{
+  "projectRoot": "D:\\.VTNet\\redteam\\raptix\\apps\\web-improve",
+  "batchFiles": [
+    { "path": "src/screens/b-detail.tsx", "language": "typescript", "sizeLines": 562, "fileCategory": "code" },
+    { "path": "src/screens/b-detail2.tsx", "language": "typescript", "sizeLines": 446, "fileCategory": "code" },
+    { "path": "src/screens/b-wizard.tsx", "language": "typescript", "sizeLines": 573, "fileCategory": "code" },
+    { "path": "src/screens/b.tsx", "language": "typescript", "sizeLines": 118, "fileCategory": "code" },
+    { "path": "src/screens/d-agents.tsx", "language": "typescript", "sizeLines": 677, "fileCategory": "code" },
+    { "path": "src/screens/d-assets.tsx", "language": "typescript", "sizeLines": 536, "fileCategory": "code" },
+    { "path": "src/screens/d-library.tsx", "language": "typescript", "sizeLines": 353, "fileCategory": "code" },
+    { "path": "src/screens/d-shared.tsx", "language": "typescript", "sizeLines": 101, "fileCategory": "code" },
+    { "path": "src/screens/d.tsx", "language": "typescript", "sizeLines": 6, "fileCategory": "code" },
+    { "path": "src/ui.tsx", "language": "typescript", "sizeLines": 630, "fileCategory": "code" }
+  ],
+  "batchImportData": {
+    "src/screens/b-detail.tsx": [
+      "src/data.ts",
+      "src/screens/b-detail2.tsx",
+      "src/store.tsx",
+      "src/ui.tsx"
+    ],
+    "src/screens/b-detail2.tsx": [
+      "src/data.ts",
+      "src/store.tsx",
+      "src/ui.tsx"
+    ],
+    "src/screens/b-wizard.tsx": [
+      "src/data.ts",
+      "src/store.tsx",
+      "src/ui.tsx"
+    ],
+    "src/screens/b.tsx": [
+      "src/data.ts",
+      "src/screens/b-detail.tsx",
+      "src/screens/b-wizard.tsx",
+      "src/store.tsx",
+      "src/ui.tsx"
+    ],
+    "src/screens/d-agents.tsx": [
+      "src/data.ts",
+      "src/screens/d-shared.tsx",
+      "src/store.tsx",
+      "src/ui.tsx"
+    ],
+    "src/screens/d-assets.tsx": [
+      "src/data.ts",
+      "src/screens/d-shared.tsx",
+      "src/store.tsx",
+      "src/ui.tsx"
+    ],
+    "src/screens/d-library.tsx": [
+      "src/data.ts",
+      "src/screens/d-shared.tsx",
+      "src/store.tsx",
+      "src/ui.tsx"
+    ],
+    "src/screens/d-shared.tsx": [
+      "src/data.ts",
+      "src/store.tsx",
+      "src/ui.tsx"
+    ],
+    "src/screens/d.tsx": [
+      "src/screens/d-agents.tsx",
+      "src/screens/d-assets.tsx",
+      "src/screens/d-library.tsx"
+    ],
+    "src/ui.tsx": [
+      "src/store.tsx"
+    ]
+  }
+}
