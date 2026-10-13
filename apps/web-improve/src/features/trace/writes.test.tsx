@@ -54,7 +54,8 @@ function mountProviders(me = 'Pat Kim', projectId = 'RT-2026-014', withScreen = 
     store: () => store,
     svc: () => svc,
     run: (fn: () => unknown) => act(fn),
-    runA: async <T,>(fn: () => Promise<T>): Promise<T> => { let out!: T; await act(async () => { out = await fn() }); return out },
+    /** Awaits one sync-or-async service call inside act so the store projection flushes. */
+    runA: async <T,>(fn: () => T | Promise<T>): Promise<T> => { let out!: T; await act(async () => { out = await fn() }); return out },
     unmount: view.unmount,
   }
 }
