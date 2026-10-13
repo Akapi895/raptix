@@ -23,8 +23,8 @@
 ## Evidence
 
 - `npm run typecheck` — clean (0 errors; 0 new diagnostics).
-- `npm run lint` — 0 new findings: 6 errors / 203 warnings, identical to the pre-change baseline measured via `git stash` (the 6 errors sit in gitignored `.ua/.trash-*` tooling files that pre-date this ticket; `src/features/estop/*` contributes 0).
-- `npm test -- --run` — **748/748 passed** (737 baseline + 12: 11 new in `src/features/estop/ui.test.tsx`, 1 new concurrent-scope regression in `src/features/estop/service.test.tsx`). Baseline `src/safety/emergency-stop.test.tsx` (6) stays green unmodified. Two unrelated files flaked once under parallel load (`shell.test.tsx`, `agents/writes.test.tsx`) and pass in isolation — the documented pre-existing flakiness (ticket 52), reproduced here and re-verified green.
+- `npm run lint` — **0 errors / 203 warnings**, at the baseline cap with 0 new findings; `src/features/estop/*` contributes 0. (Pre-merge the base carried 6 errors from the `.ua/.trash-*` tooling files; the integration tip untracked that directory and the merge removed them.)
+- `npm test -- --run` — **748/748 passed** (737 baseline + 12: 11 new in `src/features/estop/ui.test.tsx`, 1 new concurrent-scope regression in `src/features/estop/service.test.tsx`). Baseline `src/safety/emergency-stop.test.tsx` (6) stays green unmodified. Two unrelated files flaked once under parallel load pre-merge (`shell.test.tsx`, `agents/writes.test.tsx`) and passed in isolation — the documented pre-existing flakiness (ticket 52); the final post-merge suite is fully green.
 - `npm run build` — green.
 - Required cases, in `src/features/estop/ui.test.tsx` + `service.test.tsx`:
   - every machine phase renders an actionable control (requested/acknowledged/stopped via the real orchestration timers; failed/unknown via the demo outcome switch);
