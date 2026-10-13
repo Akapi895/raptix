@@ -13,7 +13,8 @@ import { useState, type ComponentType } from 'react'
 import {
   Bell, Bot, Building2, Check as CheckIcon, CheckCheck, ChevronDown, FlaskConical, Home, Lock, LogOut, Menu as MenuIcon, RotateCcw, Settings, Sparkles,
 } from 'lucide-react'
-import { ROLE_LABEL, useStore, type CopilotCtx } from '../store'
+import { useStore, type CopilotCtx } from '../store'
+import { ROLE_LABEL } from '../auth/policy'
 import { USERS } from '../data'
 import { Button, IconButton, Segmented, Avatar, cx } from '../ui'
 import { NAV } from './nav'

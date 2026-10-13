@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowLeft, Building2, Check, Crosshair, KeyRound, Loader2, LogIn, ShieldCheck, Eye, EyeOff, LifeBuoy, Lock, FlaskConical } from 'lucide-react'
-import { ROLE_LABEL, useStore } from '../store'
+import { useStore } from '../store'
+import { ROLE_LABEL } from '../auth/policy'
 import { USERS } from '../data'
 import { switchPersona } from '../auth/persona'
 import { Banner, Button, Field, Input, Avatar, cx } from '../ui'

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, X, Search, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
-import { ROLE_LABEL, canAccessProject, sevLabel, useDirty, useStore } from '../store'
+import { canAccessProject, sevLabel, useDirty, useStore } from '../store'
+import { ROLE_LABEL } from '../auth/policy'
 import { TECHNIQUES, type Finding, type FindingStatus, type Severity } from '../data'
 import { EvidenceReadError, FindingReadError, useEvidenceDetail, useEvidenceList, useFindingDetail, useFindingList, useFindingWrites } from '../features/findings/query'
 import type { EvidenceView, FindingSort, FindingTransitionTarget } from '../features/findings/service'
