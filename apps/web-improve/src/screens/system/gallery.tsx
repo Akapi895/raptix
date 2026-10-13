@@ -1,9 +1,16 @@
-import { useState, type ReactNode } from 'react'
+/**
+ * States gallery (ticket 61b) — the semantic owner of the `states` route
+ * (route-inventory row 7): every shared empty/loading/error/denied/read-only/
+ * stale/partial/no-data variant plus the full status legend. Actions run
+ * through the system nav seam and the ticket-05 shared authorities; the
+ * simulate-reload timer is tracked and disposed on unmount.
+ */
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, Clock, Database, Eye, Filter, Inbox, Lock, Plug, RefreshCw, ShieldOff } from 'lucide-react'
-import { useStore } from '../store'
-import { Banner, Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status, STATUS, Table, Mono, type StatusKind } from '../ui'
+import { useToastStore, useUiStore } from '../../state/stores'
+import { Banner, Button, Card, CardHeader, Empty, PageHeader, Skeleton, Status, STATUS, Table, Mono, type StatusKind } from '../../ui'
+import { useSystemGo } from './nav'
 
-/* ───────── SYS-07: state gallery (moves to src/screens/system/gallery.tsx in ticket 61b) ───────── */
 const KIND_LABEL: Record<StatusKind, string> = {
   project: 'Project', op: 'Operation', step: 'Execution step', agent: 'Agent', finding: 'Finding', report: 'Report', scope: 'Asset scope', approval: 'Approval',
   roe: 'ROE', sev: 'Severity', check: 'Preflight', detect: 'Detection (SIEM)', integ: 'Integration', generic: 'Generic',
@@ -20,9 +27,16 @@ function Sample({ title, desc, children }: { title: string; desc: string; childr
 }
 
 export function StatesGallery() {
-  const { go, toast, setSwitcherOpen } = useStore()
+  const go = useSystemGo()
+  const toast = useToastStore((s) => s.toast)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const [loading, setLoading] = useState(false)
-  const reload = () => { setLoading(true); setTimeout(() => setLoading(false), 1200) }
+  const timers = useRef<number[]>([])
+  useEffect(() => () => { timers.current.forEach((t) => window.clearTimeout(t)); timers.current = [] }, [])
+  const reload = () => {
+    setLoading(true)
+    timers.current.push(window.setTimeout(() => setLoading(false), 1200))
+  }
   const rows = [{ id: 'RT-2026-014', n: 'Internal Red Team Q4', s: 'active' }, { id: 'RT-2026-015', n: 'Cloud Security Assessment', s: 'active' }, { id: 'PT-2026-006', n: 'Purple Team Exercise Q4', s: 'pending' }]
   return (
     <div>
