@@ -90,7 +90,7 @@ import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
 
 export type { CanAction } from './domain/permissions'
-export type { CopilotCtx, Toast } from './state/stores'
+export type { CopilotCtx } from './state/stores'
 
 /* ───────────── Simulated clock (UTC+7) ───────────── */
 const T0 = Date.now()
@@ -104,7 +104,7 @@ const hhmm12 = () => {
   const m = nowMin(), h = Math.floor(m / 60) % 24
   return `${h % 12 || 12}:${pad(m % 60)} ${h < 12 ? 'AM' : 'PM'}`
 }
-export const stamp = () => `Oct 13, 2026, ${hhmm12()} (UTC+7)`
+const stamp = () => `Oct 13, 2026, ${hhmm12()} (UTC+7)`
 export const today = () => 'Oct 13, 2026'
 
 /* ───────────── Route ───────────── */
@@ -114,7 +114,7 @@ export type { Route } from './router/history'
 
 /* ───────────── Roles ───────────── */
 export const ROLE_LABEL: Record<Role, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
-export type Persona = (typeof USERS)[number]
+type Persona = (typeof USERS)[number]
 
 /** Membership policy seam (ticket 06): forwards to the shared permissions interface. */
 export function canAccessProject(db: Db, me: Persona, projectId: string) {
@@ -131,9 +131,9 @@ export function sessionPerm(db: Db, me: Persona, s: Session): SessionPerm {
 /* Ticket 26: the deterministic policy lives in the operations feature
    (src/features/operations/preflight.ts) — the legacy helper delegates to the
    same derivation the typed handlers use, so both entry points observe the
-   same canonical checks (and the same scope-revision invalidation). */
-export type { Check, CheckState } from './features/operations/preflight'
-export { preflightPass } from './features/operations/preflight'
+   same canonical checks (and the same scope-revision invalidation). Ticket 67
+   retired the store's type re-exports: consumers import Check/CheckState from
+   the feature module directly. */
 export function computePreflight(db: Db, op: Operation): Check[] {
   return computePreflightChecks(db, op, Date.UTC(2026, 9, 13, 0, nowMin()) - PROJECT_TZ_OFFSET_MS)
 }
@@ -148,30 +148,13 @@ export function computePreflight(db: Db, op: Operation): Check[] {
    closePanelItems; the waiver stays a request-time input. */
 
 
-/* ───────────── V3: eligibility, readiness, completion ───────────── */
+/* ───────────── V3: eligibility, completion ───────────── */
 /* Ticket 26: the eligibility label derivation moved to the operations feature
-   (pure domain function); the legacy export delegates for existing consumers. */
-export type { EligKind, Reason } from './features/operations/preflight'
-export { projectAgentsOnline, eligibility } from './features/operations/preflight'
-export interface ReadyItem { id: string; label: string; ok: boolean; detail: string; to?: Route }
-export function readiness(db: Db, pid: string) {
-  const p = db.projects.find((x) => x.id === pid)
-  const assets = db.assets.filter((a) => a.projectId === pid && a.scope === 'in').length
-  const ag = db.agents.filter((a) => a.projectId === pid)
-  const agOn = ag.filter((a) => a.status === 'online' || a.status === 'idle').length
-  const plan = db.plans.find((x) => x.projectId === pid && ['approved', 'executed'].includes(x.status))
-  const pf = db.operations.some((o) => o.projectId === pid && (o.preflightAt || o.status === 'ready' || o.status === 'running'))
-  const items: ReadyItem[] = [
-    { id: 'r1', label: 'ROE approved', ok: p?.roeStatus === 'approved', detail: p ? `${p.roeVersion} · ${p.roeStatus}` : '—', to: { page: 'project', id: pid, tab: 'scope' } },
-    { id: 'r2', label: 'Approved assets in scope', ok: assets > 0, detail: `${assets} approved`, to: { page: 'assets' } },
-    { id: 'r3', label: 'Emergency contact set', ok: !!p?.emergency, detail: p?.emergency || 'Not set', to: { page: 'project', id: pid, tab: 'scope' } },
-    { id: 'r4', label: 'Project agents connected', ok: agOn > 0 && agOn === ag.length, detail: `${agOn}/${ag.length} connected`, to: { page: 'agents' } },
-    { id: 'r5', label: 'AI plan approved', ok: !!plan, detail: plan ? `${plan.id} ${plan.ver ?? 'v' + plan.version}` : 'No approved plan', to: { page: 'ai-operator' } },
-    { id: 'r6', label: 'Preflight passed', ok: pf, detail: pf ? 'Latest preflight passed' : 'Not run', to: { page: 'operations' } },
-  ]
-  const done = items.filter((i) => i.ok).length
-  return { items, done, total: items.length, pct: Math.round((done / items.length) * 100) }
-}
+   (pure domain function); the legacy export delegates for existing consumers.
+   Ticket 67 retired the store's readiness projection (and its dead type
+   re-exports): the Command Center domain module (src/screens/dashboard/domain)
+   owns the semantic readiness derivation. */
+export { eligibility } from './features/operations/preflight'
 export function completion(db: Db, pid: string) {
   const p = db.projects.find((x) => x.id === pid)
   const objs = p?.objectives ?? []
@@ -192,10 +175,10 @@ export function completion(db: Db, pid: string) {
 }
 
 /* ───────────── Live log ───────────── */
-export interface LogLine { id: string; ts: string; level: 'INFO' | 'WARN' | 'ERROR'; agent: string; stepId: string; text: string }
+interface LogLine { id: string; ts: string; level: 'INFO' | 'WARN' | 'ERROR'; agent: string; stepId: string; text: string }
 
 /* ───────────── Modal / toast ───────────── */
-export interface ConfirmOpts {
+interface ConfirmOpts {
   title: string; body: ReactNode; confirmLabel: string; danger?: boolean
   reasonLabel?: string; reasonRequired?: boolean; cancelLabel?: string
   onConfirm: (reason: string) => void
@@ -244,11 +227,11 @@ export interface ProjectDraft {
   assets: { name: string; ident: string; type: string; scope: 'in' | 'out' }[]
   members: { user: string; role: Role }[]
 }
-export interface OpDraft { name: string; projectId: string; owner: string; desc: string; objective: string; playbookId: string; agents: string[]; assets: string[]; mode: string; schedule: string; needConfirm: boolean; note: string }
-export interface FindingDraft { id?: string; projectId: string; title: string; severity: Finding['severity']; owner: string; kind: string; desc: string; scopeNote: string; asset: string; impact: string; rec: string; technique: string; op: string; stepId?: string; evidence: string[]; severityReason: string }
+interface OpDraft { name: string; projectId: string; owner: string; desc: string; objective: string; playbookId: string; agents: string[]; assets: string[]; mode: string; schedule: string; needConfirm: boolean; note: string }
+interface FindingDraft { id?: string; projectId: string; title: string; severity: Finding['severity']; owner: string; kind: string; desc: string; scopeNote: string; asset: string; impact: string; rec: string; technique: string; op: string; stepId?: string; evidence: string[]; severityReason: string }
 
 type Res = { ok: boolean; error?: string }
-export interface Actions {
+interface Actions {
   audit: (action: string, obj: string, projectId: string, result?: string, reason?: string) => void
   notify: (text: string, projectId: string, to: { name: string; id?: string }, group?: 'todo' | 'update' | 'system', category?: NonNullable<Db['notices'][number]['category']>) => void
   markNoticesRead: () => void
@@ -1062,4 +1045,3 @@ export function useDirty(isDirty: boolean, save?: () => void) {
 }
 
 export const sevLabel: Record<string, string> = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low', info: 'Informational' }
-export type { PlanStatus, ToolEvent }
