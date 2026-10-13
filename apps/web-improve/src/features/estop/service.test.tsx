@@ -5,15 +5,16 @@
  * stop state, the Pending audit row and the workspace notice in ONE
  * immediate commit, before any simulated acknowledgement delay. The demo
  * outcome transitions run through the typed handlers, so legacy actions and
- * direct callers observe the same state (both bridge directions). The
- * documented baseline behavior whose hardening belongs to ticket 28 (a
- * manual confirm leaving linked operations untouched) is preserved, not
- * silently changed.
+ * direct callers observe the same state (both bridge directions). Ticket 28
+ * hardened the machine: a manual confirm completes it coherently (ledger
+ * G-10) and the finalize sweep is scope-matched, so concurrent stops never
+ * touch out-of-scope records.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup } from '@testing-library/react'
 import type { Store } from '../../store'
 import type { ConsoleServices } from '../../domain/service-factory'
+import type { RequestContext } from '../../domain/service'
 
 vi.useFakeTimers()
 const { mountStore } = await import('../../test/helpers')
@@ -140,20 +141,43 @@ describe('handler-level gates and transitions', () => {
     svc.dispose()
   })
 
-  it('a manual confirm marks the stop stopped with an explicit audit row and leaves linked operations untouched (ticket 28 owns the hardening)', async () => {
+  it('a manual confirm completes the machine coherently — linked operations halt, sessions terminate, agents release (G-10, ticket 28)', async () => {
         const svc = createConsoleServices()
     expect(requestEmergencyStopTransaction(svc.authority, svc.clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: P14, corr: 'c13' }, { scope: 'operation', id: OP14, reason: 'halt now' }).ok).toBe(true)
     expect(unknownEmergencyStopTransaction(svc.authority, svc.clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: P14, corr: 'c14' }, { scope: 'operation', id: OP14 }).ok).toBe(true)
     expect(resolveStopTransaction(svc.authority, svc.clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: P14, corr: 'c15' }, 'confirmed-stopped').ok).toBe(true)
     const d = svc.authority.snapshot()
     expect(d.stopState?.phase).toBe('stopped')
-    expect(d.operations.find((o) => o.id === OP14)?.status).toBe('running')
+    // The confirmed stop never contradicts the records: the halt is real, so
+    // the demo ticker cannot keep progressing a "stopped" operation.
+    expect(d.operations.find((o) => o.id === OP14)?.status).toBe('estop')
+    expect(d.operations.find((o) => o.id === OP14)?.steps.find((s) => s.id === 'S12')?.status).toBe('notrun')
+    expect(d.sessions.filter((s) => s.opId === OP14).every((s) => s.state === 'terminated')).toBe(true)
+    expect(d.agents.find((a) => a.id === 'AG-007')?.op).toBeNull()
     expect(d.audit[0]).toMatchObject({ action: 'Emergency stop confirmed manually', result: 'Success', reason: 'Operator verified agents halted out-of-band' })
     // Dismissing clears the stop state; confirming with none in progress is an explicit refusal.
     expect(resolveStopTransaction(svc.authority, svc.clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: P14, corr: 'c16' }, 'dismiss').ok).toBe(true)
     expect(svc.authority.snapshot().stopState).toBeNull()
     expect(resolveStopTransaction(svc.authority, svc.clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: P14, corr: 'c17' }, 'confirmed-stopped'))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('No emergency stop is in progress') }) })
+    svc.dispose()
+  })
+
+  it('concurrent stops keep out-of-scope operations, sessions and reservations unchanged', async () => {
+    const svc = createConsoleServices()
+    const ctx = (projectId: string, corr: string): RequestContext => ({ actor: { id: 'Alex Morgan', role: 'manager' }, projectId, corr })
+    // Two stops committed against different scopes at the "same time".
+    expect(requestEmergencyStopTransaction(svc.authority, svc.clock, ctx(P14, 'k1'), { scope: 'operation', id: OP14, reason: 'halt 014' }).ok).toBe(true)
+    expect(requestEmergencyStopTransaction(svc.authority, svc.clock, ctx('RT-2026-015', 'k2'), { scope: 'operation', id: 'OP-015', reason: 'halt 015' }).ok).toBe(true)
+    expect(acknowledgeEmergencyStopTransaction(svc.authority, svc.clock, ctx(P14, 'k3'), { scope: 'operation', id: OP14, reason: 'halt 014' }).ok).toBe(true)
+    expect(finalizeEmergencyStopTransaction(svc.authority, svc.clock, ctx(P14, 'k4'), { scope: 'operation', id: OP14 }).ok).toBe(true)
+    const d = svc.authority.snapshot()
+    // Only the OP-014 scope moved; OP-015's records are exactly as seeded.
+    expect(d.operations.find((o) => o.id === 'OP-015')?.status).toBe('running')
+    expect(d.sessions.find((s) => s.id === 'SS-043')?.state).toBe('connected')
+    expect(d.agents.find((a) => a.id === 'AG-010')?.op).toBe('OP-015')
+    expect(d.operations.find((o) => o.id === OP14)?.status).toBe('estop')
+    expect(d.sessions.filter((s) => s.opId === OP14).every((s) => s.state === 'terminated')).toBe(true)
     svc.dispose()
   })
 })
