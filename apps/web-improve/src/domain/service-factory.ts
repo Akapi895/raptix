@@ -29,6 +29,10 @@ import { createChatService, type ChatService } from '../features/aichat/service'
 // Ticket 48 append: agent fleet list/detail read handlers are feature-local
 // (src/features/agents/service.ts); the factory only wires them into a scope.
 import { createAgentService, type AgentService } from '../features/agents/service'
+// Ticket 52 append: tradecraft library reads (playbooks + techniques) are
+// feature-local (src/features/library/service.ts); the factory only wires
+// them into a scope.
+import { createLibraryService, type LibraryService } from '../features/library/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -86,6 +90,8 @@ export interface ConsoleServices {
   chat(actor: ActorRef, projectId: string): ChatService
   /** Typed agent fleet list/detail read handlers (ticket 48 — feature-local implementation). */
   agents(actor: ActorRef, projectId: string): AgentService
+  /** Typed tradecraft library read handlers (ticket 52 — feature-local implementation). */
+  library(actor: ActorRef, projectId: string): LibraryService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -222,6 +228,27 @@ export function createConsoleServices(): ConsoleServices {
     return createAgentService(authority, guard)
   }
 
+  /* ── Ticket 52 append: tradecraft library reads (playbook list/detail,
+     technique detail). Same superseded-scope guard as forScope, so the
+     ScopeCancelBridge's cancelScope covers in-flight library reads on a
+     persona/project switch. Reads only — tradecraft mutations stay with the
+     legacy actions until ticket 53 migrates review. ── */
+  const forLibrary = (actor: ActorRef, projectId: string): LibraryService => {
+    const key = scopeKey(actor, projectId)
+    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
+      let superseded = false
+      const cancel = () => { superseded = true }
+      let set = inFlight.get(key)
+      if (!set) { set = new Set(); inFlight.set(key, set) }
+      set.add(cancel)
+      await Promise.resolve()
+      set.delete(cancel)
+      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
+      return produce()
+    }
+    return createLibraryService(authority, guard)
+  }
+
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
     set?.forEach((cancel) => cancel())
@@ -252,6 +279,7 @@ export function createConsoleServices(): ConsoleServices {
     findings: forFindings,
     chat: forChat,
     agents: forAgents,
+    library: forLibrary,
     cancelScope,
     reset(variant) {
       scheduler.clear()
