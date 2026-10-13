@@ -17,7 +17,7 @@ import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Report, Template } from '../../domain/entities'
-import type { DeliveryListQuery, DraftOptionsRead, ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead } from './service'
+import type { DeliveryListQuery, DraftOptionsRead, DeliveryInput, NoFind, ReportDecision, ReportDraftInput, ReportEditorRead, ReportListQuery, ReportListRead, ReportReviewRead, ReportSubmitInput } from './service'
 
 /** Feature-local key namespaces, each aligned with its owning entity kind.
  *  The editor/preview key shares the `report` kind prefix, so any committed
@@ -30,6 +30,8 @@ export const reportKeys = {
   draftOptions: (scope: QueryScope) => consoleKeys.view('finding', scope, 'report-draft-options'),
   /** One editor/preview read of a report (ticket 35) — both screens consume it. */
   editor: (scope: QueryScope, id: string) => consoleKeys.view('report', scope, 'editor', id),
+  /** One review read (ticket 36); the variant is part of the read's inputs. */
+  review: (scope: QueryScope, id: string, variant: string) => consoleKeys.view('report', scope, 'review', id, variant),
 }
 
 /** A service failure rethrown as the query error, so screens render the kind and message. */
@@ -135,6 +137,28 @@ export function useReportEditor(id: string) {
 }
 
 /**
+ * Query-backed review read (ticket 36): the report aggregate, its project,
+ * the review checklist, the linked findings with redaction markers, this
+ * report's export/delivery records and the handler-computed action gates.
+ * Keyed under the `report` kind, so any committed report change — a typed
+ * review decision, a legacy approval or a section write — refetches it.
+ * `nf` (the no-findings variant) is part of the key.
+ */
+export function useReportReview(id: string, nf?: NoFind) {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: reportKeys.review(scope, id, nf?.on ? 'nf' : 'std'),
+    queryFn: async (): Promise<ReportReviewRead> => {
+      const res = await services.reports(actorRef(scope.actor), scope.project).review(ctxOf(scope, 'report-review'), id, nf)
+      if (!res.ok) throw new ReportReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/**
  * Write-side binding (tickets 34 + 35): the validated draft creation and the
  * section/findings writes for the current scope. Each call captures
  * actor/project at call time — a persona or project switch never retargets
@@ -163,6 +187,16 @@ export function useReportWrites() {
         svc().reorderSections(ctx('report-section-reorder'), id, order),
       setFindings: (id: string, ids: string[]): Promise<ServiceResult<Report>> =>
         svc().setFindings(ctx('report-findings-set'), id, ids),
+      /* Ticket 36: submit/approve/return + export/delivery. */
+      submit: (id: string, input: ReportSubmitInput): Promise<ServiceResult<Report>> =>
+        svc().submit(ctx('report-submit'), id, input),
+      decide: (id: string, decision: ReportDecision, note: string): Promise<ServiceResult<Report>> =>
+        svc().decide(ctx('report-decide'), id, decision, note),
+      exportVersion: (id: string, format: 'PDF' | 'DOCX') =>
+        svc().exportVersion(ctx('report-export'), id, format),
+      deliver: (id: string, input: DeliveryInput): Promise<ServiceResult<Report>> =>
+        svc().deliver(ctx('report-deliver'), id, input),
+      acknowledge: (id: string) => svc().acknowledge(ctx('report-ack'), id),
     }
   }, [services, scope.actor, scope.project])
 }
