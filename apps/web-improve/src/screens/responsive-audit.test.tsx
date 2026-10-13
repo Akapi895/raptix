@@ -1,0 +1,251 @@
+/**
+ * Ticket 62: responsive coverage audit across the migrated route groups.
+ *
+ * jsdom has no layout engine, so the 768/1024/1280/1440 behavior is asserted
+ * structurally (the ticket-08 precedent): the responsive classes that
+ * implement each breakpoint stay on the migrated surfaces, critical controls
+ * carry no responsive-hide variants, overflow containers keep horizontal
+ * scrolling instead of clipping, and overlay surfaces stay inside the
+ * viewport. The pixel-level width/light-dark sweep of the real UI remains a
+ * recorded gap (see the ticket's Evidence).
+ */
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
+import { createHashRouter, RouterProvider } from 'react-router'
+import { StoreProvider, useStore, type Store } from '../store'
+import { ConsoleProviders } from '../state/query'
+import { setActiveRouter } from '../router/active'
+import { RouteHost } from '../router/host'
+import { DTable } from './d-shared'
+
+function Probe({ ready }: { ready: (s: Store) => void }) {
+  ready(useStore())
+  return null
+}
+
+function mountApp(hash?: string) {
+  if (hash !== undefined) window.location.hash = hash
+  let store!: Store
+  const router = createHashRouter([
+    { path: '*', element: <><Probe ready={(s) => (store = s)} /><RouteHost /></>, errorElement: <div />, hydrateFallbackElement: null },
+  ])
+  setActiveRouter(router)
+  render(
+    <StoreProvider>
+      <ConsoleProviders>
+        <RouterProvider router={router} />
+      </ConsoleProviders>
+    </StoreProvider>,
+  )
+  return { store: () => store }
+}
+
+function signIn() {
+  fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
+}
+
+const noHide = (el: HTMLElement) => expect(el.className).not.toMatch(/\b(max-(sm|md|lg|xl|2xl):)?hidden\b/)
+
+afterEach(() => {
+  cleanup()
+  setActiveRouter(null)
+  window.location.hash = ''
+})
+
+describe('shell chrome (every route group)', () => {
+  it('keeps the 768/1024/1280/1440 breakpoint classes on the sidebar, header and overlay surfaces', async () => {
+    mountApp('#/command-center')
+    signIn()
+    await screen.findByRole('heading', { name: /command center/i })
+    // Sidebar: desktop rail from lg, mobile drawer below lg.
+    const rail = screen.getByRole('complementary')
+    expect(rail.className).toContain('hidden')
+    expect(rail.className).toContain('lg:flex')
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+    const drawer = await screen.findByRole('dialog', { name: 'Navigation' })
+    expect(drawer.parentElement!.className).toContain('lg:hidden')
+    fireEvent.keyDown(window, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument())
+    // Header: hamburger below lg, full search only from md, workspace switcher from xl.
+    expect(screen.getByRole('button', { name: 'Open menu' }).className).toContain('lg:hidden')
+    expect(screen.getByRole('button', { name: 'Search (Ctrl+K)' }).className).toContain('max-md:hidden')
+    expect(screen.getByRole('button', { name: 'Search' }).className).toContain('md:hidden')
+    const ws = screen.getByRole('button', { name: /Workspace: Raptix Workspace/ })
+    expect(ws.parentElement!.className).toContain('hidden')
+    expect(ws.parentElement!.className).toContain('xl:block')
+    // AI-mode chip, Ask AI and profile collapse to icons below xl / 1500px.
+    expect(screen.getByRole('button', { name: /Default AI Mode/ }).querySelector('[class*="max-xl:hidden"]')).not.toBeNull()
+    expect(screen.getByRole('button', { name: /Default AI Mode/ }).querySelector('[class*="min-[1500px]:inline"]')).not.toBeNull()
+    const askAi = screen.getByRole('button', { name: 'Ask AI' })
+    expect(askAi.className).toContain('max-xl:!px-3')
+    expect(askAi.querySelector('span[class*="max-xl:hidden"]')).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Account menu' }).querySelector('[class*="xl:block"]')).not.toBeNull()
+    // Migrated overlays stay full-width under their breakpoint: copilot drawer and notices panel.
+    fireEvent.click(askAi)
+    const copilot = await screen.findByRole('dialog', { name: 'Ask AI' })
+    expect(copilot.className).toContain('w-full')
+    expect(copilot.className).toContain('max-w-[420px]')
+    fireEvent.click(copilot.querySelector('button[aria-label="Close Ask AI"]')!)
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Ask AI' })).not.toBeInTheDocument())
+    fireEvent.click(screen.getByTestId('notice-bell'))
+    const panel = await screen.findByTestId('notice-panel')
+    expect(panel.className).toContain('fixed')
+    expect(panel.className).toContain('sm:absolute')
+    expect(panel.className).toContain('sm:w-[420px]')
+  })
+})
+
+describe('shared table contract (projects group)', () => {
+  it('keeps container scroll + hideBelow classing, and row menus escape the table scroll container', async () => {
+    mountApp('#/projects')
+    signIn()
+    const table = await screen.findByRole('table')
+    expect(table.parentElement!.className).toContain('overflow-x-auto')
+    expect(table.className).toContain('min-w-[640px]')
+    expect(screen.getByRole('columnheader', { name: 'Client' }).className).toContain('max-md:hidden')
+    expect(screen.getByRole('columnheader', { name: 'Type' }).className).toContain('max-lg:hidden')
+    fireEvent.click(screen.getByLabelText('More actions for RT-2026-014'))
+    const menu = await screen.findByRole('menu')
+    expect(menu.parentElement).toBe(document.body)
+    expect(menu.className).toContain('max-w-[calc(100vw-1.5rem)]')
+  })
+})
+
+describe('project detail (projects group)', () => {
+  it('scrolls the tab strip, right-anchors the More menu and never hides the critical header controls', async () => {
+    mountApp('#/project/RT-2026-014')
+    signIn()
+    await screen.findByRole('tab', { name: 'Overview' })
+    const tablist = screen.getByRole('tablist')
+    expect(tablist.firstElementChild!.className).toContain('min-w-0')
+    expect(tablist.firstElementChild!.className).toContain('overflow-x-auto')
+    fireEvent.click(screen.getByText('More'))
+    const menu = await screen.findByRole('menu')
+    expect(menu.parentElement).toBe(document.body)
+    expect(menu.style.right).not.toBe('')
+    expect(screen.getAllByRole('menuitem', { name: 'Closeout' })).toHaveLength(1)
+    for (const name of ['Create Operation', 'Close Project']) noHide(screen.getByRole('button', { name }))
+    noHide(screen.getByRole('button', { name: 'Emergency Stop' }))
+  })
+
+  it('keeps the team members table on container scroll and the shared DTable on sticky-first-column container scroll', async () => {
+    mountApp('#/project/RT-2026-014?tab=team')
+    signIn()
+    const table = await screen.findByRole('table')
+    expect(table.parentElement!.className).toContain('overflow-x-auto')
+    expect(screen.getByRole('columnheader', { name: 'Permissions' }).className).toContain('max-md:hidden')
+    // DTable is shared by the agents/assets screens (API-backed there), so its
+    // scroll contract is asserted on the component directly.
+    render(
+      <DTable
+        rowKey={(x: string) => x}
+        rows={['RT-2026-014']}
+        cols={[
+          { key: 'id', header: 'ID', render: (x) => x },
+          { key: 'perm', header: 'Permissions', render: () => 'View, execute', hideBelow: 'md' },
+        ]}
+      />,
+    )
+    const dt = screen.getAllByRole('table').find((t) => t.className.includes('min-w-[720px]'))!
+    expect(dt.parentElement!.className).toContain('max-h-[62vh]')
+    expect(dt.parentElement!.className).toContain('overflow-auto')
+    const firstTh = dt.querySelector('thead th')!
+    expect(firstTh.className).toContain('sticky')
+    expect(firstTh.className).toContain('left-0')
+    expect(dt.querySelectorAll('thead th')[1]!.className).toContain('max-md:hidden')
+  })
+})
+
+describe('project wizard (planning group)', () => {
+  it('keeps the step rail horizontally scrollable and collapses the form grids to one column below md/xl', async () => {
+    mountApp('#/project-new')
+    signIn()
+    await screen.findByLabelText(/Project Name/)
+    expect(screen.getByLabelText('Project creation steps').className).toContain('overflow-x-auto')
+    expect(document.querySelector('main [class*="md:grid-cols-2"]')).not.toBeNull()
+    expect(document.querySelector('main [class*="xl:grid-cols-[minmax(0,1fr)_320px]"]')).not.toBeNull()
+  })
+})
+
+describe('operation live workspace (operations group)', () => {
+  it('uses the wide layout, collapse-at-xl panes and wrapped strips; the dock scrolls its console', async () => {
+    const { store } = mountApp('#/command-center')
+    signIn()
+    await screen.findByRole('heading', { name: /command center/i })
+    act(() => { store().go('operation', { id: 'OP-014', tab: 'live' }) })
+    const steps = await screen.findByRole('list', { name: 'Operation steps' })
+    for (const cls of ['grid-cols-2', 'sm:grid-cols-3', 'lg:grid-cols-4', '2xl:grid-cols-6']) expect(steps.className).toContain(cls)
+    const main = document.getElementById('main')!
+    expect(main).toHaveAttribute('data-wide')
+    expect(main.className).toContain('p-0')
+    const workspace = screen.getByRole('complementary', { name: 'AI Copilot' }).parentElement!
+    expect(workspace.className).toContain('grid-cols-1')
+    expect(workspace.className).toContain('xl:grid-cols-[minmax(0,1fr)_340px]')
+    expect(document.querySelector('[aria-label="Health strip"]')!.className).toContain('flex-wrap')
+    expect(screen.getByRole('region', { name: 'Operation dock' }).querySelector('[role="log"]')!.className).toContain('overflow-auto')
+  })
+})
+
+describe('AI operator workspace (AI group)', () => {
+  it('falls back to drawers for the rail and inspector below 1280 and keeps panes min-w-0', async () => {
+    const { store } = mountApp('#/ai-operator')
+    signIn()
+    await screen.findByText('All Projects view')
+    act(() => { store().setPid('RT-2026-014') })
+    await screen.findByRole('button', { name: 'New Conversation' })
+    expect(document.querySelector('[aria-label="Conversation"]')!.className).toContain('min-w-0')
+    fireEvent.click(screen.getByRole('button', { name: 'Conversations' }))
+    const rail = await screen.findByRole('dialog', { name: 'Conversations & plans' })
+    expect(rail.className).toContain('w-full')
+    expect(rail.style.maxWidth).toBe('380px')
+    fireEvent.click(rail.querySelector('button[aria-label="Close"]')!)
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Conversations & plans' })).not.toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: 'Show Context' }))
+    const insp = await screen.findByRole('dialog', { name: 'Context inspector' })
+    expect(insp.style.maxWidth).toBe('460px')
+  })
+})
+
+describe('findings, C2, reports and settings (their groups)', () => {
+  it('findings: collapses the severity strip, hides below-md/lg columns and right-anchors the filter popover', async () => {
+    mountApp('#/findings')
+    signIn()
+    await screen.findByRole('table')
+    expect(screen.getByText('Awaiting Review').closest('[class*="xl:grid-cols-8"]')!.className).toContain('grid-cols-2')
+    expect(screen.getByRole('columnheader', { name: 'Project' }).className).toContain('max-md:hidden')
+    expect(screen.getByRole('columnheader', { name: 'Affected asset' }).className).toContain('max-lg:hidden')
+    fireEvent.click(screen.getByRole('button', { name: 'More filters' }))
+    const pop = await screen.findByText('Done').then((b) => b.closest('[class*="w-72"]')!)
+    expect(pop.className).toContain('right-0')
+  })
+
+  it('c2: collapses the infrastructure KPI strip to two columns below lg', async () => {
+    mountApp('#/c2')
+    signIn()
+    await screen.findByRole('tablist')
+    const strip = document.querySelector('main [class*="lg:grid-cols-6"]')!
+    expect(strip.className).toContain('grid-cols-2')
+  })
+
+  it('settings: scrolls the ten-tab bar and keeps the permission matrix on container scroll', async () => {
+    mountApp('#/settings')
+    signIn()
+    const tabs = await screen.findByRole('tablist')
+    expect(tabs.className).toContain('overflow-x-auto')
+    fireEvent.click(screen.getByRole('tab', { name: 'Users & roles' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Roles & permissions' }))
+    await screen.findByText('Legend:')
+    const table = screen.getByRole('table')
+    expect(table.parentElement!.className).toContain('overflow-x-auto')
+    expect(table.className).toContain('min-w-[860px]')
+  })
+})
+
+describe('demo surfaces (scenarios group, outside the shell)', () => {
+  it('keeps the wide scenario matrix on container scroll', async () => {
+    mountApp('#/scenarios')
+    const table = await screen.findByRole('table')
+    expect(table.parentElement!.className).toContain('overflow-x-auto')
+    expect(table.className).toContain('min-w-[920px]')
+  })
+})
