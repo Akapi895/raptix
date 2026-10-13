@@ -5,13 +5,18 @@
  * direct detail URLs select the correct project and sync the switcher,
  * unknown and out-of-scope projects expose no record content, tab state and
  * old aliases survive back/forward, scope switches and the dirty guard, and
- * membership edits are permission-gated with reasons. Unmigrated secondary
- * panels keep rendering through the bridged legacy store (ticket 23 owns
- * their migration), including the viewer redaction banner.
+ * membership edits are permission-gated with reasons. Ticket 23: every
+ * secondary panel renders the same typed read — the service's project-
+ * narrowed slices and derived closure checklist — deep links resolve to the
+ * canonical feature routes, a legacy mutation reaches the panels through the
+ * change bridge, and the shell files contain no legacy database reader
+ * (source assertion), including the viewer redaction banner.
  */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { seed } from '../../data'
 import { setActiveRouter } from '../../router/active'
 import { StoreProvider, useServices, useStore, type Store } from '../../store'
@@ -259,5 +264,108 @@ describe('unmigrated panels keep working through the bridge', () => {
     expect(await screen.findByText('Sensitive content is redacted')).toBeInTheDocument()
     expect(screen.getByText('Redacted (sensitive)')).toBeInTheDocument()
     expect(screen.queryByText('evidence-027.png')).not.toBeInTheDocument()
+  })
+})
+
+describe('secondary panels on the typed detail read (ticket 23)', () => {
+  it('objectives, activity and plans render the service slices for the route project only', async () => {
+    mountProject('#/project/RT-2026-014?tab=objectives')
+    await screen.findByText('Internal Red Team Q4')
+    expect(await screen.findByText('Assess internal discovery exposure in the lab')).toBeInTheDocument()
+    // Related operations resolve from the same aggregate slice (both objectives owned by Taylor Chen link OP-013).
+    expect(screen.getAllByText('OP-013').length).toBeGreaterThan(0)
+
+    mountProject('#/project/RT-2026-014?tab=activity')
+    await screen.findByText('Internal Red Team Q4')
+    expect(await screen.findByText('Blocked tool call')).toBeInTheDocument()
+
+    mountProject('#/project/RT-2026-014?tab=plans')
+    await screen.findByText('Internal Red Team Q4')
+    expect((await screen.findAllByText('Internal environment discovery plan')).length).toBeGreaterThan(0)
+    expect(screen.getByText('PL-021')).toBeInTheDocument()
+  })
+
+  it('findings, reports and sessions render scoped rows and empty states stay project-scoped', async () => {
+    mountProject('#/project/RT-2026-014?tab=findings')
+    await screen.findByText('Internal Red Team Q4')
+    expect(await screen.findByText('2 findings in RT-2026-014')).toBeInTheDocument()
+    expect(screen.getByText('Excessive account privileges (simulated)')).toBeInTheDocument()
+
+    mountProject('#/project/RT-2026-014?tab=reports')
+    await screen.findByText('Internal Red Team Q4')
+    expect(await screen.findByText('Red Team Q4 Report — Northwind Bank')).toBeInTheDocument()
+    mountProject('#/project/RT-2026-014?tab=sessions')
+    await screen.findByText('Internal Red Team Q4')
+    expect((await screen.findAllByText('win-dc-01')).length).toBeGreaterThan(0)
+
+    // Empty and cross-project scoping on the same panels.
+    mountProject('#/project/RT-2026-015?tab=sessions')
+    await screen.findByText('Cloud Security Assessment')
+    expect(await screen.findByText('SS-043')).toBeInTheDocument()
+    expect(screen.queryByText('SS-041')).not.toBeInTheDocument()
+
+    mountProject('#/project/RT-2026-017?tab=sessions')
+    await screen.findByText('Draft Review')
+    expect(await screen.findByText('No C2 sessions for this project')).toBeInTheDocument()
+
+    mountProject('#/project/RT-2026-017?tab=plans')
+    await screen.findByText('Draft Review')
+    expect(await screen.findByText('No AI plans for this project')).toBeInTheDocument()
+  })
+
+  it('the close console renders the service-derived checklist and delegates the waiver to it', async () => {
+    mountProject('#/project/RT-2026-014?tab=close')
+    await screen.findByText('Internal Red Team Q4')
+    // Ticket 22's derivation, read from the detail service over the same snapshot.
+    expect(await screen.findByText('Still open: OP-014')).toBeInTheDocument()
+    expect(screen.getByText('Live: SS-041, SS-042')).toBeInTheDocument()
+    expect(screen.getByText('No report has been delivered')).toBeInTheDocument()
+    // The waiver stays the closure service's rule: the read exposes the
+    // precondition and both checklist variants; the panel only selects.
+    const d14 = detailFor(seed(), ALEX, 'RT-2026-014')!
+    expect(d14.noFindingsWaiverOk).toBe(false)
+    const d16 = detailFor(seed(), ALEX, 'RT-2026-016')!
+    expect(d16.noFindingsWaiverOk).toBe(true)
+    expect(d16.close.find((c) => c.id === 'c3')!.detail).toBe('No report has been delivered')
+    expect(d16.closeWaived.find((c) => c.id === 'c3')!.detail).toContain('Waived: approved no-findings closure')
+  })
+
+  it('detail links in the migrated panels resolve to the canonical feature routes', async () => {
+    mountProject('#/project/RT-2026-014?tab=findings')
+    await screen.findByText('Internal Red Team Q4')
+    fireEvent.click(await screen.findByText('FD-011'))
+    await waitFor(() => expect(window.location.hash).toBe('#/finding/FD-011'))
+
+    mountProject('#/project/RT-2026-014?tab=reports')
+    await screen.findByText('Internal Red Team Q4')
+    fireEvent.click(await screen.findByText('REP-014'))
+    await waitFor(() => expect(window.location.hash).toBe('#/report/REP-014'))
+
+    mountProject('#/project/RT-2026-014?tab=sessions')
+    await screen.findByText('Internal Red Team Q4')
+    fireEvent.click(await screen.findByText('SS-041'))
+    await waitFor(() => expect(window.location.hash).toBe('#/c2-session/SS-041'))
+  })
+
+  it('a legacy mutation reaches the migrated panels through the change bridge', async () => {
+    const h = mountProject('#/project/RT-2026-014?tab=evidence')
+    await screen.findByText('Internal Red Team Q4')
+    expect(await screen.findByText('accounts-output.txt')).toBeInTheDocument()
+    // The legacy action commits through the shared transaction bridge; the
+    // published ChangeSet refetches the detail view, so the panel updates.
+    act(() => {
+      h.store().A.addEvidence({ name: 'bridge-probe.bin', kind: 'Binary', source: 'Probe', projectId: 'RT-2026-014', sensitive: false })
+    })
+    expect(await screen.findByText('bridge-probe.bin')).toBeInTheDocument()
+  })
+
+  it('the detail shell files read the typed service, never the legacy database', () => {
+    const DB_READ = /\bdb\.|[{,]\s*db\s*[,}]/
+    for (const f of ['src/screens/b-detail.tsx', 'src/screens/b-detail2.tsx']) {
+      const src = readFileSync(join(process.cwd(), f), 'utf8')
+      expect(src, f).not.toMatch(DB_READ)
+    }
+    expect(readFileSync(join(process.cwd(), 'src/screens/b-detail.tsx'), 'utf8')).toMatch(/useProjectDetail\(/)
+    expect(readFileSync(join(process.cwd(), 'src/screens/b-detail2.tsx'), 'utf8')).toMatch(/ProjectDetail/)
   })
 })
