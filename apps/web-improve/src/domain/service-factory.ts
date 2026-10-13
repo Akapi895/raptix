@@ -92,7 +92,7 @@ export interface ConsoleServices {
   reports(actor: ActorRef, projectId: string): ReportService
   /** Typed branch group reads + branch action writes (ticket 43 — feature-local implementation). */
   branches(actor: ActorRef, projectId: string): BranchService
-  /** Typed tradecraft library read handlers (ticket 52 — feature-local implementation). */
+  /** Typed tradecraft library reads + revision-review writes (tickets 52–53 — feature-local implementation). */
   library(actor: ActorRef, projectId: string): LibraryService
   /** Typed ATT&CK coverage + detection heatmap read handlers (ticket 54 — feature-local implementation). */
   analysis(actor: ActorRef, projectId: string): AnalysisService
@@ -178,7 +178,7 @@ export function createConsoleServices(): ConsoleServices {
   const forBranches = (actor: ActorRef, projectId: string): BranchService =>
     createBranchService(authority, clock, scopeGuard(actor, projectId))
   const forLibrary = (actor: ActorRef, projectId: string): LibraryService =>
-    createLibraryService(authority, scopeGuard(actor, projectId))
+    createLibraryService(authority, clock, scopeGuard(actor, projectId))
   const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService =>
     createAnalysisService(authority, scopeGuard(actor, projectId))
   const forSettings = (actor: ActorRef, projectId: string): SettingsService =>
