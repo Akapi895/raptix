@@ -2,7 +2,7 @@
 
 **What to build:** Migrate agent status/allocation reads and detail health/capability/connection/history presentation through typed services.
 **Blocked by:** 13.
-**Status:** ready-for-agent
+**Status:** resolved
 **Owner:** Agent read services and fleet/detail views.
 **Contract:** [execution.md](../execution.md).
 
