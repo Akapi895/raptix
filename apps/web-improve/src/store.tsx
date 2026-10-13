@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { seed, BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Asset, type Agent, type Group, type Plan, type PlanStep, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent, type Conversation } from './data'
+import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Asset, type Agent, type Group, type Plan, type PlanStep, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent, type Conversation } from './data'
 import type { CanAction } from './domain/permissions'
+import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
 
 export type { CanAction } from './domain/permissions'
 
@@ -325,6 +326,11 @@ export interface Actions {
 const Ctx = createContext<Store>(null as any)
 export const useStore = () => useContext(Ctx)
 
+const ServicesCtx = createContext<ConsoleServices | null>(null)
+/** Canonical data authority + service factory (ADR-0067): typed handlers, clock and bridge subscription. */
+// eslint-disable-next-line react-refresh/only-export-components
+export const useServices = () => useContext(ServicesCtx)!
+
 export function allocation(db: Db, projectId: string) {
   const mine = db.agents.filter((a) => a.projectId === projectId)
   const pool = db.agents.filter((a) => !a.projectId && (a.status === 'online' || a.status === 'idle'))
@@ -349,15 +355,24 @@ const bumpRoe = (v: string) => v.replace(/v(\d+)$/, (_, n) => `v${+n + 1}`)
 const bumpVer = (p: Plan) => { const m = (p.ver ?? `v${p.version}`).match(/^v(\d+)(?:\.(\d+))?$/); return m ? `v${m[1]}.${(+(m[2] ?? 0)) + 1}` : `v${p.version + 1}` }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [db, setDb] = useState<Db>(() => seed())
+  /* One data authority (ADR-0067): the context state is a projection of the
+     canonical database; every mutation — legacy or service — commits through
+     its atomic transaction bridge and publishes the affected identities. */
+  const servicesRef = useRef<ConsoleServices | null>(null)
+  if (!servicesRef.current) servicesRef.current = createConsoleServices()
+  const services = servicesRef.current
+  const [db, setDb] = useState<Db>(() => services.authority.snapshot())
   const dbRef = useRef(db)
   dbRef.current = db
-  const mutate = useCallback((fn: (d: Db) => void) => {
-    const next = structuredClone(dbRef.current)
-    fn(next)
+  useEffect(() => services.authority.subscribe(() => {
+    const next = services.authority.snapshot()
     dbRef.current = next
     setDb(next)
-  }, [])
+  }), [services])
+  const mutate = useCallback((fn: (d: Db) => void) => {
+    services.authority.commit('legacy', fn)
+    dbRef.current = services.authority.snapshot()
+  }, [services])
 
   const [meName, setMeName] = useState('Alex Morgan')
   const me = USERS.find((u) => u.name === meName)!
@@ -381,6 +396,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const stopOutRef = useRef(stopOutcome); stopOutRef.current = stopOutcome
   const [aiBusy, setAiBusy] = useState<string | null>(null)
   const aiTimers = useRef(new Map<string, number>())
+  /* Dataset-bound delayed callbacks; demo reset disposes them so stale
+     callbacks never apply pre-reset state to the reseeded dataset. */
+  const pendingTimers = useRef(new Set<number>())
+  const later = useCallback((fn: () => void, ms: number) => {
+    const t = window.setTimeout(() => { pendingTimers.current.delete(t); fn() }, ms)
+    pendingTimers.current.add(t)
+    return t
+  }, [])
   const [logs, setLogs] = useState<Record<string, LogLine[]>>({})
   const [staleOps, setStaleOps] = useState<Record<string, boolean>>({})
   const [persistFilters, setPF] = useState<Record<string, any>>({})
@@ -514,10 +537,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => { setLogs(buildLogs(dbRef.current)) }, [])
 
   const resetDemo: Store['resetDemo'] = (scenario = 'default') => {
-    const next = seed(scenario)
-    dbRef.current = next
-    setDb(next)
-    setLogs(buildLogs(next))
+    pendingTimers.current.forEach((t) => window.clearTimeout(t))
+    pendingTimers.current.clear()
+    aiTimers.current.clear()
+    services.reset(scenario)
+    dbRef.current = services.authority.snapshot()
+    setLogs(buildLogs(dbRef.current))
     setStaleOps({}); setPF({}); setPidRaw('all'); setDirtyS(false); saveRef.current = undefined
     setConfirmState(null); setUnsaved(null); setCopilotOpenRaw(false); setNoticesOpenRaw(false); setAiBusy(null)
     toast(scenario === 'e2e01' ? 'Demo state reset — RT-2026-017 scenario dataset loaded.' : 'Demo state reset.', 'info')
@@ -838,13 +863,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })
       })
       const outcome = stopOutRef.current
-      setTimeout(() => {
+      later(() => {
         if (outcome === 'fail') { mutate((d) => { if (d.stopState) d.stopState.phase = 'failed' }); audit('Emergency stop failed', id, affectedP, 'Failed', 'No acknowledgement — agents did not confirm halt'); return }
         if (outcome === 'unknown') { mutate((d) => { if (d.stopState) d.stopState.phase = 'unknown' }); audit('Emergency stop status unknown', id, affectedP, 'Unknown', 'Acknowledgement timed out'); return }
         applyStop()
         mutate((d) => { if (d.stopState) d.stopState.phase = 'acknowledged' })
         audit('Emergency stop acknowledged', id, affectedP, 'Success', 'Agents confirmed halt')
-        setTimeout(() => {
+        later(() => {
           mutate((d) => {
             d.sessions.forEach((s) => { if (s.state === 'revoking') s.state = 'terminated' })
             d.operations.forEach((o) => { if (o.status === 'estop') o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === o.id) a.op = null }) })
@@ -1000,7 +1025,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         c.updated = stamp()
       })
       setAiBusy(convId)
-      const timer = window.setTimeout(() => {
+      const timer = later(() => {
         aiTimers.current.delete(convId)
         aiRespond(convId, text)
         setAiBusy(null)
@@ -1138,7 +1163,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const s = dbRef.current.sessions.find((x) => x.id === sessionId)!
       mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; x.state = 'revoking'; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: `Termination requested by ${me.name}: ${reason}` }) })
       audit('Terminated session', sessionId, s.projectId, 'Success', reason)
-      setTimeout(() => mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; if (x.state === 'revoking') { x.state = 'terminated'; x.grants = []; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated. All grants revoked.' }) } }), 2000)
+      later(() => mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; if (x.state === 'revoking') { x.state = 'terminated'; x.grants = []; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated. All grants revoked.' }) } }), 2000)
     },
     revokeGrant: (sessionId, user, reason) => {
       const s = dbRef.current.sessions.find((x) => x.id === sessionId)!
@@ -1207,7 +1232,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     switcherOpen, setSwitcherOpen, noticesOpen, setNoticesOpen, copilotOpen, copilotCtx, setCopilotOpen, aiMode, setAiMode, aiBusy,
     logs, now: stamp, staleOps, setStale, persistFilters, setFilter, resetDemo, stopOutcome, setStopOutcome, A,
   }
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+  return (
+    <ServicesCtx.Provider value={services}>
+      <Ctx.Provider value={value}>{children}</Ctx.Provider>
+    </ServicesCtx.Provider>
+  )
 }
 
 /** Marks a form as having unsaved changes. Call every render with (isDirty, saveDraftFn). */
