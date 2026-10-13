@@ -5,6 +5,8 @@ import { can as policyCan, projectAccessible, readOnlyContext } from './auth/pol
 import type { CanAction } from './domain/permissions'
 import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
+import { getActiveRouter } from './router/active'
+import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
 
 export type { CanAction } from './domain/permissions'
 export type { CopilotCtx, Toast } from './state/stores'
@@ -25,16 +27,9 @@ export const stamp = () => `Oct 13, 2026, ${hhmm12()} (UTC+7)`
 export const today = () => 'Oct 13, 2026'
 
 /* ───────────── Route ───────────── */
-export interface Route { page: string; id?: string; tab?: string }
-const parseHash = (): Route => {
-  const h = window.location.hash.replace(/^#\/?/, '')
-  if (!h) return { page: 'login' }
-  const [path, qs] = h.split('?')
-  const [page, id] = path.split('/')
-  const tab = qs ? new URLSearchParams(qs).get('tab') || undefined : undefined
-  return { page: page || 'login', id: id ? decodeURIComponent(id) : undefined, tab }
-}
-const toHash = (r: Route) => `#/${r.page}${r.id ? '/' + encodeURIComponent(r.id) : ''}${r.tab ? '?tab=' + r.tab : ''}`
+/* Route codecs and the router location projection live in the router layer
+   (ticket 07); the store re-exports the type for legacy consumers. */
+export type { Route } from './router/history'
 
 /* ───────────── Roles ───────────── */
 export const ROLE_LABEL: Record<Role, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
@@ -370,7 +365,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   if (!initedRef.current) {
     initedRef.current = true
     resetSharedStores()
-    useAuthStore.setState({ authed: !!window.location.hash && parseHash().page !== 'login' })
+    /* Deep links no longer auto-authenticate (ticket 07): the auth store is
+       the single authorization authority, and the route guard holds the
+       requested URL as the safe return destination for unauthenticated visits. */
   }
   const [db, setDb] = useState<Db>(() => services.authority.snapshot())
   const dbRef = useRef(db)
@@ -394,6 +391,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const authed = useAuthStore((s) => s.authed)
   const org = useAuthStore((s) => s.org)
   const [route, setRoute] = useState<Route>(() => parseHash())
+  const routeRef = useRef(route)
+  routeRef.current = route
   const pid = useProjectStore((s) => s.pid)
   const setPidRaw = useProjectStore((s) => s.setPid)
   const theme = useThemeStore((s) => s.theme)
@@ -461,20 +460,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
   const closeUnsaved = () => setUnsaved(null)
 
-  /* navigation */
-  const navRaw = useCallback((page: string, opts?: { id?: string; tab?: string }) => {
-    const r: Route = { page, id: opts?.id, tab: opts?.tab }
+  /* navigation — the router is the single location writer (ticket 07). navRaw
+     forwards to the active data router; the fallback branch only serves
+     router-less mounts (tests) and keeps the legacy state+hash write. */
+  const navRaw = useCallback((r: Route) => {
     setDirtyS(false); saveRef.current = undefined
-    setRoute(r)
-    window.location.hash = toHash(r)
+    const router = getActiveRouter()
+    if (router) router.navigate(toHref(r))
+    else { setRoute(r); window.location.hash = toHash(r) }
     document.querySelector('main')?.scrollTo?.(0, 0)
   }, [])
-  const go = useCallback((page: string, opts?: { id?: string; tab?: string }) => guarded(() => navRaw(page, opts)), [guarded, navRaw])
+  const go = useCallback((page: string, opts?: { id?: string; tab?: string }) => guarded(() => navRaw({ page, id: opts?.id, tab: opts?.tab })), [guarded, navRaw])
 
+  /* The store's route is a projection of the router location, synced through
+     the router's own subscription — there is deliberately no window
+     hashchange listener here (one listener, owned by the router). */
   useEffect(() => {
-    const on = () => setRoute(parseHash())
-    window.addEventListener('hashchange', on)
-    return () => window.removeEventListener('hashchange', on)
+    const router = getActiveRouter()
+    if (!router) return
+    return router.subscribe(() => {
+      const next = parseLocation(router.state.location)
+      if (!sameRoute(routeRef.current, next)) { routeRef.current = next; setRoute(next) }
+    })
   }, [])
 
   const DETAIL_MAP: Record<string, string> = {
@@ -491,22 +498,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setSwitcherOpen(false)
       setLoading(true)
       setTimeout(() => setLoading(false), 450)
-      setRoute((r) => {
-        if (r.page === 'project' && id === 'all') { const nr = { page: 'projects' }; window.location.hash = toHash(nr); return nr }
-        if (r.page === 'project') { const nr = { ...r, id }; window.location.hash = toHash(nr); return nr }
-        if (DETAIL_MAP[r.page]) { const nr = { page: DETAIL_MAP[r.page] }; window.location.hash = toHash(nr); return nr }
-        return r
-      })
+      /* The redirect is computed from the committed route and written once
+         through navRaw — never inside a state updater. Writing location.hash
+         in a setRoute updater used to land after later navigations and let a
+         delayed hashchange clobber the route (execution ledger, ticket 02). */
+      const r = routeRef.current
+      if (r.page === 'project' && id === 'all') navRaw({ page: 'projects' })
+      else if (r.page === 'project') navRaw({ ...r, id })
+      else if (DETAIL_MAP[r.page]) navRaw({ page: DETAIL_MAP[r.page] })
     })
-  }, [pid, guarded])
+  }, [pid, guarded, navRaw])
 
   /* Auth writes forward to the shared auth authority via the auth feature
-     actions (ticket 06); navigation stays legacy until ticket 07. */
+     actions (ticket 06); navigation forwards to the router (ticket 07). */
   const login = (o?: string) => {
     signIn(useAuthStore.getState().meName, o)
-    navRaw('command-center')
+    /* Safe return destination: the guard renders login in place for protected
+       URLs, so signing in reveals the requested route without a redirect.
+       Public and unknown destinations go home. */
+    const r = routeRef.current
+    if (isKnownPage(r.page) && r.page !== 'login' && !OUTSIDE_SHELL.has(r.page)) {
+      setDirtyS(false); saveRef.current = undefined
+      return
+    }
+    navRaw({ page: 'command-center' })
   }
-  const logout = () => { signOut(); navRaw('login') }
+  const logout = () => { signOut(); navRaw({ page: 'login' }) }
 
   const confirm = (o: ConfirmOpts) => setConfirmState(o)
 
