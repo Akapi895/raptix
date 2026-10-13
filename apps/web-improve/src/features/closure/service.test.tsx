@@ -13,11 +13,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, completion, type Store } from '../../store'
+import { StoreProvider, useServices, useStore, type Store } from '../../store'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { DbAuthority } from '../../domain/database'
-import { APR } from '../../data'
+import { APR, type Db } from '../../data'
 import { CloseTab, TeamTab } from '../../screens/b-detail2'
 import { aggregateFor } from '../../screens/dashboard/service'
 import { detailFor } from '../../screens/project-detail/service'
@@ -36,6 +36,28 @@ const P16 = 'RT-2026-016'
 
 let corrSeq = 0
 const ctxOf = (actor: ActorRef, projectId = P16): RequestContext => ({ actor, projectId, corr: `corr-${++corrSeq}` })
+
+/* Ticket 67: the completion % probe moved here from the legacy store — this
+   suite is its only consumer, and it pins the canonical checklist fold
+   (closeDone/closeTotal) the percentage is derived from. */
+function completion(db: Db, pid: string) {
+  const p = db.projects.find((x) => x.id === pid)
+  const objs = p?.objectives ?? []
+  const objPct = objs.length ? Math.round(objs.reduce((a, o) => a + o.progress, 0) / objs.length) : 0
+  const ops = db.operations.filter((o) => o.projectId === pid)
+  const opsDone = ops.filter((o) => o.status === 'done').length
+  const fs = db.findings.filter((f) => f.projectId === pid)
+  const confirmed = fs.filter((f) => ['confirmed', 'remediation', 'retest', 'resolved'].includes(f.status)).length
+  const suggested = fs.filter((f) => f.status === 'ai_suggested').length
+  const inReview = fs.filter((f) => ['draft', 'review', 'returned'].includes(f.status)).length
+  const reps = db.reports.filter((r) => r.projectId === pid)
+  const delivered = reps.some((r) => r.status === 'delivered')
+  const repLabel = delivered ? 'Delivered' : reps.length ? reps.map((r) => r.status).sort()[0].replace(/^./, (c) => c.toUpperCase()) : 'None'
+  const chk = evaluateCloseChecklist(db, pid)
+  const closeDone = chk.filter((c) => c.ok).length
+  const pct = Math.round(objPct * 0.5 + (delivered ? 30 : reps.some((r) => ['approved', 'exported'].includes(r.status)) ? 20 : 0) + (closeDone / chk.length) * 20)
+  return { pct, objPct, ops: ops.length, opsDone, confirmed, suggested, inReview, repLabel, delivered, closeDone, closeTotal: chk.length }
+}
 
 function Probe({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) {
   ready(useStore(), useServices())

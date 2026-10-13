@@ -31,6 +31,17 @@ export interface C2AccessInfo { key: C2AccessKey; label: string; tone: 'ok' | 'w
 
 export type C2Perm = 'none' | 'read-only' | 'interactive'
 
+/* Ticket 67: the demo wall-clock label moved here from the legacy store — the
+   same simulated clock (UTC+7), anchored at this module's evaluation (the
+   dataset's demo instant is Oct 13, 2026, 10:42 AM). The session console uses
+   it for the grant countdown against the recorded `expires` strings. */
+const CLOCK_T0 = Date.now()
+const pad2 = (n: number) => String(n).padStart(2, '0')
+export function hhmm() {
+  const m = 10 * 60 + 42 + Math.floor((Date.now() - CLOCK_T0) / 60000)
+  return `${pad2(Math.floor(m / 60) % 24)}:${pad2(m % 60)}`
+}
+
 /** Recorded per-user permission for one session (viewer ⇒ none; grant ⇒ grant perm; member ⇒ read-only). */
 export function sessionPermOf(db: Db, ctx: RequestContext, s: Session): C2Perm {
   if (ctx.actor.role === 'viewer' || !projectAccessible(db.projects.find((p) => p.id === s.projectId), ctx.actor)) return 'none'

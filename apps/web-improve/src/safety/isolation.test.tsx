@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
-import { computePreflight, StoreProvider, useServices, useStore, type Store } from '../store'
+import { StoreProvider, useServices, useStore, type Store } from '../store'
+import { computePreflightChecks } from '../features/operations/preflight'
 import type { ConsoleServices } from '../domain/service-factory'
 import { importAssetsTransaction } from '../features/assets/writes'
 import { runOperationPreflight, startOperation } from '../features/operations/service'
@@ -85,7 +86,7 @@ describe('scope revisions invalidate at submission (requirement a / spec scope r
     h.run(() => h.store().A.editScope('RT-2026-014', { window: 'Mon–Fri, 10:00 AM–4:00 PM (UTC+7)' }, 'Tighten the window'))
     const d = h.store().db
     const op = d.operations.find((o) => o.id === opId)!
-    const roe = computePreflight(d, op).find((c) => c.code === 'PRE-02')!
+    const roe = computePreflightChecks(d, op, h.svc().clock.now()).find((c) => c.code === 'PRE-02')!
     expect(roe.state).toBe('fail')
     expect(roe.detail).toContain('waiting for re-approval')
     h.run(() => { startOperation(h.svc().authority, h.svc().clock, ctxOf('RT-2026-014'), opId) })

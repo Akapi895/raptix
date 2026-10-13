@@ -31,6 +31,9 @@ import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../..
 import type { Evidence, Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'
 import type { CaptureIntegrity, EvidenceReference } from '../../domain/evidence'
 
+/** Display label for each finding severity (ticket 67: moved from the legacy store; one definition for the findings/report surfaces). */
+export const sevLabel: Record<Severity, string> = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low', info: 'Informational' }
+
 /** Filter/sort state for the findings inventory (all optional; empty = unfiltered). */
 export interface FindingListQuery {
   /** Tab key (''|confirmed|review|ai|drafts|remediation) or one detailed status. */

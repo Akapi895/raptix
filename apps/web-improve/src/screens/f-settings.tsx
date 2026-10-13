@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRound, Lock, LogOut, MinusCircle, MoreHorizontal, OctagonX, Plug, RefreshCw, Save, ShieldAlert, ShieldCheck, Trash2, UserPlus, XCircle } from 'lucide-react'
-import { useStore, useDirty, ROLE_LABEL, today } from '../store'
+import { useStore, useDirty } from '../store'
+import { ROLE_LABEL } from '../auth/policy'
 import { USERS, TECHNIQUES, type Integration, type Policy, type Retention, type Role, type DetectState } from '../data'
 import { OrgReadError, useAudit, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites, useRetention, useRetentionWrites } from '../features/settings/query'
 import { auditCorr, type AuditRead, type IntegrationsRead, type OrgMembersRead, type OrgProfile, type OrgProfileRead, type PoliciesRead, type RetentionRead } from '../features/settings/service'
@@ -723,7 +724,7 @@ function SecurityTab() {
         <DescList cols={3} items={[{ k: 'Live operations in scope', v: live }, { k: 'Stop mechanism', v: <span className="inline-flex items-center gap-1.5 text-ok"><CheckCircle2 size={13} aria-hidden />Ready</span> }, { k: 'Last drill', v: 'Sep 28, 2026, 2:00 PM (UTC+7)' }, { k: 'Emergency contact', v: 'SOC duty line (demo)' }, { k: 'Your role', v: ['admin', 'manager', 'operator'].includes(me.role) ? 'Authorized to stop' : 'View only' }]} />
         <p className="mt-3 flex items-start gap-1.5 text-xs text-muted"><AlertTriangle size={13} className="mt-0.5 shrink-0 text-warn" aria-hidden />Emergency Stop is available on each running operation and in the top bar. It needs a reason, is audited, and never restarts automatically.</p>
       </Card>
-      {void today}{void XCircle}
+      {void XCircle}
     </div>
   )
 }

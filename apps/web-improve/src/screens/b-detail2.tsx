@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
-import { useStore, ROLE_LABEL } from '../store'
+import { useStore } from '../store'
+import { ROLE_LABEL } from '../auth/policy'
 import { useReopen } from '../features/approvals/hooks'
 import { APR, USERS, type Project, type Role, type Approval } from '../data'
 import type { DashboardAggregate } from './dashboard/domain'

@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
-import { computePreflight, StoreProvider, useServices, useStore, type Store } from '../store'
-import { preflightPass } from '../features/operations/preflight'
+import { StoreProvider, useServices, useStore, type Store } from '../store'
+import { computePreflightChecks, preflightPass } from '../features/operations/preflight'
+import { MockClock } from '../domain/clock'
+import type { Db, Operation } from '../data'
 import type { ConsoleServices } from '../domain/service-factory'
 import type { ActorRef, RequestContext } from '../domain/service'
 import { runOperationPreflight, startOperation } from '../features/operations/service'
@@ -36,15 +38,19 @@ function mountPreflight(me = 'Alex Morgan') {
 }
 
 const db = seed()
+/* Ticket 67: the store's computePreflight demo-anchor wrapper is retired — the
+   derivation resolves at the factory mock clock's instant (same class and demo
+   anchor as createConsoleServices: Oct 13, 2026, 10:42 AM UTC+7). */
+const pf = (d: Db, op: Operation) => computePreflightChecks(d, op, new MockClock().now())
 const checksFor = (opId: string) => {
   const op = db.operations.find((o) => o.id === opId)!
-  return Object.fromEntries(computePreflight(db, op).map((c) => [c.code, c]))
+  return Object.fromEntries(pf(db, op).map((c) => [c.code, c]))
 }
 
 describe('operation preflight (8-point gate)', () => {
   it('an operation on an approved, active project with approved ROE/in-scope targets/agents passes all eight checks', () => {
     const op = db.operations.find((o) => o.id === 'OP-014')!
-    const checks = computePreflight(db, op)
+    const checks = pf(db, op)
     expect(checks.map((c) => c.code)).toEqual(['PRE-01', 'PRE-02', 'PRE-03', 'PRE-04', 'PRE-05', 'PRE-06', 'PRE-07', 'PRE-08'])
     expect(checks.every((c) => c.state === 'pass')).toBe(true)
     expect(preflightPass(checks)).toBe(true)
@@ -57,7 +63,7 @@ describe('operation preflight (8-point gate)', () => {
   it('denies an approved project whose ROE is still draft (PRE-02 fail)', () => {
     const roe = checksFor('OP-016')['PRE-02']
     expect(roe.state).toBe('fail')
-    expect(preflightPass(computePreflight(db, db.operations.find((o) => o.id === 'OP-016')!))).toBe(false)
+    expect(preflightPass(pf(db, db.operations.find((o) => o.id === 'OP-016')!))).toBe(false)
   })
 
   it('denies a draft project: unapproved ROE, no targets, no agents and no emergency contact all fail', () => {
@@ -69,16 +75,16 @@ describe('operation preflight (8-point gate)', () => {
     const d = seed()
     const op = d.operations.find((o) => o.id === 'OP-016')!
     op.assets = [...op.assets, 'AS-0153']
-    const targets = computePreflight(d, op).find((c) => c.code === 'PRE-03')!
+    const targets = pf(d, op).find((c) => c.code === 'PRE-03')!
     expect(targets.state).toBe('fail')
     expect(targets.detail).toContain('prod-payments-db')
   })
 
   it('marks required approvals as review — not pass — while the linked plan awaits approval, blocking start', () => {
     const op = db.operations.find((o) => o.id === 'OP-015')!
-    const approvals = computePreflight(db, op).find((c) => c.code === 'PRE-07')!
+    const approvals = pf(db, op).find((c) => c.code === 'PRE-07')!
     expect(approvals.state).toBe('review')
-    expect(preflightPass(computePreflight(db, op))).toBe(false)
+    expect(preflightPass(pf(db, op))).toBe(false)
   })
 })
 

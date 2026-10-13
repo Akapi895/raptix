@@ -36,6 +36,9 @@ type MatrixCoversAll = [CanAction] extends [GrantedSomewhere] ? true : never
 const matrixCoversAll: MatrixCoversAll = true
 void matrixCoversAll
 
+/** Display label for each role in the documented 6-role model (ticket 67: one definition, moved from the legacy store). */
+export const ROLE_LABEL: Record<Role, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
+
 /** Roles that reach every project without an explicit membership entry. */
 const ELEVATED: readonly Role[] = ['admin', 'manager', 'reviewer']
 
