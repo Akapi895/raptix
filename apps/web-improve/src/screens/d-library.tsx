@@ -1,31 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertTriangle, BookOpen, Eye, ClipboardCheck, Copy, Crosshair, ExternalLink, GitCompare, Layers, Play, Plus, Send, Sparkles, Upload, X } from 'lucide-react'
 import { useStore } from '../store'
 import { TACTICS, TECHNIQUES, type Playbook } from '../data'
-import { Banner, Button, Card, CardHeader, DescList, Empty, FilterBar, IdLink, Kpi, Locked, Mono, PageHeader, SearchBox, Select, Status, Table, Tabs, Timeline, useGuard, cx } from '../ui'
+import { Banner, Button, Card, CardHeader, DescList, Empty, FilterBar, IdLink, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Timeline, useGuard, cx } from '../ui'
 import { Id, IdL, MoreFilters, withLoading } from './d-shared'
+import { LibraryReadError, usePlaybookDetail, usePlaybookList, useTechniqueDetail } from '../features/library/query'
 
 const tName = (id: string) => TECHNIQUES.find((t) => t.id === id)?.name ?? id
-const tTactic = (id: string) => TECHNIQUES.find((t) => t.id === id)?.tactic ?? ''
 
 function PbStatus({ s }: { s: Playbook['status'] }) {
   return s === 'approved' ? <Status kind="check" value="pass" label="Approved" /> : s === 'review' ? <Status kind="report" value="review" label="In review" /> : <Status kind="report" value="draft" label="Draft, not usable yet" />
 }
 
-/* ───────────── Playbooks & TTPs (PB-01) ───────────── */
+/* ───────────── Playbooks & TTPs (PB-01, ticket 52: typed service read + Query) ───────────── */
 function Playbooks() {
-  const { db, route, go, pid, persistFilters, setFilter, can, toast } = useStore()
+  const { route, go, pid, persistFilters, setFilter, can, toast } = useStore()
   const tab = route.tab || 'playbooks'
   const [q, setQ] = useState(''), [tac, setTac] = useState(''), [os, setOs] = useState(''), [st, setSt] = useState('')
+  const [page, setPage] = useState(1)
   const kind = tab === 'profiles' ? 'profile' : 'playbook'
+  /* The one library read: scope-checked typed service; cards, tab badges,
+     technique catalog rows and the detection overlay all derive from the
+     actor-visible active versions (pending revisions stay projections). */
+  const list = usePlaybookList({ kind, q: q || undefined, tactic: tac || undefined, os: os || undefined, status: st || undefined, page: page > 1 ? page : undefined })
+  useEffect(() => { setPage(1) }, [q, tac, os, st, tab])
+  const read = list.data
   const pre: string[] | undefined = persistFilters['operation-new.assets']
-  const list = db.playbooks.filter((p) => p.kind === kind && (!q || (p.name + p.id + p.desc + p.goal).toLowerCase().includes(q.toLowerCase())) && (!tac || p.techniques.some((t) => tTactic(t) === tac)) && (!os || p.os.includes(os)) && (!st || p.status === st))
-  const techs = TECHNIQUES.filter((t) => (!q || (t.id + t.name).toLowerCase().includes(q.toLowerCase())) && (!tac || t.tactic === tac) && (!os || t.platforms.includes(os)))
-  const usedBy = (id: string) => db.playbooks.filter((p) => p.techniques.includes(id)).length
-  const det = pid !== 'all' ? db.detection[pid] : undefined
   const filtered = !!(q || tac || os || st)
   const clear = () => { setQ(''); setTac(''); setOs(''); setSt('') }
-  const kinds = { playbooks: db.playbooks.filter((p) => p.kind === 'playbook').length, profiles: db.playbooks.filter((p) => p.kind === 'profile').length }
   const createWhy = !can('editScope') ? 'Only editors (Red Team Managers and Admins) can create playbooks.' : ''
   const importWhy = !can('admin') ? 'Importing playbooks is restricted by policy to Admins. Ask an Admin to import it, or create a draft instead.' : ''
   return (
@@ -39,50 +41,63 @@ function Playbooks() {
       {pre && pre.length > 0 && (
         <Banner tone="info" title={`${pre.length} in-scope ${pre.length === 1 ? 'asset is' : 'assets are'} selected as targets`} action={<Button size="sm" variant="ghost" onClick={() => setFilter('operation-new.assets', [])}>Clear selection</Button>}>Open an approved playbook and choose “Use in operation” to continue creating the operation.</Banner>
       )}
-      <Tabs value={tab} onChange={(t) => { clear(); go('playbooks', { tab: t }) }} tabs={[{ id: 'playbooks', label: 'Playbooks', count: kinds.playbooks }, { id: 'profiles', label: 'Adversary profiles', count: kinds.profiles }, { id: 'techniques', label: 'MITRE ATT&CK techniques', count: TECHNIQUES.length }]} />
-      <FilterBar>
-        <SearchBox className="w-64" value={q} onChange={setQ} placeholder={tab === 'techniques' ? 'Search technique ID or name' : 'Search name, ID or goal'} />
-        <Select className="!w-52" aria-label="Tactic" value={tac} onChange={(e) => setTac(e.target.value)}><option value="">All tactics</option>{TACTICS.map((t) => <option key={t}>{t}</option>)}</Select>
-        {tab !== 'techniques' && <Select className="!w-44" aria-label="Status" value={st} onChange={(e) => setSt(e.target.value)}><option value="">All statuses</option><option value="approved">Approved</option><option value="review">In review</option><option value="draft">Draft</option></Select>}
-        <MoreFilters active={os ? 1 : 0}><Select aria-label="OS" value={os} onChange={(e) => setOs(e.target.value)}><option value="">All OS</option><option>Windows</option><option>Linux</option></Select></MoreFilters>
-        {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
-      </FilterBar>
-      {tab !== 'techniques' ? (
-        !list.length ? <Empty icon={BookOpen} title={filtered ? 'No items match the filters' : tab === 'profiles' ? 'No adversary profiles yet' : 'No playbooks yet'} action={filtered ? <Button onClick={clear}>Clear filters</Button> : undefined}>Try relaxing the filters or switching tabs.</Empty> : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {list.map((p) => (
-              <button key={p.id} onClick={() => go('playbook', { id: p.id })} className={cx('flex flex-col rounded-xl border bg-panel p-5 text-left transition hover:bg-hover', p.status === 'draft' ? 'border-warn/40' : 'border-line')}>
-                <div className="mb-2 flex items-start justify-between gap-2"><Id className="text-muted">{p.id} · v{p.version}</Id><PbStatus s={p.status} /></div>
-                <div className="text-[15px] font-semibold">{p.name}</div>
-                <p className="mt-1 line-clamp-2 text-sm text-muted">{p.desc}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">{p.techniques.slice(0, 5).map((t) => <span key={t} className="rounded-md border border-line bg-bg px-1.5 py-0.5 font-mono text-[11px] text-cyan">{t}</span>)}{p.techniques.length > 5 && <span className="text-[11px] text-muted">+{p.techniques.length - 5}</span>}</div>
-                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4 text-xs text-muted"><span>{p.steps.length} steps</span><span>{p.os.join(' / ')}</span><span>{p.owner}</span><span className="ml-auto">Updated {p.updated}</span></div>
-                {p.status === 'draft' && <div className="mt-2 flex items-center gap-1.5 text-xs text-warn"><AlertTriangle size={13} />Draft: Preview Draft only, not usable in operations</div>}
-                {p.revision && <div className="mt-2 flex items-center gap-1.5 text-xs text-accent"><ClipboardCheck size={13} />v{p.revision.version} pending review · v{p.version} stays approved</div>}
-              </button>
-            ))}
-          </div>
-        )
-      ) : (
+      {list.isPending ? (
+        <div aria-busy="true" aria-label="Loading library"><Skeleton className="h-96" /></div>
+      ) : list.isError ? (
+        <Empty icon={AlertTriangle} title="Library could not be loaded" action={<Button onClick={() => list.refetch()}>Retry</Button>}>
+          {(list.error as LibraryReadError).failure.message}
+        </Empty>
+      ) : read && (
         <>
-          {pid !== 'all' && !det && <p className="mb-3 text-xs text-muted">The selected project has no SIEM detection data yet.</p>}
-          {!techs.length ? <Empty icon={Crosshair} title="No techniques match" action={<Button onClick={clear}>Clear filters</Button>} /> : (
-            <div className="space-y-5">
-              {TACTICS.filter((t) => techs.some((x) => x.tactic === t)).map((t) => (
-                <section key={t} aria-label={t}>
-                  <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">{t}<span className="rounded-full bg-hover px-1.5 text-[11px] font-normal text-muted">{techs.filter((x) => x.tactic === t).length}</span></h3>
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                    {techs.filter((x) => x.tactic === t).map((x) => (
-                      <button key={x.id} onClick={() => go('technique', { id: x.id })} className="flex min-h-14 items-center gap-3 rounded-xl border border-line bg-panel px-4 py-2.5 text-left transition hover:bg-hover">
-                        <Mono className="text-cyan">{x.id}</Mono>
-                        <span className="min-w-0 flex-1 text-sm"><span className="block truncate">{x.name}</span><span className="text-[11px] text-muted">{usedBy(x.id)} {usedBy(x.id) === 1 ? 'playbook' : 'playbooks'} · {x.platforms.join(', ')}</span></span>
-                        {pid !== 'all' && <Status kind="detect" value={det?.[x.id] || 'nodata'} size="sm" />}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+          <Tabs value={tab} onChange={(t) => { clear(); go('playbooks', { tab: t }) }} tabs={[{ id: 'playbooks', label: 'Playbooks', count: read.counts.playbooks }, { id: 'profiles', label: 'Adversary profiles', count: read.counts.profiles }, { id: 'techniques', label: 'MITRE ATT&CK techniques', count: read.counts.techniques }]} />
+          <FilterBar>
+            <SearchBox className="w-64" value={q} onChange={setQ} placeholder={tab === 'techniques' ? 'Search technique ID or name' : 'Search name, ID or goal'} />
+            <Select className="!w-52" aria-label="Tactic" value={tac} onChange={(e) => setTac(e.target.value)}><option value="">All tactics</option>{TACTICS.map((t) => <option key={t}>{t}</option>)}</Select>
+            {tab !== 'techniques' && <Select className="!w-44" aria-label="Status" value={st} onChange={(e) => setSt(e.target.value)}><option value="">All statuses</option><option value="approved">Approved</option><option value="review">In review</option><option value="draft">Draft</option></Select>}
+            <MoreFilters active={os ? 1 : 0}><Select aria-label="OS" value={os} onChange={(e) => setOs(e.target.value)}><option value="">All OS</option><option>Windows</option><option>Linux</option></Select></MoreFilters>
+            {filtered && <Button variant="ghost" size="sm" icon={X} onClick={clear}>Clear filters</Button>}
+          </FilterBar>
+          {tab !== 'techniques' ? (
+            !read.items.length ? <Empty icon={BookOpen} title={filtered ? 'No items match the filters' : tab === 'profiles' ? 'No adversary profiles yet' : 'No playbooks yet'} action={filtered ? <Button onClick={clear}>Clear filters</Button> : undefined}>Try relaxing the filters or switching tabs.</Empty> : (
+              <>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {read.items.map(({ playbook: p, pendingRevision }) => (
+                    <button key={p.id} onClick={() => go('playbook', { id: p.id })} className={cx('flex flex-col rounded-xl border bg-panel p-5 text-left transition hover:bg-hover', p.status === 'draft' ? 'border-warn/40' : 'border-line')}>
+                      <div className="mb-2 flex items-start justify-between gap-2"><Id className="text-muted">{p.id} · v{p.version}</Id><PbStatus s={p.status} /></div>
+                      <div className="text-[15px] font-semibold">{p.name}</div>
+                      <p className="mt-1 line-clamp-2 text-sm text-muted">{p.desc}</p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">{p.techniques.slice(0, 5).map((t) => <span key={t} className="rounded-md border border-line bg-bg px-1.5 py-0.5 font-mono text-[11px] text-cyan">{t}</span>)}{p.techniques.length > 5 && <span className="text-[11px] text-muted">+{p.techniques.length - 5}</span>}</div>
+                      <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4 text-xs text-muted"><span>{p.steps.length} steps</span><span>{p.os.join(' / ')}</span><span>{p.owner}</span><span className="ml-auto">Updated {p.updated}</span></div>
+                      {p.status === 'draft' && <div className="mt-2 flex items-center gap-1.5 text-xs text-warn"><AlertTriangle size={13} />Draft: Preview Draft only, not usable in operations</div>}
+                      {pendingRevision && <div className="mt-2 flex items-center gap-1.5 text-xs text-accent"><ClipboardCheck size={13} />v{pendingRevision.version} pending review · v{p.version} stays approved</div>}
+                    </button>
+                  ))}
+                </div>
+                <Pager page={read.page} pages={Math.max(1, Math.ceil(read.total / read.pageSize))} setPage={setPage} total={read.total} />
+              </>
+            )
+          ) : (
+            <>
+              {pid !== 'all' && !read.detection && <p className="mb-3 text-xs text-muted">The selected project has no SIEM detection data yet.</p>}
+              {!read.techniques.length ? <Empty icon={Crosshair} title="No techniques match" action={<Button onClick={clear}>Clear filters</Button>} /> : (
+                <div className="space-y-5">
+                  {TACTICS.filter((t) => read.techniques.some((x) => x.tactic === t)).map((t) => (
+                    <section key={t} aria-label={t}>
+                      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">{t}<span className="rounded-full bg-hover px-1.5 text-[11px] font-normal text-muted">{read.techniques.filter((x) => x.tactic === t).length}</span></h3>
+                      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        {read.techniques.filter((x) => x.tactic === t).map((x) => (
+                          <button key={x.id} onClick={() => go('technique', { id: x.id })} className="flex min-h-14 items-center gap-3 rounded-xl border border-line bg-panel px-4 py-2.5 text-left transition hover:bg-hover">
+                            <Mono className="text-cyan">{x.id}</Mono>
+                            <span className="min-w-0 flex-1 text-sm"><span className="block truncate">{x.name}</span><span className="text-[11px] text-muted">{x.usedBy} {x.usedBy === 1 ? 'playbook' : 'playbooks'} · {x.platforms.join(', ')}</span></span>
+                            {pid !== 'all' && <Status kind="detect" value={read.detection?.[x.id] || 'nodata'} size="sm" />}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -92,28 +107,23 @@ function Playbooks() {
 
 /* ───────────── Playbook detail (PB-02, PB-03) ───────────── */
 function PlaybookDetail() {
-  const { db, route, go, pid, project, can, accessible, A, toast, setFilter, setSwitcherOpen, confirm } = useStore()
-  const p = db.playbooks.find((x) => x.id === route.id)
+  const { route, go, pid, project, can, A, toast, setFilter, setSwitcherOpen, confirm } = useStore()
   const guard = useGuard(pid === 'all' ? undefined : pid)
+  const read = usePlaybookDetail(route.id)
   const [asked, setAsked] = useState(false)
   const [attached, setAttached] = useState(false)
-  const back = { label: 'Playbooks & TTPs', to: () => go('playbooks', { tab: p?.kind === 'profile' ? 'profiles' : 'playbooks' }) }
-  if (!p) return <><PageHeader title="Playbook not found" back={{ label: 'Playbooks & TTPs', to: () => go('playbooks') }} /><Empty icon={BookOpen} title={`No playbook “${route.id}”`} action={<Button onClick={() => go('playbooks')}>Back to playbooks</Button>} /></>
+  const back = { label: 'Playbooks & TTPs', to: () => go('playbooks', { tab: read.data?.playbook.kind === 'profile' ? 'profiles' : 'playbooks' }) }
+  if (read.isPending) return <div aria-busy="true" aria-label="Loading playbook"><Skeleton className="h-96" /></div>
+  if (read.isError || !read.data) return <><PageHeader title="Playbook not found" back={{ label: 'Playbooks & TTPs', to: () => go('playbooks') }} /><Empty icon={BookOpen} title={`No playbook “${route.id}”`} action={<Button onClick={() => go('playbooks')}>Back to playbooks</Button>} /></>
+  const { playbook: p, pending, pendingRevision, usage, usedProjects, tactics: tacs, versions, compat } = read.data
   const useWhy = p.status !== 'approved' ? 'This playbook is not approved yet. Request approval or ask a reviewer to approve it.' : pid === 'all' ? 'Select a specific project in the top bar to create an operation.' : guard.ro ? guard.reason : !can('run') ? 'Your role cannot create test operations.' : !['approved', 'active'].includes(project?.status || '') ? 'The project is not approved yet, so operations cannot be created.' : ''
-  const usedOps = db.operations.filter((o) => o.playbookId === p.id && accessible.some((a) => a.id === o.projectId))
-  const usedPlans = db.plans.filter((x) => x.playbookId === p.id && accessible.some((a) => a.id === x.projectId))
-  const pendingRev = !!p.revision || p.status === 'review'
-  const usedProjects = [...new Set(usedOps.map((o) => o.projectId))]
-  const tacs = [...new Set(p.techniques.map(tTactic))]
-  const [maj, min] = p.version.split('.').map(Number)
-  const versions = [{ at: p.updated, title: `v${p.version}: ${p.status === 'approved' ? 'approved' : p.status === 'review' ? 'in review' : 'current draft'}`, sub: p.owner, tone: (p.status === 'approved' ? 'ok' : 'warn') as 'ok' | 'warn' },
-    ...(min > 0 ? [{ at: '—', title: `v${maj}.${min - 1}: previous version`, sub: 'Archived', tone: 'neutral' as const }] : [])]
+  const pendingRev = pending
   const startNew = () => { setFilter('operation-new.playbook', p.id); go('operation-new') }
   const requestApproval = () => { A.audit('Playbook approval requested', p.id, '', 'Pending'); A.notify(`Playbook ${p.id} v${p.version} submitted for review`, '', { name: 'playbook', id: p.id }, 'todo'); setAsked(true); toast('Playbook review requested.', 'info') }
   const editWhy = !can('editScope') ? 'Only Red Team Managers and Admins can change playbooks.' : ''
   const approvalWhy = p.status === 'approved' ? 'Already approved.' : asked ? 'Request already sent.' : editWhy
   const attachWhy = p.status !== 'approved' ? 'Only approved playbooks can be added to a project.' : pid === 'all' ? 'Select a specific project to add this playbook.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can add playbooks to a project.' : ''
-  const winOnly = p.os.length === 1
+  const winOnly = compat?.winOnly ?? false
   const dup = () => confirm({
     title: `Duplicate ${p.id} as a draft?`, confirmLabel: 'Create draft copy', body: 'A draft copy is created for editing. It must be reviewed and approved before it can be used.',
     onConfirm: () => { A.audit('Playbook duplicated as draft', p.id, '', 'Success'); toast(`Draft copy of ${p.id} created (simulated).`, 'info') },
@@ -123,14 +133,11 @@ function PlaybookDetail() {
     body: <>The playbook version is locked for this project. Later versions will not apply until a manager updates the project.</>,
     onConfirm: () => { setAttached(true); A.audit('Playbook added to project', p.id, pid, 'Success'); toast(`${p.id} added to ${pid}.`) },
   })
-  const assets = db.assets.filter((a) => a.projectId === pid)
-  const inScope = assets.filter((a) => a.scope === 'in')
-  const compat = inScope.filter((a) => p.os.includes(a.os))
   return (
     <>
       <PageHeader back={back} title={p.name} meta={<><PbStatus s={p.status} /><Mono className="text-muted">{p.id} · v{p.version}</Mono></>} sub={p.desc}
         actions={<>
-          {pendingRev && <Button icon={ClipboardCheck} disabled={!can('approve')} title={!can('approve') ? 'Only Reviewers and Admins can review playbooks.' : `Review pending ${p.revision ? 'v' + p.revision.version : 'revision'}`} onClick={() => go('playbook-review', { id: p.id })}>Review Playbook{p.revision ? ` v${p.revision.version}` : ''}</Button>}
+          {pendingRev && <Button icon={ClipboardCheck} disabled={!can('approve')} title={!can('approve') ? 'Only Reviewers and Admins can review playbooks.' : `Review pending ${pendingRevision ? 'v' + pendingRevision.version : 'revision'}`} onClick={() => go('playbook-review', { id: p.id })}>Review Playbook{pendingRevision ? ` v${pendingRevision.version}` : ''}</Button>}
           <Button icon={Plus} disabled={!!attachWhy || attached} title={attached ? 'Already added to this project.' : attachWhy || 'Add to project'} onClick={attach}>{attached ? 'Added to Project' : 'Add to Project'}</Button>
           <Button icon={Send} disabled={!!approvalWhy} title={approvalWhy || 'Request approval'} onClick={requestApproval}>{asked ? 'Approval Requested' : 'Request Approval'}</Button>
           <Button icon={GitCompare} disabled={!pendingRev} title={!pendingRev ? 'No pending revision to compare. v' + p.version + ' is the only version under review policy.' : 'Compare the pending revision with the approved version'} onClick={() => go('playbook-review', { id: p.id })}>Compare Versions</Button>
@@ -141,7 +148,7 @@ function PlaybookDetail() {
             : <Button variant="primary" icon={Play} disabled={!!useWhy} title={useWhy || 'Create a new operation with this playbook'} onClick={startNew}>Use in operation</Button>}
         </>} />
       {p.status === 'draft' && <Banner tone="warn" title="Draft: cannot be used yet">This playbook has not been approved, so it cannot be chosen for new operations and does not pass preflight. Request approval first.</Banner>}
-      {p.revision && <Banner tone="info" title={`v${p.revision.version} is pending review`} action={can('approve') ? <Button size="sm" onClick={() => go('playbook-review', { id: p.id })}>Review Playbook</Button> : undefined}>v{p.version} is the approved version and stays in use; it is read-only. Revision v{p.revision.version} by {p.revision.by} is not usable until a reviewer approves it.</Banner>}
+      {pendingRevision && <Banner tone="info" title={`v${pendingRevision.version} is pending review`} action={can('approve') ? <Button size="sm" onClick={() => go('playbook-review', { id: p.id })}>Review Playbook</Button> : undefined}>v{p.version} is the approved version and stays in use; it is read-only. Revision v{pendingRevision.version} by {pendingRevision.by} is not usable until a reviewer approves it.</Banner>}
       {p.status === 'review' && <Banner tone="info" title="Awaiting review" action={can('approve') ? <Button size="sm" onClick={() => go('playbook-review', { id: p.id })}>Open review</Button> : undefined}>This playbook cannot be used until a reviewer approves it.</Banner>}
       {(useWhy || approvalWhy || editWhy) && <div className="-mt-2 mb-4 flex flex-col gap-1">{useWhy && <Locked reason={`Use in operation: ${useWhy}`} />}{p.status !== 'approved' && approvalWhy && !asked && <Locked reason={`Request Approval: ${approvalWhy}`} />}{editWhy && <Locked reason={`Duplicate Draft: ${editWhy}`} />}{pid === 'all' && p.status === 'approved' && <Button size="sm" onClick={() => setSwitcherOpen(true)}>Select project</Button>}</div>}
       <div className="grid gap-4 xl:grid-cols-3">
@@ -165,10 +172,10 @@ function PlaybookDetail() {
           </Card>
         </div>
         <div className="space-y-4">
-          <Card><CardHeader title="Attach to project" sub={pid === 'all' ? 'Select a project to check compatibility.' : `Compatibility with ${pid}`} />
-            {pid === 'all' ? <p className="text-sm text-muted">Compatibility checks need a specific project. Select one in the top bar.</p> : (
+          <Card><CardHeader title="Attach to project" sub={pid === 'all' || !compat ? 'Select a project to check compatibility.' : `Compatibility with ${compat.projectId}`} />
+            {!compat ? <p className="text-sm text-muted">Compatibility checks need a specific project. Select one in the top bar.</p> : (
               <ul className="divide-y divide-line rounded-lg border border-line text-sm">
-                <li className="flex items-start gap-2 px-3 py-2"><Status kind="check" value={compat.length ? 'pass' : 'fail'} size="sm" /><span>Scope compatibility: {compat.length} of {inScope.length} in-scope assets run {p.os.join(' / ')}.{!compat.length && ' No in-scope assets match, so request a scope change or choose another playbook.'}</span></li>
+                <li className="flex items-start gap-2 px-3 py-2"><Status kind="check" value={compat.matching ? 'pass' : 'fail'} size="sm" /><span>Scope compatibility: {compat.matching} of {compat.inScope} in-scope assets run {p.os.join(' / ')}.{!compat.matching && ' No in-scope assets match, so request a scope change or choose another playbook.'}</span></li>
                 <li className="flex items-start gap-2 px-3 py-2"><Status kind="check" value={p.status === 'approved' ? 'pass' : 'fail'} size="sm" /><span>Version lock: v{p.version} is locked once added to the project.{p.status !== 'approved' && ' Requires an approved version.'}</span></li>
                 <li className="flex items-start gap-2 px-3 py-2"><Status kind="check" value={winOnly ? 'fail' : 'pass'} size="sm" /><span>Blocked variants: {winOnly ? `Variants for other operating systems are blocked (${p.os[0]} only).` : 'No variants are blocked for this project.'}</span></li>
               </ul>
@@ -185,14 +192,14 @@ function PlaybookDetail() {
           </Card>
           <Card><CardHeader title="Version history" /><Timeline items={versions} /></Card>
           <Card><CardHeader title="Usage / Impact" sub="Which version is pinned where" />
-            {usedPlans.length + usedOps.length ? <ul className="space-y-2 text-sm">
-              {usedPlans.map((x) => <li key={x.id} className="flex flex-wrap items-center justify-between gap-2"><IdL onClick={() => go('ai-plan', { id: x.id })}>{x.id}</IdL><span className="text-xs text-muted">{x.ver || `v${x.version}`} · {x.status} · pins v{p.version}</span></li>)}
-              {usedOps.map((o) => <li key={o.id} className="flex flex-wrap items-center justify-between gap-2"><IdL onClick={() => go('operation', { id: o.id })}>{o.id}</IdL><span className="text-xs text-muted">{o.status} · pins v{p.version}</span></li>)}
+            {usage.plans.length + usage.operations.length ? <ul className="space-y-2 text-sm">
+              {usage.plans.map((x) => <li key={x.id} className="flex flex-wrap items-center justify-between gap-2"><IdL onClick={() => go('ai-plan', { id: x.id })}>{x.id}</IdL><span className="text-xs text-muted">{x.label} · {x.status} · pins v{p.version}</span></li>)}
+              {usage.operations.map((o) => <li key={o.id} className="flex flex-wrap items-center justify-between gap-2"><IdL onClick={() => go('operation', { id: o.id })}>{o.id}</IdL><span className="text-xs text-muted">{o.status} · pins v{p.version}</span></li>)}
             </ul> : <p className="text-sm text-muted">No AI plan or operation pins this playbook yet.</p>}
             <p className="mt-3 text-xs text-muted">Editing or approving a new playbook version never changes a plan or operation that is already running. They keep their pinned version until a manager re-plans.</p>
           </Card>
           <Card><CardHeader title="Projects that used it" sub="Only projects you can access are shown." />
-            {usedProjects.length ? <ul className="space-y-2 text-sm">{usedProjects.map((id) => <li key={id} className="flex items-center justify-between gap-2"><IdLink onClick={() => go('project', { id })}>{id}</IdLink><span className="text-xs text-muted">{usedOps.filter((o) => o.projectId === id).map((o) => o.id).join(', ')}</span></li>)}</ul> : <p className="text-sm text-muted">No project has used this playbook yet.</p>}
+            {usedProjects.length ? <ul className="space-y-2 text-sm">{usedProjects.map((u) => <li key={u.id} className="flex items-center justify-between gap-2"><IdLink onClick={() => go('project', { id: u.id })}>{u.id}</IdLink><span className="text-xs text-muted">{u.operations.join(', ')}</span></li>)}</ul> : <p className="text-sm text-muted">No project has used this playbook yet.</p>}
           </Card>
         </div>
       </div>
@@ -200,7 +207,7 @@ function PlaybookDetail() {
   )
 }
 
-/* ───────────── Playbook review (PB-V3-03 / V3-14) ───────────── */
+/* ───────────── Playbook review (PB-V3-03 / V3-14 — legacy until ticket 53) ───────────── */
 function PlaybookReview() {
   const { db, route, go, can, confirm, toast, A, me } = useStore()
   const p = db.playbooks.find((x) => x.id === route.id)
@@ -292,18 +299,15 @@ function PlaybookReview() {
   )
 }
 
-/* ───────────── Technique detail (PB-04) ───────────── */
+/* ───────────── Technique detail (PB-04, ticket 52: typed service read + Query) ───────────── */
 function TechniqueDetail() {
-  const { db, route, go, pid, project, accessible, setFilter, scoped } = useStore()
-  const t = TECHNIQUES.find((x) => x.id === route.id)
-  if (!t) return <><PageHeader title="Technique not found" back={{ label: 'MITRE ATT&CK techniques', to: () => go('playbooks', { tab: 'techniques' }) }} /><Empty icon={Crosshair} title={`No technique “${route.id}”`} action={<Button onClick={() => go('playbooks', { tab: 'techniques' })}>Back to catalog</Button>} /></>
-  const pbs = db.playbooks.filter((p) => p.techniques.includes(t.id))
-  const approved = pbs.filter((p) => p.status === 'approved')
-  const steps = scoped(db.operations).flatMap((o) => o.steps.filter((s) => s.technique === t.id).map((s) => ({ o, s })))
-  const fs = scoped(db.findings).filter((f) => f.technique === t.id)
-  const siem = db.integrations.find((i) => i.kind === 'SIEM')
-  const siemOk = siem?.status === 'connected'
-  const detRows = (pid === 'all' ? accessible : project ? [project] : []).map((p) => ({ p, v: db.detection[p.id]?.[t.id] }))
+  const { route, go, pid, setFilter } = useStore()
+  const read = useTechniqueDetail(route.id)
+  if (read.isPending) return <div aria-busy="true" aria-label="Loading technique"><Skeleton className="h-96" /></div>
+  if (read.isError || !read.data) return <><PageHeader title="Technique not found" back={{ label: 'MITRE ATT&CK techniques', to: () => go('playbooks', { tab: 'techniques' }) }} /><Empty icon={Crosshair} title={`No technique “${route.id}”`} action={<Button onClick={() => go('playbooks', { tab: 'techniques' })}>Back to catalog</Button>} /></>
+  const t = read.data
+  const approved = t.playbooks.filter((p) => p.status === 'approved')
+  const siemOk = t.siem.connected
   return (
     <>
       <PageHeader back={{ label: 'MITRE ATT&CK techniques', to: () => go('playbooks', { tab: 'techniques' }) }}
@@ -313,9 +317,9 @@ function TechniqueDetail() {
           <Button variant="primary" icon={ExternalLink} onClick={() => go('analysis', { tab: 'matrix' })}>Attack coverage</Button>
         </>} />
       <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <Kpi label="Related playbooks" value={pbs.length} icon={BookOpen} />
-        <Kpi label="Steps executed" value={steps.length} sub={pid === 'all' ? 'Across accessible projects' : 'In the selected project'} icon={Layers} />
-        <Kpi label="Related findings" value={fs.length} icon={AlertTriangle} tone={fs.length ? 'warn' : undefined} />
+        <Kpi label="Related playbooks" value={t.playbooks.length} icon={BookOpen} />
+        <Kpi label="Steps executed" value={t.steps.length} sub={pid === 'all' ? 'Across accessible projects' : 'In the selected project'} icon={Layers} />
+        <Kpi label="Related findings" value={t.findings.length} icon={AlertTriangle} tone={t.findings.length ? 'warn' : undefined} />
         <Kpi label="Tactic" value={<span className="text-base">{t.tactic}</span>} icon={Crosshair} />
       </div>
       <div className="grid gap-4 xl:grid-cols-3">
@@ -328,22 +332,22 @@ function TechniqueDetail() {
             {approved.length ? <ul className="space-y-2">{approved.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="min-w-0"><IdLink onClick={() => go('playbook', { id: p.id })}>{p.id}</IdLink> <span className="text-muted">{p.name}</span></span><PbStatus s={p.status} /></li>)}</ul> : <p className="text-sm text-muted">No approved simulation covers this technique yet. Draft playbooks must be approved first.</p>}
           </Card>
           <Card><CardHeader title="Test results in projects" sub={pid === 'all' ? 'Aggregated across projects you can access' : `Project ${pid}`} />
-            <Table dense rows={steps} rowKey={(r) => r.o.id + r.s.id} onRow={(r) => go('operation', { id: r.o.id })}
+            <Table dense rows={t.steps} rowKey={(r) => r.opId + r.stepId} onRow={(r) => go('operation', { id: r.opId })}
               empty={<Empty icon={Crosshair} title="No test data yet">No step in the current scope has exercised this technique.</Empty>}
-              cols={[{ key: 'o', header: 'Operation', render: (r) => <Mono className="text-accent">{r.o.id}</Mono> }, { key: 's', header: 'Step', render: (r) => r.s.name }, { key: 'a', header: 'Asset', hideBelow: 'md', render: (r) => <Mono>{r.s.asset}</Mono> }, { key: 'st', header: 'Result', render: (r) => <Status kind="step" value={r.s.status} /> }]} />
+              cols={[{ key: 'o', header: 'Operation', render: (r) => <Mono className="text-accent">{r.opId}</Mono> }, { key: 's', header: 'Step', render: (r) => r.name }, { key: 'a', header: 'Asset', hideBelow: 'md', render: (r) => <Mono>{r.asset}</Mono> }, { key: 'st', header: 'Result', render: (r) => <Status kind="step" value={r.status} /> }]} />
           </Card>
         </div>
         <div className="space-y-4">
           <Card><CardHeader title="Detection status" />
-            {!siemOk ? <p className="text-sm text-muted">No detection data: the {siem?.name || 'SIEM'} integration is not connected.</p> : !detRows.length ? <p className="text-sm text-muted">Select a project to see detection status.</p> : (
-              <ul className="space-y-2">{detRows.map(({ p, v }) => <li key={p.id} className="flex items-center justify-between gap-2 text-sm"><span className="truncate"><Mono className="text-muted">{p.id}</Mono></span><Status kind="detect" value={v || 'nodata'} /></li>)}</ul>
+            {!siemOk ? <p className="text-sm text-muted">No detection data: the {t.siem.name || 'SIEM'} integration is not connected.</p> : !t.detection.length ? <p className="text-sm text-muted">Select a project to see detection status.</p> : (
+              <ul className="space-y-2">{t.detection.map(({ projectId, state }) => <li key={projectId} className="flex items-center justify-between gap-2 text-sm"><span className="truncate"><Mono className="text-muted">{projectId}</Mono></span><Status kind="detect" value={state} /></li>)}</ul>
             )}
             <p className="mt-3 text-xs text-muted">“No data” means not tested or no signal received. It does not mean “detected”.</p>
           </Card>
           <Card><CardHeader title="Playbooks using this technique" />
-            {pbs.length ? <ul className="space-y-2">{pbs.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="min-w-0"><IdLink onClick={() => go('playbook', { id: p.id })}>{p.id}</IdLink> <span className="text-muted">{p.name}</span></span><PbStatus s={p.status} /></li>)}</ul> : <p className="text-sm text-muted">No playbook uses this technique yet.</p>}
+            {t.playbooks.length ? <ul className="space-y-2">{t.playbooks.map((p) => <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="min-w-0"><IdLink onClick={() => go('playbook', { id: p.id })}>{p.id}</IdLink> <span className="text-muted">{p.name}</span></span><PbStatus s={p.status} /></li>)}</ul> : <p className="text-sm text-muted">No playbook uses this technique yet.</p>}
           </Card>
-          {fs.length > 0 && <Card><CardHeader title="Related findings" /><ul className="space-y-2">{fs.map((f) => <li key={f.id} className="flex items-center justify-between gap-2 text-sm"><IdLink onClick={() => go('finding', { id: f.id })}>{f.id}</IdLink><Status kind="sev" value={f.severity} /></li>)}</ul></Card>}
+          {t.findings.length > 0 && <Card><CardHeader title="Related findings" /><ul className="space-y-2">{t.findings.map((f) => <li key={f.id} className="flex items-center justify-between gap-2 text-sm"><IdLink onClick={() => go('finding', { id: f.id })}>{f.id}</IdLink><Status kind="sev" value={f.severity} /></li>)}</ul></Card>}
         </div>
       </div>
     </>
