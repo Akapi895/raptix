@@ -33,7 +33,6 @@ import { createSettingsService, type SettingsService } from '../features/setting
 import { createAssetService, type AssetService } from '../features/assets/service'
 import { createWorkerService, type WorkerService } from '../features/workers/service'
 import { createNoticeService, type NoticeService } from '../features/notices/service'
-<<<<<<< HEAD
 import { createResultsService, type ResultsService } from '../features/results/service'
 import { createTraceService, type TraceService } from '../features/trace/service'
 import { createC2Service, type C2Service } from '../features/c2/service'
@@ -114,7 +113,6 @@ export interface ConsoleServices {
   workers(actor: ActorRef, projectId: string): WorkerService
   /** Typed notice center handlers (ticket 59 — feature-local implementation). */
   notices(actor: ActorRef, projectId: string): NoticeService
-<<<<<<< HEAD
   /** Typed operation results + execution graph read (ticket 30 — feature-local implementation). */
   results(actor: ActorRef, projectId: string): ResultsService
   /** Typed tool-event trace reads with boundary-derived facets (ticket 41 — feature-local implementation). */
