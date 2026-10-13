@@ -1,115 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, CircleDot, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, PanelRightClose, PanelRightOpen, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
-import { Banner, Button, Card, CardHeader, Check, DemoTag, Field, Modal, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, SearchBox, Select, Status, Table, Timeline, Toggle, useGuard, cx } from '../ui'
+import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, PanelRightClose, PanelRightOpen, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
+import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, SearchBox, Select, Status, Table, Timeline, Toggle, useGuard, cx } from '../ui'
 import { computePreflight, preflightPass, sessionPerm, useStore } from '../store'
 import { BRANCH_LABEL, planVer, toolFacets } from '../data'
 import type { Agent, Operation, Step } from '../data'
 import { MASK, OpStatus, RuntimeStatus, failedBranches, hasReview, opConversation, opGroups, parseStamp, runtimeLabel, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
 import { FanOutCard } from './g-fanout'
-
-/* ───────────── Stop progress: requested → stopping → stopped ───────────── */
-export function StopProgress({ op }: { op: Operation }) {
-  const { db } = useStore()
-  const ss = db.stopState
-  const mine = !!ss && (ss.scope === 'workspace' || (ss.scope === 'project' && ss.id === op.projectId) || (ss.scope === 'operation' && ss.id === op.id))
-  const phase = mine ? ss!.phase : 'stopped'
-  const sessions = db.sessions.filter((s) => s.opId === op.id)
-  const stage = (label: string, state: 'done' | 'active' | 'todo') => (
-    <li className={cx('inline-flex items-center gap-1.5 text-xs font-medium', state === 'todo' ? 'text-neutral' : state === 'active' ? 'text-warn' : 'text-fg')}>
-      {state === 'done' ? <CheckCircle2 size={14} className="text-ok" aria-hidden /> : state === 'active' ? <Clock size={14} aria-hidden /> : <CircleDot size={14} aria-hidden />}{label}
-    </li>
-  )
-  return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-      <ol className="flex flex-wrap items-center gap-x-3 gap-y-1" aria-label="Stop progress">
-        {stage('Stop requested', 'done')}<span className="text-neutral" aria-hidden>→</span>
-        {stage('Stopping', phase === 'stopping' ? 'active' : 'done')}<span className="text-neutral" aria-hidden>→</span>
-        {stage('Stopped', phase === 'stopping' ? 'todo' : 'done')}
-      </ol>
-      {sessions.length > 0 && <span className="text-xs text-muted">Linked sessions: {sessions.map((s) => `${s.id} ${s.state === 'terminated' ? 'terminated' : s.state === 'revoking' ? 'revoking access' : s.state}`).join(', ')}</span>}
-    </div>
-  )
-}
-
-/* ───────────── Emergency Stop dialog + stop state (OP-V3-07) ───────────── */
-export function EmergencyStopDialog({ op, open, onClose }: { op: Operation; open: boolean; onClose: () => void }) {
-  const { A, db, toast } = useStore()
-  const [scope, setScope] = useState<'operation' | 'project'>('operation')
-  const [reason, setReason] = useState('')
-  const [ack, setAck] = useState(false)
-  const sessions = db.sessions.filter((s) => (scope === 'project' ? s.projectId === op.projectId : s.opId === op.id) && ['connected', 'available', 'awaiting', 'suspended'].includes(s.state))
-  const ops = db.operations.filter((o) => o.projectId === op.projectId && ['running', 'paused'].includes(o.status))
-  const affected = scope === 'project' ? ops : [op]
-  const c = stepCounts(op.steps)
-  const ready = reason.trim().length > 0 && ack
-  const why = !reason.trim() ? 'Enter a reason.' : !ack ? 'Acknowledge the impact first.' : ''
-  const close = () => { setReason(''); setAck(false); onClose() }
-  return (
-    <Modal open={open} onClose={close} danger title="Emergency Stop" footer={<>
-      <Button onClick={close}>Cancel</Button>
-      <Button variant="dangerSolid" icon={OctagonX} disabled={!ready} title={ready ? undefined : why} onClick={() => { A.emergencyStop(scope, scope === 'project' ? op.projectId : op.id, reason.trim()); toast('Emergency stop requested. Waiting for agents to acknowledge — the operation is not stopped yet.', 'warn'); close() }}>Request Emergency Stop</Button>
-    </>}>
-      <div className="space-y-4 text-sm">
-        <fieldset>
-          <legend className="mb-1.5 text-xs font-medium text-muted">Scope</legend>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {([['operation', `This operation only (${op.id})`], ['project', `Whole project (${op.projectId})`]] as const).map(([v, l]) => (
-              <label key={v} className={cx('flex cursor-pointer items-start gap-2 rounded-lg border p-3', scope === v ? 'border-accent bg-accent-soft' : 'border-line')}>
-                <input type="radio" name="estop-scope" checked={scope === v} onChange={() => setScope(v)} className="mt-0.5 accent-[var(--c-accent)]" /><span>{l}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <div className="rounded-lg border border-bad/30 bg-bad-soft p-3">
-          <div className="mb-1 font-medium text-bad">Impact</div>
-          <ul className="list-disc space-y-0.5 pl-5 text-fg">
-            <li>{affected.length} active operation(s): {affected.map((o) => o.id).join(', ') || '—'}</li>
-            <li>{c.running} running and {c.pending} queued step(s) here; running steps become Unknown</li>
-            <li>{sessions.length} linked session(s) are revoked and terminated</li>
-            <li>The operation does not restart automatically</li>
-          </ul>
-        </div>
-        <Field label="Reason" required><Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Why is an emergency stop needed?" /></Field>
-        <Check checked={ack} onChange={setAck} label="I understand the impact. Status stays “Requested” until agents acknowledge." />
-        {!ready && <p className="text-xs text-warn">Request is disabled: {why}</p>}
-        <p className="text-xs text-muted">Prototype only. This simulates a stop request; no real system is affected.</p>
-      </div>
-    </Modal>
-  )
-}
-
-export function StopStatePanel({ op }: { op: Operation }) {
-  const { db, A, toast, stopOutcome, setStopOutcome, go } = useStore()
-  const ss = db.stopState
-  const mine = !!ss && (ss.scope === 'workspace' || (ss.scope === 'project' && ss.id === op.projectId) || (ss.scope === 'operation' && ss.id === op.id))
-  if (!mine || !ss) return null
-  const ph = ss.phase as string
-  const steps: [string, string][] = [['requested', 'Requested'], ['acknowledged', 'Acknowledged'], ['stopped', 'Stopped']]
-  const idx = ph === 'stopped' ? 2 : ph === 'acknowledged' ? 1 : 0
-  const bad = ph === 'failed' || ph === 'unknown'
-  const msg = ph === 'requested' ? 'Waiting for agents to acknowledge. The operation is still shown as active until they do.'
-    : ph === 'acknowledged' ? 'Agents acknowledged the stop and are halting. Final confirmation is pending.'
-    : ph === 'stopped' ? 'Stop confirmed. Running steps are marked Unknown until verified.'
-    : ph === 'failed' ? 'No acknowledgement was received. The operation may still be running. Retry the stop or contact the emergency contact.'
-    : 'Acknowledgement timed out and the real state is unknown. Verify manually before treating the operation as stopped.'
-  return (
-    <Banner tone={bad ? 'bad' : ph === 'stopped' ? 'info' : 'warn'} icon={OctagonX} title={`Emergency stop (${ss.scope}) — ${ph === 'failed' ? 'Failed' : ph === 'unknown' ? 'Unknown' : steps[idx][1]}`}>
-      <div>By {ss.by} at {ss.at}. Reason: {ss.reason}</div>
-      <ol className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium" aria-label="Emergency stop status">
-        {steps.map(([k, l], i) => <li key={k} className={cx('inline-flex items-center gap-1.5', i <= idx && !bad ? 'text-fg' : 'text-neutral')}>{i < idx || (i === idx && ph === 'stopped') ? <CheckCircle2 size={14} className="text-ok" aria-hidden /> : <CircleDot size={14} aria-hidden />}{l}{i < 2 && <span aria-hidden className="ml-2 text-neutral">→</span>}</li>)}
-        {bad && <li className="inline-flex items-center gap-1.5 text-bad"><XCircle size={14} aria-hidden />{ph === 'failed' ? 'Failed' : 'Unknown'}</li>}
-      </ol>
-      <p className="mt-2">{msg}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        {ph === 'failed' && <Button size="sm" variant="danger" onClick={() => { A.retryStop(); toast('Retrying emergency stop…', 'warn') }}>Retry Stop</Button>}
-        {ph === 'unknown' && <><Button size="sm" onClick={() => { A.resolveStop('confirmed-stopped'); toast('Marked as manually confirmed stopped.') }}>Confirm Manually Stopped</Button><Button size="sm" variant="ghost" onClick={() => A.resolveStop('dismiss')}>Dismiss</Button></>}
-        {ph === 'failed' && <Button size="sm" variant="ghost" onClick={() => A.resolveStop('dismiss')}>Dismiss</Button>}
-        <Button size="sm" variant="ghost" onClick={() => go('settings', { tab: 'audit' })}>Open Audit Log</Button>
-        <label className="ml-auto flex items-center gap-2 text-xs text-muted">Demo outcome of next stop<Select value={stopOutcome} onChange={(e) => setStopOutcome(e.target.value as 'ack' | 'fail' | 'unknown')} aria-label="Demo outcome of the next emergency stop" className="!h-8 w-36"><option value="ack">Acknowledged</option><option value="fail">Failed</option><option value="unknown">Unknown</option></Select></label>
-      </div>
-    </Banner>
-  )
-}
+/* Ticket 28: the emergency-stop machine UI (request dialog, phase banner,
+   progress strip) is feature-local (src/features/estop/ui.tsx) and runs the
+   typed estop handlers; the console composes it. */
+import { EmergencyStopDialog, StopProgress, StopStatePanel } from '../features/estop/ui'
 
 /* ───────────── ONE banner per operation (V3.1): highest-priority condition wins, the rest become notes ───────────── */
 export function OpBanner({ op }: { op: Operation }) {
