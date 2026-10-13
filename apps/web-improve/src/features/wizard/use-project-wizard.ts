@@ -1,15 +1,14 @@
 /**
- * Project wizard shell state (ticket 17, ADR-0067 —
+ * Project wizard shell state (tickets 17/18, ADR-0067 —
  * docs/adr/0067-web-console-service-domain-boundary.md).
  *
  * One React Hook Form instance owns the whole draft: back/forward retains
- * values and completion state across migrated and compatibility steps,
- * `formState.isDirty` drives the shared unsaved-changes guard (`useDirty`),
- * and every step transition gates on that step's validation — the shared Zod
- * schema for migrated steps, the legacy validator for the compat steps that
- * tickets 18/19 inherit. Save-draft/create delegate to the legacy store
- * action, so the end-to-end creation flow and its audit trail stay the one
- * canonical path.
+ * values and completion state across all input steps, `formState.isDirty`
+ * drives the shared unsaved-changes guard (`useDirty`), and every step
+ * transition gates on that step's fields through the shared Zod schema (the
+ * review step gates through the submit issues). Save-draft/create delegate
+ * to the legacy store action, so the end-to-end creation flow and its audit
+ * trail stay the one canonical path.
  */
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -61,11 +60,7 @@ export function useProjectWizard() {
   const next = async () => {
     setAttempted((s) => ({ ...s, [step]: true }))
     const def = WIZARD_STEPS[step]
-    if (def.fields) {
-      if (!(await form.trigger([...def.fields]))) return
-    } else if (def.validator && Object.keys(def.validator(w)).length) {
-      return
-    }
+    if (def.fields && !(await form.trigger([...def.fields]))) return
     if (step < WIZARD_STEPS.length - 1) advance(step + 1)
   }
   const back = () => setStep((s) => Math.max(0, s - 1))
@@ -107,8 +102,9 @@ export function useProjectWizard() {
    * the router blocker both route through this guard) and can save or discard. */
   useDirty(isDirty && !done, saveDraft)
 
-  /* Draft accessors for the compat steps (3–5): `set` mirrors the legacy
-   * key/value writer, `update` the legacy functional setState. */
+  /* Draft accessors for the compat step 5 (and value-list inputs on steps
+   * 3–4): `set` mirrors the legacy key/value writer, `update` the legacy
+   * functional setState. */
   const set = <K extends keyof WizardDraft>(k: K, v: WizardDraft[K]) => form.setValue(k, v as never, { shouldDirty: true })
   const update = (fn: (prev: WizardDraft) => WizardDraft) => {
     const nextDraft = fn(form.getValues())

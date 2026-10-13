@@ -1,13 +1,14 @@
 /**
- * Project creation wizard (ticket 17, ADR-0067 —
+ * Project creation wizard (tickets 17/18, ADR-0067 —
  * docs/adr/0067-web-console-service-domain-boundary.md).
  *
  * The wizard shell — stepper, step navigation, one validated draft with
  * dirty tracking and the unsaved-changes guard — lives in
- * `src/features/wizard/`. Steps 1 (information) and 2 (objectives) render
- * React Hook Form fields over the shared Zod schema; steps 3–5 keep their
- * legacy bodies wired to the same draft through the shell's `set`/`update`
- * accessors until tickets 18/19 migrate them. Save-draft and create commit
+ * `src/features/wizard/`. Steps 1 (information), 2 (objectives, RHF
+ * `useFieldArray`), 3 (scope/ROE essentials and asset in/out lists) and 4
+ * (ROE document, reviewer and members) render React Hook Form fields over
+ * the shared Zod schema; step 5 keeps its legacy review body wired to the
+ * same draft until ticket 19 migrates it. Save-draft and create commit
  * through the single legacy store action — no second creation path.
  */
 import { useState } from 'react'
@@ -50,7 +51,10 @@ export function ProjectNew() {
   const canSubmit = blocking.length === 0 && confirmed
   const minimalOk = wiz.live[0] && Object.keys(wiz.live[0]).length === 0
   const objError = asMessage((errors.objectives as { root?: unknown } | null | undefined)?.root) ?? asMessage(errors.objectives)
-  const e2 = shown(2), e3 = shown(3)
+  /* The ROE banner stays on the attempted-gated live check (not `errors`):
+   * table edits via `update` (removing the reviewer) must re-reveal it
+   * without a new blur/trigger, matching the legacy show-on-attempt behavior. */
+  const e3 = shown(3)
 
   const clients = Array.from(new Set(db.projects.map((p) => p.client)))
   const assignable = (Object.keys(RANK) as Role[]).filter((r) => RANK[r] <= RANK[me.role])
@@ -248,16 +252,16 @@ export function ProjectNew() {
             </Card>
           )}
 
-          {/* ───── STEP 3 — compat (ticket 18) ───── */}
+          {/* ───── STEP 3 — migrated (RHF + Zod, ticket 18) ───── */}
           {step === 2 && (
             <Card>
               <CardHeader title="Scope" sub="Assets can be added after saving a draft. Submitting for approval needs in-scope assets, an assessment window and an emergency contact."
                 actions={<Button size="sm" onClick={runCheck}>Check Scope</Button>} />
-              <Field label="Scope Description & Boundaries" required error={e2.scopeDesc} className="mb-4">
-                <Textarea {...register('scopeDesc')} placeholder="e.g. Lab environment with 3 web/API/Windows servers; the restricted zone is excluded." aria-invalid={!!e2.scopeDesc} />
+              <Field label="Scope Description & Boundaries" required error={errors.scopeDesc?.message} className="mb-4">
+                <Textarea {...register('scopeDesc')} placeholder="e.g. Lab environment with 3 web/API/Windows servers; the restricted zone is excluded." aria-invalid={!!errors.scopeDesc} />
               </Field>
               <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="Assessment Window" required error={e2.window}><Input {...register('window')} aria-invalid={!!e2.window} /></Field>
+                <Field label="Assessment Window" required error={errors.window?.message}><Input {...register('window')} aria-invalid={!!errors.window} /></Field>
                 <Field label="Data Sensitivity"><Select {...register('sensitivity')}>{['Synthetic / lab only', 'Internal', 'Confidential'].map((t) => <option key={t}>{t}</option>)}</Select></Field>
               </div>
               {checkRes && (
@@ -284,7 +288,7 @@ export function ProjectNew() {
             </Card>
           )}
 
-          {/* ───── STEP 4 — compat (tickets 18/19) ───── */}
+          {/* ───── STEP 4 — migrated (RHF + Zod, ticket 18) ───── */}
           {step === 3 && (
             <div className="space-y-4">
             <Card>
