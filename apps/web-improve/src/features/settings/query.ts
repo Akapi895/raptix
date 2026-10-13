@@ -15,10 +15,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useServices, useStore } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import type { OrgInvite, OrgProfile, Role } from '../../domain/entities'
+import type { Integration, OrgInvite, OrgProfile, Policy, Role } from '../../domain/entities'
 import type {
-  OrgInviteInput, OrgMemberStatusAction, OrgMemberView, OrgProfilePatch,
-  OrgProfileRead, OrgMembersRead,
+  IntegrationAction, IntegrationsRead, OrgInviteInput, OrgMemberStatusAction, OrgMemberView,
+  OrgProfilePatch, OrgProfileRead, OrgMembersRead, PoliciesRead,
 } from './service'
 
 /** Feature-local key namespaces: ['org', scope, 'profile' | 'members']. */
@@ -107,6 +107,96 @@ export function useOrgWrites() {
         svc().setMemberStatus(ctx('org-member-status'), name, action, reason),
       inviteMember: (input: OrgInviteInput): Promise<ServiceResult<OrgInvite>> =>
         svc().inviteMember(ctx('org-invite'), input),
+    }
+  }, [services, scope.project, actor])
+}
+
+/* ───────────── Integration registry + policy configuration (ticket 57) ───────────── */
+
+/**
+ * Feature-local key namespaces with the entity kind at position 0 —
+ * `['integration', scope, 'registry']` and `['policy', scope, 'list']` — so
+ * the ChangeSet bridge's kind-prefix invalidation refetches them on every
+ * committed integration/policy change, whoever commits it: this feature's
+ * typed writes and the legacy `A.toggleIntegration`/`A.togglePolicy` actions
+ * publish the same kinds through the one authority.
+ */
+export const integrationKeys = {
+  registry: (scope: QueryScope) => consoleKeys.view('integration', scope, 'registry'),
+}
+export const policyKeys = {
+  list: (scope: QueryScope) => consoleKeys.view('policy', scope, 'list'),
+}
+
+/** Query-backed integration registry for the current auth/project scope. */
+export function useIntegrations() {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  return useQuery({
+    queryKey: integrationKeys.registry(scope),
+    queryFn: async (): Promise<IntegrationsRead> => {
+      const res = await services
+        .settings(actor, scope.project)
+        .getIntegrations({ actor, projectId: scope.project, corr: 'integration-registry' })
+      if (!res.ok) throw new OrgReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/** Query-backed policy list (recorded toggles + recent per-policy audit). */
+export function usePolicies() {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  return useQuery({
+    queryKey: policyKeys.list(scope),
+    queryFn: async (): Promise<PoliciesRead> => {
+      const res = await services
+        .settings(actor, scope.project)
+        .getPolicies({ actor, projectId: scope.project, corr: 'policy-list' })
+      if (!res.ok) throw new OrgReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/**
+ * Write-side binding for integrations (ticket 57): connect/disconnect
+ * (disconnect is the audited revoke) and the create-once access-key
+ * re-entry. Refusals resolve as explicit ServiceResults for the panel to
+ * render; a committed write publishes the `integration` ChangeSet the
+ * analysis coverage indicator and this registry both observe.
+ */
+export function useIntegrationWrites() {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  return useMemo(() => {
+    const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
+    const svc = () => services.settings(actor, scope.project)
+    return {
+      setConnection: (id: string, action: IntegrationAction, reason: string): Promise<ServiceResult<Integration>> =>
+        svc().setIntegrationConnection(ctx(action === 'disconnect' ? 'integration-disconnect' : 'integration-connect'), id, action, reason),
+      reauthenticate: (id: string, key: string): Promise<ServiceResult<Integration>> =>
+        svc().updateIntegrationKey(ctx('integration-key'), id, key),
+    }
+  }, [services, scope.project, actor])
+}
+
+/** Write-side binding for policy toggles (ticket 57); disable requires a reason. */
+export function usePolicyWrites() {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  return useMemo(() => {
+    const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
+    return {
+      setEnabled: (id: string, enabled: boolean, reason: string): Promise<ServiceResult<Policy>> =>
+        services.settings(actor, scope.project).setPolicyEnabled(ctx('policy-toggle'), id, enabled, reason),
     }
   }, [services, scope.project, actor])
 }
