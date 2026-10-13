@@ -28,6 +28,7 @@ from raptix.middleware.budget import (
     _default_litellm_spend_provider,
     _emit_warning_event,
     _env_float,
+    _inject_notices,
     _SpendCache,
 )
 
@@ -399,3 +400,241 @@ def test_default_provider_null_total_spend_is_zero(monkeypatch: pytest.MonkeyPat
     )
 
     assert _default_litellm_spend_provider("engagement:test") == 0.0
+
+
+# ---------------------------------------------------------------- model-visible notices
+#
+# Q12 (P4 research, 2026-10-13): live-model testing showed models handle
+# budget-aware stopping well when told the remaining budget explicitly, but
+# production never surfaced it -- the soft-warn only reached a dashboard
+# stream event, and the hard stop was a bare exception. These tests cover
+# the new model-visible notice path layered on top of the unchanged
+# dashboard/hard-stop behavior.
+
+
+def test_check_one_returns_notice_above_soft_warn():
+    mw = BudgetEnforcementMiddleware(
+        engagement_cap_usd=10.0,
+        soft_warn_at_pct=0.5,
+        final_warn_at_pct=0.9,
+        spend_provider=lambda _k: 6.0,
+    )
+    notice, reserved = mw._check_one("engagement", "engagement:test", 10.0)
+    assert reserved is True
+    assert notice is not None
+    assert "Budget notice" in notice
+    assert "BUDGET ALERT" not in notice
+
+
+def test_check_one_notice_escalates_at_final_warn():
+    mw = BudgetEnforcementMiddleware(
+        engagement_cap_usd=10.0,
+        soft_warn_at_pct=0.5,
+        final_warn_at_pct=0.9,
+        spend_provider=lambda _k: 9.5,
+    )
+    notice, _ = mw._check_one("engagement", "engagement:test", 10.0)
+    assert notice is not None
+    assert "BUDGET ALERT" in notice
+
+
+def test_check_one_no_notice_below_soft_warn():
+    mw = BudgetEnforcementMiddleware(
+        engagement_cap_usd=10.0,
+        soft_warn_at_pct=0.7,
+        spend_provider=lambda _k: 1.0,
+    )
+    notice, reserved = mw._check_one("engagement", "engagement:test", 10.0)
+    assert notice is None
+    assert reserved is True
+
+
+def test_check_one_notice_fires_every_call_not_just_once():
+    """Unlike the dashboard event (fires once per scope), the model-visible
+    notice must repeat so a long-running agent keeps seeing fresh budget
+    info at every decision point, not a single warning buried in history.
+    """
+    mw = BudgetEnforcementMiddleware(
+        engagement_cap_usd=10.0,
+        soft_warn_at_pct=0.5,
+        spend_provider=lambda _k: 6.0,
+    )
+    notice1, _ = mw._check_one("engagement", "engagement:test", 10.0)
+    notice2, _ = mw._check_one("engagement", "engagement:test", 10.0)
+    assert notice1 is not None
+    assert notice2 is not None
+
+
+# ---------------------------------------------------------------- _inject_notices
+
+
+class _ReqWithSystemMessage:
+    """Request stand-in carrying a ``system_message``, like a real ModelRequest."""
+
+    def __init__(self, system_message: object = None) -> None:
+        self.state: dict[str, object] = {}
+        self.runtime = None
+        self.model_settings: dict[str, object] = {}
+        self.system_message = system_message
+
+    def override(self, **kwargs: object) -> "_ReqWithSystemMessage":
+        new = _ReqWithSystemMessage(system_message=self.system_message)
+        new.__dict__.update(self.__dict__)
+        new.__dict__.update(kwargs)
+        return new
+
+
+def test_inject_notices_appends_to_existing_system_message():
+    from langchain_core.messages import SystemMessage
+
+    req = _ReqWithSystemMessage(
+        system_message=SystemMessage(content=[{"type": "text", "text": "original prompt"}])
+    )
+    updated = _inject_notices(req, ["Budget notice (engagement): 80% used."])
+    blocks = updated.system_message.content_blocks
+    assert blocks[0] == {"type": "text", "text": "original prompt"}
+    assert "Budget notice" in blocks[1]["text"]
+
+
+def test_inject_notices_handles_missing_system_message():
+    updated = _inject_notices(_ReqWithSystemMessage(system_message=None), ["notice text"])
+    assert "notice text" in updated.system_message.content_blocks[0]["text"]
+
+
+def test_wrap_model_call_injects_notice_above_soft_warn():
+    mw = BudgetEnforcementMiddleware(
+        engagement_cap_usd=10.0,
+        soft_warn_at_pct=0.5,
+        spend_provider=lambda _k: 6.0,
+    )
+    captured: dict[str, object] = {}
+
+    def handler(req: object) -> str:
+        captured["req"] = req
+        return "OK"
+
+    mw.wrap_model_call(_ReqWithSystemMessage(), handler)
+    system_message = captured["req"].system_message  # type: ignore[attr-defined]
+    assert system_message is not None
+    assert "Budget notice" in system_message.content_blocks[-1]["text"]
+
+
+def test_wrap_model_call_no_notice_injection_under_soft_warn():
+    mw = BudgetEnforcementMiddleware(
+        engagement_cap_usd=10.0,
+        soft_warn_at_pct=0.7,
+        spend_provider=lambda _k: 1.0,
+    )
+    captured: dict[str, object] = {}
+
+    def handler(req: object) -> str:
+        captured["req"] = req
+        return "OK"
+
+    mw.wrap_model_call(_ReqWithSystemMessage(), handler)
+    assert captured["req"].system_message is None  # type: ignore[attr-defined]
+
+
+# ---------------------------------------------------------------- inflight reservation
+#
+# Q14 (P4 research, 2026-10-13): the pre-fix check was poll-then-decide with
+# no reservation, so N concurrently admitted calls (e.g. ADR-0026's bounded
+# 3-way surface_exploit fan-out) could all pass against the same stale
+# cached spend and collectively overshoot the cap before the next poll
+# caught it -- a real race, not a hypothetical one.
+
+
+def test_release_decrements_inflight():
+    mw = BudgetEnforcementMiddleware(engagement_cap_usd=10.0, spend_provider=lambda _k: 0.0)
+    mw._check_one("engagement", "engagement:test", 10.0)
+    mw._check_one("engagement", "engagement:test", 10.0)
+    assert mw._inflight["engagement:test"] == 2
+    mw._release("engagement:test")
+    assert mw._inflight["engagement:test"] == 1
+    mw._release("engagement:test")
+    assert "engagement:test" not in mw._inflight
+
+
+def test_release_on_unreserved_scope_is_noop():
+    mw = BudgetEnforcementMiddleware(engagement_cap_usd=10.0, spend_provider=lambda _k: 0.0)
+    mw._release("never-reserved")  # must not raise
+
+
+def test_concurrent_batch_cannot_collectively_overshoot_cap():
+    """The named Q14 race, reproduced: 3 concurrent calls against a scope
+    already at 90% of cap. Each admitted call reserves 30% of the cap, so
+    after the first is admitted, the reservation alone pushes the effective
+    total past the cap for every later concurrent check -- at most one of
+    the three may pass, not all three against the same stale pre-call spend.
+    """
+    import threading
+
+    mw = BudgetEnforcementMiddleware(
+        engagement_cap_usd=10.0,
+        reserve_per_call_pct=0.3,
+        spend_provider=lambda _k: 9.0,
+    )
+    barrier = threading.Barrier(3)
+    results: list[bool] = []
+    results_lock = threading.Lock()
+
+    def worker() -> None:
+        barrier.wait()
+        try:
+            mw._check_one("engagement", "engagement:test", 10.0)
+            admitted = True
+        except BudgetExceeded:
+            admitted = False
+        with results_lock:
+            results.append(admitted)
+
+    threads = [threading.Thread(target=worker) for _ in range(3)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert results.count(True) <= 1
+    assert results.count(False) >= 2
+
+
+def test_wrap_model_call_releases_reservation_even_when_handler_raises():
+    mw = BudgetEnforcementMiddleware(engagement_cap_usd=10.0, spend_provider=lambda _k: 0.0)
+
+    def handler(_req: object) -> str:
+        raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError):
+        mw.wrap_model_call(_Req(state={}, runtime=None), handler)
+    assert mw._inflight == {}
+
+
+async def test_awrap_model_call_releases_reservation_even_when_handler_raises():
+    mw = BudgetEnforcementMiddleware(engagement_cap_usd=10.0, spend_provider=lambda _k: 0.0)
+
+    async def handler(_req: object) -> str:
+        raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError):
+        await mw.awrap_model_call(_Req(state={}, runtime=None), handler)
+    assert mw._inflight == {}
+
+
+def test_enforce_releases_earlier_scope_reservation_when_later_scope_raises():
+    spends = {"engagement:test": 1.0, "agent:test:recon": 999.0}
+    mw = BudgetEnforcementMiddleware(
+        engagement_cap_usd=100.0,
+        per_agent_cap_usd=10.0,
+        spend_provider=spends.get,
+    )
+
+    class _RT:
+        agent_name = "recon"
+
+    class _ReqAgent:
+        state = {"engagement_name": "test"}
+        runtime = _RT()
+
+    with pytest.raises(BudgetExceeded):
+        mw._enforce(_ReqAgent())
+    assert mw._inflight == {}
