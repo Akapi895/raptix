@@ -25,6 +25,9 @@ import { DEMO_TZ, parseDemoInstant, formatDemoInstant } from '../../domain/clock
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, Asset, Operation, Plan, Playbook, Project, Step } from '../../domain/entities'
 import type { Clock, Instant, RequestContext, ServiceResult } from '../../domain/service'
+// Ticket 40: the resume re-check consults the plans feature's approval-validity
+// gate (execution.md row b — expiry integrated by 40).
+import { usableApproval } from '../plans/service'
 import {
   PROJECT_TZ_OFFSET_MS, scheduleInstantOf, scheduleLabelOf, roeWindowIssue,
   computePreflightChecks, preflightPass, eligibility, type Check, type EligKind,
@@ -835,6 +838,11 @@ export function resumeOperation(authority: DbAuthority, clock: Clock, ctx: Reque
   const pl = op!.planId ? db.plans.find((x) => x.id === op!.planId) : undefined
   if (pl && !['approved', 'executed'].includes(pl.status)) {
     return { ok: false, failure: { kind: 'validation', message: `Cannot resume: revised plan ${pl.id} ${planVer(pl)} needs re-approval.`, entity: opEntity(op!) } }
+  }
+  /* Ticket 40: the approval is re-checked at resume time — a plan past its
+   * absolute 24h deadline (stored status still `approved`) never resumes. */
+  if (pl && !usableApproval(pl, clock.now()).ok) {
+    return { ok: false, failure: { kind: 'validation', message: `Cannot resume: the approval of plan ${pl.id} ${planVer(pl)} expired ${pl.expires} — re-approve the plan before the operation can continue.`, entity: opEntity(op!) } }
   }
   const at = formatDemoInstant(clock.now())
   authority.commit(ctx.corr, (d) => {

@@ -23,6 +23,7 @@ import { createOperationService, type OperationService } from '../features/opera
 import { createFindingService, type FindingService } from '../features/findings/service'
 import { createChatService, type ChatService } from '../features/aichat/service'
 import { createPlanService, type PlanService } from '../features/plans/service'
+import { createPlanBridgeService, type PlanBridgeService } from '../features/plans/bridge'
 import { createAgentService, type AgentService } from '../features/agents/service'
 import { createReportService, type ReportService } from '../features/reports/service'
 import { createBranchService, type BranchService } from '../features/branches/service'
@@ -89,6 +90,8 @@ export interface ConsoleServices {
   chat(actor: ActorRef, projectId: string): ChatService
   /** Typed plan workbench + approval/expiry handlers (ticket 39 — feature-local implementation). */
   plans(actor: ActorRef, projectId: string): PlanService
+  /** Typed plan→operation bridge (ticket 40 — feature-local implementation). */
+  plansBridge(actor: ActorRef, projectId: string): PlanBridgeService
   /** Typed agent fleet list/detail reads + allocation/group writes (tickets 48–49 — feature-local implementation). */
   agents(actor: ActorRef, projectId: string): AgentService
   /** Typed report catalog reads + draft creation (ticket 34 — feature-local implementation). */
@@ -225,6 +228,9 @@ export function createConsoleServices(): ConsoleServices {
     findings: forFindings,
     chat: forChat,
     plans: forPlans,
+    // Ticket 40: the bridge is write-only over the shared authority — no
+    // scope-guarded reads, so the wiring needs no per-scope state.
+    plansBridge: () => createPlanBridgeService(authority, clock),
     agents: forAgents,
     reports: forReports,
     branches: forBranches,
