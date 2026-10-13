@@ -55,7 +55,10 @@ describe('operation preflight (8-point gate)', () => {
 
 describe('preflight gates execution at the store actions', () => {
   it('confirmPreflight marks a fully passing operation ready and leaves a failing one in draft', () => {
-    const h = mountStore('Taylor Chen')
+    // The pool assignment in the setup is role-gated at the typed handler
+    // (ticket 49): managers/admins assign immediately, so this setup runs as
+    // the manager persona; the preflight assertions are persona-independent.
+    const h = mountStore()
     h.run(() => h.store().A.assignAgent('AG-012', 'RT-2026-014'))
     const opId = h.store().A.createOperation({ name: 'Preflight gate check', projectId: 'RT-2026-014', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
     h.run(() => h.store().A.confirmPreflight(opId))

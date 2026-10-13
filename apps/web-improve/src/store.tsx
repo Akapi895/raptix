@@ -38,6 +38,9 @@ import { operationStartGate, runOperationPreflight } from './features/operations
 // feature-local (src/features/assets/writes.ts); these legacy entries
 // delegate to them so validation, gating and audit have one implementation.
 import { changeAssetScopeTransaction, importAssetsTransaction } from './features/assets/writes'
+// Ticket 49 append: the allocation/group entries delegate to the typed agent
+// write handlers so eligibility, gating and audit have one implementation.
+import { assignAgentTransaction, removeFromGroupTransaction, saveGroupTransaction } from './features/agents/writes'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
@@ -217,10 +220,10 @@ export interface Actions {
   updateProject: (projectId: string, patch: Partial<Project>) => void
   addAssets: (projectId: string, list: { name: string; ident: string; type: string; os: string; owner: string; scope: 'in' | 'out'; source: string; ip?: string }[]) => { ok: boolean; needsApproval: boolean; error?: string }
   setAssetScope: (assetId: string, scope: Asset['scope']) => void
-  assignAgent: (agentId: string, projectId: string) => void
+  assignAgent: (agentId: string, projectId: string) => Res
   setAgentStatus: (agentId: string, s: Agent['status']) => void
   saveGroup: (g: Partial<Group> & { name: string; projectId: string }) => string
-  removeFromGroup: (groupId: string, agentId: string) => void
+  removeFromGroup: (groupId: string, agentId: string, reason?: string) => Res
   createOperation: (d: OpDraft & { planId?: string }) => string
   updateOperation: (id: string, d: Partial<OpDraft>) => void
   confirmPreflight: (opId: string) => void
@@ -613,20 +616,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
        handler owns the read-only/role refusals, the audited reason and the
        governed-ROE scope-change request for pending proposals. */
     setAssetScope: (assetId, scope) => { changeAssetScopeTransaction(services.authority, services.clock, actorCtx(''), assetId, scope) },
-    assignAgent: (agentId, projectId) => { mutate((d) => { const a = d.agents.find((x) => x.id === agentId)!; a.projectId = projectId }); audit('Assigned agent to project', agentId, projectId) },
+    /* Ticket 49: allocation/group entries delegate to the typed transactions
+       (src/features/agents/writes) — eligibility (connected, unreserved,
+       pool-only, active/approved target), the role gates, the pending-request
+       conflict and the audit/notice commit have one implementation for both
+       entry points; refusals commit nothing. */
+    assignAgent: (agentId, projectId) => {
+      const res = assignAgentTransaction(services.authority, services.clock, actorCtx(projectId), agentId, { projectId })
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
     setAgentStatus: (agentId, s) => { mutate((d) => { d.agents.find((x) => x.id === agentId)!.status = s }); audit(s === 'disabled' ? 'Disabled agent' : 'Enabled agent', agentId, dbRef.current.agents.find((x) => x.id === agentId)!.projectId) },
     saveGroup: (g) => {
-      const id = g.id || 'GR-' + pad(dbRef.current.groups.length + 1)
-      mutate((d) => {
-        const ex = d.groups.find((x) => x.id === id)
-        if (ex) Object.assign(ex, g, { updated: today() })
-        else d.groups.push({ id, name: g.name, projectId: g.projectId, desc: g.desc || '', agents: g.agents || [], owner: g.owner || me.name, policy: g.policy || 'Project use only', updated: today() })
-        ;(g.agents || []).forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a) { a.group = g.name; if (!a.projectId) a.projectId = g.projectId } })
-      })
-      audit(g.id ? 'Updated agent group' : 'Created agent group', id, g.projectId)
-      return id
+      const res = saveGroupTransaction(services.authority, services.clock, actorCtx(g.projectId), { id: g.id, name: g.name, projectId: g.projectId, desc: g.desc || '', agents: g.agents || [], owner: g.owner || me.name, policy: g.policy || 'Project use only' })
+      return res.ok ? res.data.id : ''
     },
-    removeFromGroup: (groupId, agentId) => { mutate((d) => { const g = d.groups.find((x) => x.id === groupId)!; g.agents = g.agents.filter((x) => x !== agentId); const a = d.agents.find((x) => x.id === agentId); if (a) a.group = '' }); audit('Removed agent from group', agentId, dbRef.current.groups.find((x) => x.id === groupId)!.projectId) },
+    removeFromGroup: (groupId, agentId, reason) => {
+      const res = removeFromGroupTransaction(services.authority, services.clock, actorCtx(''), groupId, agentId, reason)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
 
     createOperation: (dr) => {
       const p = dbRef.current.projects.find((x) => x.id === dr.projectId)!
