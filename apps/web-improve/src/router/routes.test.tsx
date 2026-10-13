@@ -3,11 +3,14 @@
  * direct deep links (legacy `#/page/id?tab=` format), unauthenticated access
  * with a preserved return destination, not-found, browser back/forward,
  * dirty-navigation blocking, the setPid single-write redirect (execution
- * ledger G-note) and crash containment.
+ * ledger G-note), crash containment, and the single-writer closure grep
+ * (ticket 61e — no location writes outside the router seam).
  */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { StoreProvider, useStore, type Store } from '../store'
 import { ConsoleProviders } from '../state/query'
 import { setActiveRouter } from './active'
@@ -156,6 +159,27 @@ describe('project detail transitions (execution ledger: setPid single write)', (
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 60)) })
     expect(window.location.hash).toBe('#/c2')
     expect(store().route).toEqual({ page: 'c2' })
+  })
+})
+
+describe('single-writer closure (ticket 61e)', () => {
+  it('no module outside the router seam writes the location', () => {
+    /* The route inventory's raw-reads list is empty: the router (via the
+       store's navRaw) is the only location writer. store.tsx is the seam's
+       own router-less fallback; test files stage deep links by design. */
+    const rawWriter = /(?:\bwindow\.location\.hash\s*=|\blocation\.hash\s*=|\blocation\.assign\(|\bhistory\.(?:replaceState|pushState)\()/
+    const offenders: string[] = []
+    const walk = (dir: string) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        if (e.isDirectory()) { if (e.name !== 'router') walk(join(dir, e.name)); continue }
+        if (!/\.(tsx?|jsx?)$/.test(e.name) || e.name.includes('.test.')) continue
+        const file = join(dir, e.name).replace(/\\/g, '/')
+        if (file.endsWith('/src/store.tsx')) continue
+        if (rawWriter.test(readFileSync(join(dir, e.name), 'utf8'))) offenders.push(file)
+      }
+    }
+    walk(join(process.cwd(), 'src'))
+    expect(offenders).toEqual([])
   })
 })
 
