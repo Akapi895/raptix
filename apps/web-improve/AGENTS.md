@@ -33,3 +33,17 @@ This is the canonical project structure. Start with task-relevant files below. O
 This project uses **Tailwind CSS v4** through the `@tailwindcss/vite` plugin configured in `vite.config.ts`. `src/index.css` imports Tailwind with `@import 'tailwindcss';`. Use Tailwind utility classes directly in JSX and put global CSS or Tailwind v4 theme customization in `src/index.css`. This scaffold does not need a Tailwind config file or PostCSS config.
 
 `src/main.tsx` imports `src/index.css`, so global font wiring belongs in `src/index.css`. Keep CSS `@import` statements first, then add any `@font-face` rules and font-family defaults there.
+
+## Windows Temporary Process Safety
+
+Applies ONLY to temporary process lifecycle operations — Vite preview/dev servers, npm/npx servers, `Start-Process`, `Stop-Process`, `Stop-Job`, `taskkill` and similar cleanup. It does NOT add timeouts to builds, tests, installs, lint, or other ordinary commands.
+
+- Never launch a temporary server with `Start-Process -NoNewWindow` unless you control the entire child process tree. `npm.cmd`/`npx.cmd` spawn `cmd.exe` and `node.exe` children that survive the parent — never assume `Stop-Process -Id $p.Id` stops the whole tree.
+- Before stopping anything, identify the exact PID, command line, worktree and port. NEVER kill all `node.exe`, `npm`, or `cmd.exe` processes. Prefer stopping only the children of the server you started; kill a whole tree only when its root PID is verified to belong to the current verification session.
+- Every STOP/CLEANUP operation has a hard 5-second cap. If the environment supports tool-level command timeouts, use them for every STOP/CLEANUP call. If a stop does not finish within the cap, skip cleanup, record a warning with the surviving PID/port, and move on — no unbounded retries.
+- A `Start-Sleep`, `Wait-Job -Timeout`, or an HTTP probe timeout is NOT a hard timeout for the whole PowerShell command, and no timeout mechanism may be built by spawning another job/process that can itself wait forever.
+- Waiting for a server to start and probing HTTP get their own time limits (the 5-second STOP cap does not apply to them). Always probe the actual port from the launch configuration or arguments — never hardcode a different port in HTTP checks. Do not start another server while a port is in use until the owning process is identified.
+- Never wait on `Stop-Job`/`Wait-Job` or on long-lived server stdout/stderr without a timeout. Prefer verifiable termination checks over fixed sleeps.
+- If the terminal tool cannot guarantee a timeout, do not keep issuing stop commands that may hang: report the surviving PID/port and continue independent work.
+- Never modify application code, install dependencies, or change Vite configuration to work around an agent process-management failure.
+- When a verification server is optional, prefer SKIPPING it and recording the verification gap over running an unbounded server lifecycle.
