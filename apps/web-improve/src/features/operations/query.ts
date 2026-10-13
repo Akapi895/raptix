@@ -14,7 +14,7 @@ import { actorRef } from '../../auth/persona'
 import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
-import type { OperationDetailRead, OperationDraftInput, OperationDraftOptions, OperationDraftPatch, OperationListQuery, OperationListRead, OperationTransitionRead, OperationWriteRead, PreflightRunRead } from './service'
+import type { OperationDetailRead, OperationDraftInput, OperationDraftOptions, OperationDraftPatch, OperationListQuery, OperationListRead, OperationTransitionRead, OperationWriteRead, PreflightRunRead, StepDecision } from './service'
 
 /** Feature-local key namespace: ['operation', scope, 'list', query]. */
 export const operationKeys = {
@@ -214,6 +214,27 @@ export function useCompleteOperation() {
     mutationFn: async (v: { id: string }): Promise<ServiceResult<OperationTransitionRead>> => {
       const actor = actorRef(scope.actor)
       return services.operations(actor, scope.project).complete({ actor, projectId: scope.project, corr: corr('operation-complete') }, v.id)
+    },
+  })
+}
+
+/* ── Ticket 29: live-workspace review decisions. ── */
+
+/**
+ * Records a reviewer's decision on a review-gated step (approve / skip /
+ * reject): the handler re-derives the role, read-only-context and run-state
+ * gates at click time and refuses unauthorized decisions on its own — the
+ * screen's disable reason is a courtesy, never the enforcement. Scope is
+ * captured at call time, so a persona/project switch never retargets a
+ * decision mid-flight.
+ */
+export function useReviewStep() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { id: string; stepId: string; decision: StepDecision; note: string }): Promise<ServiceResult<OperationTransitionRead>> => {
+      const actor = actorRef(scope.actor)
+      return services.operations(actor, scope.project).reviewStep({ actor, projectId: scope.project, corr: corr('operation-review') }, v.id, v.stepId, v.decision, v.note)
     },
   })
 }
