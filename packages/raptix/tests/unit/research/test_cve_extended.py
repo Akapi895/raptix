@@ -19,10 +19,12 @@ from raptix.execution.tools.research.cve import (
     _Cache,
     _parse_epss,
     _parse_nvd,
+    _parse_nvd_candidates,
     _rehydrate,
     lookup_cve,
     lookup_cves,
     lookup_package,
+    lookup_product,
 )
 
 # ── _Cache ───────────────────────────────────────────────────────────────
@@ -443,6 +445,122 @@ class TestLookupPackage:
 
         result = asyncio.run(_run())
         assert result == []
+
+
+# ── _parse_nvd_candidates ─────────────────────────────────────────────────
+
+
+def _nvd_search_payload(*pairs: tuple[str, str]) -> dict[str, Any]:
+    return {
+        "vulnerabilities": [
+            {
+                "cve": {
+                    "id": cve_id,
+                    "descriptions": [{"lang": "en", "value": summary}],
+                }
+            }
+            for cve_id, summary in pairs
+        ]
+    }
+
+
+class TestParseNvdCandidates:
+    def test_extracts_all_results_not_just_first(self) -> None:
+        data = _nvd_search_payload(("CVE-2024-0001", "First bug"), ("CVE-2024-0002", "Second bug"))
+        candidates = _parse_nvd_candidates(data)
+        assert [c["cve_id"] for c in candidates] == ["CVE-2024-0001", "CVE-2024-0002"]
+        assert candidates[0]["summary"] == "First bug"
+
+    def test_empty_vulnerabilities_returns_empty_list(self) -> None:
+        assert _parse_nvd_candidates({"vulnerabilities": []}) == []
+
+    def test_missing_vulnerabilities_key_returns_empty_list(self) -> None:
+        assert _parse_nvd_candidates({}) == []
+
+    def test_entry_without_cve_id_is_skipped(self) -> None:
+        data = {"vulnerabilities": [{"cve": {"descriptions": []}}]}
+        assert _parse_nvd_candidates(data) == []
+
+    def test_prefers_english_description(self) -> None:
+        data = {
+            "vulnerabilities": [
+                {
+                    "cve": {
+                        "id": "CVE-2024-0003",
+                        "descriptions": [
+                            {"lang": "es", "value": "descripcion"},
+                            {"lang": "en", "value": "english desc"},
+                        ],
+                    }
+                }
+            ]
+        }
+        candidates = _parse_nvd_candidates(data)
+        assert candidates[0]["summary"] == "english desc"
+
+
+# ── lookup_product (async, mocked network) ────────────────────────────────
+
+
+class TestLookupProduct:
+    def test_cache_hit_skips_network(self, tmp_path: Path) -> None:
+        cache = _Cache(path=tmp_path / "product.json")
+        cache.set(
+            "product:flowise@3.0.5",
+            {"candidates": [{"cve_id": "CVE-2024-9999", "summary": "cached"}]},
+        )
+
+        async def _run() -> list[dict[str, str]]:
+            return await lookup_product("Flowise", "3.0.5", cache=cache)
+
+        result = asyncio.run(_run())
+        assert result == [{"cve_id": "CVE-2024-9999", "summary": "cached"}]
+
+    def test_network_response_returns_candidates(self, tmp_path: Path) -> None:
+        cache = _Cache(path=tmp_path / "fresh.json")
+        search_data = _nvd_search_payload(("CVE-2024-1111", "Flowise RCE"))
+
+        async def _run() -> list[dict[str, str]]:
+            with patch(
+                "raptix.execution.tools.research.cve._fetch_nvd_keyword",
+                new_callable=AsyncMock,
+            ) as fk:
+                fk.return_value = search_data
+                return await lookup_product("Flowise", "3.0.5", cache=cache)
+
+        result = asyncio.run(_run())
+        assert result == [{"cve_id": "CVE-2024-1111", "summary": "Flowise RCE"}]
+
+    def test_network_failure_returns_empty_list(self, tmp_path: Path) -> None:
+        cache = _Cache(path=tmp_path / "fail.json")
+
+        async def _run() -> list[dict[str, str]]:
+            with patch(
+                "raptix.execution.tools.research.cve._fetch_nvd_keyword",
+                new_callable=AsyncMock,
+            ) as fk:
+                fk.return_value = {}
+                return await lookup_product("Nonexistent", "1.0.0", cache=cache)
+
+        result = asyncio.run(_run())
+        assert result == []
+
+    def test_result_stored_in_cache(self, tmp_path: Path) -> None:
+        cache = _Cache(path=tmp_path / "store.json")
+        search_data = _nvd_search_payload(("CVE-2024-2222", "Stored bug"))
+
+        async def _run() -> None:
+            with patch(
+                "raptix.execution.tools.research.cve._fetch_nvd_keyword",
+                new_callable=AsyncMock,
+            ) as fk:
+                fk.return_value = search_data
+                await lookup_product("Widget", "2.0.0", cache=cache)
+
+        asyncio.run(_run())
+        cached = cache.get("product:widget@2.0.0")
+        assert cached is not None
+        assert cached["candidates"][0]["cve_id"] == "CVE-2024-2222"
 
 
 # ── NVD parser edge cases ─────────────────────────────────────────────────
