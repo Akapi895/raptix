@@ -1,6 +1,9 @@
 import type { ComponentType } from 'react'
 import { Login } from './a-login'
-import { Forbidden, NotFound, Offline, ServerError, SessionExpired, StatesGallery } from './a-system'
+/* Ticket 61a/61b: the auth/system slice's semantic module (src/screens/system)
+   owns the error pages and the states gallery; route keys are unchanged. */
+import { Forbidden, NotFound, Offline, ServerError, SessionExpired } from './system/pages'
+import { StatesGallery } from './system/gallery'
 import { Dashboard, MyTasks } from './a-dashboard'
 
 export const routes: Record<string, ComponentType> = {
