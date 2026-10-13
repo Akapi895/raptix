@@ -4,6 +4,8 @@ import { Columns3, Download, ExternalLink, Filter, X } from 'lucide-react'
 import { useStore } from '../store'
 import { planVer, toolFacets } from '../data'
 import type { Audit, Conversation, Facets, ToolEvent } from '../data'
+import { TraceReadError, useTraceEvents } from '../features/trace/query'
+import type { TraceRow } from '../features/trace/service'
 import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../ui'
 import { AiSubNav, NoProject, Pill, ReplanPanel, Thread, tz } from './g-common'
 
@@ -21,11 +23,6 @@ const polTone = (p: Facets['policy']) => (p === 'Allowed' ? 'ok' : p === 'Blocke
 const apprTone = (a: Facets['approval']) => (a === 'Approved' ? 'ok' : a === 'Pending' ? 'warn' : a === 'Denied' ? 'bad' : 'neutral') as 'ok' | 'warn' | 'bad' | 'neutral'
 const exTone = (x: Facets['exec']) => (x === 'Executed' ? 'ok' : x === 'Failed' ? 'bad' : x === 'Running' ? 'cyan' : 'neutral') as 'ok' | 'bad' | 'cyan' | 'neutral'
 const dur = (ms?: number) => (ms == null ? '—' : ms >= 60000 ? `${(ms / 60000).toFixed(1)} min` : `${Math.round(ms / 1000)} s`)
-const hashParam = (k: string) => { const q = window.location.hash.split('?')[1]; return q ? new URLSearchParams(q).get(k) || undefined : undefined }
-const setHash = (view: View, ev?: string) => {
-  const q = new URLSearchParams(); if (view !== 'table') q.set('view', view); if (ev) q.set('event', ev)
-  const qs = q.toString(); window.history.replaceState(null, '', `#/ai-trace${qs ? '?' + qs : ''}`)
-}
 
 /** Lightweight click-away popover. */
 function Pop({ label, icon: I, badge, children, width = 260 }: { label: string; icon: typeof Filter; badge?: number; children: ReactNode; width?: number }) {
@@ -55,44 +52,52 @@ const COLS = [
 type ColId = (typeof COLS)[number]['id']
 
 export function AiTrace() {
-  const { db, pid, route, go, A, can } = useStore()
-  const hashEv = hashParam('event')
-  const [sel, setSel] = useState<string | undefined>(route.id || hashEv)
-  const [view, setView] = useState<View>((hashParam('view') as View) || 'table')
+  const { pid, route, go, A, can } = useStore()
+  const trace = useTraceEvents()
+  const [sel, setSel] = useState<string | undefined>(route.id)
+  const [view, setView] = useState<View>(VIEWS.some((v) => v.id === route.tab) ? (route.tab as View) : 'table')
   const [st, setSt] = useState<'all' | Bucket>('all')
   const [q, setQ] = useState('')
   const [fp, setFp] = useState(''); const [fa, setFa] = useState(''); const [fx, setFx] = useState(''); const [fg, setFg] = useState('')
   const [hidden, setHidden] = useState<ColId[]>([])
-  const evParam = route.id || hashEv
+  const evParam = route.id
   useEffect(() => { setSel(evParam); setSt('all'); setQ(''); setFp(''); setFa(''); setFx(''); setFg('') }, [pid, evParam])
   useEffect(() => { if (sel) document.getElementById('trace-' + sel)?.scrollIntoView?.({ block: 'center' }) }, [sel, view])
-  const open = (id?: string) => { setSel(id); setHash(view, id) }
-  const changeView = (v: View) => { setView(v); setHash(v, sel) }
+  /* Selection and view are screen state; the router route (path id / ?tab=)
+     seeds them on entry — this surface never writes location itself. */
+  const open = (id?: string) => setSel(id)
+  const changeView = (v: View) => setView(v)
 
   if (pid === 'all') return <><PageHeader title="Tool Proposal & Execution Trace" sub="Every tool the AI proposed, with its policy decision." /><AiSubNav current="ai-trace" /><NoProject /></>
-  const all = db.toolEvents.filter((t) => t.projectId === pid)
+  if (trace.isPending) return <><PageHeader title="Tool Proposal & Execution Trace" sub="Every tool the AI proposed, with its policy decision." /><AiSubNav current="ai-trace" /><p className="py-3 text-sm text-muted" role="status">Loading tool trace…</p></>
+  if (trace.isError) {
+    const f = (trace.error as TraceReadError).failure
+    return <><PageHeader title="Tool Proposal & Execution Trace" sub="Every tool the AI proposed, with its policy decision." /><AiSubNav current="ai-trace" /><Empty title="Could not load tool trace" action={<Button onClick={() => trace.refetch()}>Retry</Button>}>{f.message}</Empty></>
+  }
+  const all = trace.data.events
   const nq = q.trim().toLowerCase()
-  const base = all.filter((e) => {
-    const f = toolFacets(e)
-    if (fp && f.policy !== fp) return false
-    if (fa && f.approval !== fa) return false
-    if (fx && f.exec !== fx) return false
+  const base = all.filter((r) => {
+    const e = r.event
+    if (fp && r.facets.policy !== fp) return false
+    if (fa && r.facets.approval !== fa) return false
+    if (fx && r.facets.exec !== fx) return false
     if (fg && (e.agentId || '') !== fg) return false
     return !nq || `${e.id} ${e.tool} ${e.target} ${e.planId || ''} ${e.agentId || ''} ${e.branchId || ''} ${e.opId || ''} ${e.stepId || ''} ${e.corr || ''}`.toLowerCase().includes(nq)
   })
-  const count = (b: 'all' | Bucket) => (b === 'all' ? base.length : base.filter((e) => bucket(e) === b).length)
-  const events = base.filter((e) => st === 'all' || bucket(e) === st)
-  const awaiting = all.filter((e) => e.state === 'awaiting').length
-  const ev = all.find((t) => t.id === sel)
+  const count = (b: 'all' | Bucket) => (b === 'all' ? base.length : base.filter((r) => bucket(r.event) === b).length)
+  const events = base.filter((r) => st === 'all' || bucket(r.event) === st)
+  const awaiting = all.filter((r) => r.event.state === 'awaiting').length
+  const ev = all.find((r) => r.event.id === sel)
   const facetCount = [fp, fa, fx, fg].filter(Boolean).length
-  const agentIds = [...new Set(all.map((e) => e.agentId).filter(Boolean))] as string[]
+  const agentIds = [...new Set(all.map((r) => r.event.agentId).filter(Boolean))] as string[]
   const clear = () => { setSt('all'); setQ(''); setFp(''); setFa(''); setFx(''); setFg('') }
   const vis = (c: ColId) => !hidden.includes(c)
   const why = 'Your role cannot approve tool calls. Ask a reviewer.'
-  const stepName = (e: ToolEvent) => db.plans.find((p) => p.id === e.planId)?.steps.find((s) => s.id === e.stepId)?.name
+  const stepName = (r: TraceRow) => r.plan?.stepName
 
-  const cell = (c: ColId, e: ToolEvent): ReactNode => {
-    const f = toolFacets(e)
+  const cell = (c: ColId, r: TraceRow): ReactNode => {
+    const e = r.event
+    const f = r.facets
     switch (c) {
       case 'id': return <Mono className="whitespace-nowrap font-semibold">{e.id}</Mono>
       case 'at': return <span className="whitespace-nowrap text-xs">{tz(e.at)}</span>
@@ -174,22 +179,22 @@ export function AiTrace() {
               </tr>
             </thead>
             <tbody>
-              {events.map((e) => (
-                <tr key={e.id} id={'trace-' + e.id} tabIndex={0} onClick={() => open(e.id)} onKeyDown={(k) => k.key === 'Enter' && open(e.id)}
-                  className={cx('h-12 cursor-pointer border-b border-line/60 transition last:border-0 hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent', sel === e.id && 'bg-accent-soft')}>
-                  {shown.map((c) => <td key={c.id} className={cx('px-4 align-middle', c.id === 'id' && cx('sticky left-0 z-10 border-r border-line', sel === e.id ? 'bg-accent-soft' : 'bg-panel'))}>{cell(c.id, e)}</td>)}
-                  <td className="px-4 align-middle"><button className="whitespace-nowrap text-xs text-accent hover:underline" onClick={(x) => { x.stopPropagation(); open(e.id) }}>{e.state === 'awaiting' ? 'Review' : 'Inspect'}</button></td>
+              {events.map((r) => (
+                <tr key={r.event.id} id={'trace-' + r.event.id} tabIndex={0} onClick={() => open(r.event.id)} onKeyDown={(k) => k.key === 'Enter' && open(r.event.id)}
+                  className={cx('h-12 cursor-pointer border-b border-line/60 transition last:border-0 hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent', sel === r.event.id && 'bg-accent-soft')}>
+                  {shown.map((c) => <td key={c.id} className={cx('px-4 align-middle', c.id === 'id' && cx('sticky left-0 z-10 border-r border-line', sel === r.event.id ? 'bg-accent-soft' : 'bg-panel'))}>{cell(c.id, r)}</td>)}
+                  <td className="px-4 align-middle"><button className="whitespace-nowrap text-xs text-accent hover:underline" onClick={(x) => { x.stopPropagation(); open(r.event.id) }}>{r.event.state === 'awaiting' ? 'Review' : 'Inspect'}</button></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : (
-        <Grouped events={events} view={view} sel={sel} open={open} stepName={stepName} />
+        <Grouped rows={events} view={view} sel={sel} open={open} stepName={stepName} />
       )}
       <p className="mt-2 text-xs text-muted">Chat messages are never counted as execution. Status chips are exclusive and sum to All; Policy, Approval and Execution facets are independent and live under More filters. Policy “Allowed” does not mean “Executed”.</p>
-      <Drawer open={!!ev} onClose={() => open(undefined)} width={580} title={ev ? `Tool Event Inspector — ${ev.id}` : ''}>
-        {ev && <Inspector key={ev.id} ev={ev} canDecide={can('approvePlan')} why={why} onAllow={(r) => A.decideTool(ev.id, 'allowed', r)} onDeny={(r) => A.decideTool(ev.id, 'denied', r)} />}
+      <Drawer open={!!ev} onClose={() => open(undefined)} width={580} title={ev ? `Tool Event Inspector — ${ev.event.id}` : ''}>
+        {ev && <Inspector key={ev.event.id} row={ev} canDecide={can('approvePlan')} why={why} onAllow={(r) => A.decideTool(ev.event.id, 'allowed', r)} onDeny={(r) => A.decideTool(ev.event.id, 'denied', r)} />}
       </Drawer>
     </>
   )
@@ -198,15 +203,15 @@ export function AiTrace() {
 const Dash = () => <span className="text-xs text-muted">—</span>
 
 /** Timeline / By Agent / By Branch / By Plan Step. */
-function Grouped({ events, view, sel, open, stepName }: { events: ToolEvent[]; view: View; sel?: string; open: (id: string) => void; stepName: (e: ToolEvent) => string | undefined }) {
+function Grouped({ rows, view, sel, open, stepName }: { rows: TraceRow[]; view: View; sel?: string; open: (id: string) => void; stepName: (r: TraceRow) => string | undefined }) {
   const { go } = useStore()
-  const keyOf = (e: ToolEvent) => (view === 'timeline' ? e.corr || 'No correlation ID' : view === 'agent' ? e.agentId || 'No agent assigned' : view === 'branch' ? e.branchId || 'No branch' : e.stepId ? `${e.opId || ''} ${e.stepId}`.trim() : 'No plan step')
-  const groups = new Map<string, ToolEvent[]>()
-  ;[...events].sort((a, b) => a.at.localeCompare(b.at)).forEach((e) => groups.set(keyOf(e), [...(groups.get(keyOf(e)) || []), e]))
-  const link = (k: string, first: ToolEvent): ReactNode => {
-    if (view === 'agent' && first.agentId) return <IdLink onClick={() => go('agent', { id: first.agentId! })}>{k}</IdLink>
-    if (view === 'branch' && first.branchId) return <IdLink onClick={() => go('ai-branch', { id: first.branchId! })}>{k}</IdLink>
-    if (view === 'step' && first.stepId) return <span className="inline-flex items-center gap-2"><Mono className="font-semibold">{k}</Mono>{stepName(first) && <span className="text-sm">{stepName(first)}</span>}{first.planId && <IdLink onClick={() => go('ai-plan', { id: first.planId! })}>{first.planId}</IdLink>}</span>
+  const keyOf = (r: TraceRow) => (view === 'timeline' ? r.event.corr || 'No correlation ID' : view === 'agent' ? r.event.agentId || 'No agent assigned' : view === 'branch' ? r.event.branchId || 'No branch' : r.event.stepId ? `${r.event.opId || ''} ${r.event.stepId}`.trim() : 'No plan step')
+  const groups = new Map<string, TraceRow[]>()
+  ;[...rows].sort((a, b) => a.event.at.localeCompare(b.event.at)).forEach((r) => groups.set(keyOf(r), [...(groups.get(keyOf(r)) || []), r]))
+  const link = (k: string, first: TraceRow): ReactNode => {
+    if (view === 'agent' && first.event.agentId) return <IdLink onClick={() => go('agent', { id: first.event.agentId! })}>{k}</IdLink>
+    if (view === 'branch' && first.event.branchId) return <IdLink onClick={() => go('ai-branch', { id: first.event.branchId! })}>{k}</IdLink>
+    if (view === 'step' && first.event.stepId) return <span className="inline-flex items-center gap-2"><Mono className="font-semibold">{k}</Mono>{stepName(first) && <span className="text-sm">{stepName(first)}</span>}{first.event.planId && <IdLink onClick={() => go('ai-plan', { id: first.event.planId! })}>{first.event.planId}</IdLink>}</span>
     return <Mono className="font-semibold">{k}</Mono>
   }
   return (
@@ -214,11 +219,11 @@ function Grouped({ events, view, sel, open, stepName }: { events: ToolEvent[]; v
       {[...groups.entries()].map(([k, list]) => (
         <Card key={k} pad={false}>
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
-            <div className="flex flex-wrap items-center gap-2 text-sm">{link(k, list[0])}<span className="text-xs text-muted">{view === 'timeline' ? 'correlation ID' : view === 'agent' ? 'agent' : view === 'branch' ? 'branch' : 'step'} · {list.length} event{list.length > 1 ? 's' : ''}</span></div>
-            {view === 'branch' && list[0].agentId && <span className="text-xs text-muted">Agent {list[0].agentId}</span>}
+            <div className="flex flex-wrap items-center gap-2 text-sm">{link(k, list[0]!)}<span className="text-xs text-muted">{view === 'timeline' ? 'correlation ID' : view === 'agent' ? 'agent' : view === 'branch' ? 'branch' : 'step'} · {list.length} event{list.length > 1 ? 's' : ''}</span></div>
+            {view === 'branch' && list[0]!.event.agentId && <span className="text-xs text-muted">Agent {list[0]!.event.agentId}</span>}
           </div>
           <ul>
-            {list.map((e) => { const f = toolFacets(e); return (
+            {list.map((r) => { const e = r.event; const f = r.facets; return (
               <li key={e.id} id={'trace-' + e.id}>
                 <button onClick={() => open(e.id)} className={cx('flex w-full flex-wrap items-center gap-x-4 gap-y-1 border-b border-line/60 px-4 py-2.5 text-left text-sm last:border-0 hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent', sel === e.id && 'bg-accent-soft')}>
                   <Mono className="whitespace-nowrap font-semibold">{e.id}</Mono>
@@ -235,14 +240,12 @@ function Grouped({ events, view, sel, open, stepName }: { events: ToolEvent[]; v
   )
 }
 
-function Inspector({ ev, canDecide, why, onAllow, onDeny }: { ev: ToolEvent; canDecide: boolean; why: string; onAllow: (r: string) => void; onDeny: (r: string) => void }) {
-  const { db, go, toast } = useStore()
+function Inspector({ row, canDecide, why, onAllow, onDeny }: { row: TraceRow; canDecide: boolean; why: string; onAllow: (r: string) => void; onDeny: (r: string) => void }) {
+  const { go, toast } = useStore()
+  const ev = row.event
   const [decision, setDecision] = useState<'allowed' | 'denied' | null>(null)
   const [reason, setReason] = useState('')
-  const f = toolFacets(ev)
-  const plan = db.plans.find((p) => p.id === ev.planId)
-  const step = plan?.steps.find((s) => s.id === ev.stepId)
-  const br = db.branches.find((b) => b.id === ev.branchId)
+  const f = row.facets
   const stages = [
     { n: 'Proposal', d: `AP-${ev.id.replace('TL-', '')} by AI Operator`, tone: 'ok' as const, t: ev.at },
     { n: 'Policy decision', d: f.policy === 'Not evaluated' ? 'Not evaluated yet' : f.policy, tone: polTone(f.policy), t: f.policy === 'Not evaluated' ? 'pending' : ev.at },
@@ -303,11 +306,11 @@ function Inspector({ ev, canDecide, why, onAllow, onDeny }: { ev: ToolEvent; can
         <CardHeader title="Details" />
         <DescList cols={1} items={[
           { k: 'Tool / target', v: <><Mono>{ev.tool}</Mono> on {ev.target}</> },
-          { k: 'Inputs (summary)', v: <span className="text-muted">[summarized, sensitive values redacted] {ev.params}</span> },
-          { k: 'Output (sanitized)', v: ev.result || <span className="text-muted">No output — not executed or nothing returned</span> },
+          { k: 'Inputs (summary)', v: <span className="text-muted">[summarized, sensitive values redacted] {row.params}</span> },
+          { k: 'Output (sanitized)', v: row.result || <span className="text-muted">No output — not executed or nothing returned</span> },
           { k: 'Agent', v: ev.agentId ? <IdLink onClick={() => go('agent', { id: ev.agentId! })}>{ev.agentId}</IdLink> : 'None assigned' },
-          { k: 'Branch', v: ev.branchId ? <span className="inline-flex items-center gap-2"><IdLink onClick={() => go('ai-branch', { id: ev.branchId! })}>{ev.branchId}</IdLink>{br && <span className="text-xs text-muted">{br.state.replace('_', ' ')}</span>}</span> : 'No branch' },
-          { k: 'Plan step', v: ev.stepId ? <span className="inline-flex flex-wrap items-center gap-1.5"><Mono>{ev.stepId}</Mono>{step && <span>{step.name}</span>}{plan && <IdLink onClick={() => go('ai-plan', { id: plan.id })}>{plan.id}</IdLink>}{plan && <span className="text-xs text-muted">{planVer(plan)}</span>}</span> : 'Not in a plan' },
+          { k: 'Branch', v: ev.branchId ? <span className="inline-flex items-center gap-2"><IdLink onClick={() => go('ai-branch', { id: ev.branchId! })}>{ev.branchId}</IdLink>{row.branch && <span className="text-xs text-muted">{row.branch.state.replace('_', ' ')}</span>}</span> : 'No branch' },
+          { k: 'Plan step', v: ev.stepId ? <span className="inline-flex flex-wrap items-center gap-1.5"><Mono>{ev.stepId}</Mono>{row.plan?.stepName && <span>{row.plan.stepName}</span>}{row.plan && <IdLink onClick={() => go('ai-plan', { id: row.plan!.id })}>{row.plan!.id}</IdLink>}{row.plan && <span className="text-xs text-muted">{row.plan.version}</span>}</span> : 'Not in a plan' },
           { k: 'Operation', v: ev.opId ? <IdLink onClick={() => go('operation', { id: ev.opId! })}>{ev.opId}</IdLink> : 'Not executed — no operation' },
           { k: 'Timing', v: <span className="text-xs">{tz(ev.at)} · duration {dur(ev.ms)}</span> },
           { k: 'Correlation ID', v: <Mono>{ev.corr || '—'}</Mono> },
