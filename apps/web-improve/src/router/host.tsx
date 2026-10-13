@@ -5,6 +5,10 @@
  * not-found resolution, the per-page error boundary, the loading fallback for
  * lazy slices, and the dirty-navigation blocker for popstate/URL-edit
  * traversals (in-app navigation is pre-guarded by the store's `go`).
+ *
+ * Ticket 59 (append): the header `notifications` slot is filled with the
+ * migrated notice center through the ticket-08 typed `ShellSlots` contract;
+ * the copilot slots keep the legacy defaults until ticket 60.
  */
 import { Component, Suspense, useEffect, useRef, type ReactNode } from 'react'
 import { useBlocker, useRouteError } from 'react-router'
@@ -12,6 +16,7 @@ import { Loader2, RefreshCw, ServerCrash } from 'lucide-react'
 import { useStore } from '../store'
 import { Button } from '../ui'
 import { Shell } from '../shell'
+import { HeaderNotices } from '../features/notices/header-notices'
 import { OUTSIDE_SHELL, type Route } from './history'
 import { routeComponent } from './registry'
 
@@ -79,7 +84,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
   }
   const Page = routeComponent(route.page) ?? routeComponent('notfound')
   return (
-    <Shell>
+    <Shell slots={{ notifications: HeaderNotices }}>
       <Suspense fallback={<PageFallback />}>
         <PageBoundary key={key}>
           {Page ? <Page /> : null}
