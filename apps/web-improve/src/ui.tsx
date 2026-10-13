@@ -1,80 +1,25 @@
-import { useEffect, useId, useMemo, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Circle, CircleDashed, CircleDot, Clock, Eye, FileText, HelpCircle, Info, Lock, Loader2, MinusCircle, OctagonX, PauseCircle, PlayCircle, Search, Send, ShieldCheck, ShieldOff, ShieldAlert, X, XCircle, RotateCcw, Archive, Ban, Wifi, WifiOff, Power, FlaskConical, Lightbulb, Zap, TerminalSquare, Wrench, type LucideIcon } from 'lucide-react'
+/**
+ * Shared UI primitives compatibility barrel (ticket 09).
+ *
+ * Input, button, status and identity primitives were extracted into `src/ui/*`;
+ * this module re-exports them so existing `./ui` imports keep resolving while
+ * the remaining primitives (tables/tabs 10, dialogs/menus 11, composed/domain
+ * 12, charts 13) still live here. No reimplementation — every extracted export
+ * forwards to its owning module.
+ */
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
+import { AlertTriangle, Ban, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye, FileText, Info, Lock, ShieldCheck, ShieldOff, X, XCircle, WifiOff, FlaskConical, Lightbulb, Zap, type LucideIcon } from 'lucide-react'
 import { useStore } from './store'
+import { cx } from './ui/cx'
+import { toneText, type Tone } from './ui/status-map'
+import { Button, IconButton } from './ui/button'
 
-export const cx = (...a: (string | false | null | undefined)[]) => a.filter(Boolean).join(' ')
-
-/* ───────────── Status (never colour alone: always icon + label) ───────────── */
-type Tone = 'ok' | 'warn' | 'bad' | 'accent' | 'cyan' | 'neutral'
-const TONE: Record<Tone, string> = {
-  ok: 'text-ok bg-ok-soft border-ok/30', warn: 'text-warn bg-warn-soft border-warn/30', bad: 'text-bad bg-bad-soft border-bad/30',
-  accent: 'text-accent bg-accent-soft border-accent-line', cyan: 'text-cyan bg-info-soft border-cyan/30', neutral: 'text-muted bg-subtle border-line',
-}
-const S = (label: string, tone: Tone, icon: LucideIcon) => ({ label, tone, icon })
-export const STATUS = {
-  project: {
-    draft: S('Draft', 'neutral', CircleDashed), pending: S('Pending Approval', 'warn', Clock), approved: S('Approved', 'cyan', ShieldCheck), active: S('Active', 'ok', PlayCircle),
-    review: S('Closing', 'warn', Eye), closed: S('Closed', 'neutral', Archive), rejected: S('Rejected', 'bad', XCircle), paused: S('Paused', 'warn', PauseCircle), cancelled: S('Cancelled', 'neutral', Ban),
-  },
-  op: {
-    draft: S('Draft', 'neutral', CircleDashed), pending: S('Awaiting Approval', 'warn', Clock), ready: S('Ready', 'ok', CheckCircle2), running: S('Running', 'cyan', Loader2), paused: S('Paused', 'warn', PauseCircle),
-    done: S('Completed', 'ok', CheckCircle2), error: S('Failed', 'bad', XCircle), cancelled: S('Stopped', 'neutral', Ban), estop: S('Stopped (emergency)', 'bad', OctagonX),
-  },
-  step: {
-    ok: S('Completed', 'ok', CheckCircle2), fail: S('Failed', 'bad', XCircle), pending: S('Queued', 'neutral', Clock), running: S('Running', 'cyan', Loader2), notrun: S('Not run', 'neutral', MinusCircle), unknown: S('Unknown', 'warn', HelpCircle), review: S('Needs review', 'warn', Eye),
-  },
-  agent: {
-    online: S('Connected', 'ok', Wifi), idle: S('Idle', 'cyan', CircleDot), lost: S('Disconnected', 'bad', WifiOff), disabled: S('Disabled', 'neutral', Power), unknown: S('Unknown', 'warn', HelpCircle), unhealthy: S('Unhealthy', 'warn', AlertTriangle),
-  },
-  finding: {
-    draft: S('Draft', 'neutral', CircleDashed), review: S('In Review', 'warn', Eye), confirmed: S('Confirmed', 'cyan', CheckCircle2), remediation: S('In Remediation', 'cyan', Loader2),
-    ai_suggested: S('AI Suggested — unverified', 'warn', Lightbulb), retest: S('Retest', 'warn', RotateCcw), resolved: S('Resolved', 'ok', ShieldCheck), returned: S('Returned', 'bad', RotateCcw),
-  },
-  report: {
-    draft: S('Draft', 'neutral', CircleDashed), review: S('In Review', 'warn', Eye), approved: S('Approved', 'cyan', ShieldCheck), exported: S('Exported', 'cyan', FileText), delivered: S('Delivered', 'ok', Send), returned: S('Returned', 'bad', RotateCcw),
-  },
-  scope: { in: S('In Scope', 'ok', CheckCircle2), out: S('Out of Scope', 'bad', Ban), pending: S('Pending Approval', 'warn', Clock), unclassified: S('Unclassified', 'neutral', HelpCircle) },
-  approval: { pending: S('Pending', 'warn', Clock), approved: S('Approved', 'ok', CheckCircle2), returned: S('Returned', 'bad', RotateCcw), withdrawn: S('Withdrawn', 'neutral', Ban) },
-  roe: { none: S('No ROE', 'neutral', MinusCircle), draft: S('Draft', 'neutral', CircleDashed), pending: S('Pending', 'warn', Clock), approved: S('Approved', 'ok', ShieldCheck), rejected: S('Rejected', 'bad', XCircle) },
-  sev: { critical: S('Critical', 'bad', ShieldAlert), high: S('High', 'bad', AlertTriangle), medium: S('Medium', 'warn', AlertTriangle), low: S('Low', 'cyan', Info), info: S('Informational', 'neutral', Info) },
-  check: { pass: S('Pass', 'ok', CheckCircle2), fail: S('Fail', 'bad', XCircle), review: S('Needs review', 'warn', Eye) },
-  detect: { detected: S('Detected', 'ok', CheckCircle2), undetected: S('Not Detected', 'bad', XCircle), nodata: S('Not Evaluated', 'neutral', MinusCircle) },
-  integ: { connected: S('Connected', 'ok', CheckCircle2), disconnected: S('Disconnected', 'neutral', MinusCircle), authfail: S('Auth failed', 'bad', Lock) },
-  generic: { ok: S('Success', 'ok', CheckCircle2), warn: S('Warning', 'warn', AlertTriangle), bad: S('Error', 'bad', XCircle), neutral: S('—', 'neutral', Circle) },
-  plan: {
-    draft: S('Draft', 'neutral', CircleDashed), proposed: S('Proposed', 'cyan', FileText), in_review: S('In Review', 'warn', Eye), approved: S('Approved', 'ok', ShieldCheck),
-    rejected: S('Rejected', 'bad', XCircle), expired: S('Expired', 'neutral', Clock), executed: S('Executed', 'ok', PlayCircle), superseded: S('Superseded', 'neutral', Archive),
-  },
-  session: {
-    connected: S('Connected', 'ok', Wifi), available: S('Available', 'cyan', CircleDot), awaiting: S('Awaiting Access', 'warn', Clock), suspended: S('Suspended', 'warn', PauseCircle),
-    expired: S('Expired', 'neutral', Clock), terminated: S('Terminated', 'neutral', Ban), revoking: S('Revoking', 'warn', Loader2), disconnected: S('Disconnected', 'neutral', WifiOff),
-  },
-  perm: { none: S('No Access', 'neutral', Ban), 'read-only': S('Read-only', 'cyan', Eye), interactive: S('Interactive', 'warn', TerminalSquare) },
-  c2: { healthy: S('Healthy', 'ok', CheckCircle2), degraded: S('Degraded', 'warn', AlertTriangle), offline: S('Offline', 'bad', WifiOff), maintenance: S('Maintenance', 'neutral', Wrench) },
-  channel: { connected: S('Connected', 'ok', Wifi), degraded: S('Degraded', 'warn', AlertTriangle), disconnected: S('Disconnected', 'bad', WifiOff) },
-  tool: {
-    proposed: S('Proposed', 'neutral', CircleDashed), awaiting: S('Awaiting Approval', 'warn', Clock), allowed: S('Allowed', 'ok', CheckCircle2), denied: S('Denied', 'bad', Ban),
-    running: S('Running', 'cyan', Loader2), completed: S('Completed', 'ok', CheckCircle2), failed: S('Failed', 'bad', XCircle), stopped: S('Stopped', 'neutral', OctagonX),
-  },
-  access: { pending: S('Pending', 'warn', Clock), approved: S('Approved', 'ok', CheckCircle2), rejected: S('Rejected', 'bad', XCircle), changes: S('Changes Requested', 'warn', RotateCcw), expired: S('Expired', 'neutral', Clock) },
-  gate: { passed: S('Passed', 'ok', CheckCircle2), failed: S('Failed', 'bad', XCircle), pending: S('Pending', 'warn', Clock) },
-} as const
-export type StatusKind = keyof typeof STATUS
-
-export function Status({ kind, value, size = 'md', label }: { kind: StatusKind; value: string; size?: 'sm' | 'md'; label?: string }) {
-  const m = (STATUS[kind] as any)[value] as ReturnType<typeof S> | undefined
-  const x = m || S(value, 'neutral', Circle)
-  const I = x.icon
-  const solid = kind === 'sev' && value === 'critical'
-  return (
-    <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-medium', solid ? 'border-bad bg-bad text-white' : TONE[x.tone], size === 'sm' ? 'h-5 px-2 text-xs' : 'h-6 px-2.5 text-xs')}>
-      <I size={size === 'sm' ? 12 : 13} className={I === Loader2 ? 'motion-safe:animate-spin' : ''} aria-hidden />
-      {label || x.label}
-    </span>
-  )
-}
-export const Sev = ({ v }: { v: string }) => <Status kind="sev" value={v} />
-export const toneText = (t: Tone) => ({ ok: 'text-ok', warn: 'text-warn', bad: 'text-bad', accent: 'text-accent', cyan: 'text-cyan', neutral: 'text-neutral' })[t]
+export { cx } from './ui/cx'
+export { STATUS, toneText, type StatusKind, type Tone } from './ui/status-map'
+export { Status, Sev } from './ui/status'
+export { Button, IconButton } from './ui/button'
+export { Field, Input, Textarea, Select, SearchBox, Check, Toggle } from './ui/input'
+export { Mono, IdLink, Avatar, Person } from './ui/identity'
 
 /* ───────────── V2 badges / banners ───────────── */
 export function AiModeBadge({ mode }: { mode: 'observe' | 'propose' | 'execution' }) {
@@ -112,35 +57,6 @@ export type ReasonCodeValue = 'Missing approval' | 'Out of scope' | 'Expired gra
 export function ReasonCode({ code }: { code: ReasonCodeValue }) {
   const I = ({ 'Missing approval': Clock, 'Out of scope': Ban, 'Expired grant': Clock, 'Agent unavailable': WifiOff, 'Project not selected': Info, 'Permission denied': Lock } as Record<string, LucideIcon>)[code] || Info
   return <span className="inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-md border border-line bg-subtle px-1.5 text-xs font-medium text-muted"><I size={12} aria-hidden />{code}</span>
-}
-
-/* ───────────── Button ───────────── */
-type BtnV = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dangerSolid' | 'destructive'
-const BV: Record<BtnV, string> = {
-  primary: 'bg-accent text-white hover:bg-accent-hover active:bg-accent-press border border-transparent',
-  secondary: 'bg-panel text-fg border border-line hover:bg-hover',
-  ghost: 'bg-transparent text-muted hover:bg-hover hover:text-fg border border-transparent',
-  danger: 'bg-transparent text-bad border border-bad/50 hover:bg-bad-soft',
-  dangerSolid: 'bg-bad text-white hover:brightness-110 border border-transparent',
-  destructive: 'bg-bad text-white hover:brightness-110 border border-transparent',
-}
-export function Button({ variant = 'secondary', size = 'md', icon: I, children, className, disabled, title, ...r }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnV; size?: 'sm' | 'md' | 'lg'; icon?: LucideIcon }) {
-  return (
-    <button
-      {...r} disabled={disabled} title={title}
-      className={cx('inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-medium transition disabled:cursor-not-allowed disabled:opacity-45', size === 'sm' ? 'h-8 px-3 text-xs' : size === 'lg' ? 'h-11 px-5 text-sm' : 'h-10 px-4 text-sm', BV[variant], className)}
-    >
-      {I && <I size={size === 'sm' ? 14 : 16} aria-hidden />}
-      {children}
-    </button>
-  )
-}
-export function IconButton({ icon: I, label, className, ...r }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: LucideIcon; label: string }) {
-  return (
-    <button {...r} aria-label={label} title={label} className={cx('inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition hover:bg-hover hover:text-fg disabled:opacity-40', className)}>
-      <I size={18} aria-hidden />
-    </button>
-  )
 }
 
 /* ───────────── Layout ───────────── */
@@ -262,42 +178,6 @@ export function PageSkeleton() {
 }
 
 /* ───────────── Forms ───────────── */
-const fieldCls = 'w-full rounded-[10px] border border-line bg-panel px-3 text-sm text-fg placeholder:text-neutral outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50'
-export function Field({ label, hint, error, required, children, className }: { label: ReactNode; hint?: ReactNode; error?: ReactNode; required?: boolean; children: ReactNode; className?: string }) {
-  return (
-    <label className={cx('block', className)}>
-      <span className="mb-1.5 block text-xs font-medium text-muted">{label}{required && <span className="text-bad"> *</span>}</span>
-      {children}
-      {error ? <span className="mt-1 flex items-center gap-1 text-xs text-bad"><AlertTriangle size={12} />{error}</span> : hint ? <span className="mt-1 block text-xs text-neutral">{hint}</span> : null}
-    </label>
-  )
-}
-export const Input = ({ className, ...r }: InputHTMLAttributes<HTMLInputElement>) => <input {...r} className={cx(fieldCls, 'h-10', className)} />
-export const Textarea = ({ className, ...r }: TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...r} className={cx(fieldCls, 'min-h-24 py-2.5 leading-relaxed', className)} />
-export const Select = ({ className, children, ...r }: SelectHTMLAttributes<HTMLSelectElement>) => <select {...r} className={cx(fieldCls, 'h-10 appearance-none pr-8', className)}>{children}</select>
-export function SearchBox({ value, onChange, placeholder = 'Search…', className }: { value: string; onChange: (v: string) => void; placeholder?: string; className?: string }) {
-  return (
-    <div className={cx('relative', className)}>
-      <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral" aria-hidden />
-      <input aria-label={placeholder} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={cx(fieldCls, 'h-10 pl-9')} />
-    </div>
-  )
-}
-export function Check({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label?: ReactNode; disabled?: boolean }) {
-  return (
-    <label className={cx('inline-flex cursor-pointer items-center gap-2 text-sm', disabled && 'cursor-not-allowed opacity-50')}>
-      <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-[var(--c-accent)]" />
-      {label}
-    </label>
-  )
-}
-export function Toggle({ on, onChange, label, disabled }: { on: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
-  return (
-    <button role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)} className={cx('relative h-6 w-11 shrink-0 rounded-full border transition disabled:opacity-50', on ? 'border-accent bg-accent' : 'border-line bg-hover')}>
-      <span className={cx('absolute top-0.5 h-4.5 w-4.5 rounded-full bg-white transition-all', on ? 'left-[22px]' : 'left-0.5')} style={{ width: 18, height: 18 }} />
-    </button>
-  )
-}
 export function FilterBar({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -462,8 +342,6 @@ export function Menu({ trigger, items, align = 'right' }: { trigger: ReactNode; 
 }
 
 /* ───────────── Data display ───────────── */
-export const Mono = ({ children, className }: { children: ReactNode; className?: string }) => <span className={cx('font-mono text-[13px]', className)}>{children}</span>
-export const IdLink = ({ children, onClick }: { children: ReactNode; onClick: () => void }) => <button onClick={(e) => { e.stopPropagation(); onClick() }} className="font-mono text-[13px] text-accent hover:underline">{children}</button>
 export function DescList({ items, cols = 2 }: { items: { k: ReactNode; v: ReactNode }[]; cols?: 1 | 2 | 3 }) {
   return (
     <dl className={cx('grid gap-x-8 gap-y-4', cols === 1 ? 'grid-cols-1' : cols === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3')}>
@@ -492,11 +370,6 @@ export function Progress({ value, tone = 'accent', label }: { value: number; ton
     </div>
   )
 }
-export function Avatar({ name, size = 28 }: { name: string; size?: number }) {
-  const ini = name.split(' ').slice(-2).map((x) => x[0]).join('').toUpperCase()
-  return <span style={{ width: size, height: size, fontSize: size * 0.4 }} className="inline-flex shrink-0 items-center justify-center rounded-full bg-accent-soft font-semibold text-accent" aria-hidden>{ini}</span>
-}
-export const Person = ({ name }: { name: string }) => <span className="inline-flex items-center gap-2"><Avatar name={name} size={24} />{name}</span>
 export function Timeline({ items }: { items: { at: string; title: ReactNode; sub?: ReactNode; tone?: Tone }[] }) {
   return (
     <ol className="relative ml-2 border-l border-line">
