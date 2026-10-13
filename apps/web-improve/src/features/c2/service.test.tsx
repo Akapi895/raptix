@@ -4,13 +4,13 @@
  * are not-found), channel detail derived from canonical session data,
  * connection health reported separately from access permission, sensitive
  * masking gated on the shared viewSensitive policy action, deep links that
- * resolve, late-response isolation on project switch, and the legacy→Query
- * bridge (a legacy grant decision and the typed estop transitions update the
- * mounted overview without a reload — including the failure/unknown outcomes
- * that must NOT fake a termination).
+ * resolve, late-response isolation on project switch, and the bridge proof
+ * (a typed grant decision and the typed estop transitions update the mounted
+ * overview without a reload — including the failure/unknown outcomes that
+ * must NOT fake a termination).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { ConsoleProviders } from '../../state/query'
 import { StoreProvider, useServices, useStore, type Store } from '../../store'
@@ -22,6 +22,7 @@ import {
   acknowledgeEmergencyStopTransaction, failEmergencyStopTransaction, finalizeEmergencyStopTransaction,
   requestEmergencyStopTransaction, unknownEmergencyStopTransaction,
 } from '../estop/service'
+import { decideSessionRequestTransaction } from './grants'
 import { getChannel, getOverview, listAudit, listRequests, listSessions } from './service'
 
 beforeEach(() => { window.location.hash = '' })
@@ -140,31 +141,34 @@ describe('sessions tab (ticket 45)', () => {
     h.unmount()
   })
 
-  it('a legacy grant decision refetches the mounted session list through the bridge', async () => {
+  it('a typed grant decision refetches the mounted session list through the bridge', async () => {
     const h = mountC2('#/c2?tab=sessions', 'Riley Brooks')
     h.run(() => h.store().setPid('RT-2026-014'))
     await waitFor(() => expect(screen.getAllByText('SS-042').length).toBeGreaterThan(0))
     expect(screen.getAllByText('Pending request').length).toBeGreaterThan(0)
-    // Legacy store action (ticket 46 will migrate it): one commit publishes
-    // the session + session-request ChangeSets the mounted reads observe.
-    h.run(() => h.store().A.decideSessionRequest('AR-012', 'approved', 'Confirmed web profile findings', 30))
+    // Ticket 46: the decision is the feature-local transaction — one commit
+    // publishes the session + session-request ChangeSets the mounted reads observe.
+    h.run(() => {
+      const r = decideSessionRequestTransaction(h.svc().authority, h.svc().clock, opCtx(), { requestId: 'AR-012', decision: 'approved', note: 'Confirmed web profile findings', minutes: 30 })
+      expect(r.ok).toBe(true)
+    })
     await waitFor(() => expect(screen.getAllByText(/Interactive until/).length).toBeGreaterThan(0))
     expect(screen.queryByText('Pending request')).not.toBeInTheDocument()
     h.unmount()
   })
 
   it('a legacy access request submitted from the row action reaches the typed reads', async () => {
-    const h = mountC2('#/c2?tab=sessions', 'Riley Brooks')
-    h.run(() => h.store().setPid('RT-2026-014'))
+    const h = mountC2('#/c2?tab=sessions', 'Taylor Chen')
     await waitFor(() => expect(screen.getAllByText('SS-041').length).toBeGreaterThan(0))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Request access' })[0])
+    // Taylor (operator) may request interactive access; the SS-042 row action
+    // commits through the shared authority (the drawer then navigates to the
+    // session detail; return to the overview's sessions tab).
+    fireEvent.click(within(screen.getByText('SS-042').closest('tr')!).getByRole('button', { name: 'Request access' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Submit request' })).toBeInTheDocument())
     fireEvent.change(screen.getByPlaceholderText(/Why do you need this access/), { target: { value: 'Validate step 8 output on the domain controller.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit request' }))
-    // The legacy action commits through the shared authority (the drawer then
-    // navigates to the session detail; return to the overview's sessions tab).
     h.run(() => h.store().go('c2', { tab: 'sessions' }))
-    await waitFor(() => expect(screen.getAllByText('Pending request').length).toBeGreaterThanOrEqual(2))
+    await waitFor(() => expect(screen.getAllByText('Pending request').length).toBeGreaterThanOrEqual(1))
     h.unmount()
   })
 

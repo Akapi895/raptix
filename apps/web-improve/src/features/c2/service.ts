@@ -10,9 +10,11 @@
  * reports its connection state separately from the actor's access grant —
  * "Connected" never implies "interactive" and an ended state never fakes a
  * termination that the recorded stop machine did not perform. Grant expiry
- * is not evaluated here (ticket 46 owns the deadline lifecycle); access
- * reflects recorded grants/requests as-is. Request/grant mutations stay
- * with the legacy bridge until 46 — every legacy commit publishes the
+ * is not evaluated here (ticket 46 owns the deadline lifecycle — see
+ * ./grants); access reflects recorded grants/requests as-is, with the
+ * grant deadline checked where it matters (the command handler and the
+ * factory-registered sweep). Request/grant mutations run through the
+ * feature-local transactions in ./grants — every commit publishes the
  * session / session-request / audit ChangeSets these reads observe.
  */
 import { projectAccessible, can as policyCan } from '../../auth/policy'
