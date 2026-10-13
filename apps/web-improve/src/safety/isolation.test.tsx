@@ -27,7 +27,7 @@ describe('project switch isolates reads (requirement 6)', () => {
 
 describe('scope revisions invalidate at submission (requirement a / spec scope re-validation)', () => {
   it('editing an approved project bumps the ROE, re-locks approval, expires approved plans and resets ready operations', () => {
-    const h = mountStore('Taylor Chen')
+    const h = mountStore()
     h.run(() => h.store().A.assignAgent('AG-012', 'RT-2026-014'))
     const opId = newOp(h.store)
     h.run(() => h.store().A.confirmPreflight(opId))
@@ -48,7 +48,7 @@ describe('scope revisions invalidate at submission (requirement a / spec scope r
   })
 
   it('after a scope revision preflight denies start until the ROE is re-approved', () => {
-    const h = mountStore('Taylor Chen')
+    const h = mountStore()
     h.run(() => h.store().A.assignAgent('AG-012', 'RT-2026-014'))
     const opId = newOp(h.store)
     h.run(() => h.store().A.confirmPreflight(opId))
