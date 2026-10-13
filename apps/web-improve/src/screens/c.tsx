@@ -5,11 +5,13 @@ import { computePreflight, eligibility, preflightPass, useDirty, useStore } from
 import { planVer } from '../data'
 import type { Operation } from '../data'
 import type { PfCheck, PfSnap, PfState } from './c-common'
-import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, opConversation, opGroups, elapsed, pfOverall, specChecks, findConflicts, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
+import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, opConversation, opGroups, elapsed, pfOverall, specChecks, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
 import { AgentsTab, ConsoleTab, OpBanner, OpControls, OverviewTab, TimelineTab } from './c-console'
 import { GraphTab, ResultsTab } from './c-results'
-import { useOperationList, OperationReadError } from '../features/operations/query'
-import type { OperationCategory } from '../features/operations/service'
+import { useCreateOperation, useOperationDraftOptions, useOperationList, useScheduleOperation, useUpdateOperation, OperationReadError } from '../features/operations/query'
+import { PROJECT_TZ_OFFSET_MS, findScheduleConflicts, roeWindowIssue, scheduleInstantOf } from '../features/operations/service'
+import type { OperationCategory, OperationWriteRead } from '../features/operations/service'
+import type { ServiceResult } from '../domain/service'
 
 const SELECT_PROJECT = 'Select a project to continue'
 const STATUS_OPTS: [string, string][] = [['draft', 'Draft'], ['ready', 'Ready'], ['running', 'Running'], ['paused', 'Paused'], ['done', 'Completed'], ['cancelled', 'Stopped'], ['estop', 'Emergency stopped'], ['error', 'Error']]
@@ -111,21 +113,24 @@ function Operations() {
   )
 }
 
-/* ───────────── Conflict panel (shared by wizard and schedule page) ───────────── */
-function ConflictPanel({ db, id, agents, assets, at, mins, windowText }: { db: ReturnType<typeof useStore>['db']; id?: string; agents: string[]; assets: string[]; at: string; mins: number; windowText?: string }) {
+/* ───────────── Conflict panel (shared by wizard and schedule page). Candidate
+   and stored instants are absolute (service boundary); the display converts to
+   the project timezone's wall clock. ───────────── */
+function ConflictPanel({ db, id, agents, assets, at, mins }: { db: ReturnType<typeof useStore>['db']; id?: string; agents: string[]; assets: string[]; at: string; mins: number }) {
   const { now, go } = useStore()
-  const ms = schedMs(at)
-  if (ms == null) return null
-  const nowMs = parseStamp(now()) ?? ms
+  const inst = scheduleInstantOf(at)
+  if (inst == null) return null
+  const nowInst = (parseStamp(now()) ?? inst + PROJECT_TZ_OFFSET_MS) - PROJECT_TZ_OFFSET_MS
   const proj = db.projects.find((p) => p.id === (db.operations.find((o) => o.id === id)?.projectId))
-  const cs = findConflicts(db, { id, agents, assets, start: ms, mins }, nowMs)
-  const win = windowIssue(proj, ms)
-  const past = ms < nowMs
+  const cs = findScheduleConflicts(db, { id, agents, assets, start: inst, mins }, nowInst)
+  const win = roeWindowIssue(proj, inst)
+  const past = inst < nowInst
+  const disp = (i: number) => fmtMs(i + PROJECT_TZ_OFFSET_MS)
   return (
     <div className="space-y-2" aria-live="polite">
-      <div className="text-xs text-muted">Estimated duration {mins} min · {fmtMs(ms)} to {fmtMs(ms + mins * 60000)}</div>
+      <div className="text-xs text-muted">Estimated duration {mins} min · {disp(inst)} to {disp(inst + mins * 60000)}</div>
       {past && <Banner tone="warn" title="Start time is in the past">Choose a future time or start the operation manually after preflight.</Banner>}
-      {win && <Banner tone="warn" icon={AlertTriangle} title="Outside the allowed window">{win} {windowText ? '' : ''}Pick a time inside the window or request an ROE window change.</Banner>}
+      {win && <Banner tone="warn" icon={AlertTriangle} title="Outside the allowed window">{win} Pick a time inside the window or request an ROE window change.</Banner>}
       {cs.length > 0 && (
         <Banner tone="bad" icon={ShieldX} title={`${cs.length} scheduling conflict${cs.length === 1 ? '' : 's'}`}>
           <ul className="mt-1 space-y-1">
@@ -133,7 +138,7 @@ function ConflictPanel({ db, id, agents, assets, at, mins, windowText }: { db: R
               <li key={i} className="flex flex-wrap items-center gap-x-2 text-sm">
                 <span className="font-semibold">{c.kind === 'agent' ? 'Blocking' : 'Warning'}:</span>{c.label}
                 <IdLink onClick={() => go('operation', { id: c.other.id, tab: 'overview' })}>{c.other.id}</IdLink>
-                <span className="text-xs text-muted">overlap {fmtMs(c.from)} – {fmtMs(c.to)}</span>
+                <span className="text-xs text-muted">overlap {disp(c.from)} – {disp(c.to)}</span>
               </li>
             ))}
           </ul>
@@ -145,18 +150,25 @@ function ConflictPanel({ db, id, agents, assets, at, mins, windowText }: { db: R
   )
 }
 const blockingConflicts = (db: ReturnType<typeof useStore>['db'], id: string | undefined, agents: string[], assets: string[], at: string, mins: number, nowMs: number) => {
-  const ms = schedMs(at)
-  return ms == null ? 0 : findConflicts(db, { id, agents, assets, start: ms, mins }, nowMs).filter((c) => c.kind === 'agent').length
+  const inst = scheduleInstantOf(at)
+  return inst == null ? 0 : findScheduleConflicts(db, { id, agents, assets, start: inst, mins }, nowMs - PROJECT_TZ_OFFSET_MS).filter((c) => c.kind === 'agent').length
 }
 
 /* ═════════════ OP-02 — Create / edit wizard ═════════════ */
 const STEPS = ['Basics', 'Playbook', 'Targets and agents', 'Schedule and mode', 'Review']
 function OperationNew() {
-  const { db, route, pid, project, me, go, can, A, toast, setSwitcherOpen, setPid, setDirty, persistFilters: pfx, setFilter: setFx, now } = useStore()
+  const { db, route, pid, project, me, go, can, toast, setSwitcherOpen, setPid, setDirty, persistFilters: pfx, setFilter: setFx, now } = useStore()
   const edit = route.id ? db.operations.find((o) => o.id === route.id) : undefined
   const projectId = edit?.projectId || (pid !== 'all' ? pid : '')
   const p = db.projects.find((x) => x.id === projectId) || project
   const { ro, reason } = useGuard(projectId || undefined)
+  /* Ticket 25: the selectable options are scoped by the typed service — only
+     approved playbooks, eligible agents and approved in-scope assets reach the
+     form; the write re-validates every selection at the boundary. */
+  const draft = useOperationDraftOptions(edit?.id)
+  const options = draft.data
+  const createOp = useCreateOperation()
+  const updateOp = useUpdateOperation()
   const members = p ? [...new Set([p.owner, ...p.members.filter((m) => m.role === 'manager' || m.role === 'operator').map((m) => m.user)])] : []
   const init = {
     name: edit?.name || '', owner: edit?.owner || (p && members.includes(me.name) ? me.name : p?.owner || ''), desc: '', objective: p?.objectives[0]?.id || '', newObj: '',
@@ -165,22 +177,22 @@ function OperationNew() {
   }
   const [d, setD] = useState(init)
   const [step, setStep] = useState(0)
+  const [submitErr, setSubmitErr] = useState('')
   useEffect(() => { if (pfx['operation-new.playbook']) setFx('operation-new.playbook', undefined); if (pfx['operation-new.assets']) setFx('operation-new.assets', undefined) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const isDirty = JSON.stringify(d) !== JSON.stringify(init)
-  const pb = db.playbooks.find((x) => x.id === d.playbookId)
+  const pb = options?.playbooks.find((x) => x.id === d.playbookId)
   const upd = (patch: Partial<typeof d>) => setD((s) => ({ ...s, ...patch }))
   const toggle = (k: 'agents' | 'assets', id: string) => upd({ [k]: d[k].includes(id) ? d[k].filter((x) => x !== id) : [...d[k], id] } as Partial<typeof d>)
 
-  const agents = db.agents.filter((a) => a.projectId === projectId || a.projectId === '')
-  const agentIssue = (a: (typeof agents)[number]) => {
-    if (a.status === 'lost') return ''
-    if (a.status !== 'online' && a.status !== 'idle') return a.status === 'disabled' ? 'Agent is disabled.' : 'Agent status is unknown.'
-    if (a.op && a.op !== edit?.id) return `Busy with ${a.op} (policy: one agent, one operation).`
-    if (pb && !pb.os.includes(a.os)) return `Incompatible: playbook supports ${pb.os.join(', ')}, agent runs ${a.os}.`
+  const agentRows = options?.agents ?? []
+  const agentIssue = (id: string) => {
+    const row = agentRows.find((x) => x.agent.id === id)
+    if (!row) return ''
+    if (row.issue) return row.issue
+    if (pb && !pb.os.includes(row.agent.os)) return `Incompatible: playbook supports ${pb.os.join(', ')}, agent runs ${row.agent.os}.`
     return ''
   }
-  const assetList = db.assets.filter((a) => a.projectId === projectId)
-  const assetIssue = (a: (typeof assetList)[number]) => a.scope === 'in' ? '' : a.scope === 'out' ? 'Out of scope per ROE — cannot be selected.' : a.scope === 'pending' ? 'Scope approval pending — cannot be selected yet.' : 'Scope not classified — cannot be selected.'
+  const assetRows = options?.assets ?? []
   const mins = edit ? stepMinutes(edit) : Math.max(20, (pb?.steps.length || 8) * 7)
   const nowMs = parseStamp(now()) ?? 0
 
@@ -192,7 +204,7 @@ function OperationNew() {
     1: { pb: !pb && !edit?.planId ? 'Needed before preflight: choose an approved playbook or link an approved AI plan.' : '' },
     2: {
       assets: d.assets.length === 0 ? 'Needed before preflight: select at least one approved in-scope asset. You can still save this draft.' : '',
-      agents: d.agents.length === 0 ? 'Needed before preflight: assign at least one agent. You can still save this draft.' : d.agents.some((a) => agentIssue(db.agents.find((x) => x.id === a)!)) ? 'Some selected agents are not valid. Deselect them or choose others.' : '',
+      agents: d.agents.length === 0 ? 'Needed before preflight: assign at least one agent. You can still save this draft.' : d.agents.some((a) => agentIssue(a)) ? 'Some selected agents are not valid. Deselect them or choose others.' : '',
     },
     3: {
       at: d.when === 'later' ? (!d.at ? 'Choose a start time, or switch to manual start.' : windowIssue(p ?? undefined, schedMs(d.at)) || (blockingConflicts(db, edit?.id, d.agents, d.assets, d.at, mins, nowMs) ? 'An agent is already reserved at this time.' : '')) : '',
@@ -207,7 +219,7 @@ function OperationNew() {
     if (!['approved', 'active'].includes(p.status)) blockers.push({ text: `Project ${p.id} is ${p.status === 'draft' ? 'still a draft' : 'not approved'}.`, to: { page: 'project', id: p.id, tab: 'overview' } })
     if (p.roeStatus !== 'approved') blockers.push({ text: `Cannot run: ROE is not approved (${p.roeVersion} is ${p.roeStatus === 'none' ? 'missing' : p.roeStatus}).`, to: { page: 'project', id: p.id, tab: 'scope' } })
     if (!p.emergency) blockers.push({ text: 'No emergency contact on the ROE.', to: { page: 'project', id: p.id, tab: 'scope' } })
-    if (d.assets.length === 0) blockers.push({ text: assetList.some((a) => a.scope === 'in') ? 'No target assets selected.' : 'This project has 0 approved assets in scope.', to: assetList.some((a) => a.scope === 'in') ? undefined : { page: 'assets' } })
+    if (d.assets.length === 0) blockers.push({ text: assetRows.some((r) => r.asset.scope === 'in') ? 'No target assets selected.' : 'This project has 0 approved assets in scope.', to: assetRows.some((r) => r.asset.scope === 'in') ? undefined : { page: 'assets' } })
     if (d.agents.length === 0) blockers.push({ text: 'No agents assigned.', to: { page: 'agents' } })
     if (!pb && !edit?.planId) blockers.push({ text: 'No approved playbook or AI plan chosen.', to: { page: 'playbooks' } })
   }
@@ -216,15 +228,29 @@ function OperationNew() {
   const submit = (to: 'preflight' | 'detail') => {
     if (!p) return
     if (to === 'preflight' && preflightWhy) { toast(preflightWhy, 'bad'); return }
-    d.agents.filter((a) => db.agents.find((x) => x.id === a)?.projectId === '').forEach((a) => A.assignAgent(a, p.id))
-    const obj = d.objective === '__new' ? d.newObj : p.objectives.find((o) => o.id === d.objective)?.text || ''
-    let id: string
+    setSubmitErr('')
     const schedule = d.when === 'now' ? 'now' : d.at
     const name = d.name.trim() || 'Untitled draft operation'
-    if (edit) { A.updateOperation(edit.id, { name, owner: d.owner, playbookId: d.playbookId, agents: d.agents, assets: d.assets, mode: d.mode, schedule }); id = edit.id; toast('Draft saved. Preflight must be run again before starting.', 'warn') }
-    else { id = A.createOperation({ name, projectId: p.id, owner: d.owner, desc: d.desc, objective: obj, playbookId: d.playbookId, agents: d.agents, assets: d.assets, mode: d.mode, schedule, needConfirm: d.needConfirm, note: d.note }); toast(`Draft ${id} saved. No commands were issued and nothing is reserved.`) }
-    setDirty(false)
-    setTimeout(() => go(to === 'preflight' ? 'preflight' : 'operation', { id, tab: to === 'preflight' ? 'run' : 'overview' }), 60)
+    /* A typed failure renders its reason beside the form and keeps every entry —
+       no navigation, no duplicate write. Success publishes a ChangeSet the list observes. */
+    const saved = (r: ServiceResult<OperationWriteRead>, id: string) => {
+      if (!r.ok) { setSubmitErr(r.failure.message); toast(r.failure.message, 'bad'); return }
+      setDirty(false)
+      toast(edit ? 'Draft saved. Preflight must be run again before starting.' : `Draft ${id} saved. No commands were issued and nothing is reserved.`, edit ? 'warn' : undefined)
+      setTimeout(() => go(to === 'preflight' ? 'preflight' : 'operation', { id, tab: to === 'preflight' ? 'run' : 'overview' }), 60)
+    }
+    const obj = d.objective === '__new' ? d.newObj : p.objectives.find((o) => o.id === d.objective)?.text || ''
+    if (edit) {
+      updateOp.mutate(
+        { id: edit.id, patch: { name, owner: d.owner, playbookId: d.playbookId, agents: d.agents, assets: d.assets, mode: d.mode, schedule } },
+        { onSuccess: (r) => saved(r, edit.id) },
+      )
+    } else {
+      createOp.mutate(
+        { name, owner: d.owner, desc: d.desc, objective: obj, playbookId: d.playbookId, agents: d.agents, assets: d.assets, mode: d.mode, schedule, needConfirm: d.needConfirm, note: d.note },
+        { onSuccess: (r) => saved(r, r.ok ? r.data.op.id : '') },
+      )
+    }
   }
   useDirty(isDirty, () => submit('detail'))
 
@@ -263,9 +289,9 @@ function OperationNew() {
           </div>)}
           {step === 1 && sec(<>
             <Field label="Playbook" hint={show(1, 'pb') || 'Only approved playbooks can be selected. A draft without a plan or playbook is valid.'}>
-              <Select value={d.playbookId} onChange={(e) => upd({ playbookId: e.target.value, agents: d.agents.filter((a) => { const ag = db.agents.find((x) => x.id === a)!; const np = db.playbooks.find((x) => x.id === e.target.value); return !np || np.os.includes(ag.os) }) })}>
+              <Select value={d.playbookId} onChange={(e) => upd({ playbookId: e.target.value, agents: d.agents.filter((a) => { const row = agentRows.find((x) => x.agent.id === a); const np = options?.playbooks.find((x) => x.id === e.target.value); return !row || !np || np.os.includes(row.agent.os) }) })}>
                 <option value="">— Choose a playbook —</option>
-                {db.playbooks.filter((x) => x.kind === 'playbook').map((x) => <option key={x.id} value={x.id} disabled={x.status !== 'approved'}>{x.name} v{x.version}{x.status !== 'approved' ? ' — not approved, cannot be selected' : ''}</option>)}
+                {(options?.playbooks ?? []).map((x) => <option key={x.id} value={x.id}>{x.name} v{x.version}</option>)}
               </Select>
             </Field>
             {pb && <div className="mt-3 rounded-lg border border-line bg-bg p-4"><DescList cols={3} items={[{ k: 'Version', v: <Mono>v{pb.version}</Mono> }, { k: 'Steps', v: pb.steps.length }, { k: 'Compatible platforms', v: pb.os.join(', ') }, { k: 'ATT&CK techniques', v: <span className="font-mono text-xs">{pb.techniques.join(', ')}</span> }, { k: 'Objective', v: pb.goal }, { k: 'Preflight', v: 'PRE-01 to PRE-08 must pass' }]} /></div>}
@@ -273,17 +299,17 @@ function OperationNew() {
           {step === 2 && sec(<>
             <div className="mb-2 text-xs font-medium text-muted">In-scope assets <span className="text-bad">*</span></div>
             <ul className="mb-1 divide-y divide-line/60 rounded-lg border border-line">
-              {assetList.length === 0 && <li className="p-4 text-sm text-muted">This project has no assets. Add assets in the Assets section.</li>}
-              {assetList.map((a) => { const iss = assetIssue(a); return (
-                <li key={a.id} className={cx('flex min-h-12 flex-wrap items-center gap-3 px-4 py-2', iss && 'opacity-70')}>
-                  <Check checked={d.assets.includes(a.id)} disabled={!!iss} onChange={() => toggle('assets', a.id)} label={<span><span className="font-medium">{a.name}</span> <Mono className="text-muted">{a.ident}</Mono></span>} />
-                  <span className="ml-auto flex items-center gap-2">{iss && <span className="text-xs text-bad max-sm:basis-full">{iss}</span>}<Status kind="scope" value={a.scope} size="sm" /></span>
-                </li>) })}
+              {assetRows.length === 0 && <li className="p-4 text-sm text-muted">{options ? 'This project has no assets. Add assets in the Assets section.' : 'Loading assets…'}</li>}
+              {assetRows.map(({ asset: a, issue }) => (
+                <li key={a.id} className={cx('flex min-h-12 flex-wrap items-center gap-3 px-4 py-2', issue && 'opacity-70')}>
+                  <Check checked={d.assets.includes(a.id)} disabled={!!issue} onChange={() => toggle('assets', a.id)} label={<span><span className="font-medium">{a.name}</span> <Mono className="text-muted">{a.ident}</Mono></span>} />
+                  <span className="ml-auto flex items-center gap-2">{issue && <span className="text-xs text-bad max-sm:basis-full">{issue}</span>}<Status kind="scope" value={a.scope} size="sm" /></span>
+                </li>))}
             </ul>
             {stepErr(show(2, 'assets'))}
             <div className="mb-2 mt-5 text-xs font-medium text-muted">Agents <span className="text-bad">*</span> <span className="font-normal">(project agents and unassigned pool agents)</span></div>
             <ul className="mb-1 divide-y divide-line/60 rounded-lg border border-line">
-              {agents.map((a) => { const iss = agentIssue(a); return (
+              {agentRows.map(({ agent: a }) => { const iss = agentIssue(a.id); return (
                 <li key={a.id} className={cx('flex min-h-12 flex-wrap items-center gap-3 px-4 py-2', iss && 'opacity-70')}>
                   <Check checked={d.agents.includes(a.id)} disabled={!!iss} onChange={() => toggle('agents', a.id)} label={<span><span className="font-mono text-[13px]">{a.id}</span> <span className="text-muted">{a.host} · {a.os}</span></span>} />
                   <span className="ml-auto flex flex-wrap items-center gap-2">{iss && <span className="text-xs text-warn max-sm:basis-full">{iss}</span>}{a.status === 'lost' && <span className="text-xs text-warn max-sm:basis-full">Disconnected — preflight will fail until restored.</span>}{a.projectId === '' && <span className="text-xs text-muted">Pool — will be assigned to this project</span>}<Status kind="agent" value={a.status} size="sm" /></span>
@@ -317,6 +343,7 @@ function OperationNew() {
               <p className="mt-2 text-xs text-muted">Start Operation is only offered on the preflight screen, after every required check passes.</p>
             </div>
           </>)}
+          {submitErr && <Banner tone="bad" icon={ShieldX} title="The draft could not be saved">{submitErr} Your entries are kept — fix the issue and save again.</Banner>}
           <div className="flex flex-wrap items-center gap-2">
             <Button disabled={step === 0} onClick={() => setStep(step - 1)} title={step === 0 ? 'This is the first step.' : undefined}>Back</Button>
             {step < 4 && <Button variant="primary" disabled={!allowed} title={allowed ? undefined : 'The form is locked.'} onClick={next}>Next</Button>}
@@ -461,22 +488,36 @@ function PreflightPage({ op }: { op: Operation }) {
 
 /* ═════════════ Scheduling with conflict detection ═════════════ */
 function SchedulePage({ op }: { op: Operation }) {
-  const { db, go, A, toast, can, now } = useStore()
+  const { db, go, toast, can, now } = useStore()
   const { ro, reason } = useGuard(op.projectId)
+  /* Ticket 25: the schedule write is a typed service mutation — validated,
+     atomic, and published as a ChangeSet; a refusal renders its reason and
+     keeps the chosen input. */
+  const scheduleOp = useScheduleOperation()
+  const [saveErr, setSaveErr] = useState('')
   const p = db.projects.find((x) => x.id === op.projectId)!
   const [mode, setMode] = useState<'now' | 'later'>(op.schedule && op.schedule !== 'now' ? 'later' : 'now')
   const [at, setAt] = useState(op.schedule && op.schedule !== 'now' ? op.schedule : '')
   const mins = stepMinutes(op)
-  const nowMs = parseStamp(now()) ?? 0
+  const nowInst = (parseStamp(now()) ?? 0) - PROJECT_TZ_OFFSET_MS
   const locked = ['running', 'paused', 'done', 'cancelled', 'estop', 'error'].includes(op.status)
   const allowed = can('run', op.projectId) && !ro && !locked
-  const ms = schedMs(at)
-  const conflicts = mode === 'later' && ms != null ? findConflicts(db, { id: op.id, agents: op.agents, assets: op.assets, start: ms, mins }, nowMs) : []
+  const inst = scheduleInstantOf(at)
+  const conflicts = mode === 'later' && inst != null ? findScheduleConflicts(db, { id: op.id, agents: op.agents, assets: op.assets, start: inst, mins }, nowInst) : []
   const blocking = conflicts.filter((c) => c.kind === 'agent').length
-  const win = mode === 'later' ? windowIssue(p, ms) : ''
+  const win = mode === 'later' && inst != null ? roeWindowIssue(p, inst) : ''
   const why = locked ? 'The operation has already started and cannot be rescheduled.' : ro ? reason : !can('run', op.projectId) ? 'Only a Manager or Operator can schedule operations.'
-    : mode === 'later' && !at ? 'Choose a start time.' : win ? win : mode === 'later' && ms != null && ms < nowMs ? 'Start time is in the past.' : blocking ? 'An agent is already reserved at this time. Choose a different time.' : ''
-  const save = () => { A.updateOperation(op.id, { schedule: mode === 'now' ? 'now' : at }); toast(mode === 'now' ? 'Schedule cleared. Start manually after preflight.' : `Scheduled for ${fmtSched(at)}. Preflight must be re-run.`, 'info'); go('preflight', { id: op.id }) }
+    : mode === 'later' && !at ? 'Choose a start time.' : win ? win : mode === 'later' && inst != null && inst < nowInst ? 'Start time is in the past.' : blocking ? 'An agent is already reserved at this time. Choose a different time.' : ''
+  const save = () => {
+    setSaveErr('')
+    scheduleOp.mutate({ id: op.id, at: mode === 'now' ? 'now' : at }, {
+      onSuccess: (r) => {
+        if (!r.ok) { setSaveErr(r.failure.message); return }
+        toast(mode === 'now' ? 'Schedule cleared. Start manually after preflight.' : `Scheduled for ${fmtSched(at)}. Preflight must be re-run.`, 'info')
+        go('preflight', { id: op.id })
+      },
+    })
+  }
   const others = db.operations.filter((o) => o.id !== op.id && o.projectId === op.projectId && (o.status === 'running' || o.status === 'paused' || (o.schedule && o.schedule !== 'now' && ['draft', 'ready'].includes(o.status))))
   return (
     <div>
@@ -496,6 +537,7 @@ function SchedulePage({ op }: { op: Operation }) {
               <Button onClick={() => go('preflight', { id: op.id })}>Back to preflight</Button>
               {why && allowed && <span className="text-xs text-warn">{why}</span>}
             </div>
+            {saveErr && <Banner tone="bad" icon={ShieldX} title="Schedule could not be saved">{saveErr}</Banner>}
           </Card>
         </div>
         <div className="space-y-4">

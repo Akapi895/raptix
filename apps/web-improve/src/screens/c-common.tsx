@@ -5,6 +5,7 @@ import { canAccessProject, computePreflight, useStore } from '../store'
 import type { Route } from '../store'
 import { planVer } from '../data'
 import type { Branch, Db, Operation, Plan, Project, Step } from '../data'
+import { PROJECT_TZ_OFFSET_MS, draftMinutes, roeWindowIssue } from '../features/operations/service'
 
 /** Operation access gate: checks existence, project access and the selected project */
 export function OpGate({ C }: { C: ComponentType<{ op: Operation }> }) {
@@ -67,13 +68,12 @@ export function elapsed(op: Operation, nowStamp: string) {
   return fmtMin(Math.round((b - a) / 60000))
 }
 
-/** ROE window check for a scheduled start (default window: Mon–Fri, 9:00 AM–5:00 PM UTC+7) */
+/** ROE window check for a scheduled start (default window: Mon–Fri, 9:00 AM–5:00 PM UTC+7).
+ * Delegates to the one canonical rule in the operations service; screen-layer
+ * wall-clock values are converted to absolute instants at the boundary. */
 export function windowIssue(p: Project | undefined, ms: number | null) {
   if (ms == null) return ''
-  const d = new Date(ms)
-  const day = d.getUTCDay()
-  const h = d.getUTCHours() + d.getUTCMinutes() / 60
-  return day >= 1 && day <= 5 && h >= 9 && h < 17 ? '' : `Start time is outside the ROE window (${p?.window || 'Mon–Fri, 9:00 AM–5:00 PM (UTC+7)'}).`
+  return roeWindowIssue(p, ms - PROJECT_TZ_OFFSET_MS)
 }
 
 /* ───────────── Step helpers ───────────── */
@@ -134,35 +134,8 @@ export function RuntimeStatus({ op, size }: { op: Operation; size?: 'sm' | 'md' 
 export const planApprovalState = (pl?: Plan): 'none' | 'waiting' | 'approved' | 'rejected' | 'expired' =>
   !pl ? 'none' : pl.status === 'approved' || pl.status === 'executed' ? 'approved' : pl.status === 'in_review' || pl.status === 'proposed' ? 'waiting' : pl.status === 'rejected' ? 'rejected' : pl.status === 'draft' ? 'none' : 'expired'
 
-/* ───────────── Scheduling / conflicts ───────────── */
-export const stepMinutes = (op: Operation) => Math.max(20, (op.steps.length || 8) * 7)
-export interface Occupancy { start: number; end: number; basis: 'running' | 'scheduled' }
-/** Time window an operation occupies its agents/assets */
-export function occupancy(op: Operation, nowMs: number): Occupancy | null {
-  if (op.status === 'running' || op.status === 'paused') {
-    const s = parseStamp(op.startedAt) ?? nowMs
-    return { start: s, end: Math.max(s + stepMinutes(op) * 60000, nowMs + 20 * 60000), basis: 'running' }
-  }
-  if (['draft', 'ready', 'pending'].includes(op.status)) {
-    const s = schedMs(op.schedule)
-    return s == null ? null : { start: s, end: s + stepMinutes(op) * 60000, basis: 'scheduled' }
-  }
-  return null
-}
-export interface Conflict { kind: 'agent' | 'asset'; ref: string; label: string; other: Operation; from: number; to: number }
-export function findConflicts(db: Db, cand: { id?: string; agents: string[]; assets: string[]; start: number; mins: number }, nowMs: number): Conflict[] {
-  const end = cand.start + cand.mins * 60000
-  const out: Conflict[] = []
-  db.operations.forEach((o) => {
-    if (o.id === cand.id) return
-    const w = occupancy(o, nowMs)
-    if (!w || w.start >= end || w.end <= cand.start) return
-    const from = Math.max(w.start, cand.start), to = Math.min(w.end, end)
-    o.agents.filter((a) => cand.agents.includes(a)).forEach((a) => out.push({ kind: 'agent', ref: a, label: `Agent ${a} is reserved by ${o.id}`, other: o, from, to }))
-    o.assets.filter((a) => cand.assets.includes(a)).forEach((a) => out.push({ kind: 'asset', ref: a, label: `Asset ${db.assets.find((x) => x.id === a)?.name || a} is targeted by ${o.id}`, other: o, from, to }))
-  })
-  return out
-}
+/* ───────────── Scheduling / conflicts (canonical rule lives in the operations service) ───────────── */
+export const stepMinutes = (op: Operation) => draftMinutes(op.steps.length)
 
 /* ───────────── V3 preflight: 8 spec checks with PASS / WARN / FAIL / NOT CHECKED ───────────── */
 export type PfState = 'pass' | 'warn' | 'fail' | 'nc'
