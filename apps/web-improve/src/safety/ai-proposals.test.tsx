@@ -105,9 +105,12 @@ describe('AI tool proposals are policy-gated (requirement 41/45)', () => {
 })
 
 describe('AI-suggested findings are imported by a human into review (requirement 34)', () => {
-  it('the finding screen offers verify (not auto-confirm) and blocks report inclusion for AI suggestions', () => {
+  it('the finding screen offers verify (not auto-confirm) and blocks report inclusion for AI suggestions', async () => {
     window.location.hash = '#/finding/FD-012'
     const view = mountScreen(findingRoutes.finding, 'Taylor Chen')
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0) // fake timers gate Query's scheduled notifications (ticket 31)
+    })
     const verify = screen.getByRole('button', { name: /Verify & create finding/i })
     expect(verify).toBeEnabled()
     const report = screen.getByRole('button', { name: /Add to Report/i })
