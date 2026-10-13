@@ -23,6 +23,9 @@ import { createOperationService, type OperationService } from '../features/opera
 // Ticket 31 append: findings inventory list/detail read handlers are feature-local
 // (src/features/findings/service.ts); the factory only wires them into a scope.
 import { createFindingService, type FindingService } from '../features/findings/service'
+// Ticket 38 append: AI chat + plan proposal handlers are feature-local
+// (src/features/aichat/service.ts); the factory only wires them into a scope.
+import { createChatService, type ChatService } from '../features/aichat/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -76,6 +79,8 @@ export interface ConsoleServices {
   operations(actor: ActorRef, projectId: string): OperationService
   /** Typed findings inventory list/detail read handlers (ticket 31 — feature-local implementation). */
   findings(actor: ActorRef, projectId: string): FindingService
+  /** Typed AI chat + plan proposal handlers (ticket 38 — feature-local implementation). */
+  chat(actor: ActorRef, projectId: string): ChatService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -173,6 +178,26 @@ export function createConsoleServices(): ConsoleServices {
     return createFindingService(authority, clock, guard)
   }
 
+  /* ── Ticket 38 append: AI chat + plan proposals. Reads share the
+     superseded-scope guard so cancelScope covers in-flight conversation
+     reads on a persona/project switch; writes commit synchronously through
+     the authority with the context captured at call time. ── */
+  const forChat = (actor: ActorRef, projectId: string): ChatService => {
+    const key = scopeKey(actor, projectId)
+    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
+      let superseded = false
+      const cancel = () => { superseded = true }
+      let set = inFlight.get(key)
+      if (!set) { set = new Set(); inFlight.set(key, set) }
+      set.add(cancel)
+      await Promise.resolve()
+      set.delete(cancel)
+      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
+      return produce()
+    }
+    return createChatService(authority, clock, guard)
+  }
+
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
     set?.forEach((cancel) => cancel())
@@ -201,6 +226,7 @@ export function createConsoleServices(): ConsoleServices {
     forScope,
     operations: forOperations,
     findings: forFindings,
+    chat: forChat,
     cancelScope,
     reset(variant) {
       scheduler.clear()
