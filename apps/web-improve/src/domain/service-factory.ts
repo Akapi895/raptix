@@ -33,8 +33,10 @@ import { createSettingsService, type SettingsService } from '../features/setting
 import { createAssetService, type AssetService } from '../features/assets/service'
 import { createWorkerService, type WorkerService } from '../features/workers/service'
 import { createNoticeService, type NoticeService } from '../features/notices/service'
+<<<<<<< HEAD
 import { createResultsService, type ResultsService } from '../features/results/service'
 import { createTraceService, type TraceService } from '../features/trace/service'
+import { createC2Service, type C2Service } from '../features/c2/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -112,10 +114,13 @@ export interface ConsoleServices {
   workers(actor: ActorRef, projectId: string): WorkerService
   /** Typed notice center handlers (ticket 59 — feature-local implementation). */
   notices(actor: ActorRef, projectId: string): NoticeService
+<<<<<<< HEAD
   /** Typed operation results + execution graph read (ticket 30 — feature-local implementation). */
   results(actor: ActorRef, projectId: string): ResultsService
   /** Typed tool-event trace reads with boundary-derived facets (ticket 41 — feature-local implementation). */
   trace(actor: ActorRef, projectId: string): TraceService
+  /** Typed C2 overview/session/request/audit/channel reads (ticket 45 — feature-local implementation). */
+  c2(actor: ActorRef, projectId: string): C2Service
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -203,10 +208,13 @@ export function createConsoleServices(): ConsoleServices {
     createWorkerService(authority, scopeGuard(actor, projectId))
   const forNotices = (actor: ActorRef, projectId: string): NoticeService =>
     createNoticeService(authority, clock, scopeGuard(actor, projectId))
+<<<<<<< HEAD
   const forResults = (actor: ActorRef, projectId: string): ResultsService =>
     createResultsService(authority, scopeGuard(actor, projectId))
   const forTrace = (actor: ActorRef, projectId: string): TraceService =>
     createTraceService(authority, scopeGuard(actor, projectId))
+  const forC2 = (actor: ActorRef, projectId: string): C2Service =>
+    createC2Service(authority, scopeGuard(actor, projectId))
 
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
@@ -252,6 +260,7 @@ export function createConsoleServices(): ConsoleServices {
     notices: forNotices,
     results: forResults,
     trace: forTrace,
+    c2: forC2,
     cancelScope,
     reset(variant) {
       scheduler.clear()
