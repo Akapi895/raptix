@@ -18,8 +18,8 @@
  */
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
-import { USERS } from '../data'
 import { useServices } from '../store'
+import { actorRef } from '../auth/persona'
 import type { ConsoleServices } from '../domain/service-factory'
 import type { ChangeSet, EntityKind } from '../domain/service'
 import { createConsoleQueryClient, scopeOf } from './keys'
@@ -64,8 +64,7 @@ function supersedeScope(client: QueryClient, services: ConsoleServices, actor: s
       return !!scope && scope.actor === actor && scope.project === project
     },
   })
-  const role = USERS.find((u) => u.name === actor)?.role ?? 'viewer'
-  services.cancelScope({ id: actor, role }, project)
+  services.cancelScope(actorRef(actor), project)
 }
 
 function ScopeCancelBridge({ client, services }: { client: QueryClient; services: ConsoleServices }) {
