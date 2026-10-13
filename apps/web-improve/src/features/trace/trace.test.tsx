@@ -214,7 +214,10 @@ describe('trace screen on the typed read (ticket 41)', () => {
   })
 
   it('a legacy tool decision publishes through the change bridge and the Query-backed trace refetches without a reload', async () => {
-    const h = mountTrace()
+    // Ticket 42 re-point: the decision handler enforces four-eyes, so the
+    // legacy entry is exercised as an independent reviewer (the requester
+    // persona is refused with the snapshot untouched — writes.test.tsx).
+    const h = mountTrace('Pat Kim')
     await waitFor(() => expect(screen.getByText('TL-03')).toBeInTheDocument())
     const pendingRow = () => screen.getByText('TL-03').closest('tr')!
     expect(within(pendingRow()).getByText('Pending')).toBeInTheDocument()
