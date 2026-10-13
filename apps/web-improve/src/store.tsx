@@ -33,6 +33,11 @@ import { deliverReportVersion, exportReportVersion, type DeliveryInput } from '.
 // operations feature; the legacy helpers/actions delegate to the same handlers.
 import { computePreflightChecks, PROJECT_TZ_OFFSET_MS, type Check } from './features/operations/preflight'
 import { operationStartGate, runOperationPreflight } from './features/operations/service'
+// Ticket 51 append: the asset import transaction (validated, atomic, through
+// ticket 21's governance transaction) and the role-gated scope change are
+// feature-local (src/features/assets/writes.ts); these legacy entries
+// delegate to them so validation, gating and audit have one implementation.
+import { changeAssetScopeTransaction, importAssetsTransaction } from './features/assets/writes'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
@@ -210,7 +215,7 @@ export interface Actions {
   decideApproval: (id: string, decision: 'approved' | 'returned', note: string) => Res
   editScope: (projectId: string, patch: Partial<Pick<Project, 'window' | 'emergency' | 'methods' | 'restrictions' | 'desc'>>, reason?: string) => Res
   updateProject: (projectId: string, patch: Partial<Project>) => void
-  addAssets: (projectId: string, list: { name: string; ident: string; type: string; os: string; owner: string; scope: 'in' | 'out'; source: string; ip?: string }[]) => { needsApproval: boolean }
+  addAssets: (projectId: string, list: { name: string; ident: string; type: string; os: string; owner: string; scope: 'in' | 'out'; source: string; ip?: string }[]) => { ok: boolean; needsApproval: boolean; error?: string }
   setAssetScope: (assetId: string, scope: Asset['scope']) => void
   assignAgent: (agentId: string, projectId: string) => void
   setAgentStatus: (agentId: string, s: Agent['status']) => void
@@ -593,19 +598,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     updateProject: (projectId, patch) => mutate((d) => { const p = d.projects.find((x) => x.id === projectId)!; Object.assign(p, patch); p.updated = stamp() }),
-    /* Ticket 21: asset additions run through the same governance transaction
-       as ROE edits — one atomic submission-time invalidation (added assets
-       stay pending until an independent approval admits them). Ticket 51
-       migrates the import screens onto this same transaction interface. */
+    /* Ticket 51: the import path runs through the feature-local import
+       transaction — every row is validated before anything commits (one
+       invalid/duplicate row refuses the batch), then ticket 21's governance
+       transaction commits the valid batch atomically (added assets stay
+       pending; a governed scope invalidates at submission). */
     addAssets: (projectId, list) => {
-      const res = reviseScopeTransaction(services.authority, services.clock, actorCtx(projectId), projectId, {
-        assets: list,
-        note: `Adding ${list.length} assets to scope.`,
-        diff: `${list.map((a) => a.name).join(', ')} → in scope`,
-      })
-      return { needsApproval: res.ok ? res.data.invalidated : false }
+      const res = importAssetsTransaction(services.authority, services.clock, actorCtx(projectId), projectId, list)
+      return res.ok
+        ? { ok: true, needsApproval: res.data.needsApproval }
+        : { ok: false, needsApproval: false, error: res.failure.message }
     },
-    setAssetScope: (assetId, scope) => { mutate((d) => { const a = d.assets.find((x) => x.id === assetId)!; a.scope = scope; a.updated = stamp() }); audit('Changed asset scope status', assetId, dbRef.current.assets.find((x) => x.id === assetId)!.projectId) },
+    /* Ticket 51: scope changes run through the role-gated transaction — the
+       handler owns the read-only/role refusals, the audited reason and the
+       governed-ROE scope-change request for pending proposals. */
+    setAssetScope: (assetId, scope) => { changeAssetScopeTransaction(services.authority, services.clock, actorCtx(''), assetId, scope) },
     assignAgent: (agentId, projectId) => { mutate((d) => { const a = d.agents.find((x) => x.id === agentId)!; a.projectId = projectId }); audit('Assigned agent to project', agentId, projectId) },
     setAgentStatus: (agentId, s) => { mutate((d) => { d.agents.find((x) => x.id === agentId)!.status = s }); audit(s === 'disabled' ? 'Disabled agent' : 'Enabled agent', agentId, dbRef.current.agents.find((x) => x.id === agentId)!.projectId) },
     saveGroup: (g) => {
