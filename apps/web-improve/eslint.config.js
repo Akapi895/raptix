@@ -7,7 +7,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 // the owning tickets that must re-promote each rule to 'error'.
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'coverage/**'] },
+  { ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.ua/**'] },
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
