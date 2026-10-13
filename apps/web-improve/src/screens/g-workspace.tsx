@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { Bot, FileText, MessageSquare, Pin, PinOff, Plus, ShieldCheck } from 'lucide-react'
-import { eligibility, useStore } from '../store'
+import { useStore } from '../store'
+import { eligibility } from '../features/operations/preflight'
 import { planVer } from '../data'
 import type { Conversation } from '../data'
 import { Button, DemoTag, IdLink, Status, cx } from '../ui'
