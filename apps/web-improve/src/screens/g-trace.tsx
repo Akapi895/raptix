@@ -4,8 +4,10 @@ import { Columns3, Download, ExternalLink, Filter, X } from 'lucide-react'
 import { useStore } from '../store'
 import { planVer, toolFacets } from '../data'
 import type { Audit, Conversation, Facets, ToolEvent } from '../data'
-import { TraceReadError, useTraceEvents } from '../features/trace/query'
+import { TraceReadError, useTraceEvents, useTraceWrites } from '../features/trace/query'
 import type { TraceRow } from '../features/trace/service'
+import type { ToolDecisionOutcome } from '../features/trace/writes'
+import type { ServiceResult } from '../domain/service'
 import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../ui'
 import { AiSubNav, NoProject, Pill, ReplanPanel, Thread, tz } from './g-common'
 
@@ -52,8 +54,9 @@ const COLS = [
 type ColId = (typeof COLS)[number]['id']
 
 export function AiTrace() {
-  const { pid, route, go, A, can } = useStore()
+  const { pid, route, go, can } = useStore()
   const trace = useTraceEvents()
+  const writes = useTraceWrites()
   const [sel, setSel] = useState<string | undefined>(route.id)
   const [view, setView] = useState<View>(VIEWS.some((v) => v.id === route.tab) ? (route.tab as View) : 'table')
   const [st, setSt] = useState<'all' | Bucket>('all')
@@ -194,7 +197,7 @@ export function AiTrace() {
       )}
       <p className="mt-2 text-xs text-muted">Chat messages are never counted as execution. Status chips are exclusive and sum to All; Policy, Approval and Execution facets are independent and live under More filters. Policy “Allowed” does not mean “Executed”.</p>
       <Drawer open={!!ev} onClose={() => open(undefined)} width={580} title={ev ? `Tool Event Inspector — ${ev.event.id}` : ''}>
-        {ev && <Inspector key={ev.event.id} row={ev} canDecide={can('approvePlan')} why={why} onAllow={(r) => A.decideTool(ev.event.id, 'allowed', r)} onDeny={(r) => A.decideTool(ev.event.id, 'denied', r)} />}
+        {ev && <Inspector key={ev.event.id} row={ev} canDecide={can('approvePlan')} why={why} onAllow={(r) => writes.decide(ev.event.id, 'allowed', r)} onDeny={(r) => writes.decide(ev.event.id, 'denied', r)} />}
       </Drawer>
     </>
   )
@@ -240,12 +243,22 @@ function Grouped({ rows, view, sel, open, stepName }: { rows: TraceRow[]; view: 
   )
 }
 
-function Inspector({ row, canDecide, why, onAllow, onDeny }: { row: TraceRow; canDecide: boolean; why: string; onAllow: (r: string) => void; onDeny: (r: string) => void }) {
+function Inspector({ row, canDecide, why, onAllow, onDeny }: { row: TraceRow; canDecide: boolean; why: string; onAllow: (r: string) => Promise<ServiceResult<ToolDecisionOutcome>>; onDeny: (r: string) => Promise<ServiceResult<ToolDecisionOutcome>> }) {
   const { go, toast } = useStore()
   const ev = row.event
   const [decision, setDecision] = useState<'allowed' | 'denied' | null>(null)
   const [reason, setReason] = useState('')
   const f = row.facets
+  /* The typed handler owns the gates; the explicit ServiceResult is the
+     refusal surface (a refusal commits nothing and renders its reason). */
+  const submit = (kind: 'allowed' | 'denied', whyText: string) => {
+    void (kind === 'allowed' ? onAllow(whyText) : onDeny(whyText)).then((res) => {
+      if (res.ok) {
+        toast(`${ev.id} ${kind === 'allowed' ? 'allowed — Policy Allowed, not executed' : 'denied'} (recorded).`, kind === 'allowed' ? 'ok' : 'warn')
+        setDecision(null); setReason('')
+      } else toast(res.failure.message, 'bad')
+    })
+  }
   const stages = [
     { n: 'Proposal', d: `AP-${ev.id.replace('TL-', '')} by AI Operator`, tone: 'ok' as const, t: ev.at },
     { n: 'Policy decision', d: f.policy === 'Not evaluated' ? 'Not evaluated yet' : f.policy, tone: polTone(f.policy), t: f.policy === 'Not evaluated' ? 'pending' : ev.at },
@@ -269,11 +282,7 @@ function Inspector({ row, canDecide, why, onAllow, onDeny }: { row: TraceRow; ca
                     size="sm"
                     disabled={!reason.trim()}
                     title={reason.trim() ? undefined : 'A decision reason is required.'}
-                    onClick={() => {
-                      if (decision === 'allowed') onAllow(reason.trim())
-                      else onDeny(reason.trim())
-                      toast(`${ev.id} ${decision === 'allowed' ? 'allowed and executed' : 'denied'} (simulated).`, decision === 'allowed' ? 'ok' : 'warn')
-                    }}
+                    onClick={() => submit(decision, reason.trim())}
                   >
                     {decision === 'allowed' ? 'Confirm allow' : 'Confirm deny'}
                   </Button>
@@ -314,6 +323,7 @@ function Inspector({ row, canDecide, why, onAllow, onDeny }: { row: TraceRow; ca
           { k: 'Operation', v: ev.opId ? <IdLink onClick={() => go('operation', { id: ev.opId! })}>{ev.opId}</IdLink> : 'Not executed — no operation' },
           { k: 'Timing', v: <span className="text-xs">{tz(ev.at)} · duration {dur(ev.ms)}</span> },
           { k: 'Correlation ID', v: <Mono>{ev.corr || '—'}</Mono> },
+          { k: 'Decision record', v: ev.decision ? <span className="whitespace-pre-wrap">{`${ev.decision.outcome} by ${ev.decision.by}, ${tz(ev.decision.at)} — ${ev.decision.note}`}</span> : <span className="text-muted">No human decision recorded{ev.state === 'awaiting' ? ' — pending a reviewer' : ''}</span> },
           { k: 'Evidence', v: ev.evidence?.length ? <span className="inline-flex gap-2">{ev.evidence.map((x) => <IdLink key={x} onClick={() => go('project', { id: ev.projectId, tab: 'evidence' })}>{x}</IdLink>)}</span> : 'None captured' },
           { k: 'Audit', v: <button className="text-accent hover:underline" onClick={() => go('ai-history')}>View in AI Audit →</button> },
         ]} />

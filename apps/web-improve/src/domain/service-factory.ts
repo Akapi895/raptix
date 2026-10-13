@@ -209,7 +209,7 @@ export function createConsoleServices(): ConsoleServices {
   const forResults = (actor: ActorRef, projectId: string): ResultsService =>
     createResultsService(authority, scopeGuard(actor, projectId))
   const forTrace = (actor: ActorRef, projectId: string): TraceService =>
-    createTraceService(authority, scopeGuard(actor, projectId))
+    createTraceService(authority, clock, scopeGuard(actor, projectId))
   const forC2 = (actor: ActorRef, projectId: string): C2Service =>
     createC2Service(authority, scopeGuard(actor, projectId))
 
