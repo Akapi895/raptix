@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
-import { can as policyCan, projectAccessible, readOnlyContext } from './auth/policy'
+import { can as policyCan, projectAccessible, readOnlyContext, ROLE_LABEL } from './auth/policy'
 import type { CanAction } from './domain/permissions'
 import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
 // Ticket 38 append: the legacy AI actions delegate to the feature-local chat
@@ -90,9 +90,6 @@ import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToa
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
 
-export type { CanAction } from './domain/permissions'
-export type { CopilotCtx } from './state/stores'
-
 /* ───────────── Simulated clock (UTC+7) ───────────── */
 const T0 = Date.now()
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -108,13 +105,9 @@ const hhmm12 = () => {
 const stamp = () => `Oct 13, 2026, ${hhmm12()} (UTC+7)`
 export const today = () => 'Oct 13, 2026'
 
-/* ───────────── Route ───────────── */
-/* Route codecs and the router location projection live in the router layer
-   (ticket 07); the store re-exports the type for legacy consumers. */
-export type { Route } from './router/history'
-
 /* ───────────── Roles ───────────── */
-export const ROLE_LABEL: Record<Role, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }
+/* Ticket 67: the store's ROLE_LABEL definition moved to the auth policy
+   authority (src/auth/policy.ts) — every consumer resolves it there. */
 type Persona = (typeof USERS)[number]
 
 /** Membership policy seam (ticket 06): forwards to the shared permissions interface. */
