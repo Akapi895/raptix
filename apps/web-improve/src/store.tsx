@@ -29,6 +29,10 @@ import {
 // Ticket 37 append: the legacy export/delivery actions delegate to the typed
 // report handlers (one audited implementation for both entry points).
 import { deliverReportVersion, exportReportVersion, type DeliveryInput } from './features/reports/service'
+// Ticket 26 append: the preflight derivation and the start gate live in the
+// operations feature; the legacy helpers/actions delegate to the same handlers.
+import { computePreflightChecks, PROJECT_TZ_OFFSET_MS, type Check } from './features/operations/preflight'
+import { operationStartGate, runOperationPreflight } from './features/operations/service'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
@@ -77,54 +81,15 @@ export const nextProjectId = (db: Db, prefix = 'RT') => {
 }
 
 /* ───────────── Preflight (8 checks) ───────────── */
-export type CheckState = 'pass' | 'fail' | 'review'
-export interface Check { code: string; label: string; state: CheckState; detail: string; fix?: string; fixRoute?: Route; reason?: string }
+/* Ticket 26: the deterministic policy lives in the operations feature
+   (src/features/operations/preflight.ts) — the legacy helper delegates to the
+   same derivation the typed handlers use, so both entry points observe the
+   same canonical checks (and the same scope-revision invalidation). */
+export type { Check, CheckState } from './features/operations/preflight'
+export { preflightPass } from './features/operations/preflight'
 export function computePreflight(db: Db, op: Operation): Check[] {
-  const p = db.projects.find((x) => x.id === op.projectId)!
-  const pb = db.playbooks.find((x) => x.id === op.playbookId)
-  const plan = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
-  const targets = op.assets.map((id) => db.assets.find((a) => a.id === id)).filter(Boolean) as Asset[]
-  const outT = targets.filter((a) => a.scope !== 'in')
-  const ags = op.agents.map((id) => db.agents.find((a) => a.id === id)).filter(Boolean) as Agent[]
-  const bad = ags.filter((a) => a.status !== 'online' || (a.op && a.op !== op.id) || a.projectId !== p.id)
-  const projOk = ['approved', 'active'].includes(p.status)
-  const roeOk = p.roeStatus === 'approved'
-  const pendingScope = db.approvals.some((a) => a.projectId === p.id && a.status === 'pending' && a.type === APR.scope)
-  const R = (page: string, tab?: string, id?: string): Route => ({ page, tab, id })
-  const planBlock = plan && plan.status !== 'approved' && plan.status !== 'executed'
-  const pendingOther = db.approvals.some((a) => a.projectId === p.id && a.status === 'pending' && a.type === APR.plan)
-  return [
-    projOk
-      ? { code: 'PRE-01', label: 'Project selected and approved', state: 'pass', detail: `${p.id} — ${p.name}` }
-      : { code: 'PRE-01', label: 'Project selected and approved', state: 'fail', detail: 'The project has not been approved.', fix: 'Open approvals', fixRoute: R('project', 'team', p.id), reason: 'Cannot start: the project is not approved. Open Team & approvals to finish.' },
-    roeOk && !pendingScope
-      ? { code: 'PRE-02', label: 'ROE approved and current version', state: 'pass', detail: `${p.roeVersion} — approved` }
-      : { code: 'PRE-02', label: 'ROE approved and current version', state: 'fail', detail: pendingScope ? 'A scope change is waiting for re-approval.' : 'The Rules of Engagement are not approved or no longer valid.', fix: 'Open ROE', fixRoute: R('project', 'scope', p.id), reason: 'Execution is blocked: this project has no approved ROE. Open Scope & ROE to resolve.' },
-    targets.length === 0
-      ? { code: 'PRE-03', label: 'Targets inside approved scope', state: 'fail', detail: 'No target assets selected.', fix: 'Review assets', fixRoute: R('assets') }
-      : outT.length
-        ? { code: 'PRE-03', label: 'Targets inside approved scope', state: 'fail', detail: `Assets outside the allowed scope: ${outT.map((a) => a.name).join(', ')}`, fix: 'Review assets', fixRoute: R('assets') }
-        : { code: 'PRE-03', label: 'Targets inside approved scope', state: 'pass', detail: `${targets.length} in-scope assets: ${targets.map((a) => a.name).join(', ')}` },
-    { code: 'PRE-04', label: 'Inside the allowed time window', state: 'pass', detail: `${p.window} — now ${hhmm12()} (UTC+7)` },
-    pb && pb.status === 'approved'
-      ? { code: 'PRE-05', label: 'Playbook approved and versioned', state: 'pass', detail: `${pb.name} v${pb.version}` }
-      : { code: 'PRE-05', label: 'Playbook approved and versioned', state: 'fail', detail: 'The playbook is not ready for use.', fix: 'Choose another playbook', fixRoute: R('playbooks') },
-    ags.length === 0
-      ? { code: 'PRE-06', label: 'Agents healthy and not in conflict', state: 'fail', detail: 'No agents assigned.', fix: 'Replace agent', fixRoute: R('agents') }
-      : bad.length
-        ? { code: 'PRE-06', label: 'Agents healthy and not in conflict', state: 'fail', detail: `Agents unavailable or in use elsewhere: ${bad.map((a) => a.id).join(', ')}`, fix: 'Replace agent', fixRoute: R('agents') }
-        : { code: 'PRE-06', label: 'Agents healthy and not in conflict', state: 'pass', detail: `${ags.map((a) => a.id).join(', ')} connected and compatible` },
-    planBlock
-      ? { code: 'PRE-07', label: 'Required approvals in place', state: 'review', detail: `AI plan ${plan!.id} ${plan!.ver ?? 'v' + plan!.version} is ${plan!.status.replace('_', ' ')} — approval required.`, fix: 'Review plan', fixRoute: R('ai-plan-review', undefined, plan!.id), reason: 'Waiting for plan approval before execution.' }
-      : pendingOther
-        ? { code: 'PRE-07', label: 'Required approvals in place', state: 'review', detail: 'Another approval request is open for this project.', fix: 'Open approvals', fixRoute: R('project', 'team', p.id) }
-        : { code: 'PRE-07', label: 'Required approvals in place', state: 'pass', detail: plan ? `Plan ${plan.id} v${plan.version} approved.` : 'No open approval requests.' },
-    p.emergency
-      ? { code: 'PRE-08', label: 'Emergency contact defined', state: 'pass', detail: p.emergency }
-      : { code: 'PRE-08', label: 'Emergency contact defined', state: 'fail', detail: 'No emergency contact on file.', fix: 'Update ROE', fixRoute: R('project', 'scope', p.id) },
-  ]
+  return computePreflightChecks(db, op, Date.UTC(2026, 9, 13, 0, nowMin()) - PROJECT_TZ_OFFSET_MS)
 }
-export const preflightPass = (c: Check[]) => c.every((x) => x.state === 'pass')
 
 /* ───────────── Project closure checklist ───────────── */
 /* Ticket 22: the derivation moved to the closure handlers
@@ -136,27 +101,10 @@ export const closureChecklist = (db: Db, pid: string) => evaluateCloseChecklist(
 
 
 /* ───────────── V3: eligibility, readiness, completion ───────────── */
-export type EligKind = 'locked' | 'ready' | 'eligible' | 'active' | 'closed'
-export interface Reason { text: string; to?: Route }
-export function projectAgentsOnline(db: Db, pid: string) { return db.agents.filter((a) => a.projectId === pid && (a.status === 'online' || a.status === 'idle')) }
-export function eligibility(db: Db, pid: string): { kind: EligKind; label: string; tone: 'ok' | 'warn' | 'bad' | 'neutral' | 'cyan'; reasons: Reason[] } {
-  const p = db.projects.find((x) => x.id === pid)
-  if (!p) return { kind: 'locked', label: 'No project selected', tone: 'neutral', reasons: [] }
-  if (p.status === 'closed') return { kind: 'closed', label: 'Read-only — project closed', tone: 'neutral', reasons: [] }
-  const reasons: Reason[] = []
-  const approvedAssets = db.assets.filter((a) => a.projectId === pid && a.scope === 'in').length
-  if (!['approved', 'active', 'review', 'paused'].includes(p.status)) reasons.push({ text: `Project is ${p.status === 'draft' ? 'a draft' : 'not approved'}`, to: { page: 'project', id: pid } })
-  if (p.roeStatus !== 'approved') reasons.push({ text: `${p.roeVersion} is ${p.roeStatus === 'none' ? 'missing' : p.roeStatus}, not approved`, to: { page: 'project', id: pid, tab: 'scope' } })
-  if (approvedAssets === 0) reasons.push({ text: '0 approved assets in scope', to: { page: 'assets' } })
-  if (!p.emergency) reasons.push({ text: 'No emergency contact on the ROE', to: { page: 'project', id: pid, tab: 'scope' } })
-  if (reasons.length) return { kind: 'locked', label: p.roeStatus !== 'approved' ? 'Execution locked — ROE not approved' : 'Execution locked', tone: 'bad', reasons }
-  if (db.operations.some((o) => o.projectId === pid && ['running', 'paused'].includes(o.status))) return { kind: 'active', label: 'Execution active', tone: 'cyan', reasons: [] }
-  const agentsOk = projectAgentsOnline(db, pid).length
-  if (!agentsOk) reasons.push({ text: 'No connected project agents', to: { page: 'agents' } })
-  const ready = db.operations.some((o) => o.projectId === pid && o.status === 'ready')
-  if (ready) return { kind: 'eligible', label: 'Eligible to start', tone: 'ok', reasons }
-  return { kind: 'ready', label: reasons.length ? 'Ready for preflight (agents needed)' : 'Ready for preflight', tone: reasons.length ? 'warn' : 'ok', reasons }
-}
+/* Ticket 26: the eligibility label derivation moved to the operations feature
+   (pure domain function); the legacy export delegates for existing consumers. */
+export type { EligKind, Reason } from './features/operations/preflight'
+export { projectAgentsOnline, eligibility } from './features/operations/preflight'
 export interface ReadyItem { id: string; label: string; ok: boolean; detail: string; to?: Route }
 export function readiness(db: Db, pid: string) {
   const p = db.projects.find((x) => x.id === pid)
@@ -703,14 +651,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })
     },
     confirmPreflight: (opId) => {
-      const op = dbRef.current.operations.find((o) => o.id === opId)!
-      const ok = preflightPass(computePreflight(dbRef.current, op))
-      mutate((d) => { const o = d.operations.find((x) => x.id === opId)!; o.preflightAt = stamp(); o.status = ok ? 'ready' : 'draft' })
-      audit('Ran preflight', opId, op.projectId, ok ? 'Passed' : 'Failed')
+      /* Ticket 26: the preflight run is the typed handler — the eight checks
+         are re-derived from canonical state there; this entry only binds the
+         current persona to the operation's own project. */
+      const op = dbRef.current.operations.find((o) => o.id === opId)
+      if (!op) return
+      runOperationPreflight(services.authority, services.clock, actorCtx(op.projectId), opId)
     },
     startOp: (opId) => {
-      const op = dbRef.current.operations.find((o) => o.id === opId)!
-      if (!preflightPass(computePreflight(dbRef.current, op))) return
+      const op = dbRef.current.operations.find((o) => o.id === opId)
+      /* Ticket 26: the gate is re-derived from canonical state at the handler;
+         a refusal (failing check, role, already started) commits nothing. */
+      const gate = op ? operationStartGate(services.authority, services.clock, actorCtx(op.projectId), opId) : { ok: false as const }
+      if (!gate.ok || !op) return
       mutate((d) => {
         const o = d.operations.find((x) => x.id === opId)!
         o.status = 'running'; o.startedAt = stamp(); o.updated = stamp()
