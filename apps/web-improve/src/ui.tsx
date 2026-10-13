@@ -1,18 +1,18 @@
 /**
  * Shared UI primitives compatibility barrel (ticket 09).
  *
- * Input, button, status, identity, table/pager, tabs/segmented and filter/empty
- * primitives are extracted into `src/ui/*`; this module re-exports them so
- * existing `./ui` imports keep resolving while the remaining primitives
- * (dialogs/menus 11, composed/domain 12, charts 13) still live here. No
+ * Input, button, status, identity, table/pager, tabs/segmented, filter/empty
+ * and dialog/menu primitives are extracted into `src/ui/*`; this module
+ * re-exports them so existing `./ui` imports keep resolving while the
+ * remaining primitives (composed/domain 12, charts 13) still live here. No
  * reimplementation — every extracted export forwards to its owning module.
  */
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
-import { AlertTriangle, Ban, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye, Info, Lock, ShieldCheck, ShieldOff, X, XCircle, WifiOff, FlaskConical, Lightbulb, Zap, type LucideIcon } from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { AlertTriangle, Ban, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye, Info, Lock, ShieldCheck, ShieldOff, XCircle, WifiOff, FlaskConical, Lightbulb, Zap, type LucideIcon } from 'lucide-react'
 import { useStore } from './store'
 import { cx } from './ui/cx'
 import { toneText, type Tone } from './ui/status-map'
-import { Button, IconButton } from './ui/button'
+import { Button } from './ui/button'
 
 export { cx } from './ui/cx'
 export { STATUS, toneText, type StatusKind, type Tone } from './ui/status-map'
@@ -27,6 +27,8 @@ export { Tabs } from './ui/tabs'
 export { Segmented } from './ui/segmented'
 export { Empty } from './ui/empty'
 export { FilterBar } from './ui/filter-bar'
+export { Modal, Drawer } from './ui/dialog'
+export { Menu } from './ui/menu'
 
 /* ───────────── V2 badges / banners ───────────── */
 export function AiModeBadge({ mode }: { mode: 'observe' | 'propose' | 'execution' }) {
@@ -135,113 +137,6 @@ export function PageSkeleton() {
       <Skeleton className="mb-3 h-7 w-64" /><Skeleton className="mb-8 h-4 w-96" />
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}</div>
       <Skeleton className="h-72" />
-    </div>
-  )
-}
-
-/* ───────────── Modal / Drawer ───────────── */
-function useDialogFocus<T extends HTMLElement>(open: boolean, onClose: () => void) {
-  const ref = useRef<T>(null)
-  const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
-  useEffect(() => {
-    if (!open || !ref.current) return
-    const dialog = ref.current
-    const previous = document.activeElement as HTMLElement | null
-    const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter((el) => !el.closest('[inert]'))
-    const topmost = () => {
-      const layers = document.querySelectorAll('[data-dialog-layer]')
-      return layers[layers.length - 1] === dialog
-    }
-    const h = (e: KeyboardEvent) => {
-      if (!topmost()) return
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onCloseRef.current()
-        return
-      }
-      if (e.key !== 'Tab') return
-      const items = focusable()
-      if (!items.length) {
-        e.preventDefault()
-        dialog.focus()
-        return
-      }
-      const first = items[0], last = items[items.length - 1]
-      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    document.addEventListener('keydown', h)
-    requestAnimationFrame(() => (focusable()[0] || dialog).focus())
-    return () => {
-      document.removeEventListener('keydown', h)
-      if (previous?.isConnected) requestAnimationFrame(() => previous.focus())
-    }
-  }, [open])
-  return ref
-}
-
-export function Modal({ open, onClose, title, children, footer, width = 520, danger }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; footer?: ReactNode; width?: number; danger?: boolean }) {
-  const titleId = useId()
-  const ref = useDialogFocus<HTMLDivElement>(open, onClose)
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
-      <div ref={ref} data-dialog-layer role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} style={{ maxWidth: width }} className={cx('relative flex max-h-[90vh] w-full flex-col rounded-2xl border bg-panel shadow-xl outline-none', danger ? 'border-bad/50' : 'border-line')}>
-        <div className="flex items-center justify-between border-b border-line px-6 py-4">
-          <h2 id={titleId} className="text-base font-semibold">{title}</h2>
-          <IconButton icon={X} label="Close" onClick={onClose} className="!h-8 !w-8" />
-        </div>
-        <div className="overflow-y-auto px-6 py-5 text-sm">{children}</div>
-        {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-line px-6 py-4">{footer}</div>}
-      </div>
-    </div>
-  )
-}
-export function Drawer({ open, onClose, title, children, footer, width = 480 }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; footer?: ReactNode; width?: number }) {
-  const titleId = useId()
-  const ref = useDialogFocus<HTMLElement>(open, onClose)
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-[70]">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
-      <aside ref={ref} data-dialog-layer role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} style={{ maxWidth: width }} className="absolute right-0 top-0 flex h-full w-full flex-col border-l border-line bg-panel shadow-2xl outline-none">
-        <div className="flex items-center justify-between border-b border-line px-6 py-4">
-          <h2 id={titleId} className="text-base font-semibold">{title}</h2>
-          <IconButton icon={X} label="Close" onClick={onClose} className="!h-8 !w-8" />
-        </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5 text-sm">{children}</div>
-        {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-line px-6 py-4">{footer}</div>}
-      </aside>
-    </div>
-  )
-}
-export function Menu({ trigger, items, align = 'right' }: { trigger: ReactNode; items: { label: string; icon?: LucideIcon; onClick: () => void; danger?: boolean; disabled?: boolean; hint?: string }[]; align?: 'left' | 'right' }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const h = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false)
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-  return (
-    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
-      <div onClick={() => setOpen(!open)}>{trigger}</div>
-      {open && (
-        <div role="menu" className={cx('absolute top-full z-50 mt-1 min-w-52 rounded-xl border border-line bg-panel p-1 shadow-xl', align === 'right' ? 'right-0' : 'left-0')}>
-          {items.map((it) => (
-            <button key={it.label} role="menuitem" disabled={it.disabled} title={it.hint} onClick={() => { setOpen(false); it.onClick() }} className={cx('flex h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-sm transition hover:bg-hover disabled:opacity-40', it.danger ? 'text-bad' : 'text-fg')}>
-              {it.icon && <it.icon size={15} aria-hidden />}{it.label}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
