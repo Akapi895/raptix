@@ -16,8 +16,14 @@ import { createChatHandlers } from './features/aichat/handlers'
 // entry points.
 import {
   decidePlanTransaction, discardPlanTransaction, editPlanDraftTransaction, requestPlanReviewTransaction,
-  revisePlanTransaction, usableApproval, withdrawPlanReviewTransaction,
+  revisePlanTransaction, withdrawPlanReviewTransaction,
 } from './features/plans/service'
+// Ticket 40 append: the plan→operation bridge is a feature-local transaction
+// (src/features/plans/bridge.ts); the legacy executePlan entry delegates to it
+// so the scope/role gates, the approval-validity re-check at binding time and
+// the ONE atomic binding commit (operation + plan pin + audit) have one
+// implementation for both entry points.
+import { createOperationFromPlanTransaction } from './features/plans/bridge'
 // Ticket 19 append: the project-creation transaction is feature-local
 // (src/features/wizard/service.ts); the legacy action delegates to it.
 import { createProjectTransaction } from './features/wizard/service'
@@ -945,17 +951,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     executePlan: (planId) => {
-      const pl = dbRef.current.plans.find((x) => x.id === planId)
-      if (!pl || pl.status !== 'approved') return { ok: false, error: 'Only an approved plan can be executed.' }
-      /* Ticket 39: the approval-validity gate runs at the handler boundary
-         with the factory clock — an expired approval is unusable even before
-         any cleanup sweep marks the plan expired (the operation bridge itself
-         is ticket 40). */
-      const gate = usableApproval(pl, services.clock.now())
-      if (!gate.ok) return { ok: false, error: gate.error }
-      if (pl.opId && dbRef.current.operations.some((o) => o.id === pl.opId)) return { ok: true, opId: pl.opId }
-      const opId = A.createOperation({ name: pl.title, projectId: pl.projectId, owner: me.name, desc: '', objective: '', playbookId: pl.playbookId, agents: pl.agents, assets: pl.assets, mode: 'Manual approval', schedule: '', needConfirm: true, note: '', planId: pl.id })
-      return { ok: true, opId }
+      /* Ticket 40: the bridge is the feature-local transaction — the scope
+         gate (wrong-project plans cannot bridge), the read-only/role refusal,
+         ticket 39's approval-validity rule re-checked at binding time (an
+         expired approval refuses even while its stored status reads
+         approved) and the idempotent ONE-commit binding (draft operation +
+         plan pin + audit) live there. This entry only bridges the typed
+         result to the legacy shape. */
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = createOperationFromPlanTransaction(services.authority, services.clock, actorCtx(projectId), planId)
+      return res.ok ? { ok: true, opId: res.data.opId } : { ok: false, error: res.failure.message }
     },
     decideTool: (toolId, decision, reason) => {
       const t = dbRef.current.toolEvents.find((x) => x.id === toolId)!
