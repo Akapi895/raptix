@@ -36,6 +36,8 @@ export interface Operation {
   id: string; projectId: string; name: string; status: OpStatus; owner: string; playbookId: string
   agents: string[]; assets: string[]; mode: string; startedAt: string; updated: string; steps: Step[]
   planId?: string; sessionId?: string; schedule?: string
+  /** Canonical absolute instant (ISO-8601) of a scheduled start; `schedule` is its UTC+7 projection (ticket 25). */
+  scheduleAt?: string
   stopReason?: string; stopBy?: string; stopAt?: string; preflightAt?: string
 }
 export interface Agent { id: string; host: string; os: string; version: string; projectId: string; status: AgentStatus; lastSeen: string; op: string | null; group: string; conn: string; ip: string }
