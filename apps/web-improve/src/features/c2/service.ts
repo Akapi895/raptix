@@ -18,10 +18,11 @@
  * session / session-request / audit ChangeSets these reads observe.
  */
 import { projectAccessible, can as policyCan } from '../../auth/policy'
+import { parseDemoInstant } from '../../domain/clock'
 import type { Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
-import type { Agent, Audit, C2Node, Channel, Session, SessionRequest, SessionState } from '../../domain/entities'
-import type { RequestContext, ServiceResult } from '../../domain/service'
+import type { Agent, Asset, Audit, C2Node, Channel, Session, SessionPerm, SessionRequest, SessionState } from '../../domain/entities'
+import type { Instant, RequestContext, ServiceResult } from '../../domain/service'
 
 /* ───────────── Access derivation (connection ≠ permission) ───────────── */
 
@@ -148,6 +149,36 @@ export interface C2ChannelDetailRead {
   canViewSensitive: boolean
 }
 
+/* ───────────── Session detail (ticket 47: console + linked panels) ───────────── */
+
+/** One evidence row of the session's operation; the sensitive identity masks without viewSensitive. */
+export interface C2SessionEvidenceRow { id: string; name: string; kind: string; source: string; sensitive: boolean }
+
+export interface C2SessionDetailRead {
+  session: Session
+  /** Recorded per-user permission for this session (viewer ⇒ none). */
+  perm: C2Perm
+  access: C2AccessInfo
+  /** Sensitive unmasking gate — the shared `viewSensitive` policy action. */
+  canViewSensitive: boolean
+  project?: { id: string; name: string; roeVersion: string; window: string }
+  op?: { id: string; name: string; owner: string; status: string }
+  agent?: { id: string; host: string }
+  /** Connection health of the channel/node as recorded — separate from the access grant. */
+  channel?: { id: string; status: Channel['status']; last: string; nodeLatency?: string }
+  asset?: { id: string; name: string; scope: Asset['scope'] }
+  /** Access requests recorded for this session. */
+  requests: SessionRequest[]
+  /** The actor's own grant; `expiresAt` is the absolute instant when the display string parses. */
+  myGrant?: { perm: SessionPerm; expires: string; by: string; expiresAt?: Instant }
+  /** Audit rows for this session (newest first). */
+  audit: Audit[]
+  /** Evidence rows of the session's operation (sensitive names mask without viewSensitive). */
+  evidence: C2SessionEvidenceRow[]
+  /** Findings recorded against the session's target. */
+  findings: { id: string; title: string }[]
+}
+
 export interface C2Service {
   /** Whole-shell overview: scoped nodes/channels, live session KPIs, readiness reasons. */
   overview(ctx: RequestContext): Promise<ServiceResult<C2OverviewRead>>
@@ -159,6 +190,8 @@ export interface C2Service {
   audit(ctx: RequestContext, query: C2AuditQuery): Promise<ServiceResult<C2AuditListRead>>
   /** One channel with its node, sessions, agents and operations. */
   channel(ctx: RequestContext, id: string): Promise<ServiceResult<C2ChannelDetailRead>>
+  /** One session with its linked panels (scoped, masked per viewSensitive). */
+  session(ctx: RequestContext, id: string): Promise<ServiceResult<C2SessionDetailRead>>
 }
 
 /* ───────────── Shared scoping (matches the legacy seam) ───────────── */
@@ -321,6 +354,57 @@ export function getChannel(db: Db, ctx: RequestContext, id: string): ServiceResu
   }
 }
 
+/**
+ * Pure session-detail handler: one consistent snapshot for the session
+ * detail screen and its console. A session outside the scope is `not-found`
+ * (indistinguishable from a missing one, no existence leak). Connection
+ * health is reported as recorded and separate from the actor's access
+ * grant; the sensitive evidence identity masks unless the actor holds the
+ * shared `viewSensitive` policy action. The readable transcript and linked
+ * panels follow the recorded read policy — they are never hidden merely
+ * because interactive access is absent (the view locks the viewer's
+ * transcript instead); interactive authorization stays in the grant
+ * lifecycle (./grants) and is not derived here.
+ */
+export function getSessionDetail(db: Db, ctx: RequestContext, id: string): ServiceResult<C2SessionDetailRead> {
+  const scope = scopeSets(db, ctx)
+  if (!scope.ok) return scope
+  const accessible = scope.data
+  const s = db.sessions.find((x) => x.id === id)
+  if (!s || !inProject(s.projectId, ctx, accessible)) {
+    return { ok: false, failure: { kind: 'not-found', message: `No session "${id}" in this project. It may belong to another project.`, entity: { kind: 'session', id } } }
+  }
+  const project = db.projects.find((p) => p.id === s.projectId)
+  const op = db.operations.find((o) => o.id === s.opId)
+  const agent = db.agents.find((a) => a.id === s.agentId)
+  const channel = db.channels.find((c) => c.id === s.channelId)
+  const node = channel ? db.c2Nodes.find((n) => n.id === channel.nodeId) : undefined
+  const asset = db.assets.find((a) => a.name === s.asset && a.projectId === s.projectId)
+  const canViewSensitive = policyCan(ctx.actor, 'viewSensitive', project)
+  const g = s.grants.find((x) => x.user === ctx.actor.id)
+  return {
+    ok: true,
+    data: {
+      session: s,
+      perm: sessionPermOf(db, ctx, s),
+      access: accessOf(db, ctx, s),
+      canViewSensitive,
+      project: project && { id: project.id, name: project.name, roeVersion: project.roeVersion, window: project.window },
+      op: op && { id: op.id, name: op.name, owner: op.owner, status: op.status },
+      agent: agent && { id: agent.id, host: agent.host },
+      channel: channel && { id: channel.id, status: channel.status, last: channel.last, nodeLatency: node?.latency },
+      asset: asset && { id: asset.id, name: asset.name, scope: asset.scope },
+      requests: db.sessionRequests.filter((r) => r.sessionId === s.id),
+      myGrant: g && { perm: g.perm, expires: g.expires, by: g.by, expiresAt: parseDemoInstant(g.expires) },
+      audit: db.audit.filter((a) => a.obj === s.id && a.projectId === s.projectId),
+      evidence: db.evidence
+        .filter((e) => e.projectId === s.projectId && e.opId === s.opId)
+        .map((e) => ({ id: e.id, name: e.sensitive && !canViewSensitive ? '•••••• (redacted)' : e.name, kind: e.kind, source: e.source, sensitive: e.sensitive })),
+      findings: db.findings.filter((f) => f.asset === s.asset && f.projectId === s.projectId).map((f) => ({ id: f.id, title: f.title })),
+    },
+  }
+}
+
 /** Builds the typed C2 read service; `guard` is the factory's superseded-scope read guard. */
 export function createC2Service(
   authority: DbAuthority,
@@ -332,5 +416,6 @@ export function createC2Service(
     requests: (ctx) => guard(() => listRequests(authority.snapshot(), ctx)),
     audit: (ctx, query) => guard(() => listAudit(authority.snapshot(), ctx, query)),
     channel: (ctx, id) => guard(() => getChannel(authority.snapshot(), ctx, id)),
+    session: (ctx, id) => guard(() => getSessionDetail(authority.snapshot(), ctx, id)),
   }
 }
