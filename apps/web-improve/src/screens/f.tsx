@@ -144,7 +144,8 @@ function Templates() {
         {templates.map((t) => (
           <Card key={t.id} pad={false} className="flex flex-col overflow-hidden">
             <button onClick={() => setSel(t)} className="block h-36 border-b border-line bg-hover/50 p-4 text-left" aria-label={`View details for ${t.name}`}>
-              <div className="mx-auto flex h-full w-24 flex-col justify-between rounded-sm bg-white p-2 shadow">
+              {/* Miniature paper thumbnail — intentionally light in both themes. */}
+              <div data-paper className="mx-auto flex h-full w-24 flex-col justify-between rounded-sm bg-white p-2 shadow">
                 <div><div className="h-1 w-10 rounded bg-slate-400" /><div className="mt-2 h-2 w-16 rounded bg-slate-800" /><div className="mt-1 h-1 w-14 rounded bg-slate-300" /></div>
                 <div className="text-[7px] text-slate-500">{t.kind} · {t.version}</div>
               </div>
