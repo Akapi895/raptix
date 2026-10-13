@@ -21,6 +21,7 @@ import { DEMO_ANCHOR } from '../../domain/clock'
 import { APR } from '../../data'
 import type { Db, Operation } from '../../data'
 import { reviseScopeTransaction } from '../approvals/service'
+import { assignAgentTransaction } from '../agents/writes'
 import { routes } from '../../screens/c'
 import { seed } from '../../data'
 import { computePreflightChecks, eligibility, preflightPass } from './preflight'
@@ -325,7 +326,10 @@ function mountProbe(me = 'Alex Morgan') {
 describe('operation console (ticket 26 — screens)', () => {
   it('bridge: a legacy preflight run reaches the typed detail read; a typed run reaches the legacy store', async () => {
     const h = mountProbe('Taylor Chen')
-    h.run(() => { h.store().setPid('RT-2026-014'); h.store().A.assignAgent('AG-012', 'RT-2026-014') })
+    // Setup: the pool assignment is role-gated at the typed handler (ticket
+    // 49), so the setup runs it as the manager persona; the bridge proof
+    // below still exercises the operator's preflight actions.
+    h.run(() => { h.store().setPid('RT-2026-014'); assignAgentTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX, 'all'), 'AG-012', { projectId: 'RT-2026-014' }) })
     const opId = h.store().A.createOperation({ name: 'Bridge proof op', projectId: 'RT-2026-014', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
     h.run(() => h.store().go('operation', { id: opId }))
     h.show(<routes.operation />)
