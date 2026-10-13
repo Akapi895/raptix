@@ -59,7 +59,7 @@ export interface Report {
 }
 /** Immutable content of one submitted report version; `pinned` marks the approved snapshot. */
 export interface ReportSnapshot { version: string; at: string; by: string; bodies: Record<string, string>; findings: string[]; pinned?: boolean }
-export interface ExportRec { id: string; reportId: string; version: string; format: string; by: string; at: string; recipient: string; status: string; checksum: string; /** Delivery handover details (ticket 36), stamped on the delivered record. */ channel?: string; notes?: string; ackAt?: string }
+export interface ExportRec { id: string; reportId: string; version: string; format: string; by: string; at: string; recipient: string; status: string; checksum: string; /** Delivery handover details (ticket 36), stamped on the delivered record. */ channel?: string; notes?: string; ackAt?: string; /** Delivery event (ticket 37): the handover's actor and instant, distinct from the export. */ deliveredBy?: string; deliveredAt?: string }
 export interface PlaybookRevision { version: string; by: string; at: string; summary: string[]; steps: string[]; techniques: string[] }
 export interface Playbook { revision?: PlaybookRevision; id: string; name: string; kind: 'playbook' | 'profile'; version: string; owner: string; status: 'approved' | 'draft' | 'review'; os: string[]; techniques: string[]; steps: string[]; desc: string; goal: string; updated: string; share: string }
 export interface Technique { id: string; name: string; tactic: string; platforms: string[]; desc: string }
