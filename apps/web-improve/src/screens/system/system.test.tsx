@@ -128,10 +128,38 @@ describe('recovery behavior', () => {
   })
 })
 
+describe('states gallery (ticket 61b)', () => {
+  it('renders at its key with every state sample and the status legend', () => {
+    mountApp('#/states')
+    signInAs('Alex Morgan')
+    expect(screen.getByRole('heading', { name: 'Universal state set' })).toBeInTheDocument()
+    for (const sample of ['1. Loading', '2. Empty (natural / filtered)', '3. Network error / failed to load', '4. Insufficient permission', '5. Read-only', '6. Stale data', '7. Partial data', '8. No data from integration', '9. Status legend']) {
+      expect(screen.getByText(sample)).toBeInTheDocument()
+    }
+    expect(screen.getByText('Project', { selector: 'div' })).toBeInTheDocument()
+  })
+
+  it('simulate reload shows the skeleton and recovers without a stale timer', () => {
+    mountApp('#/states')
+    signInAs('Alex Morgan')
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Simulate reload' }))
+    expect(screen.getByLabelText('Loading data')).toBeInTheDocument()
+    act(() => { vi.advanceTimersByTime(1200) })
+    expect(screen.getByRole('table')).toBeInTheDocument()
+  })
+
+  it('sample actions navigate through the router seam', () => {
+    mountApp('#/states')
+    signInAs('Alex Morgan')
+    fireEvent.click(screen.getAllByRole('button', { name: 'Create operation' })[0])
+    expect(window.location.hash).toBe('#/operation-new')
+  })
+})
+
 /* Route-inventory rows 1–53 (.scratch/web-improve-refactor/route-inventory.md):
    the manifest must resolve every inventoried key; unknown keys resolve to
-   nothing so the host falls back to the not-found screen. */
-const INVENTORY = [
+   nothing so the host falls back to the not-found screen. */const INVENTORY = [
   'login', 'forbidden', 'notfound', 'error', 'offline', 'session-expired', 'states', 'command-center', 'tasks',
   'projects', 'project-new', 'project',
   'operations', 'operation-new', 'preflight', 'operation-schedule', 'operation',
