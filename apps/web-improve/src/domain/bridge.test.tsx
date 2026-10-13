@@ -147,10 +147,12 @@ describe('bridge: legacy context and services share the one authority', () => {
     const seen: ChangeSet[] = []
     const stop = view.svc().subscribe((cs) => seen.push(cs))
     const auditBefore = view.store().db.counters.audit
+    // Ticket 51: the delegated scope change commits the flip and its audit in
+    // ONE ChangeSet (the transaction owns the atomicity).
     view.run(() => { view.store().A.setAssetScope('AS-0141', 'out') })
-    expect(seen.map((cs) => cs.corr)).toEqual(['legacy', 'legacy'])
+    expect(seen.map((cs) => cs.corr)).toEqual(['legacy'])
     expect(seen[0].entities).toContainEqual({ kind: 'asset', id: 'AS-0141', projectId: 'RT-2026-014' })
-    expect(seen[1].entities.some((e) => e.kind === 'audit')).toBe(true)
+    expect(seen[0].entities.some((e) => e.kind === 'audit')).toBe(true)
     expect(view.store().db.counters.audit).toBe(auditBefore + 1)
     expect(view.svc().authority.snapshot().counters).toBe(view.store().db.counters)
     stop()
