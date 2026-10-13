@@ -201,8 +201,9 @@ function Detail({ d }: { d: ProjectDetail }) {
           })}
         </div>
         <div className="-mb-px shrink-0">
-          {/* Ticket 62: right-anchored (default) — the trigger sits at the strip's right edge, so a left-anchored panel extended past the viewport where the strip scrolls. */}
-          <Menu trigger={<span role="tab" aria-selected={inMore} aria-haspopup="menu" className={`inline-flex h-11 cursor-pointer items-center gap-1.5 whitespace-nowrap border-b-2 px-3.5 text-sm font-medium transition ${inMore ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg'}`}>{inMore ? MORE_TABS.find((t) => t.id === tab)!.label : 'More'}<ChevronDown size={14} aria-hidden /></span>} items={MORE_TABS.map((t) => ({ label: `${t.label}${count(t.id) !== undefined ? ` (${count(t.id)})` : ''}`, onClick: () => setTab(t.id) }))} />
+          {/* Ticket 62: right-anchored (default) — the trigger sits at the strip's right edge, so a left-anchored panel extended past the viewport where the strip scrolls.
+              Ticket 64: a real button so the tab (and its menu) is focusable and keyboard-operable. */}
+          <Menu trigger={<button type="button" role="tab" aria-selected={inMore} aria-haspopup="menu" className={`inline-flex h-11 cursor-pointer items-center gap-1.5 whitespace-nowrap border-b-2 px-3.5 text-sm font-medium transition ${inMore ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg'}`}>{inMore ? MORE_TABS.find((t) => t.id === tab)!.label : 'More'}<ChevronDown size={14} aria-hidden /></button>} items={MORE_TABS.map((t) => ({ label: `${t.label}${count(t.id) !== undefined ? ` (${count(t.id)})` : ''}`, onClick: () => setTab(t.id) }))} />
         </div>
       </div>
 

@@ -112,7 +112,8 @@ export function ProjectPortfolio() {
         return (
           <span className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
             <Button size="sm" variant="ghost" icon={Eye} onClick={() => open(p)}>View Details</Button>
-            <Menu trigger={<span className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-hover" aria-label={`More actions for ${p.id}`}><MoreHorizontal size={16} /></span>} items={[
+            {/* Ticket 64: a real button — the span was unfocusable, so the row menu could not be opened by keyboard at all. */}
+            <Menu trigger={<button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-hover" aria-label={`More actions for ${p.id}`}><MoreHorizontal size={16} /></button>} items={[
               { label: 'Edit Project', icon: Pencil, disabled: !edit, hint: edit ? undefined : 'Requires permission to edit scope', onClick: () => open(p, 'scope') },
               { label: p.pinned ? 'Unpin' : 'Pin to top', icon: p.pinned ? PinOff : Pin, disabled: ro, hint: ro ? (viewer ? 'Viewers have read-only access' : 'This project is closed or cancelled and is read-only.') : undefined, onClick: () => pin.mutate(p) },
               { label: 'Open Operations tab', icon: Eye, onClick: () => open(p, 'operations') },

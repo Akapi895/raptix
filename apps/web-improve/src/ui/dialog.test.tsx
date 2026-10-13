@@ -137,6 +137,32 @@ describe('menu primitive', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument()
   })
 
+  it('opens via ArrowDown on the focused trigger, moves focus to the first enabled item and conveys state on the trigger (ticket 64)', async () => {
+    render(<MenuHost onPick={vi.fn()} />)
+    const trigger = screen.getByRole('button', { name: 'Actions' })
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu')
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    trigger.focus()
+    await userEvent.keyboard('{ArrowDown}')
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Duplicate agent' })).toHaveFocus())
+    // The disabled item is skipped by the focus-in, never auto-focused.
+    expect(screen.getByRole('menuitem', { name: 'Delete agent' })).not.toHaveFocus()
+  })
+
+  it('closes via Escape and restores focus to the trigger (dialog focus-restore semantics, ticket 64)', async () => {
+    render(<MenuHost onPick={vi.fn()} />)
+    const trigger = screen.getByRole('button', { name: 'Actions' })
+    trigger.focus()
+    await userEvent.keyboard('{ArrowDown}')
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Duplicate agent' })).toHaveFocus())
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    await waitFor(() => expect(trigger).toHaveFocus())
+  })
+
   it('activates items with closing, ignores disabled items and contains clicks', async () => {
     const onPick = vi.fn()
     const onRow = vi.fn()
