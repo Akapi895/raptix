@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, X, Search, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
 import { ROLE_LABEL, canAccessProject, sevLabel, useDirty, useStore } from '../store'
-import { TECHNIQUES, type Evidence, type Finding, type FindingStatus, type Severity } from '../data'
-import { FindingReadError, useFindingDetail, useFindingList, useFindingWrites } from '../features/findings/query'
+import { TECHNIQUES, type Finding, type FindingStatus, type Severity } from '../data'
+import { EvidenceReadError, FindingReadError, useEvidenceDetail, useEvidenceList, useFindingDetail, useFindingList, useFindingWrites } from '../features/findings/query'
 import type { EvidenceView, FindingSort, FindingTransitionTarget } from '../features/findings/service'
 import {
   Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Kpi, Locked, Modal, Mono, PageHeader, Pager, Person, PersonaHint, SearchBox, Segmented, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx, useGuard,
@@ -808,90 +808,115 @@ function RetestTab({ f, ro, roReason }: { f: Finding; ro: boolean; roReason: str
   )
 }
 
-/* ───────────── FI-V3-03: Evidence list + Inspector ───────────── */
-const fakeHash = (id: string) => {
-  let h = 2166136261
-  const out: string[] = []
-  for (let i = 0; i < 8; i++) { for (const c of id + i) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) } out.push((h >>> 0).toString(16).padStart(8, '0')) }
-  return out.join('')
-}
+/* ───────────── FI-V3-03: Evidence list + Inspector (ticket 33: typed reads) ───────────── */
 
+/**
+ * Standalone evidence list (ticket 33): the scoped rows, type options and
+ * role-sensitive masking come from the typed findings service through Query
+ * — every row renders its opaque reference, and a masked capture withholds
+ * only its name (the reference stays visible). Missing/cross-project reads
+ * are handler refusals rendered as errors, never content.
+ */
 function EvidenceList() {
-  const { db, scoped, go, pid, can } = useStore()
+  const { go, pid } = useStore()
   const [q, setQ] = useState('')
   const [kind, setKind] = useState('')
-  const all = scoped(db.evidence)
-  const rows = all.filter((e) => (!q || (e.id + ' ' + e.name + ' ' + e.source).toLowerCase().includes(q.toLowerCase())) && (!kind || e.kind === kind))
+  const list = useEvidenceList({ q: q || undefined, kind: kind || undefined })
+  const rows = list.data?.items ?? []
   return (
     <div>
       <PageHeader title="Evidence" sub={pid === 'all' ? 'Evidence across accessible projects (read-only).' : `Evidence recorded for ${pid}. Open an item to inspect metadata and chain of custody.`} />
       <FilterBar>
         <SearchBox value={q} onChange={setQ} placeholder="Search by ID, name or source…" className="w-full sm:w-72" />
-        <Select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value)} className="!w-auto"><option value="">All types</option>{[...new Set(all.map((e) => e.kind))].map((k) => <option key={k}>{k}</option>)}</Select>
+        <Select aria-label="Type" value={kind} onChange={(e) => setKind(e.target.value)} className="!w-auto"><option value="">All types</option>{(list.data?.kinds ?? []).map((k) => <option key={k}>{k}</option>)}</Select>
       </FilterBar>
-      <Table
-        rows={rows} rowKey={(e) => e.id} onRow={(e) => go('evidence', { id: e.id })}
-        empty={<Empty icon={Paperclip} title="No evidence in this project yet" action={<Button onClick={() => go('operations')}>Open Operations</Button>}>Evidence is captured when operation steps produce output. Next: run an operation, or upload from a finding.</Empty>}
-        cols={[
-          { key: 'id', header: 'Evidence ID', render: (e) => <span className="whitespace-nowrap"><Mono className="text-accent">{e.id}</Mono></span> },
-          { key: 'n', header: 'Name', render: (e) => (e.sensitive && !can('viewSensitive') ? <span className="text-warn">Sensitive file — redacted</span> : e.name) },
-          { key: 'k', header: 'Type', render: (e) => <span className="whitespace-nowrap">{e.kind}</span> },
-          { key: 's', header: 'Source event', hideBelow: 'md', render: (e) => <span className="whitespace-nowrap"><Mono>{e.source}</Mono></span> },
-          { key: 'f', header: 'Finding', hideBelow: 'md', render: (e) => (e.findingId ? <span className="whitespace-nowrap"><Mono>{e.findingId}</Mono></span> : '—') },
-          { key: 'r', header: 'Redaction', render: (e) => <span className="whitespace-nowrap text-xs">{e.sensitive ? <span className="text-warn">Redacted by default</span> : 'None needed'}</span> },
-          { key: 'a', header: 'Captured', hideBelow: 'lg', render: (e) => <span className="whitespace-nowrap text-xs text-muted">{e.at}</span> },
-        ]}
-      />
+      {list.isPending ? (
+        <div aria-busy="true" aria-label="Loading evidence"><Skeleton className="h-72" /></div>
+      ) : list.isError ? (
+        <Empty icon={AlertTriangle} title="Could not load evidence" action={<Button onClick={() => list.refetch()}>Retry</Button>}>
+          {(list.error as EvidenceReadError).failure.message}
+        </Empty>
+      ) : (
+        <Table
+          rows={rows} rowKey={(e) => e.ref} onRow={(e) => go('evidence', { id: e.ref })}
+          empty={<Empty icon={Paperclip} title="No evidence in this project yet" action={<Button onClick={() => go('operations')}>Open Operations</Button>}>Evidence is captured when operation steps produce output. Next: run an operation, or upload from a finding.</Empty>}
+          cols={[
+            { key: 'id', header: 'Evidence ID', render: (e) => <span className="whitespace-nowrap"><Mono className="text-accent">{e.ref}</Mono></span> },
+            { key: 'n', header: 'Name', render: (e) => (e.masked ? <span className="text-warn">Sensitive file — redacted</span> : <span>{e.name}</span>) },
+            { key: 'k', header: 'Type', render: (e) => <span className="whitespace-nowrap">{e.kind}</span> },
+            { key: 's', header: 'Source event', hideBelow: 'md', render: (e) => <span className="whitespace-nowrap"><Mono>{e.source}</Mono></span> },
+            { key: 'f', header: 'Finding', hideBelow: 'md', render: (e) => (e.findingId ? <span className="whitespace-nowrap"><Mono>{e.findingId}</Mono></span> : '—') },
+            { key: 'r', header: 'Redaction', render: (e) => <span className="whitespace-nowrap text-xs">{e.sensitive ? <span className="text-warn">Redacted by default</span> : 'None needed'}</span> },
+            { key: 'a', header: 'Captured', hideBelow: 'lg', render: (e) => <span className="whitespace-nowrap text-xs text-muted">{e.at}</span> },
+          ]}
+        />
+      )}
     </div>
   )
 }
 
+/**
+ * Standalone evidence inspector (ticket 33): both route aliases render this
+ * typed read — metadata, producer links (resolved by the handler from real
+ * record links, never parsed from the source string) and the simulated
+ * capture integrity, which describes the retained capture and is never
+ * proof of a finding. Masking and the display/download gates are handler
+ * decisions, identical whichever screen linked the capture; a
+ * missing/out-of-scope record reveals no content and a cross-project record
+ * offers an explicit, access-checked switch.
+ */
 function EvidenceInspector() {
-  const { route, db, me, pid, go, can, A, toast, confirm, setFilter, setPid, readOnly } = useStore()
+  const { route, go, pid, setPid, setSwitcherOpen, A, toast, confirm, setFilter, me, can, readOnly } = useStore()
   const [orig, setOrig] = useState(false)
   const [log, setLog] = useState<{ at: string; text: string }[]>([])
+  const detail = useEvidenceDetail(route.id || undefined)
+  useEffect(() => { setOrig(false); setLog([]) }, [route.id])
   if (!route.id) return <EvidenceList />
-  const ev = db.evidence.find((e) => e.id === route.id)
-  if (!ev) return <Empty icon={AlertTriangle} title="Evidence not found" action={<Button onClick={() => go('evidence')}>Back to evidence</Button>}>ID {route.id} does not exist or was removed.</Empty>
-  if (!canAccessProject(db, me, ev.projectId)) return <Empty icon={Lock} title="You do not have permission to view this evidence" action={<Button onClick={() => go('findings')}>Back</Button>}>Evidence {ev.id} belongs to a project your account cannot access.</Empty>
-  if (pid !== 'all' && ev.projectId !== pid) {
-    return <Empty icon={Lock} title={`Evidence ${ev.id} belongs to another project`} action={<Button variant="primary" onClick={() => { setPid(ev.projectId); setTimeout(() => go('evidence', { id: ev.id }), 80) }}>Switch to {ev.projectId}</Button>}>To avoid mixing data, content from {ev.projectId} is not shown in {pid}.</Empty>
+  if (detail.isError) {
+    const err = (detail.error as EvidenceReadError).failure
+    const other = err.kind === 'forbidden' ? err.entity?.projectId : undefined
+    if (other) {
+      return (
+        <Empty icon={Lock} title={`Evidence ${route.id} belongs to another project`} action={<div className="flex gap-2"><Button variant="primary" onClick={() => { setPid(other); setTimeout(() => go('evidence', { id: route.id }), 80) }}>Switch to {other}</Button><Button onClick={() => setSwitcherOpen(true)}>Select another project</Button></div>}>
+          The selected project is {pid}. To avoid mixing data, content from {other} is not shown in this context.
+        </Empty>
+      )
+    }
+    return <Empty icon={AlertTriangle} title="Evidence not found" action={<Button onClick={() => go('evidence')}>Back to evidence</Button>}>ID {route.id} does not exist or is not available for your account.</Empty>
   }
-  const [opId, stepId] = ev.source.split(' / ')
-  const op = db.operations.find((o) => o.id === (ev.opId || opId))
-  const step = op?.steps.find((x) => x.id === stepId || x.evidence === ev.id)
-  const finding = db.findings.find((f) => f.id === ev.findingId || f.evidence.includes(ev.id))
-  const agent = db.agents.find((a) => a.id === step?.agent)
-  const session = db.sessions.find((x) => x.opId === op?.id && x.agentId === step?.agent)
-  const canOrig = can('viewSensitive') && me.role !== 'analyst'
-  const origWhy = !ev.sensitive ? 'This item has no sensitive content — nothing is masked.' : !can('viewSensitive') ? `The ${ROLE_LABEL[me.role]} role cannot view sensitive content.` : !canOrig ? `The ${ROLE_LABEL[me.role]} role can only view masked content. Ask a Reviewer, Operator or Manager.` : ''
+  if (detail.isPending || !detail.data) {
+    return <div aria-busy="true" aria-label="Loading evidence"><Skeleton className="h-72" /></div>
+  }
+  const data = detail.data
+  const ev = data.evidence
+  const producer = data.producer
+  const origWhy = !ev.sensitive ? 'This item has no sensitive content — nothing is masked.' : !data.canViewSensitive ? `The ${ROLE_LABEL[me.role]} role cannot view sensitive content.` : !data.canViewOriginal ? `The ${ROLE_LABEL[me.role]} role can only view masked content. Ask a Reviewer, Operator or Manager.` : ''
   const masked = ev.sensitive && !orig
   const isImg = ev.kind.startsWith('Image')
   const ro = readOnly(ev.projectId)
   const createWhy = ro ? 'Project is read-only.' : !can('createFinding', ev.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot create findings.` : ''
-  const hash = fakeHash(ev.id)
   const sample = ev.kind === 'JSON' ? '{\n  "role": "service-demo",\n  "permissions": ["read", "list"]\n}' : 'user=demo_account\ngroups=Users, Backup (simulated)\n[synthetic content — no real data]'
   const toggle = () => {
     if (!orig) {
-      confirm({ title: 'View original content?', confirmLabel: 'View original', body: 'Original (unmasked) content will be shown on screen. This access is recorded in the review log (simulated).', onConfirm: () => { setOrig(true); setLog((l) => [{ at: 'Just now (UTC+7)', text: `${me.name} viewed original content` }, ...l]); A.audit('Viewed original evidence', ev.id, ev.projectId) } })
+      confirm({ title: 'View original content?', confirmLabel: 'View original', body: 'Original (unmasked) content will be shown on screen. This access is recorded in the review log (simulated).', onConfirm: () => { setOrig(true); setLog((l) => [{ at: 'Just now (UTC+7)', text: `${me.name} viewed original content` }, ...l]); A.audit('Viewed original evidence', ev.ref, ev.projectId) } })
     } else { setOrig(false); toast('Masked view restored.', 'info') }
   }
   const createFinding = () => {
-    setFilter('finding-prefill', { projectId: ev.projectId, op: op?.id, technique: step?.technique, asset: step?.asset, stepId: step?.id, evidence: [ev.id], title: step ? `Finding from ${ev.id}: ${step.name}` : `Finding from ${ev.id}`, desc: `Observed in ${ev.source}. Evidence ${ev.id} (${ev.kind}) captured ${ev.at}.` })
+    setFilter('finding-prefill', { projectId: ev.projectId, op: producer?.operation?.id, technique: producer?.step?.technique, asset: producer?.step?.asset, stepId: producer?.step?.id, evidence: [ev.ref], title: producer?.step ? `Finding from ${ev.ref}: ${producer.step.name}` : `Finding from ${ev.ref}`, desc: `Observed in ${ev.source}. Evidence ${ev.ref} (${ev.kind}) captured ${ev.at}.` })
     go('finding-new')
   }
   const chain = [
-    { at: ev.at, title: `Captured by agent ${step?.agent || '—'}`, sub: `${ev.source} · collector ${agent ? agent.host : 'operator upload'}`, tone: 'cyan' as const },
-    { at: ev.at, title: 'Hash computed and stored (simulated SHA-256)', sub: 'Integrity baseline recorded', tone: 'accent' as const },
+    { at: ev.at, title: `Captured by agent ${producer?.step?.agent || producer?.invocation?.producer || '—'}`, sub: `${ev.source} · collector ${producer?.agent ? producer.agent.host : 'operator upload'}`, tone: 'cyan' as const },
+    { at: ev.at, title: 'Hash computed and stored (simulated SHA-256)', sub: 'Integrity baseline — describes the retained capture, not the truth of any finding', tone: 'accent' as const },
     { at: ev.at, title: `Collected by ${ev.by}`, sub: 'Attached to the operation record', tone: 'accent' as const },
-    ...(finding ? [{ at: finding.updated, title: `Linked to ${finding.id}`, sub: 'Link cannot be removed from history', tone: 'ok' as const }] : []),
+    ...data.findings.map((f) => ({ at: f.updated, title: `Linked to ${f.id}`, sub: 'Link cannot be removed from history', tone: 'ok' as const })),
   ]
 
   return (
     <div>
       <PageHeader
         back={{ label: 'Evidence', to: () => go('evidence') }}
-        title={<span className="flex flex-wrap items-center gap-2"><Mono className="text-accent">{ev.id}</Mono><span className="text-base font-medium">{ev.sensitive && !can('viewSensitive') ? 'Sensitive file — redacted' : ev.name}</span></span>}
+        title={<span className="flex flex-wrap items-center gap-2"><Mono className="text-accent">{ev.ref}</Mono><span className="text-base font-medium">{ev.masked ? 'Sensitive file — redacted' : ev.name}</span></span>}
         meta={ev.sensitive ? <span className="inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border border-warn/40 bg-warn/10 px-2.5 text-xs text-warn"><Lock size={12} aria-hidden />Sensitive</span> : undefined}
         sub={`Project ${ev.projectId} · captured ${ev.at}`}
         actions={<Button variant="primary" icon={Bug} disabled={!!createWhy} title={createWhy || 'Open the finding form prefilled from this evidence'} onClick={createFinding}>Create finding from evidence</Button>}
@@ -911,7 +936,7 @@ function EvidenceInspector() {
               <pre className="max-h-56 overflow-auto rounded-lg border border-line bg-bg p-3 font-mono text-xs leading-relaxed">{sample}</pre>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" icon={Download} disabled={masked || !can('viewSensitive')} title={masked ? 'Download is available only for content you are permitted to view unmasked.' : !can('viewSensitive') ? 'Your role cannot download evidence.' : ''} onClick={() => toast(`Download of ${ev.name} started (simulated).`, 'info')}>Download</Button>
+              <Button size="sm" icon={Download} disabled={!data.canViewSensitive || masked} title={!data.canViewSensitive ? 'Your role cannot download evidence.' : masked ? 'Download is available only for content you are permitted to view unmasked.' : ''} onClick={() => toast(`Download of ${ev.name} started (simulated).`, 'info')}>Download</Button>
             </div>
           </Card>
           <Card>
@@ -927,23 +952,23 @@ function EvidenceInspector() {
           <Card>
             <CardHeader title="Metadata" />
             <DescList cols={1} items={[
-              { k: 'Evidence ID', v: <Mono>{ev.id}</Mono> },
+              { k: 'Evidence ID', v: <Mono>{ev.ref}</Mono> },
               { k: 'Source event', v: <Mono>{ev.source}</Mono> },
-              { k: 'Operation', v: op ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id })}>{op.id}</button> : '—' },
-              { k: 'Agent / Session', v: <span className="whitespace-nowrap">{agent ? <Mono>{agent.id} · {agent.host}</Mono> : '—'}{session && <> · <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('c2-session', { id: session.id })}>{session.id}</button></>}</span> },
+              { k: 'Operation', v: producer?.operation ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: producer.operation!.id })}>{producer.operation.id}</button> : '—' },
+              { k: 'Agent / Session', v: <span className="whitespace-nowrap">{producer?.agent ? <Mono>{producer.agent.id} · {producer.agent.host}</Mono> : '—'}{producer?.session && <> · <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('c2-session', { id: producer.session!.id })}>{producer.session.id}</button></>}</span> },
               { k: 'Captured time', v: ev.at },
               { k: 'Collector', v: ev.by },
               { k: 'Content type', v: ev.kind },
-              { k: 'Hash / integrity', v: <span><Mono className="break-all text-xs">sha256:{hash.slice(0, 24)}…</Mono><div className="mt-1 inline-flex items-center gap-1 text-xs text-ok"><Fingerprint size={12} aria-hidden />Integrity verified (simulated)</div></span> },
-              { k: 'Redaction status', v: ev.sensitive ? (orig ? 'Redacted by default — original shown (logged)' : 'Redacted (masked)') : 'None needed' },
+              { k: 'Hash / integrity', v: <span><Mono className="break-all text-xs">sha256:{data.integrity.digest?.slice(0, 24)}…</Mono><div className="mt-1 inline-flex items-center gap-1 text-xs text-ok"><Fingerprint size={12} aria-hidden />Integrity verified (simulated)</div><div className="mt-1 text-xs text-muted">Describes the retained capture — not proof that any finding is true.</div></span> },
+              { k: 'Redaction status', v: !ev.sensitive ? 'None needed' : orig ? 'Redacted by default — original shown (logged)' : 'Redacted (masked)' },
             ]} />
           </Card>
           <Card>
             <CardHeader title="Linked records" />
             <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-2"><span className="text-muted">Operation step</span>{op && step ? <Button size="sm" variant="ghost" icon={ExternalLink} onClick={() => go('operation', { id: op.id, tab: 'console' })}>{op.id} / {step.id}</Button> : '—'}</div>
-              <div className="flex items-center justify-between gap-2"><span className="text-muted">Finding</span>{finding ? <Button size="sm" variant="ghost" icon={ExternalLink} onClick={() => go('finding', { id: finding.id })}>{finding.id}{finding.status === 'ai_suggested' ? ' (AI, unverified)' : ''}</Button> : <span className="text-muted">Not linked yet</span>}</div>
-              <div className="flex items-center justify-between gap-2"><span className="text-muted">ATT&CK technique</span>{step ? <Button size="sm" variant="ghost" icon={ExternalLink} onClick={() => go('analysis', { id: op?.id, tab: 'matrix' })}>{step.technique}</Button> : '—'}</div>
+              <div className="flex items-center justify-between gap-2"><span className="text-muted">Operation step</span>{producer?.operation && producer?.step ? <Button size="sm" variant="ghost" icon={ExternalLink} onClick={() => go('operation', { id: producer.operation!.id, tab: 'console' })}>{producer.operation.id} / {producer.step.id}</Button> : '—'}</div>
+              <div className="flex items-center justify-between gap-2"><span className="text-muted">Finding</span>{data.findings.length ? <span className="flex flex-wrap justify-end gap-1.5">{data.findings.map((f) => <Button key={f.id} size="sm" variant="ghost" icon={ExternalLink} onClick={() => go('finding', { id: f.id })}>{f.id}{f.status === 'ai_suggested' ? ' (AI, unverified)' : ''}</Button>)}</span> : <span className="text-muted">Not linked yet</span>}</div>
+              <div className="flex items-center justify-between gap-2"><span className="text-muted">ATT&CK technique</span>{producer?.step ? <Button size="sm" variant="ghost" icon={ExternalLink} onClick={() => go('analysis', { id: producer.operation?.id, tab: 'matrix' })}>{producer.step.technique}</Button> : '—'}</div>
             </div>
           </Card>
         </div>
