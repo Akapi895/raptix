@@ -29,16 +29,14 @@ import { createChatService, type ChatService } from '../features/aichat/service'
 // Ticket 48 append: agent fleet list/detail read handlers are feature-local
 // (src/features/agents/service.ts); the factory only wires them into a scope.
 import { createAgentService, type AgentService } from '../features/agents/service'
-// Ticket 34 append: report catalog reads + validated draft creation are
-// feature-local (src/features/reports/service.ts); the factory wires the scope.
-import { createReportService, type ReportService } from '../features/reports/service'
-// Ticket 43 append: branch group reads + branch action writes are feature-local
-// (src/features/branches/service.ts); the factory only wires them into a scope.
-import { createBranchService, type BranchService } from '../features/branches/service'
 // Ticket 52 append: tradecraft library reads (playbooks + techniques) are
 // feature-local (src/features/library/service.ts); the factory only wires
 // them into a scope.
 import { createLibraryService, type LibraryService } from '../features/library/service'
+// Ticket 54 append: ATT&CK coverage + detection heatmap read handlers are
+// feature-local (src/features/analysis/service.ts); the factory only wires
+// them into a scope.
+import { createAnalysisService, type AnalysisService } from '../features/analysis/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -102,6 +100,8 @@ export interface ConsoleServices {
   branches(actor: ActorRef, projectId: string): BranchService
   /** Typed tradecraft library read handlers (ticket 52 — feature-local implementation). */
   library(actor: ActorRef, projectId: string): LibraryService
+  /** Typed ATT&CK coverage + detection heatmap read handlers (ticket 54 — feature-local implementation). */
+  analysis(actor: ActorRef, projectId: string): AnalysisService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -238,6 +238,25 @@ export function createConsoleServices(): ConsoleServices {
     return createAgentService(authority, guard)
   }
 
+  /* ── Ticket 54 append: ATT&CK coverage + detection heatmap read. Same
+     superseded-scope guard as forScope, so the ScopeCancelBridge's
+     cancelScope covers in-flight coverage reads on a persona/project switch. ── */
+  const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService => {
+    const key = scopeKey(actor, projectId)
+    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
+      let superseded = false
+      const cancel = () => { superseded = true }
+      let set = inFlight.get(key)
+      if (!set) { set = new Set(); inFlight.set(key, set) }
+      set.add(cancel)
+      await Promise.resolve()
+      set.delete(cancel)
+      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
+      return produce()
+    }
+    return createAnalysisService(authority, guard)
+  }
+
   /* ── Ticket 52 append: tradecraft library reads (playbook list/detail,
      technique detail). Same superseded-scope guard as forScope, so the
      ScopeCancelBridge's cancelScope covers in-flight library reads on a
@@ -333,6 +352,7 @@ export function createConsoleServices(): ConsoleServices {
     reports: forReports,
     branches: forBranches,
     library: forLibrary,
+    analysis: forAnalysis,
     cancelScope,
     reset(variant) {
       scheduler.clear()
