@@ -6,7 +6,9 @@ import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, M
 import { getActiveRouter } from '../router/active'
 import { toHash, toHref } from '../router/history'
 import { CONFIRMED_OR_LATER } from '../features/reports/service'
-import { ReportReadError, useDraftOptions, useReportWrites } from '../features/reports/query'
+import type { ReportEditorRead } from '../features/reports/service'
+import { ReportReadError, useDraftOptions, useReportEditor, useReportWrites } from '../features/reports/query'
+import type { ServiceResult } from '../domain/service'
 
 /* ───────── shared helpers ───────── */
 /** Post-submit navigation: written through the active router (ticket 07 — the
@@ -321,42 +323,85 @@ export function ReportNew() {
   )
 }
 
-/* ═════════════ RP-02 — Editor ═════════════ */
+/* ═════════════ RP-02 — Editor (ticket 35) ═════════════ */
+/**
+ * Shared read states for the migrated editor/preview: a pending skeleton, a
+ * refused scope (a non-member's not-found without an existence leak; a
+ * member scoped to another project gets a switch affordance from the
+ * failure's entity ref), then the typed read model.
+ */
+function ReportReadGate({ q, children }: { q: ReturnType<typeof useReportEditor>; children: (d: ReportEditorRead) => ReactNode }) {
+  const { go, setPid } = useStore()
+  if (q.isPending) return <div aria-busy="true" aria-label="Loading report"><Skeleton className="h-72" /></div>
+  if (q.isError) {
+    const failure = q.error instanceof ReportReadError ? q.error.failure : undefined
+    const switchTo = failure?.entity?.projectId
+    return (
+      <Empty icon={FileText}
+        title={failure?.kind === 'not-found' ? 'Report not found' : switchTo ? 'This report belongs to another project' : 'Cannot load the report'}
+        action={switchTo
+          ? <Button variant="primary" onClick={() => setPid(switchTo)}>Switch to project {switchTo}</Button>
+          : failure?.kind === 'not-found'
+            ? <Button onClick={() => go('reports')}>Back to reports</Button>
+            : <Button onClick={() => q.refetch()}>Retry</Button>}>
+        {failure?.message || 'The report is temporarily unavailable.'}
+      </Empty>
+    )
+  }
+  return <>{children(q.data)}</>
+}
+
 export function ReportEditor() {
   const { route } = useStore()
-  const { r, block } = useGate(route.id)
-  if (!r) return <>{block}</>
-  return <EditorInner key={r.id} r={r} />
+  const q = useReportEditor(route.id || '')
+  return <ReportReadGate q={q}>{(d) => <EditorInner key={d.report.id} d={d} />}</ReportReadGate>
 }
 
 const SUGGEST = (title: string, client: string, roe: string) => `AI draft suggestion for "${title}": summarize the verified results for ${client} under ${roe}, state scope limits, and list recommended remediation. Edit and link a source before relying on it.`
 
-function EditorInner({ r }: { r: Report }) {
-  const { db, can, A, go, toast } = useStore()
-  const g = useGuard(r.projectId)
+/**
+ * Editor on the typed read + writes (ticket 35). The report/project/gate come
+ * from the service read; every section mutation (text autosave, add, remove,
+ * reorder, linked findings) commits through the validated handlers and the
+ * ChangeSet bridge refetches this read — a legacy action's report change
+ * reaches the editor the same way. A refused write keeps the local draft and
+ * renders the failure; navigation while dirty goes through the shared
+ * unsaved-changes guard.
+ */
+function EditorInner({ d }: { d: ReportEditorRead }) {
+  const { db, can, go, toast, confirm } = useStore()
+  const writes = useReportWrites()
+  const r = d.report
+  const project = d.project
   const [nf, setNf] = useNoFind(r.id)
   const snaps = useSnaps(r.id)
   const submitVersion = useSubmitter()
-  const project = db.projects.find((p) => p.id === r.projectId)!
   const [active, setActive] = useState(r.sections[0]?.id)
-  const [drafts, setDrafts] = useState<Record<string, string>>(() => Object.fromEntries(r.sections.map((s) => [s.id, s.body])))
+  /* Sparse draft store: only sections the user edited diverge from the server
+     body, so a refetch (own write or a legacy report change) flows through to
+     clean sections instead of being shadowed by mount-time copies. */
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [state, setState] = useState<'saved' | 'saving' | 'error'>('saved')
+  const [saveErr, setSaveErr] = useState<string | null>(null)
   const [histOpen, setHistOpen] = useState(false)
-  const [order, setOrder] = useState<string[]>(() => r.sections.map((s) => s.id))
-  const statusEditable = r.status === 'draft' || r.status === 'returned'
-  const perm = can('editReport', r.projectId)
-  const editable = statusEditable && perm && !g.ro
+  const [newTitle, setNewTitle] = useState('')
+  const [writing, setWriting] = useState(false)
+  const editable = d.canEdit
+  const lockMsg = d.editReason
   const dirtyIds = r.sections.filter((s) => (drafts[s.id] ?? s.body) !== s.body).map((s) => s.id)
   const dirty = dirtyIds.length > 0
-  const saveAll = () => {
-    if (!editable) return true
-    if (!navigator.onLine) { setState('error'); return false }
+  const saveAll = (onDone?: () => void) => {
+    if (!editable || !dirtyIds.length) return
     setState('saving')
-    dirtyIds.forEach((id) => A.saveReportSection(r.id, id, drafts[id]))
-    setTimeout(() => setState('saved'), 300)
-    return true
+    setSaveErr(null)
+    Promise.all(dirtyIds.map((id) => writes.saveSection(r.id, id, drafts[id] ?? ''))).then((results) => {
+      const bad = results.find((x): x is Extract<ServiceResult<Report>, { ok: false }> => !x.ok)
+      setState(bad ? 'error' : 'saved')
+      setSaveErr(bad?.failure.message ?? null)
+      if (!bad) onDone?.()
+    })
   }
-  useDirty(dirty && editable, () => { saveAll() })
+  useDirty(dirty && editable, () => saveAll())
   const timer = useRef<number | undefined>(undefined)
   useEffect(() => {
     if (!dirty || !editable) return
@@ -365,19 +410,39 @@ function EditorInner({ r }: { r: Report }) {
     return () => window.clearTimeout(timer.current)
   }, [drafts]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const sections = order.map((id) => r.sections.find((s) => s.id === id)!).filter(Boolean)
+  /** One structural write at a time; a refusal toasts the handler's reason. */
+  const runWrite = (fn: () => Promise<ServiceResult<Report>>, onOk?: (rep: Report) => void) => {
+    if (writing || !editable) return
+    setWriting(true)
+    fn().then((res) => {
+      setWriting(false)
+      if (!res.ok) toast(res.failure.message, 'bad')
+      else onOk?.(res.data)
+    })
+  }
+  const sections = r.sections
   const sec = sections.find((s) => s.id === active) || sections[0]
-  const move = (id: string, d: -1 | 1) => { const i = order.indexOf(id); const j = i + d; if (j < 0 || j >= order.length) return; const n = [...order]; [n[i], n[j]] = [n[j], n[i]]; setOrder(n) }
+  const move = (id: string, dir: -1 | 1) => {
+    const ids = sections.map((s) => s.id)
+    const i = ids.indexOf(id); const j = i + dir
+    if (j < 0 || j >= ids.length) return
+    const n = [...ids]; [n[i], n[j]] = [n[j], n[i]]
+    runWrite(() => writes.reorderSections(r.id, n))
+  }
+  const addSection = () => {
+    if (!newTitle.trim()) return
+    runWrite(() => writes.addSection(r.id, newTitle), (rep) => { setNewTitle(''); setActive(rep.sections[rep.sections.length - 1]?.id) })
+  }
+  const removeSection = (s: { id: string; title: string }) =>
+    confirm({ title: `Remove section "${s.title}"?`, body: 'The section and its text are removed from this report. This cannot be undone.', confirmLabel: 'Remove section', danger: true, onConfirm: () => runWrite(() => writes.removeSection(r.id, s.id)) })
   const merged: Report = { ...r, sections: r.sections.map((s) => ({ ...s, body: drafts[s.id] ?? s.body })) }
   const checks = reportChecks(db, merged, nf)
   const blocking = checks.filter((c) => c.state === 'fail')
   const lastReturn = [...r.reviews].reverse().find((x) => x.action === 'Changes requested')
-  const STATUS_EN: Record<string, string> = { review: 'In Review', approved: 'Approved', exported: 'Exported', delivered: 'Delivered' }
-  const lockMsg = !statusEditable ? `This report is ${STATUS_EN[r.status]}, so it is read-only. ${r.status === 'delivered' ? 'Create a new version to make changes.' : 'Wait for the reviewer to decide.'}` : g.ro ? g.reason : !perm ? 'Only a Red Team Manager, Operator or Analyst can edit reports. Ask one of them to make the change.' : ''
   const submitBlock = !editable ? (lockMsg || 'Cannot submit.') : blocking.length ? `Cannot submit yet: ${blocking.map((c) => c.label).join('; ')}.` : ''
   const fill = () => {
     const next = { ...drafts }
-    r.sections.forEach((s) => { if (!(next[s.id] ?? '').trim()) next[s.id] = `${s.title}: simulated content for ${project.client} under ROE ${project.roeVersion}. Detailed figures and conclusions will be updated from the completed operations.` })
+    r.sections.forEach((s) => { if (!(next[s.id] ?? s.body).trim()) next[s.id] = `${s.title}: simulated content for ${project.client} under ROE ${project.roeVersion}. Detailed figures and conclusions will be updated from the completed operations.` })
     setDrafts(next); toast('Filled empty sections with simulated content. Review it before submitting.', 'info')
   }
   const submit = () => {
@@ -387,21 +452,24 @@ function EditorInner({ r }: { r: Report }) {
     toast(r.status === 'returned' ? `Resubmitted ${r.id} as a new version for ${r.reviewer}` : `Submitted ${r.id} to ${r.reviewer} for review`)
     hardGo('report-review', r.id)
   }
-  const confirmedLinked = r.findings.map((id) => db.findings.find((f) => f.id === id)).filter((f): f is Finding => !!f && CONFIRMED_OR_LATER.includes(f.status))
+  const confirmedLinked = d.findings.filter((f) => f.reportable && f.linked)
   const insertFindings = () => insert('\n' + confirmedLinked.map((f) => `• ${f.id} (${sevLabel[f.severity]}) — ${f.title}. Asset ${f.asset}.`).join('\n'))
   const lastSnap = snaps[snaps.length - 1]
-  const insert = (t: string) => { if (editable && sec) setDrafts({ ...drafts, [sec.id]: (drafts[sec.id] ?? '') + t }) }
-  const projFindings = db.findings.filter((f) => f.projectId === r.projectId)
-  const toggleF = (id: string, on: boolean) => A.setReportFindings(r.id, on ? [...r.findings, id] : r.findings.filter((x) => x !== id))
+  const insert = (t: string) => { if (editable && sec) setDrafts({ ...drafts, [sec.id]: (drafts[sec.id] ?? sec.body ?? '') + t }) }
+  const toggleF = (id: string, on: boolean) => {
+    const next = on ? [...r.findings, id] : r.findings.filter((x) => x !== id)
+    runWrite(() => writes.setFindings(r.id, next))
+  }
   const empty = (b: string) => !b.trim()
   const returned = r.status === 'returned'
+  const perm = can('editReport', r.projectId)
 
   return (
     <>
       <ReportHead r={r} tab="edit" sub={<>{project.id} · {r.template} · Author {r.author} · Reviewer {r.reviewer}</>}
         actions={<>
           <Button icon={History} onClick={() => setHistOpen(true)}>Version history</Button>
-          <Button icon={Save} onClick={() => { if (saveAll()) toast('Draft saved') }} disabled={!editable || !dirty} title={!editable ? lockMsg : !dirty ? 'There are no unsaved changes' : undefined}>Save Draft</Button>
+          <Button icon={Save} onClick={() => saveAll(() => toast('Draft saved'))} disabled={!editable || !dirty} title={!editable ? lockMsg : !dirty ? 'There are no unsaved changes' : undefined}>Save Draft</Button>
           <Button icon={Eye} onClick={() => go('report-preview', { id: r.id })}>Preview</Button>
           <Button variant="primary" icon={Send} onClick={submit} disabled={!!submitBlock} title={submitBlock || undefined}>{returned ? 'Resubmit for Review' : 'Submit for Review'}</Button>
         </>} />
@@ -413,14 +481,14 @@ function EditorInner({ r }: { r: Report }) {
         </Banner>
       )}
       {returned && !perm && <PersonaHint need="Author" persona={r.author}>This report was returned. The author ({r.author}) must revise it and resubmit for review.</PersonaHint>}
-      {state === 'error' && <Banner tone="bad" title="Could not save" action={<Button size="sm" onClick={() => { if (saveAll()) toast('Saved successfully') }}>Retry</Button>}>The connection was lost during autosave. Your text is still on screen and has not been lost.</Banner>}
+      {state === 'error' && <Banner tone="bad" title="Could not save" action={<Button size="sm" onClick={() => saveAll()}>Retry</Button>}>{saveErr || 'The connection was lost during autosave. Your text is still on screen and has not been lost.'}</Banner>}
       <AiExclusion projectId={r.projectId} />
       {r.findings.length === 0 && !nf?.on && <Banner tone="warn" title="No confirmed findings linked. Saving drafts is still allowed.">Link confirmed findings in the right-hand panel, or switch the Report variant to No-findings closure if the assessment found nothing.</Banner>}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr_340px]">
         <Card pad={false} className="h-fit overflow-hidden">
           <div className="border-b border-line px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted">Outline</div>
-          <ol className="max-h-[70vh] overflow-y-auto p-1.5">
+          <ol className="max-h-[60vh] overflow-y-auto p-1.5">
             {sections.map((s, i) => (
               <li key={s.id} className="group flex items-center">
                 <button onClick={() => setActive(s.id)} aria-current={sec?.id === s.id} className={cx('flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-3 text-left text-sm transition hover:bg-hover', sec?.id === s.id && 'bg-accent-soft font-medium text-fg')}>
@@ -429,12 +497,19 @@ function EditorInner({ r }: { r: Report }) {
                   {empty(drafts[s.id] ?? s.body) ? <span title="Empty section" className="inline-flex shrink-0 items-center gap-1 text-[11px] text-warn"><span className="h-2 w-2 rounded-full bg-warn" />Empty</span> : <CheckCircle2 size={13} className="shrink-0 text-ok" aria-label="Has content" />}
                 </button>
                 {editable && <span className="flex flex-col opacity-0 focus-within:opacity-100 group-hover:opacity-100">
-                  <button aria-label={`Move ${s.title} up`} disabled={i === 0} onClick={() => move(s.id, -1)} className="px-1 text-[10px] leading-none text-muted hover:text-fg disabled:opacity-30">▲</button>
-                  <button aria-label={`Move ${s.title} down`} disabled={i === sections.length - 1} onClick={() => move(s.id, 1)} className="px-1 text-[10px] leading-none text-muted hover:text-fg disabled:opacity-30">▼</button>
+                  <button aria-label={`Move ${s.title} up`} disabled={i === 0 || writing} onClick={() => move(s.id, -1)} className="px-1 text-[10px] leading-none text-muted hover:text-fg disabled:opacity-30">▲</button>
+                  <button aria-label={`Move ${s.title} down`} disabled={i === sections.length - 1 || writing} onClick={() => move(s.id, 1)} className="px-1 text-[10px] leading-none text-muted hover:text-fg disabled:opacity-30">▼</button>
                 </span>}
+                {editable && sections.length > 1 && <button aria-label={`Remove ${s.title}`} disabled={writing} onClick={() => removeSection(s)} className="ml-1 shrink-0 rounded px-1 text-sm text-muted opacity-0 transition hover:text-bad focus-visible:opacity-100 group-hover:opacity-100 disabled:opacity-30" title={`Remove ${s.title}`}>×</button>}
               </li>
             ))}
           </ol>
+          {editable && (
+            <div className="flex gap-1.5 border-t border-line p-2">
+              <Input aria-label="New section title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addSection() }} placeholder="New section title" className="h-8 min-w-0 flex-1 text-xs" />
+              <Button size="sm" icon={Plus} onClick={addSection} disabled={!newTitle.trim() || writing}>Add</Button>
+            </div>
+          )}
         </Card>
 
         <div className="min-w-0 xl:col-start-2">
@@ -456,7 +531,7 @@ function EditorInner({ r }: { r: Report }) {
               </div>
             )}
             <Textarea
-              aria-label={`Content of section ${sec?.title}`} value={drafts[sec?.id] ?? ''} readOnly={!editable} onChange={(e) => { setDrafts({ ...drafts, [sec.id]: e.target.value }); if (state === 'error') setState('saved') }}
+              aria-label={`Content of section ${sec?.title}`} value={drafts[sec?.id] ?? sec?.body ?? ''} readOnly={!editable} onChange={(e) => { setDrafts({ ...drafts, [sec.id]: e.target.value }); if (state === 'error') setState('saved') }}
               className="min-h-[340px] font-sans text-[15px] leading-7" placeholder={editable ? 'Write the section. Autosaves 1.5 seconds after you stop typing.' : 'This section has no content yet.'}
             />
             {(drafts[sec?.id] ?? '').includes('[AI draft') && <p className="mt-2 flex items-start gap-1.5 text-xs text-warn"><AlertTriangle size={13} className="mt-0.5 shrink-0" />AI draft — verify before approval. Lines marked [AI draft] are unverified until you edit them and cite a finding, event or evidence item.</p>}
@@ -464,7 +539,7 @@ function EditorInner({ r }: { r: Report }) {
               <div className="mt-4 rounded-xl border border-line bg-bg p-4">
                 <div className="mb-2 text-xs font-medium text-muted">Linked data (inserted automatically on export)</div>
                 {r.findings.length === 0 ? <p className="text-sm text-muted">No linked findings yet.</p> : (
-                  <ul className="space-y-2">{r.findings.map((id) => { const f = db.findings.find((x) => x.id === id); return f && <li key={id} className="flex flex-wrap items-center gap-2 text-sm"><Mono className="whitespace-nowrap text-accent">{f.id}</Mono><span className="flex-1">{f.title}</span><Sev v={f.severity} /></li> })}</ul>
+                  <ul className="space-y-2">{r.findings.map((id) => { const f = d.findings.find((x) => x.id === id); return f && <li key={id} className="flex flex-wrap items-center gap-2 text-sm"><Mono className="whitespace-nowrap text-accent">{f.id}</Mono><span className="flex-1">{f.title}</span><Sev v={f.severity} /></li> })}</ul>
                 )}
               </div>
             )}
@@ -506,14 +581,14 @@ function EditorInner({ r }: { r: Report }) {
             <CheckList checks={checks} />
           </Card>
           <Card>
-            <CardHeader title="Sources: linked findings" sub={`${r.findings.length}/${projFindings.length} findings from ${r.projectId}`} />
-            {projFindings.length === 0 ? <p className="text-sm text-muted">This project has no findings.</p> : (
+            <CardHeader title="Sources: linked findings" sub={`${r.findings.length}/${d.findings.length} findings from ${r.projectId}`} />
+            {d.findings.length === 0 ? <p className="text-sm text-muted">This project has no findings.</p> : (
               <ul className="space-y-3">
-                {projFindings.map((f) => {
-                  const ok = CONFIRMED_OR_LATER.includes(f.status)
+                {d.findings.map((f) => {
+                  const ok = f.reportable
                   return (
                     <li key={f.id} className="text-sm">
-                      <Check checked={r.findings.includes(f.id)} disabled={!editable || (!ok && !r.findings.includes(f.id))} onChange={(v) => toggleF(f.id, v)} label={<span><Mono className="whitespace-nowrap text-accent">{f.id}</Mono> <span className="text-muted">{sevLabel[f.severity]}</span></span>} />
+                      <Check checked={f.linked} disabled={!editable || (!ok && !f.linked)} onChange={(v) => toggleF(f.id, v)} label={<span><Mono className="whitespace-nowrap text-accent">{f.id}</Mono> <span className="text-muted">{sevLabel[f.severity]}</span></span>} />
                       <div className="ml-6 text-xs text-muted">{f.title}</div>
                       {!ok && <div className="ml-6 text-xs text-warn">{f.status === 'ai_suggested' ? 'AI-suggested, not a verified finding. Excluded from the formal report.' : 'Not confirmed. It cannot be included in a report.'}</div>}
                     </li>
@@ -547,18 +622,24 @@ function EditorInner({ r }: { r: Report }) {
   )
 }
 
-/* ═════════════ RP-03 — Preview ═════════════ */
+/* ═════════════ RP-03 — Preview (ticket 35) ═════════════ */
+/**
+ * Read-only preview on the typed editor/preview read: it renders the
+ * composed report exactly as committed (sections in stored order, linked
+ * findings with redaction markers). No editing, no preview checksum feature;
+ * submit/export stay with the review/delivery owner.
+ */
 export function ReportPreview() {
   const { route } = useStore()
-  const { r, block } = useGate(route.id)
-  if (!r) return <>{block}</>
-  return <PreviewInner r={r} />
+  const q = useReportEditor(route.id || '')
+  return <ReportReadGate q={q}>{(d) => <PreviewInner key={d.report.id} d={d} />}</ReportReadGate>
 }
 
-function PreviewInner({ r }: { r: Report }) {
+function PreviewInner({ d }: { d: ReportEditorRead }) {
   const { db, me, can, A, go, toast } = useStore()
-  const g = useGuard(r.projectId)
-  const project = db.projects.find((p) => p.id === r.projectId)!
+  const g = useGuard(d.report.projectId)
+  const r = d.report
+  const project = d.project
   const [zoom, setZoom] = useState<'80' | '100' | '120'>('100')
   const [mode, setMode] = useState<'desktop' | 'pdf'>('desktop')
   const [pg, setPg] = useState(1)
@@ -569,7 +650,7 @@ function PreviewInner({ r }: { r: Report }) {
   const finalOk = ['approved', 'exported', 'delivered'].includes(r.status)
   const canExport = finalOk && r.status !== 'delivered' && me.role !== 'viewer' && me.role !== 'operator' && !g.ro
   const exportWhy = !finalOk ? 'Export is available only after the report is approved. Submit it for review first.' : r.status === 'delivered' ? 'This report is already delivered. Create a new version to export changes.' : me.role === 'viewer' || me.role === 'operator' ? 'Your role cannot export reports. Ask a Manager or Reviewer.' : g.reason
-  const linked = r.findings.map((id) => db.findings.find((f) => f.id === id)).filter(Boolean) as Finding[]
+  const linked = d.linked
   const canSubmit = (r.status === 'draft' || r.status === 'returned') && can('editReport', r.projectId) && !g.ro
   const submitWhy = !canSubmit ? 'Only the author can submit, and only while the report is a draft or returned.' : blocking.length ? `Not ready: ${blocking.map((c) => c.label).join('; ')}.` : ''
   const pages: { key: string; title: string; node: ReactNode }[] = [
@@ -589,7 +670,7 @@ function PreviewInner({ r }: { r: Report }) {
             {linked.length === 0 ? <Missing>Missing data: no linked findings.</Missing> : (
               <div className="overflow-x-auto"><table className="w-full min-w-[480px] border-collapse text-xs text-slate-800">
                 <thead><tr className="bg-slate-100 text-left"><th className="border border-slate-300 p-2">ID</th><th className="border border-slate-300 p-2">Finding</th><th className="border border-slate-300 p-2">Severity</th><th className="border border-slate-300 p-2">Asset</th><th className="border border-slate-300 p-2">Evidence</th></tr></thead>
-                <tbody>{linked.map((f) => <tr key={f.id}><td className="border border-slate-300 p-2 font-mono">{f.id}</td><td className="border border-slate-300 p-2">{f.title}</td><td className="border border-slate-300 p-2">{sevLabel[f.severity]}</td><td className="border border-slate-300 p-2">{f.asset}</td><td className="border border-slate-300 p-2">{f.evidence.length ? f.evidence.map((e) => { const ev = db.evidence.find((x) => x.id === e); return `${e}${ev?.sensitive ? ' [redacted]' : ''}` }).join(', ') : 'None'}</td></tr>)}</tbody>
+                <tbody>{linked.map((f) => <tr key={f.id}><td className="border border-slate-300 p-2 font-mono">{f.id}</td><td className="border border-slate-300 p-2">{f.title}</td><td className="border border-slate-300 p-2">{sevLabel[f.severity]}</td><td className="border border-slate-300 p-2">{f.asset}</td><td className="border border-slate-300 p-2">{f.evidence.length ? f.evidence.map((e) => `${e.ref}${e.sensitive ? ' [redacted]' : ''}`).join(', ') : 'None'}</td></tr>)}</tbody>
               </table></div>
             )}
           </div>
