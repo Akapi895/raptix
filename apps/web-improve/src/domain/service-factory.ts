@@ -35,6 +35,10 @@ import { createReportService, type ReportService } from '../features/reports/ser
 // Ticket 43 append: branch group reads + branch action writes are feature-local
 // (src/features/branches/service.ts); the factory only wires them into a scope.
 import { createBranchService, type BranchService } from '../features/branches/service'
+// Ticket 52 append: tradecraft library reads (playbooks + techniques) are
+// feature-local (src/features/library/service.ts); the factory only wires
+// them into a scope.
+import { createLibraryService, type LibraryService } from '../features/library/service'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -96,6 +100,8 @@ export interface ConsoleServices {
   reports(actor: ActorRef, projectId: string): ReportService
   /** Typed branch group reads + branch action writes (ticket 43 — feature-local implementation). */
   branches(actor: ActorRef, projectId: string): BranchService
+  /** Typed tradecraft library read handlers (ticket 52 — feature-local implementation). */
+  library(actor: ActorRef, projectId: string): LibraryService
   /** Cancels in-flight reads for a scope (persona/project switch). */
   cancelScope(actor: ActorRef, projectId: string): void
   /** Demo reset: disposes scheduled callbacks, restores the clock anchor, reseeds the one dataset. */
@@ -232,6 +238,27 @@ export function createConsoleServices(): ConsoleServices {
     return createAgentService(authority, guard)
   }
 
+  /* ── Ticket 52 append: tradecraft library reads (playbook list/detail,
+     technique detail). Same superseded-scope guard as forScope, so the
+     ScopeCancelBridge's cancelScope covers in-flight library reads on a
+     persona/project switch. Reads only — tradecraft mutations stay with the
+     legacy actions until ticket 53 migrates review. ── */
+  const forLibrary = (actor: ActorRef, projectId: string): LibraryService => {
+    const key = scopeKey(actor, projectId)
+    const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
+      let superseded = false
+      const cancel = () => { superseded = true }
+      let set = inFlight.get(key)
+      if (!set) { set = new Set(); inFlight.set(key, set) }
+      set.add(cancel)
+      await Promise.resolve()
+      set.delete(cancel)
+      if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
+      return produce()
+    }
+    return createLibraryService(authority, guard)
+  }
+
   /* ── Ticket 34 append: report catalog reads (list/templates/delivery
      history/draft options) + the validated draft creation. Same
      superseded-scope guard as forScope, so cancelScope covers in-flight
@@ -303,11 +330,9 @@ export function createConsoleServices(): ConsoleServices {
     findings: forFindings,
     chat: forChat,
     agents: forAgents,
-<<<<<<< HEAD
     reports: forReports,
-=======
     branches: forBranches,
->>>>>>> wi/43-fanout
+    library: forLibrary,
     cancelScope,
     reset(variant) {
       scheduler.clear()
