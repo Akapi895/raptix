@@ -148,13 +148,11 @@ export function computePreflight(db: Db, op: Operation): Check[] {
    closePanelItems; the waiver stays a request-time input. */
 
 
-/* ───────────── V3: eligibility, completion ───────────── */
-/* Ticket 26: the eligibility label derivation moved to the operations feature
-   (pure domain function); the legacy export delegates for existing consumers.
-   Ticket 67 retired the store's readiness projection (and its dead type
-   re-exports): the Command Center domain module (src/screens/dashboard/domain)
-   owns the semantic readiness derivation. */
-export { eligibility } from './features/operations/preflight'
+/* ───────────── V3: completion ───────────── */
+/* Ticket 26/67: the eligibility label derivation is the operations feature's
+   pure domain function (src/features/operations/preflight.ts) — ticket 67
+   retired the store's forwarding export; every consumer imports it from the
+   feature module directly. */
 export function completion(db: Db, pid: string) {
   const p = db.projects.find((x) => x.id === pid)
   const objs = p?.objectives ?? []
