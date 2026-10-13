@@ -36,6 +36,11 @@ import { createNoticeService, type NoticeService } from '../features/notices/ser
 import { createResultsService, type ResultsService } from '../features/results/service'
 import { createTraceService, type TraceService } from '../features/trace/service'
 import { createC2Service, type C2Service } from '../features/c2/service'
+// Ticket 46 append: the session-grant deadline lifecycle (15 s sweep + exact
+// per-grant deadline callbacks) is feature-local (src/features/c2/grants); the
+// factory registers it once so deadlines fire without any C2 screen mounted,
+// and the authority's 'reset' publication re-arms it against the fresh dataset.
+import { createGrantLifecycle } from '../features/c2/grants'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
   ReadResult, RequestContext, ServiceResult,
@@ -212,6 +217,7 @@ export function createConsoleServices(): ConsoleServices {
     createTraceService(authority, scopeGuard(actor, projectId))
   const forC2 = (actor: ActorRef, projectId: string): C2Service =>
     createC2Service(authority, scopeGuard(actor, projectId))
+  const grants = createGrantLifecycle(authority, clock, scheduler)
 
   const cancelScope = (actor: ActorRef, projectId: string) => {
     const set = inFlight.get(scopeKey(actor, projectId))
@@ -265,6 +271,7 @@ export function createConsoleServices(): ConsoleServices {
       authority.reset(variant)
     },
     dispose() {
+      grants.dispose()
       scheduler.clear()
       offAdvance()
       clock.reset()
