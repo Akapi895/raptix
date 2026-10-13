@@ -24,6 +24,13 @@ import {
 // the ONE atomic binding commit (operation + plan pin + audit) have one
 // implementation for both entry points.
 import { createOperationFromPlanTransaction } from './features/plans/bridge'
+// Ticket 41 append: the tool/analysis trace read model is feature-local
+// (src/features/trace); this layer no longer derives or stores facets.
+// Ticket 42 append: the HITL tool decision delegates to the feature-local
+// transaction (src/features/trace/writes.ts) so the pending-state gate,
+// the four-eyes refusal, the role gate and the persisted resolution record
+// have one implementation for both entry points.
+import { decideToolEventTransaction } from './features/trace/writes'
 // Ticket 19 append: the project-creation transaction is feature-local
 // (src/features/wizard/service.ts); the legacy action delegates to it.
 import { createProjectTransaction } from './features/wizard/service'
@@ -300,7 +307,7 @@ export interface Actions {
   discardPlan: (planId: string) => Res
   revisePlan: (planId: string, changes: string[], note?: string) => string
   executePlan: (planId: string) => { ok: boolean; opId?: string; error?: string }
-  decideTool: (toolId: string, decision: 'allowed' | 'denied', reason?: string) => void
+  decideTool: (toolId: string, decision: 'allowed' | 'denied', reason?: string) => Res
   requestBranchRetry: (branchId: string, reason: string) => void
   reassignBranch: (branchId: string, agentId: string, reason: string) => { ok: boolean; error?: string }
   cancelBranch: (branchId: string, reason: string) => void
@@ -964,10 +971,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return res.ok ? { ok: true, opId: res.data.opId } : { ok: false, error: res.failure.message }
     },
     decideTool: (toolId, decision, reason) => {
-      const t = dbRef.current.toolEvents.find((x) => x.id === toolId)!
-      mutate((d) => { const x = d.toolEvents.find((y) => y.id === toolId)!; x.state = decision === 'allowed' ? 'completed' : 'denied'; x.reason = reason || x.reason; if (decision === 'allowed') x.result = 'Demo data — simulated result, sanitized.' })
-      mutate((d) => d.branches.forEach((b) => { if (b.toolEventId === toolId) { b.approval = decision === 'allowed' ? 'approved' : 'denied'; b.state = decision === 'allowed' ? 'completed' : 'blocked'; b.lastEvent = decision === 'allowed' ? 'Approved and executed (demo)' : 'Denied by reviewer' } }))
-      audit(`${decision === 'allowed' ? 'Allowed' : 'Denied'} tool call`, t.tool, t.projectId, 'Success', reason || '')
+      /* Ticket 42: the HITL decision is the typed handler
+         (src/features/trace/writes.ts) — the pending-state gate, the
+         four-eyes refusal (a proposal's requester cannot decide it) and
+         the role gate, plus the persisted resolution record and the
+         audited ONE-commit ChangeSet, have one implementation for both
+         entry points; this entry only bridges the typed result and the
+         current persona. Policy Allowed is not execution. */
+      const projectId = dbRef.current.toolEvents.find((x) => x.id === toolId)?.projectId ?? ''
+      const res = decideToolEventTransaction(services.authority, services.clock, actorCtx(projectId), toolId, decision, reason ?? '')
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
 
     requestBranchRetry: (branchId, reason) => {

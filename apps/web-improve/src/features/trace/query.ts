@@ -11,10 +11,12 @@
  * before a delayed response can restore old visibility.
  */
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { actorRef } from '../../auth/persona'
 import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
-import type { ServiceFailure } from '../../domain/service'
+import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
+import type { ToolDecision, ToolDecisionOutcome } from './writes'
 import type { TraceListRead } from './service'
 
 /** Feature-local key namespace: ['tool-event', scope, 'list']. */
@@ -50,4 +52,26 @@ export function useTraceEvents() {
     },
     enabled: !!services && scope.project !== 'all',
   })
+}
+
+/**
+ * Write-side binding (ticket 42): the typed HITL decision for the current
+ * scope. The call captures actor/project at call time — a persona or
+ * project switch never retargets an in-flight write — and a committed
+ * decision publishes one `tool-event` ChangeSet the bridge turns into
+ * trace/facet refetches (and the legacy store observes the same commit).
+ * Callers resolve the explicit ServiceResult: a refused decision never
+ * commits, and the message is safe to render.
+ */
+export function useTraceWrites() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMemo(() => {
+    const actor = actorRef(scope.actor)
+    const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
+    return {
+      decide: (id: string, decision: ToolDecision, reason: string): Promise<ServiceResult<ToolDecisionOutcome>> =>
+        services.trace(actor, scope.project).decide(ctx('tool-decision'), id, decision, reason),
+    }
+  }, [services, scope.actor, scope.project])
 }

@@ -84,7 +84,9 @@ export interface Plan {
   roeVersion: string; opId?: string; prevPlanId?: string; changes?: string[]; decision?: { by: string; at: string; note: string }; expires?: string; conversationId: string
 }
 export type ToolState = 'proposed' | 'awaiting' | 'allowed' | 'denied' | 'running' | 'completed' | 'failed' | 'stopped'
-export interface ToolEvent { id: string; conversationId: string; planId?: string; projectId: string; tool: string; target: string; params: string; state: ToolState; at: string; reason?: string; result?: string; opId?: string; stepId?: string; branchId?: string; agentId?: string; corr?: string; evidence?: string[]; ms?: number }
+export interface ToolEvent { id: string; conversationId: string; planId?: string; projectId: string; tool: string; target: string; params: string; state: ToolState; at: string; reason?: string; result?: string; opId?: string; stepId?: string; branchId?: string; agentId?: string; corr?: string; evidence?: string[]; ms?: number; /** Persisted human decision (ticket 42) — set when the pending proposal is allowed or denied. */ decision?: ToolEventResolution }
+/** HITL resolution record (ticket 42): the human decision on one pending proposal — outcome, actor, instant and reason. */
+export interface ToolEventResolution { outcome: 'allowed' | 'denied'; by: string; at: string; note: string }
 export interface ChatMsg { id: string; role: 'user' | 'ai' | 'system'; text: string; at: string; kind?: 'text' | 'plan' | 'tool' | 'blocked'; planId?: string; toolId?: string; card?: 'answer' | 'proposal' | 'revision' | 'tool' | 'policy' | 'approval' | 'result' | 'analysis' | 'error'; refs?: string[] }
 export interface Conversation { id: string; projectId: string; title: string; mode: AiMode; messages: ChatMsg[]; updated: string; owner: string; pinned?: boolean }
 
