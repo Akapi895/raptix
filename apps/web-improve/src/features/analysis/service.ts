@@ -7,7 +7,9 @@
  * steps and findings into tactic/technique coverage. Every request captures
  * actor and project explicitly; a non-member's specific-project read is
  * denied with `not-found` (no existence leak), and the aggregate scope
- * (`'all'`/`''`) folds in only projects the actor can access.
+ * (`'all'`/`''`) folds in only projects the actor can access. The
+ * attack-path graph read (ticket 55) lives beside it in `./path` and is
+ * exposed on the same service.
  *
  * Vocabulary (glossary): coverage is derived from observed operation events
  * only. A technique is covered when a step reached a recorded outcome
@@ -23,6 +25,9 @@ import { TECHNIQUES, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { DetectState, Operation, Step, Technique } from '../../domain/entities'
 import type { RequestContext, ServiceResult } from '../../domain/service'
+// Ticket 55 append: the attack-path graph read is a sibling handler in this
+// feature; the service interface grows additively beside the coverage read.
+import { pathOf, type AttackPathQuery, type AttackPathRead } from './path'
 
 /** Filter state for the coverage read (all optional; empty = unfiltered). */
 export interface AnalysisCoverageQuery {
@@ -97,6 +102,8 @@ export interface AnalysisCoverageRead {
 export interface AnalysisService {
   /** Scope-checked ATT&CK coverage + detection heatmap read for the current filters. */
   coverage(ctx: RequestContext, query?: AnalysisCoverageQuery): Promise<ServiceResult<AnalysisCoverageRead>>
+  /** Scope-checked attack-path graph read for the current filters (ticket 55). */
+  path(ctx: RequestContext, query?: AttackPathQuery): Promise<ServiceResult<AttackPathRead>>
 }
 
 /**
@@ -190,5 +197,6 @@ export function createAnalysisService(
 ): AnalysisService {
   return {
     coverage: (ctx, query) => guard(() => coverageOf(authority.snapshot(), ctx, query)),
+    path: (ctx, query) => guard(() => pathOf(authority.snapshot(), ctx, query)),
   }
 }
