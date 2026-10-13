@@ -10,3 +10,7 @@
 - [ ] Scenario reset uses the one authority, cancels previous timers and drives migrated approval/stop/grant workflows coherently.
 - [ ] Walkthrough/keyboard focus and states gallery remain functional; workspace selection preserves public-route behavior.
 - [ ] Every source screen/route is assigned a semantic owner; missing links or unretired readers become explicit blocking leaves before contraction.
+
+## Split
+
+The system/demo migration exceeded the ≤400-line cap as a single leaf, so before coding it was split into bounded leaves [61a](61a-system-error-pages.md) → [61b](61b-states-gallery.md) → [61c](61c-guided-walkthrough.md) → [61d](61d-scenario-workspaces.md) (chain; the outgoing blocker 62 was transferred to the completion leaf 61d). The coverage audit also filed [61e](61e-retire-raw-hash-writers.md) (two remaining raw hash-location writers in f-report/g-common, now blocking contraction batch B via 66) and recorded the semantic-owner map: every source screen/route resolves to a semantic owner (src/auth 06, src/screens/system 61a/61b, src/screens/dashboard 14, src/screens/tasks 15, src/features/wizard 17–19, src/screens/project-detail 20/23, src/features/{operations,agents,assets,library,findings,reports,settings,aichat,plans,trace,branches,workers,c2,estop,notices,copilot} 21–60, src/screens/demo 61c/61d); the legacy slice records/screen files (a*, b*–h*, scenarios/demo-guide barrels) remain bridged consumers with their retirement path in 65–67.
