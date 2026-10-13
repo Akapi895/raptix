@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, PanelRightClose, PanelRightOpen, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
 import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, SearchBox, Select, Status, Table, Timeline, Toggle, useGuard, cx } from '../ui'
-import { computePreflight, sessionPerm, useStore } from '../store'
-import { preflightPass } from '../features/operations/preflight'
+import { sessionPerm, useServices, useStore } from '../store'
+import { computePreflightChecks, preflightPass } from '../features/operations/preflight'
 import { BRANCH_LABEL, planVer, toolFacets } from '../data'
 import type { Agent, Operation, Step } from '../data'
 import { MASK, OpStatus, RuntimeStatus, failedBranches, hasReview, opConversation, opGroups, parseStamp, runtimeLabel, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
@@ -54,6 +54,7 @@ export function OpBanner({ op }: { op: Operation }) {
 /* ───────────── Operation controls (pause / resume / stop) ───────────── */
 export function OpControls({ op, onError, size = 'md' }: { op: Operation; onError: (e: string) => void; size?: 'sm' | 'md' }) {
   const { A, db, confirm, toast, can, go } = useStore()
+  const { clock } = useServices()
   const { ro, reason } = useGuard(op.projectId)
   const [stopping, setStopping] = useState(false)
   const [es, setEs] = useState(false)
@@ -78,7 +79,7 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     onConfirm: (r) => { A.pauseOp(op.id, r); toast('Operation paused.', 'warn') },
   })
   const resume = () => {
-    const checks = computePreflight(db, op)
+    const checks = computePreflightChecks(db, op, clock.now())
     const rows: [string, boolean, string][] = [
       ['ROE', p.roeStatus === 'approved', `ROE ${p.roeVersion} is ${p.roeStatus}`],
       ['Permissions', allowed, allowed ? 'You may run operations' : 'Your role cannot run operations'],

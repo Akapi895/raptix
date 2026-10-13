@@ -1,10 +1,12 @@
 import { useRef, type ComponentType } from 'react'
 import { Eye, Lock, ShieldX, SearchX, GitBranch } from 'lucide-react'
 import { Button, Empty, Status } from '../ui'
-import { canAccessProject, computePreflight, useStore } from '../store'
+import { canAccessProject, useStore } from '../store'
 import type { Route } from '../store'
+import { computePreflightChecks } from '../features/operations/preflight'
 import { planVer } from '../data'
 import type { Branch, Db, Operation, Plan, Project, Step } from '../data'
+import type { Instant } from '../domain/service'
 import { PROJECT_TZ_OFFSET_MS, draftMinutes, roeWindowIssue } from '../features/operations/service'
 
 /** Operation access gate: checks existence, project access and the selected project */
@@ -144,9 +146,12 @@ export const PF_LABEL: Record<PfState, string> = { pass: 'PASS', warn: 'WARN', f
 export const PF_TONE: Record<PfState, string> = { pass: 'border-ok/30 bg-ok-soft text-ok', warn: 'border-warn/30 bg-warn-soft text-warn', fail: 'border-bad/30 bg-bad-soft text-bad', nc: 'border-line bg-subtle text-muted' }
 export const pfOverall = (cs: PfCheck[]): PfState => (cs.some((c) => c.state === 'fail') ? 'fail' : cs.some((c) => c.state === 'nc') ? 'nc' : cs.some((c) => c.state === 'warn') ? 'warn' : 'pass')
 
-/** Builds the 8 required preflight checks from the store's engine plus C2/policy context. Never invents a pass. */
-export function specChecks(db: Db, op: Operation): PfCheck[] {
-  const raw = computePreflight(db, op)
+/** Builds the 8 required preflight checks from the canonical derivation at the
+ *  caller's factory-clock instant plus C2/policy context. Never invents a pass.
+ *  (Ticket 67: the store's computePreflight demo-anchor wrapper is retired —
+ *  callers pass the services clock's instant.) */
+export function specChecks(db: Db, op: Operation, now: Instant): PfCheck[] {
+  const raw = computePreflightChecks(db, op, now)
   const g = (c: string) => raw.find((x) => x.code === c)!
   const p = db.projects.find((x) => x.id === op.projectId)!
   const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
