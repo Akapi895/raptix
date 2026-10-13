@@ -12,8 +12,8 @@
  * Navigation goes through the router (`go`) — there are no raw hash writers
  * left on this surface. FanOutCard/AllocationView keep their legacy seams for
  * their consumers (tickets 39–44 own the shared workspace); the AI-team view
- * itself migrated to src/screens/g-workers.tsx (ticket 44) and is forwarded
- * below so the workspace Inspector's import stays stable.
+ * itself lives in src/screens/g-workers.tsx (ticket 44), imported directly
+ * by the workspace Inspector.
  */
 import { useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
@@ -531,12 +531,5 @@ export function FanOutPage() {
     </>
   )
 }
-
-/* ───────── AI team ─────────
-   Ticket 44 moved the AI-worker team view (and its dependency graph) to
-   src/screens/g-workers.tsx on the typed worker service — the raw
-   db.aiWorkers reader this file used to carry is retired. The forwarding
-   export keeps the workspace Inspector's `AiTeamView` import stable. */
-export { WorkerTeamView as AiTeamView } from './g-workers'
 
 export const routes: Record<string, ComponentType> = { 'ai-fanout': FanOutPage, 'ai-branch': BranchPage }

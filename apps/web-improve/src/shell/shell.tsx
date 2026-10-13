@@ -13,7 +13,7 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 import { Activity, Lock, ShieldAlert } from 'lucide-react'
 import { useStore, type Route } from '../store'
 import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from '../ui'
-import { CopilotDrawer } from '../screens/ai-copilot'
+import { CopilotDrawer } from '../features/copilot/drawer'
 import { DemoGuide } from '../screens/demo/guide'
 import { isWide, NAV } from './nav'
 import { Sidebar } from './sidebar'

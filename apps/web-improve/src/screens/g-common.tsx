@@ -1,11 +1,11 @@
 import { FanOutCard } from './g-fanout'
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Ban, BarChart3, Bot, Check, FileText, GitBranch, Info, Lock, Send, ShieldCheck, Terminal, User, Cog, X } from 'lucide-react'
 import { eligibility, useDirty, useStore } from '../store'
 import { planVer, toolFacets } from '../data'
-import type { AiMode, ChatMsg, Conversation, Db, Plan, ToolEvent } from '../data'
+import type { AiMode, ChatMsg, Conversation, Plan, ToolEvent } from '../data'
 import { useTraceWrites } from '../features/trace/query'
-import { AiModeBadge, Banner, Button, DemoTag, Field, Gated, IdLink, Modal, Status, Tabs, Textarea, cx } from '../ui'
+import { Banner, Button, DemoTag, Field, Gated, IdLink, Modal, Status, Tabs, Textarea, cx } from '../ui'
 
 export const MODES: { id: AiMode; label: string; hint: string }[] = [
   { id: 'observe', label: 'Observe', hint: 'Read-only. Summaries and explanations; no proposals.' },
@@ -13,18 +13,6 @@ export const MODES: { id: AiMode; label: string; hint: string }[] = [
   { id: 'execution', label: 'Approved Execution', hint: 'Runs only approved plans after preflight and confirmation.' },
 ]
 export const STARTERS = ['Summarize the approved scope', 'Review agent readiness', 'Propose a validation plan', 'Explain recent operation results']
-
-const moveRadio = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
-  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return
-  const buttons = Array.from(e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]:not([disabled])') || [])
-  if (!buttons.length) return
-  e.preventDefault()
-  const current = buttons.indexOf(e.currentTarget)
-  const forward = e.key === 'ArrowRight' || e.key === 'ArrowDown'
-  const next = e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length - 1 : (current + (forward ? 1 : -1) + buttons.length) % buttons.length
-  buttons[next].focus()
-  buttons[next].click()
-}
 
 /** Ensure a timestamp always carries the (UTC+7) label. */
 export const tz = (t?: string) => (!t ? '—' : /UTC\+7/.test(t) ? t : `${t} (UTC+7)`)
@@ -41,20 +29,6 @@ export function EligBadge({ pid }: { pid: string }) {
   const Icon = el.kind === 'locked' ? Lock : el.kind === 'closed' ? Ban : Check
   return <span title={el.reasons.map((r) => r.text).join('; ') || el.label}><Pill tone={el.tone}><Icon size={12} aria-hidden />Eligibility: {el.label}</Pill></span>
 }
-
-/** Derived view of one AI tool call: policy decision is kept apart from the execution result. */
-export function toolFlow(e: ToolEvent, db: Db) {
-  const plan = e.planId ? db.plans.find((p) => p.id === e.planId) : undefined
-  const step = plan?.steps.find((x) => x.tool === e.tool)
-  const policy = e.state === 'denied' ? { label: 'Blocked', tone: 'bad' as const } : e.state === 'awaiting' ? { label: 'Needs approval', tone: 'warn' as const } : e.state === 'proposed' ? { label: 'Pending evaluation', tone: 'neutral' as const } : { label: 'Allowed', tone: 'ok' as const }
-  const approval = e.state === 'awaiting' ? 'Pending reviewer' : e.state === 'denied' ? 'Not requested' : e.state === 'proposed' ? 'Not yet evaluated' : step?.needsApproval ? `Approved (${plan?.decision?.by || 'reviewer'})` : `Covered by ${plan ? plan.id + ' ' + planVer(plan) : 'plan'} approval`
-  const exec = ({ proposed: 'Not executed', awaiting: 'Not executed — pending approval', denied: 'Not executed', allowed: 'Queued', running: 'Running', completed: 'Executed', failed: 'Failed', stopped: 'Stopped' } as Record<string, string>)[e.state]
-  const op = plan?.opId
-  const corr = e.projectId === 'RT-2026-014' ? 'COR-014-01' : `COR-${e.projectId.slice(-3)}-${e.id}`
-  const evidence = e.id === 'TL-02' ? 'EV-014-01' : undefined
-  return { plan, step, policy, approval, exec, op, corr, evidence, proposal: 'AP-' + e.id.replace('TL-', '') }
-}
-export const execTone = (s: string) => (s === 'Executed' ? 'ok' : s === 'Failed' ? 'bad' : s === 'Running' || s === 'Queued' ? 'cyan' : 'neutral') as keyof typeof TONE_CLS
 
 /** Failure / agent-loss detection for the running operation of a project (AI-V3-07). */
 export function useReplan(pid: string) {
@@ -383,23 +357,6 @@ export function Composer({ conv, suggestions = STARTERS, compact }: { conv: Conv
         </div>
       </div>
       <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted"><AlertTriangle size={12} aria-hidden />AI suggestions must be verified by a person against scope and ROE. Prompts alone never start execution.</p>
-    </div>
-  )
-}
-
-export function ModeSwitch({ conv }: { conv: Conversation }) {
-  const { A, readOnly } = useStore()
-  const ro = readOnly(conv.projectId)
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <AiModeBadge mode={conv.mode} />
-      <div role="radiogroup" aria-label="AI mode" className="inline-flex rounded-lg border border-line bg-panel p-0.5">
-        {MODES.map((m) => (
-          <button key={m.id} role="radio" aria-checked={conv.mode === m.id} tabIndex={conv.mode === m.id ? 0 : -1} disabled={ro} title={ro ? 'Project is read-only.' : `${m.hint} Mode is a preference; it does not grant execution.`}
-            onKeyDown={moveRadio} onClick={() => A.setConversationMode(conv.id, m.id)}
-            className={cx('rounded-md px-2.5 py-1 text-xs font-medium disabled:opacity-50', conv.mode === m.id ? 'bg-accent text-white' : 'text-muted hover:bg-hover hover:text-fg')}>{m.label}</button>
-        ))}
-      </div>
     </div>
   )
 }
