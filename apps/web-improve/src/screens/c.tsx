@@ -5,12 +5,12 @@ import { computePreflight, eligibility, preflightPass, useDirty, useStore } from
 import { planVer } from '../data'
 import type { Operation } from '../data'
 import type { PfCheck, PfSnap, PfState } from './c-common'
-import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, opConversation, opGroups, elapsed, pfOverall, specChecks, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
+import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, elapsed, pfOverall, specChecks, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
 import { AgentsTab, ConsoleTab, OpBanner, OpControls, OverviewTab, TimelineTab } from './c-console'
 import { GraphTab, ResultsTab } from './c-results'
-import { useCreateOperation, useOperationDraftOptions, useOperationList, useScheduleOperation, useUpdateOperation, OperationReadError } from '../features/operations/query'
+import { useCreateOperation, useOperationDetail, useOperationDraftOptions, useOperationList, useRunPreflight, useScheduleOperation, useUpdateOperation, OperationReadError } from '../features/operations/query'
 import { PROJECT_TZ_OFFSET_MS, findScheduleConflicts, roeWindowIssue, scheduleInstantOf } from '../features/operations/service'
-import type { OperationCategory, OperationWriteRead } from '../features/operations/service'
+import type { OperationCategory, OperationDetailRead, OperationWriteRead } from '../features/operations/service'
 import type { ServiceResult } from '../domain/service'
 
 const SELECT_PROJECT = 'Select a project to continue'
@@ -100,7 +100,7 @@ function Operations() {
               { key: 'pr', header: 'Progress', width: '190px', render: (it) => {
                 const o = it.op
                 const c = stepCounts(o.steps); const v = progressOf(o.steps)
-                if (noRunning(o)) { const e = eligibility(db, o.projectId); return <div className="text-xs"><div className="whitespace-nowrap text-muted">Not started{o.steps.length ? ` · ${o.steps.length} steps planned` : ' · no steps yet'}</div><div className={cx('whitespace-nowrap', e.kind === 'locked' ? 'text-bad' : 'text-muted')}>{e.label}</div></div> }
+                if (noRunning(o)) { const e = it.eligibility; return <div className="text-xs"><div className="whitespace-nowrap text-muted">Not started{o.steps.length ? ` · ${o.steps.length} steps planned` : ' · no steps yet'}</div><div className={cx('whitespace-nowrap', e.kind === 'locked' ? 'text-bad' : 'text-muted')}>{e.label}</div></div> }
                 return v == null ? <span className="text-xs text-muted">No data yet</span> : <div><div className="mb-1 whitespace-nowrap text-xs font-medium">{c.ok + c.fail}/{c.total} steps{c.review ? <span className="ml-1 font-normal text-warn">· {c.review} needs review</span> : ''}</div><Progress value={v} tone={c.fail || c.review ? 'warn' : 'accent'} label={`Progress ${o.id}`} /></div> } },
               { key: 'a', header: 'Agents', hideBelow: 'md', render: (it) => it.op.agents.length },
               { key: 'st', header: 'Started', hideBelow: 'lg', className: 'whitespace-nowrap', render: (it) => <Mono className="whitespace-nowrap text-muted">{it.op.startedAt}</Mono> },
@@ -380,6 +380,10 @@ function PreflightPage({ op }: { op: Operation }) {
   const { db, go, A, toast, can, pid, route, persistFilters, setFilter, now } = useStore()
   const { ro, reason } = useGuard(op.projectId)
   const [checking, setChecking] = useState(false)
+  /* Ticket 26: the run goes through the typed handler — the eight checks are
+     re-derived from canonical state at the handler, so the recorded snapshot
+     can never outlive the records it was derived from. */
+  const runPf = useRunPreflight()
   const p = db.projects.find((x) => x.id === op.projectId)!
   const pb = db.playbooks.find((x) => x.id === op.playbookId)
   const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
@@ -402,12 +406,15 @@ function PreflightPage({ op }: { op: Operation }) {
     : firstBad ? `${firstBad.code} failed: ${firstBad.detail}` : overall === 'nc' ? 'Some required checks were not checked.' : !enginePass ? 'The current state no longer passes. Run Preflight again.' : ''
   const run = () => {
     setChecking(true)
-    setTimeout(() => {
+    runPf.mutate({ id: op.id }, { onSuccess: (r) => {
+      setChecking(false)
+      /* A refusal (role, in-flight, superseded scope) surfaces its reason and
+         records nothing; a run re-derives the checks and commits atomically. */
+      if (!r.ok) { toast(r.failure.message, 'bad'); return }
       const cs = specChecks(db, op)
       setFilter('preflight.' + op.id, { at: now(), roe: p.roeVersion, plan: planV, checks: cs } as PfSnap)
-      A.confirmPreflight(op.id); setChecking(false)
       toast(pfOverall(cs) === 'fail' ? 'Preflight finished with failures. Start is unavailable.' : 'Preflight snapshot recorded.', pfOverall(cs) === 'fail' ? 'bad' : 'info')
-    }, 700)
+    } })
   }
   useEffect(() => { if (route.tab === 'run' && !snap && allowed && !started) run() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const approver = db.approvals.find((a) => a.projectId === p.id && a.status === 'approved')
@@ -563,16 +570,17 @@ const TABS = [
   { id: 'timeline', label: 'Timeline' }, { id: 'graph', label: 'Execution Graph' }, { id: 'results', label: 'Results & Evidence' },
 ]
 const TAB_ALIAS: Record<string, string> = { console: 'live', evidence: 'results' }
-function OperationDetail({ op }: { op: Operation }) {
-  const { db, route, go, can, staleOps, pid } = useStore()
+function OperationDetail({ d }: { d: OperationDetailRead }) {
+  const { route, go, can, staleOps, pid } = useStore()
+  const op = d.op
+  const p = d.project
   const rt = route.tab ? TAB_ALIAS[route.tab] || route.tab : 'overview'
   const tab = TABS.some((t) => t.id === rt) ? rt : 'overview'
-  const p = db.projects.find((x) => x.id === op.projectId)!
   const { ro, reason } = useGuard(op.projectId)
   const pre = op.status === 'draft' || op.status === 'ready' || op.status === 'pending'
   const active = op.status === 'running' || op.status === 'paused'
   const [err, setErr] = useState('')
-  const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
+  const pl = d.plan
   const startWhy = pid === 'all' ? SELECT_PROJECT : !can('run', op.projectId) ? 'Only a Manager or Operator can run preflight and start operations.' : ro ? reason : ''
   return (
     <div>
@@ -588,7 +596,7 @@ function OperationDetail({ op }: { op: Operation }) {
           {active && tab === 'overview' && <OpControls op={op} onError={setErr} />}
         </>} />
       {err && tab === 'overview' && <Banner tone="bad" title="Action could not be completed">{err}</Banner>}
-      <OpLinks op={op} />
+      <OpLinks d={d} />
       <OpBanner op={op} />
       <Tabs tabs={TABS} value={tab} onChange={(t) => go('operation', { id: op.id, tab: t })} />
       {tab === 'overview' && <OverviewTab op={op} />}
@@ -601,12 +609,14 @@ function OperationDetail({ op }: { op: Operation }) {
   )
 }
 
-/** Linked context: plan, conversation, branch group, runtime state, Open in AI Operator */
-function OpLinks({ op }: { op: Operation }) {
-  const { db, go } = useStore()
-  const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
-  const conv = opConversation(db, op)
-  const groups = opGroups(db, op.id)
+/** Linked context: plan, conversation, branch group, runtime state, Open in AI Operator.
+ *  Ticket 26: plan, conversation and branch groups come from the canonical detail read. */
+function OpLinks({ d }: { d: OperationDetailRead }) {
+  const { go } = useStore()
+  const op = d.op
+  const pl = d.plan
+  const conv = d.conversation
+  const groups = d.branchGroups
   const none = <span className="text-neutral">None</span>
   return (
     <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-line bg-panel px-4 py-2.5 text-sm" aria-label="Linked context">
@@ -619,7 +629,32 @@ function OpLinks({ op }: { op: Operation }) {
   )
 }
 
-const Detail = () => <OpGate C={OperationDetail} />
+/** Detail route (ticket 26): one scope-checked canonical read replaces the
+ *  direct store lookup. Loading shows a skeleton; a refusal renders the
+ *  handler's reason — with the switch affordance only for members addressing
+ *  the operation from another specific project (no existence leak). */
+const Detail = () => {
+  const { route, pid, setPid, go } = useStore()
+  const read = useOperationDetail(route.id || '')
+  if (read.isPending) return <div className="space-y-2" aria-busy="true"><Skeleton className="h-14" /><Skeleton className="h-24" /><Skeleton className="h-64" /></div>
+  if (read.isError || !read.data) {
+    const failure = read.error instanceof OperationReadError ? read.error.failure : undefined
+    const target = failure?.entity?.projectId
+    if (target && pid !== 'all' && pid !== target) {
+      return (
+        <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => setPid(target)}>Switch to {target}</Button>}>
+          Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} belongs to project {target}. To avoid mixing data between projects, switch to that project before viewing it.
+        </Empty>
+      )
+    }
+    return (
+      <Empty icon={ShieldAlert} title="Operation not found" action={<Button onClick={() => go('operations')}>Back to operations</Button>}>
+        {failure?.message || <>Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} does not exist or has been removed.</>}
+      </Empty>
+    )
+  }
+  return <OperationDetail d={read.data} />
+}
 const Preflight = () => <OpGate C={PreflightPage} />
 const Schedule = () => <OpGate C={SchedulePage} />
 
