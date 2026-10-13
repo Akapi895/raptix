@@ -5,6 +5,7 @@ import { computePreflight, preflightPass, sessionPerm, useStore } from '../store
 import { BRANCH_LABEL, planVer, toolFacets } from '../data'
 import type { Agent, Operation, Step } from '../data'
 import { MASK, OpStatus, RuntimeStatus, failedBranches, hasReview, opConversation, opGroups, parseStamp, runtimeLabel, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
+import { useReviewStep } from '../features/operations/query'
 import { FanOutCard } from './g-fanout'
 
 /* ───────────── Stop progress: requested → stopping → stopped ───────────── */
@@ -472,6 +473,7 @@ const NODE_TONE: Record<string, string> = { ok: 'border-ok/40 bg-ok-soft', runni
 
 export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const { db, logs: liveLogs, staleOps, setStale, A, go, now, toast, setCopilotOpen, aiMode, can, persistFilters, setFilter } = useStore()
+  const review = useReviewStep()
   const stale = !!staleOps[liveOp.id]
   const polBlock = !!persistFilters['polblock.' + liveOp.id]
   const setPolBlock = (v: boolean) => setFilter('polblock.' + liveOp.id, v ? true : undefined)
@@ -517,7 +519,19 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
       </Empty>
     )
   }
-  const decide = (d: 'approve' | 'skip' | 'fail') => { if (!reviewStep) return; A.reviewStep(op.id, reviewStep.id, d, note.trim()); setNote(''); toast(d === 'approve' ? `${reviewStep.id} approved.` : d === 'skip' ? `${reviewStep.id} skipped.` : `${reviewStep.id} rejected.`, d === 'approve' ? 'info' : 'warn') }
+  const decide = (d: 'approve' | 'skip' | 'fail') => {
+    if (!reviewStep) return
+    /* Ticket 29: the decision is the typed mutation — the handler re-derives
+       the role/context/run-state gates at click time; a refusal surfaces its
+       reason instead of recording an unauthorized decision. */
+    review.mutate({ id: op.id, stepId: reviewStep.id, decision: d, note: note.trim() }, {
+      onSuccess: (r) => {
+        if (!r.ok) { toast(r.failure.message, 'bad'); return }
+        setNote('')
+        toast(d === 'approve' ? `${reviewStep.id} approved.` : d === 'skip' ? `${reviewStep.id} skipped.` : `${reviewStep.id} rejected.`, d === 'approve' ? 'info' : 'warn')
+      },
+    })
+  }
   const canDecide = can('run', op.projectId) && !ro && op.status === 'running' && !stale
   const decideWhy = ro ? roReason : !can('run', op.projectId) ? 'Only a Manager or Operator can decide on review steps.' : op.status !== 'running' ? 'Resume the operation to decide.' : stale ? 'Data is delayed. Reload before deciding.' : ''
   const needNote = !note.trim()

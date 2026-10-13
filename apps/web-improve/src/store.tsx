@@ -37,7 +37,7 @@ import { computePreflightChecks, PROJECT_TZ_OFFSET_MS, type Check } from './feat
 // reservations and the audited outcomes have one implementation for both
 // entry points (the store keeps only the demo live-log mirrors).
 import {
-  completeOperation, pauseOperation, resumeOperation, runOperationPreflight, startOperation, stopOperation,
+  completeOperation, pauseOperation, resumeOperation, reviewOperationStep, runOperationPreflight, startOperation, stopOperation,
 } from './features/operations/service'
 // Ticket 51 append: the asset import transaction (validated, atomic, through
 // ticket 21's governance transaction) and the role-gated scope change are
@@ -735,14 +735,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     retryStop: () => { const s = dbRef.current.stopState; if (!s) return; setStopOutcome('ack'); stopOutRef.current = 'ack'; A.emergencyStop(s.scope, s.id, s.reason + ' (retry)') },
     resolveStop: (outcome) => { resolveStopTransaction(services.authority, services.clock, actorCtx(''), outcome) },
     reviewStep: (opId, stepId, decision, note) => {
-      const op = dbRef.current.operations.find((o) => o.id === opId); if (!op) return
-      mutate((d) => {
-        const s = d.operations.find((o) => o.id === opId)!.steps.find((x) => x.id === stepId)!
-        s.status = decision === 'approve' ? 'ok' : decision === 'skip' ? 'notrun' : 'fail'
-        s.dur = decision === 'approve' ? '01:20' : '—'
-        s.output = decision === 'approve' ? 'Sanitized output. No sensitive content.' : decision === 'skip' ? 'Skipped by operator.' : 'Rejected at review.'
-      })
-      audit(`Step review: ${decision}`, `${opId}/${stepId}`, op.projectId, 'Success', note || '')
+      const op = dbRef.current.operations.find((o) => o.id === opId)
+      /* Ticket 29: the decision is the typed handler — role, read-only-context
+         and run-state gates reject unauthorized decisions independently of any
+         screen; this entry keeps only the live-log mirror. */
+      if (!op) return
+      const res = reviewOperationStep(services.authority, services.clock, actorCtx(op.projectId), opId, stepId, decision, note)
+      if (!res.ok) return
       pushLog(opId, { level: 'INFO', agent: '—', stepId, text: `Step ${stepId} ${decision === 'approve' ? 'approved' : decision === 'skip' ? 'skipped' : 'rejected'} by ${me.name}` })
     },
     completeOp: (opId) => {
