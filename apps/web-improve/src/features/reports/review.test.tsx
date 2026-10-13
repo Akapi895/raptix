@@ -12,12 +12,19 @@
  * directions — a legacy approval refetches the migrated review screen, and
  * the typed delivery chain is observed by the legacy store and the catalog's
  * kind-aligned delivery history.
+ *
+ * Ticket 37 (export and delivery records): the handover confirmation gate at
+ * the handler, stale-version delivery refusals, the persisted handover
+ * history (actor/instant/reason/version on the record + audit row), the
+ * closure consumer observing a typed delivery through the shared authority,
+ * and the legacy export/delivery store actions delegating to the same
+ * handlers (legacy export refetches the typed delivery history).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ConsoleProviders } from '../../state/query'
 import { useProjectStore } from '../../state/stores'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
+import { StoreProvider, useServices, useStore, closureChecklist, type Store } from '../../store'
 import type { ConsoleServices } from '../../domain/service-factory'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
@@ -27,6 +34,8 @@ import {
   acknowledgeDelivery, decideReport, deliverReportVersion, exportReportVersion,
   readReportReview, saveReportSection, submitReportVersion,
 } from './service'
+import { useDeliveryHistory } from './query'
+import type { DeliveryListRead } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 
@@ -192,7 +201,7 @@ describe('report export and delivery (ticket 36)', () => {
     // The state gate fires before the role gate (mirroring the baseline reason order).
     expect(exportReportVersion(h.authority, h.clock, ctxOf(taylor, P15), 'REP-015', 'DOCX'))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('Export unlocks after the report is approved') }) })
-    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Fabrikam Cloud (Demo)', channel: 'Secure portal', notes: '' }))
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Fabrikam Cloud (Demo)', channel: 'Secure portal', notes: '', confirm: true }))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('has not been approved') }) })
     // A closed project is read-only before any state or role consideration.
     expect(exportReportVersion(h.authority, h.clock, ctxOf(pat, 'RT-2026-009'), 'REP-009', 'PDF'))
@@ -204,11 +213,11 @@ describe('report export and delivery (ticket 36)', () => {
     decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
     expect(exportReportVersion(h.authority, h.clock, ctxOf(taylor, P15), 'REP-015', 'DOCX'))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('(Operator) cannot export reports') }) })
-    expect(deliverReportVersion(h.authority, h.clock, ctxOf(taylor, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '' }))
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(taylor, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '', confirm: true }))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden', message: expect.stringContaining('cannot mark delivery') }) })
     // A delivered report refuses further exports while its project is active.
     exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
-    deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '' })
+    deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '', confirm: true })
     expect(exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF'))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('already delivered') }) })
     h.authority.reset()
@@ -217,18 +226,18 @@ describe('report export and delivery (ticket 36)', () => {
   it('delivery requires an export of the exact version and stamps the handover record; export alone is not delivery', () => {
     const h = harness()
     decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
-    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '' }))
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '', confirm: true }))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: expect.stringContaining('no valid export exists for this version') }) })
     exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
-    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: '   ', channel: 'Secure portal', notes: '' }))
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: '   ', channel: 'Secure portal', notes: '', confirm: true }))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: 'Enter the recipient.' }) })
-    const res = deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: 'Handed over via portal.' })
+    const res = deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: 'Handed over via portal.', confirm: true })
     expect(res.ok && res.data.status).toBe('delivered')
     const rec = dbOf(h).exportsList.find((e) => e.id === 'EX-92')!
     expect(rec).toMatchObject({ recipient: 'Mai Ellis', status: 'Delivered', channel: 'Secure portal', notes: 'Handed over via portal.', version: 'v1.0' })
     expect(dbOf(h).reports.find((r) => r.id === 'REP-015')!.deliveredAt).toBeTruthy()
     expect(dbOf(h).audit[0]).toMatchObject({ action: 'Marked as delivered', obj: 'REP-015', reason: 'Mai Ellis' })
-    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '' }))
+    expect(deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'x', channel: 'Secure portal', notes: '', confirm: true }))
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('already delivered') }) })
     h.authority.reset()
   })
@@ -239,12 +248,78 @@ describe('report export and delivery (ticket 36)', () => {
       .toEqual({ ok: false, failure: expect.objectContaining({ kind: 'conflict', message: expect.stringContaining('Only a delivered report') }) })
     decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
     exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
-    deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '' })
+    deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '', confirm: true })
     const res = acknowledgeDelivery(h.authority, h.clock, ctxOf(pat, P15), 'REP-015')
     expect(res.ok && res.data.ackAt).toBeTruthy()
     expect(dbOf(h).audit[0]).toMatchObject({ action: 'Recorded delivery acknowledgement', obj: 'REP-015' })
     const again = acknowledgeDelivery(h.authority, h.clock, ctxOf(pat, P15), 'REP-015')
     expect(again.ok && again.data.ackAt).toBe(res.ok ? res.data.ackAt : undefined)
+    h.authority.reset()
+  })
+})
+
+describe('report export and delivery records (ticket 37)', () => {
+  it('refuses delivery without the explicit handover confirmation; a refused attempt commits nothing', () => {
+    const h = harness()
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
+    const refused = deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '', confirm: false })
+    expect(refused).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: expect.stringContaining('Confirm that the handover happened') }) })
+    // Export alone is not delivery: the export record stays unclaimed and no audit row lands.
+    expect(dbOf(h).reports.find((r) => r.id === 'REP-015')!.status).toBe('exported')
+    expect(dbOf(h).exportsList.filter((e) => e.reportId === 'REP-015').every((e) => e.status === 'Completed' && !e.deliveredBy)).toBe(true)
+    expect(dbOf(h).audit.some((a) => a.action === 'Marked as delivered' && a.obj === 'REP-015')).toBe(false)
+    h.authority.reset()
+  })
+
+  it('a stale export version cannot deliver a newer approved version; a fresh export of that version can', () => {
+    const h = harness()
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
+    // The report goes back through the legacy path; the canonical resubmit advances the version.
+    h.authority.commit('legacy-return', (d) => { d.reports.find((x) => x.id === 'REP-015')!.status = 'returned' })
+    const again = submitReportVersion(h.authority, h.clock, ctxOf(alex, P15), 'REP-015', { bodies: {} })
+    expect(again.ok && again.data.version).toBe('v1.1')
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    const stale = deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '', confirm: true })
+    expect(stale).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'validation', message: expect.stringContaining('no valid export exists for this version') }) })
+    // The stale v1.0 export record is untouched by the refused delivery.
+    expect(dbOf(h).exportsList.find((e) => e.version === 'v1.0')).toMatchObject({ status: 'Completed', recipient: '—' })
+    exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'DOCX')
+    const fresh = deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '', confirm: true })
+    expect(fresh.ok).toBe(true)
+    expect(dbOf(h).exportsList.filter((e) => e.reportId === 'REP-015' && e.status === 'Delivered').map((e) => e.version)).toEqual(['v1.1'])
+    h.authority.reset()
+  })
+
+  it('persists the handover history: actor, delivery instant, reason and version on the record plus the audit row', () => {
+    const h = harness()
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
+    h.clock.advance(90_000)
+    const res = deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Encrypted email', notes: 'Handed over via encrypted mail.', confirm: true })
+    expect(res.ok).toBe(true)
+    const rec = dbOf(h).exportsList.find((e) => e.reportId === 'REP-015' && e.status === 'Delivered')!
+    expect(rec).toMatchObject({ reportId: 'REP-015', version: 'v1.0', recipient: 'Mai Ellis', channel: 'Encrypted email', notes: 'Handed over via encrypted mail.', deliveredBy: 'Pat Kim' })
+    // The delivery instant is its own stamp, distinct from the export record's.
+    expect(rec.deliveredAt).toBeTruthy()
+    expect(rec.deliveredAt).not.toBe(rec.at)
+    expect(dbOf(h).audit[0]).toMatchObject({ action: 'Marked as delivered', actor: 'Pat Kim', reason: 'Mai Ellis', obj: 'REP-015' })
+    // The review read resolves the immutable delivery audit row for the screen.
+    const read = readReportReview(dbOf(h), ctxOf(pat, P15), 'REP-015')
+    expect(read.ok && read.data.deliveryAuditId).toBe(dbOf(h).audit[0].id)
+    h.authority.reset()
+  })
+
+  it('the closure checklist observes a typed delivery through the shared authority (closure consumer)', () => {
+    const h = harness()
+    expect(closureChecklist(dbOf(h), P15).find((c) => c.id === 'c3')).toMatchObject({ ok: false, detail: 'No report has been delivered' })
+    decideReport(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'approve', 'ok')
+    exportReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', 'PDF')
+    deliverReportVersion(h.authority, h.clock, ctxOf(pat, P15), 'REP-015', { recipient: 'Mai Ellis', channel: 'Secure portal', notes: '', confirm: true })
+    const c3 = closureChecklist(dbOf(h), P15).find((c) => c.id === 'c3')!
+    expect(c3.ok).toBe(true)
+    expect(c3.detail).toBe('A report is Delivered')
     h.authority.reset()
   })
 })
@@ -352,6 +427,35 @@ describe('report review screen (ticket 36)', () => {
     expect(rep.snapshots![0]).toMatchObject({ version: 'v0.3', by: 'Alex Morgan' })
     expect(rep.snapshots![0].bodies['exec']).toContain('During the assessment period')
     expect(h.store().db.notices.some((n) => n.text.includes('REP-014 needs review'))).toBe(true)
+    h.unmount()
+  })
+})
+
+describe('report export/delivery legacy bridge (ticket 37)', () => {
+  it('a legacy export action refetches the typed delivery history and the legacy deliver action records the handover', async () => {
+    let hist: DeliveryListRead | undefined
+    const HistProbe = () => {
+      hist = useDeliveryHistory({}).data
+      return null
+    }
+    const h = mountScreenRoute('Alex Morgan', P15)
+    h.show(<HistProbe />)
+    await waitFor(() => expect(hist).toBeDefined(), { timeout: 3000 })
+    expect(hist!.items.some((i) => i.rec.reportId === 'REP-015')).toBe(false)
+    // The legacy entry points delegate to the canonical handlers: approve through
+    // the legacy action, then export — the handler's export commit publishes the
+    // report-export ChangeSet the typed delivery history refetches.
+    h.run(() => { h.store().A.approveReport('REP-015') })
+    h.run(() => { h.store().A.exportReport('REP-015', 'DOCX') })
+    await waitFor(() => expect(hist!.items.some((i) => i.rec.reportId === 'REP-015' && i.rec.version === 'v1.0' && i.rec.format === 'DOCX' && i.rec.status === 'Completed')).toBe(true), { timeout: 3000 })
+    const rec = hist!.items.find((i) => i.rec.reportId === 'REP-015')!.rec
+    // The checksum lives on the export record (the delivery history), never on preview content.
+    expect(rec.checksum).toMatch(/^sha256:[0-9a-f]{4}…[0-9a-f]{4}$/)
+    expect(h.store().db.exportsList.some((e) => e.id === rec.id && e.checksum === rec.checksum)).toBe(true)
+    // The legacy deliver action goes through the same confirmation-gated handler.
+    h.run(() => { h.store().A.deliverReport('REP-015', { recipient: 'Fabrikam Cloud (Demo)', channel: 'Secure portal', notes: '', confirm: true }) })
+    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('delivered'), { timeout: 3000 })
+    await waitFor(() => expect(hist!.items.some((i) => i.rec.reportId === 'REP-015' && i.rec.status === 'Delivered' && i.rec.deliveredBy === 'Alex Morgan')).toBe(true), { timeout: 3000 })
     h.unmount()
   })
 })

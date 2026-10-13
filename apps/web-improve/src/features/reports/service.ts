@@ -572,6 +572,8 @@ export interface ReportReviewRead {
   linked: (LinkedFindingRow & { status: FindingStatus })[]
   /** Export/delivery records for this report — the canonical delivery history. */
   exports: ExportRec[]
+  /** Id of the immutable delivery audit row (ticket 37), resolved by the read so the screen never inspects the audit log. */
+  deliveryAuditId?: string
   gates: {
     /** Approve/return decisions (four-eyes + reviewer role + state). */
     decide: ReviewGate
@@ -655,6 +657,7 @@ export function readReportReview(db: Db, ctx: RequestContext, id: string, nf?: N
           evidence: f.evidence.map((ref) => ({ ref, sensitive: !!db.evidence.find((e) => e.id === ref && e.projectId === project.id)?.sensitive })),
         })),
       exports,
+      deliveryAuditId: db.audit.find((a) => a.obj === report.id && a.action === 'Marked as delivered')?.id,
       gates: { decide, export: exportGate, deliver: deliverGate, ack: ackGate },
     },
   }
@@ -788,14 +791,22 @@ export function exportReportVersion(authority: DbAuthority, clock: Clock, ctx: R
 }
 
 /** Delivery/handover input: who received the locked version, how, with what note. */
-export interface DeliveryInput { recipient: string; channel: string; notes: string }
+export interface DeliveryInput {
+  recipient: string
+  channel: string
+  notes: string
+  /** Explicit handover confirmation (ticket 37): the handler refuses delivery without it. */
+  confirm: boolean
+}
 
 /**
  * Marks the locked version delivered: requires an approved version, a valid
- * export of that exact version, a published template and a recipient. The
- * handover record (recipient/channel/notes) is stamped onto the delivered
- * export records — the delivery history is the export history, and export
- * alone is never delivery.
+ * export of that exact version, a published template, a recipient and the
+ * explicit handover confirmation. The handover history persists on the
+ * delivered export records — recipient/channel/notes plus the delivery
+ * actor and its own instant (ticket 37), distinct from the export stamp —
+ * and the immutable audit row carries actor/reason/timestamp/version. The
+ * delivery history is the export history, and export alone is never delivery.
  */
 export function deliverReportVersion(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input: DeliveryInput): ServiceResult<Report> {
   const db = authority.snapshot()
@@ -821,6 +832,9 @@ export function deliverReportVersion(authority: DbAuthority, clock: Clock, ctx: 
   if (!input.recipient.trim()) {
     return { ok: false, failure: { kind: 'validation', message: 'Enter the recipient.' } }
   }
+  if (!input.confirm) {
+    return { ok: false, failure: { kind: 'validation', message: 'Confirm that the handover happened before marking delivery.', entity: reportRef(report) } }
+  }
   const at = stampOf(clock)
   authority.commit(ctx.corr, (d) => {
     const r = d.reports.find((x) => x.id === id)!
@@ -832,6 +846,8 @@ export function deliverReportVersion(authority: DbAuthority, clock: Clock, ctx: 
       e.status = 'Delivered'
       e.channel = input.channel
       e.notes = input.notes
+      e.deliveredBy = ctx.actor.id
+      e.deliveredAt = at
     })
     d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Marked as delivered', obj: id, projectId: r.projectId, result: 'Success', reason: input.recipient.trim() })
   })
