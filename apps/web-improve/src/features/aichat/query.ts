@@ -31,8 +31,13 @@ export class ChatReadError extends Error {
   }
 }
 
-/** Query-backed conversation workspace for the current auth/project scope. */
-export function useConversationList() {
+/**
+ * Query-backed conversation workspace for the current auth/project scope.
+ * `opts.enabled` (ticket 60): the copilot drawer fetches only while open —
+ * a closed drawer neither fetches nor keeps an active subscription, and the
+ * ChangeSet bridge still marks the entry stale so opening refetches.
+ */
+export function useConversationList(opts?: { enabled?: boolean }) {
   const services = useServices()
   const scope = useQueryScope()
   return useQuery({
@@ -45,6 +50,6 @@ export function useConversationList() {
       if (!res.ok) throw new ChatReadError(res.failure)
       return res.data
     },
-    enabled: !!services,
+    enabled: (opts?.enabled ?? true) && !!services,
   })
 }

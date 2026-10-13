@@ -7,8 +7,9 @@
  * traversals (in-app navigation is pre-guarded by the store's `go`).
  *
  * Ticket 59 (append): the header `notifications` slot is filled with the
- * migrated notice center through the ticket-08 typed `ShellSlots` contract;
- * the copilot slots keep the legacy defaults until ticket 60.
+ * migrated notice center through the ticket-08 typed `ShellSlots` contract.
+ * Ticket 60 (append): the `copilotDrawer` slot is filled with the migrated
+ * copilot drawer the same way; the `askAi` trigger keeps the legacy default.
  */
 import { Component, Suspense, useEffect, useRef, type ReactNode } from 'react'
 import { useBlocker, useRouteError } from 'react-router'
@@ -17,6 +18,7 @@ import { useStore } from '../store'
 import { Button } from '../ui'
 import { Shell } from '../shell'
 import { HeaderNotices } from '../features/notices/header-notices'
+import { CopilotDrawer } from '../features/copilot/drawer'
 import { OUTSIDE_SHELL, type Route } from './history'
 import { routeComponent } from './registry'
 
@@ -84,7 +86,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
   }
   const Page = routeComponent(route.page) ?? routeComponent('notfound')
   return (
-    <Shell slots={{ notifications: HeaderNotices }}>
+    <Shell slots={{ notifications: HeaderNotices, copilotDrawer: CopilotDrawer }}>
       <Suspense fallback={<PageFallback />}>
         <PageBoundary key={key}>
           {Page ? <Page /> : null}
