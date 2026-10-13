@@ -91,25 +91,24 @@ describe('requesting closure is manager-gated and blocked while the checklist fa
     view.unmount()
   })
 
-  it('the request action itself is not checklist-gated (baseline gap, ticket 22), then a reviewer confirms closure', () => {
+  it('the request accepts a failing checklist (UI-only request) while the confirmation stays gated by the re-derived checklist (ticket 22)', () => {
     const view = mountScreen(<Tab pid="RT-2026-016" />)
     act(() => {
-      view.store().A.requestClose('RT-2026-016')
+      view.store().A.requestClose('RT-2026-016', { reason: 'Requesting review of closure readiness.' })
     })
     const h = view.store()
     expect(h.db.projects.find((p) => p.id === 'RT-2026-016')!.status).toBe('review')
-    expect(h.db.approvals.some((a) => a.projectId === 'RT-2026-016' && a.status === 'pending' && a.note === 'Requesting project closure — checklist complete.')).toBe(true)
+    expect(h.db.approvals.some((a) => a.projectId === 'RT-2026-016' && a.status === 'pending' && a.note === 'Requesting project closure — 1 checklist condition still open.')).toBe(true)
 
     act(() => {
       view.store().setMe('Pat Kim')
     })
     expect(screen.getByRole('button', { name: 'Approve Closure' })).toBeEnabled()
     expect(screen.getByText(/Requested by Alex Morgan on/)).toBeInTheDocument()
-    act(() => {
-      view.store().A.confirmClose(h.db.approvals.find((a) => a.projectId === 'RT-2026-016')!.id)
-    })
-    expect(view.store().db.projects.find((p) => p.id === 'RT-2026-016')!.status).toBe('closed')
-    expect(view.store().db.projects.find((p) => p.id === 'RT-2026-016')!.closedAt).toBeTruthy()
+    const refused = view.store().A.confirmClose(h.db.approvals.find((a) => a.projectId === 'RT-2026-016')!.id)
+    expect(refused.ok).toBe(false)
+    expect(refused.error).toContain('Final report approved and delivered')
+    expect(view.store().db.projects.find((p) => p.id === 'RT-2026-016')!.status).toBe('review')
     view.unmount()
   })
 })

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
-import { useStore, closureChecklist, ROLE_LABEL, type Route } from '../store'
+import { useStore, ROLE_LABEL } from '../store'
 import { useReopen } from '../features/approvals/hooks'
+import { closePanelItems } from '../features/closure/service'
 import { APR, USERS, type Project, type Role, type Approval } from '../data'
 import type { DashboardAggregate } from './dashboard/domain'
 import { Banner, Button, Check, Card, CardHeader, DescList, Empty, Field, IconButton, IdLink, Input, Kpi, Locked, Modal, PersonaHint, Person, Progress, Segmented, Select, Status, Table, Textarea, useGuard, type Col } from '../ui'
@@ -267,7 +268,7 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
     if (!r.ok) { setErr(r.error || 'Could not complete the decision'); return }
     setErr(''); toast(d === 'approved' ? `Approved: ${a.type}` : `Returned: ${a.type}`)
   }
-  const approve = (a: Approval) => confirm({ title: `Approve “${a.type}”?`, body: `Project ${p.id} moves to its next state based on this decision.`, confirmLabel: 'Approve', reasonLabel: 'Comment (optional)', onConfirm: (r) => (a.type === APR.close ? (A.confirmClose(a.id), toast('Project closure confirmed')) : decide(a, 'approved', r)) })
+  const approve = (a: Approval) => confirm({ title: `Approve “${a.type}”?`, body: `Project ${p.id} moves to its next state based on this decision.`, confirmLabel: 'Approve', reasonLabel: 'Comment (optional)', onConfirm: (r) => { if (a.type !== APR.close) { decide(a, 'approved', r); return } /* Ticket 22: closure resolution is gated by the handler (four-eyes + re-derived checklist); the refusal renders here. */ const c = A.confirmClose(a.id); if (c.ok) toast('Project closure confirmed'); else setErr(c.error || 'Could not confirm closure') } })
   const ret = (a: Approval) => confirm({ title: `Request changes to “${a.type}”`, body: 'The submitter is notified with your reason so they can revise and resubmit.', confirmLabel: 'Request Changes', danger: true, reasonLabel: 'Reason for changes', reasonRequired: true, onConfirm: (r) => decide(a, 'returned', r) })
   const more = (a: Approval) => confirm({ title: 'Request more information', body: 'The request is returned to the submitter with what is needed.', confirmLabel: 'Send request', reasonLabel: 'Information needed', reasonRequired: true, onConfirm: (r) => decide(a, 'returned', 'More information requested: ' + r) })
 
@@ -347,13 +348,11 @@ export function CloseTab({ p, setTab }: { p: Project; setTab: (t: string) => voi
   const [modal, setModal] = useState(false)
   const [reason, setReason] = useState('')
   const [noFind, setNoFind] = useState(false)
-  const base = closureChecklist(db, p.id)
-  const heldAgents = db.agents.filter((a) => a.projectId === p.id && a.op && db.operations.some((o) => o.id === a.op && ['running', 'paused'].includes(o.status)))
   const noFindingsOk = db.findings.filter((f) => f.projectId === p.id && ['confirmed', 'remediation', 'retest', 'resolved'].includes(f.status)).length === 0
-  const items = [
-    ...base.map((i) => (i.id === 'c3' && noFind && noFindingsOk ? { ...i, ok: true, detail: 'Waived: approved no-findings closure (documented statement replaces the final report)' } : i)),
-    { id: 'c5', label: 'Agent reservations released', ok: heldAgents.length === 0, detail: heldAgents.length ? `Still reserved: ${heldAgents.map((a) => a.id).join(', ')}` : 'No agent is reserved by an active operation', fix: { page: 'agents' } as Route },
-  ]
+  /* Ticket 22: one canonical derivation (policy checklist + the agent-
+     reservation row + the documented no-findings waiver) shared with the
+     request/confirm handlers — the panel can never drift from the policy. */
+  const items = closePanelItems(db, p.id, { waiverNoFindings: noFind && noFindingsOk })
   const ops = db.operations.filter((o) => o.projectId === p.id)
   const fs = db.findings.filter((f) => f.projectId === p.id)
   const reps = db.reports.filter((r) => r.projectId === p.id)
@@ -415,7 +414,7 @@ export function CloseTab({ p, setTab }: { p: Project; setTab: (t: string) => voi
         ) : p.status === 'review' && closePending ? (
           can('confirmClose', p.id) ? (
             <div className="flex flex-wrap items-center gap-3">
-              <Button variant="primary" onClick={() => confirm({ title: `Approve closure of ${p.id}?`, body: 'The project becomes read-only; data is retained per policy.', confirmLabel: 'Approve Closure', danger: true, onConfirm: () => { A.confirmClose(closePending.id); toast(`Closed ${p.id}`) } })}>Approve Closure</Button>
+              <Button variant="primary" onClick={() => confirm({ title: `Approve closure of ${p.id}?`, body: 'The project becomes read-only; data is retained per policy.', confirmLabel: 'Approve Closure', danger: true, onConfirm: () => { const r = A.confirmClose(closePending.id); if (r.ok) toast(`Closed ${p.id}`); else toast(r.error || 'The closure could not be confirmed.', 'bad') } })}>Approve Closure</Button>
               <span className="text-xs text-muted">Requested by {closePending.by} on {closePending.at}</span>
             </div>
           ) : (
@@ -429,7 +428,7 @@ export function CloseTab({ p, setTab }: { p: Project; setTab: (t: string) => voi
         )}
       </Card>
 
-      <Modal open={modal} onClose={() => setModal(false)} title="Close Project" footer={<><Button onClick={() => setModal(false)}>Cancel</Button><Button variant="primary" disabled={failing.length > 0 || !reason.trim()} title={failing.length ? 'Resolve the blockers first' : !reason.trim() ? 'A reason is required' : undefined} onClick={() => { A.requestClose(p.id); A.audit(noFind && noFindingsOk ? 'Closure reason (approved no-findings closure)' : 'Closure reason', p.id, p.id, 'Success', reason.trim()); setModal(false); setReason(''); toast('Closure request submitted for sign-off') }}>Submit closure request</Button></>}>
+      <Modal open={modal} onClose={() => setModal(false)} title="Close Project" footer={<><Button onClick={() => setModal(false)}>Cancel</Button><Button variant="primary" disabled={failing.length > 0 || !reason.trim()} title={failing.length ? 'Resolve the blockers first' : !reason.trim() ? 'A reason is required' : undefined} onClick={() => { const r = A.requestClose(p.id, { reason: reason.trim(), waiverNoFindings: noFind && noFindingsOk }); if (!r.ok) { toast(r.error || 'The closure request was refused.', 'bad'); return } setModal(false); setReason(''); toast('Closure request submitted for sign-off') }}>Submit closure request</Button></>}>
         {failing.length === 0 ? (
           <p className="mb-3 flex items-center gap-2 text-sm"><CheckCircle2 size={16} className="text-ok" />All conditions are met. A Reviewer or Admin signs off. Closing makes the project read-only and keeps all logs.</p>
         ) : (

@@ -6,8 +6,9 @@
  * modules (which stay components-only). Submission goes through the store
  * action that delegates to the ticket-21 transaction handler, so a refused
  * submission is explained to the user from the handler's failure — the
- * handler owns the rule, the panel only renders it. Reopen stays on the
- * bridged legacy action until ticket 22 owns closure governance.
+ * handler owns the rule, the panel only renders it. Reopen runs through
+ * ticket 22's typed closure handler (role gate and required reason are
+ * enforced there); the panel surfaces its refusal.
  */
 import { APR, type Project } from '../../data'
 import { useStore } from '../../store'
@@ -30,11 +31,11 @@ export function useSubmitApproval(p: Project) {
   }
 }
 
-/** Reopen a closed project — closure governance is ticket 22; the reason is required and audited. */
+/** Reopen a closed project — ticket 22's closure handler owns the role gate and the required, audited reason. */
 export function useReopen(p: Project) {
   const { A, confirm, toast } = useStore()
   return () => confirm({
     title: `Reopen project ${p.id}?`, body: 'The project returns to Active and becomes editable again. This action is recorded in the audit log.', confirmLabel: 'Reopen Project', danger: true,
-    reasonLabel: 'Reason for reopening', reasonRequired: true, onConfirm: (r) => { A.reopen(p.id, r); toast(`Reopened ${p.id}`) },
+    reasonLabel: 'Reason for reopening', reasonRequired: true, onConfirm: (r) => { const res = A.reopen(p.id, r); if (res.ok) toast(`Reopened ${p.id}`); else toast(res.error || 'The project could not be reopened.', 'bad') },
   })
 }
