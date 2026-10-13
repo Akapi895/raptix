@@ -22,9 +22,12 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { createHashRouter, RouterProvider } from 'react-router'
 import { ConsoleProviders } from '../../state/query'
 import { useProjectStore } from '../../state/stores'
 import { StoreProvider, useServices, useStore, closureChecklist, type Store } from '../../store'
+import { setActiveRouter } from '../../router/active'
+import { RouteErrorBoundary, RouteHost } from '../../router/host'
 import type { ConsoleServices } from '../../domain/service-factory'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
@@ -37,7 +40,7 @@ import {
 import { useDeliveryHistory } from './query'
 import type { DeliveryListRead } from './service'
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
+afterEach(() => { cleanup(); vi.restoreAllMocks(); setActiveRouter(null); window.location.hash = '' })
 
 /* ───────────── handler harness ───────────── */
 function harness() {
@@ -457,5 +460,71 @@ describe('report export/delivery legacy bridge (ticket 37)', () => {
     await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('delivered'), { timeout: 3000 })
     await waitFor(() => expect(hist!.items.some((i) => i.rec.reportId === 'REP-015' && i.rec.status === 'Delivered' && i.rec.deliveredBy === 'Alex Morgan')).toBe(true), { timeout: 3000 })
     h.unmount()
+  })
+})
+
+/* ───────────── post-write navigation through the single writer (ticket 61e) ───────────── */
+/* The report flows navigate through the store's guarded `go` (the dirty-guarded
+   single-writer seam) — no raw hash writes on the screens. Rendered regressions
+   run the real route host so the destination screen, the URL and the addressed
+   report id are all observed after the write commits. */
+
+function RouteProbe({ ready }: { ready: (s: Store) => void }) {
+  ready(useStore())
+  return null
+}
+
+function mountRouterApp(hash: string) {
+  window.location.hash = hash
+  let store!: Store
+  const router = createHashRouter([
+    { path: '*', element: <><RouteProbe ready={(s) => { store = s }} /><RouteHost /></>, errorElement: <RouteErrorBoundary />, hydrateFallbackElement: null },
+  ])
+  setActiveRouter(router)
+  const view = render(
+    <StoreProvider>
+      <ConsoleProviders>
+        <RouterProvider router={router} />
+      </ConsoleProviders>
+    </StoreProvider>,
+  )
+  return { view, store: () => store, run: (fn: () => unknown) => act(fn) }
+}
+
+describe('report post-write navigation through the guarded seam (ticket 61e)', () => {
+  it('submitting from a dirty editor clears the draft state and lands on the review route with the report id — no unsaved modal', async () => {
+    const h = mountRouterApp('#/report/REP-014')
+    fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
+    const box = await screen.findByLabelText('Content of section Cover Page')
+    fireEvent.change(box, { target: { value: 'Submitted straight from a dirty editor.' } })
+    await waitFor(() => expect(h.store().dirty).toBe(true))
+    fireEvent.click(screen.getByRole('button', { name: 'Submit for Review' }))
+    await waitFor(() => expect(window.location.hash).toBe('#/report-review/REP-014'), { timeout: 3000 })
+    expect(h.store().unsaved).toBeNull()
+    expect(h.store().route).toEqual({ page: 'report-review', id: 'REP-014' })
+    expect((await screen.findAllByText(/Only a Reviewer can approve or return reports/)).length).toBeGreaterThan(0)
+    h.view.unmount()
+  })
+
+  it('submitting from the preview lands on the review route with the addressed entity', async () => {
+    const h = mountRouterApp('#/report-preview/REP-014')
+    fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Submit for Review' }))
+    await waitFor(() => expect(window.location.hash).toBe('#/report-review/REP-014'), { timeout: 3000 })
+    expect(h.store().route).toEqual({ page: 'report-review', id: 'REP-014' })
+    expect(await screen.findByText('Review requests')).toBeInTheDocument()
+    h.view.unmount()
+  })
+
+  it('returning a report from the review route navigates back to the editor route with the report id', async () => {
+    const h = mountRouterApp('#/report-review/REP-015')
+    fireEvent.click(screen.getByRole('button', { name: /Pat Kim/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Return with Comments' }))
+    h.run(() => { h.store().confirmState!.onConfirm('Tighten the executive summary.') })
+    await waitFor(() => expect(window.location.hash).toBe('#/report/REP-015'), { timeout: 3000 })
+    expect(h.store().route).toEqual({ page: 'report', id: 'REP-015' })
+    expect(await screen.findByLabelText('Content of section Cover Page')).toBeInTheDocument()
+    expect(h.store().unsaved).toBeNull()
+    h.view.unmount()
   })
 })
