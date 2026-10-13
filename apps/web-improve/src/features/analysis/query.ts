@@ -11,6 +11,10 @@
  * position 1, so a persona/project switch reads a different cache entry and
  * the ScopeCancelBridge cancels the superseded scope's in-flight reads
  * before a delayed response can restore old visibility.
+ *
+ * Ticket 55 appends the attack-path graph hook (`useAttackPath`) with the
+ * same key shape: operation/step commits invalidate the shared `[kind]`
+ * prefix, so a legacy step review updates the graph without a reload.
  */
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -19,10 +23,13 @@ import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
 import type { AnalysisCoverageQuery, AnalysisCoverageRead } from './service'
+import type { AttackPathQuery, AttackPathRead } from './path'
 
 /** Feature-local key namespace: ['operation', scope, 'coverage', query]. */
 export const analysisKeys = {
   coverage: (scope: QueryScope, query: AnalysisCoverageQuery) => consoleKeys.view('operation', scope, 'coverage', query),
+  /** Ticket 55: ['operation', scope, 'path', query] — operation-kind commits invalidate the shared prefix. */
+  path: (scope: QueryScope, query: AttackPathQuery) => consoleKeys.view('operation', scope, 'path', query),
 }
 
 /** A service failure rethrown as the query error, so screens render the kind and message. */
@@ -61,6 +68,32 @@ export function useAnalysisCoverage(query: AnalysisCoverageQuery) {
       const res = await services
         .analysis(actor, scope.project)
         .coverage({ actor, projectId: scope.project, corr: 'analysis-coverage' }, { opId, agent, os })
+      if (!res.ok) throw new AnalysisReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/**
+ * Query-backed attack-path graph for the current auth/project scope
+ * (ticket 55). Same key shape as the coverage read — the `operation` kind
+ * prefix means any committed operation/step change (legacy review actions
+ * included) invalidates the graph, and finding changes arrive through the
+ * bridge's project-scope invalidation; scope sits at key position 1 so the
+ * ScopeCancelBridge cancels superseded in-flight reads.
+ */
+export function useAttackPath(query: AttackPathQuery) {
+  const services = useServices()
+  const scope = useQueryScope()
+  const { opId, agent, os } = query
+  return useQuery({
+    queryKey: analysisKeys.path(scope, { opId, agent, os }),
+    queryFn: async (): Promise<AttackPathRead> => {
+      const actor = actorRef(scope.actor)
+      const res = await services
+        .analysis(actor, scope.project)
+        .path({ actor, projectId: scope.project, corr: 'analysis-path' }, { opId, agent, os })
       if (!res.ok) throw new AnalysisReadError(res.failure)
       return res.data
     },
