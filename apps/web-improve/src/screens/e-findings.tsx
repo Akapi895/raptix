@@ -2,30 +2,24 @@ import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from
 import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, X, Search, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
 import { ROLE_LABEL, canAccessProject, sevLabel, useDirty, useStore } from '../store'
 import { TECHNIQUES, type Evidence, type Finding, type FindingStatus, type Severity } from '../data'
+import { FindingReadError, useFindingDetail, useFindingList } from '../features/findings/query'
+import type { EvidenceView, FindingSort } from '../features/findings/service'
 import {
-  Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Kpi, Locked, Modal, Mono, PageHeader, Pager, Person, PersonaHint, SearchBox, Segmented, Select, Sev, Status, Table, Tabs, Textarea, Timeline, cx, usePaged, useGuard,
+  Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Kpi, Locked, Modal, Mono, PageHeader, Pager, Person, PersonaHint, SearchBox, Segmented, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx, useGuard,
 } from '../ui'
 
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const STATUSES: FindingStatus[] = ['draft', 'review', 'returned', 'confirmed', 'remediation', 'retest', 'resolved']
 const STATUS_LABEL: Record<string, string> = { ai_suggested: 'AI Suggested — unverified', draft: 'Draft', review: 'In Review', returned: 'Returned', confirmed: 'Confirmed', remediation: 'In Remediation', retest: 'Retest', resolved: 'Resolved' }
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const ts = (s: string) => {
-  const m = s.match(/([A-Za-z]{3}) (\d+), (\d{4}), (\d+):(\d+) ([AP])M/)
-  if (!m) return 0
-  const h = (+m[4] % 12) + (m[6] === 'P' ? 12 : 0)
-  return Date.UTC(+m[3], MONTHS.indexOf(m[1]), +m[2], h, +m[5])
-}
-const isVerified = (f: Finding) => f.status !== 'ai_suggested'
-const TABS: { id: string; label: string; test: (f: Finding) => boolean }[] = [
-  { id: 'all', label: 'All', test: () => true },
-  { id: 'confirmed', label: 'Confirmed', test: (f) => f.status === 'confirmed' },
-  { id: 'review', label: 'In Review', test: (f) => f.status === 'review' },
-  { id: 'ai', label: 'AI Suggestions', test: (f) => f.status === 'ai_suggested' },
-  { id: 'drafts', label: 'Drafts', test: (f) => f.status === 'draft' || f.status === 'returned' },
-  { id: 'remediation', label: 'Remediation', test: (f) => ['remediation', 'retest', 'resolved'].includes(f.status) },
+/** Status tabs; the scoped counts come from the findings read model (ticket 31). */
+const TABS: { id: string; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'confirmed', label: 'Confirmed' },
+  { id: 'review', label: 'In Review' },
+  { id: 'ai', label: 'AI Suggestions' },
+  { id: 'drafts', label: 'Drafts' },
+  { id: 'remediation', label: 'Remediation' },
 ]
-const SEV_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 }
 
 /** Reason creation is not allowed (empty = allowed) */
 function useCreateReason(projectId?: string) {
@@ -71,8 +65,18 @@ function MoreFilters({ children, active }: { children: ReactNode; active: number
   )
 }
 
+/**
+ * Findings list (ticket 31): search/severity/status filters, pagination and
+ * the severity/tab counts run on the typed findings service through Query —
+ * scope-keyed cache entries, ChangeSet invalidation (a legacy status change
+ * updates these views without a reload) and cancel-on-switch come from the
+ * shared bridges. AI suggestions are presented as proposals: they are
+ * excluded from the severity KPIs until a human verifies them, and
+ * dismissal is a session-local overlay passed into the read. Creation and
+ * the detail form still use the bridged legacy routes (owner: ticket 32).
+ */
 function FindingList() {
-  const { db, scoped, go, pid, project, setSwitcherOpen, accessible, route } = useStore()
+  const { go, pid, project, setSwitcherOpen, accessible, route } = useStore()
   const ai = useAiActions()
   const [q, setQ] = useState('')
   const [sev, setSev] = useState('')
@@ -83,23 +87,23 @@ function FindingList() {
   const [opf, setOpf] = useState('')
   const [showDis, setShowDis] = useState(false)
   const [sort, setSort] = useState('updated')
+  const [page, setPage] = useState(1)
   const reason = useCreateReason()
-  const all = scoped(db.findings)
-  const verified = all.filter(isVerified)
-  const owners = [...new Set(all.map((f) => f.owner))]
-  const assets = [...new Set(all.map((f) => f.asset))]
-  const opsList = [...new Set(all.map((f) => f.op).filter(Boolean))]
-  const curTab = TABS.find((t) => t.id === tab) || TABS[0]
-  const rows = all
-    .filter((f) => curTab.test(f) && (tab !== 'ai' || showDis || !ai.dismissed[f.id]) && (!q || (f.id + ' ' + f.title).toLowerCase().includes(q.toLowerCase())) && (!sev || f.severity === sev) && (!prj || f.projectId === prj) && (!owner || f.owner === owner) && (!asset || f.asset === asset) && (!opf || f.op === opf))
-    .sort((a, b) => (sort === 'severity' ? SEV_RANK[a.severity] - SEV_RANK[b.severity] || ts(b.updated) - ts(a.updated) : sort === 'id' ? a.id.localeCompare(b.id) : sort === 'created' ? ts(b.date) - ts(a.date) : ts(b.updated) - ts(a.updated)))
-  const pg = usePaged(rows, 10)
-  const count = (t: (typeof TABS)[number]) => all.filter((f) => t.test(f) && (t.id !== 'ai' || !ai.dismissed[f.id])).length
-  const vcount = (s: FindingStatus) => verified.filter((f) => f.status === s).length
+  const dismissed = Object.keys(ai.dismissed)
+  const list = useFindingList({
+    q: q || undefined, severity: sev || undefined, status: tab !== 'all' ? tab : undefined,
+    project: prj || undefined, owner: owner || undefined, asset: asset || undefined, op: opf || undefined,
+    sort: sort !== 'updated' ? (sort as FindingSort) : undefined,
+    dismissed: !showDis && dismissed.length ? dismissed : undefined,
+    page: page > 1 ? page : undefined,
+  })
+  useEffect(() => { setPage(1) }, [q, sev, tab, prj, owner, asset, opf, sort, showDis])
+  const data = list.data
+  const rows = data?.items ?? []
   const moreActive = [prj, owner, asset, sort !== 'updated' ? sort : ''].filter(Boolean).length
   const filtered = !!(q || sev || prj || owner || asset || opf || tab !== 'all')
   const reset = () => { setQ(''); setSev(''); setTab('all'); setPrj(''); setOwner(''); setAsset(''); setOpf(''); setSort('updated') }
-  const nSugg = count(TABS[3])
+  const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1
 
   return (
     <div>
@@ -115,88 +119,96 @@ function FindingList() {
       )}
       {pid !== 'all' && reason && <div className="-mt-3 mb-4 flex justify-end"><Locked reason={reason} /></div>}
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
-        {SEVS.map((s) => <Kpi key={s} label={sevLabel[s]} value={verified.filter((f) => f.severity === s).length} tone={s === 'critical' || s === 'high' ? 'bad' : s === 'medium' ? 'warn' : s === 'low' ? 'cyan' : 'neutral'} onClick={() => setSev(sev === s ? '' : s)} />)}
-        <Kpi label="Awaiting Review" value={vcount('review')} tone="warn" onClick={() => setTab('review')} />
-        <Kpi label="Resolved" value={vcount('resolved')} tone="ok" onClick={() => setTab('remediation')} />
-        <Kpi label="AI Suggestions" value={nSugg} sub="unverified — not in counts" tone="warn" onClick={() => setTab('ai')} />
+        {SEVS.map((s) => <Kpi key={s} label={sevLabel[s]} value={data?.severity[s] ?? 0} tone={s === 'critical' || s === 'high' ? 'bad' : s === 'medium' ? 'warn' : s === 'low' ? 'cyan' : 'neutral'} onClick={() => setSev(sev === s ? '' : s)} />)}
+        <Kpi label="Awaiting Review" value={data?.awaitingReview ?? 0} tone="warn" onClick={() => setTab('review')} />
+        <Kpi label="Resolved" value={data?.resolved ?? 0} tone="ok" onClick={() => setTab('remediation')} />
+        <Kpi label="AI Suggestions" value={data?.counts.ai ?? 0} sub="unverified — not in counts" tone="warn" onClick={() => setTab('ai')} />
       </div>
-      <Tabs value={tab} onChange={setTab} tabs={TABS.map((t) => ({ id: t.id, label: t.label, count: count(t) }))} />
+      <Tabs value={tab} onChange={setTab} tabs={TABS.map((t) => ({ id: t.id, label: t.label, count: data?.counts[t.id as keyof typeof data.counts] ?? 0 }))} />
       <FilterBar right={filtered ? <Button size="sm" variant="ghost" icon={RotateCcw} onClick={reset}>Reset</Button> : undefined}>
         <SearchBox value={q} onChange={setQ} placeholder="Search by ID or title…" className="w-full sm:w-64" />
         <Select aria-label="Severity" value={sev} onChange={(e) => setSev(e.target.value)} className="!w-auto"><option value="">All severities</option>{SEVS.map((s) => <option key={s} value={s}>{sevLabel[s]}</option>)}</Select>
-        <Select aria-label="Operation" value={opf} onChange={(e) => setOpf(e.target.value)} className="!w-auto"><option value="">All operations</option>{opsList.map((o) => <option key={o}>{o}</option>)}</Select>
+        <Select aria-label="Operation" value={opf} onChange={(e) => setOpf(e.target.value)} className="!w-auto"><option value="">All operations</option>{(data?.ops ?? []).map((o) => <option key={o}>{o}</option>)}</Select>
         <MoreFilters active={moreActive}>
-          {pid === 'all' && <Field label="Project"><Select value={prj} onChange={(e) => setPrj(e.target.value)}><option value="">All projects</option>{accessible.map((p) => <option key={p.id} value={p.id}>{p.id}</option>)}</Select></Field>}
-          <Field label="Owner"><Select value={owner} onChange={(e) => setOwner(e.target.value)}><option value="">All owners</option>{owners.map((o) => <option key={o}>{o}</option>)}</Select></Field>
-          <Field label="Asset"><Select value={asset} onChange={(e) => setAsset(e.target.value)}><option value="">All assets</option>{assets.map((o) => <option key={o}>{o}</option>)}</Select></Field>
+          {pid === 'all' && <Field label="Project"><Select value={prj} onChange={(e) => setPrj(e.target.value)}><option value="">All projects</option>{(data?.projects ?? []).map((p) => <option key={p} value={p}>{p}</option>)}</Select></Field>}
+          <Field label="Owner"><Select value={owner} onChange={(e) => setOwner(e.target.value)}><option value="">All owners</option>{(data?.owners ?? []).map((o) => <option key={o}>{o}</option>)}</Select></Field>
+          <Field label="Asset"><Select value={asset} onChange={(e) => setAsset(e.target.value)}><option value="">All assets</option>{(data?.assets ?? []).map((o) => <option key={o}>{o}</option>)}</Select></Field>
           <Field label="Sort"><Select value={sort} onChange={(e) => setSort(e.target.value)}><option value="updated">Recently updated</option><option value="created">Newest recorded</option><option value="severity">Severity</option><option value="id">ID</option></Select></Field>
         </MoreFilters>
       </FilterBar>
       {tab === 'ai' && (
         <div className="mb-3 space-y-2">
           <Banner tone="warn" icon={Sparkles} title="AI suggestions are not verified findings">They are excluded from confirmed counts, severity charts and reports until a human verifies them.</Banner>
-          {Object.keys(ai.dismissed).length > 0 && <label className="flex cursor-pointer items-center gap-2 text-xs text-muted"><input type="checkbox" className="accent-[var(--c-accent)]" checked={showDis} onChange={(e) => setShowDis(e.target.checked)} />Show dismissed suggestions ({Object.keys(ai.dismissed).length})</label>}
+          {dismissed.length > 0 && <label className="flex cursor-pointer items-center gap-2 text-xs text-muted"><input type="checkbox" className="accent-[var(--c-accent)]" checked={showDis} onChange={(e) => setShowDis(e.target.checked)} />Show dismissed suggestions ({dismissed.length})</label>}
         </div>
       )}
-      <Table
-        rows={pg.rows} rowKey={(f) => f.id} onRow={(f) => go('finding', { id: f.id })}
-        empty={
-          <Empty icon={tab === 'ai' ? Sparkles : Bug} title={tab === 'ai' ? 'No AI suggestions to review' : filtered ? 'No findings match the filters' : 'No findings yet'} action={filtered ? <Button onClick={reset}>Reset filters</Button> : <Button variant="primary" icon={Plus} disabled={!!reason} title={reason} onClick={() => go('finding-new')}>Create Finding</Button>}>
-            {tab === 'ai' ? 'AI suggestions appear here when the AI Operator spots a possible gap in an operation.' : filtered ? 'Try removing some filters or the search term.' : 'No verified findings is a valid result. Findings are created from operation results, evidence or attack analysis — never invented to complete a report.'}
-          </Empty>
-        }
-        cols={[
-          { key: 'id', header: 'Finding ID', render: (f) => <span className="whitespace-nowrap"><Mono className="text-accent">{f.id}</Mono></span> },
-          { key: 't', header: 'Title', render: (f) => <div className="max-w-[300px] truncate font-medium" title={f.title}>{f.title}</div> },
-          { key: 'p', header: 'Project', hideBelow: 'md', render: (f) => <div className="whitespace-nowrap"><Mono>{f.projectId}</Mono><div className="text-xs text-muted">{db.projects.find((p) => p.id === f.projectId)?.client}</div></div> },
-          { key: 'sev', header: 'Severity', render: (f) => <span className="whitespace-nowrap"><Sev v={f.severity} /></span> },
-          { key: 'a', header: 'Affected asset', hideBelow: 'lg', render: (f) => <span className="whitespace-nowrap"><Mono>{f.asset}</Mono></span> },
-          { key: 'op', header: 'Operation', hideBelow: 'lg', render: (f) => <span className="whitespace-nowrap"><Mono>{f.op}</Mono></span> },
-          { key: 'o', header: 'Owner', hideBelow: 'md', render: (f) => <span className="whitespace-nowrap">{f.owner}</span> },
-          { key: 's', header: 'Status', render: (f) => <span className="whitespace-nowrap"><Status kind="finding" value={f.status} />{ai.dismissed[f.id] && <span className="ml-1.5 text-xs text-muted">dismissed</span>}</span> },
-          { key: 'u', header: 'Updated', hideBelow: 'lg', render: (f) => <span className="whitespace-nowrap text-xs text-muted">{f.updated}</span> },
-          ...(tab === 'ai' ? [{ key: 'act', header: 'Actions', render: (f: Finding) => {
-            const w = ai.why(f)
-            return ai.dismissed[f.id] ? <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); ai.restore(f) }}>Restore</Button> : (
-              <div className="flex gap-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                <Button size="sm" variant="primary" disabled={!!w} title={w || 'Verify the suggestion and create a finding in review'} onClick={() => ai.verify(f)}>Verify & create finding</Button>
-                <Button size="sm" disabled={!!w} title={w || 'Dismiss with a reason'} onClick={() => ai.dismiss(f)}>Dismiss</Button>
-              </div>
-            )
-          } }] : []),
-        ]}
-      />
-      <Pager {...pg} />
+      {list.isPending ? (
+        <div aria-busy="true" aria-label="Loading findings"><Skeleton className="h-72" /></div>
+      ) : list.isError ? (
+        <Empty icon={AlertTriangle} title="Could not load findings" action={<Button onClick={() => list.refetch()}>Retry</Button>}>
+          {(list.error as FindingReadError).failure.message}
+        </Empty>
+      ) : (
+        <>
+          <Table
+            rows={rows} rowKey={(it) => it.finding.id} onRow={(it) => go('finding', { id: it.finding.id })}
+            empty={
+              <Empty icon={tab === 'ai' ? Sparkles : Bug} title={tab === 'ai' ? 'No AI suggestions to review' : filtered ? 'No findings match the filters' : 'No findings yet'} action={filtered ? <Button onClick={reset}>Reset filters</Button> : <Button variant="primary" icon={Plus} disabled={!!reason} title={reason} onClick={() => go('finding-new')}>Create Finding</Button>}>
+                {tab === 'ai' ? 'AI suggestions appear here when the AI Operator spots a possible gap in an operation.' : filtered ? 'Try removing some filters or the search term.' : 'No verified findings is a valid result. Findings are created from operation results, evidence or attack analysis — never invented to complete a report.'}
+              </Empty>
+            }
+            cols={[
+              { key: 'id', header: 'Finding ID', render: (it) => <span className="whitespace-nowrap"><Mono className="text-accent">{it.finding.id}</Mono></span> },
+              { key: 't', header: 'Title', render: (it) => <div className="max-w-[300px] truncate font-medium" title={it.finding.title}>{it.finding.title}</div> },
+              { key: 'p', header: 'Project', hideBelow: 'md', render: (it) => <div className="whitespace-nowrap"><Mono>{it.finding.projectId}</Mono><div className="text-xs text-muted">{it.projectClient}</div></div> },
+              { key: 'sev', header: 'Severity', render: (it) => <span className="whitespace-nowrap"><Sev v={it.finding.severity} /></span> },
+              { key: 'a', header: 'Affected asset', hideBelow: 'lg', render: (it) => <span className="whitespace-nowrap"><Mono>{it.finding.asset}</Mono></span> },
+              { key: 'op', header: 'Operation', hideBelow: 'lg', render: (it) => <span className="whitespace-nowrap"><Mono>{it.finding.op}</Mono></span> },
+              { key: 'o', header: 'Owner', hideBelow: 'md', render: (it) => <span className="whitespace-nowrap">{it.finding.owner}</span> },
+              { key: 's', header: 'Status', render: (it) => <span className="whitespace-nowrap"><Status kind="finding" value={it.finding.status} />{ai.dismissed[it.finding.id] && <span className="ml-1.5 text-xs text-muted">dismissed</span>}</span> },
+              { key: 'u', header: 'Updated', hideBelow: 'lg', render: (it) => <span className="whitespace-nowrap text-xs text-muted">{it.finding.updated}</span> },
+              ...(tab === 'ai' ? [{ key: 'act', header: 'Actions', render: (it: { finding: Finding }) => {
+                const f = it.finding
+                const w = ai.why(f)
+                return ai.dismissed[f.id] ? <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); ai.restore(f) }}>Restore</Button> : (
+                  <div className="flex gap-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <Button size="sm" variant="primary" disabled={!!w} title={w || 'Verify the suggestion and create a finding in review'} onClick={() => ai.verify(f)}>Verify & create finding</Button>
+                    <Button size="sm" disabled={!!w} title={w || 'Dismiss with a reason'} onClick={() => ai.dismiss(f)}>Dismiss</Button>
+                  </div>
+                )
+              } }] : []),
+            ]}
+          />
+          <Pager page={data?.page ?? 1} pages={pages} total={data?.total ?? 0} setPage={setPage} />
+        </>
+      )}
     </div>
   )
 }
 
-/* ───────────── Access guard for the finding page ───────────── */
-function useFinding(id?: string): { f?: Finding; blocked?: ReactNode } {
-  const { db, me, pid, go, setPid, setSwitcherOpen } = useStore()
-  const f = db.findings.find((x) => x.id === id)
-  if (!f) {
-    return { blocked: <Empty icon={AlertTriangle} title="Finding not found" action={<Button onClick={() => go('findings')}>Back to findings</Button>}>ID {id || '—'} does not exist or was removed.</Empty> }
+/* ───────────── Access handling for the finding page (ticket 31) ───────────── */
+/**
+ * The detail read carries the authorization decisions: a finding outside the
+ * actor's access is `not-found` (indistinguishable from a missing one), and
+ * a finding in an accessible project outside the active project context is
+ * `forbidden` with the owning project on the entity ref — refused without
+ * content, with an explicit switch offered here.
+ */
+function FindingDenied({ id, error }: { id?: string; error: FindingReadError }) {
+  const { go, pid, setPid, setSwitcherOpen } = useStore()
+  const other = error.failure.kind === 'forbidden' ? error.failure.entity?.projectId : undefined
+  if (other) {
+    return (
+      <Empty icon={Lock} title={`Finding ${id} belongs to another project`} action={<div className="flex gap-2"><Button variant="primary" onClick={() => { setPid(other); setTimeout(() => go('finding', { id }), 80) }}>Switch to {other}</Button><Button onClick={() => setSwitcherOpen(true)}>Select another project</Button></div>}>
+        The selected project is {pid}. To avoid mixing data, content from {other} is not shown in this context.
+      </Empty>
+    )
   }
-  if (!canAccessProject(db, me, f.projectId)) {
-    return { blocked: <Empty icon={Lock} title="You do not have permission to view this finding" action={<Button onClick={() => go('findings')}>Back to findings</Button>}>Finding {f.id} belongs to a project your current account cannot access.</Empty> }
-  }
-  if (pid !== 'all' && f.projectId !== pid) {
-    return {
-      blocked: (
-        <Empty icon={Lock} title={`Finding ${f.id} belongs to another project`} action={<div className="flex gap-2"><Button variant="primary" onClick={() => { setPid(f.projectId); setTimeout(() => go('finding', { id: f.id }), 80) }}>Switch to {f.projectId}</Button><Button onClick={() => setSwitcherOpen(true)}>Select another project</Button></div>}>
-          The selected project is {pid}. To avoid mixing data, content from {f.projectId} is not shown in this context.
-        </Empty>
-      ),
-    }
-  }
-  return { f }
+  return <Empty icon={AlertTriangle} title="Finding not found" action={<Button onClick={() => go('findings')}>Back to findings</Button>}>ID {id || '—'} does not exist or is not available for your account.</Empty>
 }
 
-const MaskedName = ({ ev }: { ev: Evidence }) => {
-  const { can } = useStore()
-  return ev.sensitive && !can('viewSensitive') ? <span className="inline-flex items-center gap-1.5 text-warn"><Lock size={13} aria-hidden />Sensitive file — redacted</span> : <span>{ev.name}</span>
-}
+const MaskedName = ({ ev }: { ev: EvidenceView }) =>
+  ev.masked ? <span className="inline-flex items-center gap-1.5 text-warn"><Lock size={13} aria-hidden />Sensitive file — redacted</span> : <span>{ev.name ?? ev.ref}</span>
 
 /* ───────────── FI-03: create / edit ───────────── */
 interface Draft { title: string; severity: Severity; severityReason: string; asset: string; op: string; technique: string; desc: string; scopeNote: string; impact: string; rec: string; evidence: string[]; owner: string; kind: string; stepId?: string }
@@ -388,29 +400,42 @@ function FindingForm() {
 const FLOW = ['Draft', 'In Review', 'Confirmed', 'Remediation', 'Retest', 'Resolved']
 const FLOW_IDX: Record<string, number> = { ai_suggested: -1, draft: 0, returned: 0, review: 1, confirmed: 2, remediation: 3, retest: 4, resolved: 5 }
 
+/**
+ * Finding detail (ticket 31): the record, history/metadata and linked
+ * evidence come from the typed detail read through Query — role-sensitive
+ * masking (`viewSensitive`) is applied by the service, not by the screen.
+ * Lifecycle actions, comments, retest recording and report attachment stay
+ * with the bridged legacy actions until ticket 32 (lifecycle) and 36
+ * (reports) migrate them.
+ */
 function FindingDetail() {
-  const { route, go, can, readOnly, me, A, confirm, toast, db, scoped } = useStore()
-  const { f, blocked } = useFinding(route.id)
+  const { route, go, can, readOnly, me, A, confirm, toast, db, setPid, setSwitcherOpen } = useStore()
+  const detail = useFindingDetail(route.id)
   const [note, setNote] = useState('')
   const [rep, setRep] = useState(false)
   const ai = useAiActions()
-  if (blocked || !f) return <div>{blocked}</div>
+  if (!route.id || detail.isError) {
+    return <FindingDenied id={route.id} error={detail.isError ? (detail.error as FindingReadError) : new FindingReadError({ kind: 'not-found', message: 'Finding not found.' })} />
+  }
+  if (detail.isPending || !detail.data) {
+    return <div aria-busy="true" aria-label="Loading finding"><Skeleton className="h-72" /></div>
+  }
+  const data = detail.data
+  const f = data.finding
   const tab = route.tab || 'overview'
   const ro = readOnly(f.projectId)
   const reviewer = can('reviewFinding', f.projectId)
   const author = can('createFinding', f.projectId)
-  const proj = db.projects.find((p) => p.id === f.projectId)
-  const asset = db.assets.find((a) => a.name === f.asset && a.projectId === f.projectId)
-  const op = db.operations.find((o) => o.id === f.op)
-  const tech = TECHNIQUES.find((t) => t.id === f.technique)
+  const proj = data.project
+  const op = data.operation
+  const step = data.step
   const noEv = f.evidence.length === 0
   const roReason = me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.'
   const returnedNote = f.status === 'returned' ? [...f.comments].reverse()[0] : undefined
   const reports = db.reports.filter((r) => r.projectId === f.projectId && ['draft', 'returned'].includes(r.status))
-  const inReport = db.reports.filter((r) => r.findings.includes(f.id))
+  const inReport = data.inReports
   const reportReason = f.status === 'ai_suggested' ? 'AI suggestions are unverified and cannot be included in a report. Verify the finding first.' : ro ? roReason : !can('editReport', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot edit reports.` : ['draft', 'review', 'returned'].includes(f.status) ? 'Only confirmed findings can be added to a report.' : ''
 
-  const step = op?.steps.find((x) => x.evidence && f.evidence.includes(x.evidence)) || op?.steps.find((x) => x.technique === f.technique)
   const lastDecision = [...f.history].reverse().find((h) => /Confirmed|Returned/.test(h.text))
   const doSubmit = () => { A.setFindingStatus(f.id, 'review'); toast(`${f.id} submitted for review.`) }
   const approve = () => confirm({ title: `Confirm ${f.id}?`, body: 'The finding will move to "Confirmed" and can be added to reports. This action is written to the audit log.', confirmLabel: 'Confirm Finding', onConfirm: () => { A.setFindingStatus(f.id, 'confirmed'); toast(`${f.id} was confirmed.`) } })
@@ -471,7 +496,7 @@ function FindingDetail() {
         value={tab} onChange={(t) => go('finding', { id: f.id, tab: t })}
         tabs={[{ id: 'overview', label: 'Summary & workflow' }, { id: 'evidence', label: 'Evidence', count: f.evidence.length }, { id: 'retest', label: 'Retest', count: f.retests.length }]}
       />
-      {tab === 'evidence' ? <EvidenceTab f={f} ro={ro} /> : tab === 'retest' ? <RetestTab f={f} ro={ro} roReason={roReason} /> : (
+      {tab === 'evidence' ? <EvidenceTab f={f} evs={data.evidence} ro={ro} /> : tab === 'retest' ? <RetestTab f={f} ro={ro} roReason={roReason} /> : (
         <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
           <div className="space-y-6">
             <Card>
@@ -486,13 +511,13 @@ function FindingDetail() {
             <Card>
               <CardHeader title="Links" />
               <DescList cols={2} items={[
-                { k: 'Affected asset', v: asset ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('asset', { id: asset.id })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
+                { k: 'Affected asset', v: data.assetId ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('asset', { id: data.assetId })}>{f.asset} <ExternalLink size={11} className="inline" /></button> : <Mono>{f.asset}</Mono> },
                 { k: 'Evidence', v: f.evidence.length ? f.evidence.map((id) => <button key={id} className="mr-2 whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => go('evidence', { id })}>{id}</button>) : <span className="text-muted">None linked</span> },
                 { k: 'Operation step', v: op && step ? <button className="whitespace-nowrap font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id, tab: 'console' })}>{op.id} / {step.id} — {step.name}</button> : '—' },
-                { k: 'Confidence', v: f.status === 'ai_suggested' ? 'Low — AI inference, needs verification' : f.evidence.length ? 'High — backed by linked evidence' : 'Low — no evidence linked' },
+                { k: 'Confidence', v: f.status === 'ai_suggested' ? 'Low — AI inference, needs verification' : f.evidence.length ? 'Supported by linked evidence — a recorded claim, not proven exploitability' : 'Low — no evidence linked' },
                 { k: 'Reviewer decision', v: f.status === 'ai_suggested' ? 'Not submitted' : lastDecision ? `${lastDecision.text} by ${lastDecision.by}` : 'Pending' },
                 { k: 'Operation', v: op ? <button className="font-mono text-[13px] text-accent hover:underline" onClick={() => go('operation', { id: op.id })}>{op.id} — {op.name}</button> : f.op || '—' },
-                { k: 'ATT&CK technique', v: tech ? <button className="text-left text-accent hover:underline" onClick={() => go('technique', { id: tech.id })}><Mono>{tech.id}</Mono> — {tech.name}</button> : f.technique || 'Not applicable' },
+                { k: 'ATT&CK technique', v: data.techniqueName ? <button className="text-left text-accent hover:underline" onClick={() => go('technique', { id: f.technique })}><Mono>{f.technique}</Mono> — {data.techniqueName}</button> : f.technique || 'Not applicable' },
                 { k: 'Client', v: proj?.client },
                 { k: 'Recorded', v: f.date },
                 { k: 'Included in reports', v: inReport.length ? inReport.map((r) => <button key={r.id} className="mr-2 font-mono text-[13px] text-accent hover:underline" onClick={() => go('report', { id: r.id })}>{r.id}</button>) : 'Not yet' },
@@ -502,7 +527,7 @@ function FindingDetail() {
               <CardHeader title="Execution timeline" sub="From the source step through evidence to this finding." />
               <Timeline items={[
                 ...(step && step.ts !== '—' ? [{ at: `${step.ts} (UTC+7)`, title: `Step ${step.id} executed — ${step.name}`, sub: `${step.agent} on ${step.asset} · ${step.technique}`, tone: 'cyan' as const }] : []),
-                ...f.evidence.map((id) => db.evidence.find((e) => e.id === id)).filter((e): e is Evidence => !!e).map((e) => ({ at: e.at, title: `Evidence ${e.id} captured`, sub: `${e.kind} · ${e.by}`, tone: 'accent' as const })),
+                ...data.evidence.map((e) => ({ at: e.at, title: `Evidence ${e.ref} captured`, sub: `${e.kind} · ${e.by}`, tone: 'accent' as const })),
                 { at: f.date, title: `${f.id} recorded`, sub: f.status === 'ai_suggested' ? 'Suggested by AI Operator' : f.owner, tone: 'accent' as const },
               ]} />
             </Card>
@@ -573,14 +598,13 @@ function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: ()
   )
 }
 
-/* ───────────── Evidence tab ───────────── */
+/* ───────────── Evidence tab (ticket 31: masked read; link/upload stay legacy for 32) ───────────── */
 const OK_EXT = ['png', 'jpg', 'jpeg', 'txt', 'log', 'json', 'csv', 'pdf']
-function EvidenceTab({ f, ro }: { f: Finding; ro: boolean }) {
+function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: boolean }) {
   const { db, can, A, toast, me, go } = useStore()
-  const [view, setView] = useState<Evidence | null>(null)
+  const [view, setView] = useState<EvidenceView | null>(null)
   const [attach, setAttach] = useState(false)
   const [up, setUp] = useState(false)
-  const items = f.evidence.map((id) => db.evidence.find((e) => e.id === id)).filter(Boolean) as Evidence[]
   const canAdd = !ro && can('createFinding', f.projectId)
   const why = ro ? (me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.') : !canAdd ? `The ${ROLE_LABEL[me.role]} role cannot add evidence.` : ''
   const candidates = db.evidence.filter((e) => e.projectId === f.projectId && !f.evidence.includes(e.id))
@@ -588,15 +612,15 @@ function EvidenceTab({ f, ro }: { f: Finding; ro: boolean }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="mr-auto text-sm text-muted">{items.length} evidence item(s) — evidence cannot be removed from history; every link is logged.</span>
+        <span className="mr-auto text-sm text-muted">{evs.length} evidence item(s) — links are opaque references to retained captures; a linked claim still needs reviewer verification and is never proof of exploitability by itself. Evidence cannot be removed from history; every link is logged.</span>
         <Button icon={Link2} disabled={!canAdd} title={why} onClick={() => setAttach(true)}>Link Evidence</Button>
         <Button variant="primary" icon={Upload} disabled={!canAdd} title={why} onClick={() => setUp(true)}>Upload evidence</Button>
       </div>
       <Table
-        rows={items} rowKey={(e) => e.id} onRow={setView}
+        rows={evs} rowKey={(e) => e.ref} onRow={setView}
         empty={<Empty icon={Paperclip} title="No evidence yet" action={<Button variant="primary" icon={Upload} disabled={!canAdd} title={why} onClick={() => setUp(true)}>Upload evidence</Button>}>A finding needs at least one piece of evidence before it can be submitted for review.</Empty>}
         cols={[
-          { key: 'n', header: 'Name', render: (e) => <div className="flex items-center gap-2"><Mono className="text-accent">{e.id}</Mono><MaskedName ev={e} /></div> },
+          { key: 'n', header: 'Name', render: (e) => <div className="flex items-center gap-2"><Mono className="text-accent">{e.ref}</Mono><MaskedName ev={e} /></div> },
           { key: 'k', header: 'Type', render: (e) => e.kind },
           { key: 's', header: 'Source', hideBelow: 'md', render: (e) => <Mono>{e.source}</Mono> },
           { key: 'a', header: 'Captured at', hideBelow: 'lg', render: (e) => <span className="text-xs text-muted">{e.at}</span> },
@@ -604,8 +628,8 @@ function EvidenceTab({ f, ro }: { f: Finding; ro: boolean }) {
           { key: 'l', header: 'Label', render: (e) => (e.sensitive ? <span className="inline-flex items-center gap-1 text-xs text-warn"><Lock size={12} aria-hidden />Sensitive</span> : <span className="text-xs text-muted">Standard</span>) },
         ]}
       />
-      <Drawer open={!!view} onClose={() => setView(null)} title={view ? <span><Mono className="text-accent">{view.id}</Mono> · <MaskedName ev={view} /></span> : ''}
-        footer={view && <><Button icon={Eye} onClick={() => go('evidence', { id: view.id })}>Open in Evidence Inspector</Button><Button icon={Download} disabled={view.sensitive && !can('viewSensitive')} title={view.sensitive && !can('viewSensitive') ? 'Sensitive file — your role cannot download it.' : ''} onClick={() => toast(`Download of ${view.name} started (simulated).`, 'info')}>Download</Button></>}>
+      <Drawer open={!!view} onClose={() => setView(null)} title={view ? <span><Mono className="text-accent">{view.ref}</Mono> · <MaskedName ev={view} /></span> : ''}
+        footer={view && <><Button icon={Eye} onClick={() => go('evidence', { id: view.ref })}>Open in Evidence Inspector</Button><Button icon={Download} disabled={view.masked} title={view.masked ? 'Sensitive file — your role cannot download it.' : ''} onClick={() => toast(`Download of ${view.name} started (simulated).`, 'info')}>Download</Button></>}>
         {view && <EvidencePreview ev={view} f={f} onOp={() => view.opId && go('operation', { id: view.opId })} />}
       </Drawer>
       <Modal open={attach} onClose={() => setAttach(false)} title="Link existing evidence" footer={<Button onClick={() => setAttach(false)}>Done</Button>}>
@@ -659,9 +683,8 @@ function UploadModal({ open, onClose, f }: { open: boolean; onClose: () => void;
   )
 }
 
-function EvidencePreview({ ev, f, onOp }: { ev: Evidence; f: Finding; onOp: () => void }) {
-  const { can } = useStore()
-  const hide = ev.sensitive && !can('viewSensitive')
+function EvidencePreview({ ev, f, onOp }: { ev: EvidenceView; f: Finding; onOp: () => void }) {
+  const hide = ev.masked
   const isImg = ev.kind.startsWith('Image')
   const sample = ev.kind === 'JSON' ? '{\n  "role": "service-demo",\n  "permissions": ["read", "list", "write (exceeds policy)"]\n}' : 'user=demo_account\ngroups=Users, Backup (simulated)\n[sanitized — contains no sensitive data]'
   return (
