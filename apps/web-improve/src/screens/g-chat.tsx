@@ -1,26 +1,66 @@
-import { useEffect, useState } from 'react'
+/**
+ * AI Operator workspace (ticket 38, ADR-0067 —
+ * docs/adr/0067-web-console-service-domain-boundary.md).
+ *
+ * The migrated chat workspace: conversations read through the feature-local
+ * Query binding (scope-keyed cache, ChangeSet invalidation and cancel-on-
+ * switch come from the shared bridges), and conversation creation/mode
+ * selection go through the typed ChatService handlers. Sending stays on the
+ * bridged legacy action, which owns the demo's response orchestration
+ * (busy flag + timer) and delegates the commits to the same handlers —
+ * messages and plan proposals are strictly proposal-shaped (invariant 5).
+ * The shared chat cards/rail (g-common/g-workspace, tickets 39–44) keep
+ * their legacy seams until their owners migrate.
+ */
+import { useEffect, useMemo, useState } from 'react'
 import { ListTree, PanelRight, Plus, Sparkles } from 'lucide-react'
-import { eligibility, useStore } from '../store'
+import { eligibility, useServices, useStore } from '../store'
+import { actorRef } from '../auth/persona'
+import { useQueryScope } from '../state/keys'
+import { createChatHandlers } from '../features/aichat/handlers'
+import { ChatReadError, useConversationList } from '../features/aichat/query'
 import { Banner, Button, Drawer, Empty, PageHeader } from '../ui'
 import { AiSubNav, Composer, NoProject, Pill, STARTERS, Thread } from './g-common'
 import { ConvBanner, ConversationHeader, INSP, Inspector, LeftRail, RAIL, Separator, useResizable, useViewportW } from './g-workspace'
+import type { AiMode } from '../domain/entities'
 
 const LS_OPEN = 'raptix.ai.inspectorOpen'
 const readOpen = () => { try { return window.localStorage.getItem(LS_OPEN) !== '0' } catch { return true } }
 
 export function AiOperator() {
-  const { db, pid, project, route, A, aiMode, go, readOnly, guarded } = useStore()
+  const { db, pid, project, route, A, aiMode, go, readOnly, guarded, toast } = useStore()
+  const services = useServices()
+  const scope = useQueryScope()
   const vw = useViewportW()
   const wide = vw >= 1280
   const rail = useResizable('raptix.ai.railW', RAIL)
   const insp = useResizable('raptix.ai.inspectorW', INSP)
   const [ctxOpen, setCtxOpen] = useState(readOpen)
   const [sheet, setSheet] = useState<'rail' | 'ctx' | null>(null)
-  const convs = db.conversations.filter((c) => c.projectId === pid)
+  /* Typed chat handlers for the active actor/project scope; context is built
+     per call so a switch never retargets an in-flight request. */
+  const chat = useMemo(
+    () => createChatHandlers(services, actorRef(scope.actor), scope.project),
+    [services, scope.actor, scope.project],
+  )
+  const convsQ = useConversationList()
+  const convs = convsQ.data?.conversations ?? []
   const conv = convs.find((c) => c.id === route.id) || convs[0]
   useEffect(() => { if (wide) setSheet(null) }, [wide])
   const toggleCtx = () => { if (!wide) return setSheet(sheet === 'ctx' ? null : 'ctx'); const n = !ctxOpen; setCtxOpen(n); try { window.localStorage.setItem(LS_OPEN, n ? '1' : '0') } catch { /* ignore */ } }
-  const newConv = () => { if (pid === 'all') return; guarded(() => { const id = A.createConversation(pid, aiMode); go('ai-operator', { id }) }) }
+  const newConv = () => {
+    if (pid === 'all') return
+    guarded(() => {
+      const res = chat.create(pid, aiMode)
+      if (res.ok) go('ai-operator', { id: res.data.id })
+      else toast(res.failure.message, 'bad')
+    })
+  }
+  const setMode = (m: AiMode) => {
+    if (!conv) return
+    const res = chat.setMode(conv.id, m)
+    if (!res.ok) toast(res.failure.message, 'bad')
+  }
 
   if (pid === 'all' || !project) {
     return (
@@ -45,6 +85,13 @@ export function AiOperator() {
           <Button variant="primary" icon={Plus} disabled={ro} title={ro ? 'This project is read-only.' : 'Inherits the Default AI Mode. Nothing runs.'} onClick={newConv}>New Conversation</Button>
         </>} />
       <AiSubNav current="ai-operator" />
+      {convsQ.isError && (
+        <div className="mb-4">
+          <Banner tone="bad" title="Could not load conversations" action={<Button onClick={() => convsQ.refetch()}>Retry</Button>}>
+            {(convsQ.error as ChatReadError).failure.message}
+          </Banner>
+        </div>
+      )}
       <div className="flex h-[calc(100vh-250px)] min-h-[520px] min-w-0 overflow-hidden rounded-xl border border-line bg-panel">
         {wide && (
           <>
@@ -55,7 +102,7 @@ export function AiOperator() {
         <section aria-label="Conversation" className="flex min-w-0 flex-1 flex-col">
           {conv ? (
             <>
-              <ConversationHeader conv={conv} onMode={(m) => A.setConversationMode(conv.id, m)} />
+              <ConversationHeader conv={conv} onMode={setMode} />
               <ConvBanner conv={conv} />
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
                 {conv.messages.length === 0 ? (
