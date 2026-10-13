@@ -68,8 +68,10 @@ import {
   completeOperation, pauseOperation, resumeOperation, stopOperation,
 } from './features/operations/service'
 // Ticket 49: the allocation/group entries delegate to the typed agent write
-// handlers so eligibility, gating and audit have one implementation.
-import { assignAgentTransaction, removeFromGroupTransaction, saveGroupTransaction } from './features/agents/writes'
+// handlers so eligibility, gating and audit have one implementation. (Ticket 67
+// retired the zero-caller removeFromGroup wrapper: group removal resolves the
+// typed agents service directly.)
+import { assignAgentTransaction, saveGroupTransaction } from './features/agents/writes'
 // Ticket 51: asset import/scope changes are feature-local transactions
 // (src/features/assets/writes.ts); ticket 65 removed the last store entries
 // that forwarded to them, so the store no longer imports the handlers.
@@ -258,7 +260,6 @@ export interface Actions {
   assignAgent: (agentId: string, projectId: string) => Res
   setAgentStatus: (agentId: string, s: Agent['status']) => void
   saveGroup: (g: Partial<Group> & { name: string; projectId: string }) => string
-  removeFromGroup: (groupId: string, agentId: string, reason?: string) => Res
   createOperation: (d: OpDraft & { planId?: string }) => string
   updateOperation: (id: string, d: Partial<OpDraft>) => void
   pauseOp: (opId: string, reason: string) => void
@@ -272,17 +273,12 @@ export interface Actions {
   retryStop: () => void
   resolveStop: (outcome: 'confirmed-stopped' | 'dismiss') => void
   createFinding: (d: FindingDraft, submit: boolean) => string
-  updateFinding: (id: string, d: Partial<FindingDraft>) => void
   setFindingStatus: (id: string, status: Finding['status'], note?: string) => void
-  addRetest: (id: string, r: { result: string; note: string }) => void
   addFindingComment: (id: string, text: string) => void
-  attachEvidence: (findingId: string, evidenceId: string) => void
   addEvidence: (e: { name: string; kind: string; source: string; projectId: string; opId?: string; sensitive: boolean; findingId?: string }) => string
   createReport: (d: { projectId: string; title: string; template: string; kind: string; reviewer: string; findings: string[]; period: string }) => string
   saveReportSection: (id: string, sectionId: string, body: string) => void
   setReportFindings: (id: string, ids: string[]) => void
-  submitReport: (id: string) => void
-  returnReport: (id: string, note: string) => void
   approveReport: (id: string) => void
   exportReport: (id: string, format: 'PDF' | 'DOCX') => void
   deliverReport: (id: string, input: DeliveryInput) => Res
@@ -295,7 +291,6 @@ export interface Actions {
   decidePlaybookRevision: (id: string, decision: 'approve' | 'return') => void
   /* AI Operator */
   createConversation: (projectId: string, mode?: AiMode) => string
-  setConversationMode: (convId: string, mode: AiMode) => void
   togglePinConv: (convId: string) => void
   sendChat: (convId: string, text: string) => void
   stopChat: (convId: string) => void
@@ -307,8 +302,6 @@ export interface Actions {
   revisePlan: (planId: string, changes: string[], note?: string) => string
   executePlan: (planId: string) => { ok: boolean; opId?: string; error?: string }
   decideTool: (toolId: string, decision: 'allowed' | 'denied', reason?: string) => Res
-  requestBranchRetry: (branchId: string, reason: string) => void
-  reassignBranch: (branchId: string, agentId: string, reason: string) => { ok: boolean; error?: string }
   cancelBranch: (branchId: string, reason: string) => void
   /* C2 & Sessions */
   requestSessionAccess: (sessionId: string, mode: 'read-only' | 'interactive', duration: string, reason: string) => Res & { id?: string }
@@ -317,7 +310,6 @@ export interface Actions {
   revokeGrant: (sessionId: string, user: string, reason?: string) => Res
   expireGrant: (sessionId: string, user: string) => void
   sessionCommand: (sessionId: string, label: string) => Res
-  setSessionState: (sessionId: string, state: Session['state']) => void
 }
 
 const Ctx = createContext<Store>(null as any)
@@ -673,10 +665,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const res = saveGroupTransaction(services.authority, services.clock, actorCtx(g.projectId), { id: g.id, name: g.name, projectId: g.projectId, desc: g.desc || '', agents: g.agents || [], owner: g.owner || me.name, policy: g.policy || 'Project use only' })
       return res.ok ? res.data.id : ''
     },
-    removeFromGroup: (groupId, agentId, reason) => {
-      const res = removeFromGroupTransaction(services.authority, services.clock, actorCtx(''), groupId, agentId, reason)
-      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
-    },
 
     createOperation: (dr) => {
       const p = dbRef.current.projects.find((x) => x.id === dr.projectId)!
@@ -806,7 +794,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (submit) notify(`${id} needs review`, dr.projectId, { name: 'finding', id }, 'todo')
       return id
     },
-    updateFinding: (id, dr) => mutate((d) => { const f = d.findings.find((x) => x.id === id)!; Object.assign(f, { title: dr.title ?? f.title, severity: dr.severity ?? f.severity, desc: dr.desc ?? f.desc, impact: dr.impact ?? f.impact, rec: dr.rec ?? f.rec, asset: dr.asset ?? f.asset, technique: dr.technique ?? f.technique, owner: dr.owner ?? f.owner, evidence: dr.evidence ?? f.evidence }); f.updated = stamp(); f.history.push({ at: stamp(), by: me.name, text: 'Content updated' }) }),
     setFindingStatus: (id, status, note) => {
       const f = dbRef.current.findings.find((x) => x.id === id)!
       const txt: Record<string, string> = { review: 'Submitted for review', confirmed: 'Confirmed', returned: 'Returned for changes', remediation: 'Sent to remediation', retest: 'Moved to retest', resolved: 'Marked resolved', draft: 'Moved back to draft' }
@@ -814,9 +801,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       audit(txt[status] || 'Changed status', id, f.projectId, 'Success', note || '')
       if (status === 'returned') notify(`${id} was returned for changes`, f.projectId, { name: 'finding', id }, 'todo')
     },
-    addRetest: (id, r) => { mutate((d) => { const f = d.findings.find((x) => x.id === id)!; f.retests.push({ at: stamp(), by: me.name, ...r }); f.history.push({ at: stamp(), by: me.name, text: `Retest: ${r.result}` }); if (r.result === 'Resolved') f.status = 'resolved' }); audit('Retested', id, dbRef.current.findings.find((x) => x.id === id)!.projectId) },
     addFindingComment: (id, text) => mutate((d) => { d.findings.find((x) => x.id === id)!.comments.push({ by: me.name, at: stamp(), text }) }),
-    attachEvidence: (findingId, evidenceId) => mutate((d) => { const f = d.findings.find((x) => x.id === findingId)!; if (!f.evidence.includes(evidenceId)) f.evidence.push(evidenceId); const e = d.evidence.find((x) => x.id === evidenceId); if (e) e.findingId = findingId }),
     addEvidence: (e) => { const id = 'EV-' + (400 + dbRef.current.evidence.length + 1); mutate((d) => { d.evidence.push({ id, name: e.name, kind: e.kind, source: e.source, at: stamp(), by: me.name, projectId: e.projectId, opId: e.opId, findingId: e.findingId, sensitive: e.sensitive }) }); audit('Uploaded evidence', id, e.projectId); return id },
 
     createReport: (dr) => {
@@ -836,17 +821,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     saveReportSection: (id, sectionId, body) => mutate((d) => { const r = d.reports.find((x) => x.id === id)!; const s = r.sections.find((x) => x.id === sectionId)!; s.body = body; r.updated = stamp() }),
     setReportFindings: (id, ids) => mutate((d) => { const r = d.reports.find((x) => x.id === id)!; r.findings = ids; r.updated = stamp() }),
-    submitReport: (id) => {
-      const r = dbRef.current.reports.find((x) => x.id === id)!
-      mutate((d) => {
-        const x = d.reports.find((y) => y.id === id)!
-        if (x.status === 'returned') { const [maj, min] = x.version.replace('v', '').split('.').map(Number); x.version = `v${maj}.${min + 1}` }
-        x.status = 'review'; x.updated = stamp()
-        x.reviews.push({ at: stamp(), by: me.name, action: 'Submitted for review', note: '', version: x.version })
-      })
-      audit('Submitted report for review', id, r.projectId); notify(`${id} needs review`, r.projectId, { name: 'report-review', id }, 'todo', 'reports')
-    },
-    returnReport: (id, note) => { const r = dbRef.current.reports.find((x) => x.id === id)!; mutate((d) => { const x = d.reports.find((y) => y.id === id)!; x.status = 'returned'; x.updated = stamp(); x.reviews.push({ at: stamp(), by: me.name, action: 'Changes requested', note, version: x.version }) }); audit('Requested report changes', id, r.projectId, 'Success', note); notify(`${id} was returned for changes`, r.projectId, { name: 'report', id }, 'todo', 'reports') },
     approveReport: (id) => { const r = dbRef.current.reports.find((x) => x.id === id)!; mutate((d) => { const x = d.reports.find((y) => y.id === id)!; x.status = 'approved'; x.updated = stamp(); x.reviews.push({ at: stamp(), by: me.name, action: 'Approved', note: '', version: x.version }) }); audit('Approved report', id, r.projectId) },
     /* Ticket 37: the export/delivery mutations are canonical typed handlers
        (src/features/reports/service.ts); these legacy entries delegate to them
@@ -888,7 +862,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const res = chatApi.create(projectId, mode)
       return res.ok ? res.data.id : ''
     },
-    setConversationMode: (convId, mode) => { chatApi.setMode(convId, mode) },
     togglePinConv: (convId) => { chatApi.setPinned(convId) },
     sendChat: (convId, text) => {
       if (!text.trim() || aiBusy) return
@@ -972,23 +945,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
 
-    requestBranchRetry: (branchId, reason) => {
-      const b = dbRef.current.branches.find((x) => x.id === branchId)!
-      mutate((d) => { const x = d.branches.find((y) => y.id === branchId)!; x.pendingRequest = 'retry'; x.approval = 'pending'; x.lastEvent = 'Retry requested — awaiting approval and preflight'; x.timeline.push({ at: stamp(), text: `Retry requested: ${reason}` }) })
-      audit('Requested branch retry', branchId, b.projectId, 'Pending', reason)
-    },
-    reassignBranch: (branchId, agentId, reason) => {
-      const d0 = dbRef.current
-      const b = d0.branches.find((x) => x.id === branchId)!
-      const ag = d0.agents.find((x) => x.id === agentId)
-      if (!ag) return { ok: false, error: 'Agent not found.' }
-      if (ag.status !== 'online' && ag.status !== 'idle') return { ok: false, error: `${agentId} is not connected. Disconnected agents can't be assigned.` }
-      if (ag.projectId && ag.projectId !== b.projectId) return { ok: false, error: `${agentId} belongs to another project.` }
-      if (!ag.projectId) return { ok: false, error: `${agentId} is in the shared pool. Request assignment to ${b.projectId} first.` }
-      mutate((d) => { const x = d.branches.find((y) => y.id === branchId)!; x.assignLog.push({ at: stamp(), text: `Reassignment ${x.agent} → ${agentId} requested: ${reason}` }); x.pendingRequest = 'reassign'; x.approval = 'pending'; x.lastEvent = `Reassignment to ${agentId} awaiting approval` })
-      audit('Requested branch reassignment', branchId, b.projectId, 'Pending', `${b.agent} → ${agentId}: ${reason}`)
-      return { ok: true }
-    },
     cancelBranch: (branchId, reason) => {
       const b = dbRef.current.branches.find((x) => x.id === branchId)!
       mutate((d) => { const x = d.branches.find((y) => y.id === branchId)!; x.state = 'cancelled'; x.pendingRequest = undefined; x.lastEvent = 'Cancelled by user'; x.timeline.push({ at: stamp(), text: `Cancelled: ${reason}` }) })
@@ -1034,7 +990,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const res = sessionCommandTransaction(services.authority, services.clock, actorCtx(s.projectId), { sessionId, label })
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
-    setSessionState: (sessionId, state) => { mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId); if (x) x.state = state }) },
   }
 
   /* ticker: running operation progress */
