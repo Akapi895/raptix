@@ -158,14 +158,18 @@ describe('menu primitive', () => {
     expect(onRow).not.toHaveBeenCalled()
   })
 
-  it('aligns the panel left or right of the trigger', async () => {
+  it('aligns the panel left or right of the trigger, portals it to body and clamps to the viewport (ticket 62)', async () => {
     const left = render(<MenuHost onPick={vi.fn()} align="left" />)
     await userEvent.click(screen.getByRole('button', { name: 'Actions' }))
-    expect(screen.getByRole('menu').className).toContain('left-0')
-    expect(screen.getByRole('menu').className).not.toContain('right-0')
+    const menu = screen.getByRole('menu')
+    expect(menu.className).toContain('max-w-[calc(100vw-1.5rem)]')
+    expect(menu.style.left).not.toBe('')
+    expect(menu.style.right).toBe('')
     left.unmount()
     render(<MenuHost onPick={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: 'Actions' }))
-    expect(screen.getByRole('menu').className).toContain('right-0')
+    expect(screen.getByRole('menu').style.right).not.toBe('')
+    // The panel escapes overflow containers: it renders into document.body.
+    expect(screen.getByRole('menu').parentElement).toBe(document.body)
   })
 })
