@@ -1,7 +1,7 @@
 # 34: Report catalog, templates and draft creation
 
 **What to build:** Migrate report inventory/template/delivery-history reads and validated draft creation from eligible confirmed findings.
-**Blocked by:** 32.
+**Blocked by:** 32b.
 **Status:** ready-for-agent
 **Owner:** Report catalog/template reads and create handler.
 **Contract:** [execution.md](../execution.md).

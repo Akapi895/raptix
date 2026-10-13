@@ -152,9 +152,11 @@ export function createConsoleServices(): ConsoleServices {
     return createOperationService(authority, clock, guard)
   }
 
-  /* ── Ticket 31 append: findings inventory list/detail reads. Same
-     superseded-scope guard as forScope, so the ScopeCancelBridge's
-     cancelScope covers in-flight finding reads on a persona/project switch. ── */
+  /* ── Ticket 31/32 append: findings inventory reads + write handlers
+     (forms, lifecycle transitions, AI draft import, evidence attachment,
+     retests). Same superseded-scope guard as forScope for reads; mutations
+     capture their context at call time and commit once, publishing the
+     ChangeSet both bridges observe. ── */
   const forFindings = (actor: ActorRef, projectId: string): FindingService => {
     const key = scopeKey(actor, projectId)
     const guard = async <T>(produce: () => ServiceResult<T>): Promise<ServiceResult<T>> => {
@@ -168,7 +170,7 @@ export function createConsoleServices(): ConsoleServices {
       if (superseded) return { ok: false, failure: { kind: 'unavailable', message: 'Request superseded by a scope change.' } }
       return produce()
     }
-    return createFindingService(authority, guard)
+    return createFindingService(authority, clock, guard)
   }
 
   const cancelScope = (actor: ActorRef, projectId: string) => {

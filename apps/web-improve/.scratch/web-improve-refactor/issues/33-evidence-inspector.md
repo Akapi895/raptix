@@ -1,7 +1,7 @@
 # 33: Standalone evidence inspector
 
 **What to build:** Migrate both evidence route aliases to a typed inspector showing metadata, producer links and simulated capture integrity.
-**Blocked by:** 32.
+**Blocked by:** 32b.
 **Status:** ready-for-agent
 **Owner:** Evidence inspector/read/download policy; sequenced after shared findings-source migration.
 **Contract:** [execution.md](../execution.md).
