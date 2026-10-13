@@ -391,6 +391,7 @@ nmap -PR -sn <target_network>/24
 - **Scanning too broadly**: Only scan IPs confirmed in scope
 - **Ignoring UDP**: Critical services (DNS, SNMP, NTP) run on UDP
 - **Not saving results**: Always use `-oN` / `-oX` flags — scans are expensive to repeat
+- **Re-running a full scan to resolve a contradiction**: if a result seems to contradict a prior scan in this workspace (e.g. a full-range scan now shows a port closed that an earlier scan or a live probe showed open), do NOT re-run the same full/expensive scan again to "double-check" — verify with a narrow, targeted probe of just the specific port/range in question (a single `curl`/`nc`/`nmap -p <port>` call), then note the discrepancy (e.g. rate-limiting, filtering) in SUMMARY.md. A second full 65535-port scan costs as much wall-clock time as the first one for zero new information outside the disputed range.
 - **Aggressive timing on sensitive targets**: Start slow, increase only if needed
 - **Forgetting IPv6**: Check for AAAA records and scan IPv6 addresses too
 - **Skipping web fuzzing**: Many findings are behind non-obvious paths
