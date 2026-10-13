@@ -10,8 +10,11 @@
  * whatever surface fired it. The store action keeps only the demo's simulated
  * outcome orchestration (tracked delays disposed on reset); every transition
  * runs through these handlers, so legacy actions and typed callers observe
- * the same state. The remaining machine hardening (a manual confirm leaving
- * linked operations untouched — ledger G-10) stays with ticket 28.
+ * the same state. Machine hardening (ticket 28): a manual confirm completes
+ * the machine coherently — linked in-scope operations join the halted state,
+ * their sessions terminate and reserved agents release — and the finalize
+ * sweep is scope-matched, so a concurrent stop on another scope never
+ * touches out-of-scope records.
  */
 import { can } from '../../auth/policy'
 import { DEMO_TZ, formatDemoInstant } from '../../domain/clock'
@@ -109,12 +112,22 @@ export function acknowledgeEmergencyStopTransaction(authority: DbAuthority, cloc
   return { ok: true, data: { scope: input.scope, id: input.id } }
 }
 
-/** Releases the revoked sessions and the agents the stopped operations reserved; the stop state completes. */
+/**
+ * Completes the stop: the scope's revoked sessions terminate and the agents
+ * the stopped operations reserved are released; the stop state completes.
+ * The session sweep is scope-matched, so a concurrent stop's revoking
+ * sessions are left to their own finalization.
+ */
 export function finalizeEmergencyStopTransaction(authority: DbAuthority, clock: Clock, ctx: RequestContext, input: StopTarget): ServiceResult<StopTarget> {
+  const inScope = inScopeOf(input.scope, input.id)
   authority.commit(ctx.corr, (d) => {
-    d.sessions.forEach((s) => { if (s.state === 'revoking') s.state = 'terminated' })
+    d.sessions.forEach((s) => {
+      if (s.state !== 'revoking') return
+      const o = d.operations.find((x) => x.id === s.opId)
+      if (o && inScope(o)) s.state = 'terminated'
+    })
     d.operations.forEach((o) => {
-      if (o.status === 'estop') o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === o.id) a.op = null })
+      if (o.status === 'estop' && inScope(o)) o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === o.id) a.op = null })
     })
     if (d.stopState) d.stopState.phase = 'stopped'
   })
@@ -147,9 +160,13 @@ export type StopResolution = 'confirmed-stopped' | 'dismiss'
 
 /**
  * The manual resolution path: dismissing clears the stop state; a manual
- * confirm marks it stopped with an explicit audit row (the operator verified
- * the halt out-of-band). Linked operations are deliberately left untouched —
- * the documented baseline behavior whose hardening belongs to ticket 28.
+ * confirm completes the machine coherently (ledger G-10, hardened by
+ * ticket 28) — the operator verified the halt out-of-band, so the ONE commit
+ * brings the record in line with that attestation: in-scope operations that
+ * are still active join the halted state (running steps Unknown, queued
+ * steps not run), their linked sessions terminate and their reserved agents
+ * release. A confirmed stop therefore leaves execution halted and audited
+ * Success instead of a fabricated one the demo ticker keeps progressing.
  */
 export function resolveStopTransaction(authority: DbAuthority, clock: Clock, ctx: RequestContext, outcome: StopResolution): ServiceResult<StopTarget> {
   if (outcome === 'dismiss') {
@@ -161,7 +178,21 @@ export function resolveStopTransaction(authority: DbAuthority, clock: Clock, ctx
     return { ok: false, failure: { kind: 'conflict', message: 'No emergency stop is in progress to confirm.', entity: stopRef } }
   }
   const at = formatDemoInstant(clock.now())
+  const inScope = inScopeOf(s.scope, s.id)
   authority.commit(ctx.corr, (d) => {
+    d.operations.forEach((o) => {
+      if (!inScope(o)) return
+      if (['running', 'paused'].includes(o.status)) {
+        o.status = 'estop'; o.stopReason = s.reason; o.stopBy = ctx.actor.id; o.stopAt = at
+        o.steps.forEach((st) => { if (st.status === 'running') st.status = 'unknown'; if (st.status === 'pending' || st.status === 'review') st.status = 'notrun' })
+      }
+      if (o.status === 'estop') o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === o.id) a.op = null })
+    })
+    d.sessions.forEach((x) => {
+      if (x.state === 'terminated') return
+      const o = d.operations.find((y) => y.id === x.opId)
+      if (o && inScope(o) && ['connected', 'available', 'suspended', 'awaiting', 'revoking'].includes(x.state)) x.state = 'terminated'
+    })
     if (d.stopState) d.stopState.phase = 'stopped'
     d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Emergency stop confirmed manually', obj: s.id, projectId: '', result: 'Success', reason: 'Operator verified agents halted out-of-band' })
   })
