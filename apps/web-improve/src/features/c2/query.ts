@@ -10,9 +10,9 @@
  * kind invalidation covers every live state change: a legacy session
  * mutation (grant, revocation, emergency-stop outcome, operation
  * completion) refetches the mounted overview and lists without a reload,
- * and a legacy access-request decision refetches the requests view through
- * the same publication. Reads only — request/grant mutations stay with the
- * legacy bridge until ticket 46.
+ * and an access-request decision refetches the requests view through
+ * the same publication. Request/grant mutations live in the feature-local
+ * transactions (./grants, ticket 46) behind the legacy action bridge.
  */
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
