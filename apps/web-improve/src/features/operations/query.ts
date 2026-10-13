@@ -14,12 +14,13 @@ import { actorRef } from '../../auth/persona'
 import { useServices } from '../../store'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
-import type { OperationDraftInput, OperationDraftOptions, OperationDraftPatch, OperationListQuery, OperationListRead, OperationWriteRead } from './service'
+import type { OperationDetailRead, OperationDraftInput, OperationDraftOptions, OperationDraftPatch, OperationListQuery, OperationListRead, OperationWriteRead, PreflightRunRead } from './service'
 
 /** Feature-local key namespace: ['operation', scope, 'list', query]. */
 export const operationKeys = {
   list: (scope: QueryScope, query: OperationListQuery) => consoleKeys.view('operation', scope, 'list', query),
   draftOptions: (scope: QueryScope, forOperation?: string) => consoleKeys.view('operation', scope, 'draft-options', forOperation ?? ''),
+  detail: (scope: QueryScope, id: string) => consoleKeys.view('operation', scope, 'detail', id),
 }
 
 /** A service failure rethrown as the query error, so screens render the kind and message. */
@@ -106,6 +107,48 @@ export function useScheduleOperation() {
     mutationFn: async (v: { id: string; at: 'now' | string }): Promise<ServiceResult<OperationWriteRead>> => {
       const actor = actorRef(scope.actor)
       return services.operations(actor, scope.project).schedule({ actor, projectId: scope.project, corr: corr('operation-schedule') }, v.id, v.at)
+    },
+  })
+}
+
+/* ── Ticket 26: console detail read + preflight run. ── */
+
+/**
+ * The canonical detail bundle for one operation (phases, steps, linked
+ * plan/conversation/branch groups). The key embeds the scope, so a persona or
+ * project switch reads a different entry and the superseded read is cancelled
+ * before a delayed response can restore old visibility.
+ */
+export function useOperationDetail(id: string) {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useQuery({
+    queryKey: operationKeys.detail(scope, id),
+    queryFn: async (): Promise<OperationDetailRead> => {
+      const actor = actorRef(scope.actor)
+      const res = await services
+        .operations(actor, scope.project)
+        .detail({ actor, projectId: scope.project, corr: 'operation-detail' }, id)
+      if (!res.ok) throw new OperationReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services && !!id,
+  })
+}
+
+/**
+ * Runs preflight through the typed handler: the eight checks are re-derived
+ * from canonical state at the handler, so a scope revision that cleared the
+ * stored preflight fails the re-run until the ROE is re-approved. The typed
+ * result — success or refusal reason — is surfaced to the caller.
+ */
+export function useRunPreflight() {
+  const services = useServices()
+  const scope = useQueryScope()
+  return useMutation({
+    mutationFn: async (v: { id: string }): Promise<ServiceResult<PreflightRunRead>> => {
+      const actor = actorRef(scope.actor)
+      return services.operations(actor, scope.project).preflight({ actor, projectId: scope.project, corr: corr('operation-preflight') }, v.id)
     },
   })
 }
