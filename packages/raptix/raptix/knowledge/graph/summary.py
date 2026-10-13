@@ -15,7 +15,7 @@ Sections (in order):
   2. Top high-severity vulnerabilities (limit 5)
   3. Unexplored entrypoints (limit 3) — entrypoints with no HAS_VULN
      edge out
-  4. Crown jewels with viable-path counts
+  4. Crown jewels with graph-path counts (hop count only, not verified)
   5. Recorded Candidate/Hypothesis assertions (opt-in, unverified)
 
 ``RAPTIX_KG_CLAIM_CONTEXT=1`` adds at most five claims in a bounded,
@@ -129,7 +129,11 @@ def _open_entrypoints(store: KGStore, *, engagement: str) -> list[dict[str, Any]
 
 
 def _crown_jewels(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
-    """Crown jewels with the number of distinct viable paths from any entrypoint."""
+    """Crown jewels with the number of distinct graph paths from any entrypoint.
+
+    Topological reachability only (any relationship type, 1-6 hops) — not
+    evidence of a verified, executable attack path.
+    """
     rows = store.execute_read(
         (
             "MATCH (c:CrownJewel) WHERE c.engagement = $engagement "
@@ -222,7 +226,7 @@ def _render_crown_jewels(crown_jewels: Iterable[Mapping[str, Any]]) -> str:
         label = jewel.get("label") or jewel.get("key") or "?"
         paths = int(jewel.get("paths") or 0)
         plural = "" if paths == 1 else "s"
-        lines.append(f"- {label} ({paths} viable path{plural})")
+        lines.append(f"- {label} ({paths} graph path{plural})")
     return "\n".join(lines)
 
 
@@ -357,10 +361,14 @@ def _cheapest_paths(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
     )
     paths: list[dict[str, Any]] = []
     for jewel in jewels:
+        jewel_key = jewel.get("key")
+        if not jewel_key:
+            continue
         rows = store.execute_read(
             (
                 "MATCH p=(e:Entrypoint)-[*1..%d]->(c:CrownJewel) "
-                "WHERE c.engagement = $engagement AND e.engagement = $engagement "
+                "WHERE c.engagement = $engagement AND c.key = $jewel_key "
+                "  AND e.engagement = $engagement "
                 "  AND all(n IN nodes(p) WHERE n.engagement = $engagement) "
                 "  AND all(r IN relationships(p) WHERE r.engagement = $engagement) "
                 "RETURN e.label AS entrypoint, length(p) AS hops, "
@@ -368,12 +376,12 @@ def _cheapest_paths(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
                 "ORDER BY hops ASC LIMIT 1"
             )
             % MAX_PATH_HOPS,
-            {"engagement": engagement},
+            {"engagement": engagement, "jewel_key": jewel_key},
             engagement=engagement,
         )
         if not rows:
             continue
-        paths.append({"crown_jewel": jewel.get("label") or jewel.get("key"), **rows[0]})
+        paths.append({"crown_jewel": jewel.get("label") or jewel_key, **rows[0]})
     return paths
 
 
@@ -388,7 +396,9 @@ def build_planning_context(store: KGStore, *, engagement: str) -> str:
     paths = _cheapest_paths(store, engagement=engagement)
     if not paths:
         return ""
-    lines = ["## PLANNING CONTEXT (cheapest known attack paths)"]
+    lines = [
+        "## PLANNING CONTEXT (shortest known graph paths — hop count only, not a verified attack path)"
+    ]
     for path in paths:
         route = " → ".join(str(step) for step in path.get("route") or [])
         lines.append(
