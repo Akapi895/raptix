@@ -1,8 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRound, Lock, LogOut, MinusCircle, MoreHorizontal, OctagonX, Plug, RefreshCw, Save, ShieldAlert, ShieldCheck, Trash2, UserPlus, XCircle } from 'lucide-react'
-import { useStore, useDirty, ROLE_LABEL, stamp, today } from '../store'
+import { useStore, useDirty, ROLE_LABEL, today } from '../store'
 import { USERS, TECHNIQUES, type Role, type DetectState } from '../data'
-import { Avatar, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Input, Menu, Modal, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, Timeline, Toggle, cx, usePaged } from '../ui'
+import { OrgReadError, useOrgMembers, useOrgProfile, useOrgWrites } from '../features/settings/query'
+import type { OrgMembersRead, OrgProfile, OrgProfileRead } from '../features/settings/service'
+import { Avatar, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Input, Menu, Modal, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Toggle, cx, usePaged } from '../ui'
 
 type TabId = 'org' | 'users' | 'integrations' | 'policies' | 'retention' | 'templates' | 'detection' | 'audit' | 'notifications' | 'security'
 const ROLES: Role[] = ['admin', 'manager', 'operator', 'reviewer', 'analyst', 'viewer']
@@ -60,23 +62,42 @@ export function SettingsPage() {
   )
 }
 
-/* ───────── ST-10 Organization / workspace general ───────── */
+/* ───────── ST-10 Organization / workspace general (ticket 56: typed service) ───────── */
 function OrgTab() {
-  const { org, me, A, toast, persistFilters, setFilter } = useStore()
+  const q = useOrgProfile()
+  if (q.isPending) return <div aria-busy="true" aria-label="Loading organization settings"><Skeleton className="h-96" /></div>
+  if (q.isError || !q.data) return <Empty icon={AlertTriangle} title="Organization settings unavailable" action={<Button onClick={() => q.refetch()}>Retry</Button>}>{q.error instanceof OrgReadError ? q.error.failure.message : 'The organization profile could not be loaded.'}</Empty>
+  return <OrgForm read={q.data} />
+}
+
+function OrgForm({ read }: { read: OrgProfileRead }) {
+  const { me, toast } = useStore()
+  const writes = useOrgWrites()
   const admin = me.role === 'admin'
-  const saved = (persistFilters.orgInfo || { name: org, tz: 'Asia/Ho_Chi_Minh (UTC+7)', dateFmt: 'MMM D, YYYY', landing: 'Dashboard', contact: 'dana.whitfield@acme-security.example.test', policy: 'Data stays in the demo region; evidence is encrypted; least-privilege access.', def: 'WS-02' }) as Record<string, string>
-  const [f, setF] = useState(saved)
+  const saved = read.profile
+  const [f, setF] = useState<OrgProfile>(saved)
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
   const dirty = JSON.stringify(f) !== JSON.stringify(saved)
-  const save = () => { setFilter('orgInfo', f); A.audit('Updated organization settings', 'ORG', '', 'Success', Object.keys(f).filter((k) => f[k] !== saved[k]).join(', ')); toast('Organization settings saved') }
+  const save = async () => {
+    setErr(''); setBusy(true)
+    const res = await writes.updateProfile(f)
+    setBusy(false)
+    if (!res.ok) { setErr(res.failure.message); return }
+    toast('Organization settings saved')
+  }
   useDirty(dirty && admin, save)
-  const workspaces = [{ id: 'WS-01', name: 'Raptix Workspace — Production', st: 'Active' }, { id: 'WS-02', name: 'Raptix Workspace — Test Lab', st: 'Active (current)' }, { id: 'WS-03', name: 'Archive workspace 2025', st: 'Read-only' }]
-  const set = (k: string, v: string) => setF({ ...f, [k]: v })
+  const set = (k: keyof OrgProfile, v: string) => setF({ ...f, [k]: v })
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_380px]">
       <div>
         {!admin && <ReadOnlyNote>Only Organization Admins can edit these settings. Ask an admin to change them; you are viewing read-only.</ReadOnlyNote>}
+        {err && <Banner tone="bad" title="Change not saved">{err}</Banner>}
         <Card>
-          <CardHeader title="Organization profile" actions={<Button variant="primary" icon={Save} disabled={!admin || !dirty || !f.name.trim()} title={!admin ? 'Only Organization Admins can save' : !dirty ? 'No changes to save' : !f.name.trim() ? 'Enter an organization name' : undefined} onClick={save}>Save</Button>} />
+          <CardHeader title="Organization profile" actions={<>
+            <Button disabled={!dirty || busy} title={dirty ? 'Discard unsaved changes' : 'No changes to discard'} onClick={() => { setF(saved); setErr('') }}>Reset</Button>
+            <Button variant="primary" icon={Save} disabled={!admin || !dirty || busy || !f.name.trim()} title={!admin ? 'Only Organization Admins can save' : !dirty ? 'No changes to save' : !f.name.trim() ? 'Enter an organization name' : undefined} onClick={save}>Save</Button>
+          </>} />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Organization name" required error={!f.name.trim() ? 'Required.' : ''}><Input value={f.name} disabled={!admin} onChange={(e) => set('name', e.target.value)} /></Field>
             <Field label="Current workspace" hint="Switch workspaces from the list on the right."><Input value="Raptix Workspace — Test Lab" readOnly disabled /></Field>
@@ -85,7 +106,7 @@ function OrgTab() {
             <Field label="Date format"><Select value={f.dateFmt} disabled={!admin} onChange={(e) => set('dateFmt', e.target.value)}><option>MMM D, YYYY</option><option>YYYY-MM-DD</option></Select></Field>
             <Field label="Default landing page"><Select value={f.landing} disabled={!admin} onChange={(e) => set('landing', e.target.value)}><option>Dashboard</option><option>Projects</option><option>Approvals</option></Select></Field>
             <Field label="Language" hint="English only for now."><Select value="en" disabled><option value="en">English</option></Select></Field>
-            <Field label="Admin contact" className="md:col-span-2"><Input type="email" value={f.contact} disabled={!admin} onChange={(e) => set('contact', e.target.value)} /></Field>
+            <Field label="Admin contact" className="md:col-span-2" hint={read.contactMasked ? 'Masked for your role; only Organization Admins see the full address.' : undefined}><Input type="email" value={f.contact} disabled={!admin} onChange={(e) => set('contact', e.target.value)} /></Field>
             <Field label="Data policy" className="md:col-span-2"><Textarea value={f.policy} disabled={!admin} onChange={(e) => set('policy', e.target.value)} /></Field>
           </div>
         </Card>
@@ -93,10 +114,10 @@ function OrgTab() {
       <Card>
         <CardHeader title="Workspaces" sub="Choose the default workspace at sign-in." />
         <ul className="space-y-2">
-          {workspaces.map((w) => (
+          {read.workspaces.map((w) => (
             <li key={w.id} className="flex items-center gap-3 rounded-lg border border-line p-3">
-              <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{w.name}</div><div className="text-xs text-muted"><Mono className="whitespace-nowrap">{w.id}</Mono> · {w.st}</div></div>
-              {f.def === w.id ? <span className="rounded-full border border-accent/30 bg-accent-soft px-2 py-0.5 text-[11px] text-accent">Default</span> : <Button size="sm" disabled={!admin || w.st === 'Read-only'} title={!admin ? 'Only Organization Admins' : w.st === 'Read-only' ? 'A read-only workspace cannot be the default' : undefined} onClick={() => set('def', w.id)}>Set default</Button>}
+              <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{w.name}</div><div className="text-xs text-muted"><Mono className="whitespace-nowrap">{w.id}</Mono> · {w.state}</div></div>
+              {f.defWorkspace === w.id ? <span className="rounded-full border border-accent/30 bg-accent-soft px-2 py-0.5 text-[11px] text-accent">Default</span> : <Button size="sm" disabled={!admin || w.state === 'Read-only'} title={!admin ? 'Only Organization Admins' : w.state === 'Read-only' ? 'A read-only workspace cannot be the default' : undefined} onClick={() => set('defWorkspace', w.id)}>Set default</Button>}
             </li>
           ))}
         </ul>
@@ -105,7 +126,7 @@ function OrgTab() {
   )
 }
 
-/* ───────── ST-02/03 Users & roles ───────── */
+/* ───────── ST-02/03 Users & roles (ticket 56: typed service) ───────── */
 const SPEC_ROLES: Role[] = ['admin', 'manager', 'reviewer', 'operator', 'analyst', 'viewer']
 const MATRIX: [string, string[]][] = [
   ['View allowed project', ['Y', 'Y', 'Y', 'Y', 'Y', 'R']], ['Create project draft', ['Y', 'Y', '—', 'Req', '—', '—']], ['Approve project / ROE', ['Y', 'Req', 'Y', '—', '—', '—']],
@@ -121,34 +142,42 @@ const CELL: Record<string, { tip: string; cls: string }> = {
 const corr = (a: { id: string; corr?: string }) => a.corr || 'COR-' + a.id.replace(/\D/g, '').padStart(4, '0')
 const actorType = (a: { actor: string; role: string }) => a.actor === 'AI Operator' ? 'AI' : a.role === 'System' || a.actor === 'System' ? 'System' : 'Human'
 const utcOf = (at: string) => { const t = Date.parse(at.replace(/\s*\(UTC\+7\)/, '')); return Number.isNaN(t) ? '—' : new Date(t - 7 * 3600000).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (UTC)' }
-type UserOv = Record<string, { role?: Role; locked?: boolean; revoked?: boolean }>
 function UsersTab() {
-  const { db, me, A, toast, confirm, persistFilters, setFilter } = useStore()
-  const admin = me.role === 'admin'
-  const ov = (persistFilters.userOv || {}) as UserOv
-  const invites = (persistFilters.invites || []) as { email: string; role: Role; project: string; days: string; note: string; at: string }[]
+  const q = useOrgMembers()
+  if (q.isPending) return <div aria-busy="true" aria-label="Loading users"><Skeleton className="h-72" /></div>
+  if (q.isError || !q.data) return <Forbidden reason={q.error instanceof OrgReadError ? q.error.failure.message : 'The user list could not be loaded.'} />
+  return <UsersPanel read={q.data} />
+}
+function UsersPanel({ read }: { read: OrgMembersRead }) {
+  const { me, toast, confirm, A } = useStore()
+  const writes = useOrgWrites()
+  const admin = read.canEdit
   const [view, setView] = useState<'users' | 'roles' | 'invites'>('users')
   const [open, setOpen] = useState(false)
   const [hist, setHist] = useState<string | null>(null)
-  const [inv, setInv] = useState({ email: '', role: 'operator' as Role, project: db.projects[0].id, days: '7', note: '' })
+  const [inv, setInv] = useState({ email: '', role: 'operator' as Role, project: '', days: '7', note: '' })
   const [touched, setTouched] = useState(false)
+  const [invErr, setInvErr] = useState('')
   const why = 'Only Organization Admins can change user access. Ask an admin to make the change.'
-  const emailErr = !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inv.email) ? 'Enter a valid email address.' : [...USERS.map((u) => u.email), ...invites.map((i) => i.email)].includes(inv.email) ? 'This email already exists or has been invited.' : ''
+  const emailErr = !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inv.email) ? 'Enter a valid email address.' : [...read.members.map((u) => u.email), ...read.invites.map((i) => i.email)].includes(inv.email) ? 'This email already exists or has been invited.' : ''
   const roleErr = inv.role === 'admin' && inv.project ? 'Organization Admins have organization-wide access. Clear the project to continue.' : ''
-  const send = () => {
-    setTouched(true)
+  const send = async () => {
+    setTouched(true); setInvErr('')
     if (emailErr || roleErr) return
-    setFilter('invites', [{ ...inv, at: stamp() }, ...invites]); A.audit('Invited user', inv.email, inv.project, 'Success', `Role ${ROLE_LABEL[inv.role]}`)
+    const res = await writes.inviteMember({ email: inv.email, role: inv.role, project: inv.project, days: inv.days, note: inv.note })
+    if (!res.ok) { setInvErr(res.failure.message); return }
     toast(`Invitation sent to ${inv.email}`); setOpen(false); setTouched(false); setInv({ ...inv, email: '', note: '' }); setView('invites')
   }
   const act = (name: string, kind: 'lock' | 'unlock' | 'revoke') => confirm({
     title: `${kind === 'lock' ? 'Disable account for' : kind === 'unlock' ? 'Re-enable' : 'Revoke access for'} ${name}?`, body: kind === 'revoke' ? 'The user loses all project access. This is audited.' : 'This is audited.',
     confirmLabel: 'Confirm', danger: kind !== 'unlock', reasonLabel: 'Reason', reasonRequired: kind !== 'unlock',
-    onConfirm: (reason) => { setFilter('userOv', { ...ov, [name]: { ...ov[name], locked: kind === 'lock' ? true : kind === 'unlock' ? false : ov[name]?.locked, revoked: kind === 'revoke' ? true : ov[name]?.revoked } }); A.audit(`${kind === 'lock' ? 'Disabled account' : kind === 'unlock' ? 'Re-enabled account' : 'Revoked access'}`, name, '', 'Success', reason); toast('User updated') },
+    onConfirm: (reason) => { void writes.setMemberStatus(name, kind, reason).then((res) => { if (res.ok) toast('User updated'); else toast(res.failure.message, 'bad') }) },
   })
-  const changeRole = (name: string, cur: Role, role: Role) => { if (role === cur) return; confirm({ title: `Change role for ${name}`, body: `${ROLE_LABEL[cur]} to ${ROLE_LABEL[role]}. The new permissions apply immediately and are audited.`, confirmLabel: 'Change Role', danger: role === 'admin', reasonLabel: 'Reason', reasonRequired: true, onConfirm: (reason) => { setFilter('userOv', { ...ov, [name]: { ...ov[name], role } }); A.audit('Changed user role', name, '', 'Success', `${cur} to ${role}. ${reason}`); toast('Role changed') } }) }
-  const users = USERS.map((u) => ({ ...u, role: ov[u.name]?.role || u.role, locked: !!ov[u.name]?.locked, revoked: !!ov[u.name]?.revoked }))
-  const histRows = db.audit.filter((a) => a.actor === hist || a.obj === hist)
+  const changeRole = (name: string, cur: Role, role: Role) => { if (role === cur) return; confirm({ title: `Change role for ${name}`, body: `${ROLE_LABEL[cur]} to ${ROLE_LABEL[role]}. The new permissions apply immediately and are audited.`, confirmLabel: 'Change Role', danger: role === 'admin', reasonLabel: 'Reason', reasonRequired: true, onConfirm: (reason) => { void writes.setMemberRole(name, role, reason).then((res) => { if (res.ok) toast('Role changed'); else toast(res.failure.message, 'bad') }) } }) }
+  const users = read.members
+  const invites = read.invites
+  const histMember = read.members.find((m) => m.name === hist)
+  const histRows = histMember?.history ?? []
   return (
     <>
       <FilterBar right={<Button variant="primary" icon={UserPlus} disabled={!admin} title={admin ? undefined : why} onClick={() => setOpen(true)}>Invite User</Button>}>
@@ -159,14 +188,14 @@ function UsersTab() {
         <Table rows={users} rowKey={(u) => u.name} cols={[
           { key: 'n', header: 'User', render: (u) => <div className="flex items-center gap-3"><Avatar name={u.name} /><div><div className="font-medium">{u.name}</div><div className="text-xs text-muted">{u.email}</div></div></div> },
           { key: 'r', header: 'Role', render: (u) => admin ? <Select aria-label={`Role of ${u.name}`} className="!h-9 w-48" value={u.role} onChange={(e) => changeRole(u.name, u.role, e.target.value as Role)}>{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</Select> : ROLE_LABEL[u.role] },
-          { key: 'p', header: 'Projects', hideBelow: 'md', render: (u) => { const ps = u.role === 'admin' || u.role === 'manager' || u.role === 'reviewer' ? 'All projects' : db.projects.filter((p) => p.members.some((m) => m.user === u.name)).map((p) => p.id).join(', ') || '—'; return <span className="text-sm">{u.revoked ? 'Revoked' : ps}</span> } },
+          { key: 'p', header: 'Projects', hideBelow: 'md', render: (u) => { const ps = u.role === 'admin' || u.role === 'manager' || u.role === 'reviewer' ? 'All projects' : u.projects.join(', ') || '—'; return <span className="text-sm">{u.revoked ? 'Revoked' : ps}</span> } },
           { key: 's', header: 'Status', render: (u) => <Status kind="generic" value={u.revoked ? 'bad' : u.locked ? 'warn' : 'ok'} label={u.revoked ? 'Access revoked' : u.locked ? 'Disabled' : 'Active'} /> },
           { key: 'i', header: 'Invited', hideBelow: 'lg', render: () => <span className="text-muted">Sep 1, 2026</span> },
           { key: 'l', header: 'Last active', hideBelow: 'lg', render: (u) => <span className="text-muted">{u.name === me.name ? 'Online now' : 'Oct 13, 2026, 9:' + String(10 + (u.name.length * 7) % 50) + ' AM (UTC+7)'}</span> },
           { key: 'x', header: '', render: (u) => <Menu trigger={<Button size="sm" icon={MoreHorizontal} aria-label={`Actions for ${u.name}`}>Actions</Button>} items={[
             { label: 'View Access History', onClick: () => setHist(u.name) },
-            { label: u.locked ? 'Re-enable account' : 'Disable Account', onClick: () => act(u.name, u.locked ? 'unlock' : 'lock'), disabled: !admin || u.name === me.name, hint: !admin ? 'Admins only' : u.name === me.name ? 'You cannot disable your own account' : undefined },
-            { label: 'Revoke access', danger: true, onClick: () => act(u.name, 'revoke'), disabled: !admin || u.name === me.name || u.revoked, hint: !admin ? 'Admins only' : undefined },
+            { label: u.locked ? 'Re-enable account' : 'Disable Account', onClick: () => act(u.name, u.locked ? 'unlock' : 'lock'), disabled: !admin || u.self, hint: !admin ? 'Admins only' : u.self ? 'You cannot disable your own account' : undefined },
+            { label: 'Revoke access', danger: true, onClick: () => act(u.name, 'revoke'), disabled: !admin || u.self || u.revoked, hint: !admin ? 'Admins only' : undefined },
             { label: 'Assign as reviewer', onClick: () => changeRole(u.name, u.role, 'reviewer'), disabled: !admin || u.role === 'reviewer', hint: !admin ? 'Admins only' : undefined },
           ]} /> },
         ]} />
@@ -201,9 +230,9 @@ function UsersTab() {
       )}
       <Modal open={open} onClose={() => setOpen(false)} title="Invite User" footer={<><Button onClick={() => setOpen(false)}>Cancel</Button><Button variant="primary" onClick={send}>Send invitation</Button></>}>
         <div className="space-y-4">
-          <Field label="Email" required error={touched ? emailErr : ''}><Input type="email" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} placeholder="name@company.example.test" /></Field>
+          <Field label="Email" required error={(touched && emailErr) || invErr}><Input type="email" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} placeholder="name@company.example.test" /></Field>
           <Field label="Role" required error={touched ? roleErr : ''}><Select value={inv.role} onChange={(e) => setInv({ ...inv, role: e.target.value as Role })}>{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</Select></Field>
-          <Field label="Project access"><Select value={inv.project} onChange={(e) => setInv({ ...inv, project: e.target.value })}><option value="">Organization-wide</option>{db.projects.map((p) => <option key={p.id} value={p.id}>{p.id} — {p.name}</option>)}</Select></Field>
+          <Field label="Project access"><Select value={inv.project} onChange={(e) => setInv({ ...inv, project: e.target.value })}><option value="">Organization-wide</option>{read.projectOptions.map((p) => <option key={p.id} value={p.id}>{p.id} — {p.name}</option>)}</Select></Field>
           <Field label="Invitation expiry"><Select value={inv.days} onChange={(e) => setInv({ ...inv, days: e.target.value })}><option value="3">3 days</option><option value="7">7 days</option><option value="14">14 days</option></Select></Field>
           <Field label="Notes"><Textarea value={inv.note} onChange={(e) => setInv({ ...inv, note: e.target.value })} /></Field>
         </div>

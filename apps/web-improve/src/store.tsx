@@ -391,7 +391,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
      legacy and migrated consumers observe one state. */
   const meName = useAuthStore((s) => s.meName)
   const setMeName = useAuthStore((s) => s.setMe)
-  const me = USERS.find((u) => u.name === meName)!
+  /* Organization member role overrides (ticket 56) apply to the persona the
+     console resolves: the seeded USERS stay the base identity and the settings
+     service's committed override (in the one database) takes effect for the
+     current persona's role everywhere the legacy seam reads `me`. */
+  const baseMe = USERS.find((u) => u.name === meName)!
+  const meRoleOv = db.org.members[meName]?.role
+  const me = useMemo(() => (meRoleOv ? { ...baseMe, role: meRoleOv } : baseMe), [baseMe, meRoleOv])
   const authed = useAuthStore((s) => s.authed)
   const org = useAuthStore((s) => s.org)
   const [route, setRoute] = useState<Route>(() => parseHash())

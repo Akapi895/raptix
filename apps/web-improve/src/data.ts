@@ -8,7 +8,7 @@
 import type {
   Agent, AiWorker, Approval, Asset, Audit, Branch, BranchGroup, BranchState, C2Node, Channel,
   ChatMsg, Conversation, DetectState, Evidence, ExportRec, Facets, Finding, Group, Integration,
-  Notice, Operation, Plan, PlanStep, Playbook, Policy, Project, Report, Retention, Role, Session,
+  Notice, Operation, OrgState, Plan, PlanStep, Playbook, Policy, Project, Report, Retention, Role, Session,
   SessionRequest, StopState, Step, StepStatus, Template, Technique, ToolEvent, ToolState,
   WorkerState,
 } from './domain/entities'
@@ -383,6 +383,14 @@ export function seed(variant: SeedVariant = 'default') {
   }
   const counters = { op: 16, plan: 23, session: variant === 'e2e01' ? 50 : 43, finding: 16, report: 16, approval: 200, request: 12, audit: 8 }
   const stopState = null as StopState | null
-  return { groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState }
+  // Ticket 56: organization settings live in the one database so profile edits
+  // and member role/status overrides persist for the demo session and publish
+  // ChangeSets through the shared commit bridge.
+  const org: OrgState = {
+    profile: { name: 'Acme Security (Demo)', tz: 'Asia/Ho_Chi_Minh (UTC+7)', dateFmt: 'MMM D, YYYY', landing: 'Dashboard', contact: 'dana.whitfield@acme-security.example.test', policy: 'Data stays in the demo region; evidence is encrypted; least-privilege access.', defWorkspace: 'WS-02' },
+    members: {},
+    invites: [],
+  }
+  return { groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState, org }
 }
 export type Db = ReturnType<typeof seed>
