@@ -2,11 +2,28 @@
 
 **What to build:** Extract table/pager and tabs/segmented primitives with their existing sorting, responsive and navigation behavior.
 **Blocked by:** 09.
-**Status:** ready-for-agent
+**Status:** resolved
 **Owner:** Table/navigation primitives and compatibility exports.
 **Contract:** [execution.md](../execution.md).
 
-- [ ] Table sorting/selection/empty state and responsive column hiding work without clipped headers.
-- [ ] Pagination handles empty/filtered data and boundary pages; tabs/segmented controls expose selection and keyboard behavior.
-- [ ] Legacy consumers continue to render through forwarding exports; extraction introduces no domain logic into primitives.
-- [ ] Focused widget regressions verify observable interaction and accessible names.
+- [x] Table sorting/selection/empty state and responsive column hiding work without clipped headers.
+- [x] Pagination handles empty/filtered data and boundary pages; tabs/segmented controls expose selection and keyboard behavior.
+- [x] Legacy consumers continue to render through forwarding exports; extraction introduces no domain logic into primitives.
+- [x] Focused widget regressions verify observable interaction and accessible names.
+
+## Evidence
+
+- Commit `refactor(web-improve): table, pagination and tab navigation primitives (ticket 10)` on `wi/10-tables`: 9 code/test files + this ticket (≤10), one concern. `src/ui.tsx` 503 → 408 lines (barrel re-exports only for the extracted surface); the new `src/ui/` modules hold 118 non-blank runtime lines, all moved verbatim from `ui.tsx` (class strings, markup, props and clamping logic unchanged; the only edits are the `import` lines themselves):
+  - `src/ui/table.tsx` (30) — `Col<T>` (incl. `hideBelow: 'md' | 'lg'`, `width`, `className`) and `Table<T>` (empty-state fallback, keyboard row activation via Enter, `selectedKey` highlight, `dense` heights).
+  - `src/ui/use-paged.ts` (8) — `usePaged<T>` pagination-state hook (slice, page clamp `Math.min(page, pages)`, `Math.max(1, …)` for empty data); hooks-only file, so its pre-existing `react-refresh` warning leaves `ui.tsx`.
+  - `src/ui/pager.tsx` (16) — `Pager` (boundary-disabled prev/next, `Page X of Y`, records label collapse at `pages <= 1`).
+  - `src/ui/tabs.tsx` (30) — `Tabs` (`role="tablist"`, `aria-selected`, roving `tabIndex`, ArrowLeft/ArrowRight wrap + Home/End, counts badge, optional icon).
+  - `src/ui/segmented.tsx` (11) — `Segmented<T extends string>` (`aria-pressed` selection).
+  - `src/ui/empty.tsx` (13) — `Empty` (enabling move, see deviations).
+  - `src/ui/filter-bar.tsx` (10) — `FilterBar` (per ticket 09's ownership handoff "FilterBar + table/pager/tabs/segmented (10)").
+  - `src/ui/table-navigation.test.tsx` (218, test-only) — focused accessible-widget tests through the `../ui` forwarding barrel.
+- DTable (sticky header/column variant) stays in `src/screens/d-shared.tsx` per plan §1.8/coverage (consumed by feature ticket 50); this ticket's text does not request its extraction, and no domain logic entered the primitives.
+- Tests (12 new, `src/ui/table-navigation.test.tsx`, 163 total passing / 16 files, all through the `../ui` barrel): Table renders headers/cells with `hideBelow` classing (`max-md:hidden` on `Role` th+td, `max-lg:hidden` on `Note` th+td) and column `className`; row activation by click **and** Enter fires `onRow` with the row object, rows expose `tabindex="0"` + pointer classes only when `onRow` is set; `selectedKey` adds the `bg-hover` token (asserted via `classList`, distinct from `hover:bg-hover`); `dense` switches `h-12`/`h-14`; no-rows renders the default `Empty` ("No data yet") or the custom `empty` node. Pagination: 25 rows/size 10 slices 1–10/11–20/21–25 across pages, "Page X of 3" label, Previous disabled on page 1 and Next disabled on the last page, single-page and empty datasets collapse to the "N records" label with no buttons, and shrinking the dataset from page 3 clamps back to page 1 with the records label. Tabs: click moves `aria-selected`/roving `tabIndex`, counts (12/3) and icon render, ArrowRight/ArrowLeft rove focus **and** selection with wrap, Home/End jump, unrelated keys (Enter) don't move selection. Segmented: click selects, `aria-pressed` flips, selected token classes move. FilterBar renders children and the `ml-auto` right slot.
+- Checks at this leaf: `npm run typecheck` 0 diagnostics; `npm run lint` **222 warnings / 0 errors — delta 0** versus this branch's base. The pre-existing `usePaged` local-hook warning relocated from its `ui.tsx` definition to its forwarding re-export on the compatibility barrel (same accepted non-component re-export category as `cx`/`toneText` from ticket 09; it disappears entirely when the barrel retires in tickets 65–67). All seven `src/ui/*` modules are warning-free; `useGuard`/`useDebounced`/`useMemoList`/Kpi-`any` remain untouched for ticket 12. `npm test -- --run` 163 passed (151 existing + 12 new, 16 files). `npm run build` ✓ (8.2s; the >500 kB chunk advisory is pre-existing).
+- Real app: production build served via `npm run preview` → HTTP 200 with the `#root` HTML shell and bundled asset. Interactive browser click-through of the live screens (sorting via screen-level selects, width sweeps at 768/1024/1280/1440, light/dark screenshots) not available in this environment — recorded as a gap for tickets 62–64 audits rather than claimed as a pass; the primitive-level interaction surface is covered by the 12 widget tests above.
+- Deviations: (1) the dispatch brief's "sortable / Table sorting toggles" does not match the codebase — the `Table` primitive has no sorting props and never had; screens sort data before passing rows (e.g. `e-findings` sorts by a `Select`) and ticket 02's baseline covers those. Inventing a sort API would violate "preserve props/behavior exactly" and "no domain logic into primitives", so the primitive's actual observable behaviors (selection, responsive hiding, empty state, Enter activation) are pinned instead. (2) `Empty` moved verbatim into `src/ui/empty.tsx` now (10 runtime lines) so `table.tsx` can import its default empty state as a sibling module; importing it from the `ui.tsx` barrel would have created a `ui.tsx ↔ ui/table.tsx` cycle. Ticket 12's remaining family (badges/banners/skeletons/composed/guards) is untouched and simply re-exports `Empty` from the barrel henceforth. (3) `FilterBar` is included on ticket 09's recorded ownership ("FilterBar + table/pager/tabs/segmented (10)") although the dispatch brief did not list it; it is an 8-line verbatim move in its own file.
