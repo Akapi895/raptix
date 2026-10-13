@@ -1,14 +1,14 @@
 /**
  * Shared UI primitives compatibility barrel (ticket 09).
  *
- * Input, button, status and identity primitives were extracted into `src/ui/*`;
- * this module re-exports them so existing `./ui` imports keep resolving while
- * the remaining primitives (tables/tabs 10, dialogs/menus 11, composed/domain
- * 12, charts 13) still live here. No reimplementation — every extracted export
- * forwards to its owning module.
+ * Input, button, status, identity, table/pager, tabs/segmented and filter/empty
+ * primitives are extracted into `src/ui/*`; this module re-exports them so
+ * existing `./ui` imports keep resolving while the remaining primitives
+ * (dialogs/menus 11, composed/domain 12, charts 13) still live here. No
+ * reimplementation — every extracted export forwards to its owning module.
  */
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
-import { AlertTriangle, Ban, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye, FileText, Info, Lock, ShieldCheck, ShieldOff, X, XCircle, WifiOff, FlaskConical, Lightbulb, Zap, type LucideIcon } from 'lucide-react'
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { AlertTriangle, Ban, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye, Info, Lock, ShieldCheck, ShieldOff, X, XCircle, WifiOff, FlaskConical, Lightbulb, Zap, type LucideIcon } from 'lucide-react'
 import { useStore } from './store'
 import { cx } from './ui/cx'
 import { toneText, type Tone } from './ui/status-map'
@@ -20,6 +20,13 @@ export { Status, Sev } from './ui/status'
 export { Button, IconButton } from './ui/button'
 export { Field, Input, Textarea, Select, SearchBox, Check, Toggle } from './ui/input'
 export { Mono, IdLink, Avatar, Person } from './ui/identity'
+export { Table, type Col } from './ui/table'
+export { usePaged } from './ui/use-paged'
+export { Pager } from './ui/pager'
+export { Tabs } from './ui/tabs'
+export { Segmented } from './ui/segmented'
+export { Empty } from './ui/empty'
+export { FilterBar } from './ui/filter-bar'
 
 /* ───────────── V2 badges / banners ───────────── */
 export function AiModeBadge({ mode }: { mode: 'observe' | 'propose' | 'execution' }) {
@@ -105,41 +112,6 @@ export function PageHeader({ title, sub, actions, back, meta, crumbs }: { title:
     </div>
   )
 }
-export function Tabs({ tabs, value, onChange }: { tabs: { id: string; label: string; count?: number; icon?: LucideIcon }[]; value: string; onChange: (id: string) => void }) {
-  const onKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
-    const buttons = Array.from(e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') || [])
-    if (!buttons.length) return
-    e.preventDefault()
-    const current = buttons.indexOf(e.currentTarget)
-    const next = e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length - 1 : (current + (e.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length
-    buttons[next].focus()
-    buttons[next].click()
-  }
-  return (
-    <div role="tablist" className="no-scrollbar mb-5 flex gap-1 overflow-x-auto border-b border-line">
-      {tabs.map((t) => (
-        <button
-          key={t.id} role="tab" aria-selected={value === t.id} tabIndex={value === t.id ? 0 : -1} onKeyDown={onKeyDown} onClick={() => onChange(t.id)}
-          className={cx('-mb-px inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3.5 text-sm font-medium transition', value === t.id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg')}
-        >
-          {t.icon && <t.icon size={15} aria-hidden />}
-          {t.label}
-          {t.count !== undefined && <span className="rounded-full bg-hover px-1.5 text-xs text-muted">{t.count}</span>}
-        </button>
-      ))}
-    </div>
-  )
-}
-export function Segmented<T extends string>({ options, value, onChange }: { options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
-  return (
-    <div className="inline-flex rounded-[10px] border border-line bg-subtle p-0.5">
-      {options.map((o) => (
-        <button key={o.id} onClick={() => onChange(o.id)} aria-pressed={value === o.id} className={cx('h-8 rounded-md px-3 text-xs font-medium transition', value === o.id ? 'bg-panel text-fg shadow-sm' : 'text-muted hover:text-fg')}>{o.label}</button>
-      ))}
-    </div>
-  )
-}
 
 /* ───────────── Banner / empty / skeleton ───────────── */
 export function Banner({ tone = 'info', title, children, action, icon }: { tone?: 'info' | 'warn' | 'bad' | 'ok'; title?: ReactNode; children?: ReactNode; action?: ReactNode; icon?: LucideIcon }) {
@@ -156,16 +128,6 @@ export function Banner({ tone = 'info', title, children, action, icon }: { tone?
     </div>
   )
 }
-export function Empty({ icon: I = FileText, title, children, action }: { icon?: LucideIcon; title: ReactNode; children?: ReactNode; action?: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-line px-6 py-14 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-hover text-muted"><I size={22} aria-hidden /></div>
-      <div className="text-[15px] font-semibold">{title}</div>
-      {children && <p className="mt-1 max-w-md text-sm text-muted">{children}</p>}
-      {action && <div className="mt-4">{action}</div>}
-    </div>
-  )
-}
 export const Skeleton = ({ className }: { className?: string }) => <div className={cx('animate-pulse rounded-md bg-hover', className)} />
 export function PageSkeleton() {
   return (
@@ -173,63 +135,6 @@ export function PageSkeleton() {
       <Skeleton className="mb-3 h-7 w-64" /><Skeleton className="mb-8 h-4 w-96" />
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}</div>
       <Skeleton className="h-72" />
-    </div>
-  )
-}
-
-/* ───────────── Forms ───────────── */
-export function FilterBar({ children, right }: { children: ReactNode; right?: ReactNode }) {
-  return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
-      {children}
-      {right && <div className="ml-auto flex items-center gap-2">{right}</div>}
-    </div>
-  )
-}
-
-/* ───────────── Table ───────────── */
-export interface Col<T> { key: string; header: ReactNode; render: (r: T) => ReactNode; width?: string; className?: string; hideBelow?: 'md' | 'lg' }
-export function Table<T>({ cols, rows, rowKey, onRow, empty, dense, selectedKey }: { cols: Col<T>[]; rows: T[]; rowKey: (r: T) => string; onRow?: (r: T) => void; empty?: ReactNode; dense?: boolean; selectedKey?: string }) {
-  if (!rows.length) return <>{empty || <Empty title="No data yet" />}</>
-  return (
-    <div className="no-scrollbar overflow-x-auto rounded-xl border border-line bg-panel">
-      <table className="w-full min-w-[640px] border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-line text-left text-xs font-medium uppercase tracking-wide text-muted">
-            {cols.map((c) => <th key={c.key} style={{ width: c.width }} className={cx('h-11 whitespace-nowrap px-4 font-medium', c.hideBelow === 'md' && 'max-md:hidden', c.hideBelow === 'lg' && 'max-lg:hidden', c.className)}>{c.header}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr
-              key={rowKey(r)} onClick={onRow ? () => onRow(r) : undefined}
-              onKeyDown={onRow ? (e) => e.key === 'Enter' && onRow(r) : undefined} tabIndex={onRow ? 0 : undefined}
-              className={cx('border-b border-line/60 last:border-0', dense ? 'h-12' : 'h-14', onRow && 'cursor-pointer transition hover:bg-hover', selectedKey === rowKey(r) && 'bg-hover')}
-            >
-              {cols.map((c) => <td key={c.key} className={cx('px-4 align-middle', c.hideBelow === 'md' && 'max-md:hidden', c.hideBelow === 'lg' && 'max-lg:hidden', c.className)}>{c.render(r)}</td>)}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-export function usePaged<T>(rows: T[], size = 10) {
-  const [page, setPage] = useState(1)
-  const pages = Math.max(1, Math.ceil(rows.length / size))
-  const p = Math.min(page, pages)
-  return { rows: rows.slice((p - 1) * size, p * size), page: p, pages, setPage, total: rows.length }
-}
-export function Pager({ page, pages, setPage, total }: { page: number; pages: number; setPage: (n: number) => void; total: number }) {
-  if (pages <= 1) return <div className="mt-3 text-xs text-muted">{total} records</div>
-  return (
-    <div className="mt-3 flex items-center justify-between text-xs text-muted">
-      <span>{total} records</span>
-      <div className="flex items-center gap-1">
-        <IconButton icon={ChevronLeft} label="Previous page" disabled={page <= 1} onClick={() => setPage(page - 1)} className="!h-8 !w-8" />
-        <span className="px-2">Page {page} of {pages}</span>
-        <IconButton icon={ChevronRight} label="Next page" disabled={page >= pages} onClick={() => setPage(page + 1)} className="!h-8 !w-8" />
-      </div>
     </div>
   )
 }
