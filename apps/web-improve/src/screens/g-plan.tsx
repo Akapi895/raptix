@@ -3,6 +3,8 @@ import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Plus, Rocket, Trash2, 
 import { useDirty, useStore } from '../store'
 import { planVer } from '../data'
 import type { Plan, PlanStep } from '../data'
+import { policyChecks } from '../features/plans/policy'
+import type { Chk } from '../features/plans/policy'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui'
 import { NoProject, ReplanPanel, tz, useReplan } from './g-common'
 import { FanOutCard } from './g-fanout'
@@ -159,6 +161,7 @@ function ReviseDialog({ plan, open, onClose }: { plan: Plan; open: boolean; onCl
   const gated = plan.status === 'approved' || plan.status === 'executed'
   const submit = () => {
     const id = A.revisePlan(plan.id, list, note)
+    if (!id) { toast('The revision could not be created — the plan must be approved and at least one change described.', 'bad'); return }
     toast(`Revision ${id} created. Re-approval required.`, 'warn')
     onClose(); setChanges(['']); setNote('')
     go('ai-plan-compare', { id })
@@ -197,7 +200,7 @@ function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void
   const [discard, setDiscard] = useState(false)
   useEffect(() => { if (!edit) setSteps(plan.steps) }, [plan.steps, edit])
   const dirty = edit && JSON.stringify(steps) !== JSON.stringify(plan.steps)
-  const save = () => { A.editPlan(plan.id, { steps }); setEdit(false); setReorder(false); toast(`${plan.id} saved as ${plan.status}. Not submitted for review.`, 'ok') }
+  const save = () => { const r = A.editPlan(plan.id, { steps }); if (!r.ok) { toast(r.error || 'The draft could not be saved.', 'bad'); return }; setEdit(false); setReorder(false); toast(`${plan.id} saved as ${plan.status}. Not submitted for review.`, 'ok') }
   useDirty(dirty, save)
   const view: Plan = { ...plan, steps }
   const step = steps.find((x) => x.id === sel) || steps[0]
@@ -268,7 +271,7 @@ function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void
           <PolicyChecks plan={view} />
         </div>
       </div>
-      <Modal open={discard} onClose={() => setDiscard(false)} title={`Discard ${plan.id}?`} danger footer={<><Button onClick={() => setDiscard(false)}>Keep draft</Button><Button variant="danger" onClick={() => { A.discardPlan(plan.id); setDiscard(false); toast(`${plan.id} discarded.`, 'warn'); go('ai-operator', { id: plan.conversationId }) }}>Discard draft</Button></>}>
+      <Modal open={discard} onClose={() => setDiscard(false)} title={`Discard ${plan.id}?`} danger footer={<><Button onClick={() => setDiscard(false)}>Keep draft</Button><Button variant="danger" onClick={() => { const r = A.discardPlan(plan.id); setDiscard(false); if (r.ok) { toast(`${plan.id} discarded.`, 'warn'); go('ai-operator', { id: plan.conversationId }) } else toast(r.error || 'The draft could not be discarded.', 'bad') }}>Discard draft</Button></>}>
         <p className="text-sm">The draft and its chat card are removed. This cannot be undone; approved plans are never discarded.</p>
       </Modal>
     </div>
@@ -309,7 +312,7 @@ function PlanDetail({ plan }: { plan: Plan }) {
   const reqWhy = !proposal ? `Review can only be requested for a draft or proposed plan (this one is ${plan.status.replace('_', ' ')}).` : roeBlocked ? `Cannot request approval: ${p.roeVersion} is ${p.roeStatus === 'none' ? 'missing' : p.roeStatus}. The plan can still be saved as a draft.` : !canPlan ? whyPlan : ''
   const request = (
     <span className="inline-flex items-center gap-2">
-      <Gated allowed={!reqWhy} reason={reqWhy}><Button variant="primary" onClick={() => { A.requestPlanApproval(plan.id); toast(`${plan.id} ${planVer(plan)} sent to ${plan.reviewer} for review.`, 'ok') }}>Request Review</Button></Gated>
+      <Gated allowed={!reqWhy} reason={reqWhy}><Button variant="primary" onClick={() => { const r = A.requestPlanApproval(plan.id); if (r.ok) toast(`${plan.id} ${planVer(plan)} sent to ${plan.reviewer} for review.`, 'ok'); else toast(r.error || 'The review request could not be recorded.', 'bad') }}>Request Review</Button></Gated>
       {roeBlocked && proposal && <button className="text-xs text-accent hover:underline" onClick={() => go('project', { id: p.id, tab: 'scope' })}>Fix ROE →</button>}
     </span>
   )
@@ -441,25 +444,9 @@ export function AiPlanReview() {
   return <PlanGuard title="Review AI Plan">{(plan) => <ReviewBody plan={plan} />}</PlanGuard>
 }
 
-export type Chk = { id: string; label: string; state: 'pass' | 'warn' | 'fail'; detail: string; to?: { page: string; id?: string; tab?: string } }
-export function policyChecks(plan: Plan, db: ReturnType<typeof useStore>['db']): Chk[] {
-  const p = db.projects.find((x) => x.id === plan.projectId)!
-  const assets = plan.assets.map((a) => db.assets.find((x) => x.id === a))
-  const outs = assets.filter((a) => a?.scope !== 'in')
-  const agents = plan.agents.map((a) => db.agents.find((x) => x.id === a))
-  const badAg = agents.filter((a) => a && a.status !== 'online' && a.status !== 'idle')
-  const excluded = db.agents.filter((a) => a.projectId === plan.projectId && a.status === 'lost' && !plan.agents.includes(a.id))
-  const ungated = plan.steps.filter((s) => s.risk !== 'low' && !s.needsApproval)
-  const gated = plan.steps.filter((s) => s.needsApproval).length
-  const live = ['approved', 'active', 'review', 'paused'].includes(p.status)
-  return [
-    { id: 'scope', label: 'Scope', state: plan.assets.length === 0 ? 'fail' : outs.length ? 'fail' : 'pass', detail: plan.assets.length === 0 ? '0 approved assets — nothing in scope to target.' : outs.length ? `${outs.map((a) => a?.name).join(', ')} not in approved scope.` : `${plan.assets.length} of ${plan.assets.length} target assets are approved in scope.`, to: { page: 'assets' } },
-    { id: 'roe', label: 'ROE version', state: p.roeStatus !== 'approved' ? 'fail' : plan.roeVersion !== p.roeVersion ? 'fail' : 'pass', detail: p.roeStatus !== 'approved' ? `${p.roeVersion} is ${p.roeStatus}, not approved.` : plan.roeVersion !== p.roeVersion ? `Plan is pinned to ${plan.roeVersion}; project is now on ${p.roeVersion}.` : `Plan pinned to ${plan.roeVersion} (approved).`, to: { page: 'project', id: p.id, tab: 'scope' } },
-    { id: 'agents', label: 'Agents', state: plan.agents.length === 0 ? 'fail' : badAg.length ? 'fail' : 'pass', detail: plan.agents.length === 0 ? 'No project agents assigned.' : badAg.length ? `${badAg.map((a) => `${a!.id} ${a!.host}`).join(', ')} not connected.` : `${plan.agents.length} of ${plan.agents.length} assigned agents connected${excluded.length ? `; ${excluded.map((a) => a.id).join(', ')} excluded (disconnected)` : ''}.`, to: { page: 'agents' } },
-    { id: 'gates', label: 'Approval gates', state: ungated.length ? 'warn' : 'pass', detail: ungated.length ? `${ungated.length} medium/high-risk step(s) have no approval gate: ${ungated.map((s) => s.id).join(', ')}.` : `${gated} step(s) require explicit action approval; all medium/high-risk steps are gated.` },
-    { id: 'window', label: 'Time window', state: live ? 'pass' : 'warn', detail: live ? `Inside ROE window: ${p.window}` : `Project is ${p.status}; window ${p.window} has not started or is not approved.`, to: { page: 'project', id: p.id, tab: 'scope' } },
-  ]
-}
+/* Ticket 39: the risk-assessment derivation moved to the plans feature
+   (src/features/plans/policy.ts) — the screen renders the same checks the
+   approval handlers enforce. */
 const CHK_ICON = { pass: <CheckCircle2 size={16} className="text-ok" aria-label="Pass" />, warn: <AlertTriangle size={16} className="text-warn" aria-label="Warn" />, fail: <XCircle size={16} className="text-bad" aria-label="Fail" /> }
 const CHK_LABEL = { pass: 'PASS', warn: 'WARN', fail: 'FAIL' }
 function PolicyChecks({ plan }: { plan: Plan }) {
@@ -627,6 +614,10 @@ function ReviewBody({ plan }: { plan: Plan }) {
             <Gated allowed={!whyNo('returned')} reason={whyNo('returned')}><Button onClick={() => setDec('returned')}>Return for Changes</Button></Gated>
             <Gated allowed={!whyNo('rejected')} reason={whyNo('rejected')}><Button variant="danger" onClick={() => setDec('rejected')}>Reject</Button></Gated>
             <Gated allowed={!whyNo('approved')} reason={whyNo('approved')}><Button variant="primary" onClick={() => setDec('approved')}>Approve Plan</Button></Gated>
+            {/* Ticket 39: the requester (or a scope manager) can pull the plan out of review before a decision. */}
+            <Gated allowed={me.name === plan.requestedBy || can('editScope', plan.projectId)} reason={me.name === plan.requestedBy ? '' : 'Only the requester, a Red Team Manager or an Organization Admin can withdraw this review.'}>
+              <Button onClick={() => { const r = A.withdrawPlanReview(plan.id); if (r.ok) toast(`${plan.id} withdrawn from review.`, 'warn'); else toast(r.error || 'The review could not be withdrawn.', 'bad') }}>Withdraw from review</Button>
+            </Gated>
             <span className="text-xs text-muted">A reason is required for every decision and is written to the audit trail.</span>
           </> : plan.status === 'approved' ? <>
             <span className="text-sm">Approval is a precondition only — the operation still needs preflight.</span>
@@ -699,7 +690,7 @@ function CompareBody({ plan }: { plan: Plan }) {
           <Button onClick={() => go('ai-plan-review', { id: newP.id })}>Approval Review</Button>
           <Button onClick={() => { toast(`${newP.id} kept as a draft proposal.`, 'info'); go('ai-plan', { id: newP.id }) }}>Accept Revision as Draft</Button>
           <Gated allowed={canReq} reason={!can('plan') ? 'Your role cannot request plan approval.' : `${newP.id} is already ${newP.status}; re-approval was requested or decided.`}>
-            <Button variant="primary" onClick={() => { A.requestPlanApproval(newP.id); toast(`Re-approval requested for ${newP.id}.`, 'ok') }}>Request Reapproval</Button>
+            <Button variant="primary" onClick={() => { const r = A.requestPlanApproval(newP.id); if (r.ok) toast(`Re-approval requested for ${newP.id}.`, 'ok'); else toast(r.error || 'The re-approval request could not be recorded.', 'bad') }}>Request Reapproval</Button>
           </Gated>
         </>} />
       <div className="space-y-4">

@@ -22,6 +22,7 @@ import { createDatabaseAuthority, type DbAuthority } from './database'
 import { createOperationService, type OperationService } from '../features/operations/service'
 import { createFindingService, type FindingService } from '../features/findings/service'
 import { createChatService, type ChatService } from '../features/aichat/service'
+import { createPlanService, type PlanService } from '../features/plans/service'
 import { createAgentService, type AgentService } from '../features/agents/service'
 import { createReportService, type ReportService } from '../features/reports/service'
 import { createBranchService, type BranchService } from '../features/branches/service'
@@ -86,6 +87,8 @@ export interface ConsoleServices {
   findings(actor: ActorRef, projectId: string): FindingService
   /** Typed AI chat + plan proposal handlers (ticket 38 — feature-local implementation). */
   chat(actor: ActorRef, projectId: string): ChatService
+  /** Typed plan workbench + approval/expiry handlers (ticket 39 — feature-local implementation). */
+  plans(actor: ActorRef, projectId: string): PlanService
   /** Typed agent fleet list/detail reads + allocation/group writes (tickets 48–49 — feature-local implementation). */
   agents(actor: ActorRef, projectId: string): AgentService
   /** Typed report catalog reads + draft creation (ticket 34 — feature-local implementation). */
@@ -171,6 +174,8 @@ export function createConsoleServices(): ConsoleServices {
     createFindingService(authority, clock, scopeGuard(actor, projectId))
   const forChat = (actor: ActorRef, projectId: string): ChatService =>
     createChatService(authority, clock, scopeGuard(actor, projectId))
+  const forPlans = (actor: ActorRef, projectId: string): PlanService =>
+    createPlanService(authority, clock, scopeGuard(actor, projectId))
   const forAgents = (actor: ActorRef, projectId: string): AgentService =>
     createAgentService(authority, clock, scopeGuard(actor, projectId))
   const forReports = (actor: ActorRef, projectId: string): ReportService =>
@@ -219,6 +224,7 @@ export function createConsoleServices(): ConsoleServices {
     operations: forOperations,
     findings: forFindings,
     chat: forChat,
+    plans: forPlans,
     agents: forAgents,
     reports: forReports,
     branches: forBranches,
