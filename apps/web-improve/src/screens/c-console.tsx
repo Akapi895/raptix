@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, PanelRightClose, PanelRightOpen, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
 import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, SearchBox, Select, Status, Table, Timeline, Toggle, useGuard, cx } from '../ui'
-import { sessionPerm, useServices, useStore } from '../store'
+import { useServices, useStore } from '../store'
 import { computePreflightChecks, preflightPass } from '../features/operations/preflight'
+import { sessionPermOf } from '../features/c2/service'
 import { BRANCH_LABEL, planVer, toolFacets } from '../data'
 import type { Agent, Operation, Step } from '../data'
 import { MASK, OpStatus, RuntimeStatus, failedBranches, hasReview, opConversation, opGroups, parseStamp, runtimeLabel, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
@@ -138,7 +139,8 @@ function SessionCards({ op }: { op: Operation }) {
           <div className="flex flex-wrap items-center justify-between gap-2"><IdLink onClick={() => go('c2-session', { id: s.id })}>{s.id}</IdLink><Status kind="session" value={s.state} size="sm" /></div>
           <div className="mt-1 text-xs text-muted">{s.kind === 'reverse' ? 'Reverse shell' : 'Web shell'} · {s.asset} · {s.agentId}</div>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            <Status kind="perm" value={sessionPerm(db, me, s)} size="sm" />
+            {/* Ticket 67: the semantic C2 access derivation replaced the legacy store helper (same rule, explicit request context). */}
+            <Status kind="perm" value={sessionPermOf(db, { actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, s)} size="sm" />
             {s.state === 'connected' && <span className="inline-flex items-center gap-1 text-muted"><Video size={12} aria-hidden />Recording on</span>}
             <Button size="sm" variant="ghost" className="ml-auto" onClick={() => go('c2-session', { id: s.id })}>Open Session</Button>
           </div>
