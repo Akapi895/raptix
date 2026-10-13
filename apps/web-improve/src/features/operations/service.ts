@@ -113,6 +113,8 @@ export interface OperationService {
   stop(ctx: RequestContext, id: string, reason: string): Promise<ServiceResult<OperationTransitionRead>>
   /** Completes an active operation with no running step; releases reservations in the same commit. */
   complete(ctx: RequestContext, id: string): Promise<ServiceResult<OperationTransitionRead>>
+  /** Records the human decision for one review-gated step (ticket 29); the AI never decides. */
+  reviewStep(ctx: RequestContext, id: string, stepId: string, decision: StepDecision, note: string): Promise<ServiceResult<OperationTransitionRead>>
 }
 
 /** Category → statuses the category pill covers ("needs" also takes review-pending drafts). */
@@ -213,6 +215,7 @@ export function createOperationService(
     resume: (ctx, id) => Promise.resolve(resumeOperation(authority, clock, ctx, id)),
     stop: (ctx, id, reason) => Promise.resolve(stopOperation(authority, clock, ctx, id, reason)),
     complete: (ctx, id) => Promise.resolve(completeOperation(authority, clock, ctx, id)),
+    reviewStep: (ctx, id, stepId, decision, note) => Promise.resolve(reviewOperationStep(authority, clock, ctx, id, stepId, decision, note)),
   }
 }
 
@@ -717,8 +720,16 @@ export interface OperationTransitionRead { op: Operation }
 const opEntity = (op: Operation) => ({ kind: 'operation' as const, id: op.id, projectId: op.projectId })
 
 /** Addressed-operation gate shared by the control transitions: scope without
- * existence leak, membership, read-only and role gates with reasons. */
-function lifecycleGate(db: Db, ctx: RequestContext, op: Operation | undefined, verb: string): ServiceResult<{ op: Operation; project: Project }> {
+ * existence leak, membership, read-only and role gates with reasons. Ticket 29
+ * appends the message overrides the review gate words its refusals with. */
+function lifecycleGate(
+  db: Db,
+  ctx: RequestContext,
+  op: Operation | undefined,
+  verb: string,
+  rolePhrase: string = `${verb} operations`,
+  readonlyPhrase: string = verb,
+): ServiceResult<{ op: Operation; project: Project }> {
   if (!op) return { ok: false, failure: { kind: 'not-found', message: 'Operation not found.' } }
   if (ctx.projectId && ctx.projectId !== 'all' && ctx.projectId !== op.projectId) {
     return { ok: false, failure: { kind: 'not-found', message: `Operation ${op.id} does not exist or is out of scope.`, entity: opEntity(op) } }
@@ -728,10 +739,10 @@ function lifecycleGate(db: Db, ctx: RequestContext, op: Operation | undefined, v
     return { ok: false, failure: { kind: 'not-found', message: 'Operations for this project are not available for your account.' } }
   }
   if (readOnlyContext(project, ctx.actor)) {
-    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; operations cannot be ${verb}.` } }
+    return { ok: false, failure: { kind: 'forbidden', message: `The Viewer role has read-only access${projectLocked(project) ? ` (project ${project.id} is ${project.status})` : ''}; operations cannot be ${readonlyPhrase}.` } }
   }
   if (!can({ id: ctx.actor.id, role: ctx.actor.role }, 'run', project)) {
-    return { ok: false, failure: { kind: 'forbidden', message: `Only a Manager or Operator can ${verb} operations.` } }
+    return { ok: false, failure: { kind: 'forbidden', message: `Only a Manager or Operator can ${rolePhrase}.` } }
   }
   return { ok: true, data: { op, project } }
 }
@@ -891,6 +902,64 @@ export function completeOperation(authority: DbAuthority, clock: Clock, ctx: Req
     o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === id) a.op = null })
     d.sessions.forEach((s) => { if (s.opId === id && COMPLETE_SESSION_STATES.includes(s.state)) { s.state = 'terminated'; s.transcript.push({ ts: tick, who: 'system', text: 'Session terminated at operation completion.' }) } })
     d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Completed operation', obj: id, projectId: o.projectId, result: 'Success', reason: '' })
+  })
+  return { ok: true, data: { op: authority.snapshot().operations.find((x) => x.id === id)! } }
+}
+
+/* ═════════════ Ticket 29 — the human review gate ═════════════ */
+
+/** A reviewer's decision on one review-gated step (the AI never decides). */
+export type StepDecision = 'approve' | 'skip' | 'fail'
+
+const DECISION_WORD: Record<StepDecision, { past: string; output: string }> = {
+  approve: { past: 'approved', output: 'Sanitized output. No sensitive content.' },
+  skip: { past: 'skipped', output: 'Skipped by operator.' },
+  fail: { past: 'rejected', output: 'Rejected at review.' },
+}
+
+/**
+ * Records a human reviewer's decision on one review-gated step (ticket 29).
+ * The gate is re-derived HERE, independently of any screen: only a
+ * Manager/Operator (never a read-only viewer or other role, never an AI
+ * proposal path) may decide — and only on a running operation, on the one
+ * step that is actually awaiting review, with a note for Skip/Reject. A
+ * refusal commits nothing. Like every transition, the step outcome and its
+ * audit row commit in ONE atomic ChangeSet.
+ */
+export function reviewOperationStep(
+  authority: DbAuthority,
+  clock: Clock,
+  ctx: RequestContext,
+  id: string,
+  stepId: string,
+  decision: StepDecision,
+  note?: string,
+): ServiceResult<OperationTransitionRead> {
+  const db = authority.snapshot()
+  const op = db.operations.find((o) => o.id === id)
+  const gated = lifecycleGate(db, ctx, op, 'decide on review steps in', 'decide on review steps', 'given review decisions')
+  if (!gated.ok) return gated
+  const o = gated.data.op
+  const reason = (note || '').trim()
+  if (o.status !== 'running') {
+    return { ok: false, failure: { kind: 'validation', message: `Operation ${id} is ${o.status === 'estop' ? 'emergency stopped' : o.status} — a review decision can only be recorded while it is running.`, entity: opEntity(o) } }
+  }
+  const step = o.steps.find((s) => s.id === stepId)
+  if (!step) {
+    return { ok: false, failure: { kind: 'validation', message: `Step ${stepId} was not found on operation ${id}.`, entity: opEntity(o) } }
+  }
+  if (step.status !== 'review') {
+    return { ok: false, failure: { kind: 'validation', message: `Step ${stepId} (${step.name}) is not awaiting a reviewer decision — it is ${step.status}. No decision was recorded.`, entity: opEntity(o) } }
+  }
+  if (decision !== 'approve' && !reason) {
+    return { ok: false, failure: { kind: 'validation', message: 'A reviewer note is required to Skip or Reject a step. It is recorded in the audit log.', entity: opEntity(o) } }
+  }
+  authority.commit(ctx.corr, (d) => {
+    const st = d.operations.find((x) => x.id === id)!.steps.find((s) => s.id === stepId)!
+    st.status = decision === 'approve' ? 'ok' : decision === 'skip' ? 'notrun' : 'fail'
+    st.dur = decision === 'approve' ? '01:20' : '—'
+    st.output = DECISION_WORD[decision].output
+    d.audit.unshift({ corr: ctx.corr, id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: `Step review: ${decision}`, obj: `${id}/${stepId}`, projectId: o.projectId, result: 'Success', reason })
   })
   return { ok: true, data: { op: authority.snapshot().operations.find((x) => x.id === id)! } }
 }
