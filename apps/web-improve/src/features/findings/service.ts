@@ -24,7 +24,7 @@ import { formatDemoInstant } from '../../domain/clock'
 import { TECHNIQUES, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
-import type { Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'
+import type { Evidence, Finding, FindingStatus, Project, Role, Severity } from '../../domain/entities'
 import type { EvidenceReference } from '../../domain/evidence'
 
 /** Filter/sort state for the findings inventory (all optional; empty = unfiltered). */
@@ -122,6 +122,12 @@ export interface FindingService {
   transition(ctx: RequestContext, id: string, to: FindingTransitionTarget, note?: string): Promise<ServiceResult<Finding>>
   /** Imports an AI suggestion as a DRAFT (invariant 5 — the AI never publishes a finding). */
   importSuggestion(ctx: RequestContext, id: string): Promise<ServiceResult<Finding>>
+  /** Links an existing evidence reference into the finding (same project, masking respected). */
+  attachEvidence(ctx: RequestContext, findingId: string, evidenceId: string): Promise<ServiceResult<Finding>>
+  /** Simulated evidence upload that records and links the capture in one commit. */
+  uploadEvidence(ctx: RequestContext, input: EvidenceUploadInput): Promise<ServiceResult<Evidence>>
+  /** Records one retest result; a "Resolved" result closes the finding. */
+  recordRetest(ctx: RequestContext, id: string, input: RetestInput): Promise<ServiceResult<Finding>>
 }
 
 /** Category → statuses the tab covers; drafts also include returned findings. */
@@ -288,6 +294,12 @@ export interface FindingSaveInput {
   /** Submit for review instead of keeping the finding at its current stage. */
   submit?: boolean
 }
+
+/** Simulated evidence upload attached to a finding (no real bytes are stored). */
+export interface EvidenceUploadInput { findingId: string; name: string; kind: string; source: string; sensitive: boolean; opId?: string }
+
+/** One retest observation; result "Resolved" closes the finding. */
+export interface RetestInput { result: string; note: string }
 
 /** Lifecycle targets a finding can move to (the return path included). */
 export type FindingTransitionTarget = 'draft' | 'review' | 'confirmed' | 'returned' | 'remediation' | 'retest' | 'resolved'
@@ -495,6 +507,79 @@ export function importFindingSuggestion(authority: DbAuthority, clock: Clock, ct
   return transitionFinding(authority, clock, ctx, id, 'draft')
 }
 
+/** Links one existing evidence reference into the finding — same project only. */
+export function attachFindingEvidence(authority: DbAuthority, clock: Clock, ctx: RequestContext, findingId: string, evidenceId: string): ServiceResult<Finding> {
+  const db = authority.snapshot()
+  const t = writableFinding(db, ctx, findingId)
+  if (!t.ok) return t
+  const { finding, project } = t
+  const denied = roleDenied(ctx, project, ['createFinding'], `The ${ROLE_TEXT[ctx.actor.role]} role cannot add evidence.`)
+  if (denied) return { ok: false, failure: denied }
+  const invalid = evidenceScopeFailure(db, ctx, project, [evidenceId], { findingId })
+  if (invalid) return { ok: false, failure: invalid }
+  if (finding.evidence.includes(evidenceId)) return { ok: true, data: finding }
+  const at = stampOf(clock)
+  authority.commit(ctx.corr, (d) => {
+    const f = d.findings.find((x) => x.id === findingId)!
+    f.evidence.push(evidenceId)
+    f.updated = at
+    const rec = d.evidence.find((x) => x.id === evidenceId)
+    if (rec) rec.findingId = findingId
+  })
+  return { ok: true, data: authority.snapshot().findings.find((x) => x.id === findingId)! }
+}
+
+/** Simulated upload: records the capture in the finding's own project (the
+ *  scope is derived from the finding, never claimed by the caller) and links it. */
+export function uploadFindingEvidence(authority: DbAuthority, clock: Clock, ctx: RequestContext, input: EvidenceUploadInput): ServiceResult<Evidence> {
+  const db = authority.snapshot()
+  const t = writableFinding(db, ctx, input.findingId)
+  if (!t.ok) return t
+  const { finding, project } = t
+  const denied = roleDenied(ctx, project, ['createFinding'], `The ${ROLE_TEXT[ctx.actor.role]} role cannot add evidence.`)
+  if (denied) return { ok: false, failure: denied }
+  if (!input.name.trim()) return { ok: false, failure: { kind: 'validation', message: 'Enter a file name.' } }
+  const at = stampOf(clock)
+  const id = 'EV-' + (400 + db.evidence.length + 1)
+  authority.commit(ctx.corr, (d) => {
+    d.evidence.push({ id, name: input.name.trim(), kind: input.kind, source: input.source, at, by: ctx.actor.id, projectId: finding.projectId, opId: input.opId, findingId: finding.id, sensitive: input.sensitive })
+    const f = d.findings.find((x) => x.id === finding.id)!
+    if (!f.evidence.includes(id)) f.evidence.push(id)
+    f.updated = at
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Uploaded evidence', obj: id, projectId: finding.projectId, result: 'Success', reason: '' })
+  })
+  return { ok: true, data: authority.snapshot().evidence.find((x) => x.id === id)! }
+}
+
+/** Records one retest observation in the same commit as its outcome: a
+ *  "Resolved" result closes the finding; a failed retest from `retest`
+ *  returns it to remediation with the reason in the history. */
+export function recordFindingRetest(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, input: RetestInput): ServiceResult<Finding> {
+  const db = authority.snapshot()
+  const t = writableFinding(db, ctx, id)
+  if (!t.ok) return t
+  const { finding, project } = t
+  const denied = roleDenied(ctx, project, ['createFinding', 'reviewFinding'], `The ${ROLE_TEXT[ctx.actor.role]} role cannot record retests.`)
+  if (denied) return { ok: false, failure: denied }
+  if (!['confirmed', 'remediation', 'retest', 'resolved'].includes(finding.status)) {
+    return { ok: false, failure: { kind: 'conflict', message: `Retest is only available after the finding has been confirmed — ${id} is ${STATUS_TEXT[finding.status]}.`, entity: findingRef(finding) } }
+  }
+  if (!input.note.trim()) return { ok: false, failure: { kind: 'validation', message: 'Enter notes about the retest.' } }
+  const at = stampOf(clock)
+  const resolved = input.result === 'Resolved'
+  const backToRemediation = !resolved && finding.status === 'retest'
+  authority.commit(ctx.corr, (d) => {
+    const f = d.findings.find((x) => x.id === id)!
+    f.retests.push({ at, by: ctx.actor.id, result: input.result, note: input.note.trim() })
+    f.history.push({ at, by: ctx.actor.id, text: `Retest: ${input.result}` })
+    if (resolved) f.status = 'resolved'
+    else if (backToRemediation) { f.status = 'remediation'; f.history.push({ at, by: ctx.actor.id, text: `Sent to remediation: Retest not passed (${input.result}): ${input.note.trim()}` }) }
+    f.updated = at
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Retested', obj: id, projectId: f.projectId, result: 'Success', reason: input.note.trim() })
+  })
+  return { ok: true, data: authority.snapshot().findings.find((x) => x.id === id)! }
+}
+
 /** Builds the typed findings service; `guard` is the factory's superseded-scope read guard.
  *  Reads observe scope cancellation; mutations capture their context at call time and commit once. */
 export function createFindingService(
@@ -508,5 +593,8 @@ export function createFindingService(
     save: (ctx, id, input) => Promise.resolve(saveFinding(authority, clock, ctx, id, input)),
     transition: (ctx, id, to, note) => Promise.resolve(transitionFinding(authority, clock, ctx, id, to, note)),
     importSuggestion: (ctx, id) => Promise.resolve(transitionFinding(authority, clock, ctx, id, 'draft')),
+    attachEvidence: (ctx, findingId, evidenceId) => Promise.resolve(attachFindingEvidence(authority, clock, ctx, findingId, evidenceId)),
+    uploadEvidence: (ctx, input) => Promise.resolve(uploadFindingEvidence(authority, clock, ctx, input)),
+    recordRetest: (ctx, id, input) => Promise.resolve(recordFindingRetest(authority, clock, ctx, id, input)),
   }
 }

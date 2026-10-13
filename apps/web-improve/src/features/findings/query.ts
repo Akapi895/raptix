@@ -18,8 +18,8 @@ import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Finding } from '../../domain/entities'
 import type {
-  FindingDetailRead, FindingListQuery, FindingListRead,
-  FindingSaveInput, FindingTransitionTarget,
+  EvidenceUploadInput, FindingDetailRead, FindingListQuery, FindingListRead,
+  FindingSaveInput, FindingTransitionTarget, RetestInput,
 } from './service'
 
 /** Feature-local key namespaces: ['finding', scope, 'list', query] / ['finding', scope, id]. */
@@ -94,6 +94,10 @@ export function useFindingWrites() {
       transition: (id: string, to: FindingTransitionTarget, note?: string) =>
         svc().transition(ctx('finding-transition'), id, to, note),
       importSuggestion: (id: string) => svc().importSuggestion(ctx('finding-import'), id),
+      attachEvidence: (findingId: string, evidenceId: string) =>
+        svc().attachEvidence(ctx('finding-attach'), findingId, evidenceId),
+      uploadEvidence: (input: EvidenceUploadInput) => svc().uploadEvidence(ctx('finding-upload'), input),
+      recordRetest: (id: string, input: RetestInput) => svc().recordRetest(ctx('finding-retest'), id, input),
     }
   }, [services, scope.actor, scope.project])
 }

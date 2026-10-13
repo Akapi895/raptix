@@ -634,16 +634,22 @@ function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: ()
   )
 }
 
-/* ───────────── Evidence tab (ticket 31: masked read; link/upload stay legacy for 32) ───────────── */
+/* ───────────── Evidence tab (ticket 31: masked read; ticket 32: typed link/upload) ───────────── */
 const OK_EXT = ['png', 'jpg', 'jpeg', 'txt', 'log', 'json', 'csv', 'pdf']
 function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: boolean }) {
-  const { db, can, A, toast, me, go } = useStore()
+  const { db, can, toast, me, go } = useStore()
+  const writes = useFindingWrites()
   const [view, setView] = useState<EvidenceView | null>(null)
   const [attach, setAttach] = useState(false)
   const [up, setUp] = useState(false)
   const canAdd = !ro && can('createFinding', f.projectId)
   const why = ro ? (me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.') : !canAdd ? `The ${ROLE_LABEL[me.role]} role cannot add evidence.` : ''
   const candidates = db.evidence.filter((e) => e.projectId === f.projectId && !f.evidence.includes(e.id))
+  const link = async (evidenceId: string) => {
+    const res = await writes.attachEvidence(f.id, evidenceId)
+    if (res.ok) toast(`Linked ${evidenceId} to ${f.id}.`)
+    else toast(res.failure.message, 'warn')
+  }
 
   return (
     <div className="space-y-4">
@@ -677,7 +683,7 @@ function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: bool
               return (
                 <li key={e.id} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2.5">
                   <div className="min-w-0 flex-1"><div className="truncate text-sm"><Mono className="text-accent">{e.id}</Mono> {hide ? 'Sensitive file' : e.name}</div><div className="text-xs text-muted">{e.kind} · {e.source}{other ? ` · linked to ${e.findingId}` : ''}</div></div>
-                  <Button size="sm" disabled={other || hide} title={other ? `Already linked to ${e.findingId}` : hide ? 'Outside your permission scope' : ''} onClick={() => { A.attachEvidence(f.id, e.id); toast(`Linked ${e.id} to ${f.id}.`) }}>Link</Button>
+                  <Button size="sm" disabled={other || hide} title={other ? `Already linked to ${e.findingId}` : hide ? 'Outside your permission scope' : ''} onClick={() => { void link(e.id) }}>Link</Button>
                 </li>
               )
             })}
@@ -690,25 +696,28 @@ function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: bool
 }
 
 function UploadModal({ open, onClose, f }: { open: boolean; onClose: () => void; f: Finding }) {
-  const { A, toast } = useStore()
+  const { toast } = useStore()
+  const writes = useFindingWrites()
   const [name, setName] = useState('')
   const [kind, setKind] = useState('Image')
   const [sens, setSens] = useState(false)
   const [source, setSource] = useState(f.op ? `${f.op} / manual` : 'Manual upload')
   const [tried, setTried] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
   const ext = name.split('.').pop()?.toLowerCase() || ''
   const e = !name.trim() ? 'Enter a file name.' : !name.includes('.') || !OK_EXT.includes(ext) ? `Unsupported file type. Accepted: ${OK_EXT.join(', ')}.` : ''
-  const save = () => {
+  const save = async () => {
     setTried(true)
     if (e) return
-    const id = A.addEvidence({ name: name.trim(), kind, source, projectId: f.projectId, opId: f.op || undefined, sensitive: sens, findingId: f.id })
-    A.attachEvidence(f.id, id)
+    const res = await writes.uploadEvidence({ findingId: f.id, name: name.trim(), kind, source, sensitive: sens, opId: f.op || undefined })
+    if (!res.ok) { setErr(res.failure.message); return }
     toast(`Uploaded ${name.trim()} and linked it to ${f.id}.`)
-    setName(''); setTried(false); setSens(false); onClose()
+    setName(''); setTried(false); setSens(false); setErr(null); onClose()
   }
   return (
     <Modal open={open} onClose={onClose} title="Upload evidence (simulated)" footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" icon={Upload} onClick={save}>Upload & link</Button></>}>
       <div className="space-y-4">
+        {err && <Banner tone="bad" title="The evidence was not uploaded">{err}</Banner>}
         <Field label="File name" required error={tried ? e : undefined} hint="No real file is uploaded — only a simulated record is created."><Input value={name} onChange={(x) => setName(x.target.value)} placeholder="e.g. evidence-028.png" /></Field>
         <Field label="Type"><Select value={kind} onChange={(x) => setKind(x.target.value)}>{['Image', 'Image (redacted)', 'Text', 'JSON', 'Log'].map((k) => <option key={k}>{k}</option>)}</Select></Field>
         <Field label="Source"><Input value={source} onChange={(x) => setSource(x.target.value)} /></Field>
@@ -746,25 +755,27 @@ function EvidencePreview({ ev, f, onOp }: { ev: EvidenceView; f: Finding; onOp: 
   )
 }
 
-/* ───────────── Retest tab ───────────── */
+/* ───────────── Retest tab (ticket 32: record + outcome in one typed commit) ───────────── */
 const RETEST_STATE: Record<string, { label: string; tone: 'ok' | 'bad' | 'warn' | 'neutral' }> = {
   'Resolved': { label: 'Resolved', tone: 'ok' }, 'Persists': { label: 'Still present', tone: 'bad' }, 'Partial': { label: 'Partially resolved', tone: 'warn' },
 }
 function RetestTab({ f, ro, roReason }: { f: Finding; ro: boolean; roReason: string }) {
-  const { A, toast, can, me } = useStore()
+  const { toast, can, me } = useStore()
+  const writes = useFindingWrites()
   const [result, setResult] = useState('Resolved')
   const [note, setNote] = useState('')
   const [tried, setTried] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
   const stageOk = ['confirmed', 'remediation', 'retest', 'resolved'].includes(f.status)
   const roleOk = can('createFinding', f.projectId) || can('reviewFinding', f.projectId)
   const reason = ro ? roReason : !roleOk ? `The ${ROLE_LABEL[me.role]} role cannot record retests.` : !stageOk ? 'Retest is only available after the finding has been confirmed.' : ''
-  const save = () => {
+  const save = async () => {
     setTried(true)
     if (!note.trim()) return
-    A.addRetest(f.id, { result, note: note.trim() })
-    if (result !== 'Resolved' && f.status === 'retest') A.setFindingStatus(f.id, 'remediation', `Retest not passed (${result}): ${note.trim()}`)
+    const res = await writes.recordRetest(f.id, { result, note: note.trim() })
+    if (!res.ok) { setErr(res.failure.message); return }
     toast(result === 'Resolved' ? `${f.id} was marked Resolved.` : 'Retest result recorded.', result === 'Resolved' ? 'ok' : 'warn')
-    setNote(''); setTried(false)
+    setNote(''); setTried(false); setErr(null)
   }
   return (
     <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
@@ -785,6 +796,7 @@ function RetestTab({ f, ro, roReason }: { f: Finding; ro: boolean; roReason: str
       <Card>
         <CardHeader title="Record retest" sub="A “Resolved” result closes the finding." />
         {reason && <div className="mb-3"><Locked reason={reason} /></div>}
+        {err && <Banner tone="bad" title="The retest was not recorded">{err}</Banner>}
         <div className="space-y-4">
           <Field label="Result" required><Select value={result} onChange={(e) => setResult(e.target.value)} disabled={!!reason}><option value="Resolved">Resolved</option><option value="Persists">Still present</option><option value="Partial">Partially resolved</option></Select></Field>
           <Field label="Notes" required error={tried && !note.trim() ? 'Enter notes about the retest.' : undefined}><Textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!!reason} placeholder="Describe how you tested and what you observed" /></Field>
