@@ -19,7 +19,9 @@ import type { Integration, OrgInvite, OrgProfile, Policy, Role } from '../../dom
 import type {
   IntegrationAction, IntegrationsRead, OrgInviteInput, OrgMemberStatusAction, OrgMemberView,
   OrgProfilePatch, OrgProfileRead, OrgMembersRead, PoliciesRead,
+  AuditQuery, AuditRead, RetentionPatch, RetentionRead,
 } from './service'
+import type { Retention } from '../../domain/entities'
 
 /** Feature-local key namespaces: ['org', scope, 'profile' | 'members']. */
 export const orgKeys = {
@@ -197,6 +199,83 @@ export function usePolicyWrites() {
     return {
       setEnabled: (id: string, enabled: boolean, reason: string): Promise<ServiceResult<Policy>> =>
         services.settings(actor, scope.project).setPolicyEnabled(ctx('policy-toggle'), id, enabled, reason),
+    }
+  }, [services, scope.project, actor])
+}
+
+/* ───────────── Retention + canonical audit history (ticket 58) ───────────── */
+
+/**
+ * Feature-local key namespaces with the entity kind at position 0 —
+ * `['retention', scope, 'list']` and `['audit', scope, 'list', query]` — so
+ * the ChangeSet bridge's kind-prefix invalidation keeps both live: every
+ * committed mutation (legacy or typed) appends its audit row, and retention
+ * writes touch the retention row and the org hold list. Whoever commits, the
+ * tabs refetch without a reload.
+ */
+export const retentionKeys = {
+  list: (scope: QueryScope) => consoleKeys.view('retention', scope, 'list'),
+}
+export const auditKeys = {
+  list: (scope: QueryScope, query: AuditQuery) => consoleKeys.view('audit', scope, 'list', query),
+}
+
+/** Query-backed retention read (policies, committed holds, filtered history). */
+export function useRetention() {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  return useQuery({
+    queryKey: retentionKeys.list(scope),
+    queryFn: async (): Promise<RetentionRead> => {
+      const res = await services
+        .settings(actor, scope.project)
+        .getRetention({ actor, projectId: scope.project, corr: 'retention-list' })
+      if (!res.ok) throw new OrgReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/** Query-backed audit history: the filter object is part of the query key. */
+export function useAudit(query: AuditQuery) {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  return useQuery({
+    queryKey: auditKeys.list(scope, query),
+    queryFn: async (): Promise<AuditRead> => {
+      const res = await services
+        .settings(actor, scope.project)
+        .getAudit({ actor, projectId: scope.project, corr: 'audit-list' }, query)
+      if (!res.ok) throw new OrgReadError(res.failure)
+      return res.data
+    },
+    enabled: !!services,
+  })
+}
+
+/**
+ * Write-side binding for retention (ticket 58): policy save, legal hold
+ * place/release and the simulated delete-under-policy. Refusals resolve as
+ * explicit ServiceResults; a committed write publishes the retention/org
+ * ChangeSet this tab and the audit history both observe.
+ */
+export function useRetentionWrites() {
+  const services = useServices()
+  const scope = useQueryScope()
+  const actor = useOrgActor()
+  return useMemo(() => {
+    const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
+    const svc = () => services.settings(actor, scope.project)
+    return {
+      save: (id: string, patch: RetentionPatch): Promise<ServiceResult<Retention>> =>
+        svc().updateRetention(ctx('retention-save'), id, patch),
+      setHold: (id: string, held: boolean, reason: string): Promise<ServiceResult<Retention>> =>
+        svc().setRetentionHold(ctx(held ? 'retention-hold' : 'retention-release'), id, held, reason),
+      remove: (id: string, reason: string): Promise<ServiceResult<Retention>> =>
+        svc().deleteRetentionData(ctx('retention-delete'), id, reason),
     }
   }, [services, scope.project, actor])
 }

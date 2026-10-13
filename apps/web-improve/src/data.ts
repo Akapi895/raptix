@@ -390,6 +390,7 @@ export function seed(variant: SeedVariant = 'default') {
     profile: { name: 'Acme Security (Demo)', tz: 'Asia/Ho_Chi_Minh (UTC+7)', dateFmt: 'MMM D, YYYY', landing: 'Dashboard', contact: 'dana.whitfield@acme-security.example.test', policy: 'Data stays in the demo region; evidence is encrypted; least-privilege access.', defWorkspace: 'WS-02' },
     members: {},
     invites: [],
+    holds: [],
   }
   return { groups, templates, integrations, policies, retention, detection, projects, operations, agents, assets, evidence, findings, reports, exportsList, playbooks, approvals, audit, notices, plans, conversations, toolEvents, branches, branchGroups, aiWorkers, c2Nodes, channels, sessions, sessionRequests, counters, stopState, org }
 }
