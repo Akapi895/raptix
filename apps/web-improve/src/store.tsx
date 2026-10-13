@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Asset, type Agent, type Group, type Plan, type PlanStep, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent, type Conversation } from './data'
+import { BRANCH_TERMINAL, type BranchState, USERS, APR, type Db, type Project, type Operation, type Step, type Finding, type Role, type Asset, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SessionPerm, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
 import { can as policyCan, projectAccessible, readOnlyContext } from './auth/policy'
 import type { CanAction } from './domain/permissions'
 import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
+import { createChatHandlers } from './features/aichat/handlers'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
@@ -575,90 +576,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return id
   }
 
-  /* ───────── AI mock ───────── */
-  const pickPlaybook = (p: Project, text: string, d: Db) => {
-    const t = text.toLowerCase()
-    const id = /detect|signal|soc|siem/.test(t) ? 'PB-002' : /cloud|config|iam/.test(t) || p.type === 'Assessment' ? 'PB-003' : 'PB-001'
-    return d.playbooks.find((x) => x.id === id && x.status === 'approved') || d.playbooks.find((x) => x.status === 'approved')!
-  }
-  const buildPlanRecord = (d: Db, p: Project, text: string, convId: string, prev?: Plan): Plan => {
-    const pb = pickPlaybook(p, text, d)
-    const inScope = d.assets.filter((a) => a.projectId === p.id && a.scope === 'in').slice(0, 3)
-    const ags = d.agents.filter((a) => a.projectId === p.id && a.status === 'online' && (!a.op || a.op === prev?.opId)).slice(0, 2)
-    const names = pb.steps
-    const steps: PlanStep[] = names.map((name, i) => ({
-      id: 'P' + pad(i + 1), name, technique: pb.techniques[i % pb.techniques.length], asset: inScope.length ? inScope[i % inScope.length].name : '—', agent: ags.length ? ags[i % ags.length].id : '—',
-      tool: ['host-info-collector', 'account-enumerator', 'group-enumerator', 'service-mapper', 'web-profiler', 'credential-validator (lab)', 'task-reviewer', 'data-sampler', 'remote-service-check', 'defense-sim (safe)', 'collector-sim', 'cleanup-summarizer'][i % 12],
-      risk: /simulate|validate/i.test(name) ? 'medium' : 'low', needsApproval: /simulate|validate/i.test(name), rationale: `Supports the project objectives using only approved, in-scope targets.`,
-    }))
-    const id = 'PL-' + String(++d.counters.plan).padStart(3, '0')
-    const plan: Plan = {
-      id, projectId: p.id, title: `${pb.name} plan`, version: prev ? prev.version + 1 : 1, status: 'proposed', author: 'AI Operator', requestedBy: me.name, reviewer: d.projects.find((x) => x.id === p.id)?.members.find((m) => m.role === 'reviewer')?.user || 'Pat Kim',
-      created: stamp(), updated: stamp(), playbookId: pb.id, assets: inScope.map((a) => a.id), agents: ags.map((a) => a.id), steps,
-      rationale: `Runs the approved “${pb.name}” playbook (${names.length} steps) against ${inScope.length} in-scope assets using ${ags.length} healthy project agents. This is a proposal only; nothing runs until a reviewer approves it.`,
-      risks: steps.filter((s) => s.needsApproval).length ? [`${steps.filter((s) => s.needsApproval).length} steps simulate sensitive behavior and need explicit approval.`] : ['No elevated risks identified.'],
-      roeVersion: p.roeVersion, prevPlanId: prev?.id, conversationId: convId,
-    }
-    d.plans.unshift(plan)
-    return plan
-  }
-
-  const aiRespond = (convId: string, text: string) => {
-    const d0 = dbRef.current
-    const conv = d0.conversations.find((c) => c.id === convId)!
-    const p = d0.projects.find((x) => x.id === conv.projectId)!
-    const t = text.toLowerCase()
-    const outAsset = d0.assets.find((a) => a.projectId === p.id && a.scope === 'out' && t.includes(a.name.toLowerCase()))
-    const otherProj = d0.projects.find((x) => x.id !== p.id && (t.includes(x.id.toLowerCase()) || t.includes(x.client.split(' ')[0].toLowerCase()) && x.client !== p.client))
-    const otherAsset = d0.assets.find((a) => a.projectId !== p.id && a.projectId && t.includes(a.name.toLowerCase()))
-    const wantsPlan = /plan|run|discover|scan|assess|map|validate|test|enumerat|check|propose|draft/.test(t)
-    const wantsExec = /execute|start|launch|go ahead/.test(t)
-    mutate((d) => {
-      const c = d.conversations.find((x) => x.id === convId)!
-      const add = (m: Omit<Conversation['messages'][number], 'id' | 'at'>) => c.messages.push({ id: 'm' + Math.random().toString(36).slice(2, 7), at: stamp(), ...m })
-      c.updated = stamp()
-      const blockTool = (target: string, reason: string, tool = 'service-mapper') => {
-        const id = 'TL-' + String(d.toolEvents.length + 1).padStart(2, '0') + Math.random().toString(36).slice(2, 4)
-        d.toolEvents.unshift({ id, conversationId: convId, projectId: p.id, tool, target, params: 'scope=services', state: 'denied', at: stamp(), reason })
-        d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at: stamp(), actor: 'AI Operator', role: 'System', action: 'Blocked tool call', obj: target, projectId: p.id, result: 'Denied', reason })
-        return id
-      }
-      if (otherProj || otherAsset) {
-        add({ role: 'ai', kind: 'blocked', text: `I can only work with data from ${p.id}. Information about other projects isn’t available in this conversation. Switch projects if you have access.`, toolId: blockTool(otherAsset?.name || otherProj!.id, 'Project isolation — cross-project data requested.') })
-        return
-      }
-      if (outAsset) {
-        add({ role: 'ai', kind: 'blocked', text: `I can’t do that. ${outAsset.name} is out of scope under ${p.roeVersion}, so the tool call was blocked.`, toolId: blockTool(outAsset.name, `Out of scope — asset is excluded by ${p.roeVersion}.`) })
-        return
-      }
-      if (c.mode === 'observe') {
-        const ops = d.operations.filter((o) => o.projectId === p.id)
-        const run = ops.filter((o) => o.status === 'running')
-        add({ role: 'ai', text: `Observe mode — read-only. ${p.id} is ${p.status} with ${d.assets.filter((a) => a.projectId === p.id && a.scope === 'in').length} in-scope assets, ${run.length} running operation${run.length === 1 ? '' : 's'} and ${d.findings.filter((f) => f.projectId === p.id).length} findings. Switch to Propose mode if you want me to draft a plan.` })
-        return
-      }
-      if (p.roeStatus !== 'approved') {
-        add({ role: 'ai', kind: 'blocked', text: `I can draft a plan, but execution is blocked: ${p.id} has no approved ROE (${p.roeVersion} is ${p.roeStatus}). Get the ROE approved first.` })
-        if (wantsPlan) { const pl = buildPlanRecord(d, p, text, convId); pl.status = 'draft'; pl.risks = ['ROE is not approved — this plan cannot be approved or executed.']; add({ role: 'ai', kind: 'plan', planId: pl.id, text: `Drafted ${pl.id}. It stays in Draft until the ROE is approved.` }) }
-        return
-      }
-      if (wantsExec && c.mode !== 'execution') {
-        add({ role: 'ai', text: 'Execution needs Approved Execution mode and an approved plan. Switch modes, then ask me to execute the approved plan.' })
-        return
-      }
-      if (wantsExec) {
-        const ap = d.plans.find((x) => x.projectId === p.id && x.status === 'approved' && !x.opId)
-        add({ role: 'ai', text: ap ? `Plan ${ap.id} v${ap.version} is approved. Open it to create the operation and run preflight; I will not start anything without your confirmation.` : 'There is no approved plan waiting to run. Ask me to propose a plan and send it for approval first.', kind: ap ? 'plan' : undefined, planId: ap?.id })
-        return
-      }
-      if (wantsPlan) {
-        const pl = buildPlanRecord(d, p, text, convId)
-        add({ role: 'ai', kind: 'plan', planId: pl.id, text: `I proposed plan ${pl.id} using the approved “${d.playbooks.find((x) => x.id === pl.playbookId)!.name}” playbook (${pl.steps.length} steps, ${pl.assets.length} in-scope assets). This is a proposal only; nothing has run.` })
-        return
-      }
-      add({ role: 'ai', text: `I can answer questions about ${p.id} or draft a plan from approved playbooks. Try “Plan an internal discovery run for the in-scope hosts.”` })
-    })
-  }
+  /* ───────── AI chat (ticket 38) ─────────
+     Conversations, mode selection and simulated proposal generation are owned
+     by the feature-local handlers (src/features/aichat): every commit goes
+     through the one authority and publishes the ChangeSet both the legacy
+     context and Query consumers observe. This action layer keeps only the
+     demo's response orchestration — the single busy flag and the 900 ms
+     response timer, disposed on stop and demo reset. The proposal invariant
+     (requirement 5) lives in the handler: no action here can start an
+     operation, approve a plan or allow a tool call. */
+  const chatApi = createChatHandlers(services, { id: me.name, role: me.role }, 'all')
 
   /* ───────── Actions ───────── */
   const A: Actions = {
@@ -1014,26 +941,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setPlaybookStatus: (id, status) => mutate((d) => { const p = d.playbooks.find((x) => x.id === id); if (p) { p.status = status; p.updated = stamp() } }),
     togglePolicy: (id) => { mutate((d) => { const p = d.policies.find((x) => x.id === id)!; p.enabled = !p.enabled; p.updated = today() }); audit('Changed policy', id, '') },
 
-    /* ── AI Operator ── */
+    /* ── AI Operator (ticket 38: handlers own the data; this layer keeps the
+       response orchestration only — busy flag + 900 ms timer, disposed on
+       stop and demo reset. The handler enforces the proposal invariant. ──) */
     createConversation: (projectId, mode = aiMode) => {
-      const id = 'CV-' + projectId.slice(-3) + '-' + String(dbRef.current.conversations.filter((c) => c.projectId === projectId).length + 1).padStart(2, '0')
-      mutate((d) => { d.conversations.unshift({ id, projectId, title: 'New conversation', mode, owner: me.name, updated: stamp(), messages: [] }) })
-      return id
+      const res = chatApi.create(projectId, mode)
+      return res.ok ? res.data.id : ''
     },
-    setConversationMode: (convId, mode) => { mutate((d) => { const c = d.conversations.find((x) => x.id === convId); if (c) c.mode = mode }) },
-    togglePinConv: (convId) => mutate((d) => { const c = d.conversations.find((x) => x.id === convId); if (c) c.pinned = !c.pinned }),
+    setConversationMode: (convId, mode) => { chatApi.setMode(convId, mode) },
+    togglePinConv: (convId) => { chatApi.setPinned(convId) },
     sendChat: (convId, text) => {
       if (!text.trim() || aiBusy) return
-      mutate((d) => {
-        const c = d.conversations.find((x) => x.id === convId)!
-        if (c.title === 'New conversation') c.title = text.slice(0, 48)
-        c.messages.push({ id: 'u' + Math.random().toString(36).slice(2, 7), role: 'user', text, at: stamp() })
-        c.updated = stamp()
-      })
+      const res = chatApi.send(convId, text)
+      if (!res.ok) return
       setAiBusy(convId)
       const timer = later(() => {
         aiTimers.current.delete(convId)
-        aiRespond(convId, text)
+        chatApi.respond(convId, text)
         setAiBusy(null)
       }, 900)
       aiTimers.current.set(convId, timer)
@@ -1044,12 +968,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timer)
       aiTimers.current.delete(convId)
       setAiBusy(null)
-      mutate((d) => {
-        const c = d.conversations.find((x) => x.id === convId)
-        if (!c) return
-        c.messages.push({ id: 's' + Math.random().toString(36).slice(2, 7), role: 'system', text: `Response generation stopped by ${me.name}.`, at: stamp() })
-        c.updated = stamp()
-      })
+      chatApi.stop(convId)
     },
     requestPlanApproval: (planId) => {
       const pl = dbRef.current.plans.find((x) => x.id === planId)!
