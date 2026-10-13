@@ -697,7 +697,7 @@ export function ReportReview() {
 }
 
 function ReviewInner({ d }: { d: ReportReviewRead }) {
-  const { db, go, toast, confirm } = useStore()
+  const { go, toast, confirm } = useStore()
   const writes = useReportWrites()
   const r = d.report
   const project = d.project
@@ -737,7 +737,7 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
   const approve = () => confirm({ title: `Approve ${r.id} (${r.version})?`, body: 'Approval only unlocks export. Exporting PDF/DOCX and marking delivery are separate steps that follow.', confirmLabel: 'Approve Report', reasonLabel: 'Approval reasoning (recorded with the pinned version)', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'approve', note), () => toast(`Approved ${r.id} ${r.version}. Not exported or delivered yet.`)) })
   const ret = () => confirm({ title: `Return ${r.id} with comments`, body: 'The report goes back to its author. Your comment is saved in the review history and is never deleted.', confirmLabel: 'Return with Comments', danger: true, reasonLabel: 'Comments for the author', reasonRequired: true, onConfirm: (note) => runWrite(() => writes.decide(r.id, 'return', note), () => { toast(`Returned ${r.id} to ${r.author}`, 'warn'); hardGo('report', r.id) }) })
   const doExport = (f: 'PDF' | 'DOCX') => runWrite(() => writes.exportVersion(r.id, f).then((res) => (res.ok ? { ok: true as const, data: res.data.report } : res)), () => toast(`Exported ${f} for ${r.version}. Not delivered yet.`))
-  const deliver = () => runWrite(() => writes.deliver(r.id, { recipient: recipient.trim(), channel, notes }), () => toast(`Marked ${r.id} as delivered to ${recipient.trim()}`))
+  const deliver = () => runWrite(() => writes.deliver(r.id, { recipient: recipient.trim(), channel, notes, confirm: confirmed }), () => toast(`Marked ${r.id} as delivered to ${recipient.trim()}`))
 
   return (
     <>
@@ -856,16 +856,16 @@ function ReviewInner({ d }: { d: ReportReviewRead }) {
             {deliverWhy && r.status !== 'delivered' && <p className="mt-2 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{deliverWhy}</p>}
             {r.status === 'delivered' && (() => {
               const ex = exps.find((e) => e.status === 'Delivered')
-              const au = db.audit.find((a) => a.obj === r.id && a.action === 'Marked as delivered')
               return (
                 <div className="mt-3 space-y-1.5 rounded-lg border border-ok/30 bg-ok/5 p-3 text-xs">
                   <div className="font-medium text-ok">Delivery record</div>
                   <div className="flex justify-between gap-3"><span className="text-muted">Recipient</span><span>{ex?.recipient || '—'}</span></div>
                   <div className="flex justify-between gap-3"><span className="text-muted">Method</span><span>{ex?.channel || 'Secure portal'}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted">Delivered</span><span className="whitespace-nowrap">{ex?.at || r.deliveredAt}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted">Delivered</span><span className="whitespace-nowrap">{ex?.deliveredAt || r.deliveredAt}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted">Delivered by</span><span>{ex?.deliveredBy || '—'}</span></div>
                   <div className="flex justify-between gap-3"><span className="text-muted">Version</span><Mono className="whitespace-nowrap">{ex?.version || r.version}</Mono></div>
                   <div className="flex justify-between gap-3"><span className="text-muted">Acknowledgement</span><span className={ex?.ackAt ? 'text-ok' : 'text-warn'}>{ex?.ackAt ? `Receipt acknowledged ${ex.ackAt}` : 'Awaiting recipient acknowledgement'}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-muted">Audit event</span><Mono className="whitespace-nowrap">{au?.id || 'AU-archived'} (immutable)</Mono></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted">Audit event</span><Mono className="whitespace-nowrap">{d.deliveryAuditId || 'AU-archived'} (immutable)</Mono></div>
                   {ex && !ex.ackAt && <Button size="sm" icon={CheckCircle2} disabled={!d.gates.ack.allowed} title={d.gates.ack.reason || undefined} onClick={() => writes.acknowledge(r.id).then((res) => { if (res.ok) toast('Recipient acknowledgement recorded'); else toast(res.failure.message, 'bad') })}>Record recipient acknowledgement</Button>}
                 </div>
               )

@@ -8,6 +8,9 @@ import { createChatHandlers } from './features/aichat/handlers'
 // Ticket 19 append: the project-creation transaction is feature-local
 // (src/features/wizard/service.ts); the legacy action delegates to it.
 import { createProjectTransaction } from './features/wizard/service'
+// Ticket 37 append: the legacy export/delivery actions delegate to the typed
+// report handlers (one audited implementation for both entry points).
+import { deliverReportVersion, exportReportVersion, type DeliveryInput } from './features/reports/service'
 import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 import { getActiveRouter } from './router/active'
 import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
@@ -288,7 +291,7 @@ export interface Actions {
   returnReport: (id: string, note: string) => void
   approveReport: (id: string) => void
   exportReport: (id: string, format: 'PDF' | 'DOCX') => void
-  deliverReport: (id: string, recipient: string) => Res
+  deliverReport: (id: string, input: DeliveryInput) => Res
   requestClose: (pid: string) => void
   confirmClose: (approvalId: string) => void
   reopen: (pid: string, reason: string) => void
@@ -914,22 +917,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     returnReport: (id, note) => { const r = dbRef.current.reports.find((x) => x.id === id)!; mutate((d) => { const x = d.reports.find((y) => y.id === id)!; x.status = 'returned'; x.updated = stamp(); x.reviews.push({ at: stamp(), by: me.name, action: 'Changes requested', note, version: x.version }) }); audit('Requested report changes', id, r.projectId, 'Success', note); notify(`${id} was returned for changes`, r.projectId, { name: 'report', id }, 'todo', 'reports') },
     approveReport: (id) => { const r = dbRef.current.reports.find((x) => x.id === id)!; mutate((d) => { const x = d.reports.find((y) => y.id === id)!; x.status = 'approved'; x.updated = stamp(); x.reviews.push({ at: stamp(), by: me.name, action: 'Approved', note: '', version: x.version }) }); audit('Approved report', id, r.projectId) },
+    /* Ticket 37: the export/delivery mutations are canonical typed handlers
+       (src/features/reports/service.ts); these legacy entries delegate to them
+       so every export record, handover stamp and audit row — whatever the entry
+       point — comes from the one audited implementation. Both publish the
+       ChangeSet the Query delivery history (`report-export` keys) refetches. */
     exportReport: (id, format) => {
-      const r = dbRef.current.reports.find((x) => x.id === id)!
-      mutate((d) => {
-        const x = d.reports.find((y) => y.id === id)!
-        if (x.status === 'approved') x.status = 'exported'
-        d.exportsList.unshift({ id: 'EX-' + (91 + d.exportsList.length), reportId: id, version: x.version, format, by: me.name, at: stamp(), recipient: '—', status: 'Completed', checksum: 'sha256:' + Math.random().toString(16).slice(2, 6) + '…' + Math.random().toString(16).slice(2, 6) })
-      })
-      audit(`Exported report (${format})`, id, r.projectId)
+      exportReportVersion(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: 'all', corr: 'legacy' }, id, format)
     },
-    deliverReport: (id, recipient) => {
-      const r = dbRef.current.reports.find((x) => x.id === id)!
-      if (!dbRef.current.exportsList.some((e) => e.reportId === id && e.version === r.version)) return { ok: false, error: 'Cannot deliver: no valid export exists for this version. Export PDF/DOCX first.' }
-      if (!['approved', 'exported'].includes(r.status)) return { ok: false, error: 'Cannot deliver: the report has not been approved.' }
-      mutate((d) => { const x = d.reports.find((y) => y.id === id)!; x.status = 'delivered'; x.deliveredAt = stamp(); x.updated = stamp(); d.exportsList.filter((e) => e.reportId === id && e.version === x.version).forEach((e) => { e.recipient = recipient; e.status = 'Delivered' }) })
-      audit('Marked as delivered', id, r.projectId, 'Success', recipient)
-      return { ok: true }
+    deliverReport: (id, input) => {
+      const res = deliverReportVersion(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: 'all', corr: 'legacy' }, id, input)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     requestClose: (pid_) => { mutate((d) => { d.approvals.unshift({ id: 'APR-' + ++d.counters.approval, projectId: pid_, type: APR.close, by: me.name, reviewer: 'Pat Kim', at: stamp(), status: 'pending', note: 'Requesting project closure — checklist complete.' }); const p = d.projects.find((x) => x.id === pid_)!; p.status = 'review' }); audit('Requested project closure', pid_, pid_); notify(`${pid_} requested closure — awaiting confirmation`, pid_, { name: 'project', id: pid_ }, 'todo', 'approvals') },
     confirmClose: (apId) => { const ap = dbRef.current.approvals.find((x) => x.id === apId)!; mutate((d) => { const a = d.approvals.find((x) => x.id === apId)!; a.status = 'approved'; const p = d.projects.find((x) => x.id === a.projectId)!; p.status = 'closed'; p.closedAt = stamp(); p.updated = stamp() }); audit('Confirmed project closure', ap.projectId, ap.projectId, 'Success', 'Closure criteria met') },
