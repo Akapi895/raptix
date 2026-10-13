@@ -15,6 +15,10 @@
   --c-accent-press: #8E1B1B;
   --c-accent-fg: #FFFFFF;
   --c-cyan: #1D4ED8;
+  /* Chart category color (dashboard "high" severity). Legible on both the
+     light page and the dark panels, so it is defined once like the console
+     tokens; no .dark override. */
+  --c-orange: #F2894F;
   --c-ok: #15803D;
   --c-warn: #A16207;
   --c-bad: #B91C1C;
@@ -30,6 +34,12 @@
   --c-console-fg: #E5EDF5;
   --c-console-muted: #9FB0C0;
   --c-console-line: #2A3A4A;
+  /* The console is a fixed-dark surface in both themes, so its accents keep
+     the dark-theme values (ticket 63 audit: these tokens were referenced as
+     text-console-info/warn/bad but never registered). */
+  --c-console-info: #6EA0FF;
+  --c-console-warn: #FBBF24;
+  --c-console-bad: #F87171;
   --c-focus: #DC2626;
   color-scheme: light;
 }
@@ -72,6 +82,7 @@
   --color-accent-hover: var(--c-accent-hover);
   --color-accent-press: var(--c-accent-press);
   --color-cyan: var(--c-cyan);
+  --color-orange: var(--c-orange);
   --color-ok: var(--c-ok);
   --color-warn: var(--c-warn);
   --color-bad: var(--c-bad);
@@ -88,6 +99,9 @@
   --color-console-fg: var(--c-console-fg);
   --color-console-muted: var(--c-console-muted);
   --color-console-line: var(--c-console-line);
+  --color-console-info: var(--c-console-info);
+  --color-console-warn: var(--c-console-warn);
+  --color-console-bad: var(--c-console-bad);
   --font-sans: 'Inter', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }

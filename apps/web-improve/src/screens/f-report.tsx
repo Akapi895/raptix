@@ -640,7 +640,9 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
             <Button size="sm" onClick={() => jump(pg + 1)} disabled={pg >= N}>Next page</Button>
             <Select aria-label="Jump to section" className="w-48" value="" onChange={(e) => { if (e.target.value) jump(Number(e.target.value)) }}><option value="">Jump to section…</option>{pages.map((p, i) => <option key={p.key} value={i + 1}>{i + 1}. {p.title}</option>)}</Select>
           </div>
-          <div className={cx('max-h-[78vh] overflow-auto rounded-xl border border-line p-4 sm:p-6', mode === 'pdf' ? 'bg-slate-300/60' : 'bg-hover/40')}>
+          {/* Print simulation: the paper and its desk stay light in both
+              themes (data-paper marks the intentional fixed-light surface). */}
+          <div data-paper className={cx('max-h-[78vh] overflow-auto rounded-xl border border-line p-4 sm:p-6', mode === 'pdf' ? 'bg-slate-300/60' : 'bg-hover/40')}>
             <div className="mx-auto space-y-6" style={{ width: 'min(100%, 760px)', zoom: Number(zoom) / 100 }}>
               {pages.map((p, i) => (
                 <section key={p.key} id={'pg-' + (i + 1)} aria-label={`Page ${i + 1}: ${p.title}`} onMouseEnter={() => setPg(i + 1)} className="relative overflow-hidden rounded-sm bg-white p-8 text-slate-900 shadow-lg sm:p-12" style={{ minHeight: 620 }}>
