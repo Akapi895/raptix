@@ -14,13 +14,13 @@
 
 **Commit** `feat(web-improve): states gallery semantic module (ticket 61b)` — branch `wi/61-demoworks`:
 
-- `src/screens/system/gallery.tsx` (new, 95 lines) — `StatesGallery` moved verbatim; `go`/`toast`/`setSwitcherOpen` now come from the system nav seam + `useToastStore`/`useUiStore`; the 1.2 s simulate-reload timeout is tracked and cleared on unmount.
+- `src/screens/system/gallery.tsx` (new, 100 lines) — `StatesGallery` moved verbatim; `go`/`toast`/`setSwitcherOpen` now come from the system nav seam + `useToastStore`/`useUiStore`; the 1.2 s simulate-reload timeout is tracked and cleared on unmount.
 - `src/screens/a-system.tsx` — deleted (zero callers after `a.tsx` rewires).
 - `src/screens/a.tsx` — `states` imports from `./system/gallery`; the auth/system slice record keeps its export shape, so the registry is untouched.
-- `src/screens/system/system.test.tsx` (extend) — the `states` deep link renders the gallery with the status legend and every sample heading; reload shows the loading skeleton; gallery sample actions navigate/toast.
+- `src/screens/system/system.test.tsx` (extend, +3 tests = 16 total) — the `states` deep link renders the gallery with every sample heading and the status legend; simulate-reload shows the loading skeleton (fake timers) and recovers with no stale timer; a sample action navigates through the router seam (`#/operation-new`).
 
-Runtime accounting: new-file lines 95 + net across edited files (a-system −99 deleted, a.tsx +2/−1) = **−3 runtime lines** (a net deletion), 4 touched files.
+Runtime accounting: new-file lines 100 + net across edited files (a-system −99 deleted, a.tsx +3/−2) = **+2 runtime lines**, 4 touched files.
 
-Checks: `npm run typecheck` clean; `npm run lint` 197 warnings / 0 errors; `npm test -- --run` 884 passed (880 + 4 new); `npm run build` green.
+Checks: `npm run typecheck` clean; `npm run lint` 197 warnings / 0 errors (baseline 197); `npm test -- --run` 883 passed (880 + 3 new; one pre-existing agents/writes flake failed once and passed on re-run — known flake per ticket 42's evidence); `npm run build` green.
 
 **Gaps:** browser walkthrough not performed (optional per AGENTS.md § Windows Temporary Process Safety).
