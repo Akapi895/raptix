@@ -8,6 +8,13 @@ import { createChatHandlers } from './features/aichat/handlers'
 // Ticket 19 append: the project-creation transaction is feature-local
 // (src/features/wizard/service.ts); the legacy action delegates to it.
 import { createProjectTransaction } from './features/wizard/service'
+// Ticket 21 append: the approval decisions and the scope-revision governance
+// transaction are feature-local (src/features/approvals/service.ts); these
+// legacy entries delegate to them so refusals and invalidation have one
+// implementation for both entry points.
+import {
+  decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, withdrawApprovalTransaction,
+} from './features/approvals/service'
 // Ticket 37 append: the legacy export/delivery actions delegate to the typed
 // report handlers (one audited implementation for both entry points).
 import { deliverReportVersion, exportReportVersion, type DeliveryInput } from './features/reports/service'
@@ -250,10 +257,10 @@ export interface Actions {
   notify: (text: string, projectId: string, to: { name: string; id?: string }, group?: 'todo' | 'update' | 'system', category?: NonNullable<Db['notices'][number]['category']>) => void
   markNoticesRead: () => void
   createProject: (d: ProjectDraft, submit: boolean) => string
-  submitApproval: (projectId: string, type: string, note: string, diff?: string) => void
-  withdrawApproval: (id: string) => void
+  submitApproval: (projectId: string, type: string, note: string, diff?: string) => Res
+  withdrawApproval: (id: string) => Res
   decideApproval: (id: string, decision: 'approved' | 'returned', note: string) => Res
-  editScope: (projectId: string, patch: Partial<Pick<Project, 'window' | 'emergency' | 'methods' | 'restrictions' | 'desc'>>, reason?: string) => void
+  editScope: (projectId: string, patch: Partial<Pick<Project, 'window' | 'emergency' | 'methods' | 'restrictions' | 'desc'>>, reason?: string) => Res
   updateProject: (projectId: string, patch: Partial<Project>) => void
   addAssets: (projectId: string, list: { name: string; ident: string; type: string; os: string; owner: string; scope: 'in' | 'out'; source: string; ip?: string }[]) => { needsApproval: boolean }
   setAssetScope: (assetId: string, scope: Asset['scope']) => void
@@ -353,7 +360,6 @@ export function groupSummary(db: Db, groupId: string) {
   return { bs, total: bs.length, running: n('running'), done, failed, waiting: n('waiting_approval'), queued: n('queued'), paused: n('paused'), unknown: n('unknown'), missing, open, overall, evidence: bs.reduce((a, b) => a + b.evidence.length, 0) }
 }
 
-const bumpRoe = (v: string) => v.replace(/v(\d+)$/, (_, n) => `v${+n + 1}`)
 const bumpVer = (p: Plan) => { const m = (p.ver ?? `v${p.version}`).match(/^v(\d+)(?:\.(\d+))?$/); return m ? `v${m[1]}.${(+(m[2] ?? 0)) + 1}` : `v${p.version + 1}` }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -600,6 +606,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const chatApi = createChatHandlers(services, { id: me.name, role: me.role }, 'all')
 
   /* ───────── Actions ───────── */
+  /* Legacy request context for the delegating actions: the current persona is
+     captured at call time, so a later switch never retargets a mutation. */
+  const actorCtx = (projectId: string) => ({ actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' })
+
   const A: Actions = {
     audit, notify,
     markNoticesRead: () => mutate((d) => d.notices.forEach((n) => (n.read = true))),
@@ -614,89 +624,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setPidRaw(res.data.id)
       return res.data.id
     },
+    /* Ticket 21: submit/withdraw/decide run through the feature-local
+       transaction handlers — the four-eyes refusals, the review-information
+       checks and the atomic commit live there; this entry only bridges the
+       typed ServiceResult to the legacy Res shape. */
     submitApproval: (projectId, type, note, diff) => {
-      mutate((d) => {
-        const p = d.projects.find((x) => x.id === projectId)!
-        if (type === APR.create) { p.status = 'pending'; p.roeStatus = 'pending' }
-        d.approvals.unshift({ id: 'APR-' + ++d.counters.approval, projectId, type, by: me.name, reviewer: 'Pat Kim', at: stamp(), status: 'pending', note, diff })
-      })
-      audit('Submitted for approval: ' + type, projectId, projectId)
-      notify(`${projectId} is waiting for your approval (${type})`, projectId, { name: 'project', id: projectId }, 'todo', 'approvals')
+      const res = submitApprovalTransaction(services.authority, services.clock, actorCtx(projectId), { projectId, type, note, diff })
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
-    withdrawApproval: (id) => mutate((d) => { const a = d.approvals.find((x) => x.id === id)!; a.status = 'withdrawn' }),
+    withdrawApproval: (id) => {
+      const res = withdrawApprovalTransaction(services.authority, services.clock, actorCtx(''), id)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
     decideApproval: (id, decision, note) => {
-      const a = dbRef.current.approvals.find((x) => x.id === id)!
-      const p = dbRef.current.projects.find((x) => x.id === a.projectId)!
-      if (decision === 'approved' && a.type !== APR.close && !a.type.startsWith('Agent assignment')) {
-        if (!p.emergency) return { ok: false, error: 'Cannot approve: the ROE has no emergency contact. Return it for changes with a reason.' }
-        const inScope = dbRef.current.assets.some((x) => x.projectId === p.id && ['in', 'pending'].includes(x.scope))
-        if (!inScope) return { ok: false, error: 'Cannot approve: the project has no in-scope assets. Return it for changes.' }
-      }
-      mutate((d) => {
-        const ap = d.approvals.find((x) => x.id === id)!
-        const pr = d.projects.find((x) => x.id === ap.projectId)!
-        ap.status = decision; ap.note = note || ap.note
-        if (decision === 'approved') {
-          if (ap.type === APR.create) { pr.status = 'approved'; pr.roeStatus = 'approved' }
-          if (ap.type === APR.scope) { pr.roeStatus = 'approved'; d.assets.forEach((x) => { if (x.projectId === pr.id && x.scope === 'pending') x.scope = 'in' }) }
-          if (ap.type === APR.create) d.assets.forEach((x) => { if (x.projectId === pr.id && x.scope === 'pending') x.scope = 'in' })
-          if (ap.type === APR.close) { pr.status = 'closed'; pr.closedAt = stamp() }
-          if (ap.type.startsWith('Agent assignment')) { const ag = d.agents.find((x) => x.id === /AG-\d+/.exec(ap.diff || '')?.[0]); if (ag && !ag.projectId) ag.projectId = ap.projectId }
-        } else {
-          if (ap.type === APR.create) { pr.status = 'rejected'; pr.roeStatus = 'rejected' }
-          if (ap.type === APR.scope) pr.roeStatus = 'rejected'
-          if (ap.type === APR.close) pr.status = pr.status === 'review' ? 'active' : pr.status
-        }
-        pr.updated = stamp()
-      })
-      audit(`${decision === 'approved' ? 'Approved' : 'Returned'}: ${a.type}`, a.projectId, a.projectId, 'Success', note)
-      notify(`${a.type} for ${a.projectId} was ${decision === 'approved' ? 'approved' : 'returned'}`, a.projectId, { name: 'project', id: a.projectId }, 'update', 'approvals')
-      return { ok: true }
+      const res = decideApprovalTransaction(services.authority, services.clock, actorCtx(''), id, decision, note)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     editScope: (projectId, patch, reason) => {
-      const p = dbRef.current.projects.find((x) => x.id === projectId)!
-      const needRe = ['approved', 'active'].includes(p.status) && p.roeStatus === 'approved'
-      mutate((d) => {
-        const pr = d.projects.find((x) => x.id === projectId)!
-        Object.assign(pr, patch); pr.updated = stamp()
-        if (needRe) {
-          pr.roeVersion = bumpRoe(pr.roeVersion)
-          pr.roeStatus = 'pending'
-          d.approvals.unshift({ id: 'APR-' + ++d.counters.approval, projectId, type: APR.scope, by: me.name, reviewer: 'Pat Kim', at: stamp(), status: 'pending', note: reason || 'Scope / ROE edit', diff: `New version ${pr.roeVersion}` })
-          // V3 E2E-08: scope change invalidates approved plans and ready operations (re-validation required)
-          d.plans.forEach((pl) => { if (pl.projectId === projectId && pl.status === 'approved') { pl.status = 'expired'; pl.risks = [...pl.risks, `Re-validation required: scope changed (${pr.roeVersion} draft). Re-approve under the new ROE.`] } })
-          d.operations.forEach((o) => { if (o.projectId === projectId && o.status === 'ready') { o.status = 'draft'; o.preflightAt = undefined } })
-        }
-      })
-      if (needRe) {
-        const cur = dbRef.current
-        const nPl = cur.plans.filter((x) => x.projectId === projectId && x.status === 'expired').length
-        audit('Approved plans and ready operations invalidated by scope change', projectId, projectId, 'Success', `${nPl} plan(s) need re-approval; ready operations returned to Draft`)
-        notify(`Scope change on ${projectId}: approved plans and ready operations need re-validation`, projectId, { name: 'project', id: projectId }, 'update')
-      }
-      audit(needRe ? 'Edited approved scope' : 'Updated scope', projectId, projectId, 'Success', reason || '')
+      const res = reviseScopeTransaction(services.authority, services.clock, actorCtx(projectId), projectId, { patch, reason })
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     updateProject: (projectId, patch) => mutate((d) => { const p = d.projects.find((x) => x.id === projectId)!; Object.assign(p, patch); p.updated = stamp() }),
+    /* Ticket 21: asset additions run through the same governance transaction
+       as ROE edits — one atomic submission-time invalidation (added assets
+       stay pending until an independent approval admits them). Ticket 51
+       migrates the import screens onto this same transaction interface. */
     addAssets: (projectId, list) => {
-      const p = dbRef.current.projects.find((x) => x.id === projectId)!
-      const hasOps = dbRef.current.operations.some((o) => o.projectId === projectId && o.status !== 'draft')
-      const needsApproval = p.status === 'active' || (hasOps && p.roeStatus === 'approved')
-      const initial = ['approved'].includes(p.status) && !hasOps
-      mutate((d) => {
-        list.forEach((a, i) => {
-          const scope: Asset['scope'] = a.scope === 'out' ? 'out' : p.status === 'draft' || p.status === 'pending' || p.status === 'rejected' ? 'pending' : 'pending'
-          d.assets.push({ id: `AS-${projectId.slice(-3)}${d.assets.filter((x) => x.projectId === projectId).length + i + 1}${Math.floor(Math.random() * 9)}`, name: a.name, ident: a.ident, ip: a.ip || '203.0.113.' + (120 + i), type: a.type, os: a.os, owner: a.owner, projectId, scope, source: a.source, updated: stamp() })
-        })
-        if (needsApproval && list.some((a) => a.scope === 'in')) {
-          const pr = d.projects.find((x) => x.id === projectId)!
-          pr.roeVersion = bumpRoe(pr.roeVersion); pr.roeStatus = 'pending'
-          d.plans.forEach((pl) => { if (pl.projectId === projectId && pl.status === 'approved') { pl.status = 'expired'; pl.risks = [...pl.risks, `Re-validation required: scope changed (${pr.roeVersion} draft).`] } })
-          d.operations.forEach((o) => { if (o.projectId === projectId && o.status === 'ready') { o.status = 'draft'; o.preflightAt = undefined } })
-          d.approvals.unshift({ id: 'APR-' + ++d.counters.approval, projectId, type: APR.scope, by: me.name, reviewer: 'Pat Kim', at: stamp(), status: 'pending', note: `Adding ${list.length} assets to scope.`, diff: `${list.map((a) => a.name).join(', ')} → in scope (${pr.roeVersion})` })
-        }
+      const res = reviseScopeTransaction(services.authority, services.clock, actorCtx(projectId), projectId, {
+        assets: list,
+        note: `Adding ${list.length} assets to scope.`,
+        diff: `${list.map((a) => a.name).join(', ')} → in scope`,
       })
-      audit('Added assets', list.map((a) => a.name).join(', '), projectId)
-      return { needsApproval: needsApproval && list.some((a) => a.scope === 'in') }
+      return { needsApproval: res.ok ? res.data.invalidated : false }
     },
     setAssetScope: (assetId, scope) => { mutate((d) => { const a = d.assets.find((x) => x.id === assetId)!; a.scope = scope; a.updated = stamp() }); audit('Changed asset scope status', assetId, dbRef.current.assets.find((x) => x.id === assetId)!.projectId) },
     assignAgent: (agentId, projectId) => { mutate((d) => { const a = d.agents.find((x) => x.id === agentId)!; a.projectId = projectId }); audit('Assigned agent to project', agentId, projectId) },

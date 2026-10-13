@@ -1,41 +1,19 @@
 import { useState } from 'react'
 import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
 import { useStore, closureChecklist, ROLE_LABEL, type Route } from '../store'
+import { useReopen } from '../features/approvals/hooks'
 import { APR, USERS, type Project, type Role, type Approval } from '../data'
 import type { DashboardAggregate } from './dashboard/domain'
 import { Banner, Button, Check, Card, CardHeader, DescList, Empty, Field, IconButton, IdLink, Input, Kpi, Locked, Modal, PersonaHint, Person, Progress, Segmented, Select, Status, Table, Textarea, useGuard, type Col } from '../ui'
 
+/* Ticket 21: ScopeTab/TeamTab mutations run through the ticket-21 approval
+ * and scope-revision transaction handlers (via the delegating store actions),
+ * so refusals render the handler's reason. Reads come from the detail
+ * service's typed slices (the `ds` aggregate prop b-detail passes down);
+ * secondary reads stay on the bridged legacy actions until ticket 23. */
+
 /** Approval types the scope version history lists (typed, no `any`). */
 const CREATE_OR_SCOPE: readonly string[] = [APR.create, APR.scope]
-
-/* Ticket 20: ScopeTab/TeamTab reads come from the detail service's typed
- * slices (the `ds` aggregate prop b-detail passes down — the same canonical
- * read the shell rendered from); their mutations stay on the bridged legacy
- * actions until tickets 21–22 own the approval/scope/closure handlers. */
-
-export function useSubmitApproval(p: Project) {
-  const { db, A, toast } = useStore()
-  const assets = db.assets.filter((a) => a.projectId === p.id)
-  const issues: string[] = []
-  if (!assets.some((a) => ['in', 'pending'].includes(a.scope))) issues.push('no in-scope assets')
-  if (!p.emergency) issues.push('no emergency contact')
-  if (!p.window) issues.push('no assessment window')
-  return {
-    issues, ready: issues.length === 0,
-    submit: () => {
-      A.submitApproval(p.id, APR.create, p.status === 'rejected' ? 'Resubmitted after addressing reviewer feedback.' : 'Requesting approval of the project and ROE.', `${p.roeVersion}, ${assets.filter((a) => a.scope !== 'out').length} assets`)
-      toast(`Submitted ${p.id} to the reviewer`)
-    },
-  }
-}
-
-export function useReopen(p: Project) {
-  const { A, confirm, toast } = useStore()
-  return () => confirm({
-    title: `Reopen project ${p.id}?`, body: 'The project returns to Active and becomes editable again. This action is recorded in the audit log.', confirmLabel: 'Reopen Project', danger: true,
-    reasonLabel: 'Reason for reopening', reasonRequired: true, onConfirm: (r) => { A.reopen(p.id, r); toast(`Reopened ${p.id}`) },
-  })
-}
 
 /* ───────────── PR-04 Scope & ROE ───────────── */
 type Sub = 'in' | 'out' | 'roe' | 'docs' | 'hist'
@@ -44,6 +22,7 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const guard = useGuard(p.id)
   const [sub, setSub] = useState<Sub>('in')
   const [edit, setEdit] = useState(false)
+  const [scopeErr, setScopeErr] = useState('')
   const assets = ds.assets
   const list = sub === 'in' ? assets.filter((a) => a.scope !== 'out') : assets.filter((a) => a.scope === 'out')
   const editable = !guard.ro && can('editScope', p.id)
@@ -78,7 +57,9 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   ]
 
   const rePropose = () => {
-    A.submitApproval(p.id, APR.scope, 'Resubmitted ROE after addressing reviewer feedback.', p.roeVersion)
+    const r = A.submitApproval(p.id, APR.scope, 'Resubmitted ROE after addressing reviewer feedback.', p.roeVersion)
+    if (!r.ok) { setScopeErr(r.error || 'The resubmission was refused.'); return }
+    setScopeErr('')
     toast('Requested re-approval of scope')
   }
   const download = () => toast(`Downloading ${p.id}_${p.roeVersion.replace(' ', '')}.pdf (simulated)`, 'info')
@@ -86,6 +67,7 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 
   return (
     <>
+      {scopeErr && <Banner tone="bad" title="Scope change refused">{scopeErr}</Banner>}
       {scopePending && <Banner tone="warn" title="Awaiting approval of a new scope">{p.roeVersion} submitted by {scopePending.by} on {scopePending.at}; reviewer: {scopePending.reviewer}. {running.length > 0 ? `Running operations (${running.map((o) => o.id).join(', ')}) continue per policy; ` : ''}operations that have not started are blocked by check PRE-03.</Banner>}
       {p.roeStatus === 'rejected' && !scopePending && (
         <Banner tone="bad" title="Scope / ROE returned for changes" action={<Button size="sm" disabled={!editable} title={editable ? undefined : why} onClick={rePropose}>Request re-approval</Button>}>Update the scope based on the reviewer's feedback, then resubmit.</Banner>
@@ -160,8 +142,17 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
         const needRe = ['approved', 'active'].includes(p.status) && p.roeStatus === 'approved'
         if (needRe) {
           setEdit(false)
-          confirm({ title: 'Edit an approved scope?', body: `This creates ${bumpRoeLabel(p.roeVersion)} as a new draft and sends it for approval. ${ds.plans.filter((x) => x.status === 'approved').length} approved plan(s) will need re-approval and ${ds.operations.filter((x) => x.status === 'ready').length} ready operation(s) return to Draft. Running operations continue under ${p.roeVersion} until the new version is approved.`, confirmLabel: 'Submit change', danger: true, reasonLabel: 'Reason for scope change', reasonRequired: true, onConfirm: (r) => { A.editScope(p.id, patch, r); toast(`${bumpRoeLabel(p.roeVersion)} created. Dependent plans and operations need re-validation`, 'warn') } })
-        } else { A.editScope(p.id, patch); toast('Scope updated'); setEdit(false) }
+          confirm({ title: 'Edit an approved scope?', body: `This creates ${bumpRoeLabel(p.roeVersion)} as a new draft and sends it for approval. ${ds.plans.filter((x) => x.status === 'approved').length} approved plan(s) will need re-approval and ${ds.operations.filter((x) => x.status === 'ready').length} ready operation(s) return to Draft. Running operations continue under ${p.roeVersion} until the new version is approved.`, confirmLabel: 'Submit change', danger: true, reasonLabel: 'Reason for scope change', reasonRequired: true, onConfirm: (r) => {
+            const res = A.editScope(p.id, patch, r)
+            if (!res.ok) { setScopeErr(res.error || 'The scope change was refused.'); return }
+            setScopeErr('')
+            toast(`${bumpRoeLabel(p.roeVersion)} created. Dependent plans and operations need re-validation`, 'warn')
+          } })
+        } else {
+          const res = A.editScope(p.id, patch)
+          if (!res.ok) { setScopeErr(res.error || 'The scope change was refused.'); return }
+          setScopeErr(''); toast('Scope updated'); setEdit(false)
+        }
       }} />}
     </>
   )
