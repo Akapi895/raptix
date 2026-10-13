@@ -2,12 +2,22 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, ArrowLeft, CheckCircle2, Download, Eye, FileText, History, Lock, RotateCcw, Save, Send, ShieldCheck, Wand2, XCircle, ListChecks, Plus, Table2 } from 'lucide-react'
 import { useStore, useDirty, sevLabel, stamp } from '../store'
 import type { Report, Finding } from '../data'
-import { USERS } from '../data'
-import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui'
+import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui'
+import { getActiveRouter } from '../router/active'
+import { toHash, toHref } from '../router/history'
+import { CONFIRMED_OR_LATER } from '../features/reports/service'
+import { ReportReadError, useDraftOptions, useReportWrites } from '../features/reports/query'
 
 /* ───────── shared helpers ───────── */
-export const CONFIRMED_OR_LATER: Finding['status'][] = ['confirmed', 'remediation', 'retest', 'resolved']
-const hardGo = (page: string, id?: string) => { window.location.hash = `#/${page}${id ? '/' + encodeURIComponent(id) : ''}` }
+/** Post-submit navigation: written through the active router (ticket 07 — the
+ *  router is the single location writer; the raw hash write used to land
+ *  after later navigations). The fallback branch only serves router-less
+ *  mounts (tests), mirroring the store's navRaw. */
+const hardGo = (page: string, id?: string) => {
+  const router = getActiveRouter()
+  if (router) router.navigate(toHref({ page, id }))
+  else window.location.hash = toHash({ page, id })
+}
 
 export interface RCheck { id: string; label: string; state: 'pass' | 'fail' | 'warn'; detail: string }
 export interface NoFind { on: boolean; note: string }
@@ -145,16 +155,24 @@ function ReportHead({ r, sub, actions, tab }: { r: Report; sub?: ReactNode; acti
   )
 }
 
-/* ═════════════ RP-02 — Create report ═════════════ */
+/* ═════════════ RP-02 — Create report (ticket 34) ═════════════ */
+/**
+ * Draft creation on the typed report service. The options read carries the
+ * project's findings with their reportability and the handler-computed
+ * `editReport`/read-only gate (defense in depth: the create re-checks it).
+ * A refused creation renders the failure and commits nothing; a successful
+ * one navigates to the bridged editor through the store's router-backed
+ * `go` (dirty cleared first — the unsaved guard must not hold the redirect).
+ */
 export function ReportNew() {
-  const { db, pid, project, me, can, A, go, toast, setSwitcherOpen, persistFilters, setFilter } = useStore()
-  const g = useGuard(project?.id)
-  const published = db.templates
+  const { db, pid, project, me, go, toast, setSwitcherOpen, persistFilters, setFilter, setDirty } = useStore()
+  const writes = useReportWrites()
+  const opts = useDraftOptions(pid !== 'all')
   const preset = persistFilters.reportNewTemplate as string | undefined
   const [kind, setKind] = useState(project?.type || 'Red Team')
-  const [tplName, setTplName] = useState(preset || published.find((t) => t.kind === (project?.type || 'Red Team') && t.status === 'published')?.name || published[0].name)
-  const [title, setTitle] = useState(project ? `${project.type} Report — ${project.client}` : '')
-  const [reviewer, setReviewer] = useState(project?.members.find((m) => m.role === 'reviewer')?.user || USERS.find((u) => u.role === 'reviewer')!.name)
+  const [tplName, setTplName] = useState(preset || '')
+  const [title, setTitle] = useState('')
+  const [reviewer, setReviewer] = useState('')
   const [from, setFrom] = useState(project?.start || '')
   const [to, setTo] = useState(project?.end || '')
   const rp = persistFilters['report-prefill'] as { projectId: string; findings: string[] } | undefined
@@ -162,10 +180,16 @@ export function ReportNew() {
   const [src, setSrc] = useState({ obj: true, scope: true, ops: true, find: true, ev: true, cov: true })
   const [touched, setTouched] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [saveErr, setSaveErr] = useState<string | null>(null)
   const [nfc, setNfc] = useState(false)
   useEffect(() => { if (preset) setFilter('reportNewTemplate', undefined); if (rp) setFilter('report-prefill', undefined) }, [])// eslint-disable-line react-hooks/exhaustive-deps
 
-  const isDirty = !busy && (picked.length > 0 || !!title && title !== (project ? `${project.type} Report — ${project.client}` : ''))
+  const o = opts.data
+  const defTitle = project ? `${project.type} Report — ${project.client}` : ''
+  const effTitle = title || defTitle
+  const effTpl = tplName || o?.templates.find((t) => t.kind === (project?.type || 'Red Team') && t.status === 'published')?.name || o?.templates[0]?.name || ''
+  const effReviewer = reviewer || project?.members.find((m) => m.role === 'reviewer')?.user || o?.reviewers[0] || ''
+  const isDirty = !busy && (picked.length > 0 || (!!title && title !== defTitle))
   const draftNote = () => toast('This report has not been saved as a draft yet. Select "Create draft" to save it.', 'warn')
   useDirty(isDirty, draftNote)
 
@@ -179,29 +203,54 @@ export function ReportNew() {
       </>
     )
   }
-  const locked = g.ro || !can('editReport', project.id)
-  const lockReason = g.ro ? g.reason : `Your role (${me.role}) cannot create reports. Ask a Red Team Manager, Operator or Analyst to create it.`
-  const fs = db.findings.filter((f) => f.projectId === project.id)
-  const tpl = db.templates.find((t) => t.name === tplName)
-  const errs = { title: !title.trim() ? 'Enter a report title.' : '', tpl: !tpl ? 'Choose a template.' : '', reviewer: !reviewer ? 'Choose a reviewer.' : reviewer === me.name ? 'The reviewer cannot be the author.' : '' }
+  if (opts.isPending) {
+    return (
+      <>
+        <PageHeader title="Create Report" back={{ label: 'Reports', to: () => go('reports') }} />
+        <div aria-busy="true" aria-label="Loading report options"><Skeleton className="h-72" /></div>
+      </>
+    )
+  }
+  if (opts.isError || !o) {
+    const failure = opts.error instanceof ReportReadError ? opts.error.failure : undefined
+    return (
+      <>
+        <PageHeader title="Create Report" back={{ label: 'Reports', to: () => go('reports') }} />
+        <Empty icon={FileText} title="Cannot load the draft form" action={<Button onClick={() => opts.refetch()}>Retry</Button>}>
+          {failure?.message || 'The draft options are temporarily unavailable.'}
+        </Empty>
+      </>
+    )
+  }
+  const locked = !o.canCreate
+  const lockReason = o.createReason
+  const fs = o.findings
+  const tpl = o.templates.find((t) => t.name === effTpl)
+  const errs = { title: !effTitle.trim() ? 'Enter a report title.' : '', tpl: !tpl ? 'Choose a template.' : '', reviewer: !effReviewer ? 'Choose a reviewer.' : effReviewer === me.name ? 'The reviewer cannot be the author.' : '' }
   const bad = !!(errs.title || errs.tpl || errs.reviewer)
-  const unapproved = fs.filter((f) => picked.includes(f.id) && !CONFIRMED_OR_LATER.includes(f.status))
-  const create = () => {
+  const unapproved = fs.filter((f) => picked.includes(f.id) && !f.reportable)
+  const create = async () => {
     setTouched(true)
-    if (bad || locked) return
+    setSaveErr(null)
+    if (bad || locked || busy) return
     setBusy(true)
-    const id = A.createReport({ projectId: project.id, title: title.trim(), template: tplName, kind, reviewer, findings: picked, period: `${from} – ${to}` })
+    const res = await writes.createDraft({ title: effTitle, template: effTpl, kind, reviewer: effReviewer, findings: picked, period: `${from} – ${to}` })
+    setBusy(false)
+    if (!res.ok) { setSaveErr(res.failure.message); return }
+    const id = res.data.id
     if (nfc) setFilter('repNoFind', { ...((persistFilters.repNoFind || {}) as Record<string, NoFind>), [id]: { on: true, note: '' } })
+    setDirty(false)
     toast(`Created draft report ${id}`)
-    hardGo('report', id)
+    go('report', { id })
   }
   return (
     <>
       <PageHeader title="Create Report" sub="Step 1 of 2. Choose project, template, report type, title and author, then open the editor." back={{ label: 'Reports', to: () => go('reports') }} />
       {locked && <Banner tone="warn" title="Cannot create report">{lockReason}</Banner>}
       <AiExclusion projectId={project.id} />
-      {!locked && fs.filter((f) => CONFIRMED_OR_LATER.includes(f.status)).length === 0 && <Banner tone="info" title="No confirmed findings yet. You can still create a draft.">Saving a draft is always allowed. Submit for Review will need either a confirmed finding or a no-findings closure with a justification and completion evidence.</Banner>}
+      {!locked && fs.filter((f) => f.reportable).length === 0 && <Banner tone="info" title="No confirmed findings yet. You can still create a draft.">Saving a draft is always allowed. Submit for Review will need either a confirmed finding or a no-findings closure with a justification and completion evidence.</Banner>}
       {tpl && tpl.status !== 'published' && <Banner tone="warn" title="Template not approved">{tpl.name} is a draft template: you can try it, but formal delivery is blocked.</Banner>}
+      {saveErr && <Banner tone="bad" title="Could not create the draft">{saveErr} Nothing was saved; the form keeps everything you entered.</Banner>}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_380px]">
         <div className="space-y-5">
           <Card>
@@ -211,16 +260,16 @@ export function ReportNew() {
               <Field label="Report type" required>
                 <Select value={kind} onChange={(e) => setKind(e.target.value)} disabled={locked}>{['Red Team', 'Purple Team', 'Assessment'].map((k) => <option key={k}>{k}</option>)}</Select>
               </Field>
-              <Field label="Title" required error={touched ? errs.title : ''} className="md:col-span-2"><Input value={title} onChange={(e) => setTitle(e.target.value)} disabled={locked} placeholder="Example: Red Team Q4 Report — Northwind Bank (Demo)" /></Field>
+              <Field label="Title" required error={touched ? errs.title : ''} className="md:col-span-2"><Input value={effTitle} onChange={(e) => setTitle(e.target.value)} disabled={locked} placeholder="Example: Red Team Q4 Report — Northwind Bank (Demo)" /></Field>
               <Field label="Template" required error={touched ? errs.tpl : ''}>
-                <Select value={tplName} onChange={(e) => setTplName(e.target.value)} disabled={locked}>
-                  {db.templates.map((t) => <option key={t.id} value={t.name}>{t.name}{t.status !== 'published' ? ' (draft)' : ''}</option>)}
+                <Select value={effTpl} onChange={(e) => setTplName(e.target.value)} disabled={locked}>
+                  {o.templates.map((t) => <option key={t.id} value={t.name}>{t.name}{t.status !== 'published' ? ' (draft)' : ''}</option>)}
                 </Select>
               </Field>
               <Field label="Initial version"><Input value="v0.1" disabled readOnly /></Field>
               <Field label="Author"><Input value={me.name} disabled readOnly /></Field>
               <Field label="Reviewer" required error={touched ? errs.reviewer : ''}>
-                <Select value={reviewer} onChange={(e) => setReviewer(e.target.value)} disabled={locked}>{USERS.filter((u) => u.role === 'reviewer').map((u) => <option key={u.name}>{u.name}</option>)}</Select>
+                <Select value={effReviewer} onChange={(e) => setReviewer(e.target.value)} disabled={locked}>{o.reviewers.map((u) => <option key={u}>{u}</option>)}</Select>
               </Field>
               <Field label="Reporting period — from"><Input value={from} onChange={(e) => setFrom(e.target.value)} disabled={locked} placeholder="Oct 1, 2026" /></Field>
               <Field label="Reporting period — to"><Input value={to} onChange={(e) => setTo(e.target.value)} disabled={locked} placeholder="Oct 1, 2026" /></Field>
@@ -231,7 +280,7 @@ export function ReportNew() {
             {fs.length === 0 ? <Empty icon={FileText} title="No findings in this project">You can still create a draft and link findings later, but the report needs at least one verified finding before it can be submitted for review.</Empty> : (
               <ul className="divide-y divide-line/60 rounded-xl border border-line">
                 {fs.map((f) => {
-                  const ok = CONFIRMED_OR_LATER.includes(f.status)
+                  const ok = f.reportable
                   return (
                     <li key={f.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                       <Check checked={picked.includes(f.id)} disabled={!ok || locked} onChange={(v) => setPicked(v ? [...picked, f.id] : picked.filter((x) => x !== f.id))} label={<span className="font-mono text-[13px] text-accent">{f.id}</span>} />
@@ -251,17 +300,17 @@ export function ReportNew() {
             <CardHeader title="Source data" sub="Preview of the data that will be pulled into the draft." />
             <div className="space-y-3">
               {([
-                ['obj', `Objectives (${project.objectives.length})`], ['scope', `Scope & ROE ${project.roeVersion}`], ['ops', `Operations (${db.operations.filter((o) => o.projectId === project.id).length})`],
-                ['find', `Verified findings (${fs.filter((f) => CONFIRMED_OR_LATER.includes(f.status)).length})`], ['ev', `Redacted evidence (${db.evidence.filter((e) => e.projectId === project.id).length})`], ['cov', 'Coverage charts'],
+                ['obj', `Objectives (${project.objectives.length})`], ['scope', `Scope & ROE ${project.roeVersion}`], ['ops', `Operations (${db.operations.filter((x) => x.projectId === project.id).length})`],
+                ['find', `Verified findings (${fs.filter((f) => f.reportable).length})`], ['ev', `Redacted evidence (${db.evidence.filter((x) => x.projectId === project.id).length})`], ['cov', 'Coverage charts'],
               ] as [keyof typeof src, string][]).map(([k, l]) => <div key={k}><Check checked={src[k]} onChange={(v) => setSrc({ ...src, [k]: v })} label={l} disabled={locked} /></div>)}
             </div>
-            {fs.some((f) => !CONFIRMED_OR_LATER.includes(f.status)) && <p className="mt-3 flex items-start gap-1.5 text-xs text-warn"><AlertTriangle size={13} className="mt-0.5 shrink-0" />{fs.filter((f) => !CONFIRMED_OR_LATER.includes(f.status)).length} finding(s) are not verified and will not be imported automatically.</p>}
+            {fs.some((f) => !f.reportable) && <p className="mt-3 flex items-start gap-1.5 text-xs text-warn"><AlertTriangle size={13} className="mt-0.5 shrink-0" />{fs.filter((f) => !f.reportable).length} finding(s) are not verified and will not be imported automatically.</p>}
           </Card>
           <Card>
             <div className="flex flex-col gap-2">
               <Check checked={nfc} onChange={setNfc} disabled={locked} label="Start as No-findings closure report" />
               <p className="-mt-1 text-xs text-muted">For assessments that found nothing confirmed. Needs a justification and completion evidence before review; no finding is ever invented.</p>
-              <Button variant="primary" size="lg" icon={Plus} onClick={create} disabled={locked || busy} title={locked ? lockReason : undefined}>Create Draft</Button>
+              <Button variant="primary" size="lg" icon={Plus} onClick={create} disabled={locked || busy} title={locked ? lockReason : undefined}>{busy ? 'Creating…' : 'Create Draft'}</Button>
               <Button variant="ghost" onClick={() => go('reports')}>Cancel</Button>
               {locked && <p className="text-xs text-muted">{lockReason}</p>}
             </div>
