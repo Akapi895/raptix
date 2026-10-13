@@ -4,7 +4,20 @@ import { signIn, signOut } from './auth/persona'
 import { can as policyCan, projectAccessible, readOnlyContext } from './auth/policy'
 import type { CanAction } from './domain/permissions'
 import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
+// Ticket 38 append: the legacy AI actions delegate to the feature-local chat
+// handlers (src/features/aichat); this layer keeps the demo's response
+// orchestration only.
 import { createChatHandlers } from './features/aichat/handlers'
+// Ticket 39 append: the plan workbench lifecycle (request/decide/withdraw/
+// revise/edit/discard) and the approval-validity gate are feature-local
+// transactions (src/features/plans/service.ts); these legacy entries delegate
+// to them so the role gates, the self-approval refusal, the current-ROE
+// binding check and the absolute 24h expiry have one implementation for both
+// entry points.
+import {
+  decidePlanTransaction, discardPlanTransaction, editPlanDraftTransaction, requestPlanReviewTransaction,
+  revisePlanTransaction, usableApproval, withdrawPlanReviewTransaction,
+} from './features/plans/service'
 // Ticket 19 append: the project-creation transaction is feature-local
 // (src/features/wizard/service.ts); the legacy action delegates to it.
 import { createProjectTransaction } from './features/wizard/service'
@@ -274,10 +287,11 @@ export interface Actions {
   togglePinConv: (convId: string) => void
   sendChat: (convId: string, text: string) => void
   stopChat: (convId: string) => void
-  requestPlanApproval: (planId: string) => void
+  requestPlanApproval: (planId: string) => Res
   decidePlan: (planId: string, decision: 'approved' | 'rejected' | 'returned', note: string) => Res
-  editPlan: (planId: string, patch: { steps?: Plan['steps']; title?: string }) => void
-  discardPlan: (planId: string) => void
+  withdrawPlanReview: (planId: string) => Res
+  editPlan: (planId: string, patch: { steps?: Plan['steps']; title?: string }) => Res
+  discardPlan: (planId: string) => Res
   revisePlan: (planId: string, changes: string[], note?: string) => string
   executePlan: (planId: string) => { ok: boolean; opId?: string; error?: string }
   decideTool: (toolId: string, decision: 'allowed' | 'denied', reason?: string) => void
@@ -321,8 +335,6 @@ export function groupSummary(db: Db, groupId: string) {
   const overall = open > 0 ? (n('unknown') + n('paused') > 0 ? 'Degraded — branches paused or unknown' : 'In progress') : failed + n('blocked') > 0 ? 'Partially Completed' : 'Completed'
   return { bs, total: bs.length, running: n('running'), done, failed, waiting: n('waiting_approval'), queued: n('queued'), paused: n('paused'), unknown: n('unknown'), missing, open, overall, evidence: bs.reduce((a, b) => a + b.evidence.length, 0) }
 }
-
-const bumpVer = (p: Plan) => { const m = (p.ver ?? `v${p.version}`).match(/^v(\d+)(?:\.(\d+))?$/); return m ? `v${m[1]}.${(+(m[2] ?? 0)) + 1}` : `v${p.version + 1}` }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   /* One data authority (ADR-0067): the context state is a projection of the
@@ -566,6 +578,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   /* Legacy request context for the delegating actions: the current persona is
      captured at call time, so a later switch never retargets a mutation. */
   const actorCtx = (projectId: string) => ({ actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' })
+
+  /* ───────── AI plan workbench (ticket 39) ─────────
+     The plan lifecycle and approval/expiry policy live in the feature-local
+     transactions (src/features/plans); each entry resolves the addressed
+     plan's project binding and bridges the typed ServiceResult to the legacy
+     Res shape. */
+  const planProjectOf = (planId: string): string | undefined => dbRef.current.plans.find((x) => x.id === planId)?.projectId
 
   const A: Actions = {
     audit, notify,
@@ -891,62 +910,50 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       chatApi.stop(convId)
     },
     requestPlanApproval: (planId) => {
-      const pl = dbRef.current.plans.find((x) => x.id === planId)!
-      mutate((d) => {
-        const x = d.plans.find((y) => y.id === planId)!; x.status = 'in_review'; x.updated = stamp(); x.expires = 'Oct 14, 2026, ' + hhmm12() + ' (UTC+7)'
-        const c = d.conversations.find((y) => y.id === x.conversationId)
-        c?.messages.push({ id: 's' + Math.random().toString(36).slice(2, 7), role: 'system', text: `${x.id} ${x.ver ?? 'v' + x.version} sent to ${x.reviewer} for approval.`, at: stamp() })
-      })
-      audit('Requested plan approval', planId, pl.projectId)
-      notify(`AI plan ${planId} needs review`, pl.projectId, { name: 'ai-plan-review', id: planId }, 'todo', 'plans')
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = requestPlanReviewTransaction(services.authority, services.clock, actorCtx(projectId), planId)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     decidePlan: (planId, decision, note) => {
-      const pl = dbRef.current.plans.find((x) => x.id === planId)!
-      const p = dbRef.current.projects.find((x) => x.id === pl.projectId)!
-      if (pl.requestedBy === me.name && decision === 'approved') return { ok: false, error: 'You cannot approve a plan you requested. Ask another reviewer.' }
-      if (decision === 'approved' && p.roeStatus !== 'approved') return { ok: false, error: `Cannot approve: ${p.id} has no approved ROE.` }
-      mutate((d) => {
-        const x = d.plans.find((y) => y.id === planId)!
-        x.status = decision === 'approved' ? 'approved' : decision === 'returned' ? 'draft' : 'rejected'; x.updated = stamp(); x.decision = { by: me.name, at: stamp(), note }
-        if (decision === 'approved' && x.prevPlanId) { const prev = d.plans.find((y) => y.id === x.prevPlanId); if (prev && prev.status !== 'executed' && !prev.opId) prev.status = 'superseded' }
-        const c = d.conversations.find((y) => y.id === x.conversationId)
-        c?.messages.push({ id: 's' + Math.random().toString(36).slice(2, 7), role: 'system', text: `${x.id} ${x.ver ?? 'v' + x.version} ${decision === 'approved' ? 'approved' : decision === 'returned' ? 'returned for changes' : 'rejected'} by ${me.name}${note ? ': ' + note : ''}.`, at: stamp() })
-      })
-      audit(`${decision === 'approved' ? 'Approved' : decision === 'returned' ? 'Returned' : 'Rejected'} AI plan`, planId, pl.projectId, 'Success', note)
-      notify(`AI plan ${planId} was ${decision === 'returned' ? 'returned for changes' : decision}`, pl.projectId, { name: 'ai-plan', id: planId }, 'update', 'plans')
-      return { ok: true }
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = decidePlanTransaction(services.authority, services.clock, actorCtx(projectId), planId, decision, note)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
+    withdrawPlanReview: (planId) => {
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = withdrawPlanReviewTransaction(services.authority, services.clock, actorCtx(projectId), planId)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     revisePlan: (planId, changes, note) => {
-      const prev = dbRef.current.plans.find((x) => x.id === planId)!
-      let newId = ''
-      mutate((d) => {
-        const old = d.plans.find((x) => x.id === planId)!
-        const id = 'PL-' + String(++d.counters.plan).padStart(3, '0')
-        newId = id
-        const steps = old.steps.map((s) => ({ ...s }))
-        changes.forEach((c, i) => { if (/gate|approval/i.test(c) && steps[i % steps.length]) { const st = steps[(steps.length - 1 - i) % steps.length]; st.needsApproval = true; st.risk = st.risk === 'low' ? 'medium' : st.risk } })
-        d.plans.unshift({ ...old, id, ver: bumpVer(old), version: old.version + 1, status: 'draft', steps, created: stamp(), updated: stamp(), prevPlanId: old.id, changes, decision: undefined, expires: undefined, requestedBy: me.name, rationale: `${old.rationale} Revised: ${changes.join('; ') || note || 'updated'}.`, roeVersion: d.projects.find((x) => x.id === old.projectId)!.roeVersion })
-        // Revision never replaces the plan an operation uses: the approved plan stays pinned; the draft has no operation.
-        d.plans.find((y) => y.id === id)!.opId = undefined
-        const c = d.conversations.find((y) => y.id === old.conversationId)
-        c?.messages.push({ id: 'a' + Math.random().toString(36).slice(2, 7), role: 'ai', kind: 'plan', planId: id, at: stamp(), text: `Revised as ${id} (${bumpVer(old)} draft). ${changes.join('; ')}. It needs approval before it can be used; ${old.id} stays approved and unchanged.` })
-      })
-      audit('Revised AI plan', newId, prev.projectId, 'Success', changes.join('; '))
-      notify(`Revised plan ${newId} needs re-approval`, prev.projectId, { name: 'ai-plan-review', id: newId }, 'todo', 'plans')
-      return newId
+      const projectId = planProjectOf(planId)
+      if (!projectId) return ''
+      const res = revisePlanTransaction(services.authority, services.clock, actorCtx(projectId), planId, changes, note)
+      return res.ok ? res.data.planId : ''
     },
     editPlan: (planId, patch) => {
-      mutate((d) => { const x = d.plans.find((y) => y.id === planId); if (!x || !['draft', 'proposed'].includes(x.status)) return; if (patch.steps) x.steps = patch.steps; if (patch.title) x.title = patch.title; x.updated = stamp() })
-      audit('Saved draft plan', planId, dbRef.current.plans.find((x) => x.id === planId)?.projectId || '', 'Success', 'Draft edited')
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = editPlanDraftTransaction(services.authority, services.clock, actorCtx(projectId), planId, patch)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     discardPlan: (planId) => {
-      const pl = dbRef.current.plans.find((x) => x.id === planId); if (!pl || !['draft', 'proposed'].includes(pl.status)) return
-      mutate((d) => { d.plans = d.plans.filter((x) => x.id !== planId); d.conversations.forEach((c) => { c.messages = c.messages.filter((m) => m.planId !== planId) }) })
-      audit('Discarded draft plan', planId, pl.projectId, 'Success', 'Draft discarded')
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = discardPlanTransaction(services.authority, services.clock, actorCtx(projectId), planId)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
     executePlan: (planId) => {
-      const pl = dbRef.current.plans.find((x) => x.id === planId)!
-      if (pl.status !== 'approved') return { ok: false, error: 'Only an approved plan can be executed.' }
+      const pl = dbRef.current.plans.find((x) => x.id === planId)
+      if (!pl || pl.status !== 'approved') return { ok: false, error: 'Only an approved plan can be executed.' }
+      /* Ticket 39: the approval-validity gate runs at the handler boundary
+         with the factory clock — an expired approval is unusable even before
+         any cleanup sweep marks the plan expired (the operation bridge itself
+         is ticket 40). */
+      const gate = usableApproval(pl, services.clock.now())
+      if (!gate.ok) return { ok: false, error: gate.error }
       if (pl.opId && dbRef.current.operations.some((o) => o.id === pl.opId)) return { ok: true, opId: pl.opId }
       const opId = A.createOperation({ name: pl.title, projectId: pl.projectId, owner: me.name, desc: '', objective: '', playbookId: pl.playbookId, agents: pl.agents, assets: pl.assets, mode: 'Manual approval', schedule: '', needConfirm: true, note: '', planId: pl.id })
       return { ok: true, opId }
