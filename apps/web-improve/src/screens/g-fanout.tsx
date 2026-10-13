@@ -10,8 +10,10 @@
  * Retry/reassign are requests — the UI never presents them as execution, and
  * the handlers preserve the source branch's approval/preflight waiting states.
  * Navigation goes through the router (`go`) — there are no raw hash writers
- * left on this surface. FanOutCard/AllocationView/AiTeamView keep their
- * legacy seams for their consumers (tickets 39–44 own the shared workspace).
+ * left on this surface. FanOutCard/AllocationView keep their legacy seams for
+ * their consumers (tickets 39–44 own the shared workspace); the AI-team view
+ * itself migrated to src/screens/g-workers.tsx (ticket 44) and is forwarded
+ * below so the workspace Inspector's import stays stable.
  */
 import { useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
@@ -19,7 +21,7 @@ import { Ban, CheckCircle2, CircleDashed, Clock, HelpCircle, Layers, Loader2, Pa
 import type { LucideIcon } from 'lucide-react'
 import { allocation, groupSummary, useStore } from '../store'
 import { BRANCH_LABEL, BRANCH_TERMINAL } from '../data'
-import type { Agent, Branch, BranchState, WorkerState } from '../data'
+import type { Agent, Branch, BranchState } from '../data'
 import { BranchReadError, useBranch, useBranchGroup, useBranchGroups, useCancelBranch, useReassignBranch, useRetryBranch } from '../features/branches/query'
 import type { BranchCounts, BranchRow } from '../features/branches/service'
 import type { BranchGroup } from '../domain/entities'
@@ -530,29 +532,11 @@ export function FanOutPage() {
   )
 }
 
-/* ───────── AI team ───────── */
-const WK_TONE: Record<WorkerState, string> = { idle: 'neutral', working: 'cyan', waiting: 'warn', done: 'ok', failed: 'bad' }
-export function AiTeamView({ projectId }: { projectId: string }) {
-  const { db, go } = useStore()
-  const rows = db.aiWorkers.filter((w) => w.projectId === projectId)
-  return (
-    <div className="space-y-3">
-      <Banner tone="info" title="AI workers — separate from execution agents">AI workers draft, review and summarize inside the AI Operator. They are not AG-xxx execution agents and never run commands on targets. Demo Data — simulated.</Banner>
-      <Table rows={rows} rowKey={(w) => w.id}
-        empty={<Empty icon={Users} title="No AI workers in this project" action={<Button onClick={() => go('ai-operator')}>Open AI Operator</Button>}>Workers appear when the AI Operator starts a multi-step task.</Empty>}
-        cols={[
-          { key: 'id', header: 'Worker', render: (w) => <Mono className="whitespace-nowrap">{w.id}</Mono> },
-          { key: 'role', header: 'Role', render: (w) => <span className="whitespace-nowrap font-medium">{w.role}</span> },
-          { key: 'task', header: 'Task', render: (w) => w.task },
-          { key: 'st', header: 'State', render: (w) => <span className={cx('inline-flex h-6 items-center whitespace-nowrap rounded-full border px-2.5 text-xs font-medium capitalize', TONE[WK_TONE[w.state]])}>{w.state}</span> },
-          { key: 'in', header: 'Inputs', render: (w) => <span className="text-sm">{w.inputs.join(', ')}</span> },
-          { key: 'out', header: 'Output artifact', render: (w) => w.output },
-          { key: 'par', header: 'Parent', render: (w) => w.parent ? <Mono>{w.parent}</Mono> : '—' },
-          { key: 'dep', header: 'Dependencies', render: (w) => w.deps.length ? <Mono>{w.deps.join(', ')}</Mono> : '—' },
-        ]} />
-      <p className="text-xs text-muted">Model: {rows[0]?.model || 'Demo model (simulated)'} — no real AI backend.</p>
-    </div>
-  )
-}
+/* ───────── AI team ─────────
+   Ticket 44 moved the AI-worker team view (and its dependency graph) to
+   src/screens/g-workers.tsx on the typed worker service — the raw
+   db.aiWorkers reader this file used to carry is retired. The forwarding
+   export keeps the workspace Inspector's `AiTeamView` import stable. */
+export { WorkerTeamView as AiTeamView } from './g-workers'
 
 export const routes: Record<string, ComponentType> = { 'ai-fanout': FanOutPage, 'ai-branch': BranchPage }
