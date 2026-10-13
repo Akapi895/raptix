@@ -1,7 +1,7 @@
 # 66: Retire remaining feature screen wrappers
 
 **What to build:** Remove zero-caller infrastructure/intelligence/report/AI/C2/demo legacy wrappers in bounded contraction batches.
-**Blocked by:** 65.
+**Blocked by:** 65, 61e (the last raw hash-location writers must be gone before this batch deletes or rewrites the f/g screen files).
 **Status:** ready-for-agent
 **Owner:** Contraction batch B.
 **Contract:** [execution.md](../execution.md).

@@ -1,7 +1,7 @@
 # 62: Responsive coverage audit and bounded shared fixes
 
 **What to build:** Verify per-feature viewport evidence and correct only remaining shared layout defects; feature-specific defects become bounded follow-up leaves.
-**Blocked by:** 61.
+**Blocked by:** 61d (completion leaf of the split ticket 61 system/demo surfaces; umbrella [61](61-system-demo-surfaces.md)).
 **Status:** ready-for-agent
 **Owner:** Shared responsive layout audit.
 **Contract:** [execution.md](../execution.md).
