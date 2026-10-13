@@ -1,84 +1,149 @@
-import { useEffect, useState } from 'react'
-import { Lock, Pin, PinOff, Plus, SearchX, ShieldOff, Send, ArrowRight, CheckCircle2, CircleDashed, ChevronDown, Sparkles } from 'lucide-react'
-import { useStore, canAccessProject, ROLE_LABEL, eligibility, readiness, completion } from '../store'
+/**
+ * Project detail (ticket 20, ADR-0067 —
+ * docs/adr/0067-web-console-service-domain-boundary.md).
+ *
+ * The migrated detail shell: one typed canonical read per detail URL through
+ * Query (src/screens/project-detail). The factory's ProjectService owns the
+ * membership rule, so an unknown project and a project outside the actor's
+ * scope collapse into the same `not-found` failure — the blocked state never
+ * renders record content. Overview readiness/completion/eligibility come
+ * from the Command Center's pure domain functions over the same aggregate
+ * projection the dashboard reads (src/screens/dashboard/domain — semantics
+ * pinned there, not duplicated). Header pin runs through the typed project
+ * write with its policy reason; approval submission and reopen stay on the
+ * bridged legacy actions until tickets 21–22 own their handlers.
+ *
+ * Old `?tab=` aliases keep resolving, tab state survives back/forward and
+ * scope switches, and the shared dirty guard holds tab navigation. Secondary
+ * panels (objectives, activity, operations, findings, reports, evidence,
+ * audit, plans, sessions) keep their bridged legacy reads — the store
+ * observes the same one database — until ticket 23 migrates them.
+ */
+import { useEffect, useMemo, useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed, ChevronDown, Sparkles } from 'lucide-react'
 import { APR, planVer, type Project } from '../data'
-import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, Menu, PageHeader, Pager, Person, Progress, Select, Status, Sev, Table, Tabs, Timeline, usePaged, useGuard, type Col } from '../ui'
+import { useServices, useStore, ROLE_LABEL, eligibility } from '../store'
+import { useProjectStore } from '../state/stores'
+import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, Menu, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui'
 import { ScopeTab, TeamTab, CloseTab, useSubmitApproval, useReopen } from './b-detail2'
+import { useProjectDetail } from './project-detail/use-project-detail'
+import { createPortfolioHandlers, ServiceReadError } from './portfolio-handlers'
+import type { ProjectDetail } from './project-detail/service'
+import type { ServiceFailure } from '../domain/service'
 
-export const parseDate = (s: string) => { const d = new Date(s.replace(/,?\s*\d{1,2}:\d{2}.*$/, '')); return isNaN(d.getTime()) ? new Date(2026, 9, 13) : d }
-export const NOW = new Date(2026, 9, 13)
+const parseDate = (s: string) => { const d = new Date(s.replace(/,?\s*\d{1,2}:\d{2}.*$/, '')); return isNaN(d.getTime()) ? new Date(2026, 9, 13) : d }
+const NOW = new Date(2026, 9, 13)
 
-export const MAIN_TABS = [
+const MAIN_TABS = [
   { id: 'overview', label: 'Overview' }, { id: 'scope', label: 'Scope & ROE' }, { id: 'operations', label: 'Operations' }, { id: 'plans', label: 'AI Plans' }, { id: 'findings', label: 'Findings' }, { id: 'reports', label: 'Reports' },
 ]
-export const MORE_TABS = [
+const MORE_TABS = [
   { id: 'objectives', label: 'Objectives' }, { id: 'activity', label: 'Activity' }, { id: 'team', label: 'Members & Approvals' }, { id: 'sessions', label: 'C2 Sessions' }, { id: 'evidence', label: 'Evidence' }, { id: 'audit', label: 'Audit' }, { id: 'close', label: 'Closeout' },
 ]
-export const TAB_LIST = [...MAIN_TABS, ...MORE_TABS]
+const TAB_LIST = [...MAIN_TABS, ...MORE_TABS]
 /** Old tab ids that may still appear in deep links */
 const TAB_ALIAS: Record<string, string> = { closure: 'close', closeout: 'close', members: 'team', approvals: 'team', 'ai-plans': 'plans', c2: 'sessions', 'audit-log': 'audit', roe: 'scope' }
 
-/** Access-blocked / not-found state. Never reveals project data. */
-function Blocked({ kind, id }: { kind: 'forbidden' | 'notfound'; id?: string }) {
+/** Access-blocked / not-found state. The typed read collapses foreign and unknown projects into one not-found failure — no record content is ever rendered. */
+function Blocked({ id }: { id?: string }) {
   const { go } = useStore()
   return (
     <div className="mx-auto max-w-xl pt-10">
       <Empty
-        icon={kind === 'forbidden' ? ShieldOff : SearchX}
-        title={kind === 'forbidden' ? 'You do not have access to this project' : 'Project not found'}
+        icon={SearchX}
+        title="Project not found"
         action={<div className="flex gap-2"><Button variant="primary" onClick={() => go('projects')}>Back to Projects</Button><Button onClick={() => go('command-center')}>Go to Command Center</Button></div>}
       >
-        {kind === 'forbidden'
-          ? 'Your account has not been added to this project, so its details are hidden. Ask the project owner to request access for you.'
-          : `Project ${id ? `"${id}" ` : ''}does not exist or is not in the list you can view.`}
+        {`Project ${id ? `"${id}" ` : ''}does not exist or is not in the list you can view.`}
       </Empty>
     </div>
   )
 }
 
-export function ProjectPage() {
-  const { route, db, me } = useStore()
-  const id = route.id
-  const p = db.projects.find((x) => x.id === id)
-  if (!id || !p) return <Blocked kind="notfound" id={id} />
-  if (!canAccessProject(db, me, id)) return <Blocked kind="forbidden" />
-  return <Detail key={id} p={p} />
+function DetailPending() {
+  return (
+    <div aria-busy="true" aria-label="Loading project">
+      <PageHeader title="Project" sub="Loading the canonical project read…" />
+      <Skeleton className="h-72" />
+    </div>
+  )
 }
 
-function Detail({ p }: { p: Project }) {
-  const { db, me, go, route, A, toast, pid, setPid, confirm, can } = useStore()
+function ReadFailure({ failure, retry }: { failure: ServiceFailure; retry: () => void }) {
+  return (
+    <div className="pt-6">
+      <Banner tone="bad" title="The project detail could not be loaded" action={<Button size="sm" onClick={retry}>Try again</Button>}>{failure.message}</Banner>
+    </div>
+  )
+}
+
+export function ProjectPage() {
+  const { route } = useStore()
+  const id = route.id
+  const detail = useProjectDetail(id)
+  /* One-time switcher sync on entry: the detail URL's project becomes the
+     selected context. This is the raw project-store write on purpose — the
+     guarded `setPid` flashes the shell's loading state, which unmounts this
+     page mid-read, drops the fetched detail (gcTime 0) and refetches. The
+     redirect branch of `setPid` is a no-op here (the URL already points at
+     this project), so only the selection itself is needed. */
+  useEffect(() => {
+    if (!id) return
+    const ps = useProjectStore.getState()
+    if (ps.pid !== id) ps.setPid(id)
+  }, [id])
+  if (!id) return <Blocked />
+  if (detail.isPending) return <DetailPending />
+  if (!detail.data) {
+    const failure = detail.error instanceof ServiceReadError ? detail.error.failure : undefined
+    if (failure && failure.kind !== 'not-found') return <ReadFailure failure={failure} retry={detail.refetch} />
+    return <Blocked id={id} />
+  }
+  return <Detail key={id} d={detail.data} />
+}
+
+function Detail({ d }: { d: ProjectDetail }) {
+  const { me, go, route, toast, pid, setPid, can } = useStore()
+  const svc = useServices()
+  const p = d.project
+  const ds = d.aggregate
   const rt = route.tab ? TAB_ALIAS[route.tab] || route.tab : ''
   const tab = TAB_LIST.some((t) => t.id === rt) ? rt : 'overview'
-  const elig = eligibility(db, p.id)
+  const elig = d.eligibility
   const guard = useGuard(p.id)
   const sub = useSubmitApproval(p)
   const reopen = useReopen(p)
 
-  // Lock context: select the viewed project in the project switcher
-  useEffect(() => { if (pid !== p.id) setPid(p.id) }, [pid, p.id, setPid])
-
-  const ops = db.operations.filter((o) => o.projectId === p.id)
-  const fs = db.findings.filter((f) => f.projectId === p.id)
-  const reps = db.reports.filter((r) => r.projectId === p.id)
-  const evs = db.evidence.filter((e) => e.projectId === p.id)
-  const plans = db.plans.filter((x) => x.projectId === p.id)
-  const sess = db.sessions.filter((x) => x.projectId === p.id)
-  const pending = db.approvals.filter((a) => a.projectId === p.id && a.status === 'pending')
+  const pending = ds.approvals.filter((a) => a.status === 'pending')
   const scopePending = pending.find((a) => a.type === APR.scope)
 
   const via = (page: string, opts?: { id?: string; tab?: string }) => { if (pid !== p.id) { setPid(p.id); setTimeout(() => go(page, opts), 80) } else go(page, opts) }
   const setTab = (t: string) => go('project', { id: p.id, tab: t })
   const canOp = !guard.ro && can('run', p.id)
   const closed = p.status === 'closed' || p.status === 'cancelled'
-  const count = (id: string) => id === 'operations' ? ops.length : id === 'plans' ? plans.length : id === 'sessions' ? sess.length : id === 'findings' ? fs.length : id === 'reports' ? reps.length : id === 'evidence' ? evs.length : id === 'team' && pending.length ? pending.length : undefined
+  const count = (id: string) => id === 'operations' ? ds.operations.length : id === 'plans' ? ds.plans.length : id === 'sessions' ? ds.sessions.length : id === 'findings' ? ds.findings.length : id === 'reports' ? ds.reports.length : id === 'evidence' ? d.evidence.length : id === 'team' && pending.length ? pending.length : undefined
   const inMore = MORE_TABS.some((t) => t.id === tab)
   const canSubmit = (p.status === 'draft' || p.status === 'rejected') && can('editScope', p.id)
+
+  /* Header pin runs through the typed project write (ticket 04's representative
+   * write); the handler enforces the same role rule the button states. */
+  const handlers = useMemo(() => createPortfolioHandlers(svc, { id: me.name, role: me.role }, p.id), [svc, me.name, me.role, p.id])
+  const pin = useMutation({
+    mutationFn: (pinned: boolean) => handlers.setPinned(p.id, pinned),
+    onSuccess: (res) => {
+      if (res.ok) toast(res.data.pinned ? `Pinned ${p.id}` : `Unpinned ${p.id}`)
+      else toast(res.failure.message, 'bad')
+    },
+  })
+  const canPin = me.role === 'manager' || me.role === 'admin'
 
   const actions = (
     <>
       <IconButton
-        icon={p.pinned ? PinOff : Pin} label={p.pinned ? 'Unpin project' : 'Pin project'} disabled={me.role === 'viewer'}
-        onClick={() => { A.updateProject(p.id, { pinned: !p.pinned }); toast(p.pinned ? `Unpinned ${p.id}` : `Pinned ${p.id}`) }}
+        icon={p.pinned ? PinOff : Pin} label={p.pinned ? 'Unpin project' : 'Pin project'} disabled={!canPin || pin.isPending}
+        title={canPin ? undefined : 'Only a Red Team Manager or Organization Admin can pin projects'}
+        onClick={() => pin.mutate(!p.pinned)}
       />
       {canSubmit && (
         <Button icon={Send} variant="primary" disabled={!sub.ready} title={sub.ready ? undefined : `Cannot submit yet: ${sub.issues.join('; ')}`} onClick={sub.submit}>
@@ -133,11 +198,11 @@ function Detail({ p }: { p: Project }) {
         </div>
       </div>
 
-      {tab === 'overview' && <Overview p={p} via={via} setTab={setTab} />}
-      {tab === 'scope' && <ScopeTab p={p} />}
+      {tab === 'overview' && <Overview d={d} via={via} setTab={setTab} />}
+      {tab === 'scope' && <ScopeTab p={p} ds={ds} />}
       {tab === 'objectives' && <Objectives p={p} />}
       {tab === 'activity' && <Activity p={p} />}
-      {tab === 'team' && <TeamTab p={p} />}
+      {tab === 'team' && <TeamTab p={p} ds={ds} />}
       {tab === 'operations' && <OpsTab p={p} via={via} setTab={setTab} />}
       {tab === 'plans' && <PlansTab p={p} />}
       {tab === 'sessions' && <SessionsTab p={p} />}
@@ -152,21 +217,23 @@ function Detail({ p }: { p: Project }) {
 
 type Via = (page: string, opts?: { id?: string; tab?: string }) => void
 
-/* ───────────── PR-03 Overview ───────────── */
-function Overview({ p, via, setTab }: { p: Project; via: Via; setTab: (t: string) => void }) {
-  const { db, go, can } = useStore()
+/* ───────────── PR-03 Overview (ticket 20: dashboard domain functions over the typed aggregate) ───────────── */
+function Overview({ d, via, setTab }: { d: ProjectDetail; via: Via; setTab: (t: string) => void }) {
+  const { go, can } = useStore()
+  const p = d.project
+  const ds = d.aggregate
   const guard = useGuard(p.id)
-  const ops = db.operations.filter((o) => o.projectId === p.id)
-  const fs = db.findings.filter((f) => f.projectId === p.id)
-  const reps = db.reports.filter((r) => r.projectId === p.id)
-  const agents = db.agents.filter((a) => a.projectId === p.id)
-  const assets = db.assets.filter((a) => a.projectId === p.id)
+  const ops = ds.operations
+  const fs = ds.findings
+  const reps = ds.reports
+  const agents = ds.agents
+  const assets = ds.assets
   const running = ops.filter((o) => o.status === 'running')
   const openF = fs.filter((f) => ['draft', 'review', 'returned'].includes(f.status))
-  const audit = db.audit.filter((a) => a.projectId === p.id).slice(0, 5)
-  const elig = eligibility(db, p.id)
-  const rd = readiness(db, p.id)
-  const cp = completion(db, p.id)
+  const audit = ds.audit.slice(0, 5)
+  const elig = d.eligibility
+  const rd = d.readiness
+  const cp = d.completion
   const go2 = (to?: { page: string; id?: string; tab?: string }) => { if (!to) return; if (to.page === 'project') setTab(to.tab || 'overview'); else via(to.page, { id: to.id, tab: to.tab }) }
   const total = Math.max(1, parseDate(p.end).getTime() - parseDate(p.start).getTime())
   const elapsed = Math.max(0, Math.min(total, NOW.getTime() - parseDate(p.start).getTime()))
@@ -304,7 +371,7 @@ function Overview({ p, via, setTab }: { p: Project; via: Via; setTab: (t: string
   )
 }
 
-/* ───────────── PR-06 Objectives ───────────── */
+/* ───────────── PR-06 Objectives (bridged legacy read — ticket 23 migrates) ───────────── */
 function Objectives({ p }: { p: Project }) {
   const { db, go } = useStore()
   const ops = db.operations.filter((o) => o.projectId === p.id)
@@ -330,7 +397,7 @@ function Objectives({ p }: { p: Project }) {
   )
 }
 
-/* ───────────── PR-08 Activity ───────────── */
+/* ───────────── PR-08 Activity (bridged legacy read — ticket 23 migrates) ───────────── */
 const CATS: Record<string, { label: string; re: RegExp }> = {
   scope: { label: 'Scope / assets', re: /scope|asset/i },
   approval: { label: 'Approvals', re: /approv|return|submitted|decid/i },
@@ -361,7 +428,7 @@ function Activity({ p }: { p: Project }) {
   )
 }
 
-/* ───────────── Context shortcuts ───────────── */
+/* ───────────── Context shortcuts (bridged legacy reads — ticket 23 migrates) ───────────── */
 function OpsTab({ p, via, setTab }: { p: Project; via: Via; setTab: (t: string) => void }) {
   const { db, go, can } = useStore()
   const guard = useGuard(p.id)
@@ -467,7 +534,7 @@ function ReportsTab({ p, via }: { p: Project; via: Via }) {
 }
 
 function EvidenceTab({ p }: { p: Project }) {
-  const { db, go, can } = useStore()
+  const { db, go, can, me } = useStore()
   const evs = db.evidence.filter((e) => e.projectId === p.id)
   const sens = can('viewSensitive', p.id)
   type E = (typeof evs)[number]
@@ -482,7 +549,7 @@ function EvidenceTab({ p }: { p: Project }) {
   ]
   return (
     <>
-      {!sens && <Banner tone="info" icon={Lock} title="Sensitive content is redacted">The {ROLE_LABEL[useStore().me.role]} role cannot view sensitive evidence; only metadata is shown.</Banner>}
+      {!sens && <Banner tone="info" icon={Lock} title="Sensitive content is redacted">The {ROLE_LABEL[me.role]} role cannot view sensitive evidence; only metadata is shown.</Banner>}
       <Table cols={cols} rows={evs} rowKey={(e) => e.id} empty={<Empty title="No evidence yet">Evidence is attached from operation steps or when creating a finding.</Empty>} />
     </>
   )
@@ -512,7 +579,7 @@ function AuditTab({ p }: { p: Project }) {
   )
 }
 
-/* ───────────── AI Plans and C2 Sessions (read-only) ───────────── */
+/* ───────────── AI Plans and C2 Sessions (bridged legacy reads — ticket 23 migrates) ───────────── */
 function PlansTab({ p }: { p: Project }) {
   const { db, go } = useStore()
   const guard = useGuard(p.id)
