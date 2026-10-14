@@ -219,3 +219,257 @@ model C2Command {
   @@unique([engagementId, requestId])
   @@index([engagementId, createdAt])
 }
+
+// ── Web workflow lifecycle (ADR-0069 frozen design) ──────────────────
+// Migrations land incrementally per owning integration ticket (07-17).
+// No relation fields to Engagement on purpose: lifecycle rows carry the
+// engagement id as a plain column so runtime-owned state is never copied
+// and demo data is never migrated. FKs are enforced in SQL.
+
+// Ticket 07: trusted multi-user identity. Local single-user deployments
+// keep userId="local" and never create WebUser rows.
+model WebUser {
+  id String @id @default(cuid())
+  username String @unique
+  displayName String
+  // scrypt hash (N=16384,r=8,p=1) in modular PHC form; never returned by API.
+  passwordHash String
+  status String @default("active") // active | disabled
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WebSession {
+  id String @id // sha256 hex of the opaque session token; token itself never stored
+  userId String
+  csrfToken String
+  origin String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  @@index([userId])
+}
+
+model WebMembership {
+  id String @id @default(cuid())
+  engagementId String
+  userId String
+  role String // owner | operator | reviewer | viewer
+  invitedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, userId])
+  @@index([userId])
+}
+
+// Shared consequential-action audit (tickets 07/09/10/11/12/16/17). Sensitive
+// arguments and credentials are never written to detail.
+model WebAuditEntry {
+  id String @id @default(cuid())
+  engagementId String?
+  actorId String?
+  action String
+  targetType String?
+  targetId String?
+  reason String?
+  detail Json?
+  createdAt DateTime @default(now())
+  @@index([engagementId, createdAt])
+  @@index([actorId, createdAt])
+}
+
+// Ticket 08: operator-managed scope/ROE revisions with persisted review.
+model ScopeRevision {
+  id String @id @default(cuid())
+  engagementId String
+  version Int
+  status String @default("pending") // pending | approved | rejected | superseded
+  diff Json
+  roe Json
+  requestedBy String
+  decidedBy String?
+  decidedAt DateTime?
+  decisionComment String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, version])
+  @@index([engagementId, status])
+}
+
+model WebAsset {
+  id String @id @default(cuid())
+  engagementId String
+  identifier String
+  kind String @default("host") // host | web_url | ip_range
+  classification String @default("pending") // pending | in_scope | out_of_scope
+  observed Boolean @default(false)
+  version Int @default(1)
+  createdBy String
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, identifier])
+  @@index([engagementId, classification])
+}
+
+// Ticket 09: persisted business plans, operation bindings, emergency stops.
+model BusinessPlan {
+  id String @id @default(cuid())
+  engagementId String
+  version Int
+  status String @default("draft") // draft | proposed | approved | rejected | superseded
+  body Json
+  roeVersion Int?
+  requestedBy String
+  decidedBy String?
+  decidedAt DateTime?
+  decisionComment String?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, version])
+  @@index([engagementId, status])
+}
+
+model OperationBinding {
+  id String @id @default(cuid())
+  engagementId String
+  planId String
+  threadId String?
+  status String @default("bound") // bound | running | stopped | completed
+  concurrencyVersion Int @default(1)
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([engagementId, status])
+}
+
+model EmergencyStop {
+  id String @id @default(cuid())
+  engagementId String
+  scope String // operation | project | workspace
+  targetId String?
+  requestedBy String
+  outcome String @default("requested") // requested | acknowledged | stopped | failed | unknown
+  reason String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([engagementId, createdAt])
+}
+
+// Ticket 10: curated finding records (runtime findings stay the evidence
+// producer; these are web workflow records bound to producer lineage).
+model FindingRecord {
+  id String @id @default(cuid())
+  engagementId String
+  title String
+  severity String @default("medium")
+  status String @default("draft") // draft | review | confirmed | remediation | retest | resolved
+  body Json
+  expectedVersion Int @default(1)
+  sourceType String @default("authored") // authored | imported
+  producerRef String?
+  createdBy String
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([engagementId, status])
+}
+
+model EvidenceLink {
+  id String @id @default(cuid())
+  findingId String
+  engagementId String
+  kind String // artifact | digest
+  artifactPath String?
+  digest String?
+  producer String?
+  createdAt DateTime @default(now())
+  @@index([findingId])
+}
+
+// Ticket 11: report lifecycle with independent version-pinned review.
+model ReportRecord {
+  id String @id @default(cuid())
+  engagementId String
+  title String
+  version Int @default(1)
+  status String @default("draft") // draft | in_review | approved | changes_requested | delivered
+  body Json
+  createdBy String
+  reviewedBy String?
+  reviewedAt DateTime?
+  reviewComment String?
+  approvedVersion Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([engagementId, status])
+}
+
+model ReportDelivery {
+  id String @id @default(cuid())
+  reportId String
+  engagementId String
+  kind String // export | delivery
+  format String
+  status String // completed | failed
+  requestId String
+  detail Json?
+  createdAt DateTime @default(now())
+  @@unique([reportId, requestId])
+  @@index([engagementId, createdAt])
+}
+
+// Ticket 12: expiring per-user C2 session grants.
+model C2Grant {
+  id String @id @default(cuid())
+  engagementId String
+  sessionId String
+  actorId String
+  reviewerId String?
+  status String @default("requested") // requested | approved | rejected | revoked | expired
+  reason String
+  commandPrefix String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([engagementId, sessionId, status])
+}
+
+// Ticket 15: durable per-actor notices.
+model WebNotice {
+  id String @id @default(cuid())
+  engagementId String?
+  actorId String
+  kind String
+  title String
+  detail Json?
+  readAt DateTime?
+  dismissedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([actorId, createdAt])
+}
+
+// Ticket 16: versioned workspace-level settings.
+model WorkspaceSetting {
+  id String @id @default(cuid())
+  key String @unique
+  value Json
+  version Int @default(1)
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Ticket 17: engagement closure request/decision records.
+model EngagementClosure {
+  id String @id @default(cuid())
+  engagementId String @unique
+  status String @default("requested") // requested | confirmed | rejected | closed | cancelled
+  requestedBy String
+  decidedBy String?
+  decidedAt DateTime?
+  reason String
+  checklist Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

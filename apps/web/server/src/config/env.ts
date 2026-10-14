@@ -1,4 +1,4 @@
-import type { GoPhishConfig } from '../integrations/campaigns/gophish-client.js';
+﻿import type { GoPhishConfig } from '../integrations/campaigns/gophish-client.js';
 import type { EvilginxBridgeConfig } from '../integrations/campaigns/evilginx-client.js';
 import type { SliverConfig } from '../integrations/c2/sliver-client.js';
 
@@ -45,6 +45,16 @@ export interface ServerEnv {
   readonly gophish?: GoPhishConfig;
   readonly evilginx?: EvilginxBridgeConfig;
   readonly sliver?: SliverConfig;
+  /**
+   * Identity mode (ticket 07). `local` (default) keeps the fixed single-user
+   * operator; `multi` enables session/CSRF/origin-authenticated multi-user
+   * access with persisted memberships (RAPTIX_WEB_AUTH_MODE=multi).
+   */
+  readonly authMode?: 'local' | 'multi';
+  /** Bootstrap admin credentials for multi mode; server-side only. */
+  readonly adminBootstrap?: { readonly username: string; readonly password: string; readonly displayName: string };
+  /** Issue session cookies with the Secure flag (RAPTIX_WEB_SECURE_COOKIES=1). */
+  readonly secureCookies?: boolean;
 }
 
 export const SERVER_ENV_DEFAULTS: Readonly<
@@ -265,6 +275,9 @@ export function loadServerEnv(
       if (apiKey) evilginx = { apiUrl: url.origin, apiKey };
     } catch { issues.push('EVILGINX_BRIDGE_URL requires HTTPS or loopback/evilginx-bridge lab HTTP, without credentials, path, query or fragment'); }
   }
+  const authMode = readAuthMode(source, issues);
+  const adminBootstrap = readAdminBootstrap(source, issues, authMode);
+  const secureCookies = source.RAPTIX_WEB_SECURE_COOKIES === '1';
   if (issues.length > 0) {
     throw new EnvValidationError(issues);
   }
@@ -273,6 +286,7 @@ export function loadServerEnv(
     port,
     nodeEnv,
     logLevel,
+    ...(secureCookies ? { secureCookies: true } : {}),
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
     ...(workspacePath === undefined ? {} : { workspacePath }),
     ...(graph === undefined ? {} : { graph }),
@@ -280,7 +294,43 @@ export function loadServerEnv(
     ...(gophish === undefined ? {} : { gophish }),
     ...(evilginx === undefined ? {} : { evilginx }),
     ...(sliver === undefined ? {} : { sliver }),
+    ...(authMode === undefined ? {} : { authMode }),
+    ...(adminBootstrap === undefined ? {} : { adminBootstrap }),
   } satisfies ServerEnv;
+}
+
+function readAuthMode(source: NodeJS.ProcessEnv, issues: string[]): 'local' | 'multi' | undefined {
+  const raw = source.RAPTIX_WEB_AUTH_MODE;
+  if (raw === undefined) return undefined;
+  if (raw !== 'local' && raw !== 'multi') {
+    issues.push('RAPTIX_WEB_AUTH_MODE must be "local" or "multi"');
+    return undefined;
+  }
+  return raw;
+}
+
+function readAdminBootstrap(
+  source: NodeJS.ProcessEnv,
+  issues: string[],
+  authMode: 'local' | 'multi' | undefined,
+): ServerEnv['adminBootstrap'] {
+  const username = source.RAPTIX_WEB_ADMIN_USERNAME;
+  const password = source.RAPTIX_WEB_ADMIN_PASSWORD;
+  if (username === undefined && password === undefined) return undefined;
+  if (authMode !== 'multi') {
+    issues.push('RAPTIX_WEB_ADMIN_* requires RAPTIX_WEB_AUTH_MODE=multi');
+    return undefined;
+  }
+  if (username === undefined || username.trim().length === 0 || username.length > 200) {
+    issues.push('RAPTIX_WEB_ADMIN_USERNAME must be 1-200 characters when set');
+    return undefined;
+  }
+  if (password === undefined || password.length < 8 || password.length > 200) {
+    issues.push('RAPTIX_WEB_ADMIN_PASSWORD must be 8-200 characters when set');
+    return undefined;
+  }
+  const displayName = source.RAPTIX_WEB_ADMIN_DISPLAY_NAME ?? username;
+  return { username, password, displayName };
 }
 
 export function readServerEnv(): ServerEnv {

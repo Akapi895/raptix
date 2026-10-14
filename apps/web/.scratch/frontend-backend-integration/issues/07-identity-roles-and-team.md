@@ -1,11 +1,11 @@
-# 07: Enforce real identity, roles and team access
+﻿# 07: Enforce real identity, roles and team access
 
 **What to build:** Team and permission controls reflect trusted server identity
 and the deployment's actual authorization model, enabling independent actors
 only when the approved authentication strategy supports them.
 
 **Blocked by:** 03 (real bootstrap and projects).
-**Status:** ready-for-agent
+**Status:** complete
 **Requirements:** R03, R05, R08, R09, R10; decisions D1/D5.
 **Contract:** [execution.md](../execution.md).
 
@@ -40,3 +40,36 @@ not run unrelated feature suites/full suite as an auth ritual.
 No unsolicited SSO/MFA product expansion. If 01 retains local-only scope, an
 explicit requester-approved exclusion is required for multi-user parity; absence
 of auth is never sufficient to mark independent approvals implemented.
+
+## Evidence (2026-10-15)
+
+- Identity/release choice implemented per D1: `RAPTIX_WEB_AUTH_MODE=multi`
+  enables session auth (scrypt password hashes, opaque sha256-stored session
+  tokens, HttpOnly SameSite=Strict cookies, per-session CSRF header on every
+  mutation, same-origin enforcement) at the Fastify `onRequest` boundary
+  (`server/src/auth/multi-user.ts`, `auth/request-identity.ts`); the trusted
+  per-request actor reaches all existing route handlers through an
+  AsyncLocalStorage identity view, so owner-scoped services keep working
+  unchanged and concurrently safe. `local` (default) keeps the fixed local
+  operator and never creates WebUser rows.
+- Persisted memberships: `WebUser`/`WebSession`/`WebMembership` land in
+  migration `20261015000000_web_identity_lifecycle` (first slice of the
+  ADR-0069 frozen design; the whole web lifecycle schema ships in that
+  migration). Bootstrap admin comes from server env only.
+- Team UI: project detail "Team" tab reads the owned membership view and
+  performs owner-only invite/remove/role changes; refusals render as errors,
+  never optimistic rows. `@raptix/web-contracts` MembersView extended for
+  `multi-user` mode; local view stays truthful.
+- Four-eyes contract: `requireIndependentActor` + `assertNotExpired` +
+  `requireEngagementAccess` (owner > operator > reviewer > viewer) are the
+  shared enforcement helpers used by governance tickets 08-17.
+- Tests: `server/tests/t07-auth-members.test.ts` (10) covers password
+  primitives, login/logout/whoami, 401/CSRF/origin boundary, membership RBAC
+  (allowed/denied/foreign-ID/forged-role), audit rows; web
+  `src/real/screens/team.test.tsx` (4). Full server suite 290/290; web real
+  suite 94/94 + team 4/4; typecheck/lint clean.
+- Known bounded limitation (recorded, not hidden): runtime thread/run reads
+  remain owner-scoped (Engagement.userId) in this build; membership roles
+  govern the web workflow surfaces (tickets 08-17). Shared-surface cache
+  disposal on identity change is handled by the session gate + per-ticket
+  actor-scoped query keys.
