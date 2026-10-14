@@ -15,6 +15,7 @@
  */
 import type { Project, SeedVariant } from '../data'
 import { projectAccessible } from '../auth/policy'
+import { createIdentityService, type IdentityService } from '../auth/identity'
 import { MockClock, Scheduler, formatDemoInstant } from './clock'
 import { createDatabaseAuthority, type DbAuthority } from './database'
 // Feature appends: every feature service is feature-local (src/features/*);
@@ -82,6 +83,7 @@ function listProjects(db: ReturnType<DbAuthority['snapshot']>, ctx: RequestConte
 }
 
 export interface ConsoleServices {
+  identity: IdentityService
   authority: DbAuthority
   clock: MockClock
   /** Schedules a callback at an absolute clock instant; disposed on reset. */
@@ -142,12 +144,13 @@ export function createConsoleServices(): ConsoleServices {
   const scheduler = new Scheduler()
   const offAdvance = clock.onAdvance((now) => scheduler.runDue(now))
   const authority = createDatabaseAuthority(clock)
+  const identity = createIdentityService(authority)
 
   /* In-flight read registry per scope: cancellation resolves the promise as
    * `unavailable` instead of restoring stale visibility. Mutations are never
    * cancelled mid-flight — they capture ctx at call time and commit once. */
   const inFlight = new Map<string, Set<() => void>>()
-  const scopeKey = (actor: ActorRef, projectId: string) => `${actor.id} ${projectId}`
+  const scopeKey = (actor: ActorRef, projectId: string): string => `${actor.id} ${actor.role} ${projectId}`
 
   /* Shared superseded-scope guard: every feature wiring passes reads through
    * this, so cancelScope covers all in-flight feature reads on a persona/
@@ -234,6 +237,7 @@ export function createConsoleServices(): ConsoleServices {
   }
 
   return {
+    identity,
     authority,
     clock,
     schedule: (at, fn) => scheduler.schedule(at, fn),
@@ -282,6 +286,7 @@ export function createConsoleServices(): ConsoleServices {
       authority.reset(variant)
     },
     dispose() {
+      identity.dispose()
       grants.dispose()
       scheduler.clear()
       offAdvance()

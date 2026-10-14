@@ -1,14 +1,17 @@
 import { useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FileBarChart, FolderKanban, Inbox, KeyRound, Plus, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow, type LucideIcon } from 'lucide-react'
 import { useServices } from '../state/services'
-import { APR, USERS } from '../data'
+import { APR } from '../data'
 import type { Severity } from '../data'
 import { actorRef } from '../auth/persona'
+import { readActor } from '../auth/identity'
 import { useAuthStore, useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { decideApprovalTransaction } from '../features/approvals/service'
 import { decidePlanTransaction } from '../features/plans/service'
+import { readPlanProject } from '../features/plans/bridge'
 import { decideSessionRequestTransaction } from '../features/c2/grants'
+import { readSessionRequestMeta } from '../features/c2/projection'
 import { AiModeBadge, Banner, Button, Card, CardHeader, DemoTag, Donut, Empty, Gated, IdLink, Kpi, Legend, Mono, PageHeader, PageSkeleton, Progress, Segmented, STATUS, Status, Timeline, cx } from '../ui'
 import type { CanAction } from '../domain/permissions'
 import { useConsoleGo, useDashboard, type ConsoleGo } from './dashboard/use-dashboard'
@@ -365,20 +368,14 @@ export function MyTasks() {
   const { tasks, counts, mine } = data.summary
 
   /* Ticket 67 wave 3: the legacy A.decide* entries, mirrored — the plan and
-     access-request project lookups resolve from the one authority at call
-     time, the request context captures the current persona (the override-aware
-     `me`, read at call time so a failing authority read never reaches this
-     render) with corr 'legacy', and the typed result bridges back to the
-     legacy Res shape. */
-  const actorCtx = (projectId: string) => {
-    const name = useAuthStore.getState().meName
-    const base = USERS.find((u) => u.name === name)!
-    const ov = services.authority.snapshot().org.members[name]?.role
-    const me = ov ? { ...base, role: ov } : base
-    return { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }
-  }
+     access-request project lookups resolve through the typed plans/c2
+     bridge reads at call time, the request context captures the current
+     persona (the override-aware `me`, resolved through the identity service
+     so a failing authority read never reaches this render) with corr
+     'legacy', and the typed result bridges back to the legacy Res shape. */
+  const actorCtx = (projectId: string) => ({ actor: readActor(services, useAuthStore.getState().meName), projectId, corr: 'legacy' })
   const decidePlan = (planId: string, decision: 'approved' | 'rejected' | 'returned', note: string) => {
-    const projectId = services.authority.snapshot().plans.find((x) => x.id === planId)?.projectId
+    const projectId = readPlanProject(services.authority, planId)
     if (!projectId) return { ok: false as const, error: `Plan ${planId} does not exist.` }
     const res = decidePlanTransaction(services.authority, services.clock, actorCtx(projectId), planId, decision, note)
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
@@ -388,7 +385,7 @@ export function MyTasks() {
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
   }
   const decideSessionRequest = (id: string, decision: 'approved' | 'rejected' | 'changes', note: string, minutes?: number) => {
-    const r = services.authority.snapshot().sessionRequests.find((x) => x.id === id)
+    const r = readSessionRequestMeta(services, id)
     if (!r) return { ok: false as const, error: `Access request ${id} does not exist.` }
     const res = decideSessionRequestTransaction(services.authority, services.clock, actorCtx(r.projectId), { requestId: id, decision, note, minutes })
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }

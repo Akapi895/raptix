@@ -3,18 +3,20 @@ import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, C
 import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, SearchBox, Select, Status, Table, Timeline, Toggle, useGuard, cx } from '../ui'
 import { useServices } from '../state/services'
 import { go } from '../router/navigate'
-import { useCan, useDb, useMe } from '../state/console'
+import { useCan, useMe } from '../state/console'
 import { useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore, type LogLine } from '../state/session'
 import { hhmm, stamp } from '../domain/demo-clock'
-import { ROLE_LABEL } from '../auth/policy'
-import { computePreflightChecks, preflightPass } from '../features/operations/preflight'
+import { recordAudit } from '../features/audit/service'
+import { preflightPass } from '../features/operations/preflight'
+import { readOperationMeta, readOperationPreflight, useOperationView } from '../features/operations/views'
 import { completeOperation, pauseOperation, resumeOperation, stopOperation } from '../features/operations/service'
 import { fastForward, loseAgent, restoreAgent } from '../features/demo/runtime'
-import { sessionPermOf } from '../features/c2/service'
+import { useSessionPerm } from '../features/c2/projection'
+import { useStopRead } from '../features/estop/projection'
 import { BRANCH_LABEL, planVer, toolFacets } from '../data'
-import type { Agent, Operation, Step } from '../data'
-import { MASK, OpStatus, RuntimeStatus, failedBranches, hasReview, opConversation, opGroups, parseStamp, runtimeLabel, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
+import type { Db, Operation, Step } from '../data'
+import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, runtimeLabel, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
 import { useReviewStep } from '../features/operations/query'
 import { FanOutCard } from './g-fanout'
 /* Ticket 28: the emergency-stop machine UI (request dialog, phase banner,
@@ -26,23 +28,24 @@ import { EmergencyStopDialog, StopProgress, StopStatePanel } from '../features/e
 const pad = (n: number) => String(n).padStart(2, '0')
 
 export function OpBanner({ op }: { op: Operation }) {
-  const db = useDb()
+  const view = useOperationView(op.id)
+  const ss = useStopRead(op.projectId).stopState
   const staleOps = useSessionStore((s) => s.staleOps)
   const setStale = useSessionStore((s) => s.setStale)
   const persistFilters = useSessionStore((s) => s.persistFilters)
   const toast = useToastStore((s) => s.toast)
   const { ro, reason } = useGuard(op.projectId)
-  const p = db.projects.find((x) => x.id === op.projectId)!
-  const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
+  if (!view) return null
+  const p = view.project
+  const pl = view.plan
   const active = op.status === 'running' || op.status === 'paused'
-  const lostAg = op.agents.map((id) => db.agents.find((a) => a.id === id)).filter((a) => a && a.status !== 'online' && a.status !== 'idle') as Agent[]
+  const lostAg = view.agents.filter((a) => a.status !== 'online' && a.status !== 'idle')
   const polBlock = !!persistFilters['polblock.' + op.id]
   const planOk = !pl || ['approved', 'executed'].includes(pl.status)
   const blocked = polBlock || p.roeStatus !== 'approved' || !planOk
   const review = op.steps.find((s) => s.status === 'review')
-  const fb = failedBranches(db, op.id)
+  const fb = failedBranches(view, op.id)
   const stale = !!staleOps[op.id]
-  const ss = db.stopState
   const mine = !!ss && (ss.scope === 'workspace' || (ss.scope === 'project' && ss.id === op.projectId) || (ss.scope === 'operation' && ss.id === op.id))
   const notes: React.ReactNode[] = []
   if (stale) notes.push(<span key="stale">Data delayed, showing a snapshot. <button className="text-accent underline" onClick={() => { setStale(op.id, false); toast('Real-time data resynced.') }}>Reload data</button></span>)
@@ -68,28 +71,29 @@ export function OpBanner({ op }: { op: Operation }) {
 
 /* ───────────── Operation controls (pause / resume / stop) ───────────── */
 export function OpControls({ op, onError, size = 'md' }: { op: Operation; onError: (e: string) => void; size?: 'sm' | 'md' }) {
-  const db = useDb()
+  const view = useOperationView(op.id)
   const me = useMe()
   const services = useServices()
+  const ss = useStopRead(op.projectId).stopState
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
   const can = useCan()
   const { ro, reason } = useGuard(op.projectId)
   const [stopping, setStopping] = useState(false)
   const [es, setEs] = useState(false)
+  if (!view) return null
   const allowed = can('run', op.projectId) && !ro
   const why = ro ? reason : 'Only a Red Team Manager or Operator can control operations.'
   const live = op.status === 'running'
   const paused = op.status === 'paused'
-  const ss = db.stopState
   const mine = !!ss && (ss.scope === 'workspace' || (ss.scope === 'project' && ss.id === op.projectId) || (ss.scope === 'operation' && ss.id === op.id))
   const busy = stopping || (mine && ['requested', 'acknowledged'].includes(ss!.phase as string))
   const busyWhy = 'A stop is already in progress.'
   if (!live && !paused) return null
-  const sessions = db.sessions.filter((s) => s.opId === op.id && ['connected', 'available', 'awaiting', 'suspended'].includes(s.state))
+  const sessions = view.sessions.filter((s) => s.opId === op.id && ['connected', 'available', 'awaiting', 'suspended'].includes(s.state))
   const c = stepCounts(op.steps)
-  const p = db.projects.find((x) => x.id === op.projectId)!
-  const lost = op.agents.map((id) => db.agents.find((a) => a.id === id)).filter((a) => a && a.status !== 'online' && a.status !== 'idle')
+  const p = view.project
+  const lost = view.agents.filter((a) => a.status !== 'online' && a.status !== 'idle')
 
   /* Ticket 67 wave 4: the store's delegating pause/resume/stop/complete entries,
      mirrored at the call site — the typed lifecycle handlers run with the
@@ -100,28 +104,28 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
   const pushLog = (opId: string, line: Omit<LogLine, 'id' | 'ts'>) =>
     useSessionStore.getState().pushLog(opId, line, hhmm() + ':' + pad(new Date().getSeconds()))
   const pauseOp = (opId: string, reason: string) => {
-    const target = services.authority.snapshot().operations.find((o) => o.id === opId)
-    if (!target) return
-    const res = pauseOperation(services.authority, services.clock, entryCtx(target.projectId), opId, reason)
+    const meta = readOperationMeta(services, opId)
+    if (!meta) return
+    const res = pauseOperation(services.authority, services.clock, entryCtx(meta.projectId), opId, reason)
     if (res.ok) pushLog(opId, { level: 'WARN', agent: '—', stepId: '—', text: `Operation paused by ${me.name}` })
   }
   const resumeOp = (opId: string) => {
-    const target = services.authority.snapshot().operations.find((o) => o.id === opId)
-    if (!target) return { ok: false, error: 'Operation not found.' }
-    const res = resumeOperation(services.authority, services.clock, entryCtx(target.projectId), opId)
+    const meta = readOperationMeta(services, opId)
+    if (!meta) return { ok: false, error: 'Operation not found.' }
+    const res = resumeOperation(services.authority, services.clock, entryCtx(meta.projectId), opId)
     if (!res.ok) return { ok: false, error: res.failure.message }
     pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: `Operation resumed by ${me.name}` })
     return { ok: true }
   }
   const stopOp = (opId: string, reason: string) => {
-    const target = services.authority.snapshot().operations.find((o) => o.id === opId)
-    if (!target) return
-    stopOperation(services.authority, services.clock, entryCtx(target.projectId), opId, reason)
+    const meta = readOperationMeta(services, opId)
+    if (!meta) return
+    stopOperation(services.authority, services.clock, entryCtx(meta.projectId), opId, reason)
   }
   const completeOp = (opId: string) => {
-    const target = services.authority.snapshot().operations.find((o) => o.id === opId)
-    if (!target) return { ok: false, error: 'Operation not found.' }
-    const res = completeOperation(services.authority, services.clock, entryCtx(target.projectId), opId)
+    const meta = readOperationMeta(services, opId)
+    if (!meta) return { ok: false, error: 'Operation not found.' }
+    const res = completeOperation(services.authority, services.clock, entryCtx(meta.projectId), opId)
     if (!res.ok) return { ok: false, error: res.failure.message }
     pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation completed' })
     return { ok: true }
@@ -134,7 +138,7 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     onConfirm: (r) => { pauseOp(op.id, r); toast('Operation paused.', 'warn') },
   })
   const resume = () => {
-    const checks = computePreflightChecks(db, op, services.clock.now())
+    const checks = readOperationPreflight(services, op, services.clock.now())
     const rows: [string, boolean, string][] = [
       ['ROE', p.roeStatus === 'approved', `ROE ${p.roeVersion} is ${p.roeStatus}`],
       ['Permissions', allowed, allowed ? 'You may run operations' : 'Your role cannot run operations'],
@@ -180,35 +184,41 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
 const LVL: Record<string, string> = { INFO: 'text-console-info', WARN: 'text-console-warn', ERROR: 'text-console-bad' }
 const LVL_ICON = { INFO: '●', WARN: '▲', ERROR: '✕' } as Record<string, string>
 
+function SessionCard({ s }: { s: Db['sessions'][number] }) {
+  /* Ticket 67: the semantic C2 access derivation is a typed c2 read; the
+     permission label re-derives from recorded grants per publication. */
+  const perm = useSessionPerm(s)
+  return (
+    <li className="rounded-xl border border-line p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2"><IdLink onClick={() => go('c2-session', { id: s.id })}>{s.id}</IdLink><Status kind="session" value={s.state} size="sm" /></div>
+      <div className="mt-1 text-xs text-muted">{s.kind === 'reverse' ? 'Reverse shell' : 'Web shell'} · {s.asset} · {s.agentId}</div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+        <Status kind="perm" value={perm} size="sm" />
+        {s.state === 'connected' && <span className="inline-flex items-center gap-1 text-muted"><Video size={12} aria-hidden />Recording on</span>}
+        <Button size="sm" variant="ghost" className="ml-auto" onClick={() => go('c2-session', { id: s.id })}>Open Session</Button>
+      </div>
+    </li>
+  )
+}
+
 function SessionCards({ op }: { op: Operation }) {
-  const db = useDb()
-  const me = useMe()
-  const list = db.sessions.filter((s) => s.opId === op.id || s.id === op.sessionId)
+  const view = useOperationView(op.id)
+  const list = view ? view.sessions : []
   if (list.length === 0) {
     return <p className="text-sm text-muted">{op.status === 'running' || op.status === 'paused' ? 'No session is linked to this operation.' : 'No session yet. A session appears only after the operation starts.'}</p>
   }
   return (
     <ul className="space-y-2">
-      {list.map((s) => (
-        <li key={s.id} className="rounded-xl border border-line p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2"><IdLink onClick={() => go('c2-session', { id: s.id })}>{s.id}</IdLink><Status kind="session" value={s.state} size="sm" /></div>
-          <div className="mt-1 text-xs text-muted">{s.kind === 'reverse' ? 'Reverse shell' : 'Web shell'} · {s.asset} · {s.agentId}</div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            {/* Ticket 67: the semantic C2 access derivation replaced the legacy store helper (same rule, explicit request context). */}
-            <Status kind="perm" value={sessionPermOf(db, { actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, s)} size="sm" />
-            {s.state === 'connected' && <span className="inline-flex items-center gap-1 text-muted"><Video size={12} aria-hidden />Recording on</span>}
-            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => go('c2-session', { id: s.id })}>Open Session</Button>
-          </div>
-        </li>
-      ))}
+      {list.map((s) => <SessionCard key={s.id} s={s} />)}
     </ul>
   )
 }
 
 function PlanCard({ op }: { op: Operation }) {
-  const db = useDb()
-  const pl = op.planId ? db.plans.find((p) => p.id === op.planId) : undefined
-  const conv = opConversation(db, op)
+  const view = useOperationView(op.id)
+  if (!view) return null
+  const pl = view.plan
+  const conv = view.conversation
   if (!op.planId) return <p className="text-sm text-muted">This operation was created manually from a playbook. No AI plan is linked.</p>
   if (!pl) return <p className="text-sm text-muted">Linked plan {op.planId} is not available.</p>
   return (
@@ -224,24 +234,25 @@ function PlanCard({ op }: { op: Operation }) {
 
 /* ───────────── Overview (OP-04) ───────────── */
 export function OverviewTab({ op }: { op: Operation }) {
-  const db = useDb()
+  const view = useOperationView(op.id)
   const logs = useSessionStore((s) => s.logs)
   const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
-  const p = db.projects.find((x) => x.id === op.projectId)!
-  const pb = db.playbooks.find((x) => x.id === op.playbookId)
+  const [sel, setSel] = useState<string | null>(null)
+  if (!view) return null
+  const p = view.project
+  const pb = view.playbook
   const c = stepCounts(op.steps)
   const pr = progressOf(op.steps)
-  const ags = op.agents.map((id) => db.agents.find((a) => a.id === id)!).filter(Boolean)
-  const assets = op.assets.map((id) => db.assets.find((a) => a.id === id)!).filter(Boolean)
-  const sessions = db.sessions.filter((s) => s.opId === op.id)
+  const ags = view.agents
+  const assets = view.assets
+  const sessions = view.sessions.filter((s) => s.opId === op.id)
   const recent = (logs[op.id] || []).slice(-6).reverse()
   const lost = ags.filter((a) => a.status !== 'online' && a.status !== 'idle')
-  const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
+  const pl = view.plan
   const active = op.status === 'running' || op.status === 'paused'
-  const [sel, setSel] = useState<string | null>(null)
-  const groups = opGroups(db, op.id)
-  const conv = opConversation(db, op)
-  const fb = failedBranches(db, op.id)
+  const groups = view.branchGroups
+  const conv = view.conversation
+  const fb = failedBranches(view, op.id)
   const ai = op.steps.length === 0 ? 'No execution data yet, so there is nothing to summarize.' : `${c.ok} of ${c.total} steps completed${c.fail ? `, ${c.fail} failed` : ''}${c.unknown ? `, ${c.unknown} with an unknown outcome` : ''}. ${fb.length ? `${fb.length} branch${fb.length === 1 ? '' : 'es'} failed (${fb.map((b) => b.id).join(', ')}), so this operation is not summarized as successful. ` : ''}${c.review ? `${c.review} step(s) await a human review decision. ` : ''}${c.unknown ? 'Outcomes marked Unknown are not treated as success or failure until verified.' : 'No steps are in an ambiguous state.'}`
   return (
     <div>
@@ -300,7 +311,7 @@ export function OverviewTab({ op }: { op: Operation }) {
             {op.steps.length === 0 ? <div className="px-5 pb-5 text-sm text-muted">No steps yet. Steps appear once a plan or playbook is attached.</div> : (
               <div className="max-h-80 overflow-auto"><table className="w-full border-collapse text-sm"><caption className="sr-only">Operation steps</caption>
                 <thead className="sticky top-0 bg-panel"><tr className="border-y border-line text-left text-xs uppercase tracking-wide text-muted"><th className="h-9 whitespace-nowrap px-5 font-medium">Step</th><th className="px-3 font-medium">Name</th><th className="px-3 font-medium">Status</th><th className="px-3 font-medium">Branches</th></tr></thead>
-                <tbody>{op.steps.map((s) => { const bs = stepBranches(db, op.id, s.id); return (
+                <tbody>{op.steps.map((s) => { const bs = stepBranches(view, op.id, s.id); return (
                   <tr key={s.id} tabIndex={0} onClick={() => setSel(s.id)} onKeyDown={(e) => { if (e.key === 'Enter') setSel(s.id) }} className="cursor-pointer border-b border-line/60 hover:bg-hover focus-visible:bg-hover">
                     <td className="whitespace-nowrap px-5 py-2"><Mono className="text-accent">{s.id}</Mono></td><td className="px-3 py-2">{s.name}</td>
                     <td className="whitespace-nowrap px-3 py-2"><Status kind="step" value={s.status} size="sm" /></td>
@@ -348,7 +359,7 @@ export function OverviewTab({ op }: { op: Operation }) {
 
 /* ───────────── Step inspector (OP-V3-06) ───────────── */
 export function StepDrawer({ op, step, onClose, logs }: { op: Operation; step: Step | null; onClose: () => void; logs: { id: string; ts: string; level: string; text: string; stepId: string }[] }) {
-  const db = useDb()
+  const view = useOperationView(op.id)
   const setFilter = useSessionStore((s) => s.setFilter)
   const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
   const can = useCan()
@@ -356,21 +367,21 @@ export function StepDrawer({ op, step, onClose, logs }: { op: Operation; step: S
   const [tab, setTab] = useState('summary')
   useEffect(() => { setTab('summary') }, [step?.id])
   const idx = step ? op.steps.findIndex((s) => s.id === step.id) : -1
-  const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
+  const pl = view?.plan
   const ps = pl && idx >= 0 ? pl.steps[idx] : undefined
-  const pb = db.playbooks.find((x) => x.id === op.playbookId)
-  const asset = step ? db.assets.find((a) => a.name === step.asset && a.projectId === op.projectId) : undefined
-  const ev = step?.evidence ? db.evidence.find((e) => e.id === step.evidence) : null
+  const pb = view?.playbook
+  const asset = view && step ? view.projectAssets.find((a) => a.name === step.asset && a.projectId === op.projectId) : undefined
+  const ev = view && step?.evidence ? view.evidence.find((e) => e.id === step.evidence) : null
   const masked = !!ev?.sensitive && !can('viewSensitive')
   const hist = step ? logs.filter((l) => l.stepId === step.id) : []
   const canFind = can('createFinding', op.projectId) && !ro
-  const related = step ? db.findings.filter((f) => f.op === op.id && ((step.evidence && f.evidence.includes(step.evidence)) || f.technique === step.technique)) : []
+  const related = view && step ? view.findings.filter((f) => f.op === op.id && ((step.evidence && f.evidence.includes(step.evidence)) || f.technique === step.technique)) : []
   const create = () => { if (!step) return; setFilter('finding-prefill', { op: op.id, projectId: op.projectId, stepId: step.id, technique: step.technique, asset: step.asset, evidence: step.evidence ? [step.evidence] : [] }); go('finding-new') }
   const needsAp = !!ps?.needsApproval || step?.status === 'review'
-  const brs = step ? stepBranches(db, op.id, step.id) : []
-  const grp = step ? db.branchGroups.find((g) => g.opId === op.id && (g.parentStep === step.id || g.aggStep === step.id)) : undefined
-  const tools = step ? db.toolEvents.filter((t) => t.opId === op.id && t.stepId === step.id) : []
-  const conv = opConversation(db, op)
+  const brs = view && step ? stepBranches(view, op.id, step.id) : []
+  const grp = view && step ? view.branchGroups.find((g) => g.opId === op.id && (g.parentStep === step.id || g.aggStep === step.id)) : undefined
+  const tools = view && step ? view.toolEvents.filter((t) => t.opId === op.id && t.stepId === step.id) : []
+  const conv = view?.conversation
   const failedBr = brs.filter((b) => b.state === 'failed')
   return (
     <Drawer open={!!step} onClose={onClose} width={540} title={step ? <span><Mono className="mr-2 text-muted">{step.id}</Mono>{step.name}</span> : ''} footer={step && <>
@@ -436,7 +447,7 @@ const evCat = (l: { level: string; text: string }) => (l.level === 'ERROR' ? 'er
 const NODE_TONE: Record<string, string> = { ok: 'border-ok/40 bg-ok-soft', running: 'border-cyan bg-info-soft', fail: 'border-bad/50 bg-bad-soft', unknown: 'border-warn/60 bg-warn-soft', review: 'border-warn bg-warn-soft ring-1 ring-warn', pending: 'border-line bg-panel', notrun: 'border-line bg-subtle' }
 
 export function ConsoleTab({ op: liveOp }: { op: Operation }) {
-  const db = useDb()
+  const view = useOperationView(liveOp.id)
   const liveLogs = useSessionStore((s) => s.logs)
   const staleOps = useSessionStore((s) => s.staleOps)
   const setStale = useSessionStore((s) => s.setStale)
@@ -461,11 +472,11 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const term = useRef<HTMLDivElement>(null)
   const { ro, reason: roReason } = useGuard(op.projectId)
 
-  const p = db.projects.find((x) => x.id === op.projectId)!
-  const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
-  const pb = db.playbooks.find((x) => x.id === op.playbookId)
-  const agents = useMemo(() => op.agents.map((id) => db.agents.find((a) => a.id === id)!).filter(Boolean), [db.agents, op.agents])
-  const sessions = db.sessions.filter((s) => s.opId === op.id)
+  const p = view?.project
+  const pl = view?.plan
+  const pb = view?.playbook
+  const agents = view?.agents ?? []
+  const sessions = view ? view.sessions.filter((s) => s.opId === op.id) : []
   const c = stepCounts(op.steps)
   const pr = progressOf(op.steps)
   const lostAg = agents.filter((a) => a.status !== 'online' && a.status !== 'idle')
@@ -473,17 +484,19 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const step = op.steps.find((s) => s.id === sel) || null
   const reviewStep = op.steps.find((s) => s.status === 'review')
   const current = op.steps.find((s) => s.status === 'running') || reviewStep
-  const chan = db.channels.find((ch) => agents.some((a) => a.id === (ch as any).agentId)) || db.channels.find((ch) => (ch as any).nodeId)
-  const node = db.c2Nodes.find((n) => n.projectIds.includes(op.projectId)) || db.c2Nodes[0]
-  const auditRows = db.audit.filter((a) => a.obj.startsWith(op.id) || a.obj === op.id).slice(0, 30)
-  const evs = db.evidence.filter((e) => e.opId === op.id || op.steps.some((s) => s.evidence === e.id))
-  const groups = opGroups(db, op.id)
-  const conv = opConversation(db, op)
+  const chan = view ? view.channels.find((ch) => agents.some((a) => a.id === (ch as any).agentId)) || view.channels.find((ch) => (ch as any).nodeId) : undefined
+  const node = view ? view.c2Nodes.find((n) => n.projectIds.includes(op.projectId)) || view.c2Nodes[0] : undefined
+  const auditRows = view?.audit ?? []
+  const evs = view?.evidence ?? []
+  const groups = view?.branchGroups ?? []
+  const conv = view?.conversation
+  useEffect(() => { if (term.current) term.current.scrollTop = term.current.scrollHeight }, [lines.length, dock])
+
+  if (!view || !p) return null
   const pending = c.review + (pl && !['approved', 'executed'].includes(pl.status) ? 1 : 0)
   const active = op.status === 'running' || op.status === 'paused'
   const planOk = !pl || ['approved', 'executed'].includes(pl.status)
   const blocked = polBlock || p.roeStatus !== 'approved' || !planOk
-  useEffect(() => { if (term.current) term.current.scrollTop = term.current.scrollHeight }, [lines.length, dock])
 
   if (op.status === 'draft' || op.status === 'ready' || op.status === 'pending') {
     return (
@@ -552,7 +565,7 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
                   <button onClick={() => setSel(s.id)} className={cx('h-full w-full rounded-lg border p-2.5 text-left transition hover:shadow-sm focus-visible:ring-2 focus-visible:ring-accent', NODE_TONE[s.status] || 'border-line', sel === s.id && 'ring-2 ring-accent')} aria-label={`${s.id} ${s.name} — ${s.status}`}>
                     <div className="flex items-center justify-between gap-1"><Mono className="text-muted">{s.id}</Mono><Status kind="step" value={s.status} size="sm" /></div>
                     <div className="mt-1 line-clamp-2 text-[12.5px] leading-snug">{s.name}</div>
-                    <div className="mt-1 truncate font-mono text-[11px] text-muted">{s.agent} · {s.technique}</div>{(() => { const bs = stepBranches(db, op.id, s.id); const g = groups.find((x) => x.parentStep === s.id || x.aggStep === s.id); return (bs.length > 0 || g) ? <div className="mt-1 flex items-center gap-1 text-[11px] text-muted"><GitBranch size={11} aria-hidden />{bs.length ? `${bs.length} branch${bs.length === 1 ? '' : 'es'}${bs.some((b) => b.state === 'failed') ? ' · failed' : ''}` : g!.parentStep === s.id ? 'Fan-out parent' : 'Fan-in'}</div> : null })()}
+                    <div className="mt-1 truncate font-mono text-[11px] text-muted">{s.agent} · {s.technique}</div>{(() => { const bs = stepBranches(view, op.id, s.id); const g = groups.find((x) => x.parentStep === s.id || x.aggStep === s.id); return (bs.length > 0 || g) ? <div className="mt-1 flex items-center gap-1 text-[11px] text-muted"><GitBranch size={11} aria-hidden />{bs.length ? `${bs.length} branch${bs.length === 1 ? '' : 'es'}${bs.some((b) => b.state === 'failed') ? ' · failed' : ''}` : g!.parentStep === s.id ? 'Fan-out parent' : 'Fan-in'}</div> : null })()}
                   </button>
                 </li>
               ))}
@@ -595,7 +608,7 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
             <CardHeader title="Demo controls" sub="Simulation only — nothing here affects real systems." actions={<DemoTag />} />
             <div className="space-y-2">
               {op.agents.map((id) => {
-                const a = db.agents.find((x) => x.id === id); const online = a?.status === 'online'
+                const a = view.agents.find((x) => x.id === id); const online = a?.status === 'online'
                 return (
                   <div key={id} className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">{id}</span>
                     <Button size="sm" icon={WifiOff} disabled={op.status !== 'running' || !online} title={op.status !== 'running' ? 'Available while the operation is running.' : !online ? `${id} is already disconnected.` : undefined} onClick={() => { loseAgent(id); toast(`Simulated agent offline: ${id}.`, 'warn') }}>Offline</Button>
@@ -650,8 +663,9 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
 
 /* ───────────── Agents & Sessions ───────────── */
 export function AgentsTab({ op }: { op: Operation }) {
-  const db = useDb()
-  const rows = op.agents.map((id) => db.agents.find((a) => a.id === id)!).filter(Boolean)
+  const view = useOperationView(op.id)
+  if (!view) return null
+  const rows = view.agents
   const per = rows.map((a) => ({ a, st: stepCounts(op.steps.filter((s) => s.agent === a.id)) }))
   return (
     <div className="space-y-5">
@@ -700,7 +714,7 @@ export function TimelineTab({ op }: { op: Operation }) {
      store helper's exact row shape (the RT-2026-014 SS/AR corr rule, the demo
      stamp, the override-aware persona). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const [lvl, setLvl] = useState('')
   const [ag, setAg] = useState('')
   const [pick, setPick] = useState<string | null>(null)

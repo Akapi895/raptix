@@ -18,11 +18,11 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Download, Eye, FolderPlus, MoreHorizontal, Pencil, Pin, PinOff, Plus, SlidersHorizontal } from 'lucide-react'
 import { useServices } from '../state/services'
-import { eligibility } from '../features/operations/preflight'
+import { useEligibilitySummaries } from '../features/operations/eligibility-read'
 import { readOnlyContext } from '../auth/policy'
 import type { Project } from '../domain/entities'
 import { consoleKeys, useQueryScope } from '../state/keys'
-import { useCan, useDb, useMe } from '../state/console'
+import { useCan, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
 import { useProjectStore, useToastStore } from '../state/stores'
 import { go } from '../router/navigate'
@@ -36,7 +36,7 @@ const EMPTY_FILTERS: PrjFilters = { q: '', status: '', type: '', owner: '', clie
 
 export function ProjectPortfolio() {
   const svc = useServices()
-  const db = useDb()
+  const summaries = useEligibilitySummaries()
   const me = useMe()
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
@@ -88,11 +88,11 @@ export function ProjectPortfolio() {
     },
   })
 
-  const opCount = (id: string) => db.operations.filter((o) => o.projectId === id).length
+  const opCount = (id: string) => summaries[id]?.operationCount ?? 0
   const exportCsv = () => {
     const esc = (s: string) => `"${String(s).replace(/"/g, '""')}"`
     const head = ['Project ID', 'Name', 'Client', 'Type', 'Owner', 'Start', 'End', 'Operations', 'ROE', 'Execution Readiness', 'Status', 'Updated']
-    const body = rows.map((p) => [p.id, p.name, p.client, p.type, p.owner, p.start, p.end, String(opCount(p.id)), `${p.roeVersion} ${p.roeStatus}`, eligibility(db, p.id).label, p.status, p.updated].map(esc).join(','))
+    const body = rows.map((p) => [p.id, p.name, p.client, p.type, p.owner, p.start, p.end, String(opCount(p.id)), `${p.roeVersion} ${p.roeStatus}`, summaries[p.id]?.eligibility.label ?? '', p.status, p.updated].map(esc).join(','))
     const blob = new Blob(['﻿' + [head.map(esc).join(','), ...body].join('\n')], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob); a.download = 'projects.csv'; a.click(); URL.revokeObjectURL(a.href)
@@ -108,7 +108,8 @@ export function ProjectPortfolio() {
     { key: 'roe', header: 'ROE', render: (p) => <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><span className="font-mono text-xs">{p.roeVersion}</span><Status kind="roe" value={p.roeStatus} size="sm" /></span>, hideBelow: 'md' },
     {
       key: 'elig', header: 'Execution Readiness', render: (p) => {
-        const e = eligibility(db, p.id)
+        const e = summaries[p.id]?.eligibility
+        if (!e) return null
         const t = e.tone === 'cyan' ? 'ok' : e.tone
         return <span title={e.reasons.map((r) => r.text).join('; ') || undefined}><Status kind="generic" value={t} size="sm" label={e.label} /></span>
       },

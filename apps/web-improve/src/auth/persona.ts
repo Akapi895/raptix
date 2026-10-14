@@ -19,8 +19,8 @@ export function personaRole(name: string): Role {
 }
 
 /** Actor reference for a persona name — the identity every authorization check uses. */
-export function actorRef(name: string): ActorRef {
-  return { id: name, role: personaRole(name) }
+export function actorRef(name: string, role: Role = personaRole(name)): ActorRef {
+  return { id: name, role }
 }
 
 /** Signs the persona in, optionally selecting the organization/workspace. */

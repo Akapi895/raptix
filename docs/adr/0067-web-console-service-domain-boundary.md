@@ -48,6 +48,25 @@ stores have single named owners per the tracker's shared-write table.
 
 ## Consequences
 
+### Typed runtime refinement (ticket 67)
+
+Synchronous UI continuity is supported by narrow, feature-owned service
+projections over the same authority. A projection names its view fields and
+accepts actor/project (and entity identity where appropriate); it applies
+membership before exposing relationships or derived decisions. It never
+returns `Db`, an authority snapshot, or a generic table-selection interface.
+React subscriptions observe projection results through the one authority's
+change publication, with stable results between commits. Existing async
+list/detail/aggregate Query models remain the primary entity reads.
+
+Identity and project-policy helpers may remain synchronous and narrow.
+Organization role overrides participate in both Query keys and captured
+request actors; superseding a role cancels the obsolete read scope just as
+switching persona or project does. Component writes call typed owning-service
+transactions, including audit and notification effects; components do not
+commit authority callbacks. This trades extra explicit view contracts for
+preserving immediate UI updates without reinstating a whole-database hook.
+
 - **Easier:** safety invariants stay testable at one execution site as they
   migrate; mock-to-real API swap becomes a factory change; parallel feature
   work is merge-safe because shared surfaces have declared owners.

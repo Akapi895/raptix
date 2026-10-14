@@ -12,8 +12,8 @@ import { useMemo } from 'react'
 import { QueryClient } from '@tanstack/react-query'
 import type { Role } from '../domain/entities'
 import type { EntityKind } from '../domain/service'
-import { personaRole } from '../auth/persona'
-import { useAuthStore, useProjectStore } from './stores'
+import { useMe } from './console'
+import { useProjectStore } from './stores'
 
 /** Actor/authorization/project scope embedded in every console Query key. */
 export interface QueryScope {
@@ -25,10 +25,9 @@ export interface QueryScope {
 
 /** Reads the scope Query keys are built from; updates with persona/project. */
 export function useQueryScope(): QueryScope {
-  const meName = useAuthStore((s) => s.meName)
+  const me = useMe()
   const pid = useProjectStore((s) => s.pid)
-  const role = personaRole(meName)
-  return useMemo(() => ({ actor: meName, role, project: pid }), [meName, role, pid])
+  return useMemo(() => ({ actor: me.name, role: me.role, project: pid }), [me.name, me.role, pid])
 }
 
 /** Key builders — the scope object sits at position 1 for the bridge. */

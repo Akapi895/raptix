@@ -3,16 +3,17 @@ import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRoun
 import { useServices } from '../state/services'
 import { useDirty } from '../state/session'
 import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
 import { signOut } from '../auth/persona'
 import { USERS, TECHNIQUES, type Integration, type Policy, type Retention, type Role, type DetectState } from '../data'
 import { OrgReadError, useAudit, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites, useRetention, useRetentionWrites } from '../features/settings/query'
 import { auditCorr, type AuditRead, type IntegrationsRead, type OrgMembersRead, type OrgProfile, type OrgProfileRead, type PoliciesRead, type RetentionRead } from '../features/settings/service'
 import { Avatar, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Input, Menu, Modal, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Toggle, cx, usePaged } from '../ui'
 import { go, navRawRoute, useRoute } from '../router/navigate'
-import { useAccessible, useDb, useMe } from '../state/console'
+import { useAccessible, useMe } from '../state/console'
+import { useSettingsTemplates, useDetectionSettings, useSecurityActivity } from '../features/settings/projection'
 import { useAuthStore, useThemeStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { stamp } from '../domain/demo-clock'
 
 type TabId = 'org' | 'users' | 'integrations' | 'policies' | 'retention' | 'templates' | 'detection' | 'audit' | 'notifications' | 'security'
 const ROLES: Role[] = ['admin', 'manager', 'operator', 'reviewer', 'analyst', 'viewer']
@@ -166,7 +167,7 @@ function UsersPanel({ read }: { read: OrgMembersRead }) {
   /* The legacy raw `A.audit` entries, mirrored exactly: one 'legacy' commit
      through the one authority (these simulated actions never touch data). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const writes = useOrgWrites()
   const admin = read.canEdit
   const [view, setView] = useState<'users' | 'roles' | 'invites'>('users')
@@ -276,7 +277,7 @@ function IntegrationsPanel({ read }: { read: IntegrationsRead }) {
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const writes = useIntegrationWrites()
   const admin = read.canEdit
   const [reauth, setReauth] = useState<string | null>(null)
@@ -342,7 +343,7 @@ function ApprovalMatrix() {
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const [cmp, setCmp] = useState<string | null>(null)
   const c = APPROVAL_MATRIX.find((x) => x.id === cmp)
   const admin = me.role === 'admin'
@@ -398,7 +399,7 @@ function PolicyListPanel({ read }: { read: PoliciesRead }) {
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const writes = usePolicyWrites()
   const admin = read.canEdit
   const why = 'Only Organization Admins can enable or disable policies. Ask an admin to request the change.'
@@ -561,7 +562,7 @@ function RetentionPanel({ read }: { read: RetentionRead }) {
 
 /* ───────── Templates ───────── */
 function TemplatesTab() {
-  const db = useDb()
+  const db = useSettingsTemplates()
   const me = useMe()
   const setFilter = useSessionStore((s) => s.setFilter)
   const use = (name: string) => { setFilter('reportNewTemplate', name); go('report-new') }
@@ -588,7 +589,7 @@ const DET_UI: Record<DetectState, { label: string; icon: typeof CheckCircle2; cl
   nodata: { label: 'No data', icon: CircleHelp, cls: 'text-neutral' },
 }
 function DetectionTab() {
-  const db = useDb()
+  const db = useDetectionSettings()
   const siem = db.integrations.find((i) => i.kind === 'SIEM')
   const rows = Object.entries(db.detection).flatMap(([pid, m]) => Object.entries(m).map(([tid, st]) => ({ pid, tid, st, name: TECHNIQUES.find((t) => t.id === tid)?.name || tid })))
   const pg = usePaged(rows, 12)
@@ -628,7 +629,7 @@ function AuditPanel({ read, F, set, clear }: { read: AuditRead; F: typeof AUDIT_
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const { q, actor, act, proj, res, origin } = F
   const [sel, setSel] = useState<string | null>(null)
   const [more, setMore] = useState(false)
@@ -750,13 +751,12 @@ function NotifTab() {
 /* ───────── Security / my account ───────── */
 function SecurityTab() {
   const me = useMe()
-  const db = useDb()
+  const live = useSecurityActivity()
   const toast = useToastStore((s) => s.toast)
   const setMe = useAuthStore((s) => s.setMe)
   /* The store's logout, verbatim: sign-out through the auth feature action,
      then the raw login-page route (the shell header's wave-2 precedent). */
   const logout = () => { signOut(); navRawRoute({ page: 'login' }) }
-  const live = db.operations.filter((o) => ['running', 'paused'].includes(o.status)).length
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       <Card>

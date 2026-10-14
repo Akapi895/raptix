@@ -43,7 +43,7 @@ export function useBranchGroups() {
   return useQuery({
     queryKey: branchKeys.groups(scope),
     queryFn: async (): Promise<BranchGroupListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .branches(actor, scope.project)
         .listGroups({ actor, projectId: scope.project, corr: 'branch-groups' })
@@ -61,7 +61,7 @@ export function useBranchGroup(id: string | undefined) {
   return useQuery({
     queryKey: branchKeys.group(scope, id ?? ''),
     queryFn: async (): Promise<BranchGroupDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .branches(actor, scope.project)
         .getGroup({ actor, projectId: scope.project, corr: 'branch-group' }, id!)
@@ -79,7 +79,7 @@ export function useBranch(id: string) {
   return useQuery({
     queryKey: branchKeys.detail(scope, id),
     queryFn: async (): Promise<BranchDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .branches(actor, scope.project)
         .get({ actor, projectId: scope.project, corr: 'branch-detail' }, id)
@@ -99,7 +99,7 @@ export function useRetryBranch() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string; reason: string }): Promise<ServiceResult<Branch>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.branches(actor, scope.project).retry({ actor, projectId: scope.project, corr: corr('branch-retry') }, v.id, v.reason)
     },
   })
@@ -110,7 +110,7 @@ export function useReassignBranch() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string; agentId: string; reason: string }): Promise<ServiceResult<Branch>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.branches(actor, scope.project).reassign({ actor, projectId: scope.project, corr: corr('branch-reassign') }, v.id, v.agentId, v.reason)
     },
   })
@@ -121,7 +121,7 @@ export function useCancelBranch() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string; reason: string }): Promise<ServiceResult<Branch>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.branches(actor, scope.project).cancel({ actor, projectId: scope.project, corr: corr('branch-cancel') }, v.id, v.reason)
     },
   })

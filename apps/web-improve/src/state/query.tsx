@@ -19,9 +19,9 @@
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { notifyManager, QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { useServices } from './services'
-import { actorRef } from '../auth/persona'
+import { readActor } from '../auth/identity'
 import type { ConsoleServices } from '../domain/service-factory'
-import type { ChangeSet, EntityKind } from '../domain/service'
+import type { ActorRef, ChangeSet, EntityKind } from '../domain/service'
 import { createConsoleQueryClient, scopeOf } from './keys'
 import { useAuthStore, useProjectStore } from './stores'
 
@@ -60,24 +60,24 @@ function ChangeSetBridge({ client, services }: { client: QueryClient; services: 
 }
 
 /** Cancels Query fetches and factory reads captured under a superseded scope. */
-function supersedeScope(client: QueryClient, services: ConsoleServices, actor: string, project: string) {
+function supersedeScope(client: QueryClient, services: ConsoleServices, actor: ActorRef, project: string): void {
   client.cancelQueries({
     predicate: (q) => {
       const scope = scopeOf(q)
-      return !!scope && scope.actor === actor && scope.project === project
+      return !!scope && scope.actor === actor.id && scope.role === actor.role && scope.project === project
     },
   })
-  services.cancelScope(actorRef(actor), project)
+  services.cancelScope(actor, project)
 }
 
 function ScopeCancelBridge({ client, services }: { client: QueryClient; services: ConsoleServices }) {
   useEffect(() => {
-    let actor = useAuthStore.getState().meName
+    let actor = readActor(services, useAuthStore.getState().meName)
     let project = useProjectStore.getState().pid
     const offActor = useAuthStore.subscribe((s) => {
-      if (s.meName === actor) return
+      if (s.meName === actor.id) return
       const prevActor = actor
-      actor = s.meName
+      actor = readActor(services, s.meName)
       supersedeScope(client, services, prevActor, project)
     })
     const offProject = useProjectStore.subscribe((s) => {
@@ -86,9 +86,17 @@ function ScopeCancelBridge({ client, services }: { client: QueryClient; services
       project = s.pid
       supersedeScope(client, services, actor, prevProject)
     })
+    const offRole = services.authority.subscribe(() => {
+      const next = readActor(services, actor.id)
+      if (next.role === actor.role) return
+      const previous = actor
+      actor = next
+      supersedeScope(client, services, previous, project)
+    })
     return () => {
       offActor()
       offProject()
+      offRole()
     }
   }, [client, services])
   return null

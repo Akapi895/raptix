@@ -22,6 +22,9 @@ import type { DbAuthority } from '../../domain/database'
 import { projectAccessible } from '../../auth/policy'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Role } from '../../domain/entities'
+import type { ConsoleServices } from '../../domain/service-factory'
+import { stamp } from '../../domain/demo-clock'
+import { projectView } from '../../domain/projection'
 
 /** Display chips in the header popover, in the legacy order. */
 export const NOTICE_CHIPS = ['Approvals', 'Agents', 'Sessions', 'AI plans', 'Reports', 'System'] as const
@@ -54,6 +57,22 @@ export interface NoticeListRead {
   total: number
   /** False for read-only viewer personas: mutating writes refuse at the handler. */
   canMutate: boolean
+}
+
+export function readHeaderNotices(services: ConsoleServices, ctx: RequestContext): NoticeListRead {
+  return projectView(services, ctx, 'header-notices', (db) => {
+    const read = listNotices(db, ctx)
+    if (!read.ok) throw new Error(read.failure.message)
+    return read.data
+  })
+}
+
+export interface NoticeInput { text: string; to: Notice['to']; group: Notice['group']; category?: Notice['category'] }
+
+export function publishNotice(services: ConsoleServices, ctx: RequestContext, input: NoticeInput): void {
+  services.authority.commit(ctx.corr, (db) => {
+    db.notices.unshift({ id: 'N' + (db.notices.length + 1) + '-' + Date.now() % 10000, ...input, projectId: ctx.projectId, at: stamp(), read: false })
+  })
 }
 
 /** Workspace-level identity for audit rows (the notices collection has no owner project of its own). */

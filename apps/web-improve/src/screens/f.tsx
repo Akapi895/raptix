@@ -1,18 +1,18 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { AlertTriangle, Copy, Download, Eye, FileText, History, Lock, Plus, Rocket, Send, Upload } from 'lucide-react'
 import { useServices } from '../state/services'
-import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
 import type { Template } from '../data'
 import { Banner, Button, Card, Drawer, Empty, FilterBar, IdLink, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, cx } from '../ui'
-import { reportChecks, type NoFind } from '../features/reports/service'
+import { type NoFind } from '../features/reports/service'
+import { useReportValidation } from '../features/reports/projection'
 import { ReportReadError, useDeliveryHistory, useReportList, useTemplates } from '../features/reports/query'
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './f-report'
 import { SettingsPage } from './f-settings'
 import { go, useRoute } from '../router/navigate'
-import { useCan, useDb, useMe } from '../state/console'
+import { useCan, useMe } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { stamp } from '../domain/demo-clock'
 
 const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileText }> = {
   draft: { label: 'Edit draft', page: 'report', icon: FileText },
@@ -72,7 +72,7 @@ function ReportList() {
   const setFilter = useSessionStore((s) => s.setFilter)
   const can = useCan()
   const me = useMe()
-  const db = useDb()
+  const validation = useReportValidation()
   const [more, setMore] = useState(false)
   const [page, setPage] = useState(1)
   const nfAll = (persistFilters.repNoFind || {}) as Record<string, NoFind>
@@ -123,7 +123,7 @@ function ReportList() {
               { key: 'v', header: 'Version', render: (r) => <Mono className="whitespace-nowrap">{r.version}</Mono> },
               { key: 's', header: 'Status', render: (r) => {
                 const open = r.status === 'draft' || r.status === 'returned'
-                const bl = open ? reportChecks(db, r, nfAll[r.id]).filter((c) => c.state === 'fail') : []
+                const bl = open ? validation.checks(r, nfAll[r.id]).filter((c) => c.state === 'fail') : []
                 return <div className="whitespace-nowrap"><Status kind="report" value={r.status} />{open && <div className={cx('mt-0.5 text-[11px]', bl.length ? 'text-warn' : 'text-ok')} title={bl.map((c) => c.detail).join(' ')}>{bl.length ? `Submit blocked: ${bl[0].label}${bl.length > 1 ? ` +${bl.length - 1}` : ''}` : 'Ready to submit'}</div>}</div>
               } },
               { key: 'rv', header: 'Reviewer', hideBelow: 'lg', render: (r) => r.reviewer },
@@ -146,7 +146,7 @@ function Templates() {
   /* The legacy raw `A.audit` entries, mirrored exactly: one 'legacy' commit
      through the one authority (these simulated actions never touch data). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const tpls = useTemplates()
   const [sel, setSel] = useState<Template | null>(null)
   const admin = me.role === 'admin'

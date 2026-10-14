@@ -1,46 +1,40 @@
 import { useRef, type ComponentType } from 'react'
 import { Eye, Lock, ShieldX, SearchX, GitBranch } from 'lucide-react'
 import { Button, Empty, Status } from '../ui'
-import { canAccessProject } from '../auth/policy'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { useDb, useMe } from '../state/console'
-import { useProjectStore } from '../state/stores'
-import type { Route } from '../router/history'
-import { computePreflightChecks } from '../features/operations/preflight'
-import { planVer } from '../data'
 import type { Branch, Db, Operation, Plan, Project, Step } from '../data'
-import type { Instant } from '../domain/service'
+import type { PfCheck, PfState } from '../features/operations/checklist'
+export { specChecks } from '../features/operations/checklist'
+export type { PfCheck, PfState } from '../features/operations/checklist'
+import { useOperationGate, useOperationView } from '../features/operations/views'
 import { PROJECT_TZ_OFFSET_MS, draftMinutes, roeWindowIssue } from '../features/operations/service'
 
 /** Operation access gate: checks existence, project access and the selected project */
 export function OpGate({ C }: { C: ComponentType<{ op: Operation }> }) {
-  const db = useDb()
   const route = useRoute()
-  const me = useMe()
-  const pid = useProjectStore((s) => s.pid)
-  const op = db.operations.find((o) => o.id === route.id)
-  if (!op) {
+  const gate = useOperationGate(route.id || '')
+  if (gate.state === 'missing') {
     return (
       <Empty icon={SearchX} title="Operation not found" action={<Button onClick={() => go('operations')}>Back to operations</Button>}>
         Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} does not exist or has been removed.
       </Empty>
     )
   }
-  if (!canAccessProject(db, me, op.projectId)) {
+  if (gate.state === 'denied') {
     return (
       <Empty icon={Lock} title="You do not have access to this operation" action={<Button onClick={() => go('operations')}>Back to operations</Button>}>
-        Operation {op.id} belongs to a project your account has not been granted access to. Ask a project manager to add you to the team.
+        Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} belongs to a project your account has not been granted access to. Ask a project manager to add you to the team.
       </Empty>
     )
   }
-  if (pid !== 'all' && pid !== op.projectId) {
+  if (gate.state === 'foreign') {
     return (
-      <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => selectProject(op.projectId)}>Switch to {op.projectId}</Button>}>
-        Operation {op.id} belongs to project {op.projectId}. To avoid mixing data between projects, switch to that project before viewing it.
+      <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => selectProject(gate.projectId)}>Switch to {gate.projectId}</Button>}>
+        Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} belongs to project {gate.projectId}. To avoid mixing data between projects, switch to that project before viewing it.
       </Empty>
     )
   }
-  return <C op={op} />
+  return <C op={gate.op} />
 }
 
 /* ───────────── Time helpers (wall-clock UTC+7, encoded as UTC ms) ───────────── */
@@ -117,16 +111,16 @@ export const OpStatus = ({ value, size }: { value: string; size?: 'sm' | 'md' })
 /** Operation Runtime State (separate from AI mode, eligibility and policy). A step in review pauses new dispatch. */
 export const hasReview = (op: Operation) => (op.status === 'running' || op.status === 'paused') && op.steps.some((s) => s.status === 'review')
 export const runtimeLabel = (op: Operation) => (hasReview(op) ? 'Paused — Awaiting Review' : op.status === 'estop' ? 'Emergency stopped' : op.status === 'paused' ? 'Paused' : op.status === 'cancelled' ? 'Stopped' : op.status === 'done' ? 'Completed' : op.status === 'running' ? 'Running' : op.status.charAt(0).toUpperCase() + op.status.slice(1))
-export const stepBranches = (db: Db, opId: string, stepId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.stepId === stepId)
-export const failedBranches = (db: Db, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.state === 'failed')
-export const opGroups = (db: Db, opId: string) => db.branchGroups.filter((g) => g.opId === opId)
+export const stepBranches = (db: Pick<Db, 'branches'>, opId: string, stepId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.stepId === stepId)
+export const failedBranches = (db: Pick<Db, 'branches'>, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.state === 'failed')
+export const opGroups = (db: Pick<Db, 'branchGroups'>, opId: string) => db.branchGroups.filter((g) => g.opId === opId)
 /** Conversation linked via the operation's plan */
-export const opConversation = (db: Db, op: Operation) => { const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined; return pl ? db.conversations.find((c) => c.id === pl.conversationId) : undefined }
+export const opConversation = (db: Pick<Db, 'plans' | 'conversations'>, op: Operation) => { const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined; return pl ? db.conversations.find((c) => c.id === pl.conversationId) : undefined }
 
 /** Status pill that shows the runtime state (e.g. "Paused — Awaiting Review") and flags failed branches; a failed branch is never shown as plain success. */
 export function RuntimeStatus({ op, size }: { op: Operation; size?: 'sm' | 'md' }) {
-  const db = useDb()
-  const fb = failedBranches(db, op.id).length
+  const view = useOperationView(op.id)
+  const fb = view ? failedBranches(view, op.id).length : 0
   const review = hasReview(op)
   const h = size === 'sm' ? 'h-6' : 'h-7'
   return (
@@ -145,47 +139,7 @@ export const planApprovalState = (pl?: Plan): 'none' | 'waiting' | 'approved' | 
 export const stepMinutes = (op: Operation) => draftMinutes(op.steps.length)
 
 /* ───────────── V3 preflight: 8 spec checks with PASS / WARN / FAIL / NOT CHECKED ───────────── */
-export type PfState = 'pass' | 'warn' | 'fail' | 'nc'
-export interface PfCheck { n: number; code: string; label: string; state: PfState; detail: string; fix?: string; to?: Route }
 export interface PfSnap { at: string; roe: string; plan: string; checks: PfCheck[] }
 export const PF_LABEL: Record<PfState, string> = { pass: 'PASS', warn: 'WARN', fail: 'FAIL', nc: 'NOT CHECKED' }
 export const PF_TONE: Record<PfState, string> = { pass: 'border-ok/30 bg-ok-soft text-ok', warn: 'border-warn/30 bg-warn-soft text-warn', fail: 'border-bad/30 bg-bad-soft text-bad', nc: 'border-line bg-subtle text-muted' }
 export const pfOverall = (cs: PfCheck[]): PfState => (cs.some((c) => c.state === 'fail') ? 'fail' : cs.some((c) => c.state === 'nc') ? 'nc' : cs.some((c) => c.state === 'warn') ? 'warn' : 'pass')
-
-/** Builds the 8 required preflight checks from the canonical derivation at the
- *  caller's factory-clock instant plus C2/policy context. Never invents a pass.
- *  (Ticket 67: the store's computePreflight demo-anchor wrapper is retired —
- *  callers pass the services clock's instant.) */
-export function specChecks(db: Db, op: Operation, now: Instant): PfCheck[] {
-  const raw = computePreflightChecks(db, op, now)
-  const g = (c: string) => raw.find((x) => x.code === c)!
-  const p = db.projects.find((x) => x.id === op.projectId)!
-  const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
-  const roeTo: Route = { page: 'project', tab: 'scope', id: p.id }
-  const st = (c: { state: string }): PfState => (c.state === 'pass' ? 'pass' : 'fail')
-  const out: PfCheck[] = []
-  const r1 = g('PRE-01'), r2 = g('PRE-02')
-  out.push({ n: 1, code: 'PF-1', label: 'Project status and ROE approval / version', state: r1.state !== 'pass' || r2.state !== 'pass' ? 'fail' : 'pass', detail: r1.state !== 'pass' ? r1.detail : r2.detail, fix: 'Open Scope & ROE', to: roeTo })
-  const r3 = g('PRE-03')
-  out.push({ n: 2, code: 'PF-2', label: 'Target allowlist and excluded assets', state: st(r3), detail: r3.state === 'pass' ? `${r3.detail}. Excluded assets are not targeted.` : r3.detail, fix: 'Review assets', to: r3.fixRoute })
-  const sMs = op.schedule && op.schedule !== 'now' ? schedMs(op.schedule) : null
-  const wi = sMs != null ? windowIssue(p, sMs) : ''
-  out.push({ n: 3, code: 'PF-3', label: 'Time window and project timezone', state: wi ? 'warn' : 'pass', detail: wi || `${p.window}; project timezone Asia/Ho_Chi_Minh (UTC+7)`, fix: wi ? 'Reschedule' : undefined, to: wi ? { page: 'operation-schedule', id: op.id } : undefined })
-  const r5 = g('PRE-05'), r7 = g('PRE-07')
-  out.push({ n: 4, code: 'PF-4', label: 'Approved plan / playbook version and risk review', state: r5.state !== 'pass' || r7.state !== 'pass' ? 'fail' : 'pass', detail: r5.state !== 'pass' ? r5.detail : r7.state !== 'pass' ? r7.detail : `${r5.detail}${pl ? `; plan ${pl.id} ${planVer(pl)} approved` : '; manual operation, no AI plan'}`, fix: r5.state !== 'pass' ? r5.fix : r7.fix, to: r5.state !== 'pass' ? r5.fixRoute : r7.fixRoute })
-  const r6 = g('PRE-06')
-  const lostAgents = op.agents.map((id) => db.agents.find((a) => a.id === id)).filter((a) => a && a.status !== 'online')
-  out.push({ n: 5, code: 'PF-5', label: 'Agent connectivity, assignment and reservation', state: st(r6), detail: lostAgents.length ? `${lostAgents.map((a) => `${a!.id} (${a!.host}) is ${a!.status === 'lost' ? 'disconnected' : a!.status}, last seen ${a!.lastSeen}`).join('; ')}. Remedy: restore the agent or replace it.` : r6.detail, fix: lostAgents.length ? `View ${lostAgents[0]!.id}` : r6.fix, to: lostAgents.length ? { page: 'agent', id: lostAgents[0]!.id } : r6.fixRoute })
-  const ch = db.channels.filter((c) => c.projectId === p.id)
-  const nodes = ch.map((c) => db.c2Nodes.find((n) => n.id === c.nodeId)).filter(Boolean)
-  const badCh = ch.filter((c) => c.status === 'disconnected'), warnCh = ch.filter((c) => c.status === 'degraded' || db.c2Nodes.find((n) => n.id === c.nodeId)?.status === 'degraded')
-  out.push({ n: 6, code: 'PF-6', label: 'C2 channel health (if relevant)', state: op.agents.length === 0 || ch.length === 0 ? 'nc' : badCh.length ? 'fail' : warnCh.length ? 'warn' : 'pass',
-    detail: op.agents.length === 0 ? 'Not checked: no agents are assigned, so no channel is relevant yet.' : ch.length === 0 ? 'Not checked: this project has no C2 channel configured.' : badCh.length ? `Channel ${badCh.map((c) => c.id).join(', ')} is disconnected.` : warnCh.length ? `Channel ${warnCh.map((c) => c.id).join(', ')} is degraded (node ${nodes.filter((n) => n!.status === 'degraded').map((n) => n!.name).join(', ') || 'latency'}). Execution may continue with higher latency.` : `${ch.length} channel(s) healthy`, fix: 'Open C2', to: { page: 'c2' } })
-  const r8 = g('PRE-08')
-  const member = p.members.find((m) => m.user === op.owner)
-  const opOk = !!member && ['manager', 'operator'].includes(member.role)
-  out.push({ n: 7, code: 'PF-7', label: 'Emergency contact and authorized operator', state: r8.state !== 'pass' ? 'fail' : opOk ? 'pass' : 'warn', detail: r8.state !== 'pass' ? r8.detail : opOk ? `${r8.detail}; operator ${op.owner} authorized` : `${r8.detail}; ${op.owner} is not a Manager/Operator on this project team`, fix: r8.state !== 'pass' ? 'Update ROE' : 'Open team', to: r8.state !== 'pass' ? roeTo : { page: 'project', tab: 'team', id: p.id } })
-  const upstream = out.filter((c) => c.state === 'fail').length
-  out.push({ n: 8, code: 'PF-8', label: 'Runtime policy decision and audit readiness', state: upstream ? 'nc' : 'pass', detail: upstream ? 'Not checked until checks 1-7 have no failures. No policy decision can be made yet.' : 'Policy decision: Allowed within approved ROE and scope. Audit log writable (simulated).' })
-  return out
-}

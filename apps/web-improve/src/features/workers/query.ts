@@ -37,7 +37,7 @@ export function useWorkers(projectId: string) {
   return useQuery({
     queryKey: workerKeys.list(scope, projectId),
     queryFn: async (): Promise<WorkerListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .workers(actor, projectId)
         .list({ actor, projectId, corr: 'worker-graph' })

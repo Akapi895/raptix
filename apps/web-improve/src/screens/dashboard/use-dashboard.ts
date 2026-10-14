@@ -35,8 +35,8 @@ export function useDashboard(): DashboardView {
   const q = useQuery({
     queryKey: consoleKeys.view('dashboard', scope),
     queryFn: async ({ signal }) => {
-      const res = await dashboardForScope(services, actorRef(scope.actor), projectId)
-        .read({ actor: actorRef(scope.actor), projectId, corr: 'dashboard' }, signal)
+      const res = await dashboardForScope(services, actorRef(scope.actor, scope.role), projectId)
+        .read({ actor: actorRef(scope.actor, scope.role), projectId, corr: 'dashboard' }, signal)
       if (!res.ok) throw new Error(res.failure.message)
       return res.data
     },

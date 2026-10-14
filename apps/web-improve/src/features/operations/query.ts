@@ -37,7 +37,7 @@ export function useOperationList(query: OperationListQuery) {
   return useQuery({
     queryKey: operationKeys.list(scope, query),
     queryFn: async (): Promise<OperationListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .operations(actor, scope.project)
         .list({ actor, projectId: scope.project, corr: 'operations-list' }, query)
@@ -60,7 +60,7 @@ export function useOperationDraftOptions(forOperation?: string) {
   return useQuery({
     queryKey: operationKeys.draftOptions(scope, forOperation),
     queryFn: async (): Promise<OperationDraftOptions> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .operations(actor, scope.project)
         .draftOptions({ actor, projectId: scope.project, corr: 'operation-draft-options' }, forOperation)
@@ -82,7 +82,7 @@ export function useCreateOperation() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (input: OperationDraftInput): Promise<ServiceResult<OperationWriteRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).create({ actor, projectId: scope.project, corr: corr('operation-create') }, input)
     },
   })
@@ -93,7 +93,7 @@ export function useUpdateOperation() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string; patch: OperationDraftPatch }): Promise<ServiceResult<OperationWriteRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).update({ actor, projectId: scope.project, corr: corr('operation-update') }, v.id, v.patch)
     },
   })
@@ -105,7 +105,7 @@ export function useScheduleOperation() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string; at: 'now' | string }): Promise<ServiceResult<OperationWriteRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).schedule({ actor, projectId: scope.project, corr: corr('operation-schedule') }, v.id, v.at)
     },
   })
@@ -125,7 +125,7 @@ export function useOperationDetail(id: string) {
   return useQuery({
     queryKey: operationKeys.detail(scope, id),
     queryFn: async (): Promise<OperationDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .operations(actor, scope.project)
         .detail({ actor, projectId: scope.project, corr: 'operation-detail' }, id)
@@ -147,7 +147,7 @@ export function useRunPreflight() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string }): Promise<ServiceResult<PreflightRunRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).preflight({ actor, projectId: scope.project, corr: corr('operation-preflight') }, v.id)
     },
   })
@@ -168,7 +168,7 @@ export function useStartOperation() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string }): Promise<ServiceResult<OperationTransitionRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).start({ actor, projectId: scope.project, corr: corr('operation-start') }, v.id)
     },
   })
@@ -179,7 +179,7 @@ export function usePauseOperation() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string; reason: string }): Promise<ServiceResult<OperationTransitionRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).pause({ actor, projectId: scope.project, corr: corr('operation-pause') }, v.id, v.reason)
     },
   })
@@ -190,7 +190,7 @@ export function useResumeOperation() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string }): Promise<ServiceResult<OperationTransitionRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).resume({ actor, projectId: scope.project, corr: corr('operation-resume') }, v.id)
     },
   })
@@ -201,7 +201,7 @@ export function useStopOperation() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string; reason: string }): Promise<ServiceResult<OperationTransitionRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).stop({ actor, projectId: scope.project, corr: corr('operation-stop') }, v.id, v.reason)
     },
   })
@@ -212,7 +212,7 @@ export function useCompleteOperation() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string }): Promise<ServiceResult<OperationTransitionRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).complete({ actor, projectId: scope.project, corr: corr('operation-complete') }, v.id)
     },
   })
@@ -233,7 +233,7 @@ export function useReviewStep() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { id: string; stepId: string; decision: StepDecision; note: string }): Promise<ServiceResult<OperationTransitionRead>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.operations(actor, scope.project).reviewStep({ actor, projectId: scope.project, corr: corr('operation-review') }, v.id, v.stepId, v.decision, v.note)
     },
   })
