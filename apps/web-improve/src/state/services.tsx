@@ -31,9 +31,7 @@ export function ServicesProvider({ children }: { children: ReactNode }): ReactEl
     const offRuntime = initDemoRuntime(services)
     useSessionStore.getState().setLogs(buildLogs(services.authority.snapshot()))
     let last = Date.now()
-    const offReset = services.subscribe((cs) => {
-      if (cs.corr === 'reset') { last = Date.now(); resetDemoClock() }
-    })
+    const offReset = services.clock.onReset(() => { last = Date.now(); resetDemoClock() })
     const clock = window.setInterval(() => {
       const elapsed = Date.now() - last
       last = Date.now()
