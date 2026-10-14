@@ -86,6 +86,7 @@ export class Scheduler {
 export class MockClock implements Clock {
   private elapsedMs = 0
   private listeners = new Set<(now: Instant) => void>()
+  private resetListeners = new Set<() => void>()
 
   now(): Instant { return DEMO_ANCHOR + this.elapsedMs }
 
@@ -96,7 +97,16 @@ export class MockClock implements Clock {
     this.listeners.forEach((fn) => fn(now))
   }
 
-  reset(): void { this.elapsedMs = 0 }
+  reset(): void {
+    this.elapsedMs = 0
+    this.resetListeners.forEach((fn) => fn())
+  }
+
+  /** Mounted elapsed-time adapters restart at the same dataset boundary. */
+  onReset(fn: () => void): () => void {
+    this.resetListeners.add(fn)
+    return () => { this.resetListeners.delete(fn) }
+  }
 
   onAdvance(fn: (now: Instant) => void): () => void {
     this.listeners.add(fn)
