@@ -7,40 +7,37 @@
  * layout engine, so visibility is asserted through structure and responsive
  * classes; the pixel-level visual audit stays with tickets 62/63.
  */
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { StoreProvider, useStore, type Store } from '../store'
-import { ConsoleProviders } from '../state/query'
+import { useAuthStore, resetSharedStores, useThemeStore } from '../state/stores'
+import { resetSessionStores } from '../state/session'
+import { currentRoute, go, resetNavStores, selectProject } from '../router/navigate'
+import { mountServices } from '../test/helpers'
 import { setActiveRouter } from '../router/active'
 import { RouteHost } from '../router/host'
 import { NAV } from './nav'
 
-function Probe({ ready }: { ready: (s: Store) => void }) {
-  ready(useStore())
-  return null
-}
-
 function mountApp(hash?: string) {
   if (hash !== undefined) window.location.hash = hash
-  let store!: Store
+  resetNavStores()
   const router = createHashRouter([
-    { path: '*', element: <><Probe ready={(s) => (store = s)} /><RouteHost /></>, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <RouteHost />, errorElement: <div />, hydrateFallbackElement: null },
   ])
   setActiveRouter(router)
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return { view, store: () => store }
+  return mountServices(<RouterProvider router={router} />)
 }
 
 function signIn() {
   fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
 }
+
+beforeEach(() => {
+  window.location.hash = ''
+  resetSharedStores()
+  resetSessionStores()
+  resetNavStores()
+})
 
 afterEach(() => {
   cleanup()
@@ -61,11 +58,11 @@ describe('sidebar navigation and active section', () => {
   })
 
   it('highlights Operations on an operation detail route', async () => {
-    const { store } = mountApp('#/operations')
+    mountApp('#/operations')
     signIn()
     await screen.findAllByText(/RT-2026-014/)
-    act(() => { store().go('operation', { id: 'OP-2026-118' }) })
-    await waitFor(() => expect(store().route).toEqual({ page: 'operation', id: 'OP-2026-118' }))
+    act(() => { go('operation', { id: 'OP-2026-118' }) })
+    await waitFor(() => expect(currentRoute()).toEqual({ page: 'operation', id: 'OP-2026-118' }))
     await waitFor(() => {
       const active = screen.getAllByRole('button', { current: 'page' }).map((b) => b.textContent)
       expect(active.some((t) => t?.includes('Operations'))).toBe(true)
@@ -73,11 +70,11 @@ describe('sidebar navigation and active section', () => {
   })
 
   it('highlights Projects on a project detail route', async () => {
-    const { store } = mountApp('#/projects')
+    mountApp('#/projects')
     signIn()
     await screen.findAllByText('RT-2026-014')
-    act(() => { store().go('project', { id: 'RT-2026-014' }) })
-    await waitFor(() => expect(store().route).toEqual({ page: 'project', id: 'RT-2026-014' }))
+    act(() => { go('project', { id: 'RT-2026-014' }) })
+    await waitFor(() => expect(currentRoute()).toEqual({ page: 'project', id: 'RT-2026-014' }))
     await waitFor(() => {
       const active = screen.getAllByRole('button', { current: 'page' }).map((b) => b.textContent)
       expect(active.some((t) => t?.includes('Projects'))).toBe(true)
@@ -148,10 +145,10 @@ describe('project switcher', () => {
   })
 
   it('marks inaccessible projects as disabled for a scoped persona so out-of-scope selection cannot happen', async () => {
-    const { store } = mountApp('#/command-center')
+    mountApp('#/command-center')
     signIn()
     await screen.findByRole('heading', { name: /command center/i })
-    act(() => { store().setMe('Riley Brooks') })
+    act(() => { useAuthStore.getState().setMe('Riley Brooks') })
     fireEvent.click(screen.getByRole('button', { name: /^Project: All Projects$/ }))
     const dialog = await screen.findByRole('dialog', { name: 'Select project' })
     fireEvent.click(within(dialog).getByRole('tab', { name: 'All' }))
@@ -177,22 +174,22 @@ describe('emergency stop and emergency contact controls', () => {
   }
 
   it('renders for every width class in light mode', async () => {
-    const { store } = mountApp('#/projects')
+    mountApp('#/projects')
     signIn()
     await screen.findAllByText('RT-2026-014')
-    act(() => { store().setPid('RT-2026-014') })
+    act(() => { selectProject('RT-2026-014') })
     await screen.findByRole('button', { name: /Emergency Stop/ })
     expect(document.documentElement.classList.contains('dark')).toBe(false)
     expectStopControlsAtBreakpoints()
   })
 
   it('renders for every width class in dark mode', async () => {
-    const { store } = mountApp('#/projects')
+    mountApp('#/projects')
     signIn()
     await screen.findAllByText('RT-2026-014')
-    act(() => { store().setTheme('dark') })
+    act(() => { useThemeStore.getState().setTheme('dark') })
     expect(document.documentElement.classList.contains('dark')).toBe(true)
-    act(() => { store().setPid('RT-2026-014') })
+    act(() => { selectProject('RT-2026-014') })
     await screen.findByRole('button', { name: /Emergency Stop/ })
     expectStopControlsAtBreakpoints()
   })

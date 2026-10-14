@@ -5,8 +5,8 @@
  * id/persona/step; the panel's controls are keyboard-operable buttons
  * (Prev/Next/Finish/collapse/end); the auto-advance follows the user to the
  * next step's screen; the WF-F simulated actions drive the agent
- * disconnect/restore through the DemoKit seam over the bridged demo actions;
- * ending the guide clears the panel.
+ * disconnect/restore through the DemoKit seam over the demo runtime; ending
+ * the guide clears the panel.
  *
  * Launcher/workspaces (61d): the scenarios and workspaces pages render as
  * public full-page routes outside the shell; persona selection and workspace
@@ -15,10 +15,9 @@
  * (including re-arming the seeded grant deadline on the fresh dataset) and a
  * second reset on the same mount stays coherent.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import type { Store } from '../../store'
 
 /* Captured before the fake timers are installed: `until` needs a REAL
    event-loop turn because the fake timers only flush microtasks, so the
@@ -27,12 +26,22 @@ import type { Store } from '../../store'
 const realSetTimeout = globalThis.setTimeout.bind(globalThis)
 vi.useFakeTimers()
 const realYield = () => new Promise<void>((r) => { realSetTimeout(r, 0) })
-const { StoreProvider, useStore } = await import('../../store')
-const { ConsoleProviders } = await import('../../state/query')
-const { useAuthStore } = await import('../../state/stores')
+const { useAuthStore, resetSharedStores } = await import('../../state/stores')
+const { resetSessionStores } = await import('../../state/session')
+const { go, resetNavStores } = await import('../../router/navigate')
 const { setActiveRouter } = await import('../../router/active')
 const { RouteHost, RouteErrorBoundary } = await import('../../router/host')
-const { launchGuide, stopGuide } = await import('./launch')
+const { mountServices } = await import('../../test/helpers')
+const { loseAgent } = await import('../../features/demo/runtime')
+const { launchGuide, stopGuide, jumpSeam } = await import('./launch')
+
+beforeEach(() => {
+  window.location.hash = ''
+  resetSharedStores()
+  resetSessionStores()
+  resetNavStores()
+  setActiveRouter(null)
+})
 
 afterEach(() => {
   cleanup()
@@ -44,23 +53,12 @@ afterEach(() => {
 
 function mountApp(hash?: string) {
   if (hash !== undefined) window.location.hash = hash
-  let store!: Store
-  function Probe({ ready }: { ready: (s: Store) => void }) {
-    ready(useStore())
-    return null
-  }
+  resetNavStores()
   const router = createHashRouter([
-    { path: '*', element: <><Probe ready={(s) => (store = s)} /><RouteHost /></>, errorElement: <RouteErrorBoundary />, hydrateFallbackElement: null },
+    { path: '*', element: <RouteHost />, errorElement: <RouteErrorBoundary />, hydrateFallbackElement: null },
   ])
   setActiveRouter(router)
-  render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return () => store
+  return mountServices(<RouterProvider router={router} />)
 }
 
 function signIn() {
@@ -70,8 +68,8 @@ function signIn() {
 const signedOut = () => !useAuthStore.getState().authed
 
 /** Launches a guide and settles its jump/toast timers. */
-function start(store: () => Store, id: string, at = 0) {
-  act(() => { launchGuide(store, id, at) })
+function start(seam: () => ReturnType<ReturnType<typeof jumpSeam>>, id: string, at = 0) {
+  act(() => { launchGuide(seam, id, at) })
   act(() => { vi.advanceTimersByTime(250) })
 }
 
@@ -85,9 +83,10 @@ async function until(probe: () => boolean, what: string) {
 
 describe('walkthrough panel (ticket 61c)', () => {
   it('launching a guide renders the panel with guide id, persona and step state', () => {
-    const store = mountApp('#/command-center')
+    mountApp('#/command-center')
+    const seam = jumpSeam()
     signIn()
-    start(store, 'E2E-03')
+    start(seam, 'E2E-03')
     expect(screen.getByLabelText('Demo walkthrough')).toBeInTheDocument()
     expect(screen.getByText('Demo walkthrough · E2E-03')).toBeInTheDocument()
     expect(screen.getByText('Step 1/3')).toBeInTheDocument()
@@ -96,17 +95,19 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('launching a guide from a signed-out state enters the app and shows the panel', () => {
-    const store = mountApp('#/command-center')
+    mountApp('#/command-center')
+    const seam = jumpSeam()
     expect(signedOut()).toBe(true)
-    start(store, 'E2E-03')
-    expect(store().authed).toBe(true)
+    start(seam, 'E2E-03')
+    expect(useAuthStore.getState().authed).toBe(true)
     expect(screen.getByLabelText('Demo walkthrough')).toBeInTheDocument()
   })
 
   it('Prev/Next move between steps and the last step offers Finish', () => {
-    const store = mountApp('#/command-center')
+    mountApp('#/command-center')
+    const seam = jumpSeam()
     signIn()
-    start(store, 'E2E-03')
+    start(seam, 'E2E-03')
     expect(screen.getByRole('button', { name: 'Prev' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /Next/ }))
     expect(screen.getByText('Step 2/3')).toBeInTheDocument()
@@ -119,9 +120,10 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('every control is a keyboard-operable named button (focus reaches the panel actions)', () => {
-    const store = mountApp('#/command-center')
+    mountApp('#/command-center')
+    const seam = jumpSeam()
     signIn()
-    start(store, 'E2E-03')
+    start(seam, 'E2E-03')
     for (const name of [/Next/, 'Go to this screen', 'Collapse walkthrough', 'End walkthrough']) {
       const btn = screen.getByRole('button', { name })
       expect(btn.tabIndex).toBe(0)
@@ -130,19 +132,21 @@ describe('walkthrough panel (ticket 61c)', () => {
     }
   })
 
-  it('opening the next step\'s screen auto-advances the guide', () => {
-    const store = mountApp('#/command-center')
+  it("opening the next step's screen auto-advances the guide", () => {
+    mountApp('#/command-center')
+    const seam = jumpSeam()
     signIn()
-    start(store, 'E2E-03')
+    start(seam, 'E2E-03')
     expect(screen.getByText('Step 1/3')).toBeInTheDocument()
-    act(() => { store().go('preflight', { id: 'OP-DRAFT-017' }) })
+    act(() => { go('preflight', { id: 'OP-DRAFT-017' }) })
     expect(screen.getByText('Step 2/3')).toBeInTheDocument()
   })
 
   it('collapse reduces the panel to a pill and expanding restores it', () => {
-    const store = mountApp('#/command-center')
+    mountApp('#/command-center')
+    const seam = jumpSeam()
     signIn()
-    start(store, 'E2E-03')
+    start(seam, 'E2E-03')
     fireEvent.click(screen.getByRole('button', { name: 'Collapse walkthrough' }))
     expect(screen.getByRole('button', { name: 'Expand demo walkthrough' })).toHaveTextContent('Demo E2E-03 · Step 1/3')
     fireEvent.click(screen.getByRole('button', { name: 'Expand demo walkthrough' }))
@@ -150,25 +154,27 @@ describe('walkthrough panel (ticket 61c)', () => {
   })
 
   it('the WF-F simulated actions drive the agent disconnect and restore through the kit', () => {
-    const store = mountApp('#/command-center')
+    const h = mountApp('#/command-center')
+    const seam = jumpSeam()
     signIn()
-    start(store, 'WF-F')
+    start(seam, 'WF-F')
     expect(screen.getByText('Step 1/6')).toBeInTheDocument()
-    expect(store().db.agents.find((a) => a.id === 'AG-008')!.status).not.toBe('lost')
+    expect(h.db().agents.find((a) => a.id === 'AG-008')!.status).not.toBe('lost')
     fireEvent.click(screen.getByRole('button', { name: 'Simulated action: Simulate AG-008 disconnect' }))
-    expect(store().db.agents.find((a) => a.id === 'AG-008')!.status).toBe('lost')
+    expect(h.db().agents.find((a) => a.id === 'AG-008')!.status).toBe('lost')
     expect(screen.getByText('Simulated: AG-008 disconnected. Demo data only.')).toBeInTheDocument()
-    act(() => { launchGuide(store, 'WF-F', 5) })
+    act(() => { launchGuide(seam, 'WF-F', 5) })
     act(() => { vi.advanceTimersByTime(250) })
     fireEvent.click(screen.getByRole('button', { name: 'Simulated action: Restore AG-008' }))
-    expect(store().db.agents.find((a) => a.id === 'AG-008')!.status).toBe('online')
+    expect(h.db().agents.find((a) => a.id === 'AG-008')!.status).toBe('online')
     expect(screen.getByText('Simulated: AG-008 restored. Demo data only.')).toBeInTheDocument()
   })
 
   it('ending the walkthrough clears the guide state', () => {
-    const store = mountApp('#/command-center')
+    mountApp('#/command-center')
+    const seam = jumpSeam()
     signIn()
-    start(store, 'E2E-03')
+    start(seam, 'E2E-03')
     fireEvent.click(screen.getByRole('button', { name: 'End walkthrough' }))
     expect(screen.queryByLabelText('Demo walkthrough')).not.toBeInTheDocument()
   })
@@ -199,37 +205,37 @@ describe('scenario launcher and workspaces (ticket 61d)', () => {
   })
 
   it('scenario reset runs the one authority chain through the page confirm modal and re-arms the deadline workflows', async () => {
-    const store = mountApp('#/scenarios')
+    const h = mountApp('#/scenarios')
     await until(() => screen.queryByText('Prototype Home') !== null, 'Prototype Home')
-    act(() => { store().A.loseAgent('AG-008') })
-    expect(store().db.agents.find((a) => a.id === 'AG-008')!.status).toBe('lost')
+    act(() => { loseAgent('AG-008') })
+    expect(h.db().agents.find((a) => a.id === 'AG-008')!.status).toBe('lost')
     fireEvent.click(screen.getByRole('button', { name: 'Reset Demo State' }))
     const dialog = screen.getByRole('dialog')
     expect(dialog).toHaveTextContent('All changes made in this prototype session are discarded')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Reset Demo State' }))
-    expect(store().db.agents.find((a) => a.id === 'AG-008')!.status).not.toBe('lost')
-    expect(store().db.stopState).toBeNull()
+    expect(h.db().agents.find((a) => a.id === 'AG-008')!.status).not.toBe('lost')
+    expect(h.db().stopState).toBeNull()
     /* the Scheduler re-armed against the fresh dataset: the seeded Taylor Chen
        grant on SS-041 (expires 11:15 AM, anchor + 33 min) expires on its
        deadline with no C2 screen mounted. */
     act(() => { vi.advanceTimersByTime(40 * 60 * 1000) })
-    expect(store().db.sessions.find((s) => s.id === 'SS-041')!.grants).toHaveLength(0)
+    expect(h.db().sessions.find((s) => s.id === 'SS-041')!.grants).toHaveLength(0)
   })
 
   it('a second reset on the same mount stays coherent (no duplicate publications or toasts)', async () => {
-    const store = mountApp('#/scenarios')
+    const h = mountApp('#/scenarios')
     await until(() => screen.queryByText('Prototype Home') !== null, 'Prototype Home')
     fireEvent.click(screen.getByRole('button', { name: 'Reset Demo State' }))
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Reset Demo State' }))
-    act(() => { store().A.loseAgent('AG-007') })
+    act(() => { loseAgent('AG-007') })
     fireEvent.click(screen.getByRole('button', { name: 'Reset Demo State' }))
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Reset Demo State' }))
-    expect(store().db.agents.find((a) => a.id === 'AG-007')!.status).not.toBe('lost')
+    expect(h.db().agents.find((a) => a.id === 'AG-007')!.status).not.toBe('lost')
     expect(screen.getAllByText('Demo state reset.')).toHaveLength(1)
   })
 
   it('enter app signs the selected persona in through the single auth entry and lands on the console', async () => {
-    const store = mountApp('#/scenarios')
+    mountApp('#/scenarios')
     await until(() => screen.queryByText('Prototype Home') !== null, 'Prototype Home')
     fireEvent.change(screen.getByLabelText('Persona'), { target: { value: 'Taylor Chen' } })
     expect(useAuthStore.getState().meName).toBe('Taylor Chen')
