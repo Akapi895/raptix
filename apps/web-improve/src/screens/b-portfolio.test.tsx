@@ -112,7 +112,7 @@ describe('CSV export', () => {
     const blobs: Blob[] = []
     Object.defineProperty(window.URL, 'createObjectURL', { configurable: true, value: (b: Blob) => { blobs.push(b); return `blob:${blobs.length}` } })
     Object.defineProperty(window.URL, 'revokeObjectURL', { configurable: true, value: () => {} })
-    const h = mountPortfolio()
+    mountPortfolio()
     await screen.findByText('RT-2026-014')
     fireEvent.click(screen.getByRole('button', { name: 'Export List' }))
     expect(useToastStore.getState().toasts.some((t) => t.text === 'Exported 6 projects (demo data)')).toBe(true)

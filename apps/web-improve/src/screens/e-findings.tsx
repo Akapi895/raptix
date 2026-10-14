@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
-import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, X, Search, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
+import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
 import { recordAudit } from '../features/audit/service'
 import { sevLabel, addFindingCommentTransaction } from '../features/findings/service'
 import { setReportFindingsLegacyTransaction } from '../features/reports/service'
-import { TECHNIQUES, type Finding, type FindingStatus, type Severity } from '../data'
+import { TECHNIQUES, type Finding, type Severity } from '../data'
 import { EvidenceReadError, FindingReadError, useEvidenceDetail, useEvidenceList, useFindingDetail, useFindingList, useFindingWrites } from '../features/findings/query'
 import type { EvidenceView, FindingSort, FindingTransitionTarget } from '../features/findings/service'
 import {
@@ -19,7 +19,6 @@ import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
-const STATUSES: FindingStatus[] = ['draft', 'review', 'returned', 'confirmed', 'remediation', 'retest', 'resolved']
 const STATUS_LABEL: Record<string, string> = { ai_suggested: 'AI Suggested — unverified', draft: 'Draft', review: 'In Review', returned: 'Returned', confirmed: 'Confirmed', remediation: 'In Remediation', retest: 'Retest', resolved: 'Resolved' }
 /** Status tabs; the scoped counts come from the findings read model (ticket 31). */
 const TABS: { id: string; label: string }[] = [
