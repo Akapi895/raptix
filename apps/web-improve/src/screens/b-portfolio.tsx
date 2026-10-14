@@ -17,11 +17,15 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Download, Eye, FolderPlus, MoreHorizontal, Pencil, Pin, PinOff, Plus, SlidersHorizontal } from 'lucide-react'
-import { useServices, useStore } from '../store'
+import { useServices } from '../store'
 import { eligibility } from '../features/operations/preflight'
 import { readOnlyContext } from '../auth/policy'
 import type { Project } from '../domain/entities'
 import { consoleKeys, useQueryScope } from '../state/keys'
+import { useCan, useDb, useMe } from '../state/console'
+import { useSessionStore } from '../state/session'
+import { useProjectStore, useToastStore } from '../state/stores'
+import { go } from '../router/navigate'
 import { Button, Empty, FilterBar, IdLink, Locked, Menu, PageHeader, Pager, Person, SearchBox, Select, Skeleton, Status, Table, usePaged, type Col } from '../ui'
 import { createPortfolioHandlers, ServiceReadError } from './portfolio-handlers'
 
@@ -31,8 +35,14 @@ interface PrjFilters { q: string; status: string; type: string; owner: string; c
 const EMPTY_FILTERS: PrjFilters = { q: '', status: '', type: '', owner: '', client: '' }
 
 export function ProjectPortfolio() {
-  const { db, me, pid, go, can, toast, persistFilters, setFilter } = useStore()
   const svc = useServices()
+  const db = useDb()
+  const me = useMe()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
   const scope = useQueryScope()
   const [more, setMore] = useState(false)
 

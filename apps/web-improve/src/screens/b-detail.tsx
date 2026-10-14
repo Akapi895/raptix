@@ -28,9 +28,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Lock, Pin, PinOff, Plus, SearchX, Send, ArrowRight, CheckCircle2, CircleDashed, ChevronDown, Sparkles } from 'lucide-react'
 import { APR, planVer, type Project } from '../data'
-import { useServices, useStore } from '../store'
+import { useServices } from '../store'
 import { ROLE_LABEL } from '../auth/policy'
-import { useProjectStore } from '../state/stores'
+import { useProjectStore, useToastStore } from '../state/stores'
+import { useCan, useMe } from '../state/console'
+import { go, selectProject, useRoute } from '../router/navigate'
 import { Banner, Button, Card, CardHeader, Empty, FilterBar, IconButton, IdLink, Kpi, Menu, PageHeader, Pager, Person, Progress, Select, Status, Sev, Skeleton, Table, Timeline, usePaged, useGuard, type Col } from '../ui'
 import type { DashboardAggregate, Eligibility } from './dashboard/domain'
 import { ScopeTab, TeamTab, CloseTab } from './b-detail2'
@@ -55,7 +57,6 @@ const TAB_ALIAS: Record<string, string> = { closure: 'close', closeout: 'close',
 
 /** Access-blocked / not-found state. The typed read collapses foreign and unknown projects into one not-found failure — no record content is ever rendered. */
 function Blocked({ id }: { id?: string }) {
-  const { go } = useStore()
   return (
     <div className="mx-auto max-w-xl pt-10">
       <Empty
@@ -87,7 +88,7 @@ function ReadFailure({ failure, retry }: { failure: ServiceFailure; retry: () =>
 }
 
 export function ProjectPage() {
-  const { route } = useStore()
+  const route = useRoute()
   const id = route.id
   const detail = useProjectDetail(id)
   /* One-time switcher sync on entry: the detail URL's project becomes the
@@ -112,7 +113,11 @@ export function ProjectPage() {
 }
 
 function Detail({ d }: { d: ProjectDetail }) {
-  const { me, go, route, toast, pid, setPid, can } = useStore()
+  const me = useMe()
+  const route = useRoute()
+  const toast = useToastStore((s) => s.toast)
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
   const svc = useServices()
   const p = d.project
   const ds = d.aggregate
@@ -126,7 +131,7 @@ function Detail({ d }: { d: ProjectDetail }) {
   const pending = ds.approvals.filter((a) => a.status === 'pending')
   const scopePending = pending.find((a) => a.type === APR.scope)
 
-  const via = (page: string, opts?: { id?: string; tab?: string }) => { if (pid !== p.id) { setPid(p.id); setTimeout(() => go(page, opts), 80) } else go(page, opts) }
+  const via = (page: string, opts?: { id?: string; tab?: string }) => { if (pid !== p.id) { selectProject(p.id); setTimeout(() => go(page, opts), 80) } else go(page, opts) }
   const setTab = (t: string) => go('project', { id: p.id, tab: t })
   const canOp = !guard.ro && can('run', p.id)
   const closed = p.status === 'closed' || p.status === 'cancelled'
@@ -229,7 +234,7 @@ type Via = (page: string, opts?: { id?: string; tab?: string }) => void
 
 /* ───────────── PR-03 Overview (ticket 20: dashboard domain functions over the typed aggregate) ───────────── */
 function Overview({ d, via, setTab }: { d: ProjectDetail; via: Via; setTab: (t: string) => void }) {
-  const { go, can } = useStore()
+  const can = useCan()
   const p = d.project
   const ds = d.aggregate
   const guard = useGuard(p.id)
@@ -383,7 +388,6 @@ function Overview({ d, via, setTab }: { d: ProjectDetail; via: Via; setTab: (t: 
 
 /* ───────────── PR-03/Objectives (ticket 23: typed aggregate slice) ───────────── */
 function Objectives({ p, ds }: { p: Project; ds: DashboardAggregate }) {
-  const { go } = useStore()
   const ops = ds.operations.filter((o) => o.projectId === p.id)
   type O = Project['objectives'][number]
   const cols: Col<O>[] = [
@@ -439,7 +443,7 @@ function Activity({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 
 /* ───────────── Context shortcuts (ticket 23: typed aggregate slices; eligibility is the service's derived label) ───────────── */
 function OpsTab({ p, ds, elig, via, setTab }: { p: Project; ds: DashboardAggregate; elig: Eligibility; via: Via; setTab: (t: string) => void }) {
-  const { go, can } = useStore()
+  const can = useCan()
   const guard = useGuard(p.id)
   const ops = ds.operations.filter((o) => o.projectId === p.id)
   const pg = usePaged(ops, 8)
@@ -490,7 +494,7 @@ function OpsTab({ p, ds, elig, via, setTab }: { p: Project; ds: DashboardAggrega
 }
 
 function FindingsTab({ p, ds, via }: { p: Project; ds: DashboardAggregate; via: Via }) {
-  const { go, can } = useStore()
+  const can = useCan()
   const guard = useGuard(p.id)
   const fs = ds.findings.filter((f) => f.projectId === p.id)
   const pg = usePaged(fs, 8)
@@ -517,7 +521,7 @@ function FindingsTab({ p, ds, via }: { p: Project; ds: DashboardAggregate; via: 
 }
 
 function ReportsTab({ p, ds, via }: { p: Project; ds: DashboardAggregate; via: Via }) {
-  const { go, can } = useStore()
+  const can = useCan()
   const guard = useGuard(p.id)
   const reps = ds.reports.filter((r) => r.projectId === p.id)
   const ok = !guard.ro && can('editReport', p.id)
@@ -542,7 +546,8 @@ function ReportsTab({ p, ds, via }: { p: Project; ds: DashboardAggregate; via: V
 }
 
 function EvidenceTab({ p, d }: { p: Project; d: ProjectDetail }) {
-  const { go, can, me } = useStore()
+  const me = useMe()
+  const can = useCan()
   const evs = d.evidence.filter((e) => e.projectId === p.id)
   const sens = can('viewSensitive', p.id)
   type E = (typeof evs)[number]
@@ -564,7 +569,7 @@ function EvidenceTab({ p, d }: { p: Project; d: ProjectDetail }) {
 }
 
 function AuditTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
-  const { me } = useStore()
+  const me = useMe()
   const list = ds.audit.filter((a) => a.projectId === p.id)
   const pg = usePaged(list, 10)
   type A = (typeof list)[number]
@@ -589,7 +594,6 @@ function AuditTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 
 /* ───────────── AI Plans and C2 Sessions (ticket 23: typed aggregate slices) ───────────── */
 function PlansTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
-  const { go } = useStore()
   const guard = useGuard(p.id)
   const plans = ds.plans.filter((x) => x.projectId === p.id)
   const pg = usePaged(plans, 8)
@@ -615,7 +619,6 @@ function PlansTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 }
 
 function SessionsTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
-  const { go } = useStore()
   const list = ds.sessions.filter((x) => x.projectId === p.id)
   const pg = usePaged(list, 8)
   type S = (typeof list)[number]
