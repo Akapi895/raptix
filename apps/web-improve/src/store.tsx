@@ -92,8 +92,11 @@ import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToa
 // busy, loading) is backed by the session Zustand authority; this context
 // reads/writes it like the shared authorities above.
 import { resetSessionStores, useSessionStore, type ConfirmOpts, type LogLine } from './state/session'
-import { getActiveRouter } from './router/active'
-import { isKnownPage, OUTSIDE_SHELL, parseHash, parseLocation, sameRoute, toHash, toHref, type Route } from './router/history'
+// Ticket 67 enabler B: navigation (the guarded go, the raw router forward,
+// the route projection and the auth navigation) is hosted by the canonical
+// router module; this context forwards to it with an unchanged Store surface.
+import { currentRoute, go as navGo, navRawRoute, resetNavStores, useRoute } from './router/navigate'
+import { isKnownPage, OUTSIDE_SHELL, type Route } from './router/history'
 
 /* ───────────── Simulated clock (UTC+7) ───────────── */
 /* Ticket 67: the store's hhmm/today exports retired — the session console owns
@@ -269,11 +272,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
      repeated provider mounts never inherit a previous mount's persona/
      project/UI state (an effect would leave the first render stale). The
      session authority (ticket 67 enabler A) is restored the same way. */
+  const navEpochRef = useRef(0)
   const initedRef = useRef(false)
   if (!initedRef.current) {
     initedRef.current = true
     resetSharedStores()
     resetSessionStores()
+    /* The route projection re-reads the staged hash synchronously and starts
+       this mount's navigation epoch — like the provider's own route state
+       initializer did (deep links keep working). */
+    navEpochRef.current = resetNavStores()
     /* Deep links no longer auto-authenticate (ticket 07): the auth store is
        the single authorization authority, and the route guard holds the
        requested URL as the safe return destination for unauthenticated visits. */
@@ -319,9 +327,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const me = useMemo(() => (meRoleOv ? { ...baseMe, role: meRoleOv } : baseMe), [baseMe, meRoleOv])
   const authed = useAuthStore((s) => s.authed)
   const org = useAuthStore((s) => s.org)
-  const [route, setRoute] = useState<Route>(() => parseHash())
-  const routeRef = useRef(route)
-  routeRef.current = route
+  /* The route is the router module's projection (ticket 67 enabler B) — the
+     one router subscription lives in useRoute; this context only reads it. */
+  const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const setPidRaw = useProjectStore((s) => s.setPid)
   const theme = useThemeStore((s) => s.theme)
@@ -399,29 +407,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
      the old dirtyRef staleness hazard cannot recur — a "dirty cleared first,
      then navigate" redirect is never held by the unsaved modal. */
 
-  /* navigation — the router is the single location writer (ticket 07). navRaw
-     forwards to the active data router; the fallback branch only serves
-     router-less mounts (tests) and keeps the legacy state+hash write. */
-  const navRaw = useCallback((r: Route) => {
-    clearDirty()
-    const router = getActiveRouter()
-    if (router) router.navigate(toHref(r))
-    else { setRoute(r); window.location.hash = toHash(r) }
-    document.querySelector('main')?.scrollTo?.(0, 0)
-  }, [clearDirty])
-  const go = useCallback((page: string, opts?: { id?: string; tab?: string }) => guarded(() => navRaw({ page, id: opts?.id, tab: opts?.tab })), [guarded, navRaw])
-
-  /* The store's route is a projection of the router location, synced through
-     the router's own subscription — there is deliberately no window
-     hashchange listener here (one listener, owned by the router). */
-  useEffect(() => {
-    const router = getActiveRouter()
-    if (!router) return
-    return router.subscribe(() => {
-      const next = parseLocation(router.state.location)
-      if (!sameRoute(routeRef.current, next)) { routeRef.current = next; setRoute(next) }
-    })
-  }, [])
+  /* navigation — the router is the single location writer (ticket 07). The
+     guarded go, the raw router forward (with the router-less fallback for
+     test mounts) and the route projection live in the canonical router
+     module (ticket 67 enabler B); this context forwards them unchanged. The
+     forwards scope their writes to this mount's epoch: a captured closure
+     that outlives the provider (a screen's delayed redirect) must not move a
+     later mount's route — the provider-local setRoute used to no-op after
+     unmount. */
+  const go: Store['go'] = (page, opts) => navGo(page, opts, navEpochRef.current)
 
   const DETAIL_MAP: Record<string, string> = {
     operation: 'operations', preflight: 'operations', 'operation-schedule': 'operations', finding: 'findings', report: 'reports', 'report-preview': 'reports', 'report-review': 'reports',
@@ -438,31 +432,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       setTimeout(() => setLoading(false), 450)
       /* The redirect is computed from the committed route and written once
-         through navRaw — never inside a state updater. Writing location.hash
-         in a setRoute updater used to land after later navigations and let a
-         delayed hashchange clobber the route (execution ledger, ticket 02). */
-      const r = routeRef.current
-      if (r.page === 'project' && id === 'all') navRaw({ page: 'projects' })
-      else if (r.page === 'project') navRaw({ ...r, id })
-      else if (DETAIL_MAP[r.page]) navRaw({ page: DETAIL_MAP[r.page] })
+         through navRawRoute — never inside a state updater. Writing
+         location.hash in a setRoute updater used to land after later
+         navigations and let a delayed hashchange clobber the route
+         (execution ledger, ticket 02). */
+      const r = currentRoute()
+      if (r.page === 'project' && id === 'all') navRawRoute({ page: 'projects' }, navEpochRef.current)
+      else if (r.page === 'project') navRawRoute({ ...r, id }, navEpochRef.current)
+      else if (DETAIL_MAP[r.page]) navRawRoute({ page: DETAIL_MAP[r.page] }, navEpochRef.current)
     })
-    }, [pid, guarded, navRaw, clearDirty])
+    }, [pid, guarded, clearDirty])
 
   /* Auth writes forward to the shared auth authority via the auth feature
-     actions (ticket 06); navigation forwards to the router (ticket 07). */
+     actions (ticket 06); navigation forwards to the router module (ticket 07). */
   const login = (o?: string) => {
     signIn(useAuthStore.getState().meName, o)
     /* Safe return destination: the guard renders login in place for protected
        URLs, so signing in reveals the requested route without a redirect.
        Public and unknown destinations go home. */
-    const r = routeRef.current
+    const r = currentRoute()
     if (isKnownPage(r.page) && r.page !== 'login' && !OUTSIDE_SHELL.has(r.page)) {
       clearDirty()
       return
     }
-    navRaw({ page: 'command-center' })
+    navRawRoute({ page: 'command-center' }, navEpochRef.current)
   }
-  const logout = () => { signOut(); navRaw({ page: 'login' }) }
+  const logout = () => { signOut(); navRawRoute({ page: 'login' }, navEpochRef.current) }
 
   /* ───────── Helpers ───────── */
   const buildLogs = (d: Db) => {
