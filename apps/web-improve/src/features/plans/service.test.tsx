@@ -26,7 +26,7 @@ import { DEMO_ANCHOR } from '../../domain/clock'
 import { mountServices } from '../../test/helpers'
 import { DAY_MS, effectivePlanStatus, usableApproval } from './service'
 import { createOperationFromPlanTransaction } from './bridge'
-import { MyTasks } from '../../screens/a-dashboard'
+import { MyTasks } from '../../screens/a-tasks'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 
