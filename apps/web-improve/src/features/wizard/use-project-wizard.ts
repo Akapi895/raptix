@@ -6,22 +6,31 @@
  * values and completion state across all input steps, `formState.isDirty`
  * drives the shared unsaved-changes guard (`useDirty`), and every step
  * transition gates on that step's fields through the shared Zod schema (the
- * review step gates through the submit issues). Save-draft/create delegate
- * to the legacy store action, which lands in the ticket-19 transaction
- * handler — refusals surface as submit errors with the draft kept — so the
- * end-to-end creation flow and its audit trail stay the one canonical path.
+ * review step gates through the submit issues). Save-draft/create run the
+ * ticket-19 transaction handler directly (the same handler the legacy store
+ * action delegates to) with the same request context and refusal behavior —
+ * refusals surface as submit errors with the draft kept — and a committed
+ * creation writes the active project, so the end-to-end creation flow and
+ * its audit trail stay the one canonical path.
  */
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useDirty, useStore } from '../../store'
+import { useDirty, useServices } from '../../store'
+import { useDb, useMe } from '../../state/console'
+import { useProjectStore, useToastStore } from '../../state/stores'
+import { go } from '../../router/navigate'
+import { createProjectTransaction } from './service'
 import {
   INFO_FIELDS, WIZARD_STEPS, defaultWizardDraft, makeWizardSchema, nextId,
   reviewIssues, toLegacyProjectDraft, validateWizardStep, type WizardDraft,
 } from './draft'
 
 export function useProjectWizard() {
-  const { db, me, go, A, toast } = useStore()
+  const services = useServices()
+  const db = useDb()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
   const canCreate = me.role === 'admin' || me.role === 'manager'
   /* Frozen at mount: the wizard cannot create projects mid-flow, so the
    * duplicate-code check and the auto-suggested code stay stable for the
@@ -83,16 +92,19 @@ export function useProjectWizard() {
     }
     if (submit && blocking.length) { setErr('Not ready to submit for approval: ' + blocking.map((b) => b.label).join('; ')); return }
     setErr(''); setSaving(true)
-    /* The single canonical creation path: the store action delegates to the
-     * ticket-19 transaction handler, which refuses unauthorized/invalid
-     * submissions with every entity unchanged ('' here). The typed draft
-     * stays in the form, so a refused submit can be fixed and retried. */
-    const id = A.createProject(toLegacyProjectDraft(w), submit)
-    if (!id) {
+    /* The single canonical creation path: the ticket-19 transaction handler
+     * refuses unauthorized/invalid submissions with every entity unchanged
+     * ('' here). The typed draft stays in the form, so a refused submit can
+     * be fixed and retried; a committed creation writes the active project
+     * (the raw pid write the store action performed). */
+    const res = createProjectTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: '', corr: 'legacy' }, toLegacyProjectDraft(w), submit)
+    if (!res.ok) {
       setSaving(false)
       setErr('The submission was rejected. Your draft is kept in the form — check the validation panel, then try again.')
       return
     }
+    useProjectStore.getState().setPid(res.data.id)
+    const id = res.data.id
     setDone(true)
     toast(submit ? `Created ${id} and submitted for approval` : `Saved draft ${id} with draft ROE-${id.slice(-3)}-v1`)
     setTimeout(() => go('project', { id, tab: submit ? 'team' : 'overview' }), 80)

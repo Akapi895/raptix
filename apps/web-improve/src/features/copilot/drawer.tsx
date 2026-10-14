@@ -9,21 +9,26 @@
  * keys embed the auth/project scope, so the drawer renders only the current
  * project's accessible conversations and a persona/project switch re-scopes or
  * refuses without exposing old engagement content. Conversation creation goes
- * through the typed handlers; sending stays on the bridged legacy action,
- * which owns the demo's response orchestration (busy flag + timer) and
- * commits through the same handlers — a mutation from either path publishes
- * the ChangeSet that refetches this drawer live. Visibility stays in the
- * shared ticket-05 UI authority (`copilotOpen`/`copilotCtx`); nothing is
- * duplicated. Proposal invariant (execution.md requirement 5): every surface
- * action is a chat message, a proposal request or permission-gated navigation
- * — the drawer exposes no execution, approval or tool-allow control.
+ * through the typed handlers; sending goes through the demo runtime's chat
+ * orchestration (busy flag + timer, the exact engine the legacy action
+ * delegates to), which commits through the same handlers — a mutation from
+ * either path publishes the ChangeSet that refetches this drawer live.
+ * Visibility stays in the shared ticket-05 UI authority
+ * (`copilotOpen`/`copilotCtx`); nothing is duplicated. Proposal invariant
+ * (execution.md requirement 5): every surface action is a chat message, a
+ * proposal request or permission-gated navigation — the drawer exposes no
+ * execution, approval or tool-allow control.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ExternalLink, Sparkles, X } from 'lucide-react'
-import { useServices, useStore } from '../../store'
+import { useServices } from '../../store'
 import { actorRef } from '../../auth/persona'
 import { useQueryScope } from '../../state/keys'
+import { useActiveProject, useCan, useReadOnly } from '../../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../../state/stores'
+import { go } from '../../router/navigate'
 import { createChatHandlers } from '../aichat/handlers'
+import { sendChat } from '../demo/runtime'
 import { ChatReadError, useConversationList } from '../aichat/query'
 import { AiModeBadge, Banner, Button, Gated, IconButton, Modal } from '../../ui'
 import { Composer, EligBadge, NoProject, Thread } from '../../screens/g-common'
@@ -45,7 +50,15 @@ const pick = (kind: string) => {
 }
 
 export function CopilotDrawer() {
-  const { copilotOpen, copilotCtx, setCopilotOpen, pid, project, A, aiMode, go, can, readOnly, toast } = useStore()
+  const copilotOpen = useUiStore((s) => s.copilotOpen)
+  const copilotCtx = useUiStore((s) => s.copilotCtx)
+  const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
+  const aiMode = useUiStore((s) => s.aiMode)
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const can = useCan()
+  const readOnly = useReadOnly()
+  const toast = useToastStore((s) => s.toast)
   const services = useServices()
   const scope = useQueryScope()
   /* Typed chat handlers for the active actor/project scope; context is built
@@ -106,7 +119,7 @@ export function CopilotDrawer() {
   const ctxLabel = copilotCtx?.label
   const kind = copilotCtx?.kind || ''
   const ro = pid !== 'all' && readOnly(pid)
-  const ask = (t: string) => { if (conv) A.sendChat(conv.id, t) }
+  const ask = (t: string) => { if (conv) sendChat(conv.id, t) }
   const proposeWhy = !conv ? 'No conversation yet.' : ro ? 'This project is read-only.' : conv.mode === 'observe' ? 'AI mode is Observe (read-only). Switch to Propose in the full workspace.' : !can('plan') ? 'Your role cannot create plan proposals.' : ''
   const findWhy = ro ? 'This project is read-only.' : !can('createFinding') ? 'Your role cannot create findings.' : ''
   const subject = ctxLabel || 'this page'
