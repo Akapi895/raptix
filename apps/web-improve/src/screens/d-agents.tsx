@@ -9,7 +9,8 @@ import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemove
 import type { AgentKpi } from '../features/agents/service'
 import { BRANCH_LABEL } from '../data'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { useAccessible, useCan, useDb, useMe, useScoped } from '../state/console'
+import { useAccessible, useCan, useMe, useScoped } from '../state/console'
+import { useGroupOptions, useAssignmentOptions, useAgentRecovery } from '../features/agents/projection'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { stamp } from '../domain/demo-clock'
@@ -41,7 +42,7 @@ function Heartbeat({ a }: { a: Agent }) {
 
 /* ───────────── Group modal (AG-03, ticket 49: typed write handler) ───────────── */
 function GroupModal({ group, onClose }: { group: Group | null; onClose: () => void }) {
-  const db = useDb()
+  const db = useGroupOptions('all')
   const pid = useProjectStore((s) => s.pid)
   const accessible = useAccessible()
   const me = useMe()
@@ -119,7 +120,7 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
 /* ───────────── Request assignment drawer (AG-V3-03, ticket 49: typed immediate assign) ───────────── */
 const isAssignReq = (t: string) => t.startsWith('Agent assignment')
 function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose: () => void }) {
-  const db = useDb()
+  const db = useAssignmentOptions()
   const pid = useProjectStore((s) => s.pid)
   const accessible = useAccessible()
   const me = useMe()
@@ -258,7 +259,7 @@ const STEP_IMPACT: Record<string, { label: string; tone: string }> = {
   notrun: { label: 'Not run; needs another agent', tone: 'text-muted' },
 }
 function FailurePanel({ a }: { a: Agent }) {
-  const db = useDb()
+  const db = useAgentRecovery(a)
   const accessible = useAccessible()
   const me = useMe()
   const services = useServices()
@@ -451,7 +452,7 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
 
 /* ───────────── Groups (AG-03, ticket 49: typed membership writes) ───────────── */
 function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: Group) => void; newWhy: string }) {
-  const db = useDb()
+  const db = useGroupOptions()
   const pid = useProjectStore((s) => s.pid)
   const scoped = useScoped<Group>()
   const can = useCan()
