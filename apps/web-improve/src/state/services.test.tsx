@@ -6,7 +6,8 @@ const { act, cleanup, fireEvent, render, screen } = await import('@testing-libra
 const { ServicesProvider, useServices } = await import('./services')
 const { useSessionStore } = await import('./session')
 const { createChatHandlers } = await import('../features/aichat/handlers')
-const { sendChat } = await import('../features/demo/runtime')
+const { sendChat, resetDemo } = await import('../features/demo/runtime')
+const { useState } = await import('react')
 
 afterEach(() => { cleanup(); vi.clearAllTimers() })
 
@@ -33,4 +34,25 @@ it('an unmounted response cannot clear the next provider mount’s pending respo
   fireEvent.click(screen.getByRole('button', { name: 'Start response' }))
   act(() => { vi.advanceTimersByTime(800) })
   expect(screen.getByText('Response pending')).toBeInTheDocument()
+})
+
+function ResetDeadline(): React.JSX.Element {
+  const services = useServices()
+  const [due, setDue] = useState(false)
+  return <>
+    <button onClick={() => {
+      resetDemo()
+      resetDemo()
+      services.schedule(services.clock.now() + 15_000, () => setDue(true))
+    }}>Reset and schedule</button>
+    <span>{due ? 'Deadline reached' : 'Deadline pending'}</span>
+  </>
+}
+
+it('resetting twice between clock ticks does not charge pre-reset elapsed time to a new deadline', () => {
+  render(<ServicesProvider><ResetDeadline /></ServicesProvider>)
+  act(() => { vi.advanceTimersByTime(7000) })
+  fireEvent.click(screen.getByRole('button', { name: 'Reset and schedule' }))
+  act(() => { vi.advanceTimersByTime(8000) })
+  expect(screen.getByText('Deadline pending')).toBeInTheDocument()
 })
