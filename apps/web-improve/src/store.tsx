@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
-import { USERS, APR, type Db, type Project, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SeedVariant, type ToolEvent } from './data'
+import { USERS, APR, type Db, type Project, type Step, type Finding, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
-import { can as policyCan, projectAccessible, readOnlyContext, ROLE_LABEL } from './auth/policy'
+import { can as policyCan, canAccessProject, readOnlyContext, ROLE_LABEL } from './auth/policy'
+export { canAccessProject } from './auth/policy'
+import type { ProjectDraft } from './features/wizard/draft'
+export type { ProjectDraft } from './features/wizard/draft'
 import type { CanAction } from './domain/permissions'
 import { ServicesProvider, useServices } from './state/services'
 // eslint-disable-next-line react-refresh/only-export-components
@@ -117,11 +120,6 @@ const pad = (n: number) => String(n).padStart(2, '0')
    authority (src/auth/policy.ts) — every consumer resolves it there. */
 type Persona = (typeof USERS)[number]
 
-/** Membership policy seam (ticket 06): forwards to the shared permissions interface. */
-export function canAccessProject(db: Db, me: Persona, projectId: string) {
-  return projectAccessible(db.projects.find((x) => x.id === projectId), { id: me.name, role: me.role })
-}
-
 /* ───────────── Project closure checklist ───────────── */
 /* Ticket 22: the derivation lives in the closure handlers
    (src/features/closure/service.ts) — one canonical, never-stored checklist
@@ -172,13 +170,6 @@ export interface Store {
   A: Actions
 }
 
-export interface ProjectDraft {
-  name: string; id: string; client: string; type: string; desc: string; start: string; end: string; tz: string; owner: string; tags: string[]
-  goal: string; objectives: { text: string; criteria: string }[]; metrics: string; unit: string; reportReq: string
-  scopeDesc: string; window: string; limits: string[]; emergency: string; channel: string; roeFile: string; approver: string
-  assets: { name: string; ident: string; type: string; scope: 'in' | 'out' }[]
-  members: { user: string; role: Role }[]
-}
 interface OpDraft { name: string; projectId: string; owner: string; desc: string; objective: string; playbookId: string; agents: string[]; assets: string[]; mode: string; schedule: string; needConfirm: boolean; note: string }
 interface FindingDraft { id?: string; projectId: string; title: string; severity: Finding['severity']; owner: string; kind: string; desc: string; scopeNote: string; asset: string; impact: string; rec: string; technique: string; op: string; stepId?: string; evidence: string[]; severityReason: string }
 
