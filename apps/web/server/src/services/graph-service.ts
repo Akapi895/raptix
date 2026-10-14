@@ -66,19 +66,17 @@ interface RawEdge { id: string; source: string; target: string; type: string; pr
 
 interface ScopedRawGraph { nodes: RawNode[]; edges: RawEdge[] }
 
-async function runScopedQuery(config: GraphConfig, engagementName: string): Promise<ScopedRawGraph> {
-  const statement = [
-    'MATCH (n) WHERE n.engagement = $engagement',
-    'OPTIONAL MATCH (n)-[r]->(m) WHERE m.engagement = $engagement',
-    'RETURN collect(DISTINCT {id: elementId(n), labels: labels(n), properties: properties(n)}) AS nodes,',
-    'collect(DISTINCT CASE WHEN r IS NOT NULL THEN {id: elementId(r), source: elementId(n), target: elementId(m), type: type(r), properties: properties(r)} END) AS edges',
-  ].join(' ');
+/**
+ * One bounded Neo4j HTTP transaction query returning raw rows. Shared by the
+ * engagement-scoped graph projection and the corpus library reads (ticket 14).
+ */
+export async function neo4jQuery(config: GraphConfig, statement: string, parameters: Record<string, unknown>): Promise<unknown[][]> {
   let response: Response;
   try {
     response = await fetch(`${config.httpUri.replace(/\/$/, '')}/db/neo4j/tx/commit`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Basic ${Buffer.from(`${config.user}:${config.password}`).toString('base64')}` },
-      body: JSON.stringify({ statements: [{ statement, parameters: { engagement: engagementName } }] }),
+      body: JSON.stringify({ statements: [{ statement, parameters }] }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (cause) {
@@ -93,8 +91,20 @@ async function runScopedQuery(config: GraphConfig, engagementName: string): Prom
   if (response.status === 401 || response.status === 403) throw new GraphUnavailableError('Graph store rejected authentication');
   if (!response.ok) throw new GraphUnavailableError(`Graph store responded ${response.status}`);
   const body = (await response.json().catch(() => null)) as { results?: Array<{ data?: Array<{ row?: unknown[] }> }> } | null;
-  const row = body?.results?.[0]?.data?.[0]?.row;
-  if (!Array.isArray(row) || row.length < 2) throw new GraphUnavailableError('Graph store returned an unreadable result');
+  const rows = body?.results?.[0]?.data?.map((entry) => entry.row ?? []).filter(Array.isArray) ?? [];
+  if (rows.length === 0) throw new GraphUnavailableError('Graph store returned an unreadable result');
+  return rows as unknown[][];
+}
+
+async function runScopedQuery(config: GraphConfig, engagementName: string): Promise<ScopedRawGraph> {
+  const statement = [
+    'MATCH (n) WHERE n.engagement = $engagement',
+    'OPTIONAL MATCH (n)-[r]->(m) WHERE m.engagement = $engagement',
+    'RETURN collect(DISTINCT {id: elementId(n), labels: labels(n), properties: properties(n)}) AS nodes,',
+    'collect(DISTINCT CASE WHEN r IS NOT NULL THEN {id: elementId(r), source: elementId(n), target: elementId(m), type: type(r), properties: properties(r)} END) AS edges',
+  ].join(' ');
+  const rows = await neo4jQuery(config, statement, { engagement: engagementName });
+  const row = rows[0]!;
   return { nodes: (row[0] ?? []) as RawNode[], edges: ((row[1] ?? []) as Array<RawEdge | null>).filter(edge => edge !== null) as RawEdge[] };
 }
 

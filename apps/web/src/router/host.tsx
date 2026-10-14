@@ -24,6 +24,7 @@ import { RealProjectCreate } from '../real/screens/create'
 import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
 import { RealAssets } from '../real/screens/assets-panel'
+import { RealLibrary } from '../real/screens/library'
 import { RealLogin } from '../real/screens/login'
 import { Button } from '../ui'
 import { Shell } from '../shell'
@@ -41,6 +42,7 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   project: RealProjectDetail,
   'ai-operator': RealWorkspace,
   assets: RealAssets,
+  playbooks: RealLibrary,
   login: RealLogin,
 }
 

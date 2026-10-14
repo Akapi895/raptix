@@ -738,3 +738,63 @@ function isFleetView(v: unknown): v is FleetView {
 export function fetchFleet(engagementId: string): Promise<FleetView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/fleet`, owned(engagementId, isFleetView))
 }
+
+/* ───────────── Tradecraft library and observed analysis (integration ticket 14) ───────────── */
+
+export interface LibrarySkillView {
+  name: string
+  description: string | null
+  subdomain: string | null
+  mitreIds: string[]
+  whenToUse: string | null
+  path: string | null
+}
+
+export interface LibraryView {
+  skills: LibrarySkillView[]
+  counts: { skills: number; techniques: number | null }
+  excludedActions: string[]
+  sources: { skills: string }
+  source: 'graph'
+}
+
+function isLibraryView(v: unknown): v is LibraryView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as LibraryView
+  return Array.isArray(doc.skills) && typeof doc.counts === 'object' && doc.source === 'graph'
+}
+
+export function fetchLibrary(): Promise<LibraryView> {
+  return apiFetch('/library', isLibraryView)
+}
+
+export interface ObservedTechniqueView {
+  techniqueId: string
+  label: string | null
+  nodeIds: string[]
+}
+
+export interface AnalysisPathView {
+  id: string
+  steps: { nodeId: string; techniqueId: string | null; label: string | null }[]
+}
+
+export interface AnalysisView {
+  engagementId: string
+  observed: ObservedTechniqueView[]
+  coverage: { observedTechniques: number; corpusTechniques: number | null; inCorpus: number | null }
+  paths: AnalysisPathView[]
+  quality: { graph: 'available' | 'empty'; truncated: boolean }
+  excludedActions: string[]
+  source: 'graph'
+}
+
+function isAnalysisView(v: unknown): v is AnalysisView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as AnalysisView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.observed) && Array.isArray(doc.paths) && doc.source === 'graph'
+}
+
+export function fetchAnalysis(engagementId: string): Promise<AnalysisView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/analysis`, owned(engagementId, isAnalysisView))
+}
