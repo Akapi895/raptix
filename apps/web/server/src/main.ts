@@ -34,6 +34,7 @@ import { FindingsWorkflowService } from './services/findings-workflow-service.js
 import { ReportsService } from './services/reports-service.js';
 import { C2GrantsService } from './services/c2-grants-service.js';
 import { FleetService } from './services/fleet-service.js';
+import { LibraryService } from './services/library-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
@@ -102,6 +103,7 @@ async function main(): Promise<void> {
   const findingsService = dbClient && env.workspacePath ? new FindingsService(dbClient, env.workspacePath) : undefined;
   const artifactsService = dbClient && env.workspacePath ? new ArtifactsService(dbClient, env.workspacePath) : undefined;
   const graphService = dbClient && env.graph ? new GraphService(dbClient, env.graph) : undefined;
+  const libraryService = graphService && env.graph ? new LibraryService(graphService, env.graph) : undefined;
   const timelineService = runsService && artifactsService && dbClient && env.workspacePath ? new TimelineService(dbClient, runsService, artifactsService, env.workspacePath) : undefined;
   const exportService = dbClient && env.workspacePath ? new ExportService(dbClient, env.workspacePath) : undefined;
   const settingsService = dbClient ? new SettingsService(dbClient, getLocalIdentity()) : undefined;
@@ -136,6 +138,7 @@ async function main(): Promise<void> {
   c2Service,
   c2Grants,
   fleetService,
+  libraryService,
   vaultService,
   membersService,
   scopeService,
