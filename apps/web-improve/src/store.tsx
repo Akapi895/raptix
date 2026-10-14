@@ -95,26 +95,15 @@ import { resetSessionStores, useSessionStore, type ConfirmOpts, type LogLine } f
 // Ticket 67 enabler B: navigation (the guarded go, the raw router forward,
 // the route projection and the auth navigation) is hosted by the canonical
 // router module; this context forwards to it with an unchanged Store surface.
-import { currentRoute, go as navGo, navRawRoute, resetNavStores, useRoute } from './router/navigate'
+import { currentRoute, go as navGo, navRawRoute, resetNavStores, selectProject, useRoute } from './router/navigate'
 import { isKnownPage, OUTSIDE_SHELL, type Route } from './router/history'
+import { hhmm, stamp, today } from './domain/demo-clock'
 
 /* ───────────── Simulated clock (UTC+7) ───────────── */
-/* Ticket 67: the store's hhmm/today exports retired — the session console owns
-   its wall-clock label (src/screens/h-session.tsx); these stay as the store's
-   internal demo-clock projection for logs/stamps only. */
-const T0 = Date.now()
+/* Ticket 67 enabler C: the demo wall-clock projection (hhmm/hhmm12/stamp/
+   today, one T0 anchor) is hosted by src/domain/demo-clock.ts — the store,
+   the C2 service and the screens share the single anchor. */
 const pad = (n: number) => String(n).padStart(2, '0')
-const nowMin = () => 10 * 60 + 42 + Math.floor((Date.now() - T0) / 60000)
-const hhmm = () => {
-  const m = nowMin()
-  return `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`
-}
-const hhmm12 = () => {
-  const m = nowMin(), h = Math.floor(m / 60) % 24
-  return `${h % 12 || 12}:${pad(m % 60)} ${h < 12 ? 'AM' : 'PM'}`
-}
-const stamp = () => `Oct 13, 2026, ${hhmm12()} (UTC+7)`
-const today = () => 'Oct 13, 2026'
 
 /* ───────────── Roles ───────────── */
 /* Ticket 67: the store's ROLE_LABEL definition moved to the auth policy
@@ -341,7 +330,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
      authority (ticket 67 enabler A); the context forwards to it so legacy
      and migrated consumers observe one state. */
   const loading = useSessionStore((s) => s.loading)
-  const setLoading = useSessionStore((s) => s.setLoading)
   const confirmState = useSessionStore((s) => s.confirmState)
   const confirm = useSessionStore((s) => s.confirm)
   const closeConfirm = useSessionStore((s) => s.closeConfirm)
@@ -409,39 +397,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   /* navigation — the router is the single location writer (ticket 07). The
      guarded go, the raw router forward (with the router-less fallback for
-     test mounts) and the route projection live in the canonical router
-     module (ticket 67 enabler B); this context forwards them unchanged. The
-     forwards scope their writes to this mount's epoch: a captured closure
-     that outlives the provider (a screen's delayed redirect) must not move a
-     later mount's route — the provider-local setRoute used to no-op after
-     unmount. */
+     test mounts), the route projection and the guarded project selection
+     live in the canonical router module (ticket 67 enablers B/C); this
+     context forwards them unchanged. The forwards scope their writes to this
+     mount's epoch: a captured closure that outlives the provider (a screen's
+     delayed redirect) must not move a later mount's route — the
+     provider-local setRoute used to no-op after unmount. */
   const go: Store['go'] = (page, opts) => navGo(page, opts, navEpochRef.current)
-
-  const DETAIL_MAP: Record<string, string> = {
-    operation: 'operations', preflight: 'operations', 'operation-schedule': 'operations', finding: 'findings', report: 'reports', 'report-preview': 'reports', 'report-review': 'reports',
-    agent: 'agents', asset: 'assets', 'asset-scope': 'assets', playbook: 'playbooks', 'playbook-review': 'playbooks', technique: 'playbooks',
-    'ai-plan': 'ai-operator', 'ai-plan-review': 'ai-operator', 'ai-plan-compare': 'ai-operator', 'ai-trace': 'ai-operator', 'ai-history': 'ai-operator',
-    'c2-session': 'c2', 'c2-console': 'c2', 'c2-channel': 'c2',
-  }
-  const setPid = useCallback((id: string) => {
-    if (id === pid) { setSwitcherOpen(false); return }
-    guarded(() => {
-      clearDirty()
-      setPidRaw(id)
-      setSwitcherOpen(false)
-      setLoading(true)
-      setTimeout(() => setLoading(false), 450)
-      /* The redirect is computed from the committed route and written once
-         through navRawRoute — never inside a state updater. Writing
-         location.hash in a setRoute updater used to land after later
-         navigations and let a delayed hashchange clobber the route
-         (execution ledger, ticket 02). */
-      const r = currentRoute()
-      if (r.page === 'project' && id === 'all') navRawRoute({ page: 'projects' }, navEpochRef.current)
-      else if (r.page === 'project') navRawRoute({ ...r, id }, navEpochRef.current)
-      else if (DETAIL_MAP[r.page]) navRawRoute({ page: DETAIL_MAP[r.page] }, navEpochRef.current)
-    })
-    }, [pid, guarded, clearDirty])
+  const setPid: Store['setPid'] = (id) => selectProject(id, navEpochRef.current)
 
   /* Auth writes forward to the shared auth authority via the auth feature
      actions (ticket 06); navigation forwards to the router module (ticket 07). */
