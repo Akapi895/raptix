@@ -31,18 +31,17 @@ export interface C2AccessInfo { key: C2AccessKey; label: string; tone: 'ok' | 'w
 
 export type C2Perm = 'none' | 'read-only' | 'interactive'
 
+/* Ticket 70: the pure permission rule lives in ./session-perm so eager
+   consumers (navigation search) do not pull this read service into the
+   initial load; the rule itself is unchanged. */
+export { sessionPermOf } from './session-perm'
+import { sessionPermOf } from './session-perm'
+
 /* Ticket 67 enabler C: the demo wall-clock label is hosted by the canonical
    projection (src/domain/demo-clock.ts — one T0 anchor shared with the
    store's stamps and the live logs). Re-exported for the session console's
    grant countdown and its suite. */
 export { hhmm } from '../../domain/demo-clock'
-
-/** Recorded per-user permission for one session (viewer ⇒ none; grant ⇒ grant perm; member ⇒ read-only). */
-export function sessionPermOf(db: Db, ctx: RequestContext, s: Session): C2Perm {
-  if (ctx.actor.role === 'viewer' || !projectAccessible(db.projects.find((p) => p.id === s.projectId), ctx.actor)) return 'none'
-  const g = s.grants.find((x) => x.user === ctx.actor.id)
-  return g ? g.perm : 'read-only'
-}
 
 /** The actor's access state for one session, derived only from recorded grants/requests. */
 export function accessOf(db: Db, ctx: RequestContext, s: Session): C2AccessInfo {

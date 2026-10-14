@@ -3,7 +3,7 @@ import { can, projectAccessible } from '../../auth/policy'
 import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 import { projectView, scopedRows } from '../../domain/projection'
-import { sessionPermOf } from '../c2/service'
+import { sessionPermOf } from '../c2/session-perm'
 
 export interface SearchResult { group: string; id: string; label: string; meta: string; page: string }
 

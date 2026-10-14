@@ -42,7 +42,12 @@ function literalBody(src, marker) {
 function parseKeys(body) {
   const keys = []
   const re = /(?:^|[,{\s])\s*(?:'([^']+)'|"([^"]+)"|([A-Za-z][\w-]*))\s*:/g
-  for (const m of body.matchAll(re)) keys.push(m[1] || m[2] || m[3])
+  for (const m of body.matchAll(re)) {
+    const k = m[1] || m[2] || m[3]
+    // `default:` appears inside React.lazy route wrappers (`.then((m) => ({ default: m.X }))`)
+    // and is the lazy-component contract, never a route key.
+    if (k !== 'default') keys.push(k)
+  }
   return keys
 }
 
