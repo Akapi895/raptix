@@ -24,6 +24,7 @@ const STATUS_LABEL: Record<string, string> = { online: 'Connected', idle: 'Idle'
 const ACTIVE_PROJECT = ['active', 'approved']
 
 /* ───────────── Heartbeat bars (simulated) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function Heartbeat({ a }: { a: Agent }) {
   const h = hashNum(a.id)
   const n = 24
@@ -41,6 +42,7 @@ function Heartbeat({ a }: { a: Agent }) {
 }
 
 /* ───────────── Group modal (AG-03, ticket 49: typed write handler) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function GroupModal({ group, onClose }: { group: Group | null; onClose: () => void }) {
   const db = useGroupOptions('all')
   const pid = useProjectStore((s) => s.pid)
@@ -119,6 +121,7 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
 
 /* ───────────── Request assignment drawer (AG-V3-03, ticket 49: typed immediate assign) ───────────── */
 const isAssignReq = (t: string) => t.startsWith('Agent assignment')
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose: () => void }) {
   const db = useAssignmentOptions()
   const pid = useProjectStore((s) => s.pid)
@@ -258,6 +261,7 @@ const STEP_IMPACT: Record<string, { label: string; tone: string }> = {
   pending: { label: 'Waiting; cannot start on this agent', tone: 'text-warn' },
   notrun: { label: 'Not run; needs another agent', tone: 'text-muted' },
 }
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function FailurePanel({ a }: { a: Agent }) {
   const db = useAgentRecovery(a)
   const accessible = useAccessible()
@@ -340,6 +344,7 @@ function FailurePanel({ a }: { a: Agent }) {
 /** One row: the canonical agent plus the service-derived decorations. */
 type FleetRow = Agent & { sessions: number; pending?: { id: string; by: string; at: string; reviewer: string } }
 
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project' | 'pool'; onNewGroup: () => void; newGroupWhy: string; onAssign: (a: Agent | null) => void }) {
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
@@ -451,6 +456,7 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
 
 
 /* ───────────── Groups (AG-03, ticket 49: typed membership writes) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: Group) => void; newWhy: string }) {
   const db = useGroupOptions()
   const pid = useProjectStore((s) => s.pid)
@@ -527,6 +533,7 @@ function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: G
 }
 
 /* ───────────── Connectivity & health (AG-04, ticket 48: typed service read) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function HealthTab() {
   const pid = useProjectStore((s) => s.pid)
   const can = useCan()
@@ -620,6 +627,7 @@ function HealthTab() {
 }
 
 /* ───────────── Main page ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function Agents() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -646,6 +654,7 @@ function Agents() {
 }
 
 /* ───────────── Detail (AG-02, ticket 48: typed service read + Query) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- agents route bundle: sub-screens co-exported for the registry
 function AgentDetail() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)

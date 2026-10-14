@@ -5,6 +5,7 @@ import { useUiStore } from '../state/stores'
 import { Banner, Button, Empty, Mono, PageSkeleton, cx } from '../ui'
 
 /** Wraps a screen: shows a skeleton while the project is switching */
+// eslint-disable-next-line react-refresh/only-export-components -- shared agent/asset/library screen helpers
 export function withLoading(C: ComponentType): ComponentType {
   return function Wrapped() {
     const loading = useSessionStore((s) => s.loading)
@@ -12,8 +13,10 @@ export function withLoading(C: ComponentType): ComponentType {
   }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared agent/asset/library screen helpers
 export const hashNum = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7)
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared agent/asset/library screen helpers
 export const POOL_LABEL = 'Unassigned (shared pool)'
 
 /** Banner asking for a specific project while in "All Projects" mode */
@@ -84,4 +87,5 @@ export function DTable<T>({ cols, rows, rowKey, onRow, empty, selectedKey }: { c
 export const Trunc = ({ children, max = 'max-w-[180px]' }: { children: string; max?: string }) => <span title={children} className={cx('block truncate', max)}>{children}</span>
 
 /** Short date: "Oct 13, 10:42 AM" -> keeps as is but strips trailing tz words */
+// eslint-disable-next-line react-refresh/only-export-components -- shared agent/asset/library screen helpers
 export const shortDate = (s: string) => s.replace(/\s*\(UTC\+7\)/, '').replace(/^(\w{3}) (\d+),? (\d{4}),?\s*/, '$1 $2, ')

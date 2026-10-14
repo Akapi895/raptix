@@ -14,11 +14,13 @@ import { publishNotice } from '../features/notices/service'
 
 const tName = (id: string) => TECHNIQUES.find((t) => t.id === id)?.name ?? id
 
+// eslint-disable-next-line react-refresh/only-export-components -- library route bundle: sub-screens co-exported for the registry
 function PbStatus({ s }: { s: Playbook['status'] }) {
   return s === 'approved' ? <Status kind="check" value="pass" label="Approved" /> : s === 'review' ? <Status kind="report" value="review" label="In review" /> : <Status kind="report" value="draft" label="Draft, not usable yet" />
 }
 
 /* ───────────── Playbooks & TTPs (PB-01, ticket 52: typed service read + Query) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- library route bundle: sub-screens co-exported for the registry
 function Playbooks() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -117,6 +119,7 @@ function Playbooks() {
 }
 
 /* ───────────── Playbook detail (PB-02, PB-03) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- library route bundle: sub-screens co-exported for the registry
 function PlaybookDetail() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -235,6 +238,7 @@ function PlaybookDetail() {
 }
 
 /* ───────────── Playbook review (PB-V3-03 / V3-14, ticket 53: typed service) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- library route bundle: sub-screens co-exported for the registry
 function PlaybookReview() {
   const route = useRoute()
   const can = useCan()
@@ -402,6 +406,7 @@ function PlaybookReview() {
 }
 
 /* ───────────── Technique detail (PB-04, ticket 52: typed service read + Query) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- library route bundle: sub-screens co-exported for the registry
 function TechniqueDetail() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
