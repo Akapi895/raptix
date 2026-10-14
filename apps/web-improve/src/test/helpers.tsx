@@ -25,9 +25,8 @@ export function mountServices(ui: ReactNode = null, me = 'Alex Morgan') {
       </ConsoleProviders>
     </ServicesProvider>
   )
-  const view = render(tree(null))
+  const view = render(tree(ui))
   act(() => { useAuthStore.getState().setMe(me) })
-  if (ui !== null) view.rerender(tree(ui))
   return Object.assign(view, {
     svc: (): ConsoleServices => services,
     qc: (): QueryClient => client,
