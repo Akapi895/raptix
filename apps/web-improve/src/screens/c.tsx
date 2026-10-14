@@ -431,6 +431,9 @@ function PreflightPage({ op }: { op: Operation }) {
      is re-derived at click time, so a policy change between render and click
      is refused with its reason instead of starting. */
   const startOp = useStartOperation()
+  /* rules-of-hooks: registered before the not-found early return; the guard
+     keeps the pre-return render a no-op exactly like the missing call did. */
+  useEffect(() => { if (!view) return; if (route.tab === 'run' && !snap && allowed && !started) run() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   if (!view) return null
   const p = view.project
   const pb = view.playbook
@@ -465,7 +468,6 @@ function PreflightPage({ op }: { op: Operation }) {
       toast(pfOverall(cs) === 'fail' ? 'Preflight finished with failures. Start is unavailable.' : 'Preflight snapshot recorded.', pfOverall(cs) === 'fail' ? 'bad' : 'info')
     } })
   }
-  useEffect(() => { if (route.tab === 'run' && !snap && allowed && !started) run() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const approver = view.approvals.find((a) => a.status === 'approved')
   const disabledEdit = !allowed || started
   const runWhy = !allowed ? (ro ? reason : 'You cannot run checks.') : started ? 'The operation has already started.' : undefined

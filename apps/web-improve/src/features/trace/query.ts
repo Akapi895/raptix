@@ -73,5 +73,5 @@ export function useTraceWrites() {
       decide: (id: string, decision: ToolDecision, reason: string): Promise<ServiceResult<ToolDecisionOutcome>> =>
         services.trace(actor, scope.project).decide(ctx('tool-decision'), id, decision, reason),
     }
-  }, [services, scope.actor, scope.project])
+  }, [services, scope.actor, scope.role, scope.project])
 }
