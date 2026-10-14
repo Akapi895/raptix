@@ -535,4 +535,5 @@ export function FanOutPage() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- fanout screen module: helper co-exported with screens
 export const routes: Record<string, ComponentType> = { 'ai-fanout': FanOutPage, 'ai-branch': BranchPage }

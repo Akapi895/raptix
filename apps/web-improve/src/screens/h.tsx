@@ -24,6 +24,7 @@ const short = (t: string) => t.replace('Oct 13, 2026, ', '')
    handlers (src/features/c2); the legacy grant-expiry watcher stays until
    ticket 46 moves the deadline lifecycle into the service. Request/grant
    decisions and termination keep the legacy bridge until 46. */
+// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
 function C2Overview() {
   const db = useStopRead()
   const route = useRoute()
@@ -79,6 +80,7 @@ function C2Overview() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
 function Infra({ nodes, channels, noC2 }: { nodes: C2NodeRow[]; channels: Channel[]; noC2: boolean }) {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -118,6 +120,7 @@ function Infra({ nodes, channels, noC2 }: { nodes: C2NodeRow[]; channels: Channe
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
 function Channels({ rows, noC2 }: { rows: Channel[]; noC2: boolean }) {
   const pid = useProjectStore((s) => s.pid)
   return <Card pad={false}><Table rows={rows} rowKey={(r) => r.id} onRow={(r) => go('c2-channel', { id: r.id })} empty={<Empty icon={Activity} title="No channels for this project" action={noC2 ? <Button onClick={() => go('project', { id: pid })}>Open project readiness</Button> : undefined}>Channels are created when a C2 node is allocated to the project.</Empty>}
@@ -128,6 +131,7 @@ function Channels({ rows, noC2 }: { rows: Channel[]; noC2: boolean }) {
     ]} /></Card>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
 function Sessions({ all }: { all: boolean }) {
   const route = useRoute()
   const can = useCan()
@@ -194,6 +198,7 @@ function Sessions({ all }: { all: boolean }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
 function Requests({ all }: { all: boolean }) {
   const services = useServices()
   const db = useRenewalSessions()
@@ -258,6 +263,7 @@ function Requests({ all }: { all: boolean }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
 function AuditViewer() {
   const toast = useToastStore((s) => s.toast)
   const can = useCan()
@@ -296,6 +302,7 @@ function AuditViewer() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 route bundle: sub-screens co-exported for the registry
 function ChannelDetail() {
   const route = useRoute()
   const [tab, setTab] = useState('overview')
