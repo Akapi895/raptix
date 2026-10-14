@@ -1,31 +1,20 @@
 /**
- * Ticket 67 enabler B: the canonical navigation module (src/router/navigate.ts)
- * hosts what the legacy store context used to own — the guarded `go`, the raw
- * router forward (with the router-less fallback for test mounts) and the route
- * projection. The dirty guard keeps the session authority as its only state,
- * the router stays the single location writer, and the store context forwards
- * to the module with an unchanged Store surface.
+ * Canonical guarded navigation, router subscriptions and mount-epoch isolation.
  */
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { StoreProvider, useStore, type Store } from '../store'
-import { ConsoleProviders } from '../state/query'
+import { mountServices } from '../test/helpers'
 import { resetSessionStores, useSessionStore } from '../state/session'
 import { resetSharedStores, useProjectStore, useUiStore } from '../state/stores'
 import { setActiveRouter } from './active'
 import { RouteHost, RouteErrorBoundary } from './host'
-import { currentRoute, go, navRawRoute, resetNavStores, selectProject, useRoute } from './navigate'
+import { currentRoute, go, navigationEpoch, navRawRoute, resetNavStores, selectProject, useRoute } from './navigate'
 import type { Route } from './history'
 
 let latest: Route
 function RouteProbe() {
   latest = useRoute()
-  return null
-}
-
-function StoreProbe({ ready }: { ready: (s: Store) => void }) {
-  ready(useStore())
   return null
 }
 
@@ -138,49 +127,39 @@ describe('selectProject (guarded project switch)', () => {
   })
 })
 
-describe('store forwarding (Store surface unchanged)', () => {
-  it("the store's route/go forward to the module in both directions", () => {
+describe('mounted navigation integration', () => {
+  it('rendered route subscriptions observe guarded and raw router navigation', () => {
     window.location.hash = '#/projects'
-    let store!: Store
     const router = createHashRouter([
-      { path: '*', element: <><StoreProbe ready={(s) => (store = s)} /><RouteHost /></>, errorElement: <RouteErrorBoundary />, hydrateFallbackElement: null },
+      { path: '*', element: <><RouteProbe /><RouteHost /></>, errorElement: <RouteErrorBoundary />, hydrateFallbackElement: null },
     ])
     setActiveRouter(router)
-    render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <RouterProvider router={router} />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    expect(store.route).toEqual({ page: 'projects' })
+    mountServices(<RouterProvider router={router} />)
+    expect(latest).toEqual({ page: 'projects' })
     act(() => { go('playbooks') })
-    expect(store.route.page).toBe('playbooks')
+    expect(latest.page).toBe('playbooks')
     expect(window.location.hash).toBe('#/playbooks')
-    act(() => { store.go('settings') })
+    act(() => { navRawRoute({ page: 'settings' }) })
     expect(currentRoute().page).toBe('settings')
+    expect(latest.page).toBe('settings')
     expect(window.location.hash).toBe('#/settings')
   })
 
   it("a captured go from an unmounted provider does not move a later mount's route", () => {
     const mount = (hash: string) => {
       window.location.hash = hash
-      let store!: Store
-      const view = render(
-        <StoreProvider>
-          <StoreProbe ready={(s) => { store = s }} />
-        </StoreProvider>,
-      )
-      return { store: () => store, unmount: view.unmount }
+      const view = mountServices(<RouteProbe />)
+      const epoch = navigationEpoch()
+      return { go: (page: string, opts?: { id?: string }) => go(page, opts, epoch), unmount: view.unmount }
     }
     const stale = mount('#/evidence/EV-014-02')
     stale.unmount()
     const fresh = mount('#/evidence-inspector/EV-014-01')
-    act(() => { stale.store().go('evidence', { id: 'EV-014-02' }) })
-    expect(fresh.store().route).toEqual({ page: 'evidence-inspector', id: 'EV-014-01' })
+    act(() => { stale.go('evidence', { id: 'EV-014-02' }) })
+    expect(latest).toEqual({ page: 'evidence-inspector', id: 'EV-014-01' })
     expect(window.location.hash).toBe('#/evidence/EV-014-02')
-    act(() => { fresh.store().go('projects') })
-    expect(fresh.store().route.page).toBe('projects')
+    act(() => { fresh.go('projects') })
+    expect(latest.page).toBe('projects')
     fresh.unmount()
   })
 })

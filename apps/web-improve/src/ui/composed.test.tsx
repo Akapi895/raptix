@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Search, ShieldCheck } from 'lucide-react'
-import { StoreProvider } from '../store'
+import { ServicesProvider } from '../state/services'
 import { useAuthStore } from '../state/stores'
 import {
   ApprovalBanner, Banner, Button, Card, CardHeader, DemoTag, DescList, Gated, Kpi, Locked, PageHeader, PageSkeleton, PersonaHint, Progress, Skeleton, Stepper, Timeline,
@@ -290,14 +290,14 @@ describe('skeletons and tags', () => {
 describe('persona hint', () => {
   it('explains the requirement for the current role and switches persona on click', async () => {
     useAuthStore.getState().setMe('Alex Morgan')
-    render(<StoreProvider><PersonaHint need="an approved plan" persona="Taylor Chen" /></StoreProvider>)
+    render(<ServicesProvider><PersonaHint need="an approved plan" persona="Taylor Chen" /></ServicesProvider>)
     expect(screen.getByText('This step requires an approved plan. You are signed in as manager.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Switch to Taylor Chen' }))
     expect(screen.getByText('This step requires an approved plan. You are signed in as operator.')).toBeInTheDocument()
   })
 
   it('renders custom children instead of the default hint', () => {
-    render(<StoreProvider><PersonaHint need="x" persona="y">Custom hint copy</PersonaHint></StoreProvider>)
+    render(<ServicesProvider><PersonaHint need="x" persona="y">Custom hint copy</PersonaHint></ServicesProvider>)
     expect(screen.getByText('Custom hint copy')).toBeInTheDocument()
   })
 })
