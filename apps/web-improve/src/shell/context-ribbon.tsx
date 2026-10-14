@@ -12,7 +12,10 @@ import {
 } from 'lucide-react'
 import type { Project } from '../data'
 import { go, useRoute } from '../router/navigate'
-import { useActiveProject, useCan, useDb, useMe } from '../state/console'
+import { useActiveProject, useCan, useMe } from '../state/console'
+import { useStopRead } from '../features/estop/projection'
+import { useProjectActivity } from '../features/projects/activity-read'
+import { useEligibility } from '../features/operations/eligibility-read'
 import { useSessionStore } from '../state/session'
 import { useProjectStore } from '../state/stores'
 import { emergencyStop, resolveStop, retryStop } from '../features/demo/runtime'
@@ -22,7 +25,7 @@ import { Banner, Button, Check, Field, Modal, Status, Textarea, cx } from '../ui
 import { Pop } from './pop'
 
 function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const db = useDb()
+  const db = useStopRead('all')
   const project = useActiveProject()
   const me = useMe()
   const [scope, setScope] = useState<'project' | 'workspace'>('project')
@@ -31,9 +34,8 @@ function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }
   const [err, setErr] = useState('')
   useEffect(() => { if (open) { setScope('project'); setReason(''); setAck(false); setErr('') } }, [open])
   if (!project) return null
-  const d = db as any
   const running = db.operations.filter((o) => (scope === 'workspace' || o.projectId === project.id) && ['running', 'paused'].includes(o.status))
-  const live = ((d.sessions || []) as any[]).filter((x) => (scope === 'workspace' || x.projectId === project.id) && ['connected', 'awaiting'].includes(x.state))
+  const live = db.sessions.filter((x) => (scope === 'workspace' || x.projectId === project.id) && ['connected', 'awaiting'].includes(x.state))
   const submit = () => {
     if (reason.trim().length < 5) { setErr('A reason is required (at least 5 characters). It is recorded in the audit log.'); return }
     if (!ack) { setErr('Confirm that you understand the impact.'); return }
@@ -65,9 +67,9 @@ function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 export function StopBanner() {
-  const db = useDb()
+  const db = useStopRead('all')
   const pid = useProjectStore((s) => s.pid)
-  const st = (db as any).stopState as null | { scope: string; id: string; phase: 'requested' | 'acknowledged' | 'failed' | 'unknown' | 'stopping' | 'stopped'; reason: string; at: string; by?: string }
+  const st = db.stopState
   if (!st) return null
   const opProj = st.scope === 'operation' ? db.operations.find((o) => o.id === st.id)?.projectId : ''
   const relevant = pid === 'all' || st.scope === 'workspace' || (st.scope === 'project' && st.id === pid) || opProj === pid
@@ -93,9 +95,8 @@ export function StopBanner() {
 const TONE_CLS: Record<string, string> = { ok: 'border-ok/30 bg-ok-soft text-ok', warn: 'border-warn/30 bg-warn-soft text-warn', bad: 'border-bad/30 bg-bad-soft text-bad', neutral: 'border-line bg-subtle text-muted', cyan: 'border-cyan/30 bg-info-soft text-cyan' }
 const eligLabel = (e: ReturnType<typeof eligibility>) => e.kind === 'closed' ? 'Read-only (closed)' : e.kind === 'locked' ? 'Execution Locked' : 'Execution Eligible'
 function EligBadge({ pid }: { pid: string }) {
-  const db = useDb()
+  const e = useEligibility(pid)
   const [open, setOpen] = useState(false)
-  const e = eligibility(db, pid)
   const label = eligLabel(e)
   const tone = e.kind === 'locked' ? 'bad' : e.kind === 'closed' ? 'neutral' : e.reasons.length ? 'warn' : 'ok'
   return (
@@ -154,38 +155,23 @@ export function ContextRibbon({ openSwitcher }: { openSwitcher: () => void }) {
   return <ProjectHeader project={project} />
 }
 
-function opRuntime(db: any, pid: string) {
-  const ops = (db.operations as any[]).filter((o) => o.projectId === pid)
-  const o = ops.find((x) => ['running', 'paused', 'estop'].includes(x.status))
-  if (!o) return null
-  const review = o.steps.some((x: any) => x.status === 'review')
-  const done = o.steps.filter((x: any) => ['ok', 'done'].includes(x.status)).length
-  const text = o.status === 'estop' ? 'Emergency stopped' : o.status === 'paused' ? 'Paused' : review ? 'Paused — Awaiting Review' : `Running ${done}/${o.steps.length} steps`
-  const tone = o.status === 'estop' ? 'bad' : o.status === 'paused' || review ? 'warn' : 'cyan'
-  return { id: o.id as string, text, tone }
-}
-
 function ProjectHeader({ project }: { project: Project }) {
-  const db = useDb()
+  const activity = useProjectActivity(project.id)
   const me = useMe()
   const can = useCan()
   const setFilter = useSessionStore((s) => s.setFilter)
   const [esOpen, setEsOpen] = useState(false)
   const [det, setDet] = useState(false)
   const [ct, setCt] = useState(false)
-  const running = db.operations.filter((o) => o.projectId === project.id && o.status === 'running').length
-  const stoppable = db.operations.filter((o) => o.projectId === project.id && ['running', 'paused'].includes(o.status)).length
-  const inScope = db.assets.filter((a) => a.projectId === project.id && a.scope === 'in').length
-  const rt = opRuntime(db, project.id)
-  const stopBusy = !!(db as any).stopState && ['requested', 'acknowledged', 'stopping', 'unknown', 'failed'].includes((db as any).stopState.phase)
-  const allowed = (can as any)('estop')
+  const { running, stoppable, inScope, stopBusy, runtime: rt } = activity
+  const allowed = can('estop')
   const stopWhy = !allowed ? 'Your role cannot trigger an Emergency Stop. Ask a Manager or Admin.' : stopBusy ? 'An Emergency Stop is already in progress. See the banner below.' : stoppable === 0 ? 'No running operations to stop in this project.' : ''
   const roe = project.roeStatus === 'approved' ? 'Approved' : project.roeStatus === 'none' ? 'Missing' : project.roeStatus.charAt(0).toUpperCase() + project.roeStatus.slice(1)
   const chip = 'inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs hover:bg-hover'
   const goRunning = () => { setFilter('operations.status', 'running'); setDet(false); go('operations') }
   const goInScope = () => { setFilter('assets.scope', 'in'); setDet(false); go('assets') }
   const goRt = () => { setDet(false); if (rt) go('operation', { id: rt.id }) }
-  const canContact = (can as any)('viewSensitive')
+  const canContact = can('viewSensitive')
   const rtChip = rt && <button className={cx(chip, 'border font-medium', TONE_CLS[rt.tone])} onClick={goRt} title={`Operation runtime state: ${rt.id} · ${rt.text}`}><Clock size={12} aria-hidden /><span className="font-mono">{rt.id}</span> · {rt.text}</button>
   return (
     <>
