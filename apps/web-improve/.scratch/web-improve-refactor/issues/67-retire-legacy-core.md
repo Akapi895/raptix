@@ -771,3 +771,81 @@ results, bridge and session-duality suites that exercise these screens
 through real mounted routes — including the `A.pauseOp`/typed-review bridge
 acceptance and the legacy `A.stopOp` fleet-observability cases — and
 `npm run build` covers the module graph).
+
+### Wave 7 (g screens off the store, `wi/67w7-g`)
+
+The seven g screens (operator chat, the shared g-common chat/plan kit,
+fanout branches, the plan builder, trace, workers and the workspace rail)
+leave `useStore()` entirely — 46 hook sites across 7 screens, plus the 15
+raw `A.*` entries they called; 7 files touched, +241/−78 raw (migration
+comments included), far under the caps. No new feature transactions were
+needed: every raw entry the screens used already had a canonical owner.
+The observable behavior (toasts, refusals, pins, audit rows, corr values,
+stamps) is unchanged.
+
+- `g-workers.tsx` (2 sites): WorkerDetail/WorkerTeamView `go` → the navigate
+  module; the file was otherwise typed already.
+- `g-fanout.tsx` (11 sites): useLinks/FanOutCard/AllocationView → `useDb`,
+  BranchBody → `useCan`, the retry/reassign/cancel modals → the toast
+  authority, BranchPage/BranchDrawer/FanOutPage → `useRoute`; every branch
+  mutation was already typed.
+- `g-trace.tsx` (4 sites): AiTrace/AiHistory (`pid` → the project store,
+  `can` → `useCan`, `route` → `useRoute`) and Inspector's toast → the toast
+  authority; Grouped's dead destructure left with the migration.
+- `g-workspace.tsx` (3 sites): LeftRail/Inspector/ConversationHeader on the
+  console/authority/ui seams; `A.togglePinConv` mirrors the store entry
+  exactly — `createChatHandlers(services, { id: me.name, role: me.role },
+  'all').setPinned(convId)` per call, so the handler corr stays
+  `chat-pin-1`.
+- `g-chat.tsx` (1 site): AiOperator on the console/authority/session seams
+  (`guarded` → the session authority); both `A.sendChat` call sites (the
+  starter chips and the locked-plan-outline draft button) → the canonical
+  demo-runtime `sendChat`.
+- `g-common.tsx` (12 sites): EligBadge, useReplan, ReplanPanel, ExecBanner,
+  AiSubNav, NoProject, PlanCard, useTraceLink, ToolProposalCard, Msg,
+  Thread and Composer on the console/authority/session seams, the
+  demo-runtime `sendChat`/`stopChat`, navigate (`go`/`useRoute`) and
+  `stamp()`. The ReplanPanel mirrors `A.revisePlan`/`A.editPlan` inline with
+  the store's exact semantics: the revise result's `planId` (`''` on
+  refusal) feeds the toast, and the refused-edit path still runs whenever
+  the project resolves (the no-commit edit of a foreign plan's draft), same
+  copy. `useTraceLink` is now hook-less (returns the module `go` closure);
+  its callers are unchanged. The exports `drawer.tsx` consumes
+  (`Composer`/`EligBadge`/`NoProject`/`Thread`) are untouched.
+- `g-plan.tsx` (13 sites): usePlan, useCrumbs, StepDrawer, Validation,
+  ReviseDialog, Builder, PlanDetail, PolicyChecks, StepGroups,
+  ApprovalImpact, ReviewBody, CompareBody and the `stepState`/`detailOf`
+  helpers (`ReturnType<typeof useStore>['db']` → the `Db` type import) on
+  the console/authority seams and navigate. A local `usePlanActions` hook
+  mirrors the seven raw plan entries (request approval ×2 call sites,
+  decide, withdraw, revise, edit draft, discard, execute) with the store's
+  exact call-time persona (override-aware, `corr: 'legacy'`), the
+  authority snapshot's plan→project binding, `executePlan`'s
+  `{ ok, opId?, error? }` Res bridge and the not-found copy
+  `` `Plan ${planId} does not exist.` `` — `revise` keeps returning
+  `res.ok ? res.data.planId : ''`. `usePlan`'s exported shape is preserved
+  (`setPid` now `selectProject`; no external consumers), and the
+  foreign-project switch is the same plain `selectProject` the c screens
+  use.
+
+- Delayed navigation: the audit found exactly one `setTimeout` across the
+  seven screens — AiHistory's 60 ms scroll restore
+  (`document.querySelector('main')?.scrollTo?.(0, saved.y)`), which writes
+  no route and escapes no provider, so it stays unguarded (the base had no
+  guard; adding one would change behavior). Every `go`/`selectProject` call
+  is a synchronous in-click handler.
+
+Checks: `npm run typecheck` — 0 diagnostics (`$LASTEXITCODE` 0). `npm run
+lint` — 0 errors; 164 → 164 warnings. File-level over the 7 touched files
+(baseline linted before the edits: g-chat 0, g-common 6, g-fanout 1, g-plan
+1, g-trace 0, g-workers 0, g-workspace 4 = 12): after, the same 12
+(line shifts only) — 0 new findings. `npm test -- --run --maxWorkers=2` —
+955 tests / 72 files green (`$LASTEXITCODE` 0); the known flake pair did
+not surface and no assertion changed. `npm run build` — succeeds
+(`$LASTEXITCODE` 0, pre-existing chunk-size warning only).
+
+Gaps: browser route exercise skipped (optional HTTP-check gap per AGENTS.md
+§ Windows Temporary Process Safety, same as the earlier waves; the migrated
+surfaces are pinned by the ai-operator query, ai-history pin, plan
+compare/trace writes, branches and workers suites exercising them through
+real mounted routes, and `npm run build` covers the module graph).
