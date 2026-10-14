@@ -10,7 +10,8 @@ import { OrgReadError, useAudit, useIntegrationWrites, useIntegrations, useOrgMe
 import { auditCorr, type AuditRead, type IntegrationsRead, type OrgMembersRead, type OrgProfile, type OrgProfileRead, type PoliciesRead, type RetentionRead } from '../features/settings/service'
 import { Avatar, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Input, Menu, Modal, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Toggle, cx, usePaged } from '../ui'
 import { go, navRawRoute, useRoute } from '../router/navigate'
-import { useAccessible, useDb, useMe } from '../state/console'
+import { useAccessible, useMe } from '../state/console'
+import { useSettingsTemplates, useDetectionSettings, useSecurityActivity } from '../features/settings/projection'
 import { useAuthStore, useThemeStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 
@@ -561,7 +562,7 @@ function RetentionPanel({ read }: { read: RetentionRead }) {
 
 /* ───────── Templates ───────── */
 function TemplatesTab() {
-  const db = useDb()
+  const db = useSettingsTemplates()
   const me = useMe()
   const setFilter = useSessionStore((s) => s.setFilter)
   const use = (name: string) => { setFilter('reportNewTemplate', name); go('report-new') }
@@ -588,7 +589,7 @@ const DET_UI: Record<DetectState, { label: string; icon: typeof CheckCircle2; cl
   nodata: { label: 'No data', icon: CircleHelp, cls: 'text-neutral' },
 }
 function DetectionTab() {
-  const db = useDb()
+  const db = useDetectionSettings()
   const siem = db.integrations.find((i) => i.kind === 'SIEM')
   const rows = Object.entries(db.detection).flatMap(([pid, m]) => Object.entries(m).map(([tid, st]) => ({ pid, tid, st, name: TECHNIQUES.find((t) => t.id === tid)?.name || tid })))
   const pg = usePaged(rows, 12)
@@ -750,13 +751,12 @@ function NotifTab() {
 /* ───────── Security / my account ───────── */
 function SecurityTab() {
   const me = useMe()
-  const db = useDb()
+  const live = useSecurityActivity()
   const toast = useToastStore((s) => s.toast)
   const setMe = useAuthStore((s) => s.setMe)
   /* The store's logout, verbatim: sign-out through the auth feature action,
      then the raw login-page route (the shell header's wave-2 precedent). */
   const logout = () => { signOut(); navRawRoute({ page: 'login' }) }
-  const live = db.operations.filter((o) => ['running', 'paused'].includes(o.status)).length
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       <Card>
