@@ -1,6 +1,6 @@
 # typos (crate-ci/typos) per-repo configuration
 #
-# Decepticon's skill bodies + offensive tooling include security jargon
+# Raptix's skill bodies + offensive tooling include security jargon
 # and exfiltrated-data strings that `typos` mistakes for misspellings.
 # Allowlist them here rather than disable typos entirely.
 
@@ -128,7 +128,7 @@ extend-ignore-re = [
 "NDAs" = "NDAs"      # Non-Disclosure Agreements (plural)
 "AKS" = "AKS"        # Azure Kubernetes Service
 "RTO" = "RTO"        # Red Team Operator (also Recovery Time Objective)
-# Async variants of LangChain agent middleware hooks. Decepticon names
+# Async variants of LangChain agent middleware hooks. Raptix names
 # them ``a<sync-name>`` (``aafter_model``, ``abefore_model``, ``aafter_agent``)
 # to mirror the langchain.agents.middleware convention. typos misreads
 # the leading ``a`` as a typo of the base name.
