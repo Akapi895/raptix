@@ -1,11 +1,17 @@
 import { useState, type ReactNode } from 'react'
 import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRound, Lock, LogOut, MinusCircle, MoreHorizontal, OctagonX, Plug, RefreshCw, Save, ShieldAlert, ShieldCheck, Trash2, UserPlus, XCircle } from 'lucide-react'
-import { useStore, useDirty } from '../store'
+import { useServices, useDirty } from '../store'
 import { ROLE_LABEL } from '../auth/policy'
+import { signOut } from '../auth/persona'
 import { USERS, TECHNIQUES, type Integration, type Policy, type Retention, type Role, type DetectState } from '../data'
 import { OrgReadError, useAudit, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites, useRetention, useRetentionWrites } from '../features/settings/query'
 import { auditCorr, type AuditRead, type IntegrationsRead, type OrgMembersRead, type OrgProfile, type OrgProfileRead, type PoliciesRead, type RetentionRead } from '../features/settings/service'
 import { Avatar, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Input, Menu, Modal, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Toggle, cx, usePaged } from '../ui'
+import { go, navRawRoute, useRoute } from '../router/navigate'
+import { useAccessible, useDb, useMe } from '../state/console'
+import { useAuthStore, useThemeStore, useToastStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { stamp } from '../domain/demo-clock'
 
 type TabId = 'org' | 'users' | 'integrations' | 'policies' | 'retention' | 'templates' | 'detection' | 'audit' | 'notifications' | 'security'
 const ROLES: Role[] = ['admin', 'manager', 'operator', 'reviewer', 'analyst', 'viewer']
@@ -16,7 +22,8 @@ function Forbidden({ reason }: { reason: string }) {
 const ReadOnlyNote = ({ children }: { children: ReactNode }) => <p className="mb-4 flex items-start gap-1.5 text-xs text-muted"><Lock size={13} className="mt-0.5 shrink-0" />{children}</p>
 
 export function SettingsPage() {
-  const { route, go, me } = useStore()
+  const route = useRoute()
+  const me = useMe()
   const tab = (route.tab || 'org') as TabId
   const r = me.role
   const staff = r !== 'viewer' && r !== 'operator' && r !== 'analyst'
@@ -72,7 +79,8 @@ function OrgTab() {
 }
 
 function OrgForm({ read }: { read: OrgProfileRead }) {
-  const { me, toast } = useStore()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
   const writes = useOrgWrites()
   const admin = me.role === 'admin'
   const saved = read.profile
@@ -150,7 +158,14 @@ function UsersTab() {
   return <UsersPanel read={q.data} />
 }
 function UsersPanel({ read }: { read: OrgMembersRead }) {
-  const { me, toast, confirm, A } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  /* The legacy raw `A.audit` entries, mirrored exactly: one 'legacy' commit
+     through the one authority (these simulated actions never touch data). */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const writes = useOrgWrites()
   const admin = read.canEdit
   const [view, setView] = useState<'users' | 'roles' | 'invites'>('users')
@@ -218,9 +233,8 @@ function UsersPanel({ read }: { read: OrgMembersRead }) {
           <div className="mt-3 flex flex-wrap gap-2">
             <Button disabled={!admin} title={admin ? undefined : why} onClick={() => toast('Simulated: role editor opened as a draft.', 'info')}>Create Role</Button>
             <Button disabled={!admin} title={admin ? undefined : why} onClick={() => toast('Simulated: no pending permission changes.', 'info')}>Review Permission Changes</Button>
-            <Button disabled={!admin} title={admin ? undefined : why} onClick={() => { A.audit('Saved role policy draft (simulated)', 'ROLES', '', 'Success', ''); toast('Policy draft saved') }}>Save Policy Draft</Button>
-            <Button variant="primary" disabled={!admin} title={admin ? undefined : why} onClick={() => { A.audit('Requested role policy approval (simulated)', 'ROLES', '', 'Pending', ''); toast('Approval requested from the Reviewer group') }}>Request Approval</Button>
-          </div>
+            <Button disabled={!admin} title={admin ? undefined : why} onClick={() => { audit('Saved role policy draft (simulated)', 'ROLES', '', 'Success', ''); toast('Policy draft saved') }}>Save Policy Draft</Button>
+            <Button variant="primary" disabled={!admin} title={admin ? undefined : why} onClick={() => { audit('Requested role policy approval (simulated)', 'ROLES', '', 'Pending', ''); toast('Approval requested from the Reviewer group') }}>Request Approval</Button>          </div>
         </>
       )}
       {view === 'invites' && (
@@ -254,7 +268,14 @@ function IntegrationsTab() {
 }
 
 function IntegrationsPanel({ read }: { read: IntegrationsRead }) {
-  const { A, toast, confirm } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
+     through the one authority. */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const writes = useIntegrationWrites()
   const admin = read.canEdit
   const [reauth, setReauth] = useState<string | null>(null)
@@ -272,7 +293,7 @@ function IntegrationsPanel({ read }: { read: IntegrationsRead }) {
     <>
       {!admin && <ReadOnlyNote>{why} API keys are always masked, and only admins see the configuration area.</ReadOnlyNote>}
       {read.siem && !read.siem.connected && <Banner tone="warn" title="SIEM is not connected">Analysis screens will show "No detection data yet" instead of guessed charts.</Banner>}
-      <div className="mb-3 flex justify-end"><Button disabled={!admin} title={admin ? undefined : why} onClick={() => { A.audit('Requested integration (simulated)', 'IN-new', '', 'Pending', ''); toast('Integration request submitted for review', 'info') }}>Request Integration</Button></div>
+      <div className="mb-3 flex justify-end"><Button disabled={!admin} title={admin ? undefined : why} onClick={() => { audit('Requested integration (simulated)', 'IN-new', '', 'Pending', ''); toast('Integration request submitted for review', 'info') }}>Request Integration</Button></div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {read.integrations.map((i) => (
           <Card key={i.id} className="flex flex-col gap-3">
@@ -313,7 +334,14 @@ const APPROVAL_MATRIX = [
   { id: 'PM-8', name: 'Report delivery', impact: 'Only approved and exported reports can be delivered', ver: 'v1.1', prev: 'v1.0', owner: 'Pat Kim', req: 'Red Team Manager', appr: 'Reviewer, Org Admin', diff: 'Delivery now records recipient, method and acknowledgement.' },
 ]
 function ApprovalMatrix() {
-  const { me, A, toast, confirm } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
+     through the one authority. */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const [cmp, setCmp] = useState<string | null>(null)
   const c = APPROVAL_MATRIX.find((x) => x.id === cmp)
   const admin = me.role === 'admin'
@@ -329,7 +357,7 @@ function ApprovalMatrix() {
         { key: 'a', header: 'Approved by', hideBelow: 'lg', render: (x) => x.appr },
         { key: 'x', header: '', render: (x) => <div className="flex gap-1.5 whitespace-nowrap">
           <Button size="sm" onClick={() => setCmp(x.id)}>Compare Versions</Button>
-          <Button size="sm" onClick={() => confirm({ title: `Request change to "${x.name}"`, body: admin ? 'You are an Org Admin. Separation of duties: another admin or the Policy Owner must approve your own request.' : 'The request goes to the policy owner and Organization Admins. Nothing changes until an admin approves it.', confirmLabel: 'Request Change', reasonLabel: 'What should change and why', reasonRequired: true, onConfirm: (rs) => { A.audit('Requested policy change', x.id, '', 'Pending', rs); toast(`Change requested for ${x.name}. Awaiting Organization Admin approval.`, 'info') } })}>Request Change</Button>
+          <Button size="sm" onClick={() => confirm({ title: `Request change to "${x.name}"`, body: admin ? 'You are an Org Admin. Separation of duties: another admin or the Policy Owner must approve your own request.' : 'The request goes to the policy owner and Organization Admins. Nothing changes until an admin approves it.', confirmLabel: 'Request Change', reasonLabel: 'What should change and why', reasonRequired: true, onConfirm: (rs) => { audit('Requested policy change', x.id, '', 'Pending', rs); toast(`Change requested for ${x.name}. Awaiting Organization Admin approval.`, 'info') } })}>Request Change</Button>
         </div> },
       ]} />
       <Drawer open={!!c} onClose={() => setCmp(null)} title={c ? `${c.name} — compare versions` : ''}>
@@ -362,7 +390,14 @@ function PolicyList() {
 }
 
 function PolicyListPanel({ read }: { read: PoliciesRead }) {
-  const { A, toast, confirm } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
+     through the one authority. */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const writes = usePolicyWrites()
   const admin = read.canEdit
   const why = 'Only Organization Admins can enable or disable policies. Ask an admin to request the change.'
@@ -402,7 +437,7 @@ function PolicyListPanel({ read }: { read: PoliciesRead }) {
               {hist.length > 0 && <p className="mt-2 text-xs text-muted">Last change: {hist[0].at} by {hist[0].actor}{hist[0].reason ? ` — ${hist[0].reason}` : ''}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button size="sm" variant="ghost" onClick={() => toast(`Policy ${p.id} version history: current version dated ${p.updated} (simulated).`, 'info')}>Compare Policy Versions</Button>
-                <Button size="sm" variant="ghost" disabled={admin} title={admin ? 'Admins change this policy with the toggle above' : undefined} onClick={() => { A.audit('Requested policy change (simulated)', p.id, '', 'Pending', ''); toast(`Policy change requested for ${p.name}`, 'info') }}>Request Policy Change</Button>
+                <Button size="sm" variant="ghost" disabled={admin} title={admin ? 'Admins change this policy with the toggle above' : undefined} onClick={() => { audit('Requested policy change (simulated)', p.id, '', 'Pending', ''); toast(`Policy change requested for ${p.name}`, 'info') }}>Request Policy Change</Button>
               </div>
             </Card>
           )
@@ -448,7 +483,8 @@ function RetentionTab() {
 }
 
 function RetentionPanel({ read }: { read: RetentionRead }) {
-  const { toast, confirm } = useStore()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
   const writes = useRetentionWrites()
   const admin = read.canEdit
   const why = 'Only Organization Admins can change retention policies. Ask an admin to make the change.'
@@ -524,7 +560,9 @@ function RetentionPanel({ read }: { read: RetentionRead }) {
 
 /* ───────── Templates ───────── */
 function TemplatesTab() {
-  const { db, go, me, setFilter } = useStore()
+  const db = useDb()
+  const me = useMe()
+  const setFilter = useSessionStore((s) => s.setFilter)
   const use = (name: string) => { setFilter('reportNewTemplate', name); go('report-new') }
   return (
     <>
@@ -549,7 +587,7 @@ const DET_UI: Record<DetectState, { label: string; icon: typeof CheckCircle2; cl
   nodata: { label: 'No data', icon: CircleHelp, cls: 'text-neutral' },
 }
 function DetectionTab() {
-  const { db, go } = useStore()
+  const db = useDb()
   const siem = db.integrations.find((i) => i.kind === 'SIEM')
   const rows = Object.entries(db.detection).flatMap(([pid, m]) => Object.entries(m).map(([tid, st]) => ({ pid, tid, st, name: TECHNIQUES.find((t) => t.id === tid)?.name || tid })))
   const pg = usePaged(rows, 12)
@@ -571,7 +609,8 @@ function DetectionTab() {
 /* ───────── ST-08 Audit (ticket 58: canonical typed history) ───────── */
 const AUDIT_F = { q: '', actor: '', act: '', proj: '', res: '', origin: '', corr: '', kind: '' }
 function AuditTab() {
-  const { persistFilters, setFilter } = useStore()
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
   const F = (persistFilters.auditF || AUDIT_F) as typeof AUDIT_F
   const set = (patch: Partial<typeof F>) => setFilter('auditF', { ...F, ...patch })
   const q = useAudit({ q: F.q, actor: F.actor, action: F.act, project: F.proj, result: F.res, origin: F.origin as '' | 'human' | 'ai', corr: F.corr, kind: F.kind as '' | 'estop' })
@@ -581,7 +620,14 @@ function AuditTab() {
 }
 
 function AuditPanel({ read, F, set, clear }: { read: AuditRead; F: typeof AUDIT_F; set: (patch: Partial<typeof AUDIT_F>) => void; clear: () => void }) {
-  const { A, toast, accessible } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const accessible = useAccessible()
+  /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
+     through the one authority. */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const { q, actor, act, proj, res, origin } = F
   const [sel, setSel] = useState<string | null>(null)
   const [more, setMore] = useState(false)
@@ -594,7 +640,7 @@ function AuditPanel({ read, F, set, clear }: { read: AuditRead; F: typeof AUDIT_
     const csv = ['Event ID,Time (UTC+7),Time (UTC),Actor Type,Actor,Role,Project,Action,Object,Result,Approval,Correlation ID,Reason', ...rows.map((a) => [a.id, a.at, utcOf(a.at), actorType(a), a.actor, a.role, a.projectId || 'Workspace', a.action, a.obj, a.result, approval(a), corr(a), a.reason].map(esc).join(','))].join('\n')
     const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }))
     const el = document.createElement('a'); el.href = url; el.download = 'raptix-audit-log-simulated.csv'; el.click(); URL.revokeObjectURL(url)
-    A.audit('Exported audit log (CSV)', 'AUDIT', '', 'Success', `${rows.length} records`); toast(`Exported ${rows.length} records (simulated CSV)`)
+    audit('Exported audit log (CSV)', 'AUDIT', '', 'Success', `${rows.length} records`); toast(`Exported ${rows.length} records (simulated CSV)`)
   }
   const a = rows.find((x) => x.id === sel)
   const tone = (r: string) => r === 'Success' ? 'ok' : r === 'Pending' || r === 'Warning' ? 'warn' : 'bad'
@@ -648,7 +694,11 @@ function AuditPanel({ read, F, set, clear }: { read: AuditRead; F: typeof AUDIT_
 const NTYPES = ['Approvals', 'Operation failed', 'Agent disconnected', 'Finding needs review', 'Report approved']
 const NDEF = { m: Object.fromEntries(NTYPES.map((t, i) => [t, [true, i % 2 === 0, i === 1 || i === 2]])) as Record<string, boolean[]>, quiet: true, from: '22:00', to: '07:00', theme: 'light' as 'dark' | 'light' | 'system', density: 'comfortable' as 'comfortable' | 'compact' }
 function NotifTab() {
-  const { theme, setTheme, toast, persistFilters, setFilter } = useStore()
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
+  const toast = useToastStore((s) => s.toast)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
   const saved = { ...NDEF, theme, ...(persistFilters.prefs || {}) } as typeof NDEF
   const [p, setP] = useState(saved)
   const dirty = JSON.stringify(p) !== JSON.stringify(saved)
@@ -698,7 +748,13 @@ function NotifTab() {
 
 /* ───────── Security / my account ───────── */
 function SecurityTab() {
-  const { me, setMe, logout, toast, db } = useStore()
+  const me = useMe()
+  const db = useDb()
+  const toast = useToastStore((s) => s.toast)
+  const setMe = useAuthStore((s) => s.setMe)
+  /* The store's logout, verbatim: sign-out through the auth feature action,
+     then the raw login-page route (the shell header's wave-2 precedent). */
+  const logout = () => { signOut(); navRawRoute({ page: 'login' }) }
   const live = db.operations.filter((o) => ['running', 'paused'].includes(o.status)).length
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">

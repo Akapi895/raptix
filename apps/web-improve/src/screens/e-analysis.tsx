@@ -1,12 +1,16 @@
 import { useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut, type LucideProps } from 'lucide-react'
-import { useStore, type Store } from '../store'
+import type { Store } from '../store'
 import { ROLE_LABEL } from '../auth/policy'
 import { eligibility } from '../features/operations/preflight'
 import { TACTICS, TECHNIQUES, type DetectState, type Operation, type Step, type StepStatus, type Technique } from '../data'
 import { Banner, Button, SearchBox, Card, CardHeader, Drawer, Empty, Kpi, Mono, PageHeader, Segmented, Select, Status, Table, Tabs, cx } from '../ui'
 import { AnalysisReadError, useAnalysisCoverage, useAttackPath } from '../features/analysis/query'
 import type { AnalysisCoverageRead, CoverageCell, CoverageCellState, CoveragePair } from '../features/analysis/service'
+import { go, useRoute } from '../router/navigate'
+import { useAccessible, useActiveProject, useCan, useDb, useMe, useReadOnly } from '../state/console'
+import { useProjectStore, useToastStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
 
 /* ───────────── Shared types (feature read model) ───────────── */
 type Ana = AnalysisCoverageRead
@@ -31,7 +35,12 @@ const recFor = (t: Technique, st: DetectState) =>
   st === 'undetected' ? RECS[t.id] || `Add or tune detection rules for ${t.id} (${t.name}) and retest after the update.` : `Unverified: reconcile ${t.id} logs with the Blue Team before concluding whether a signal exists.`
 
 function useCreateFinding() {
-  const { can, readOnly, me, pid, setPid, setFilter, go } = useStore()
+  const can = useCan()
+  const readOnly = useReadOnly()
+  const me = useMe()
+  const pid = useProjectStore((s) => s.pid)
+  const setPid = useProjectStore((s) => s.setPid)
+  const setFilter = useSessionStore((s) => s.setFilter)
   const reason = (projectId: string) => {
     if (readOnly(projectId)) return me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.'
     if (!can('createFinding', projectId)) return `The ${ROLE_LABEL[me.role]} role cannot create findings.`
@@ -52,7 +61,8 @@ function CreateFindingBtn({ prefill, label = 'Create Finding', size = 'md', vari
 }
 
 function EvidenceList({ ids }: { ids: string[] }) {
-  const { db, can, go } = useStore()
+  const db = useDb()
+  const can = useCan()
   if (!ids.length) return <div className="text-xs text-muted">No evidence attached.</div>
   return (
     <ul className="space-y-2">
@@ -89,10 +99,16 @@ function DetectBadge({ state }: { state: DetectState }) {
 
 /* ───────────── Main page ───────────── */
 function Analysis() {
-  const { route, go, pid, project, persistFilters, setFilter, can, accessible } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const can = useCan()
+  const accessible = useAccessible()
   const tab = route.tab || 'overview'
-  const agent: string = persistFilters['ana-agent'] ?? 'all'
-  const os: string = persistFilters['ana-os'] ?? 'all'
+  const agent: string = (persistFilters['ana-agent'] as string | undefined) ?? 'all'
+  const os: string = (persistFilters['ana-os'] as string | undefined) ?? 'all'
   const cov = useAnalysisCoverage({ opId: route.id || undefined, agent, os })
   const setOp = (id?: string) => go('analysis', { id, tab })
   const reset = () => { setFilter('ana-agent', 'all'); setFilter('ana-os', 'all'); if (route.id) setOp(undefined) }
@@ -165,7 +181,8 @@ function Analysis() {
 
 /** Empty state for projects with no executed steps (e.g. RT-2026-017): reason + next action. */
 function NoProjectData({ ops }: { ops: Operation[] }) {
-  const { db, pid, go } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
   const el = eligibility(db, pid)
   return (
     <div className="space-y-4">
@@ -191,7 +208,7 @@ function NoProjectData({ ops }: { ops: Operation[] }) {
 }
 
 function NoOps() {
-  const { pid, go } = useStore()
+  const pid = useProjectStore((s) => s.pid)
   return (
     <Empty icon={Radar} title="No execution evidence available yet" action={<Button onClick={() => go('operations')}>View Operations</Button>}>
       Analysis needs at least one operation with executed-step results and/or a connected detection data source. Charts are not drawn without real data{pid === 'all' ? '.' : ' in this project.'}
@@ -258,7 +275,6 @@ function CoverageBar({ ana }: { ana: Ana }) {
 }
 
 function OpTimeline({ ana }: { ana: Ana }) {
-  const { go } = useStore()
   const op = ana.ops.find((o) => o.steps.length && ana.entries.some((e) => e.op.id === o.id && e.tested))
   if (!op) return null
   const rows = ana.entries.filter((e) => e.op.id === op.id && e.step.status !== 'notrun')
@@ -282,7 +298,7 @@ function OpTimeline({ ana }: { ana: Ana }) {
 }
 
 function Overview({ ana }: { ana: Ana }) {
-  const { go, route } = useStore()
+  const route = useRoute()
   const hasData = ana.entries.some((e) => e.tested)
   if (!ana.allOps.length) return <NoOps />
   const idArg = route.id
@@ -408,9 +424,13 @@ const STEP_GLYPH: Record<StepStatus, ComponentType<LucideProps>> = { ok: CheckCi
 const STEP_TXT: Record<StepStatus, string> = { ok: 'Succeeded', fail: 'Failed', running: 'Running', unknown: 'Unknown', pending: 'Pending', notrun: 'Not run', review: 'In review' }
 
 function Chain({ opId }: { opId?: string }) {
-  const { db, go, can, toast, me, persistFilters } = useStore()
-  const agent: string = persistFilters['ana-agent'] ?? 'all'
-  const os: string = persistFilters['ana-os'] ?? 'all'
+  const db = useDb()
+  const can = useCan()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const agent: string = (persistFilters['ana-agent'] as string | undefined) ?? 'all'
+  const os: string = (persistFilters['ana-os'] as string | undefined) ?? 'all'
   const [pick, setPick] = useState('')
   const [sel, setSel] = useState<Sel>(null)
   const [zoom, setZoom] = useState(1)
@@ -619,7 +639,8 @@ function Chain({ opId }: { opId?: string }) {
 
 /* ───────────── MITRE ATT&CK matrix ───────────── */
 function Matrix({ ana }: { ana: Ana }) {
-  const { go, route, setFilter } = useStore()
+  const route = useRoute()
+  const setFilter = useSessionStore((s) => s.setFilter)
   const [view, setView] = useState<'heat' | 'table'>('heat')
   const [sel, setSel] = useState<Cell | null>(null)
   const [tac, setTac] = useState('')
@@ -724,7 +745,8 @@ function Matrix({ ana }: { ana: Ana }) {
 
 /* ───────────── Detection Coverage ───────────── */
 function Detection({ ana, canAdmin }: { ana: Ana; canAdmin: boolean }) {
-  const { go, can, me } = useStore()
+  const can = useCan()
+  const me = useMe()
   const [tactic, setTactic] = useState('')
   const [sel, setSel] = useState<Pair | null>(null)
   if (!can('viewSensitive')) {

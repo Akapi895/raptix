@@ -1,25 +1,31 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, ArrowLeft, CheckCircle2, Download, Eye, FileText, History, Lock, RotateCcw, Save, Send, ShieldCheck, Wand2, XCircle, ListChecks, Plus, Table2 } from 'lucide-react'
-import { useStore, useDirty } from '../store'
+import { useDirty } from '../store'
 import { sevLabel } from '../features/findings/service'
-import type { Report } from '../data'
+import type { Finding, Report } from '../data'
 import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui'
 import { closureEvidence, reportChecks, type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead } from '../features/reports/service'
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import type { ServiceResult } from '../domain/service'
+import { go, useRoute } from '../router/navigate'
+import { useActiveProject, useCan, useDb, useMe, useScoped } from '../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
 
 /* ───────── shared helpers ───────── */
 
 /** Persisted no-findings variant for a report */
 function useNoFind(id: string): [NoFind | undefined, (v: NoFind) => void] {
-  const { persistFilters, setFilter } = useStore()
-  const all = (persistFilters.repNoFind || {}) as Record<string, NoFind>
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const all = (persistFilters.repNoFind as Record<string, NoFind> | undefined) || {}
   return [all[id], (v) => setFilter('repNoFind', { ...all, [id]: v })]
 }
 
 /** AI-suggested findings are never part of a formal report */
 export function AiExclusion({ projectId }: { projectId?: string }) {
-  const { db, scoped, go } = useStore()
+  const db = useDb()
+  const scoped = useScoped<Finding>()
   const ai = (projectId ? db.findings.filter((f) => f.projectId === projectId) : scoped(db.findings)).filter((f) => f.status === 'ai_suggested')
   if (!ai.length) return null
   return (
@@ -72,7 +78,6 @@ function CheckList({ checks }: { checks: RCheck[] }) {
 }
 
 function ReportHead({ r, sub, actions, tab }: { r: Report; sub?: ReactNode; actions?: ReactNode; tab: 'edit' | 'preview' | 'review' }) {
-  const { go } = useStore()
   return (
     <PageHeader
       crumbs={[{ label: 'Reports', to: () => go('reports') }, { label: r.id }]}
@@ -97,7 +102,15 @@ function ReportHead({ r, sub, actions, tab }: { r: Report; sub?: ReactNode; acti
  * `go` (dirty cleared first — the unsaved guard must not hold the redirect).
  */
 export function ReportNew() {
-  const { db, pid, project, me, go, toast, setSwitcherOpen, persistFilters, setFilter, setDirty } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const setDirty = useSessionStore((s) => s.setDirty)
   const writes = useReportWrites()
   const opts = useDraftOptions(pid !== 'all')
   const preset = persistFilters.reportNewTemplate as string | undefined
@@ -261,7 +274,7 @@ export function ReportNew() {
  * affordance from the failure's entity ref), then the typed read model.
  */
 function ReportReadGate<T>({ q, children }: { q: { isPending: boolean; isError: boolean; error: Error | null; data: T | undefined; refetch: () => void }; children: (d: T) => ReactNode }) {
-  const { go, setPid } = useStore()
+  const setPid = useProjectStore((s) => s.setPid)
   if (q.isPending) return <div aria-busy="true" aria-label="Loading report"><Skeleton className="h-72" /></div>
   if (q.isError) {
     const failure = q.error instanceof ReportReadError ? q.error.failure : undefined
@@ -282,7 +295,7 @@ function ReportReadGate<T>({ q, children }: { q: { isPending: boolean; isError: 
 }
 
 export function ReportEditor() {
-  const { route } = useStore()
+  const route = useRoute()
   const q = useReportEditor(route.id || '')
   return <ReportReadGate q={q}>{(d) => <EditorInner key={d.report.id} d={d} />}</ReportReadGate>
 }
@@ -299,7 +312,11 @@ const SUGGEST = (title: string, client: string, roe: string) => `AI draft sugges
  * unsaved-changes guard.
  */
 function EditorInner({ d }: { d: ReportEditorRead }) {
-  const { db, can, go, toast, confirm, setDirty } = useStore()
+  const db = useDb()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  const setDirty = useSessionStore((s) => s.setDirty)
   const writes = useReportWrites()
   const r = d.report
   const project = d.project
@@ -566,13 +583,16 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
  * submit/export stay with the review/delivery owner.
  */
 export function ReportPreview() {
-  const { route } = useStore()
+  const route = useRoute()
   const q = useReportEditor(route.id || '')
   return <ReportReadGate q={q}>{(d) => <PreviewInner key={d.report.id} d={d} />}</ReportReadGate>
 }
 
 function PreviewInner({ d }: { d: ReportEditorRead }) {
-  const { db, me, can, go, toast } = useStore()
+  const db = useDb()
+  const me = useMe()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const writes = useReportWrites()
   const g = useGuard(d.report.projectId)
   const r = d.report
@@ -682,14 +702,15 @@ const Missing = ({ children }: { children: ReactNode }) => <div className="round
  * refused write renders the handler's reason and commits nothing.
  */
 export function ReportReview() {
-  const { route } = useStore()
+  const route = useRoute()
   const [nf] = useNoFind(route.id || '')
   const q = useReportReview(route.id || '', nf)
   return <ReportReadGate q={q}>{(d) => <ReviewInner key={d.report.id} d={d} />}</ReportReadGate>
 }
 
 function ReviewInner({ d }: { d: ReportReviewRead }) {
-  const { go, toast, confirm } = useStore()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
   const writes = useReportWrites()
   const r = d.report
   const project = d.project
