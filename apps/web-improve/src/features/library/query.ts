@@ -48,7 +48,7 @@ export function usePlaybookList(query: PlaybookListQuery) {
   return useQuery({
     queryKey: libraryKeys.list(scope, query),
     queryFn: async (): Promise<PlaybookListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .library(actor, scope.project)
         .list({ actor, projectId: scope.project, corr: 'playbooks-list' }, query)
@@ -66,7 +66,7 @@ export function usePlaybookDetail(id?: string) {
   return useQuery({
     queryKey: libraryKeys.playbook(scope, id || ''),
     queryFn: async (): Promise<PlaybookDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .library(actor, scope.project)
         .getPlaybook({ actor, projectId: scope.project, corr: 'playbook-detail' }, id || '')
@@ -84,7 +84,7 @@ export function useTechniqueDetail(id?: string) {
   return useQuery({
     queryKey: libraryKeys.technique(scope, id || ''),
     queryFn: async (): Promise<TechniqueDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .library(actor, scope.project)
         .getTechnique({ actor, projectId: scope.project, corr: 'technique-detail' }, id || '')
@@ -104,7 +104,7 @@ export function usePlaybookReviewQueue() {
   return useQuery({
     queryKey: libraryKeys.reviewQueue(scope),
     queryFn: async (): Promise<ReviewQueueRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .library(actor, scope.project)
         .reviewQueue({ actor, projectId: scope.project, corr: 'playbook-review-queue' })
@@ -129,7 +129,7 @@ export function usePlaybookReview() {
   const services = useServices()
   const scope = useQueryScope()
   return useMemo(() => {
-    const actor = actorRef(scope.actor)
+    const actor = actorRef(scope.actor, scope.role)
     const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
     const svc = () => services.library(actor, scope.project)
     return {

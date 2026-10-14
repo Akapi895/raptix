@@ -64,7 +64,7 @@ export function useAnalysisCoverage(query: AnalysisCoverageQuery) {
   return useQuery({
     queryKey: analysisKeys.coverage(scope, { opId, agent, os }),
     queryFn: async (): Promise<AnalysisCoverageRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .analysis(actor, scope.project)
         .coverage({ actor, projectId: scope.project, corr: 'analysis-coverage' }, { opId, agent, os })
@@ -90,7 +90,7 @@ export function useAttackPath(query: AttackPathQuery) {
   return useQuery({
     queryKey: analysisKeys.path(scope, { opId, agent, os }),
     queryFn: async (): Promise<AttackPathRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .analysis(actor, scope.project)
         .path({ actor, projectId: scope.project, corr: 'analysis-path' }, { opId, agent, os })
