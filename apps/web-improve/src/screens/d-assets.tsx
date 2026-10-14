@@ -3,7 +3,8 @@ import { useMutation } from '@tanstack/react-query'
 import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
 import { useServices } from '../state/services'
 import { useDirty } from '../state/session'
-import type { Asset, Db } from '../data'
+import type { Asset } from '../data'
+import { useAssetImportRead, type AssetImportRead } from '../features/assets/import-read'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, PickProjectBanner, shortDate, Trunc, withLoading } from './d-shared'
 // Ticket 50: catalog list, asset detail and scope views read through the
@@ -12,9 +13,9 @@ import { AssetReadError, useAssetDetail, useAssetList, useAssetScope } from '../
 import type { AssetListItem, AssetScopeProject } from '../features/assets/service'
 // Ticket 51: imports and scope changes run through the feature-local write
 // transactions (validated, atomic, role-gated) via the screen handlers.
-import { ASSET_TYPES, createAssetWriteHandlers, okIp, validateAssetRows, validateIdent, type AssetImportRow } from '../features/assets/writes'
+import { ASSET_TYPES, createAssetWriteHandlers, okIp, validateIdent, type AssetImportRow } from '../features/assets/writes'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { useActiveProject, useCan, useDb, useMe } from '../state/console'
+import { useActiveProject, useCan, usePolicyProjects, useMe } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { submitApprovalTransaction } from '../features/approvals/service'
@@ -32,10 +33,10 @@ const SCOPE_WHY: Record<Asset['scope'], string> = {
   unclassified: 'Present in the inventory but not classified. It is not targetable until it is proposed and approved.',
 }
 export function ScopeBadge({ a }: { a: Asset }) {
-  const db = useDb()
+  const projects = usePolicyProjects()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
-  const p = db.projects.find((x) => x.id === a.projectId)
+  const p = projects.find((x) => x.id === a.projectId)
   useEffect(() => {
     if (!open) return
     const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
@@ -376,8 +377,8 @@ function AssetScope() {
 type Row = AssetImportRow & { err: string; dup: boolean; keep: boolean; k: number }
 
 /** Applies the feature validator to preview rows: err/dup/keep derive from the one authority the import transaction enforces (ticket 51). */
-const applyIssues = (db: Db, pid: string, rows: Row[], onlyK?: number): Row[] => {
-  const byIndex = new Map(validateAssetRows(db, pid, rows).map((i) => [i.index, i] as const))
+const applyIssues = (db: AssetImportRead, pid: string, rows: Row[], onlyK?: number): Row[] => {
+  const byIndex = new Map(db.validate(pid, rows).map((i) => [i.index, i] as const))
   return rows.map((r, i) => {
     if (onlyK !== undefined && r.k !== onlyK) return r
     const issue = byIndex.get(i)
@@ -387,7 +388,7 @@ const applyIssues = (db: Db, pid: string, rows: Row[], onlyK?: number): Row[] =>
   })
 }
 
-function ImportPreview({ rows, setRows, onConfirm, disabled, why, db, pid }: { rows: Row[]; setRows: (r: Row[]) => void; onConfirm: () => void; disabled: boolean; why: string; db: Db; pid: string }) {
+function ImportPreview({ rows, setRows, onConfirm, disabled, why, db, pid }: { rows: Row[]; setRows: (r: Row[]) => void; onConfirm: () => void; disabled: boolean; why: string; db: AssetImportRead; pid: string }) {
   const fix = (r: Row, ident: string) => setRows(applyIssues(db, pid, rows.map((x) => (x.k === r.k ? { ...x, ident } : x)), r.k))
   const kept = rows.filter((r) => r.keep && !r.err)
   const bad = rows.filter((r) => r.err).length, dups = rows.filter((r) => r.dup && !r.err).length
@@ -413,7 +414,7 @@ function ImportPreview({ rows, setRows, onConfirm, disabled, why, db, pid }: { r
 }
 
 function AssetNew() {
-  const db = useDb()
+  const db = useAssetImportRead()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
   const can = useCan()
