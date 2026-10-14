@@ -15,11 +15,15 @@ import { hhmm } from '../features/c2/service'
 import type { C2AccessInfo } from '../features/c2/service'
 import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Locked, Mono, PageHeader, PageSkeleton, Person, Segmented, Select, Status, Table, Tabs, Textarea, ConsolePane, cx } from '../ui'
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export const SELECT_PROJECT = 'Select a project to continue'
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export const MIN_REASON = 20
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export const kindLabel = (k: Session['kind']) => (k === 'reverse' ? 'Reverse Shell' : 'Web Shell')
 
 /** Minutes until a "Oct 13, 2026, 12:00 PM (UTC+7)" style timestamp, relative to the simulated clock. */
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export function minutesUntil(exp: string, nowHHMM: string) {
   const m = /(\d+):(\d+) (AM|PM)/.exec(exp)
   if (!m) return 0
@@ -93,6 +97,7 @@ export function AccessChip({ a }: { a: C2AccessInfo }) {
  * mounted C2 screens' 15-second cadence for the countdown display and warns
  * the holder when the lifecycle just expired their grant.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export function useGrantWatch(): void {
   const me = useMe()
   const watch = useC2GrantWatch()
@@ -116,11 +121,14 @@ interface RF { sessionId: string; user: string; reason: string }
 let sim = { fails: [] as RF[], failNext: false }
 const subs = new Set<() => void>()
 const setSim = (p: Partial<typeof sim>) => { sim = { ...sim, ...p }; subs.forEach((f) => f()) }
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export function useRevokeSim() {
   return useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f) } }, () => sim)
 }
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export const setFailNext = (v: boolean) => setSim({ failNext: v })
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export function useTerminate(): (s: Session) => void {
   const watch = useC2GrantWatch()
   const confirm = useSessionStore((s) => s.confirm)
@@ -145,6 +153,7 @@ export function useTerminate(): (s: Session) => void {
   }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- C2 session sub-screens co-exported for the registry
 export function useRevoke(): ((s: Session, user: string) => void) & { retry: (s: Session, user: string) => void } {
   const services = useServices()
   const me = useMe()

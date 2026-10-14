@@ -138,6 +138,7 @@ const ORGS = [
   { name: 'Northwind Bank — Client Portal (Demo)', role: 'Viewer', last: 'Last used 2 weeks ago', projects: 1, tz: 'UTC+00:00', badge: 'Client' },
 ]
 
+// eslint-disable-next-line react-refresh/only-export-components -- demo route bundle: sub-screens co-exported for the registry
 function Brand() {
   return (
     <div className="flex items-center gap-2.5">
@@ -151,6 +152,7 @@ const th = 'whitespace-nowrap border-b border-line bg-side px-3 py-2 text-left t
 const td = 'border-b border-line px-3 py-2 align-top text-[13px]'
 
 /** Confirm + toast host for the public pages (the shell chrome is not mounted on OUTSIDE_SHELL routes). */
+// eslint-disable-next-line react-refresh/only-export-components -- demo route bundle: sub-screens co-exported for the registry
 function DemoChrome() {
   const confirmState = useSessionStore((s) => s.confirmState)
   const closeConfirm = useSessionStore((s) => s.closeConfirm)
@@ -179,6 +181,7 @@ function DemoChrome() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- demo route bundle: sub-screens co-exported for the registry
 function ScenariosPage() {
   const meName = useAuthStore((s) => s.meName)
   const authed = useAuthStore((s) => s.authed)
@@ -374,6 +377,7 @@ function ScenariosPage() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- demo route bundle: sub-screens co-exported for the registry
 function WorkspacesPage() {
   const meName = useAuthStore((s) => s.meName)
   const toast = useToastStore((s) => s.toast)
