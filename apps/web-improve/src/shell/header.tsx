@@ -7,14 +7,20 @@
  * (copilot) replace them through the typed `HeaderSlots` props instead of
  * editing this shared composition, and the integrator serializes that wiring
  * (execution.md). No store state is duplicated: persona/theme/UI panel state
- * stays in the shared ticket-05 authorities via the store context.
+ * reads the shared ticket-05 authorities directly (ticket 67 wave 2 moved
+ * this file off the legacy store context).
  */
 import { useState, type ComponentType } from 'react'
 import {
   Bell, Bot, Building2, Check as CheckIcon, CheckCheck, ChevronDown, FlaskConical, Home, Lock, LogOut, Menu as MenuIcon, RotateCcw, Settings, Sparkles,
 } from 'lucide-react'
-import { useStore } from '../store'
-import type { CopilotCtx } from '../state/stores'
+import { useServices } from '../store'
+import { go, navRawRoute, useRoute } from '../router/navigate'
+import { useAccessible, useDb, useMe } from '../state/console'
+import { useSessionStore } from '../state/session'
+import { useAuthStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx } from '../state/stores'
+import { signOut } from '../auth/persona'
+import { resetDemo } from '../features/demo/runtime'
 import { ROLE_LABEL } from '../auth/policy'
 import { USERS } from '../data'
 import { Button, IconButton, Segmented, Avatar, cx } from '../ui'
@@ -30,9 +36,11 @@ const AI_MODES = [
   { id: 'execution', label: 'Approved Execution', text: 'AI may act only on artifacts that were already approved. A prompt never starts execution.' },
 ] as const
 function AiStatus() {
-  const s = useStore()
+  const aiMode = useUiStore((s) => s.aiMode)
+  const setAiMode = useUiStore((s) => s.setAiMode)
+  const toast = useToastStore((s) => s.toast)
   const [open, setOpen] = useState(false)
-  const mode = s.aiMode || 'propose'
+  const mode = aiMode || 'propose'
   const cur = AI_MODES.find((m) => m.id === mode) || AI_MODES[1]
   return (
     <div className="relative">
@@ -48,7 +56,7 @@ function AiStatus() {
         <p className="mb-3 text-xs text-muted">Applies to new AI conversations only. It never changes existing conversations; each conversation keeps its own mode. Approved Execution is not permission: policy, approvals and Execution Eligibility still apply.</p>
         <div role="radiogroup" aria-label="Default AI Mode" className="space-y-2">
           {AI_MODES.map((m) => (
-            <button key={m.id} role="radio" aria-checked={m.id === mode} onClick={() => { s.setAiMode(m.id); s.toast(`Default AI Mode set to ${m.label}. Existing conversations are unchanged.`, 'info'); setOpen(false) }} className={cx('block w-full rounded-xl border p-3 text-left', m.id === mode ? 'border-accent-line bg-accent-soft' : 'border-line hover:bg-hover')}>
+            <button key={m.id} role="radio" aria-checked={m.id === mode} onClick={() => { setAiMode(m.id); toast(`Default AI Mode set to ${m.label}. Existing conversations are unchanged.`, 'info'); setOpen(false) }} className={cx('block w-full rounded-xl border p-3 text-left', m.id === mode ? 'border-accent-line bg-accent-soft' : 'border-line hover:bg-hover')}>
               <div className="flex items-center justify-between text-sm font-medium">{m.label}{m.id === mode && <span className="text-xs font-semibold text-accent">Default</span>}</div>
               <p className="mt-0.5 text-xs text-muted">{m.text}</p>
             </button>
@@ -101,15 +109,23 @@ const catOf = (n: any): Chip => {
   return 'System'
 }
 function Notices() {
-  const s = useStore()
-  const { db, noticesOpen, setNoticesOpen, go, A, accessible } = s
+  const db = useDb()
+  const accessible = useAccessible()
+  const noticesOpen = useUiStore((s) => s.noticesOpen)
+  const setNoticesOpen = useUiStore((s) => s.setNoticesOpen)
+  const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
+  const services = useServices()
+  /* The legacy `A.markNoticesRead` entry, mirrored exactly: one 'legacy'
+     commit marking every notice read (the typed markAllRead handler scopes
+     to the persona — a behavior change this surface does not take). */
+  const markAllRead = () => services.authority.commit('legacy', (d) => d.notices.forEach((n) => (n.read = true)))
   const [tab, setTab] = useState<'unread' | 'all'>('unread')
   const [chip, setChip] = useState<Chip | ''>('')
   const ids = new Set(accessible.map((p) => p.id))
   const all = db.notices.filter((n) => n.projectId === '' || ids.has(n.projectId))
   const unread = all.filter((n) => !n.read).length
   const list = all.filter((n) => (tab === 'all' || !n.read) && (!chip || catOf(n) === chip))
-  const toggle = () => { if (!noticesOpen) s.setCopilotOpen(false); setNoticesOpen(!noticesOpen) }
+  const toggle = () => { if (!noticesOpen) setCopilotOpen(false); setNoticesOpen(!noticesOpen) }
   const open = (n: (typeof all)[number]) => { setNoticesOpen(false); go(n.to.name, { id: n.to.id }) }
   return (
     <div className="relative">
@@ -119,7 +135,7 @@ function Notices() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setNoticesOpen(false)} aria-hidden />
           <div role="dialog" aria-label="Notifications" className="fixed left-3 right-3 top-[68px] z-50 rounded-2xl border border-line bg-panel p-3 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[420px]">
-            <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Notifications</h2><button onClick={A.markNoticesRead} className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"><CheckCheck size={13} aria-hidden />Mark all read</button></div>
+            <div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Notifications</h2><button onClick={markAllRead} className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"><CheckCheck size={13} aria-hidden />Mark all read</button></div>
             <div role="tablist" className="mb-2 flex gap-1 border-b border-line">
               {([['unread', `Unread (${unread})`], ['all', 'All']] as const).map(([id, l]) => (
                 <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cx('h-9 border-b-2 px-3 text-xs font-medium', tab === id ? 'border-accent text-fg' : 'border-transparent text-muted hover:text-fg')}>{l}</button>
@@ -156,7 +172,17 @@ const ROLE_DESC: Record<string, { can: string; cannot: string }> = {
   viewer: { can: 'View projects you are granted and delivered reports.', cannot: 'Edit data, view sensitive evidence or sessions.' },
 }
 function ProfileMenu() {
-  const { me, setMe, theme, setTheme, go, logout, resetDemo, stopOutcome, setStopOutcome, confirm } = useStore()
+  const me = useMe()
+  const setMe = useAuthStore((s) => s.setMe)
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
+  const stopOutcome = useSessionStore((s) => s.stopOutcome)
+  const setStopOutcome = useSessionStore((s) => s.setStopOutcome)
+  const confirm = useSessionStore((s) => s.confirm)
+  /* The store's logout, verbatim: sign-out through the auth feature action,
+     then the raw login navigation (the store entry passed this mount's epoch;
+     module callers always write). */
+  const logout = () => { signOut(); navRawRoute({ page: 'login' }) }
   const [open, setOpen] = useState(false)
   const item = 'flex h-10 w-full items-center gap-2 rounded-[10px] px-3 text-left text-sm text-fg hover:bg-hover'
   const desc = ROLE_DESC[me.role]
@@ -214,13 +240,14 @@ function ProfileMenu() {
 
 /* ───────────── Copilot trigger (slot default; ticket 60 owns the replacement) ───────────── */
 function AskAiButton() {
-  const s = useStore()
-  const { route, setNoticesOpen } = s
+  const route = useRoute()
+  const setNoticesOpen = useUiStore((s) => s.setNoticesOpen)
+  const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
   const nav = NAV.flatMap((g) => g.items).find((i) => i.match.includes(route.page))
   const ctx: CopilotCtx = { kind: route.page, id: route.id, label: `${nav?.label || route.page}${route.id ? ' ' + route.id : ''}` }
   const askAi = () => {
     setNoticesOpen(false)
-    s.setCopilotOpen(true, ctx)
+    setCopilotOpen(true, ctx)
   }
   return <Button variant="secondary" icon={Sparkles} onClick={askAi} aria-label="Ask AI" title="Ask AI about this page (Copilot)" className="max-xl:!px-3"><span className="max-xl:hidden">Ask AI</span></Button>
 }
@@ -235,7 +262,7 @@ export interface HeaderSlots {
 
 /* ───────────── Topbar ───────────── */
 export function Topbar({ openMobile, slots = {} }: { openMobile: () => void; slots?: HeaderSlots }) {
-  const { route } = useStore()
+  const route = useRoute()
   const Notifications = slots.notifications ?? Notices
   const AskAi = slots.askAi ?? AskAiButton
   return (

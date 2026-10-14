@@ -10,14 +10,21 @@ import { useEffect, useState } from 'react'
 import {
   AlertTriangle, Clock, FolderKanban, Info, Layers, Loader2, Lock, MoreHorizontal, OctagonX, Phone, RotateCcw, Settings, type LucideIcon,
 } from 'lucide-react'
-import { useStore } from '../store'
+import type { Project } from '../data'
+import { go, useRoute } from '../router/navigate'
+import { useActiveProject, useCan, useDb, useMe } from '../state/console'
+import { useSessionStore } from '../state/session'
+import { useProjectStore } from '../state/stores'
+import { emergencyStop, resolveStop, retryStop } from '../features/demo/runtime'
 import { ROLE_LABEL } from '../auth/policy'
 import { eligibility } from '../features/operations/preflight'
 import { Banner, Button, Check, Field, Modal, Status, Textarea, cx } from '../ui'
 import { Pop } from './pop'
 
 function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { db, project, me, A, go } = useStore()
+  const db = useDb()
+  const project = useActiveProject()
+  const me = useMe()
   const [scope, setScope] = useState<'project' | 'workspace'>('project')
   const [reason, setReason] = useState('')
   const [ack, setAck] = useState(false)
@@ -30,9 +37,8 @@ function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }
   const submit = () => {
     if (reason.trim().length < 5) { setErr('A reason is required (at least 5 characters). It is recorded in the audit log.'); return }
     if (!ack) { setErr('Confirm that you understand the impact.'); return }
-    ;(A as any).emergencyStop(scope, scope === 'workspace' ? 'workspace' : project.id, reason.trim())
+    emergencyStop(scope, scope === 'workspace' ? 'workspace' : project.id, reason.trim())
     onClose()
-    void go
   }
   return (
     <Modal open={open} onClose={onClose} danger title="Emergency Stop" width={560}
@@ -59,23 +65,23 @@ function EmergencyStop({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 export function StopBanner() {
-  const { db, pid, A } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
   const st = (db as any).stopState as null | { scope: string; id: string; phase: 'requested' | 'acknowledged' | 'failed' | 'unknown' | 'stopping' | 'stopped'; reason: string; at: string; by?: string }
-  const { go } = useStore()
   if (!st) return null
   const opProj = st.scope === 'operation' ? db.operations.find((o) => o.id === st.id)?.projectId : ''
   const relevant = pid === 'all' || st.scope === 'workspace' || (st.scope === 'project' && st.id === pid) || opProj === pid
   if (!relevant) return null
   const target = st.scope === 'workspace' ? 'the entire workspace' : `${st.scope} ${st.id}`
   const audit = <Button size="sm" onClick={() => go('settings', { tab: 'audit' })}>View audit log</Button>
-  const dismiss = <Button size="sm" variant="ghost" onClick={() => A.resolveStop('dismiss')}>Dismiss</Button>
+  const dismiss = <Button size="sm" variant="ghost" onClick={() => resolveStop('dismiss')}>Dismiss</Button>
   const m = {
     requested: { tone: 'warn', icon: Loader2, title: 'Emergency Stop requested — waiting for agent acknowledgement', body: `Nothing has stopped yet. Waiting for agents to confirm halt for ${target}. Do not treat activity as stopped until acknowledged.`, action: audit },
     acknowledged: { tone: 'info', icon: Loader2, title: 'Emergency Stop acknowledged — revoking sessions', body: `Agents confirmed halt for ${target}. Live sessions are being revoked.`, action: audit },
     stopping: { tone: 'info', icon: Loader2, title: 'Emergency Stop acknowledged — revoking sessions', body: `Agents confirmed halt for ${target}. Live sessions are being revoked.`, action: audit },
     stopped: { tone: 'ok', icon: OctagonX, title: 'Stopped — acknowledged by agents', body: `Activity for ${target} has stopped and sessions are revoked.`, action: <div className="flex gap-2">{audit}{dismiss}</div> },
-    failed: { tone: 'bad', icon: AlertTriangle, title: 'Emergency Stop failed — no acknowledgement received', body: `Activity for ${target} may still be running. Retry the stop or contact the emergency contact now.`, action: <div className="flex gap-2"><Button size="sm" variant="destructive" icon={RotateCcw} onClick={() => A.retryStop()}>Retry</Button>{audit}{dismiss}</div> },
-    unknown: { tone: 'warn', icon: AlertTriangle, title: 'Emergency Stop status unknown — acknowledgement timed out', body: `Cannot confirm that ${target} has halted. Verify out-of-band before confirming.`, action: <div className="flex flex-wrap gap-2"><Button size="sm" variant="primary" onClick={() => A.resolveStop('confirmed-stopped')}>Confirm stopped manually</Button><Button size="sm" variant="destructive" icon={RotateCcw} onClick={() => A.retryStop()}>Retry</Button>{dismiss}</div> },
+    failed: { tone: 'bad', icon: AlertTriangle, title: 'Emergency Stop failed — no acknowledgement received', body: `Activity for ${target} may still be running. Retry the stop or contact the emergency contact now.`, action: <div className="flex gap-2"><Button size="sm" variant="destructive" icon={RotateCcw} onClick={() => retryStop()}>Retry</Button>{audit}{dismiss}</div> },
+    unknown: { tone: 'warn', icon: AlertTriangle, title: 'Emergency Stop status unknown — acknowledgement timed out', body: `Cannot confirm that ${target} has halted. Verify out-of-band before confirming.`, action: <div className="flex flex-wrap gap-2"><Button size="sm" variant="primary" onClick={() => resolveStop('confirmed-stopped')}>Confirm stopped manually</Button><Button size="sm" variant="destructive" icon={RotateCcw} onClick={() => retryStop()}>Retry</Button>{dismiss}</div> },
   }[st.phase] as { tone: 'warn' | 'info' | 'ok' | 'bad'; icon: LucideIcon; title: string; body: string; action: React.ReactNode }
   return (
     <div className="px-4 pt-4 lg:px-8">
@@ -87,7 +93,7 @@ export function StopBanner() {
 const TONE_CLS: Record<string, string> = { ok: 'border-ok/30 bg-ok-soft text-ok', warn: 'border-warn/30 bg-warn-soft text-warn', bad: 'border-bad/30 bg-bad-soft text-bad', neutral: 'border-line bg-subtle text-muted', cyan: 'border-cyan/30 bg-info-soft text-cyan' }
 const eligLabel = (e: ReturnType<typeof eligibility>) => e.kind === 'closed' ? 'Read-only (closed)' : e.kind === 'locked' ? 'Execution Locked' : 'Execution Eligible'
 function EligBadge({ pid }: { pid: string }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const [open, setOpen] = useState(false)
   const e = eligibility(db, pid)
   const label = eligLabel(e)
@@ -115,7 +121,9 @@ function EligBadge({ pid }: { pid: string }) {
 }
 
 export function ContextRibbon({ openSwitcher }: { openSwitcher: () => void }) {
-  const { project, go, route, pid } = useStore()
+  const project = useActiveProject()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
   const ribbon = 'sticky top-16 z-20 flex min-h-11 shrink-0 items-center gap-3 border-b border-line px-4 py-1.5 text-xs text-muted lg:px-8'
   if (route.page === 'project-new') {
     return (
@@ -157,8 +165,11 @@ function opRuntime(db: any, pid: string) {
   return { id: o.id as string, text, tone }
 }
 
-function ProjectHeader({ project }: { project: NonNullable<ReturnType<typeof useStore>['project']> }) {
-  const { db, go, can, setFilter, me } = useStore()
+function ProjectHeader({ project }: { project: Project }) {
+  const db = useDb()
+  const me = useMe()
+  const can = useCan()
+  const setFilter = useSessionStore((s) => s.setFilter)
   const [esOpen, setEsOpen] = useState(false)
   const [det, setDet] = useState(false)
   const [ct, setCt] = useState(false)

@@ -1,12 +1,13 @@
 import { useRef, useState, useEffect, type ComponentType, type ReactNode } from 'react'
 import { FolderOpen, Lock, SlidersHorizontal } from 'lucide-react'
-import { useStore } from '../store'
+import { useSessionStore } from '../state/session'
+import { useUiStore } from '../state/stores'
 import { Banner, Button, Empty, Mono, PageSkeleton, cx } from '../ui'
 
 /** Wraps a screen: shows a skeleton while the project is switching */
 export function withLoading(C: ComponentType): ComponentType {
   return function Wrapped() {
-    const { loading } = useStore()
+    const loading = useSessionStore((s) => s.loading)
     return loading ? <PageSkeleton /> : <C />
   }
 }
@@ -17,7 +18,7 @@ export const POOL_LABEL = 'Unassigned (shared pool)'
 
 /** Banner asking for a specific project while in "All Projects" mode */
 export function PickProjectBanner({ what }: { what: ReactNode }) {
-  const { setSwitcherOpen } = useStore()
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   return (
     <Banner tone="warn" title="Select a specific project" action={<Button size="sm" icon={FolderOpen} onClick={() => setSwitcherOpen(true)}>Select project</Button>}>
       You are in “All Projects” mode (aggregated, read-only). Select a project to {what}.
