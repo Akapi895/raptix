@@ -444,6 +444,7 @@ export function StepDrawer({ op, step, onClose, logs }: { op: Operation; step: S
 const EV_FILTERS = [['all', 'All events'], ['exec', 'Execution'], ['ai', 'AI proposals'], ['approval', 'Approval'], ['error', 'Errors'], ['session', 'Session activity']] as const
 const evCat = (l: { level: string; text: string }) => (l.level === 'ERROR' ? 'error' : /approv|review|reject|skipp/i.test(l.text) ? 'approval' : /session/i.test(l.text) ? 'session' : /\bAI\b|propos|plan/i.test(l.text) ? 'ai' : 'exec')
 const NODE_TONE: Record<string, string> = { ok: 'border-ok/40 bg-ok-soft', running: 'border-cyan bg-info-soft', fail: 'border-bad/50 bg-bad-soft', unknown: 'border-warn/60 bg-warn-soft', review: 'border-warn bg-warn-soft ring-1 ring-warn', pending: 'border-line bg-panel', notrun: 'border-line bg-subtle' }
+const NO_LOGS: LogLine[] = []
 
 export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const view = useOperationView(liveOp.id)
@@ -461,7 +462,7 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const polBlock = !!persistFilters['polblock.' + liveOp.id]
   const setPolBlock = (v: boolean) => setFilter('polblock.' + liveOp.id, v ? true : undefined)
   const op = useFrozen(liveOp, stale)
-  const logs = useFrozen(liveLogs[liveOp.id], stale) || []
+  const logs = useFrozen(liveLogs[liveOp.id], stale) || NO_LOGS
   const [err, setErr] = useState('')
   const [sel, setSel] = useState<string | null>(null)
   const [dock, setDock] = useState('output')

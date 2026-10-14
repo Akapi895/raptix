@@ -155,5 +155,5 @@ export function useFindingWrites() {
       uploadEvidence: (input: EvidenceUploadInput) => svc().uploadEvidence(ctx('finding-upload'), input),
       recordRetest: (id: string, input: RetestInput) => svc().recordRetest(ctx('finding-retest'), id, input),
     }
-  }, [services, scope.actor, scope.project])
+  }, [services, scope.actor, scope.role, scope.project])
 }

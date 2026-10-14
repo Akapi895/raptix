@@ -140,5 +140,5 @@ export function usePlaybookReview() {
       decideRevision: (id: string, decision: RevisionDecision, reason: string): Promise<ServiceResult<RevisionDecisionRead>> =>
         svc().decideRevision(ctx('playbook-revision-decide'), id, decision, reason),
     }
-  }, [services, scope.actor, scope.project])
+  }, [services, scope.actor, scope.role, scope.project])
 }
