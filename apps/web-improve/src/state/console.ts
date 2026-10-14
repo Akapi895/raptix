@@ -18,7 +18,7 @@ import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { USERS, type Db, type Project } from '../data'
 import { can as policyCan, projectAccessible, readOnlyContext } from '../auth/policy'
 import type { CanAction } from '../domain/permissions'
-import { useServices } from '../store'
+import { useServices } from './services'
 import { useAuthStore, useProjectStore } from './stores'
 
 /** A seeded console persona (the org settings can override the role). */
