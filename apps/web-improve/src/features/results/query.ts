@@ -39,7 +39,7 @@ export function useOperationResults(id: string) {
   return useQuery({
     queryKey: resultKeys.detail(scope, id),
     queryFn: async (): Promise<OperationResultsRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .results(actor, scope.project)
         .detail({ actor, projectId: scope.project, corr: 'operation-results' }, id)

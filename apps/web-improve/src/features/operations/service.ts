@@ -481,7 +481,33 @@ export function createOperationDraft(authority: DbAuthority, clock: Clock, ctx: 
   return { ok: true, data: { op: authority.snapshot().operations.find((o) => o.id === id)!, scheduleInstant: inst } }
 }
 
-/** Edits a draft: invalidates stale preflight, refuses in-flight operations, preserves baseline edit semantics. */
+/** Rechecks replacement eligibility before invalidating preflight and rebuilding draft steps. */
+export function replaceOperationAgent(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, from: string, to: string, reason: string): ServiceResult<Operation> {
+  const db = authority.snapshot()
+  const gate = addressedOperationGate(db, ctx, db.operations.find((o) => o.id === id), 'replace agents', 'edited')
+  if (!gate.ok) return gate
+  const { op } = gate.data
+  const previous = db.agents.find((a) => a.id === from)
+  const replacement = db.agents.find((a) => a.id === to)
+  if (!['draft', 'ready'].includes(op.status) || !reason.trim() || !op.agents.includes(from) || !previous || !replacement || replacement.projectId !== op.projectId || previous.os !== replacement.os || !['online', 'idle'].includes(replacement.status) || replacement.op) {
+    return { ok: false, failure: { kind: 'validation', message: 'Replacement requires a reason and an available, compatible agent in the same project.' } }
+  }
+  authority.commit(ctx.corr, (d) => {
+    const target = d.operations.find((o) => o.id === id)!
+    target.agents = target.agents.map((a) => a === from ? to : a)
+    target.preflightAt = undefined
+    if (target.status === 'ready') target.status = 'draft'
+    target.updated = formatDemoInstant(clock.now())
+    if (target.status === 'draft' && !target.planId) {
+      const pb = d.playbooks.find((p) => p.id === target.playbookId)
+      target.steps = draftSteps(undefined, pb, target.agents, target.assets.map((aid) => d.assets.find((a) => a.id === aid)?.name).filter((name): name is string => !!name))
+    }
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at: formatDemoInstant(clock.now()), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: 'Replaced offline agent in operation', obj: `${id}: ${from} → ${to}`, projectId: op.projectId, result: 'Success', reason })
+  })
+  return { ok: true, data: authority.snapshot().operations.find((o) => o.id === id)! }
+}
+
+/** Edits a draft and invalidates its stale preflight. */
 export function updateOperationDraft(authority: DbAuthority, clock: Clock, ctx: RequestContext, id: string, patch: OperationDraftPatch): ServiceResult<OperationWriteRead> {
   const db = authority.snapshot()
   const gated = addressedOperationGate(db, ctx, db.operations.find((o) => o.id === id), 'edit operations', 'edited')

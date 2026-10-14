@@ -19,7 +19,8 @@ import { useState } from 'react'
 import { CheckCircle2, CircleDot, Clock, OctagonX, XCircle } from 'lucide-react'
 import { Banner, Button, Check, DemoTag, Field, Gated, Modal, Select, Textarea, cx } from '../../ui'
 import { useServices } from '../../state/services'
-import { useCan, useDb, useMe } from '../../state/console'
+import { useCan, useMe } from '../../state/console'
+import { useStopRead } from './projection'
 import { useToastStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
 import { go } from '../../router/navigate'
@@ -32,7 +33,7 @@ type Phase = StopState['phase']
 
 /** Machine derivation shared by the banner and the progress strip: the stop state applies only inside its scope. */
 function useStopMachine(op: Operation) {
-  const db = useDb()
+  const db = useStopRead(op.projectId)
   const ss = db.stopState
   const mine = !!ss && (ss.scope === 'workspace' || (ss.scope === 'project' && ss.id === op.projectId) || (ss.scope === 'operation' && ss.id === op.id))
   return { ss: mine ? ss : null, phase: (mine ? ss!.phase : 'stopped') as Phase }
@@ -45,7 +46,7 @@ const stepsOf = (op: Operation) => ({
 
 /* ───────────── Stop progress: requested → acknowledged → stopped ───────────── */
 export function StopProgress({ op }: { op: Operation }) {
-  const db = useDb()
+  const db = useStopRead(op.projectId)
   const { phase } = useStopMachine(op)
   const sessions = db.sessions.filter((s) => s.opId === op.id)
   const stage = (label: string, state: 'done' | 'active' | 'todo') => (
@@ -67,7 +68,7 @@ export function StopProgress({ op }: { op: Operation }) {
 
 /* ───────────── Emergency Stop request dialog (OP-V3-07) ───────────── */
 export function EmergencyStopDialog({ op, open, onClose }: { op: Operation; open: boolean; onClose: () => void }) {
-  const db = useDb()
+  const db = useStopRead(op.projectId)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
   const allowed = can('estop', op.projectId)

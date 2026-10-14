@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { Bot, FileText, MessageSquare, Pin, PinOff, Plus, ShieldCheck } from 'lucide-react'
 import { useServices } from '../state/services'
-import { eligibility } from '../features/operations/preflight'
 import { planVer } from '../data'
 import type { Conversation } from '../data'
 import { createChatHandlers } from '../features/aichat/handlers'
+import { useAiBundle, useAiRail, useConversationFocus } from '../features/aichat/projection'
+import { useProjectEligibility } from '../features/operations/views'
 import { go } from '../router/navigate'
-import { useCan, useDb, useMe, useReadOnly } from '../state/console'
+import { useCan, useMe, useReadOnly } from '../state/console'
 import { useUiStore } from '../state/stores'
 import { Button, DemoTag, IdLink, Status, cx } from '../ui'
 import { EligBadge, ExecBanner, MODES, Pill, ReplanPanel, useReplan, useTraceLink } from './g-common'
@@ -80,21 +81,21 @@ const opened = new Set<string>()
 const seenN: Record<string, number> = {}
 
 export function LeftRail({ pid, selId, onNew, onPicked }: { pid: string; selId?: string; onNew: () => void; onPicked?: () => void }) {
-  const db = useDb()
   const me = useMe()
   const can = useCan()
   const services = useServices()
   const readOnly = useReadOnly()
   const aiMode = useUiStore((s) => s.aiMode)
+  const rail = useAiRail(pid)
   /* Ticket 67 wave 7: the legacy A.togglePinConv entry, mirrored — the same
      per-call typed chat-handler bridge with the override-aware persona. */
   const togglePinConv = (convId: string) => { createChatHandlers(services, { id: me.name, role: me.role }, 'all').setPinned(convId) }
   const [tab, setTab] = useState<RailTab>('all')
   const ro = readOnly(pid)
-  if (selId) { opened.add(selId); seenN[selId] = db.conversations.find((c) => c.id === selId)?.messages.length ?? 0 }
-  const convs = db.conversations.filter((c) => c.projectId === pid)
-  const plans = db.plans.filter((p) => p.projectId === pid)
-  const awaiting = db.toolEvents.filter((t) => t.projectId === pid && t.state === 'awaiting')
+  if (selId) { opened.add(selId); seenN[selId] = rail.conversations.find((c) => c.id === selId)?.messages.length ?? 0 }
+  const convs = rail.conversations
+  const plans = rail.plans
+  const awaiting = rail.awaitingTools
   const attention = (c: Conversation) => awaiting.some((t) => t.conversationId === c.id) || c.messages.some((m) => m.planId && plans.find((p) => p.id === m.planId)?.status === 'in_review')
   const convItems: RailItem[] = convs.map((c) => ({
     key: c.id, kind: 'conv', title: c.title, id: c.id, owner: c.owner, updated: c.updated, pinned: c.pinned, convId: c.id, selected: c.id === selId,
@@ -161,25 +162,25 @@ const H = ({ children }: { children: ReactNode }) => <div className="mb-1.5 text
 const Sec = ({ children }: { children: ReactNode }) => <div className="border-b border-line py-3 last:border-0">{children}</div>
 
 export function Inspector({ pid, conv }: { pid: string; conv?: Conversation }) {
-  const db = useDb()
   const can = useCan()
   const trace = useTraceLink()
   const [tab, setTab] = useState<InspTab>('context')
-  const p = db.projects.find((x) => x.id === pid)
-  if (!p) return null
-  const el = eligibility(db, pid)
-  const inScope = db.assets.filter((a) => a.projectId === pid && a.scope === 'in')
-  const outN = db.assets.filter((a) => a.projectId === pid && a.scope === 'out').length
-  const ops = db.operations.filter((o) => o.projectId === pid)
-  const plans = db.plans.filter((x) => x.projectId === pid)
-  const groups = db.branchGroups.filter((g) => g.projectId === pid)
-  const tools = db.toolEvents.filter((t) => t.projectId === pid)
+  const db = useAiBundle(pid)
+  const el = useProjectEligibility(pid)
+  if (!db.project) return null
+  const p = db.project
+  const inScope = db.assets.filter((a) => a.scope === 'in')
+  const outN = db.assets.filter((a) => a.scope === 'out').length
+  const ops = db.operations
+  const plans = db.plans
+  const groups = db.branchGroups
+  const tools = db.toolEvents
   const awaiting = tools.filter((t) => t.state === 'awaiting')
   const denied = tools.filter((t) => t.state === 'denied')
-  const sreq = db.sessionRequests.filter((r) => r.projectId === pid && r.status === 'pending')
+  const sreq = db.sessionRequests
   const inReview = plans.filter((x) => x.status === 'in_review')
-  const evidence = db.evidence.filter((e) => e.projectId === pid)
-  const agents = db.agents.filter((a) => a.projectId === pid)
+  const evidence = db.evidence
+  const agents = db.agents
   const linked = ops.filter((o) => o.id === conv?.messages.map((m) => plans.find((x) => x.id === m.planId)?.opId).find(Boolean))
   const orderedOps = [...linked, ...ops.filter((o) => !linked.includes(o))].slice(0, 6)
   const link = (label: string, fn: () => void) => <button className="text-accent hover:underline" onClick={fn}>{label}</button>
@@ -231,7 +232,7 @@ export function Inspector({ pid, conv }: { pid: string; conv?: Conversation }) {
             <ul className="space-y-1.5 text-xs">
               <li className="flex justify-between gap-2"><span>Project record</span>{link(pid, () => go('project', { id: pid }))}</li>
               <li className="flex justify-between gap-2"><span>ROE version</span>{link(`${p.roeVersion} (${p.roeStatus})`, () => go('project', { id: pid, tab: 'scope' }))}</li>
-              <li className="flex justify-between gap-2"><span>Assets</span>{link(`${db.assets.filter((a) => a.projectId === pid).length} records`, () => go('assets'))}</li>
+              <li className="flex justify-between gap-2"><span>Assets</span>{link(`${db.assets.length} records`, () => go('assets'))}</li>
               <li className="flex justify-between gap-2"><span>Agents</span>{link(`${agents.length} assigned`, () => go('agents'))}</li>
               <li className="flex justify-between gap-2"><span>Operation results</span>{link(`${ops.length} operations`, () => go('operations'))}</li>
               <li className="flex justify-between gap-2"><span>Evidence</span>{link(`${evidence.length} items`, () => go('evidence'))}</li>
@@ -246,11 +247,9 @@ export function Inspector({ pid, conv }: { pid: string; conv?: Conversation }) {
 
 /* ───────────── Conversation header + single banner ───────────── */
 export function ConversationHeader({ conv, onMode }: { conv: Conversation; onMode: (m: Conversation['mode']) => void }) {
-  const db = useDb()
   const readOnly = useReadOnly()
   const ro = readOnly(conv.projectId)
-  const plan = [...conv.messages].reverse().map((m) => db.plans.find((x) => x.id === m.planId)).find(Boolean)
-  const op = plan?.opId ? db.operations.find((o) => o.id === plan.opId) : undefined
+  const { plan, op } = useConversationFocus(conv)
   const cur = MODES.find((m) => m.id === conv.mode)!
   return (
     <div className="space-y-2 border-b border-line px-4 py-3">

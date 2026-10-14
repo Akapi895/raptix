@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, BookOpen, Eye, ClipboardCheck, Copy, Crosshair, ExternalLink, GitCompare, Layers, Play, Plus, Send, Sparkles, Upload, X } from 'lucide-react'
 import { useServices } from '../state/services'
-import { TACTICS, TECHNIQUES, type Db, type Playbook } from '../data'
+import { TACTICS, TECHNIQUES, type Notice, type Playbook } from '../data'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
 import { Id, IdL, MoreFilters, withLoading } from './d-shared'
 import { LibraryReadError, usePlaybookDetail, usePlaybookList, usePlaybookReview, usePlaybookReviewQueue, useTechniqueDetail } from '../features/library/query'
@@ -9,8 +9,8 @@ import { go, useRoute } from '../router/navigate'
 import { useActiveProject, useCan, useMe } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { stamp } from '../domain/demo-clock'
-import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
+import { publishNotice } from '../features/notices/service'
 
 const tName = (id: string) => TECHNIQUES.find((t) => t.id === id)?.name ?? id
 
@@ -132,9 +132,9 @@ function PlaybookDetail() {
      commit per row through the one authority (the store helper's exact
      shape — audit rows and the todo notice are untyped demo mirrors). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
-  const notify = (text: string, projectId: string, to: { name: string; id?: string }, group: 'todo' | 'update' | 'system' = 'update', category?: NonNullable<Db['notices'][number]['category']>) =>
-    services.authority.commit('legacy', (d) => { d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + Date.now() % 10000, group, text, projectId, at: stamp(), read: false, to, category }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
+  const notify = (text: string, projectId: string, to: { name: string; id?: string }, group: 'todo' | 'update' | 'system' = 'update', category?: NonNullable<Notice['category']>) =>
+    publishNotice(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { text, to, group, category })
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const read = usePlaybookDetail(route.id)
   const [asked, setAsked] = useState(false)

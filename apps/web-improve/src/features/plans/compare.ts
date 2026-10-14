@@ -127,7 +127,7 @@ export function usePlanCompare(id: string) {
   return useQuery({
     queryKey: planCompareKeys.compare(scope, id),
     queryFn: async (): Promise<PlanCompareRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .plansCompare(actor, scope.project)
         .compare({ actor, projectId: scope.project, corr: 'plan-compare' }, id)

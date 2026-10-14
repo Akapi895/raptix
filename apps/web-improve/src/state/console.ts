@@ -15,14 +15,15 @@
  * directly — this module and the feature Query hooks are the two read paths.
  */
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
-import { USERS, type Db, type Project } from '../data'
+import { type Db, type Project } from '../data'
+import { readPersona, readPolicyProjects, type Persona } from '../auth/identity'
 import { can as policyCan, projectAccessible, readOnlyContext } from '../auth/policy'
 import type { CanAction } from '../domain/permissions'
 import { useServices } from './services'
 import { useAuthStore, useProjectStore } from './stores'
 
 /** A seeded console persona (the org settings can override the role). */
-export type Persona = (typeof USERS)[number]
+export type { Persona } from '../auth/identity'
 
 function useSubscribe(): (cb: () => void) => () => void {
   const services = useServices()
@@ -39,29 +40,32 @@ export function useDb(): Db {
 /** The override-aware persona: the seeded identity with the settings-committed org role (ticket 56). */
 export function useMe(): Persona {
   const meName = useAuthStore((s) => s.meName)
-  const db = useDb()
-  return useMemo(() => {
-    const base = USERS.find((u) => u.name === meName)!
-    const ov = db.org.members[meName]?.role
-    return ov ? { ...base, role: ov } : base
-  }, [db, meName])
+  const services = useServices()
+  const subscribe = useSubscribe()
+  return useSyncExternalStore(subscribe, () => readPersona(services, meName))
+}
+
+export function usePolicyProjects(): Project[] {
+  const services = useServices()
+  const subscribe = useSubscribe()
+  return useSyncExternalStore(subscribe, () => readPolicyProjects(services))
 }
 
 /** Every project the persona can access (the one membership rule, ticket 06). */
 export function useAccessible(): Project[] {
-  const db = useDb()
+  const projects = usePolicyProjects()
   const me = useMe()
   return useMemo(
-    () => db.projects.filter((p) => projectAccessible(p, { id: me.name, role: me.role })),
-    [db, me],
+    () => projects.filter((p) => projectAccessible(p, { id: me.name, role: me.role })),
+    [projects, me],
   )
 }
 
 /** The active project object for the selected pid ('all' selects none). */
 export function useActiveProject(): Project | null {
-  const db = useDb()
+  const projects = usePolicyProjects()
   const pid = useProjectStore((s) => s.pid)
-  return useMemo(() => (pid !== 'all' ? db.projects.find((p) => p.id === pid) || null : null), [db, pid])
+  return useMemo(() => (pid !== 'all' ? projects.find((p) => p.id === pid) || null : null), [projects, pid])
 }
 
 /**
@@ -82,24 +86,24 @@ export function useScoped<T extends { projectId: string }>(): (arr: T[]) => T[] 
 
 /** The role/context permission decision for the current persona + project. */
 export function useCan(): (a: CanAction, projectId?: string) => boolean {
-  const db = useDb()
+  const projects = usePolicyProjects()
   const me = useMe()
   const pid = useProjectStore((s) => s.pid)
   return useCallback(
     (a: CanAction, projectId?: string) =>
-      policyCan({ id: me.name, role: me.role }, a, db.projects.find((x) => x.id === (projectId || pid))),
-    [db, me, pid],
+      policyCan({ id: me.name, role: me.role }, a, projects.find((x) => x.id === (projectId || pid))),
+    [projects, me, pid],
   )
 }
 
 /** The read-only context decision (closed/cancelled projects) for the current persona. */
 export function useReadOnly(): (projectId?: string) => boolean {
-  const db = useDb()
+  const projects = usePolicyProjects()
   const me = useMe()
   const pid = useProjectStore((s) => s.pid)
   return useCallback(
     (projectId?: string) =>
-      readOnlyContext(db.projects.find((x) => x.id === (projectId || pid)), { id: me.name, role: me.role }),
-    [db, me, pid],
+      readOnlyContext(projects.find((x) => x.id === (projectId || pid)), { id: me.name, role: me.role }),
+    [projects, me, pid],
   )
 }

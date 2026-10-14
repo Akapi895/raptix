@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
 import { useServices } from '../state/services'
-import { USERS, type Agent, type Group, type Step } from '../data'
+import { USERS, type Agent, type Group } from '../data'
+import { replaceOperationAgent } from '../features/operations/service'
 import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from './d-shared'
 import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../features/agents/query'
 import type { AgentKpi } from '../features/agents/service'
 import { BRANCH_LABEL } from '../data'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { useAccessible, useCan, useDb, useMe, useScoped } from '../state/console'
+import { useAccessible, useCan, useMe, useScoped } from '../state/console'
+import { useGroupOptions, useAssignmentOptions, useAgentRecovery } from '../features/agents/projection'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { stamp } from '../domain/demo-clock'
-import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
 import { loseAgent, restoreAgent } from '../features/demo/runtime'
 import { submitApprovalTransaction } from '../features/approvals/service'
 import { setAgentStatusTransaction } from '../features/agents/writes'
@@ -20,14 +22,6 @@ import { setAgentStatusTransaction } from '../features/agents/writes'
 const POLICIES = ['Project use only', 'Shared with approval', 'Observe only (no execution)']
 const STATUS_LABEL: Record<string, string> = { online: 'Connected', idle: 'Idle', lost: 'Disconnected', disabled: 'Disabled', unknown: 'Unknown', unhealthy: 'Unhealthy' }
 const ACTIVE_PROJECT = ['active', 'approved']
-
-/** The legacy updateOperation patch fields (the store's private OpDraft subset the raw entry reads). */
-type OpPatch = { name?: string; owner?: string; playbookId?: string; agents?: string[]; assets?: string[]; mode?: string; schedule?: string }
-
-const pad = (n: number) => String(n).padStart(2, '0')
-/** The store's private step-draft builder, verbatim (the raw `A.updateOperation` mirror rebuilds draft steps). */
-const stepsFrom = (names: string[], techs: string[], agents: string[], assets: string[]): Step[] =>
-  names.map((name, i) => ({ id: 'S' + pad(i + 1), name, agent: agents.length ? agents[i % agents.length] : '—', asset: assets.length ? assets[i % assets.length] : '—', technique: techs[i % techs.length], status: 'notrun' as const, ts: '—', dur: '—', output: 'Not run.' }))
 
 /* ───────────── Heartbeat bars (simulated) ───────────── */
 function Heartbeat({ a }: { a: Agent }) {
@@ -48,7 +42,7 @@ function Heartbeat({ a }: { a: Agent }) {
 
 /* ───────────── Group modal (AG-03, ticket 49: typed write handler) ───────────── */
 function GroupModal({ group, onClose }: { group: Group | null; onClose: () => void }) {
-  const db = useDb()
+  const db = useGroupOptions('all')
   const pid = useProjectStore((s) => s.pid)
   const accessible = useAccessible()
   const me = useMe()
@@ -126,7 +120,7 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
 /* ───────────── Request assignment drawer (AG-V3-03, ticket 49: typed immediate assign) ───────────── */
 const isAssignReq = (t: string) => t.startsWith('Agent assignment')
 function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose: () => void }) {
-  const db = useDb()
+  const db = useAssignmentOptions()
   const pid = useProjectStore((s) => s.pid)
   const accessible = useAccessible()
   const me = useMe()
@@ -265,29 +259,13 @@ const STEP_IMPACT: Record<string, { label: string; tone: string }> = {
   notrun: { label: 'Not run; needs another agent', tone: 'text-muted' },
 }
 function FailurePanel({ a }: { a: Agent }) {
-  const db = useDb()
+  const db = useAgentRecovery(a)
   const accessible = useAccessible()
   const me = useMe()
   const services = useServices()
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
   const can = useCan()
-  /* The legacy raw `A.updateOperation`/`A.audit` entries, mirrored exactly:
-     one 'legacy' commit each through the one authority (the typed draft
-     update adds role gates and audit rows this path does not take). */
-  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
-  const updateOperation = (id: string, dr: OpPatch) =>
-    services.authority.commit('legacy', (d) => {
-      const o = d.operations.find((x) => x.id === id)!
-      Object.assign(o, { name: dr.name ?? o.name, owner: dr.owner ?? o.owner, playbookId: dr.playbookId ?? o.playbookId, agents: dr.agents ?? o.agents, assets: dr.assets ?? o.assets, mode: dr.mode ?? o.mode, schedule: dr.schedule ?? o.schedule })
-      o.preflightAt = undefined; if (o.status === 'ready') o.status = 'draft'; o.updated = stamp()
-      if ((dr.playbookId || dr.agents || dr.assets) && o.status === 'draft' && !o.planId) {
-        const pb = d.playbooks.find((x) => x.id === o.playbookId)
-        const as = o.assets.map((a) => d.assets.find((x) => x.id === a)!).filter(Boolean)
-        o.steps = pb ? stepsFrom(pb.steps, pb.techniques, o.agents, as.map((a) => a.name)) : []
-      }
-    })
   const guard = useGuard(a.projectId || undefined)
   const ops = db.operations.filter((o) => o.agents.includes(a.id) && !['done', 'cancelled'].includes(o.status) && accessible.some((p) => p.id === o.projectId))
   const plans = db.plans.filter((p) => p.agents.includes(a.id) && accessible.some((x) => x.id === p.projectId))
@@ -301,7 +279,7 @@ function FailurePanel({ a }: { a: Agent }) {
   const swap = (o: typeof ops[number], c: Agent) => confirm({
     title: `Replace ${a.id} with ${c.id} in ${o.id}?`, confirmLabel: 'Replace agent', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o.id} is {o.status}. {a.id} ({a.host}) is replaced by {c.id} ({c.host}), same project and scope. Preflight must be re-run before the operation starts; nothing is marked complete.</>,
-    onConfirm: (r) => { updateOperation(o.id, { agents: o.agents.map((x) => (x === a.id ? c.id : x)) }); audit('Replaced offline agent in operation', `${o.id}: ${a.id} → ${c.id}`, o.projectId, 'Success', r); toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
+    onConfirm: (r) => { const res = replaceOperationAgent(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: o.projectId, corr: 'legacy' }, o.id, a.id, c.id, r); if (!res.ok) { toast(res.failure.message, 'bad'); return }; toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
   })
   const requestRepl = (o: typeof ops[number] | null, c: Agent) => confirm({
     title: `Request ${c.id} as replacement for ${a.id}?`, confirmLabel: 'Submit request', reasonLabel: 'Reason', reasonRequired: true,
@@ -474,7 +452,7 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
 
 /* ───────────── Groups (AG-03, ticket 49: typed membership writes) ───────────── */
 function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: Group) => void; newWhy: string }) {
-  const db = useDb()
+  const db = useGroupOptions()
   const pid = useProjectStore((s) => s.pid)
   const scoped = useScoped<Group>()
   const can = useCan()
@@ -679,7 +657,7 @@ function AgentDetail() {
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   /* The legacy `A.audit` entry, mirrored exactly: one 'legacy' commit with the store helper's exact row shape. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const detail = useAgentDetail(route.id)
   const read = detail.data
   const tab = route.tab || 'overview'

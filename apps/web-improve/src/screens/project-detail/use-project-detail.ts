@@ -30,7 +30,7 @@ export interface ProjectDetailView {
 export function useProjectDetail(id: string | undefined): ProjectDetailView {
   const services = useServices()
   const scope = useQueryScope()
-  const actor = useMemo(() => actorRef(scope.actor), [scope.actor])
+  const actor = useMemo(() => actorRef(scope.actor, scope.role), [scope.actor, scope.role])
   const requestScope = useMemo(() => ({ ...scope, project: id ?? '' }), [scope, id])
   const q = useQuery({
     queryKey: consoleKeys.view('project-detail', requestScope, id ?? ''),
