@@ -17,13 +17,16 @@
  * exactly once. Render inside StoreProvider (the bridges need services).
  */
 import { useEffect, useMemo, type ReactNode } from 'react'
-import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
+import { notifyManager, QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { useServices } from './services'
 import { actorRef } from '../auth/persona'
 import type { ConsoleServices } from '../domain/service-factory'
 import type { ChangeSet, EntityKind } from '../domain/service'
 import { createConsoleQueryClient, scopeOf } from './keys'
 import { useAuthStore, useProjectStore } from './stores'
+
+// Observer delivery must not require another demo-clock tick after a commit.
+notifyManager.setScheduler(queueMicrotask)
 
 function ChangeSetBridge({ client, services }: { client: QueryClient; services: ConsoleServices }) {
   useEffect(
