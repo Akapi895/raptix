@@ -5,7 +5,7 @@ import type { ActorRef, RequestContext } from '../../domain/service'
 import { projectAccessible } from '../../auth/policy'
 import { projectView, scopedRows } from '../../domain/projection'
 import { useServiceProjection } from '../../state/projection'
-import { getGrantWatch, type C2GrantWatchRead } from './service'
+import { getGrantWatch, sessionPermOf, type C2GrantWatchRead, type C2Perm } from './service'
 
 export function readGrantWatch(services: ConsoleServices, ctx: RequestContext): C2GrantWatchRead | undefined {
   return projectView(services, ctx, 'c2-grant-watch', (db) => {
@@ -31,3 +31,12 @@ export function readRequestProject(services: ConsoleServices, actor: ActorRef, i
 }
 
 export function useRenewalSessions(): { sessions: Session[] } { return useServiceProjection(readRenewalSessions) }
+
+/** The actor's derived C2 permission for one session, from recorded grants only. */
+export function readSessionPerm(services: ConsoleServices, ctx: RequestContext, s: Session): C2Perm {
+  return projectView(services, ctx, 'session-perm.' + s.id, (db) => sessionPermOf(db, ctx, s))
+}
+
+export function useSessionPerm(s: Session): C2Perm {
+  return useServiceProjection((services, ctx) => readSessionPerm(services, ctx, s))
+}
