@@ -66,7 +66,7 @@ export function useConversationList(opts?: { enabled?: boolean }) {
   return useQuery({
     queryKey: chatKeys.list(scope),
     queryFn: async (): Promise<ConversationListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .chat(actor, scope.project)
         .list({ actor, projectId: scope.project, corr: 'chat-list' })
@@ -89,7 +89,7 @@ export function useAiHistory(query: HistoryQuery = {}) {
   return useQuery({
     queryKey: historyKeys.view(scope, q, actorType, aiOnly, page?.page ?? 1),
     queryFn: async (): Promise<AiHistoryRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .aiHistory(actor, scope.project)
         .list({ actor, projectId: scope.project, corr: 'ai-history' }, query)
@@ -110,7 +110,7 @@ export function useAiAudit(id: string | undefined) {
   return useQuery({
     queryKey: historyKeys.audit(scope, id ?? ''),
     queryFn: async (): Promise<HistoryAuditRow> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .aiHistory(actor, scope.project)
         .getAudit({ actor, projectId: scope.project, corr: 'ai-history-audit' }, id!)

@@ -33,8 +33,8 @@ export function useTasks(): TasksView {
   const q = useQuery({
     queryKey: consoleKeys.view('tasks', scope),
     queryFn: async ({ signal }) => {
-      const res = await tasksForScope(services, actorRef(scope.actor), projectId)
-        .read({ actor: actorRef(scope.actor), projectId, corr: 'tasks' }, signal)
+      const res = await tasksForScope(services, actorRef(scope.actor, scope.role), projectId)
+        .read({ actor: actorRef(scope.actor, scope.role), projectId, corr: 'tasks' }, signal)
       if (!res.ok) throw new Error(res.failure.message)
       return res.data
     },

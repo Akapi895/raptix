@@ -45,7 +45,7 @@ export class C2ReadError extends Error {
   }
 }
 
-const ctxOf = (scope: QueryScope, corr: string) => ({ actor: actorRef(scope.actor), projectId: scope.project, corr })
+const ctxOf = (scope: QueryScope, corr: string) => ({ actor: actorRef(scope.actor, scope.role), projectId: scope.project, corr })
 
 /** Query-backed C2 overview for the current auth/project scope. */
 export function useC2Overview() {
@@ -54,7 +54,7 @@ export function useC2Overview() {
   return useQuery({
     queryKey: c2Keys.overview(scope),
     queryFn: async (): Promise<C2OverviewRead> => {
-      const res = await services.c2(actorRef(scope.actor), scope.project).overview(ctxOf(scope, 'c2-overview'))
+      const res = await services.c2(actorRef(scope.actor, scope.role), scope.project).overview(ctxOf(scope, 'c2-overview'))
       if (!res.ok) throw new C2ReadError(res.failure)
       return res.data
     },
@@ -69,7 +69,7 @@ export function useC2Sessions(query: C2SessionQuery) {
   return useQuery({
     queryKey: c2Keys.sessions(scope, query),
     queryFn: async (): Promise<C2SessionListRead> => {
-      const res = await services.c2(actorRef(scope.actor), scope.project).sessions(ctxOf(scope, 'c2-sessions'), query)
+      const res = await services.c2(actorRef(scope.actor, scope.role), scope.project).sessions(ctxOf(scope, 'c2-sessions'), query)
       if (!res.ok) throw new C2ReadError(res.failure)
       return res.data
     },
@@ -84,7 +84,7 @@ export function useC2Requests() {
   return useQuery({
     queryKey: c2Keys.requests(scope),
     queryFn: async (): Promise<C2RequestListRead> => {
-      const res = await services.c2(actorRef(scope.actor), scope.project).requests(ctxOf(scope, 'c2-requests'))
+      const res = await services.c2(actorRef(scope.actor, scope.role), scope.project).requests(ctxOf(scope, 'c2-requests'))
       if (!res.ok) throw new C2ReadError(res.failure)
       return res.data
     },
@@ -99,7 +99,7 @@ export function useC2Audit(query: C2AuditQuery) {
   return useQuery({
     queryKey: c2Keys.audit(scope, query),
     queryFn: async (): Promise<C2AuditListRead> => {
-      const res = await services.c2(actorRef(scope.actor), scope.project).audit(ctxOf(scope, 'c2-audit'), query)
+      const res = await services.c2(actorRef(scope.actor, scope.role), scope.project).audit(ctxOf(scope, 'c2-audit'), query)
       if (!res.ok) throw new C2ReadError(res.failure)
       return res.data
     },
@@ -114,7 +114,7 @@ export function useC2Channel(id?: string) {
   return useQuery({
     queryKey: c2Keys.channel(scope, id || ''),
     queryFn: async (): Promise<C2ChannelDetailRead> => {
-      const res = await services.c2(actorRef(scope.actor), scope.project).channel(ctxOf(scope, 'c2-channel'), id || '')
+      const res = await services.c2(actorRef(scope.actor, scope.role), scope.project).channel(ctxOf(scope, 'c2-channel'), id || '')
       if (!res.ok) throw new C2ReadError(res.failure)
       return res.data
     },
@@ -134,7 +134,7 @@ export function useC2Session(id?: string) {
   return useQuery({
     queryKey: c2Keys.session(scope, id || ''),
     queryFn: async (): Promise<C2SessionDetailRead> => {
-      const res = await services.c2(actorRef(scope.actor), scope.project).session(ctxOf(scope, 'c2-session'), id || '')
+      const res = await services.c2(actorRef(scope.actor, scope.role), scope.project).session(ctxOf(scope, 'c2-session'), id || '')
       if (!res.ok) throw new C2ReadError(res.failure)
       return res.data
     },
