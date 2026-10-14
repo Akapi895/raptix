@@ -26,7 +26,7 @@ import { formatCountdown } from '../dashboard/domain'
 import { minutesLeft, planExpiry, taskItems } from './domain'
 import { readTasks, tasksForScope } from './service'
 import { useTasks } from './use-tasks'
-import { MyTasks } from '../a-dashboard'
+import { MyTasks } from '../a-tasks'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 

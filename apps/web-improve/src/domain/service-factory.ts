@@ -19,30 +19,35 @@ import { createIdentityService, type IdentityService } from '../auth/identity'
 import { MockClock, Scheduler, formatDemoInstant } from './clock'
 import { createDatabaseAuthority, type DbAuthority } from './database'
 // Feature appends: every feature service is feature-local (src/features/*);
-// the factory only wires each one into a scope with the shared guard.
-import { createOperationService, type OperationService } from '../features/operations/service'
-import { createFindingService, type FindingService } from '../features/findings/service'
-import { createChatService, type ChatService } from '../features/aichat/service'
-import { createAiHistoryService, type AiHistoryService } from '../features/aichat/history'
-import { createPlanService, type PlanService } from '../features/plans/service'
-import { createPlanBridgeService, type PlanBridgeService } from '../features/plans/bridge'
-import { createPlanCompareService, type PlanCompareService } from '../features/plans/compare'
-import { createAgentService, type AgentService } from '../features/agents/service'
-import { createReportService, type ReportService } from '../features/reports/service'
-import { createBranchService, type BranchService } from '../features/branches/service'
-import { createLibraryService, type LibraryService } from '../features/library/service'
-import { createAnalysisService, type AnalysisService } from '../features/analysis/service'
-import { createSettingsService, type SettingsService } from '../features/settings/service'
-import { createAssetService, type AssetService } from '../features/assets/service'
-import { createWorkerService, type WorkerService } from '../features/workers/service'
-import { createNoticeService, type NoticeService } from '../features/notices/service'
-import { createResultsService, type ResultsService } from '../features/results/service'
-import { createTraceService, type TraceService } from '../features/trace/service'
-import { createC2Service, type C2Service } from '../features/c2/service'
+// the factory only wires each one into a scope with the shared guard. Ticket
+// 70: non-critical feature handlers load their module on first call — the
+// typed call surface is unchanged (handlers already return promises), while
+// the off-page sweep authorities below stay statically wired.
+import type { OperationService } from '../features/operations/service'
+import type { FindingService } from '../features/findings/service'
+import type { ChatService } from '../features/aichat/service'
+import { createChatService } from '../features/aichat/service'
+import type { AiHistoryService } from '../features/aichat/history'
+import type { PlanService } from '../features/plans/service'
+import type { PlanBridgeService } from '../features/plans/bridge'
+import type { PlanCompareService } from '../features/plans/compare'
+import type { AgentService } from '../features/agents/service'
+import type { ReportService } from '../features/reports/service'
+import type { BranchService } from '../features/branches/service'
+import type { LibraryService } from '../features/library/service'
+import type { AnalysisService } from '../features/analysis/service'
+import type { SettingsService } from '../features/settings/service'
+import type { AssetService } from '../features/assets/service'
+import type { WorkerService } from '../features/workers/service'
+import type { NoticeService } from '../features/notices/service'
+import type { ResultsService } from '../features/results/service'
+import type { TraceService } from '../features/trace/service'
+import type { C2Service } from '../features/c2/service'
 // Ticket 46 append: the session-grant deadline lifecycle (15 s sweep + exact
 // per-grant deadline callbacks) is feature-local (src/features/c2/grants); the
 // factory registers it once so deadlines fire without any C2 screen mounted,
 // and the authority's 'reset' publication re-arms it against the fresh dataset.
+// It must load eagerly (off-page sweep invariant).
 import { createGrantLifecycle } from '../features/c2/grants'
 import type {
   ActorRef, ChangeSet, EntityReader, Instant, ListResult, PageRequest,
@@ -139,6 +144,23 @@ export interface ConsoleServices {
   dispose(): void
 }
 
+/**
+ * A handler object whose module loads on first method call (ticket 70). The
+ * proxy memoizes the loaded instance per binding; every method awaits the
+ * load and delegates, which matches the already-async handler signatures.
+ */
+function lazyService<S extends object>(load: () => Promise<S>): S {
+  let instance: Promise<S> | null = null
+  const ensure = () => (instance ??= load())
+  return new Proxy({} as S, {
+    get(_target, prop) {
+      if (typeof prop !== 'string') return undefined
+      return (...args: unknown[]) =>
+        ensure().then((svc) => (svc as unknown as Record<string, (...a: unknown[]) => unknown>)[prop](...args))
+    },
+  })
+}
+
 export function createConsoleServices(): ConsoleServices {
   const clock = new MockClock()
   const scheduler = new Scheduler()
@@ -195,39 +217,39 @@ export function createConsoleServices(): ConsoleServices {
   }
 
   const forOperations = (actor: ActorRef, projectId: string): OperationService =>
-    createOperationService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/operations/service').then((m) => m.createOperationService(authority, clock, scopeGuard(actor, projectId))))
   const forFindings = (actor: ActorRef, projectId: string): FindingService =>
-    createFindingService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/findings/service').then((m) => m.createFindingService(authority, clock, scopeGuard(actor, projectId))))
   const forChat = (actor: ActorRef, projectId: string): ChatService =>
     createChatService(authority, clock, scopeGuard(actor, projectId))
   const forAiHistory = (actor: ActorRef, projectId: string): AiHistoryService =>
-    createAiHistoryService(authority, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/aichat/history').then((m) => m.createAiHistoryService(authority, scopeGuard(actor, projectId))))
   const forPlans = (actor: ActorRef, projectId: string): PlanService =>
-    createPlanService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/plans/service').then((m) => m.createPlanService(authority, clock, scopeGuard(actor, projectId))))
   const forAgents = (actor: ActorRef, projectId: string): AgentService =>
-    createAgentService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/agents/service').then((m) => m.createAgentService(authority, clock, scopeGuard(actor, projectId))))
   const forReports = (actor: ActorRef, projectId: string): ReportService =>
-    createReportService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/reports/service').then((m) => m.createReportService(authority, clock, scopeGuard(actor, projectId))))
   const forBranches = (actor: ActorRef, projectId: string): BranchService =>
-    createBranchService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/branches/service').then((m) => m.createBranchService(authority, clock, scopeGuard(actor, projectId))))
   const forLibrary = (actor: ActorRef, projectId: string): LibraryService =>
-    createLibraryService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/library/service').then((m) => m.createLibraryService(authority, clock, scopeGuard(actor, projectId))))
   const forAnalysis = (actor: ActorRef, projectId: string): AnalysisService =>
-    createAnalysisService(authority, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/analysis/service').then((m) => m.createAnalysisService(authority, scopeGuard(actor, projectId))))
   const forSettings = (actor: ActorRef, projectId: string): SettingsService =>
-    createSettingsService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/settings/service').then((m) => m.createSettingsService(authority, clock, scopeGuard(actor, projectId))))
   const forAssets = (actor: ActorRef, projectId: string): AssetService =>
-    createAssetService(authority, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/assets/service').then((m) => m.createAssetService(authority, scopeGuard(actor, projectId))))
   const forWorkers = (actor: ActorRef, projectId: string): WorkerService =>
-    createWorkerService(authority, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/workers/service').then((m) => m.createWorkerService(authority, scopeGuard(actor, projectId))))
   const forNotices = (actor: ActorRef, projectId: string): NoticeService =>
-    createNoticeService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/notices/service').then((m) => m.createNoticeService(authority, clock, scopeGuard(actor, projectId))))
   const forResults = (actor: ActorRef, projectId: string): ResultsService =>
-    createResultsService(authority, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/results/service').then((m) => m.createResultsService(authority, scopeGuard(actor, projectId))))
   const forTrace = (actor: ActorRef, projectId: string): TraceService =>
-    createTraceService(authority, clock, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/trace/service').then((m) => m.createTraceService(authority, clock, scopeGuard(actor, projectId))))
   const forC2 = (actor: ActorRef, projectId: string): C2Service =>
-    createC2Service(authority, scopeGuard(actor, projectId))
+    lazyService(() => import('../features/c2/service').then((m) => m.createC2Service(authority, scopeGuard(actor, projectId))))
   const grants = createGrantLifecycle(authority, clock, scheduler)
 
   const cancelScope = (actor: ActorRef, projectId: string) => {
@@ -264,9 +286,11 @@ export function createConsoleServices(): ConsoleServices {
     plans: forPlans,
     // Ticket 40: the bridge is write-only over the shared authority — no
     // scope-guarded reads, so the wiring needs no per-scope state.
-    plansBridge: () => createPlanBridgeService(authority, clock),
+    plansBridge: () =>
+      lazyService(() => import('../features/plans/bridge').then((m) => m.createPlanBridgeService(authority, clock))),
     // Ticket 42: the compare read shares the plans feature's scope rules.
-    plansCompare: (actor, projectId) => createPlanCompareService(authority, scopeGuard(actor, projectId)),
+    plansCompare: (actor, projectId) =>
+      lazyService(() => import('../features/plans/compare').then((m) => m.createPlanCompareService(authority, scopeGuard(actor, projectId)))),
     agents: forAgents,
     reports: forReports,
     branches: forBranches,
