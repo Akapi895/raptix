@@ -33,7 +33,7 @@ export function mountServices(ui: ReactNode = null, me = 'Alex Morgan') {
     qc: (): QueryClient => client,
     db: () => services.authority.snapshot(),
     as: (name: string): void => { act(() => { useAuthStore.getState().setMe(name) }) },
-    run: (fn: () => unknown): void => { act(fn) },
+    run: <T,>(fn: () => T): T => { let out!: T; act(() => { out = fn() }); return out },
     show: (children: ReactNode): void => { view.rerender(tree(children)) },
   })
 }

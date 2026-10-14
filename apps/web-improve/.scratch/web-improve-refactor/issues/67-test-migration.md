@@ -44,3 +44,19 @@ are owned by the concurrent worker and are outside this branch's edits.
 - Accessibility/dark/responsive route audits: 21 tests pass, focused exit 0.
 - The nine files in the second batch lint with zero diagnostics; typecheck
   exit 0 after the six feature migrations. No runtime files edited.
+
+## T3/T4 state and safety batch
+
+- Router epoch isolation now captures the actual navigation epoch. State
+  suites assert real selector subscription updates, save-callback clearing,
+  ordered toasts, DOM theme effects, chat busy/log events and remount reset.
+- Console assertions pin seeded policy outcomes and committed identity-role
+  overrides rather than comparing two compatibility projections.
+- RBAC retains all 6 × 19 decisions and membership/context boundaries through
+  canonical policy functions. Emergency-stop retains every delayed outcome,
+  scope and no-auto-resume assertion through the actual demo runtime.
+- Focused state/router run: 36 passed, one failed from an incorrect new
+  literal membership list; corrected against the seeded six-project fixture.
+  Console/UI/system rerun: 45 passed. Safety/RBAC: 17 passed. Earlier session,
+  shared-store and router cases passed (30 tests).
+- Typecheck exit 0; all nine touched code files lint with zero diagnostics.
