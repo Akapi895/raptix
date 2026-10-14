@@ -8,6 +8,7 @@
  * else is re-exported from its extraction module without reimplementation.
  */
 export { Shell, type ShellSlots } from './shell/shell'
+// eslint-disable-next-line react-refresh/only-export-components -- shell module: header slots and shell co-exported
 export { NAV, isWide, useBadges } from './shell/nav'
 export { Sidebar } from './shell/sidebar'
 export { ProjectSwitcher } from './shell/project-switcher'
