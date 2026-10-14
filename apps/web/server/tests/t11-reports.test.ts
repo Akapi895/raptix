@@ -1,5 +1,4 @@
 ﻿import { describe, expect, it } from 'vitest';
-import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';
@@ -165,7 +164,7 @@ describe('ticket 11 report lifecycle and delivery', () => {
     // replay with the same request id: no duplicate row, no double state change
     const replay = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/report-records/${id}/deliveries`, headers: { cookie: author.cookie, 'x-csrf-token': author.csrf }, payload: { kind: 'delivery', format: 'markdown', requestId: 'req-1' } });
     expect(replay.statusCode).toBe(200);
-    expect(replay.json().deliveries.filter((d: { requestId?: string }) => d.kind === 'delivery')).toHaveLength(1);
+    expect(replay.json().deliveries.filter((d: { requestId?: string; kind?: string }) => d.kind === 'delivery')).toHaveLength(1);
   });
 
   it('answers 404 for foreign reports and engagements', async () => {

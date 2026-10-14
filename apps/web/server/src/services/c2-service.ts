@@ -1,4 +1,4 @@
-/** Engagement-owned Sliver sessions, HTTP profiles and durable command audit. */
+﻿/** Engagement-owned Sliver sessions, HTTP profiles and durable command audit. */
 import { createHash } from 'node:crypto';
 import { isC2Session, isC2Listener, isC2Profile, type C2View, type C2CommandView } from '@raptix/web-contracts';
 import type { PrismaClient, C2Command } from '../generated/prisma/client.js';
@@ -9,7 +9,8 @@ export class ProviderUnavailableError extends ProjectApiError {
 }
 const UNAVAILABLE = 'C2 session provider not configured; no session registry exists in this build';
 export class C2Service {
-  public constructor(private readonly db: PrismaClient, private readonly provider?: SliverClient) {}
+  public constructor(private readonly db: PrismaClient, private readonly provider?: SliverClient,
+    private readonly grantGate?: (engagementId: string, sessionId: string, actorId: string) => Promise<void>) {}
   public get configured(): boolean { return this.provider !== undefined; }
   private async authorize(userId: string, engagementId: string): Promise<SliverClient> {
     const engagement = await this.db.engagement.findFirst({ where: { id: engagementId, userId } });
@@ -43,6 +44,9 @@ export class C2Service {
   public async dispatchCommand(userId: string, engagementId: string, sessionId: string, body?: unknown): Promise<C2CommandView> {
     if (!sessionId.trim()) throw new ProjectApiError(400, 'sessionId is required');
     const provider = await this.authorize(userId, engagementId);
+    // Ticket 12: a connected session is not an authorization — every command
+    // authorizes against the actor's live approved grant, including at expiry.
+    if (this.grantGate !== undefined) await this.grantGate(engagementId, sessionId, userId);
     const input = command(body);
     const payloadHash = createHash('sha256').update(JSON.stringify([sessionId,input.path,input.args])).digest('hex');
     const where = { engagementId_requestId: { engagementId, requestId: input.requestId } };

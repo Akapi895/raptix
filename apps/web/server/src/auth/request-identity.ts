@@ -19,7 +19,7 @@ export interface MultiUserAuthOptions {
   readonly publicUrls: readonly string[];
 }
 
-export interface RequestSession extends ResolvedSession {}
+export type RequestSession = ResolvedSession;
 
 declare module 'fastify' {
   interface FastifyRequest {

@@ -12,7 +12,6 @@ import { requireEngagementAccess, type ActorContext, type MemberRole } from '../
  */
 
 const MIN_CURATE: MemberRole = 'operator';
-const MIN_CONFIRM: MemberRole = 'reviewer';
 
 /** Allowed lifecycle transitions; confirmation requires an independent reviewer role. */
 const TRANSITIONS: Readonly<Record<string, readonly string[]>> = {

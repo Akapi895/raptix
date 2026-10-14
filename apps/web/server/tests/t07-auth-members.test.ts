@@ -18,10 +18,10 @@ interface Row { id: string; [key: string]: unknown }
 interface FakeDb {
   tables: Map<string, Map<string, Row>>;
   engagement: { findFirst: (q: { where: { id: string } }) => Promise<Row | null> };
-  webUser: { findUnique: (q: { where: { id?: string; username?: string } }) => Promise<Row | null>; create: (q: { data: Row }) => Promise<Row> };
-  webSession: { findUnique: (q: { where: { id: string } }) => Promise<Row | null>; create: (q: { data: Row }) => Promise<Row>; deleteMany: (q: { where: { id: string } }) => Promise<{ count: number }> };
-  webMembership: { findFirst: (q: { where: { engagementId: string; userId: string } }) => Promise<Row | null>; findMany: (q: { where: { engagementId: string } }) => Promise<Row[]>; create: (q: { data: Row }) => Promise<Row>; delete: (q: { where: { id: string } }) => Promise<unknown>; update: (q: { where: { id: string }; data: Row }) => Promise<Row> };
-  webAuditEntry: { create: (q: { data: Row }) => Promise<Row> };
+  webUser: { findUnique: (q: { where: { id?: string; username?: string } }) => Promise<Row | null>; create: (q: { data: { [key: string]: unknown } }) => Promise<Row> };
+  webSession: { findUnique: (q: { where: { id: string } }) => Promise<Row | null>; create: (q: { data: { [key: string]: unknown } }) => Promise<Row>; deleteMany: (q: { where: { id: string } }) => Promise<{ count: number }> };
+  webMembership: { findFirst: (q: { where: { engagementId: string; userId: string } }) => Promise<Row | null>; findMany: (q: { where: { engagementId: string } }) => Promise<Row[]>; create: (q: { data: { [key: string]: unknown } }) => Promise<Row>; delete: (q: { where: { id: string } }) => Promise<unknown>; update: (q: { where: { id: string }; data: Row }) => Promise<Row> };
+  webAuditEntry: { create: (q: { data: { [key: string]: unknown } }) => Promise<Row> };
 }
 
 function memoryDb(): FakeDb {

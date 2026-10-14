@@ -11,7 +11,7 @@ import {
   sessionCookieHeader,
   verifyPassword,
 } from '../../auth/multi-user.js';
-import { ActorContextStore } from '../../auth/request-identity.js';
+import type { ActorContextStore } from '../../auth/request-identity.js';
 import { ProjectApiError } from '../../services/projects-service.js';
 
 /**

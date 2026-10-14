@@ -4,7 +4,7 @@ import { getLocalIdentity } from './auth/identity-provider.js';
 import type { LocalIdentity } from './auth/identity-provider.js';
 import type { PrismaClient } from './generated/prisma/client.js';
 import { ActorContextStore, registerMultiUserAuth, sessionAwareIdentity } from './auth/request-identity.js';
-import { ensureBootstrapAdmin, registerAuthRoutes } from './http/routes/auth.routes.js';
+import { registerAuthRoutes } from './http/routes/auth.routes.js';
 import { registerErrorHandler } from './http/error-handler.js';
 import { registerCapabilitiesRoutes } from './http/routes/capabilities.routes.js';
 import { registerHealthRoutes } from './http/routes/health.routes.js';
@@ -27,6 +27,7 @@ import { registerScopeRoutes } from './http/routes/scope.routes.js';
 import { registerGovernanceRoutes } from './http/routes/governance.routes.js';
 import { registerFindingsWorkflowRoutes } from './http/routes/findings-workflow.routes.js';
 import { registerReportsRoutes } from './http/routes/reports.routes.js';
+import { registerC2GrantRoutes } from './http/routes/c2-grants.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
@@ -44,6 +45,7 @@ import type { ScopeService } from './services/scope-service.js';
 import type { GovernanceService } from './services/governance-service.js';
 import type { FindingsWorkflowService } from './services/findings-workflow-service.js';
 import type { ReportsService } from './services/reports-service.js';
+import type { C2GrantsService } from './services/c2-grants-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -73,6 +75,7 @@ export interface AppOptions {
   readonly governanceService?: GovernanceService;
   readonly findingsWorkflow?: FindingsWorkflowService;
   readonly reportsService?: ReportsService;
+  readonly c2Grants?: C2GrantsService;
   /** Runtime cancel bridge for emergency stops (operation scope). */
   readonly cancelRun?: (threadId: string, runId: string | null) => Promise<string>;
   /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
@@ -156,6 +159,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.governanceService) registerGovernanceRoutes(app, options.governanceService, identity, options.cancelRun);
   if (options.findingsWorkflow) registerFindingsWorkflowRoutes(app, options.findingsWorkflow, identity);
   if (options.reportsService) registerReportsRoutes(app, options.reportsService, identity);
+  if (options.c2Grants) registerC2GrantRoutes(app, options.c2Grants, identity);
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;
