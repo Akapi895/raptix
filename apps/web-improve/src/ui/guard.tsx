@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Info, Lock } from 'lucide-react'
-import { useStore } from '../store'
+import { useMe } from '../state/console'
+import { useAuthStore } from '../state/stores'
 import { Button } from './button'
 
 /* ───────────── Guards ───────────── */
@@ -30,7 +31,8 @@ export function Locked({ reason }: { reason: string }) {
 }
 /** Suggests switching persona when the current role cannot perform the next demo step */
 export function PersonaHint({ need, persona, children }: { need: string; persona: string; children?: ReactNode }) {
-  const { me, setMe } = useStore()
+  const me = useMe()
+  const setMe = useAuthStore((s) => s.setMe)
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-line bg-hover/50 px-4 py-3 text-sm">
       <Info size={16} className="text-cyan" aria-hidden />

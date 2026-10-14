@@ -14,7 +14,9 @@
 import { Component, Suspense, useEffect, useRef, type ReactNode } from 'react'
 import { useBlocker, useRouteError } from 'react-router'
 import { Loader2, RefreshCw, ServerCrash } from 'lucide-react'
-import { useStore } from '../store'
+import { useSessionStore } from '../state/session'
+import { useAuthStore } from '../state/stores'
+import { go, useRoute } from './navigate'
 import { Button } from '../ui'
 import { Shell } from '../shell'
 import { HeaderNotices } from '../features/notices/header-notices'
@@ -26,7 +28,9 @@ const pageKey = (r: Route) => r.page + (r.id ? '/' + r.id : '')
 
 /** Holds popstate/URL-edit traversals while a form is dirty and routes the held navigation through the same unsaved-changes modal as in-app navigation. */
 function DirtyNavBlocker() {
-  const { dirty, guarded, setDirty } = useStore()
+  const dirty = useSessionStore((s) => s.dirty)
+  const guarded = useSessionStore((s) => s.guarded)
+  const setDirty = useSessionStore((s) => s.setDirty)
   const dirtyRef = useRef(dirty)
   dirtyRef.current = dirty
   const blocker = useBlocker(({ currentLocation, nextLocation }) =>
@@ -40,7 +44,6 @@ function DirtyNavBlocker() {
 }
 
 function BoundaryFallback({ error, onRetry }: { error: unknown; onRetry: () => void }) {
-  const { go } = useStore()
   return (
     <div className="mx-auto max-w-xl pt-16 text-center" role="alert">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-panel text-bad"><ServerCrash size={26} aria-hidden /></div>
@@ -97,7 +100,8 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
 }
 
 export function RouteHost() {
-  const { route, authed } = useStore()
+  const route = useRoute()
+  const authed = useAuthStore((s) => s.authed)
   return (
     <>
       <DirtyNavBlocker />

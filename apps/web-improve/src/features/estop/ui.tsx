@@ -5,20 +5,25 @@
  * The machine's surfaces — request dialog, phase banner, progress strip —
  * live feature-side and every transition runs the typed handlers
  * (src/features/estop/service.ts) against the one authority: the request via
- * the delegating store action (the entry the shell ribbon shares — one
- * bridge for both entry points), the acknowledge/finalize/resolve controls
- * directly through `useServices`. Every phase renders an actionable control
- * (invariant 1: a stop is ALWAYS an action with an immediate visible
- * response, never a passive status), state-changing controls are role-gated
- * with a visible reason, and the demo outcome switch stays the store's
- * SIMULATED orchestration — the "(demo)" affordances run the same typed
- * handlers the delayed orchestration runs, so no surface can show a success
- * that did not happen through a committed transaction.
+ * the demo runtime's orchestration entry (the engine the legacy store action
+ * delegates to — one bridge for both entry points), the
+ * acknowledge/finalize/resolve controls directly through `useServices`. Every
+ * phase renders an actionable control (invariant 1: a stop is ALWAYS an action
+ * with an immediate visible response, never a passive status), state-changing
+ * controls are role-gated with a visible reason, and the demo outcome switch
+ * stays the SIMULATED orchestration — the "(demo)" affordances run the same
+ * typed handlers the delayed orchestration runs, so no surface can show a
+ * success that did not happen through a committed transaction.
  */
 import { useState } from 'react'
 import { CheckCircle2, CircleDot, Clock, OctagonX, XCircle } from 'lucide-react'
 import { Banner, Button, Check, DemoTag, Field, Gated, Modal, Select, Textarea, cx } from '../../ui'
-import { useServices, useStore } from '../../store'
+import { useServices } from '../../store'
+import { useCan, useDb, useMe } from '../../state/console'
+import { useToastStore } from '../../state/stores'
+import { useSessionStore } from '../../state/session'
+import { go } from '../../router/navigate'
+import { emergencyStop, retryStop } from '../demo/runtime'
 import type { Operation } from '../../data'
 import type { StopState } from '../../domain/entities'
 import { acknowledgeEmergencyStopTransaction, finalizeEmergencyStopTransaction, resolveStopTransaction, type StopResolution } from './service'
@@ -27,7 +32,7 @@ type Phase = StopState['phase']
 
 /** Machine derivation shared by the banner and the progress strip: the stop state applies only inside its scope. */
 function useStopMachine(op: Operation) {
-  const { db } = useStore()
+  const db = useDb()
   const ss = db.stopState
   const mine = !!ss && (ss.scope === 'workspace' || (ss.scope === 'project' && ss.id === op.projectId) || (ss.scope === 'operation' && ss.id === op.id))
   return { ss: mine ? ss : null, phase: (mine ? ss!.phase : 'stopped') as Phase }
@@ -40,7 +45,7 @@ const stepsOf = (op: Operation) => ({
 
 /* ───────────── Stop progress: requested → acknowledged → stopped ───────────── */
 export function StopProgress({ op }: { op: Operation }) {
-  const { db } = useStore()
+  const db = useDb()
   const { phase } = useStopMachine(op)
   const sessions = db.sessions.filter((s) => s.opId === op.id)
   const stage = (label: string, state: 'done' | 'active' | 'todo') => (
@@ -62,7 +67,9 @@ export function StopProgress({ op }: { op: Operation }) {
 
 /* ───────────── Emergency Stop request dialog (OP-V3-07) ───────────── */
 export function EmergencyStopDialog({ op, open, onClose }: { op: Operation; open: boolean; onClose: () => void }) {
-  const { A, db, toast, can } = useStore()
+  const db = useDb()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const allowed = can('estop', op.projectId)
   const [scope, setScope] = useState<'operation' | 'project'>('operation')
   const [reason, setReason] = useState('')
@@ -77,10 +84,11 @@ export function EmergencyStopDialog({ op, open, onClose }: { op: Operation; open
   const close = () => { setReason(''); setAck(false); setErr(''); onClose() }
   const submit = () => {
     if (!ready) { setErr(why); return }
-    /* The typed request handler runs inside the delegating store action, so
-       the gates hold there and a refusal commits nothing — same handler the
-       shell ribbon's stop uses. */
-    A.emergencyStop(scope, scope === 'project' ? op.projectId : op.id, reason.trim())
+    /* The typed request handler runs inside the demo runtime's orchestration
+       entry (the one the store action delegates to), so the gates hold there
+       and a refusal commits nothing — same handler the shell ribbon's stop
+       uses. */
+    emergencyStop(scope, scope === 'project' ? op.projectId : op.id, reason.trim())
     toast('Emergency stop requested. Waiting for agents to acknowledge — the operation is not stopped yet.', 'warn')
     close()
   }
@@ -120,7 +128,11 @@ export function EmergencyStopDialog({ op, open, onClose }: { op: Operation; open
 
 /* ───────────── Stop state banner: every phase renders an actionable control ───────────── */
 export function StopStatePanel({ op }: { op: Operation }) {
-  const { A, me, toast, stopOutcome, setStopOutcome, go, can } = useStore()
+  const me = useMe()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
+  const stopOutcome = useSessionStore((s) => s.stopOutcome)
+  const setStopOutcome = useSessionStore((s) => s.setStopOutcome)
   const svc = useServices()
   const { ss } = useStopMachine(op)
   if (!ss) return null
@@ -163,7 +175,7 @@ export function StopStatePanel({ op }: { op: Operation }) {
       <div className="mt-2 flex flex-wrap items-center gap-2">
         {ph === 'requested' && <Gated allowed={allowed} reason={stopWhy}><Button size="sm" variant="danger" onClick={acknowledgeNow}>Acknowledge now (demo)</Button></Gated>}
         {ph === 'acknowledged' && <Gated allowed={allowed} reason={stopWhy}><Button size="sm" onClick={finalizeNow}>Finalize now (demo)</Button></Gated>}
-        {ph === 'failed' && <Gated allowed={allowed} reason={stopWhy}><Button size="sm" variant="danger" onClick={() => { A.retryStop(); toast('Retrying emergency stop…', 'warn') }}>Retry Stop</Button></Gated>}
+        {ph === 'failed' && <Gated allowed={allowed} reason={stopWhy}><Button size="sm" variant="danger" onClick={() => { retryStop(); toast('Retrying emergency stop…', 'warn') }}>Retry Stop</Button></Gated>}
         {ph === 'unknown' && <Gated allowed={allowed} reason={stopWhy}><Button size="sm" onClick={() => resolve('confirmed-stopped')}>Confirm Manually Stopped</Button></Gated>}
         {(bad || ph === 'stopped') && <Button size="sm" variant="ghost" onClick={() => resolve('dismiss')}>Dismiss</Button>}
         <Button size="sm" variant="ghost" onClick={() => go('settings', { tab: 'audit' })}>Open Audit Log</Button>
