@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { Bot, FileText, MessageSquare, Pin, PinOff, Plus, ShieldCheck } from 'lucide-react'
-import { useStore } from '../store'
+import { useServices } from '../store'
 import { eligibility } from '../features/operations/preflight'
 import { planVer } from '../data'
 import type { Conversation } from '../data'
+import { createChatHandlers } from '../features/aichat/handlers'
+import { go } from '../router/navigate'
+import { useCan, useDb, useMe, useReadOnly } from '../state/console'
+import { useUiStore } from '../state/stores'
 import { Button, DemoTag, IdLink, Status, cx } from '../ui'
 import { EligBadge, ExecBanner, MODES, Pill, ReplanPanel, useReplan, useTraceLink } from './g-common'
 import { AllocationView, FanOutCard } from './g-fanout'
@@ -76,7 +80,15 @@ const opened = new Set<string>()
 const seenN: Record<string, number> = {}
 
 export function LeftRail({ pid, selId, onNew, onPicked }: { pid: string; selId?: string; onNew: () => void; onPicked?: () => void }) {
-  const { db, me, can, A, go, aiMode, readOnly } = useStore()
+  const db = useDb()
+  const me = useMe()
+  const can = useCan()
+  const services = useServices()
+  const readOnly = useReadOnly()
+  const aiMode = useUiStore((s) => s.aiMode)
+  /* Ticket 67 wave 7: the legacy A.togglePinConv entry, mirrored — the same
+     per-call typed chat-handler bridge with the override-aware persona. */
+  const togglePinConv = (convId: string) => { createChatHandlers(services, { id: me.name, role: me.role }, 'all').setPinned(convId) }
   const [tab, setTab] = useState<RailTab>('all')
   const ro = readOnly(pid)
   if (selId) { opened.add(selId); seenN[selId] = db.conversations.find((c) => c.id === selId)?.messages.length ?? 0 }
@@ -117,7 +129,7 @@ export function LeftRail({ pid, selId, onNew, onPicked }: { pid: string; selId?:
           <div className="mt-0.5 truncate text-[11px] text-muted" title={`${it.owner} · ${it.updated}`}>{it.kind === 'tool' ? 'Target ' : ''}{it.owner} · {it.updated}</div>
           {it.approver && <div className="text-[11px] text-warn">{it.mine ? 'Awaiting your approval' : `Pending ${it.approver}`}</div>}
         </button>
-        {it.kind === 'conv' && <button aria-label={it.pinned ? `Unpin ${it.title}` : `Pin ${it.title}`} aria-pressed={!!it.pinned} title={ro ? 'Project is read-only.' : it.pinned ? 'Unpin' : 'Pin'} disabled={ro} onClick={() => A.togglePinConv(it.convId!)} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg disabled:opacity-40">{it.pinned ? <Pin size={13} className="text-accent" aria-hidden /> : <PinOff size={13} aria-hidden />}</button>}
+        {it.kind === 'conv' && <button aria-label={it.pinned ? `Unpin ${it.title}` : `Pin ${it.title}`} aria-pressed={!!it.pinned} title={ro ? 'Project is read-only.' : it.pinned ? 'Unpin' : 'Pin'} disabled={ro} onClick={() => togglePinConv(it.convId!)} className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-fg disabled:opacity-40">{it.pinned ? <Pin size={13} className="text-accent" aria-hidden /> : <PinOff size={13} aria-hidden />}</button>}
       </li>
     )
   }
@@ -149,7 +161,8 @@ const H = ({ children }: { children: ReactNode }) => <div className="mb-1.5 text
 const Sec = ({ children }: { children: ReactNode }) => <div className="border-b border-line py-3 last:border-0">{children}</div>
 
 export function Inspector({ pid, conv }: { pid: string; conv?: Conversation }) {
-  const { db, go, can } = useStore()
+  const db = useDb()
+  const can = useCan()
   const trace = useTraceLink()
   const [tab, setTab] = useState<InspTab>('context')
   const p = db.projects.find((x) => x.id === pid)
@@ -233,7 +246,8 @@ export function Inspector({ pid, conv }: { pid: string; conv?: Conversation }) {
 
 /* ───────────── Conversation header + single banner ───────────── */
 export function ConversationHeader({ conv, onMode }: { conv: Conversation; onMode: (m: Conversation['mode']) => void }) {
-  const { db, go, readOnly } = useStore()
+  const db = useDb()
+  const readOnly = useReadOnly()
   const ro = readOnly(conv.projectId)
   const plan = [...conv.messages].reverse().map((m) => db.plans.find((x) => x.id === m.planId)).find(Boolean)
   const op = plan?.opId ? db.operations.find((o) => o.id === plan.opId) : undefined

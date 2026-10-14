@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Columns3, Download, ExternalLink, Filter, X } from 'lucide-react'
-import { useServices, useStore } from '../store'
+import { useServices } from '../store'
 import { actorRef } from '../auth/persona'
 import { planVer } from '../data'
 import type { Audit, Conversation, Facets, ToolEvent } from '../data'
@@ -14,6 +14,9 @@ import { TraceReadError, useTraceEvents, useTraceWrites } from '../features/trac
 import type { TraceRow } from '../features/trace/service'
 import type { ToolDecisionOutcome } from '../features/trace/writes'
 import type { ServiceResult } from '../domain/service'
+import { go, useRoute } from '../router/navigate'
+import { useCan } from '../state/console'
+import { useProjectStore, useToastStore } from '../state/stores'
 import { Banner, Button, Card, CardHeader, DemoTag, DescList, Drawer, Empty, Field, Gated, IdLink, Mono, PageHeader, SearchBox, Segmented, Select, Status, Table, Tabs, Textarea, cx } from '../ui'
 import { AiSubNav, NoProject, Pill, ReplanPanel, Thread, tz } from './g-common'
 
@@ -60,7 +63,9 @@ const COLS = [
 type ColId = (typeof COLS)[number]['id']
 
 export function AiTrace() {
-  const { pid, route, go, can } = useStore()
+  const pid = useProjectStore((s) => s.pid)
+  const route = useRoute()
+  const can = useCan()
   const trace = useTraceEvents()
   const writes = useTraceWrites()
   const [sel, setSel] = useState<string | undefined>(route.id)
@@ -213,7 +218,6 @@ const Dash = () => <span className="text-xs text-muted">—</span>
 
 /** Timeline / By Agent / By Branch / By Plan Step. */
 function Grouped({ rows, view, sel, open, stepName }: { rows: TraceRow[]; view: View; sel?: string; open: (id: string) => void; stepName: (r: TraceRow) => string | undefined }) {
-  const { go } = useStore()
   const keyOf = (r: TraceRow) => (view === 'timeline' ? r.event.corr || 'No correlation ID' : view === 'agent' ? r.event.agentId || 'No agent assigned' : view === 'branch' ? r.event.branchId || 'No branch' : r.event.stepId ? `${r.event.opId || ''} ${r.event.stepId}`.trim() : 'No plan step')
   const groups = new Map<string, TraceRow[]>()
   ;[...rows].sort((a, b) => a.event.at.localeCompare(b.event.at)).forEach((r) => groups.set(keyOf(r), [...(groups.get(keyOf(r)) || []), r]))
@@ -250,7 +254,7 @@ function Grouped({ rows, view, sel, open, stepName }: { rows: TraceRow[]; view: 
 }
 
 function Inspector({ row, canDecide, why, onAllow, onDeny }: { row: TraceRow; canDecide: boolean; why: string; onAllow: (r: string) => Promise<ServiceResult<ToolDecisionOutcome>>; onDeny: (r: string) => Promise<ServiceResult<ToolDecisionOutcome>> }) {
-  const { go, toast } = useStore()
+  const toast = useToastStore((s) => s.toast)
   const ev = row.event
   const [decision, setDecision] = useState<'allowed' | 'denied' | null>(null)
   const [reason, setReason] = useState('')
@@ -354,7 +358,9 @@ const AUDIT_PAGE = 10
 const typeTone = (t: string) => (t === 'AI' ? 'cyan' : t === 'System' ? 'neutral' : 'ok') as 'cyan' | 'neutral' | 'ok'
 
 export function AiHistory() {
-  const { pid, go, can, toast } = useStore()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const services = useServices()
   const qscope = useQueryScope()
   /* Pin/unpin goes through the typed ChatService write; the read's key embeds
