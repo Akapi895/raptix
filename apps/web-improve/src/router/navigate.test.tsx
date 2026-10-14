@@ -12,9 +12,10 @@ import { createHashRouter, RouterProvider } from 'react-router'
 import { StoreProvider, useStore, type Store } from '../store'
 import { ConsoleProviders } from '../state/query'
 import { resetSessionStores, useSessionStore } from '../state/session'
+import { resetSharedStores, useProjectStore, useUiStore } from '../state/stores'
 import { setActiveRouter } from './active'
 import { RouteHost, RouteErrorBoundary } from './host'
-import { currentRoute, go, navRawRoute, resetNavStores, useRoute } from './navigate'
+import { currentRoute, go, navRawRoute, resetNavStores, selectProject, useRoute } from './navigate'
 import type { Route } from './history'
 
 let latest: Route
@@ -30,6 +31,7 @@ function StoreProbe({ ready }: { ready: (s: Store) => void }) {
 
 beforeEach(() => {
   window.location.hash = ''
+  resetSharedStores()
   resetSessionStores()
   resetNavStores()
   setActiveRouter(null)
@@ -96,6 +98,43 @@ describe('non-component callers', () => {
     go('projects')
     expect(currentRoute().page).toBe('projects')
     expect(window.location.hash).toBe('#/projects')
+  })
+})
+
+describe('selectProject (guarded project switch)', () => {
+  it('guards a dirty switch behind the unsaved modal, then proceeds with the loading gate and the switcher closed', () => {
+    useProjectStore.getState().setPid('RT-2026-014')
+    act(() => { useSessionStore.getState().setDirty(true, () => {}) })
+    act(() => { selectProject('RT-2026-017') })
+    expect(useProjectStore.getState().pid).toBe('RT-2026-014')
+    expect(useSessionStore.getState().unsaved).not.toBeNull()
+    act(() => { useSessionStore.getState().unsaved!.next() })
+    expect(useProjectStore.getState().pid).toBe('RT-2026-017')
+    expect(useSessionStore.getState().loading).toBe(true)
+    expect(useUiStore.getState().switcherOpen).toBe(false)
+  })
+
+  it('redirects a detail route to the selected id and falls back to the section page for "all"', () => {
+    window.location.hash = '#/finding/FD-014-01'
+    resetNavStores()
+    act(() => { selectProject('RT-2026-017') })
+    expect(useProjectStore.getState().pid).toBe('RT-2026-017')
+    expect(currentRoute()).toEqual({ page: 'findings' })
+    window.location.hash = '#/project/RT-2026-014'
+    resetNavStores()
+    act(() => { selectProject('RT-2026-021') })
+    expect(currentRoute()).toEqual({ page: 'project', id: 'RT-2026-021' })
+    act(() => { selectProject('all') })
+    expect(currentRoute()).toEqual({ page: 'projects' })
+    expect(useProjectStore.getState().pid).toBe('all')
+  })
+
+  it('re-selecting the active project only closes the switcher', () => {
+    useProjectStore.getState().setPid('RT-2026-014')
+    useUiStore.getState().setSwitcherOpen(true)
+    act(() => { selectProject('RT-2026-014') })
+    expect(useUiStore.getState().switcherOpen).toBe(false)
+    expect(useSessionStore.getState().unsaved).toBeNull()
   })
 })
 
