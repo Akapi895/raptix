@@ -28,13 +28,17 @@ metadata:
 ## Playbooks
 | Skill | Use for |
 |---|---|
+| `/skills/standard/ad/bloodhound-bhce/SKILL.md`  | Operate BloodHound CE via `bhce_*` tools — preferred ingest/query path per ADR-0005 |
 | `/skills/standard/ad/bloodhound-query/SKILL.md` | Ingest + common Cypher queries |
 | `/skills/standard/ad/kerberoasting/SKILL.md`    | Roast SPN users, crack with hashcat |
 | `/skills/standard/ad/asrep-roasting/SKILL.md`   | dontreqpreauth users |
 | `/skills/standard/ad/adcs-esc1/SKILL.md`        | ESC1 template abuse → domain admin |
+| `/skills/standard/ad/certipy-esc-chain/SKILL.md`| Full ESC1-ESC15 chain via Certipy — find, request, auth, DCSync in 4 commands |
+| `/skills/standard/ad/coercer/SKILL.md`          | PetitPotam / PrinterBug / DFSCoerce / ShadowCoerce — force NTLM auth, then relay |
 | `/skills/standard/ad/dcsync/SKILL.md`           | Replication rights → krbtgt dump |
 | `/skills/standard/ad/laps/SKILL.md`             | LAPS local admin password extraction |
 | `/skills/standard/ad/netexec/SKILL.md`          | NetExec (formerly CrackMapExec) cheatsheet — SMB/WinRM/LDAP/MSSQL modules |
+| `/skills/standard/ad/ntlm-relay/SKILL.md`       | `ntlmrelayx` target-selection matrix, SMB-signing bypass, multi-relay |
 
 ## Workflow
 1. Collect: `bash("bloodhound-python -u user -p pass -d DOMAIN -c all --zip")`
