@@ -771,3 +771,89 @@ results, bridge and session-duality suites that exercise these screens
 through real mounted routes — including the `A.pauseOp`/typed-review bridge
 acceptance and the legacy `A.stopOp` fleet-observability cases — and
 `npm run build` covers the module graph).
+
+### Wave 8 (h/demo screens off the store, `wi/67w8-hdemo`)
+
+The h screens (c2 shell, channel detail, session detail, console) and the two
+public demo screens leave `useStore()` — 5 files, +178/−56 raw lines. One new
+seam artifact was required: `src/screens/demo/launch.ts` gained the exported
+`JumpSeam` interface and a `jumpSeam(live?)` factory (the demo jump/launch
+helpers previously pinned a `() => Store` accessor, and `demo.test.tsx` still
+passes one — the narrowed `() => JumpSeam` signature is structurally
+compatible, so that pinned suite is untouched). No new feature transactions
+were needed: all five C2 A-entries the screens used already had canonical
+transactions in `src/features/c2/grants.ts`, mirrored as local call-time
+helpers with the store's exact `actorCtx` shape
+(`{ actor: { id: me.name, role: me.role }, projectId: <call-time lookup>,
+corr: 'legacy' }`, session/request lookup from `services.authority.snapshot()`
+like the store's `dbRef`, and the same `Res` bridge `{ ok: true } |
+{ ok: false, error }`).
+
+- `src/screens/h.tsx` (7 components): C2Overview (`db`/`route`/`pid` →
+  `useDb`/`useRoute`/`useProjectStore`), Infra (+`accessible` →
+  `useAccessible`), Channels (`pid`), Sessions (`route`/`can`/`pid` →
+  `useRoute`/`useCan`/`useProjectStore`), Requests (`db`/`me`/`can`/`toast` →
+  `useDb`/`useMe`/`useCan`/toast authority + the `A.decideSessionRequest`
+  mirror — call-time request lookup, `decideSessionRequestTransaction`, same
+  not-found copy and decision toasts), AuditViewer (`can`/`pid`/`toast`) and
+  ChannelDetail (`route`); all `go` → navigate; the routes map is unchanged.
+- `src/screens/h-session.tsx`: SessionDetail fully migrated (`route`/`me`/
+  `can`/`pid` → navigate/console seams). The console keeps its reactive reads
+  on the store context (see the finding below) and its raw entries retire to
+  the canonical actions: `A.sessionCommand` → a call-time mirror over
+  `sessionCommandTransaction`, `A.expireGrant` → `expireGrantTransaction`,
+  `A.emergencyStop` → the demo-runtime `emergencyStop`, the same busy timer,
+  interrupt toast and estop confirm flow. The four console-tree hooks
+  (`useGrantWatch`, `useTerminate`, `useRevoke`, `RequestAccessDrawer`) keep
+  their store-context `db`/`me`/`A` reads (they render inside the console)
+  while `toast`/`confirm` ride the toast/session authorities.
+- `src/screens/demo/launch.ts`: `JumpSeam`/`jumpSeam` — the seam reads the
+  auth/project authorities at call time (meName/authed/pid), mirrors the
+  store's `login` byte-for-byte (signIn, `currentRoute()`, the
+  `isKnownPage`/OUTSIDE_SHELL guard, `clearDirty` + command-center fallback
+  via `navRawRoute`), guards its delayed 120 ms `go` behind a `live()`
+  mount-liveness predicate (the wave-6 `useDelayedNav` equivalence), and
+  `jump`/`launchGuide` bodies are unchanged apart from the parameter type.
+- `src/screens/demo/guide.tsx`: DemoGuide drops the store — `meName`/`authed`
+  from the auth authority, toast from the toast authority, `alive` ref +
+  `jumpSeam(() => alive.current)`, `loseAgent`/`restoreAgent` from
+  `features/demo/runtime` directly; the auto-advance timer and step kit are
+  unchanged.
+- `src/screens/demo/pages.tsx`: DemoChrome's confirm state rides the session
+  authority; ScenariosPage uses the session-store confirm, the jump seam and
+  the runtime `resetDemo`; WorkspacesPage keeps the guarded module `go` for
+  sign-out; the persona/workspace flows are unchanged.
+
+Finding (enabler-D follow-up): the console cannot take the canonical `useDb`/
+`useMe`/`useCan` hooks yet. Root cause, reproduced minimally: any
+`useSyncExternalStore` subscription to the authority inside the component
+that also mounts the ticket-47 `useQuery` hooks makes the pinned suite's
+delayed-command commit (inside `BUSY_MS` `setTimeout`) permanently desync the
+mounted Query observers' React subscriptions — the authority commit and the
+ChangeSet bridge both fire, `invalidateQueries(['session'])` refetches and the
+observers' `getCurrentResult()` holds the fresh read, but React never
+re-renders (the second test, which commits directly inside `act`, still
+works). The console tree therefore keeps the provider's projection reads —
+the same objects, same synchronous behavior — until the seam's subscription
+lifecycle is revisited; SessionDetail and the h shell components keep the
+canonical hooks (their suites exercise commits inside `act` and pass).
+
+Checks: `npm run typecheck` — 0 diagnostics (`$LASTEXITCODE` 0). `npm run
+lint` — 0 errors; 165 → 164 warnings. File-level diff over the 5 touched
+files (baseline linted before the edits: h.tsx 7, h-session 9, guide 0,
+pages 4, launch 0 = 20): after, h.tsx 7, h-session 9 (same react-refresh
+rule and count), guide 0, pages 4, launch 0 — 0 new findings (intermediate
+unused-import findings were caught by the file-level diff and removed).
+`npm test -- --run --maxWorkers=2` — 955 tests / 72 files green
+(`$LASTEXITCODE` 0); the known parallel-load flake pair did not surface and
+no assertion changed. `npm run build` — succeeds (`$LASTEXITCODE` 0,
+pre-existing chunk-size warning only).
+
+Gaps: browser route exercise skipped (optional HTTP-check gap per AGENTS.md
+§ Windows Temporary Process Safety, same as the earlier waves; the migrated
+surfaces are pinned by the c2 query/detail/console, safety/grants, demo and
+session-duality suites that exercise these screens through real mounted
+routes — including the ticket-47 command-history bridge acceptance and the
+demo.test jump seam — and `npm run build` covers the module graph). The
+console's `useDb` desync above is the wave's one deliberate seam deviation,
+scoped to the console component tree and documented in the code.
