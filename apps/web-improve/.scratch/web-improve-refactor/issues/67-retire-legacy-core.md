@@ -698,3 +698,76 @@ AGENTS.md § Windows Temporary Process Safety as the earlier waves; the
 screens are pinned by the analysis, findings evidence, reports editor/
 query/review, settings and ai-proposals suites exercising them through
 real renders, and `npm run build` covers the module graph).
+### Wave 4 (c screens off the store, `wi/67w4-c`)
+
+The four "c" screens (operations list/wizard/preflight/schedule/detail, the
+shared c-common helpers, the live console and the results/graph tabs) leave
+`useStore()` entirely — 21 hook sites across 4 files, +210/−51 raw lines
+(≈ +196/−51 runtime after the migration comments), far under the caps. No new
+feature transactions were needed: the typed create/update already owned the
+wizard's writes (`useCreateOperation`/`useUpdateOperation` →
+`createOperationDraft`/`updateOperationDraft`), so the wave instructions'
+verbatim `createOperationTransaction`/`updateOperationTransaction` move had
+nothing left to own — the screen's only remaining raw entry was
+`A.executePlan`.
+
+- `src/screens/c.tsx` (8 sites): `db`/`project`/`can`/`me` → `useDb`/
+  `useActiveProject`/`useCan`/`useMe`; `pid` → `useProjectStore`; `route` →
+  `useRoute`; `go` → navigate; `setPid` → `selectProject`;
+  `persistFilters`/`setFilter`/`setDirty` → session authority;
+  `setSwitcherOpen` → `useUiStore`; `toast` → toast authority; `now()` →
+  `stamp()`; the two `ReturnType<typeof useStore>['db']` prop types → `Db`.
+  The list banner's `A.executePlan` is mirrored: the plan's project binding
+  resolves from the one authority at call time and
+  `createOperationFromPlanTransaction` runs with the store's exact ctx
+  (`corr: 'legacy'`, override-aware persona), same Res bridge and not-found
+  copy — the toast/navigation flow around it is unchanged.
+- `src/screens/c-common.tsx` (2 sites): `OpGate` (`db`/`route`/`me`/`pid`,
+  `setPid` → `selectProject`, navigate `go`) and `RuntimeStatus` (`useDb`);
+  the `canAccessProject` policy-seam import stays.
+- `src/screens/c-console.tsx` (9 components): OpBanner, OpControls,
+  SessionCards, PlanCard, OverviewTab, StepDrawer, ConsoleTab, AgentsTab and
+  TimelineTab move to the console/session/ui/toast seams plus navigate
+  (`now()` → `stamp()` for the elapsed header; the unused `now` destructure
+  left with the migration). `A.pauseOp`/`A.resumeOp`/`A.stopOp`/
+  `A.completeOp` → the typed lifecycle handlers
+  (`pauseOperation`/`resumeOperation`/`stopOperation`/`completeOperation`)
+  called directly with the store's exact request context, and the demo log
+  mirrors stay at the call site — session-store `pushLog` with the exact
+  `hhmm()+':'+pad(seconds)` ts format and the same lines
+  (`Operation paused by ${me.name}` WARN, `Operation resumed by ${me.name}`
+  INFO, `Operation completed` INFO); the entry's op lookup reads the
+  authority at call time exactly like the store's `dbRef` (a missing op
+  silently returns for pause/stop, `Operation not found.` for resume/
+  complete), and the resume recheck keeps `computePreflightChecks` at the
+  factory clock's instant. `A.loseAgent`/`A.restoreAgent`/`A.fastForward` →
+  the canonical demo-runtime functions. TimelineTab's `A.audit` → one
+  'legacy' commit with the store helper's exact row shape (the RT-2026-014
+  SS/AR corr rule, `stamp()`, override-aware persona).
+- `src/screens/c-results.tsx` (2 sites): GraphView/ResultsView on the
+  navigate/console/session/toast seams; `A.audit` ×3 (graph export, results
+  export, sign-off) → the same exact 'legacy' audit mirror;
+  `A.addEvidence` → the same two-commit mirror (the live-count `EV-` id
+  derivation, the exact evidence row, then the 'Uploaded evidence' audit
+  row); the screen's local `stamp()` (the sign-off wall-clock label) stays,
+  so the demo stamp imports under the `demoStamp` alias.
+
+Checks: `npm run typecheck` — 0 diagnostics (`$LASTEXITCODE` 0). `npm run
+lint` — 0 errors; 167 → 166 warnings. File-level diff over the 4 touched
+files (baseline linted before the edits: c.tsx 10, c-common 23, c-console
+14, c-results 0 = 48 warnings): after, c.tsx 10, c-common 23, c-console 13,
+c-results 0 = 46 — c-console's only change is the removed unused-`now`
+destructure warning; 0 new findings (an intermediate `useProjectStore`
+unused-import finding was caught by the file-level diff and removed).
+`npm test -- --run --maxWorkers=2` — 955 tests / 72 files green
+(`$LASTEXITCODE` 0); the known parallel-load flake pair did not surface and
+no assertion changed. `npm run build` — succeeds (`$LASTEXITCODE` 0,
+pre-existing chunk-size warning only).
+
+Gaps: browser route exercise skipped (optional HTTP-check gap per AGENTS.md
+§ Windows Temporary Process Safety, same as the earlier waves; the migrated
+surfaces are pinned by the operations query/write/lifecycle/workspace,
+results, bridge and session-duality suites that exercise these screens
+through real mounted routes — including the `A.pauseOp`/typed-review bridge
+acceptance and the legacy `A.stopOp` fleet-observability cases — and
+`npm run build` covers the module graph).
