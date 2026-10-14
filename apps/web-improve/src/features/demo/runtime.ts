@@ -226,6 +226,45 @@ export const buildLogs = (d: Db) => {
   return init
 }
 
+/** Advances simulated operation outcomes from the latest committed snapshot. */
+export function tickOperations(services: ConsoleServices): void {
+  const cur = services.authority.snapshot()
+  const ss = cur.stopState
+  const frozen = ss && ['requested', 'failed', 'unknown'].includes(ss.phase)
+  const stale = useSessionStore.getState().staleOps
+  const running = cur.operations.filter((o) => o.status === 'running' && !stale[o.id] && !(frozen && (ss.scope === 'workspace' || o.projectId === ss.id || o.id === ss.id)))
+  if (!running.length) return
+  const logsToPush: [string, Omit<LogLine, 'id' | 'ts'>][] = []
+  const pad = (n: number): string => String(n).padStart(2, '0')
+  services.authority.commit('demo-tick', (d) => {
+    running.forEach((ro) => {
+      const o = d.operations.find((x) => x.id === ro.id)!
+      const ri = o.steps.findIndex((s) => s.status === 'running')
+      if (ri >= 0) {
+        const s = o.steps[ri]
+        if (d.agents.find((a) => a.id === s.agent)?.status === 'lost') return
+        s.status = 'ok'; s.dur = '0' + (1 + (ri % 3)) + ':' + pad(10 + ((ri * 17) % 50)); if (s.output.startsWith('Waiting') || s.output.startsWith('Not run') || s.output.startsWith('No output')) s.output = 'Sanitized output. No sensitive content.'
+        logsToPush.push([o.id, { level: 'INFO', agent: s.agent, stepId: s.id, text: `Completed step ${s.id} (${s.dur})` }])
+      }
+      if (o.steps.some((s) => s.status === 'review')) { o.updated = stamp(); return }
+      const ni = o.steps.findIndex((s) => s.status === 'pending')
+      if (ni >= 0) {
+        const s = o.steps[ni]
+        if (d.agents.find((a) => a.id === s.agent)?.status === 'lost') return
+        s.status = 'running'; s.ts = hhmm(); s.output = 'Waiting for agent result.'
+        logsToPush.push([o.id, { level: 'INFO', agent: s.agent, stepId: s.id, text: `Started step ${s.id} — ${s.name}` }])
+      }
+      if (o.steps.length && o.steps.every((s) => !['running', 'pending', 'review'].includes(s.status)) && o.steps.some((s) => s.status === 'ok')) {
+        o.status = 'done'; logsToPush.push([o.id, { level: 'INFO', agent: '—', stepId: '—', text: 'All steps finished — operation completed (simulated)' }])
+        o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === o.id) a.op = null })
+        d.sessions.forEach((x) => { if (x.opId === o.id && ['connected', 'available', 'suspended'].includes(x.state)) { x.state = 'terminated'; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated at operation completion.' }) } })
+      }
+      o.updated = stamp()
+    })
+  })
+  logsToPush.forEach(([id, line]) => pushLog(id, line))
+}
+
 /**
  * The demo reset, verbatim from the provider's `resetDemo`: disposes the
  * runtime's tracked timers, reseeds the one dataset (the 'reset' publication

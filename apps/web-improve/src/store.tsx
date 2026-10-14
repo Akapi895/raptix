@@ -1,15 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { USERS, APR, type Db, type Project, type Step, type Finding, type Role, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
 import { can as policyCan, projectAccessible, readOnlyContext, ROLE_LABEL } from './auth/policy'
 import type { CanAction } from './domain/permissions'
-import { createConsoleServices, type ConsoleServices } from './domain/service-factory'
+import { ServicesProvider, useServices } from './state/services'
+// eslint-disable-next-line react-refresh/only-export-components
+export { useServices } from './state/services'
 // Ticket 38 append: the legacy AI actions delegate to the feature-local chat
 // handlers (src/features/aichat); this layer keeps the demo's response
 // orchestration only.
 import { createChatHandlers } from './features/aichat/handlers'
 import {
-  buildLogs, initDemoRuntime, resetDemo as demoResetDemo,
+  resetDemo as demoResetDemo,
   emergencyStop as demoEmergencyStop, retryStop as demoRetryStop, resolveStop as demoResolveStop,
   sendChat as demoSendChat, stopChat as demoStopChat,
   loseAgent as demoLoseAgent, restoreAgent as demoRestoreAgent, fastForward as demoFastForward,
@@ -91,16 +93,16 @@ import {
   decideSessionRequestTransaction, expireGrantTransaction, requestSessionAccessTransaction,
   revokeGrantTransaction, sessionCommandTransaction,
 } from './features/c2/grants'
-import { resetSharedStores, useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
+import { useAuthStore, useProjectStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx, type Toast } from './state/stores'
 // Ticket 67 enabler A: the provider's transient UI state (confirm dialog,
 // dirty/unsaved guard, demo logs, stale marks, filters, stop outcome, AI
 // busy, loading) is backed by the session Zustand authority; this context
 // reads/writes it like the shared authorities above.
-import { resetSessionStores, useSessionStore, type ConfirmOpts, type LogLine } from './state/session'
+import { useSessionStore, type ConfirmOpts, type LogLine } from './state/session'
 // Ticket 67 enabler B: navigation (the guarded go, the raw router forward,
 // the route projection and the auth navigation) is hosted by the canonical
 // router module; this context forwards to it with an unchanged Store surface.
-import { currentRoute, go as navGo, navRawRoute, resetNavStores, selectProject, useRoute } from './router/navigate'
+import { currentRoute, go as navGo, navigationEpoch, navRawRoute, selectProject, useRoute } from './router/navigate'
 import { isKnownPage, OUTSIDE_SHELL, type Route } from './router/history'
 import { hhmm, stamp, today } from './domain/demo-clock'
 
@@ -248,38 +250,13 @@ interface Actions {
 const Ctx = createContext<Store>(null as any)
 export const useStore = () => useContext(Ctx)
 
-const ServicesCtx = createContext<ConsoleServices | null>(null)
-/** Canonical data authority + service factory (ADR-0067): typed handlers, clock and bridge subscription. */
-// eslint-disable-next-line react-refresh/only-export-components
-export const useServices = () => useContext(ServicesCtx)!
+export function StoreProvider({ children }: { children: ReactNode }): ReactElement {
+  return <ServicesProvider><LegacyStoreProjection>{children}</LegacyStoreProjection></ServicesProvider>
+}
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  /* One data authority (ADR-0067): the context state is a projection of the
-     canonical database; every mutation — legacy or service — commits through
-     its atomic transaction bridge and publishes the affected identities. */
-  const servicesRef = useRef<ConsoleServices | null>(null)
-  if (!servicesRef.current) servicesRef.current = createConsoleServices()
-  const services = servicesRef.current
-
-  /* The shared authorities are module singletons. Restoring their initial
-     values synchronously — before this mount's consumers read them — means
-     repeated provider mounts never inherit a previous mount's persona/
-     project/UI state (an effect would leave the first render stale). The
-     session authority (ticket 67 enabler A) is restored the same way. */
-  const navEpochRef = useRef(0)
-  const initedRef = useRef(false)
-  if (!initedRef.current) {
-    initedRef.current = true
-    resetSharedStores()
-    resetSessionStores()
-    /* The route projection re-reads the staged hash synchronously and starts
-       this mount's navigation epoch — like the provider's own route state
-       initializer did (deep links keep working). */
-    navEpochRef.current = resetNavStores()
-    /* Deep links no longer auto-authenticate (ticket 07): the auth store is
-       the single authorization authority, and the route guard holds the
-       requested URL as the safe return destination for unauthenticated visits. */
-  }
+function LegacyStoreProjection({ children }: { children: ReactNode }): ReactElement {
+  const services = useServices()
+  const navEpochRef = useRef(navigationEpoch())
   const [db, setDb] = useState<Db>(() => services.authority.snapshot())
   const dbRef = useRef(db)
   dbRef.current = db
@@ -291,20 +268,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const mutate = useCallback((fn: (d: Db) => void) => {
     services.authority.commit('legacy', fn)
     dbRef.current = services.authority.snapshot()
-  }, [services])
-
-  /* Canonical clock lockstep (ticket 46): the service clock advances with the
-     demo wall clock so scheduler-driven deadlines (the grant-expiry lifecycle)
-     continue without any C2 screen mounted. Under the test clock the interval
-     is fake-timer driven and stays in lockstep with `hhmm()`. */
-  useEffect(() => {
-    let last = Date.now()
-    const i = window.setInterval(() => {
-      const elapsed = Date.now() - last
-      last = Date.now()
-      if (elapsed > 0) services.clock.advance(elapsed)
-    }, 15_000)
-    return () => clearInterval(i)
   }, [services])
 
   /* Persona/auth, active project, theme, toasts and transient UI state are the
@@ -363,9 +326,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
      stale callback never applies pre-reset state to the reseeded dataset
      (and a callback outliving its mount stays bound to that mount's own
      authority). */
-  useEffect(() => initDemoRuntime(services), [services])
   const logs = useSessionStore((s) => s.logs)
-  const setLogsS = useSessionStore((s) => s.setLogs)
   const pushLogS = useSessionStore((s) => s.pushLog)
   const staleOps = useSessionStore((s) => s.staleOps)
   const setStale = useSessionStore((s) => s.setStale)
@@ -422,12 +383,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     navRawRoute({ page: 'command-center' }, navEpochRef.current)
   }
   const logout = () => { signOut(); navRawRoute({ page: 'login' }, navEpochRef.current) }
-
-  /* ───────── Helpers ───────── */
-  /* Ticket 67 wave 2: the demo live-log rebuild is hosted by the demo runtime
-     (src/features/demo/runtime) next to the log mirrors it seeds; the provider
-     rebuilds the logs from its own dataset snapshot on mount. */
-  useEffect(() => { setLogsS(buildLogs(dbRef.current)) }, [setLogsS])
 
   /* Ticket 67 wave 2: the demo reset (timers disposal, reseed, log rebuild,
      transient session/UI/toast clears and the final toast) lives in the demo
@@ -805,60 +760,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
   }
 
-  /* ticker: running operation progress */
-  const staleRef = useRef(staleOps)
-  staleRef.current = staleOps
-  useEffect(() => {
-    const t = setInterval(() => {
-      const cur = dbRef.current
-      const ss = cur.stopState
-      const frozen = ss && ['requested', 'failed', 'unknown'].includes(ss.phase)
-      const running = cur.operations.filter((o) => o.status === 'running' && !staleRef.current[o.id] && !(frozen && (ss!.scope === 'workspace' || o.projectId === ss!.id || o.id === ss!.id)))
-      if (!running.length) return
-      const logsToPush: [string, Omit<LogLine, 'id' | 'ts'>][] = []
-      mutate((d) => {
-        running.forEach((ro) => {
-          const o = d.operations.find((x) => x.id === ro.id)!
-          const ri = o.steps.findIndex((s) => s.status === 'running')
-          if (ri >= 0) {
-            const s = o.steps[ri]
-            if (d.agents.find((a) => a.id === s.agent)?.status === 'lost') return
-            s.status = 'ok'; s.dur = '0' + (1 + (ri % 3)) + ':' + pad(10 + ((ri * 17) % 50)); if (s.output.startsWith('Waiting') || s.output.startsWith('Not run') || s.output.startsWith('No output')) s.output = 'Sanitized output. No sensitive content.'
-            logsToPush.push([o.id, { level: 'INFO', agent: s.agent, stepId: s.id, text: `Completed step ${s.id} (${s.dur})` }])
-          }
-          if (o.steps.some((s) => s.status === 'review')) { o.updated = stamp(); return }
-          const ni = o.steps.findIndex((s) => s.status === 'pending')
-          if (ni >= 0) {
-            const s = o.steps[ni]
-            if (d.agents.find((a) => a.id === s.agent)?.status === 'lost') return
-            s.status = 'running'; s.ts = hhmm(); s.output = 'Waiting for agent result.'
-            logsToPush.push([o.id, { level: 'INFO', agent: s.agent, stepId: s.id, text: `Started step ${s.id} — ${s.name}` }])
-          }
-          if (o.steps.length && o.steps.every((s) => !['running', 'pending', 'review'].includes(s.status)) && o.steps.some((s) => s.status === 'ok')) {
-            o.status = 'done'; logsToPush.push([o.id, { level: 'INFO', agent: '—', stepId: '—', text: 'All steps finished — operation completed (simulated)' }])
-            o.agents.forEach((aid) => { const a = d.agents.find((x) => x.id === aid); if (a && a.op === o.id) a.op = null })
-            d.sessions.forEach((x) => { if (x.opId === o.id && ['connected', 'available', 'suspended'].includes(x.state)) { x.state = 'terminated'; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated at operation completion.' }) } })
-          }
-          o.updated = stamp()
-        })
-      })
-      logsToPush.forEach(([id, l]) => pushLog(id, l))
-    }, 4000)
-    return () => clearInterval(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const value: Store = {
     db, me, setMe: setMeName, authed, login, logout, org, route, go, pid, project, setPid, scoped, accessible, readOnly, can, theme, setTheme, loading,
     toast, toasts, confirm, confirmState, closeConfirm, setDirty, dirty, unsaved, closeUnsaved, guarded,
     switcherOpen, setSwitcherOpen, noticesOpen, setNoticesOpen, copilotOpen, copilotCtx, setCopilotOpen, aiMode, setAiMode, aiBusy,
     logs, now: stamp, staleOps, setStale, persistFilters, setFilter, resetDemo, stopOutcome, setStopOutcome, A,
   }
-  return (
-    <ServicesCtx.Provider value={services}>
-      <Ctx.Provider value={value}>{children}</Ctx.Provider>
-    </ServicesCtx.Provider>
-  )
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 
 /** Marks a form as having unsaved changes. Call every render with (isDirty, saveDraftFn). */
@@ -872,4 +780,3 @@ export function useDirty(isDirty: boolean, save?: () => void) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDirty])
 }
-
