@@ -1,0 +1,180 @@
+/**
+ * Real engagement creation (integration ticket 03, decisions D2/D4).
+ *
+ * Only the fields the engagement contract accepts are rendered and POSTed:
+ * workspace slug, display name, target type/value, authorization
+ * confirmation and the operator brief. The demo wizard's unsupported steps
+ * (objectives, members, ROE document, scheduling) are named as not-yet
+ * integrated — creating never persists them under a real label.
+ */
+import { useMemo, useState, type FormEvent, type ReactElement } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft, FolderPlus, Info } from 'lucide-react'
+import { createEngagement, type CreateEngagementInput } from '../api'
+import { invalidateProjects, projectKeys } from '../queries'
+import { go } from '../../router/navigate'
+import { useDirty, useSessionStore } from '../../state/session'
+import { useToastStore } from '../../state/stores'
+import { Banner, Button, Card, CardHeader, Check, Field, Input, PageHeader, Select, Textarea } from '../../ui'
+
+const TARGET_TYPES: { value: CreateEngagementInput['targetType']; label: string }[] = [
+  { value: 'web_url', label: 'Web URL' },
+  { value: 'ip_range', label: 'IP range' },
+]
+
+/** Server slug rule (apps/web/server security/project-policy.ts): lowercase
+ *  kebab DNS label, 3-63 chars, starts/ends alphanumeric. */
+const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$/
+
+function slugify(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+interface FormState {
+  displayName: string
+  name: string
+  nameTouched: boolean
+  targetType: CreateEngagementInput['targetType']
+  targetValue: string
+  brief: string
+  authorized: boolean
+}
+
+const INITIAL: FormState = { displayName: '', name: '', nameTouched: false, targetType: 'web_url', targetValue: '', brief: '', authorized: false }
+
+export function RealProjectCreate(): ReactElement {
+  const client = useQueryClient()
+  const toast = useToastStore((s) => s.toast)
+  const guarded = useSessionStore((s) => s.guarded)
+  const clearDirty = useSessionStore((s) => s.clearDirty)
+  const [form, setForm] = useState<FormState>(INITIAL)
+  const [formError, setFormError] = useState('')
+  const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(INITIAL), [form])
+  useDirty(dirty)
+
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]): void => setForm((f) => ({ ...f, [key]: value }))
+
+  const displayName = form.displayName.trim()
+  const slug = form.name.trim()
+  const targetValue = form.targetValue.trim()
+
+  const fieldErrors = {
+    displayName: displayName ? undefined : 'A display name is required.',
+    name: !slug ? 'A workspace slug is required.' : !SLUG_RE.test(slug) ? 'Use 3-63 lowercase letters, digits or dashes; start and end with a letter or digit.' : undefined,
+    targetValue: targetValue ? undefined : 'A target is required.',
+  }
+  const valid = !fieldErrors.displayName && !fieldErrors.name && !fieldErrors.targetValue && form.authorized
+
+  const create = useMutation({
+    mutationFn: (input: CreateEngagementInput) => createEngagement(input),
+    onSuccess: (created) => {
+      clearDirty()
+      toast(`Created engagement ${created.id}`)
+      invalidateProjects(client)
+      void client.invalidateQueries({ queryKey: projectKeys.detail(created.id) })
+      setForm(INITIAL)
+      go('project', { id: created.id })
+    },
+    onError: (error) => {
+      setFormError(error instanceof Error ? error.message : 'Creating the engagement failed.')
+    },
+  })
+
+  const submit = (e: FormEvent): void => {
+    e.preventDefault()
+    setFormError('')
+    if (!valid) { setFormError('Complete the required fields and confirm the authorization to create the engagement.'); return }
+    create.mutate({
+      name: slug,
+      ...(displayName !== slug ? { displayName } : {}),
+      targetType: form.targetType,
+      targetValue,
+      authorizationConfirmed: true,
+      ...(form.brief.trim() ? { brief: form.brief.trim() } : {}),
+    })
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="New Project"
+        sub="Creates a real engagement through the API. The full demo wizard (objectives, members, ROE document, scheduling) is not integrated yet and is intentionally unavailable in real mode."
+        crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: 'New Project' }]}
+        meta={<span className="inline-flex h-6 items-center rounded-full border border-cyan/30 bg-info-soft px-2.5 text-xs font-medium text-cyan">Real mode</span>}
+      />
+      <form
+        onSubmit={submit}
+        noValidate
+        className="grid max-w-3xl grid-cols-1 gap-5"
+        aria-busy={create.isPending}
+      >
+        {formError && (
+          <Banner tone="bad" title="Cannot create the engagement" action={<Button size="sm" variant="ghost" onClick={() => setFormError('')}>Dismiss</Button>}>{formError}</Banner>
+        )}
+        <Card>
+          <CardHeader title="Engagement details" sub="These fields persist on the server and survive a refresh." />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field label="Display name" required error={fieldErrors.displayName} className="md:col-span-2">
+              <Input
+                value={form.displayName}
+                onChange={(e) => {
+                  set('displayName', e.target.value)
+                  if (!form.nameTouched) set('name', slugify(e.target.value))
+                }}
+                placeholder="e.g. Q1 External Assessment"
+                aria-invalid={!!fieldErrors.displayName}
+              />
+            </Field>
+            <Field label="Workspace slug" required error={fieldErrors.name} hint="Used as the engagement workspace directory and API identity.">
+              <Input
+                className="font-mono"
+                value={form.name}
+                onChange={(e) => set('name', e.target.value.toLowerCase())}
+                onBlur={() => set('nameTouched', true)}
+                placeholder="q1-external-assessment"
+                aria-invalid={!!fieldErrors.name}
+              />
+            </Field>
+            <Field label="Target type" required>
+              <Select value={form.targetType} onChange={(e) => set('targetType', e.target.value as CreateEngagementInput['targetType'])}>
+                {TARGET_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </Select>
+            </Field>
+            <Field label="Target value" required error={fieldErrors.targetValue} hint="The URL or IP range the engagement is authorized to test." className="md:col-span-2">
+              <Input
+                value={form.targetValue}
+                onChange={(e) => set('targetValue', e.target.value)}
+                placeholder="https://target.example.test or 10.20.0.0/24"
+                className="font-mono"
+                aria-invalid={!!fieldErrors.targetValue}
+              />
+            </Field>
+            <Field label="Operator brief" hint="Context the planner drafts scope and rules of engagement from." className="md:col-span-2">
+              <Textarea value={form.brief} onChange={(e) => set('brief', e.target.value)} placeholder="Business context, known constraints, expected outcome…" />
+            </Field>
+          </div>
+        </Card>
+        <Card>
+          <CardHeader title="Authorization" sub="The API rejects creation without an explicit authorization confirmation." />
+          <Check
+            checked={form.authorized}
+            onChange={(v) => set('authorized', v)}
+            label="I confirm this engagement is authorized against the target above."
+          />
+        </Card>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" icon={ArrowLeft} onClick={() => guarded(() => go('projects'))}>Cancel</Button>
+          <div className="ml-auto">
+            <Button type="submit" variant="primary" icon={FolderPlus} disabled={!valid || create.isPending} title={valid ? undefined : 'Complete the required fields and confirm authorization'}>
+              {create.isPending ? 'Creating…' : 'Create Engagement'}
+            </Button>
+          </div>
+        </div>
+        <p className="flex items-start gap-2 text-xs text-muted" role="note">
+          <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
+          Not integrated yet: objectives, member invitations, ROE document attachment, assessment windows and scheduling. They require the approved lifecycle tickets and are not simulated here.
+        </p>
+      </form>
+    </>
+  )
+}
