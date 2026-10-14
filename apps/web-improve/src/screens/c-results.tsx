@@ -16,7 +16,13 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { Download, FilePlus2, Maximize2, Network, Paperclip, Plus, Minus, ShieldAlert } from 'lucide-react'
 import { Banner, Button, Card, CardHeader, Check, Empty, Field, IdLink, Input, Modal, Mono, SearchBox, Select, Skeleton, Status, STATUS, Table, useGuard, cx } from '../ui'
-import { useStore } from '../store'
+import { useServices } from '../store'
+import { go } from '../router/navigate'
+import { useCan, useMe } from '../state/console'
+import { useToastStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { stamp as demoStamp } from '../domain/demo-clock'
+import { ROLE_LABEL } from '../auth/policy'
 import type { Operation } from '../data'
 import { MASK, STEP_BORDER } from './c-common'
 import { StepDrawer } from './c-console'
@@ -51,7 +57,15 @@ const COLS = 4, NW = 170, NH = 72, GX = 40, GY = 56, PAD = 20
 const TONE_TXT: Record<string, string> = { ok: 'text-ok', bad: 'text-bad', accent: 'text-accent', neutral: 'text-neutral', warn: 'text-warn', cyan: 'text-cyan' }
 
 function GraphView({ read }: { read: OperationResultsRead }) {
-  const { go, toast, A, logs } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const logs = useSessionStore((s) => s.logs)
+  const toast = useToastStore((s) => s.toast)
+  /* The legacy `A.audit` entry, mirrored exactly: one 'legacy' commit with the
+     store helper's exact row shape (the RT-2026-014 SS/AR corr rule, the demo
+     stamp, the override-aware persona). */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: demoStamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const op = read.op
   const [sel, setSel] = useState<string | null>(null)
   const [fa, setFa] = useState('')
@@ -95,7 +109,7 @@ function GraphView({ read }: { read: OperationResultsRead }) {
           <Button size="sm" icon={Plus} aria-label="Zoom in" onClick={() => setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(1)))} />
           <Button size="sm" icon={Maximize2} onClick={fit}>Fit to view</Button>
           <Button size="sm" icon={Download} className="ml-auto" disabled={!read.viewSensitive} title={read.viewSensitive ? undefined : 'Your role cannot export the graph.'}
-            onClick={() => { download(`${op.id}-graph.json`, JSON.stringify({ op: op.id, nodes: read.steps.map((s) => ({ id: s.step.id, status: s.step.status, technique: s.step.technique, agent: s.step.agent })), edges: read.edges.map((e) => [e.from, e.to]) }, null, 2)); A.audit('Exported execution graph', op.id, op.projectId); toast('Graph exported (JSON).') }}>Export graph</Button>
+            onClick={() => { download(`${op.id}-graph.json`, JSON.stringify({ op: op.id, nodes: read.steps.map((s) => ({ id: s.step.id, status: s.step.status, technique: s.step.technique, agent: s.step.agent })), edges: read.edges.map((e) => [e.from, e.to]) }, null, 2)); audit('Exported execution graph', op.id, op.projectId); toast('Graph exported (JSON).') }}>Export graph</Button>
         </div>
         <div ref={box} className="overflow-auto rounded-xl border border-line bg-bg" style={{ maxHeight: 640 }}>
           <div style={{ width: W * zoom, height: H * zoom }}>
@@ -140,7 +154,13 @@ export function ResultsTab({ op }: { op: Operation }) {
 }
 
 function ResultsView({ read }: { read: OperationResultsRead }) {
-  const { go, can, A, toast, setFilter, persistFilters, me, logs } = useStore()
+  const me = useMe()
+  const services = useServices()
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const logs = useSessionStore((s) => s.logs)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const op = read.op
   const [stepSel, setStepSel] = useState<string | null>(null)
   const { ro, reason } = useGuard(op.projectId)
@@ -157,6 +177,17 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
   const canFind = can('createFinding', op.projectId) && !ro
   const canAttach = can('run', op.projectId) && !ro
   const stamp = () => { const d = new Date(Date.now() + 7 * 3600e3); return d.toISOString().slice(0, 16).replace('T', ' ') }
+  /* The legacy `A.audit`/`A.addEvidence` entries, mirrored exactly: one
+     'legacy' commit each through the one authority (the store helper's exact
+     audit/evidence row shapes and the live-count evidence id derivation). */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: demoStamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+  const addEvidence = (e: { name: string; kind: string; source: string; projectId: string; opId?: string; findingId?: string; sensitive: boolean }) => {
+    const id = 'EV-' + (400 + services.authority.snapshot().evidence.length + 1)
+    services.authority.commit('legacy', (d) => { d.evidence.push({ id, name: e.name, kind: e.kind, source: e.source, at: demoStamp(), by: me.name, projectId: e.projectId, opId: e.opId, findingId: e.findingId, sensitive: e.sensitive }) })
+    audit('Uploaded evidence', id, e.projectId)
+    return id
+  }
   const fbr = read.failedBranches
   const outcome = op.steps.length === 0 || c.ok + c.fail === 0 ? { v: 'neutral', t: 'Not determined', d: 'No step has a result yet.' }
     : !finals ? { v: fbr.length ? 'bad' : 'warn', t: 'Provisional', d: fbr.length ? `The operation has not ended and ${fbr.length} branch(es) already failed (${fbr.map((b) => b.id).join(', ')}). It cannot be reported as succeeded.` : 'The operation has not ended. Current results are provisional.' }
@@ -178,7 +209,7 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
           <Button size="sm" icon={FilePlus2} disabled={!canFind} title={canFind ? undefined : ro ? reason : 'Only a Manager or Operator can create findings.'} onClick={() => prefill()}>Create Finding</Button>
           <Button size="sm" icon={Paperclip} disabled={!canAttach} title={canAttach ? undefined : ro ? reason : 'Only a Manager or Operator can attach evidence.'} onClick={() => { setSrc(read.steps[0]?.step.id || ''); setAttach(true) }}>Attach evidence</Button>
           <Button size="sm" icon={Download} disabled={!exportAllowed} title={exportAllowed ? undefined : !finals ? 'Results can be exported only after the operation ends.' : 'Your role cannot export results.'}
-            onClick={() => { download(`${op.id}-results.json`, JSON.stringify({ op: op.id, outcome: outcome.t, steps: read.steps.map((s) => ({ id: s.step.id, name: s.step.name, status: s.step.status, technique: s.step.technique, dur: s.step.dur, output: s.maskOutput ? 'masked' : s.step.output })) }, null, 2)); A.audit('Exported operation results', op.id, op.projectId); toast('Results exported per policy (sensitive data masked).') }}>Export redacted</Button>
+            onClick={() => { download(`${op.id}-results.json`, JSON.stringify({ op: op.id, outcome: outcome.t, steps: read.steps.map((s) => ({ id: s.step.id, name: s.step.name, status: s.step.status, technique: s.step.technique, dur: s.step.dur, output: s.maskOutput ? 'masked' : s.step.output })) }, null, 2)); audit('Exported operation results', op.id, op.projectId); toast('Results exported per policy (sensitive data masked).') }}>Export redacted</Button>
         </>} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div><div className="mb-1 text-xs text-muted">Current conclusion</div><Status kind="generic" value={outcome.v} label={outcome.t} /><p className="mt-2 text-xs text-muted">{outcome.d}</p></div>
@@ -218,7 +249,7 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
         {signoff ? <p className="text-sm text-ok">Signed off by {signoff.by} at {signoff.at} (UTC+7).</p> : (() => {
           const ok = finals && c.review === 0 && canAttach
           const why = !finals ? 'The operation has not ended.' : c.review > 0 ? 'A step still needs review.' : !canAttach ? (ro ? reason : 'Only a Manager or Operator can sign off.') : ''
-          return <div className="flex flex-wrap items-center gap-3"><Button disabled={!ok} title={ok ? undefined : why} onClick={() => { setFilter('signoff.' + op.id, { by: me.name, at: stamp() }); A.audit('Results signed off', op.id, op.projectId); toast('Results signed off.') }}>Sign off results</Button>{!ok && <span className="text-xs text-muted">{why}</span>}{partial && <span className="text-xs text-warn">Sign-off applies to partial results only.</span>}</div>
+          return <div className="flex flex-wrap items-center gap-3"><Button disabled={!ok} title={ok ? undefined : why} onClick={() => { setFilter('signoff.' + op.id, { by: me.name, at: stamp() }); audit('Results signed off', op.id, op.projectId); toast('Results signed off.') }}>Sign off results</Button>{!ok && <span className="text-xs text-muted">{why}</span>}{partial && <span className="text-xs text-warn">Sign-off applies to partial results only.</span>}</div>
         })()}
       </Card>
       <div>
@@ -254,7 +285,7 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
       <StepDrawer op={op} step={read.steps.find((x) => x.step.id === stepSel)?.step ?? null} onClose={() => setStepSel(null)} logs={logs[op.id] || []} />
       <Modal open={attach} onClose={() => setAttach(false)} title="Attach evidence" footer={<>
         <Button onClick={() => setAttach(false)}>Cancel</Button>
-        <Button variant="primary" disabled={!nm.trim()} title={nm.trim() ? undefined : 'Enter an evidence file name.'} onClick={() => { const id = A.addEvidence({ name: nm.trim(), kind, source: `${op.id} / ${src}`, projectId: op.projectId, opId: op.id, sensitive: sens }); toast(`Evidence ${id} attached.`); setAttach(false); setNm(''); setSens(false) }}>Attach</Button>
+        <Button variant="primary" disabled={!nm.trim()} title={nm.trim() ? undefined : 'Enter an evidence file name.'} onClick={() => { const id = addEvidence({ name: nm.trim(), kind, source: `${op.id} / ${src}`, projectId: op.projectId, opId: op.id, sensitive: sens }); toast(`Evidence ${id} attached.`); setAttach(false); setNm(''); setSens(false) }}>Attach</Button>
       </>}>
         <div className="space-y-4">
           <Field label="File name (simulated)" required><Input value={nm} onChange={(e) => setNm(e.target.value)} placeholder="e.g. screenshot-step-08.png" /></Field>

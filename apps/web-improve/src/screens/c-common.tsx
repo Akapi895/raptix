@@ -1,7 +1,10 @@
 import { useRef, type ComponentType } from 'react'
 import { Eye, Lock, ShieldX, SearchX, GitBranch } from 'lucide-react'
 import { Button, Empty, Status } from '../ui'
-import { canAccessProject, useStore } from '../store'
+import { canAccessProject } from '../store'
+import { go, selectProject, useRoute } from '../router/navigate'
+import { useDb, useMe } from '../state/console'
+import { useProjectStore } from '../state/stores'
 import type { Route } from '../router/history'
 import { computePreflightChecks } from '../features/operations/preflight'
 import { planVer } from '../data'
@@ -11,7 +14,10 @@ import { PROJECT_TZ_OFFSET_MS, draftMinutes, roeWindowIssue } from '../features/
 
 /** Operation access gate: checks existence, project access and the selected project */
 export function OpGate({ C }: { C: ComponentType<{ op: Operation }> }) {
-  const { db, route, me, pid, setPid, go } = useStore()
+  const db = useDb()
+  const route = useRoute()
+  const me = useMe()
+  const pid = useProjectStore((s) => s.pid)
   const op = db.operations.find((o) => o.id === route.id)
   if (!op) {
     return (
@@ -29,7 +35,7 @@ export function OpGate({ C }: { C: ComponentType<{ op: Operation }> }) {
   }
   if (pid !== 'all' && pid !== op.projectId) {
     return (
-      <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => setPid(op.projectId)}>Switch to {op.projectId}</Button>}>
+      <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => selectProject(op.projectId)}>Switch to {op.projectId}</Button>}>
         Operation {op.id} belongs to project {op.projectId}. To avoid mixing data between projects, switch to that project before viewing it.
       </Empty>
     )
@@ -119,7 +125,7 @@ export const opConversation = (db: Db, op: Operation) => { const pl = op.planId 
 
 /** Status pill that shows the runtime state (e.g. "Paused — Awaiting Review") and flags failed branches; a failed branch is never shown as plain success. */
 export function RuntimeStatus({ op, size }: { op: Operation; size?: 'sm' | 'md' }) {
-  const { db } = useStore()
+  const db = useDb()
   const fb = failedBranches(db, op.id).length
   const review = hasReview(op)
   const h = size === 'sm' ? 'h-6' : 'h-7'

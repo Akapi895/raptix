@@ -1,10 +1,16 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { AlertTriangle, ArrowRight, GitBranch, MessageSquare, CalendarClock, CheckCircle2, ClipboardCheck, Lock, Play, Plus, Radio, RefreshCw, ShieldAlert, SlidersHorizontal, ShieldCheck, ShieldX, Wrench, X, Save } from 'lucide-react'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Mono, Pager, PageHeader, Person, PersonaHint, Progress, SearchBox, Segmented, Select, Skeleton, Status, Stepper, Table, Tabs, Textarea, Toggle, useGuard, cx } from '../ui'
-import { useDirty, useServices, useStore } from '../store'
+import { useDirty, useServices } from '../store'
+import { go, selectProject, useRoute } from '../router/navigate'
+import { useActiveProject, useCan, useDb, useMe } from '../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { stamp } from '../domain/demo-clock'
 import { computePreflightChecks, eligibility, preflightPass } from '../features/operations/preflight'
+import { createOperationFromPlanTransaction } from '../features/plans/bridge'
 import { planVer } from '../data'
-import type { Operation } from '../data'
+import type { Db, Operation } from '../data'
 import type { PfCheck, PfSnap, PfState } from './c-common'
 import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, elapsed, pfOverall, specChecks, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
 import { AgentsTab, ConsoleTab, OpBanner, OpControls, OverviewTab, TimelineTab } from './c-console'
@@ -19,7 +25,16 @@ const STATUS_OPTS: [string, string][] = [['draft', 'Draft'], ['ready', 'Ready'],
 
 /* ═════════════ OP-01 — Operations list (ticket 24: typed service read + Query) ═════════════ */
 function Operations() {
-  const { db, pid, project, go, persistFilters, setFilter, setSwitcherOpen, can, A, toast } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const me = useMe()
+  const services = useServices()
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const f = { q: '', status: '', project: '', owner: '', ...(persistFilters.ops || {}) }
   const set = (patch: Partial<typeof f>) => setFilter('ops', { ...f, ...patch })
   const statusF: string = (persistFilters['operations.status'] as string) || f.status
@@ -45,6 +60,15 @@ function Operations() {
   const clear = () => { set({ q: '', status: '', project: '', owner: '' }); setFilter('operations.status', ''); setFilter('operations.technique', '') }
   const setStatus = (v: string) => { setFilter('operations.status', v); set({ status: v }) }
   const noRunning = (o: Operation) => o.status === 'draft' || o.status === 'ready' || o.status === 'pending'
+  /* Ticket 67 wave 4: the legacy A.executePlan entry, mirrored — the plan's
+     project binding resolves from the one authority at call time and the
+     bridge transaction runs with the store's exact request context. */
+  const executePlan = (planId: string) => {
+    const projectId = services.authority.snapshot().plans.find((x) => x.id === planId)?.projectId
+    if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+    const res = createOperationFromPlanTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, planId)
+    return res.ok ? { ok: true as const, opId: res.data.opId } : { ok: false as const, error: res.failure.message }
+  }
   return (
     <div>
       <PageHeader title="Operations" sub="Operations by project, status and owner. Drafts can always be saved; only preflight and start are gated."
@@ -58,7 +82,7 @@ function Operations() {
         const ready = allProjects ? [] : read?.readyPlans ?? []
         return ready.length > 0 && <Banner tone="info" icon={ClipboardCheck} title={`${ready.length} approved plan${ready.length === 1 ? '' : 's'} ready for an operation`}>
           <ul className="mt-1 space-y-1.5">{ready.map((pl) => <li key={pl.id} className="flex flex-wrap items-center gap-2 text-sm"><IdLink onClick={() => go('ai-plan-review', { id: pl.id })}>{pl.id} {pl.ver}</IdLink><span className="min-w-0 truncate">{pl.title}</span>
-            <Button size="sm" variant="primary" disabled={!canCreate} title={canCreate ? 'Creates a draft operation from this approved plan. Preflight still has to pass before it can start.' : createWhy} onClick={() => { const r = A.executePlan(pl.id); if (r.ok && r.opId) { toast(`Draft ${r.opId} created from ${pl.id}. Run preflight before starting.`); go('operation', { id: r.opId, tab: 'overview' }) } else toast(r.error || 'Cannot create the operation.', 'bad') }}>Create Operation from plan</Button></li>)}</ul>
+            <Button size="sm" variant="primary" disabled={!canCreate} title={canCreate ? 'Creates a draft operation from this approved plan. Preflight still has to pass before it can start.' : createWhy} onClick={() => { const r = executePlan(pl.id); if (r.ok && r.opId) { toast(`Draft ${r.opId} created from ${pl.id}. Run preflight before starting.`); go('operation', { id: r.opId, tab: 'overview' }) } else toast(r.error || 'Cannot create the operation.', 'bad') }}>Create Operation from plan</Button></li>)}</ul>
         </Banner>
       })()}
       {techF && <Banner tone="info" title={`Showing operations that test technique ${techF}`} action={<Button size="sm" onClick={() => setFilter('operations.technique', '')}>Clear technique filter</Button>}>Only operations with at least one step using this technique are listed.</Banner>}
@@ -117,11 +141,10 @@ function Operations() {
 /* ───────────── Conflict panel (shared by wizard and schedule page). Candidate
    and stored instants are absolute (service boundary); the display converts to
    the project timezone's wall clock. ───────────── */
-function ConflictPanel({ db, id, agents, assets, at, mins }: { db: ReturnType<typeof useStore>['db']; id?: string; agents: string[]; assets: string[]; at: string; mins: number }) {
-  const { now, go } = useStore()
+function ConflictPanel({ db, id, agents, assets, at, mins }: { db: Db; id?: string; agents: string[]; assets: string[]; at: string; mins: number }) {
   const inst = scheduleInstantOf(at)
   if (inst == null) return null
-  const nowInst = (parseStamp(now()) ?? inst + PROJECT_TZ_OFFSET_MS) - PROJECT_TZ_OFFSET_MS
+  const nowInst = (parseStamp(stamp()) ?? inst + PROJECT_TZ_OFFSET_MS) - PROJECT_TZ_OFFSET_MS
   const proj = db.projects.find((p) => p.id === (db.operations.find((o) => o.id === id)?.projectId))
   const cs = findScheduleConflicts(db, { id, agents, assets, start: inst, mins }, nowInst)
   const win = roeWindowIssue(proj, inst)
@@ -150,7 +173,7 @@ function ConflictPanel({ db, id, agents, assets, at, mins }: { db: ReturnType<ty
     </div>
   )
 }
-const blockingConflicts = (db: ReturnType<typeof useStore>['db'], id: string | undefined, agents: string[], assets: string[], at: string, mins: number, nowMs: number) => {
+const blockingConflicts = (db: Db, id: string | undefined, agents: string[], assets: string[], at: string, mins: number, nowMs: number) => {
   const inst = scheduleInstantOf(at)
   return inst == null ? 0 : findScheduleConflicts(db, { id, agents, assets, start: inst, mins }, nowMs - PROJECT_TZ_OFFSET_MS).filter((c) => c.kind === 'agent').length
 }
@@ -158,7 +181,17 @@ const blockingConflicts = (db: ReturnType<typeof useStore>['db'], id: string | u
 /* ═════════════ OP-02 — Create / edit wizard ═════════════ */
 const STEPS = ['Basics', 'Playbook', 'Targets and agents', 'Schedule and mode', 'Review']
 function OperationNew() {
-  const { db, route, pid, project, me, go, can, toast, setSwitcherOpen, setPid, setDirty, persistFilters: pfx, setFilter: setFx, now } = useStore()
+  const db = useDb()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const me = useMe()
+  const pfx = useSessionStore((s) => s.persistFilters)
+  const setFx = useSessionStore((s) => s.setFilter)
+  const setDirty = useSessionStore((s) => s.setDirty)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const edit = route.id ? db.operations.find((o) => o.id === route.id) : undefined
   const projectId = edit?.projectId || (pid !== 'all' ? pid : '')
   const p = db.projects.find((x) => x.id === projectId) || project
@@ -195,7 +228,7 @@ function OperationNew() {
   }
   const assetRows = options?.assets ?? []
   const mins = edit ? stepMinutes(edit) : Math.max(20, (pb?.steps.length || 8) * 7)
-  const nowMs = parseStamp(now()) ?? 0
+  const nowMs = parseStamp(stamp()) ?? 0
 
   const roeLocked = !!p && (p.roeStatus !== 'approved' || !['approved', 'active'].includes(p.status))
   const allowed = !!p && can('run', projectId) && !ro
@@ -256,7 +289,7 @@ function OperationNew() {
   useDirty(isDirty, () => submit('detail'))
 
   if (edit && ['running', 'paused', 'done', 'cancelled', 'estop'].includes(edit.status)) return <Empty icon={Lock} title="This operation cannot be edited" action={<Button onClick={() => go('operation', { id: edit.id })}>Back to operation</Button>}>Only operations in Draft or Ready status can be edited.</Empty>
-  if (edit && pid !== 'all' && pid !== edit.projectId) return <Empty icon={Lock} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => setPid(edit.projectId)}>Switch to {edit.projectId}</Button>}>Switch to the right project before editing.</Empty>
+  if (edit && pid !== 'all' && pid !== edit.projectId) return <Empty icon={Lock} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => selectProject(edit.projectId)}>Switch to {edit.projectId}</Button>}>Switch to the right project before editing.</Empty>
   if (!p) {
     return (
       <div>
@@ -378,7 +411,13 @@ function OperationNew() {
 
 /* ═════════════ OP-03 — Preflight ═════════════ */
 function PreflightPage({ op }: { op: Operation }) {
-  const { db, go, toast, can, pid, route, persistFilters, setFilter, now } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const route = useRoute()
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const { clock } = useServices()
   const { ro, reason } = useGuard(op.projectId)
   const [checking, setChecking] = useState(false)
@@ -419,7 +458,7 @@ function PreflightPage({ op }: { op: Operation }) {
          records nothing; a run re-derives the checks and commits atomically. */
       if (!r.ok) { toast(r.failure.message, 'bad'); return }
       const cs = specChecks(db, op, clock.now())
-      setFilter('preflight.' + op.id, { at: now(), roe: p.roeVersion, plan: planV, checks: cs } as PfSnap)
+      setFilter('preflight.' + op.id, { at: stamp(), roe: p.roeVersion, plan: planV, checks: cs } as PfSnap)
       toast(pfOverall(cs) === 'fail' ? 'Preflight finished with failures. Start is unavailable.' : 'Preflight snapshot recorded.', pfOverall(cs) === 'fail' ? 'bad' : 'info')
     } })
   }
@@ -509,7 +548,9 @@ function PreflightPage({ op }: { op: Operation }) {
 
 /* ═════════════ Scheduling with conflict detection ═════════════ */
 function SchedulePage({ op }: { op: Operation }) {
-  const { db, go, toast, can, now } = useStore()
+  const db = useDb()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const { ro, reason } = useGuard(op.projectId)
   /* Ticket 25: the schedule write is a typed service mutation — validated,
      atomic, and published as a ChangeSet; a refusal renders its reason and
@@ -520,7 +561,7 @@ function SchedulePage({ op }: { op: Operation }) {
   const [mode, setMode] = useState<'now' | 'later'>(op.schedule && op.schedule !== 'now' ? 'later' : 'now')
   const [at, setAt] = useState(op.schedule && op.schedule !== 'now' ? op.schedule : '')
   const mins = stepMinutes(op)
-  const nowInst = (parseStamp(now()) ?? 0) - PROJECT_TZ_OFFSET_MS
+  const nowInst = (parseStamp(stamp()) ?? 0) - PROJECT_TZ_OFFSET_MS
   const locked = ['running', 'paused', 'done', 'cancelled', 'estop', 'error'].includes(op.status)
   const allowed = can('run', op.projectId) && !ro && !locked
   const inst = scheduleInstantOf(at)
@@ -585,7 +626,10 @@ const TABS = [
 ]
 const TAB_ALIAS: Record<string, string> = { console: 'live', evidence: 'results' }
 function OperationDetail({ d }: { d: OperationDetailRead }) {
-  const { route, go, can, staleOps, pid } = useStore()
+  const route = useRoute()
+  const staleOps = useSessionStore((s) => s.staleOps)
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
   const op = d.op
   const p = d.project
   const rt = route.tab ? TAB_ALIAS[route.tab] || route.tab : 'overview'
@@ -626,7 +670,6 @@ function OperationDetail({ d }: { d: OperationDetailRead }) {
 /** Linked context: plan, conversation, branch group, runtime state, Open in AI Operator.
  *  Ticket 26: plan, conversation and branch groups come from the canonical detail read. */
 function OpLinks({ d }: { d: OperationDetailRead }) {
-  const { go } = useStore()
   const op = d.op
   const pl = d.plan
   const conv = d.conversation
@@ -648,7 +691,8 @@ function OpLinks({ d }: { d: OperationDetailRead }) {
  *  handler's reason — with the switch affordance only for members addressing
  *  the operation from another specific project (no existence leak). */
 const Detail = () => {
-  const { route, pid, setPid, go } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
   const read = useOperationDetail(route.id || '')
   if (read.isPending) return <div className="space-y-2" aria-busy="true"><Skeleton className="h-14" /><Skeleton className="h-24" /><Skeleton className="h-64" /></div>
   if (read.isError || !read.data) {
@@ -656,7 +700,7 @@ const Detail = () => {
     const target = failure?.entity?.projectId
     if (target && pid !== 'all' && pid !== target) {
       return (
-        <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => setPid(target)}>Switch to {target}</Button>}>
+        <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => selectProject(target)}>Switch to {target}</Button>}>
           Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} belongs to project {target}. To avoid mixing data between projects, switch to that project before viewing it.
         </Empty>
       )
