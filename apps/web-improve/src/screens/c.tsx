@@ -4,11 +4,13 @@ import { ApprovalBanner, Banner, Button, Card, CardHeader, Check, DescList, Empt
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { useActiveProject, useCan, useDb, useMe } from '../state/console'
+import { useActiveProject, useCan, useMe } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { stamp } from '../domain/demo-clock'
-import { computePreflightChecks, eligibility, preflightPass } from '../features/operations/preflight'
+import { preflightPass } from '../features/operations/preflight'
+import { readPlanProject } from '../features/plans/bridge'
+import { readOperationPreflight, readOperationSpecChecks, useOperationView, useProjectEligibility, useScheduleConflicts } from '../features/operations/views'
 import { createOperationFromPlanTransaction } from '../features/plans/bridge'
 import { planVer } from '../data'
 import type { Db, Operation } from '../data'
@@ -26,7 +28,6 @@ const STATUS_OPTS: [string, string][] = [['draft', 'Draft'], ['ready', 'Ready'],
 
 /* ═════════════ OP-01 — Operations list (ticket 24: typed service read + Query) ═════════════ */
 function Operations() {
-  const db = useDb()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
   const me = useMe()
@@ -55,17 +56,18 @@ function Operations() {
   const allProjects = pid === 'all'
   const canCreate = !allProjects && can('run') && !ro
   const createWhy = allProjects ? SELECT_PROJECT : ro ? reason : 'Only a Manager or Operator can create operations.'
-  const elig = project ? eligibility(db, project.id) : null
+  const eligRead = useProjectEligibility(project?.id ?? '')
+  const elig = project ? eligRead : null
   const filtered = !!(f.q || statusF || techF || f.project || f.owner)
   const nMore = (f.owner ? 1 : 0) + (f.project ? 1 : 0)
   const clear = () => { set({ q: '', status: '', project: '', owner: '' }); setFilter('operations.status', ''); setFilter('operations.technique', '') }
   const setStatus = (v: string) => { setFilter('operations.status', v); set({ status: v }) }
   const noRunning = (o: Operation) => o.status === 'draft' || o.status === 'ready' || o.status === 'pending'
   /* Ticket 67 wave 4: the legacy A.executePlan entry, mirrored — the plan's
-     project binding resolves from the one authority at call time and the
-     bridge transaction runs with the store's exact request context. */
+     project binding resolves through the plans feature's narrow read at call
+     time and the bridge transaction runs with the store's exact request context. */
   const executePlan = (planId: string) => {
-    const projectId = services.authority.snapshot().plans.find((x) => x.id === planId)?.projectId
+    const projectId = readPlanProject(services.authority, planId)
     if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
     const res = createOperationFromPlanTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, planId)
     return res.ok ? { ok: true as const, opId: res.data.opId } : { ok: false as const, error: res.failure.message }
@@ -142,13 +144,13 @@ function Operations() {
 /* ───────────── Conflict panel (shared by wizard and schedule page). Candidate
    and stored instants are absolute (service boundary); the display converts to
    the project timezone's wall clock. ───────────── */
-function ConflictPanel({ db, id, agents, assets, at, mins }: { db: Db; id?: string; agents: string[]; assets: string[]; at: string; mins: number }) {
+function ConflictPanel({ id, agents, assets, at, mins }: { id?: string; agents: string[]; assets: string[]; at: string; mins: number }) {
+  const view = useOperationView(id || '')
   const inst = scheduleInstantOf(at)
+  const nowInst = (parseStamp(stamp()) ?? (inst ?? 0) + PROJECT_TZ_OFFSET_MS) - PROJECT_TZ_OFFSET_MS
+  const cs = useScheduleConflicts({ id, agents, assets, at, mins, nowInst })
   if (inst == null) return null
-  const nowInst = (parseStamp(stamp()) ?? inst + PROJECT_TZ_OFFSET_MS) - PROJECT_TZ_OFFSET_MS
-  const proj = db.projects.find((p) => p.id === (db.operations.find((o) => o.id === id)?.projectId))
-  const cs = findScheduleConflicts(db, { id, agents, assets, start: inst, mins }, nowInst)
-  const win = roeWindowIssue(proj, inst)
+  const win = roeWindowIssue(view?.project, inst)
   const past = inst < nowInst
   const disp = (i: number) => fmtMs(i + PROJECT_TZ_OFFSET_MS)
   return (
@@ -174,15 +176,10 @@ function ConflictPanel({ db, id, agents, assets, at, mins }: { db: Db; id?: stri
     </div>
   )
 }
-const blockingConflicts = (db: Db, id: string | undefined, agents: string[], assets: string[], at: string, mins: number, nowMs: number) => {
-  const inst = scheduleInstantOf(at)
-  return inst == null ? 0 : findScheduleConflicts(db, { id, agents, assets, start: inst, mins }, nowMs - PROJECT_TZ_OFFSET_MS).filter((c) => c.kind === 'agent').length
-}
 
 /* ═════════════ OP-02 — Create / edit wizard ═════════════ */
 const STEPS = ['Basics', 'Playbook', 'Targets and agents', 'Schedule and mode', 'Review']
 function OperationNew() {
-  const db = useDb()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
@@ -193,9 +190,12 @@ function OperationNew() {
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
-  const edit = route.id ? db.operations.find((o) => o.id === route.id) : undefined
+  /* The edited operation, its project and linked plan come from the typed
+     operation view; an unknown or inaccessible id reads as the create flow. */
+  const editV = useOperationView(route.id || '')
+  const edit = editV?.op
   const projectId = edit?.projectId || (pid !== 'all' ? pid : '')
-  const p = db.projects.find((x) => x.id === projectId) || project
+  const p = editV?.project || project
   const { ro, reason } = useGuard(projectId || undefined)
   /* Ticket 25: the selectable options are scoped by the typed service — only
      approved playbooks, eligible agents and approved in-scope assets reach the
@@ -230,6 +230,7 @@ function OperationNew() {
   const assetRows = options?.assets ?? []
   const mins = edit ? stepMinutes(edit) : Math.max(20, (pb?.steps.length || 8) * 7)
   const nowMs = parseStamp(stamp()) ?? 0
+  const conflicts = useScheduleConflicts({ id: edit?.id, agents: d.agents, assets: d.assets, at: d.when === 'later' ? d.at : '', mins, nowInst: nowMs - PROJECT_TZ_OFFSET_MS })
 
   const roeLocked = !!p && (p.roeStatus !== 'approved' || !['approved', 'active'].includes(p.status))
   const allowed = !!p && can('run', projectId) && !ro
@@ -242,7 +243,7 @@ function OperationNew() {
       agents: d.agents.length === 0 ? 'Needed before preflight: assign at least one agent. You can still save this draft.' : d.agents.some((a) => agentIssue(a)) ? 'Some selected agents are not valid. Deselect them or choose others.' : '',
     },
     3: {
-      at: d.when === 'later' ? (!d.at ? 'Choose a start time, or switch to manual start.' : windowIssue(p ?? undefined, schedMs(d.at)) || (blockingConflicts(db, edit?.id, d.agents, d.assets, d.at, mins, nowMs) ? 'An agent is already reserved at this time.' : '')) : '',
+      at: d.when === 'later' ? (!d.at ? 'Choose a start time, or switch to manual start.' : windowIssue(p ?? undefined, schedMs(d.at)) || (conflicts.some((c) => c.kind === 'agent') ? 'An agent is already reserved at this time.' : '')) : '',
     },
   }
   const show = (i: number, k: string) => errs[i][k]
@@ -299,7 +300,7 @@ function OperationNew() {
       </div>
     )
   }
-  const pl = edit?.planId ? db.plans.find((x) => x.id === edit.planId) : undefined
+  const pl = editV?.plan
   const sec = (children: React.ReactNode) => <Card className="mb-4">{children}</Card>
   const stepErr = (m: string) => m ? <p className="mt-2 flex items-center gap-1 text-xs text-warn"><AlertTriangle size={12} aria-hidden />{m}</p> : null
   const back = () => go(edit ? 'preflight' : 'operations', edit ? { id: edit.id } : undefined)
@@ -355,7 +356,7 @@ function OperationNew() {
           {step === 3 && sec(<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Start"><Segmented value={d.when as 'now' | 'later'} onChange={(v) => upd({ when: v })} options={[{ id: 'now', label: 'Start manually after preflight' }, { id: 'later', label: 'Schedule' }]} /></Field>
             {d.when === 'later' ? <Field label="Scheduled start" error={show(3, 'at')} hint={`ROE window: ${p.window}. Times are UTC+7.`}><Input type="datetime-local" value={d.at} onChange={(e) => upd({ at: e.target.value })} /></Field> : <div />}
-            {d.when === 'later' && d.at && <div className="md:col-span-2"><ConflictPanel db={db} id={edit?.id} agents={d.agents} assets={d.assets} at={d.at} mins={mins} /></div>}
+            {d.when === 'later' && d.at && <div className="md:col-span-2"><ConflictPanel id={edit?.id} agents={d.agents} assets={d.assets} at={d.at} mins={mins} /></div>}
             <Field label="Execution mode" hint="Per organization policy"><Select value={d.mode} onChange={(e) => upd({ mode: e.target.value })}><option>Manual with confirmation</option><option>Automatic per policy</option></Select></Field>
             <div className="flex items-center justify-between gap-3 rounded-lg border border-line p-3"><span className="text-sm">Require manager confirmation before start</span><Toggle on={d.needConfirm} onChange={(v) => upd({ needConfirm: v })} label="Require manager confirmation" /></div>
             <Field label="Operator notes" className="md:col-span-2"><Textarea value={d.note} onChange={(e) => upd({ note: e.target.value })} /></Field>
@@ -366,7 +367,7 @@ function OperationNew() {
               { k: 'Operation', v: d.name || '—' }, { k: 'Owner', v: d.owner }, { k: 'Project', v: <Mono>{p.id}</Mono> },
               { k: 'ROE version', v: <span className="inline-flex items-center gap-2"><Mono>{p.roeVersion}</Mono><Status kind="roe" value={p.roeStatus} size="sm" /></span> },
               { k: 'Playbook', v: pb ? `${pb.name} v${pb.version} · ${pb.steps.length} steps` : '—' },
-              { k: 'Assets', v: d.assets.map((a) => db.assets.find((x) => x.id === a)?.name).join(', ') || '—' },
+              { k: 'Assets', v: d.assets.map((a) => assetRows.find((x) => x.asset.id === a)?.asset.name).join(', ') || '—' },
               { k: 'Agents', v: d.agents.join(', ') || '—' },
               { k: 'Start', v: d.when === 'now' ? 'Manual, after preflight' : fmtSched(d.at) || '—' },
               { k: 'Mode', v: d.mode },
@@ -412,14 +413,14 @@ function OperationNew() {
 
 /* ═════════════ OP-03 — Preflight ═════════════ */
 function PreflightPage({ op }: { op: Operation }) {
-  const db = useDb()
+  const view = useOperationView(op.id)
   const pid = useProjectStore((s) => s.pid)
   const route = useRoute()
   const persistFilters = useSessionStore((s) => s.persistFilters)
   const setFilter = useSessionStore((s) => s.setFilter)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
-  const { clock } = useServices()
+  const services = useServices()
   const { ro, reason } = useGuard(op.projectId)
   const [checking, setChecking] = useState(false)
   /* Ticket 26: the run goes through the typed handler — the eight checks are
@@ -430,12 +431,13 @@ function PreflightPage({ op }: { op: Operation }) {
      is re-derived at click time, so a policy change between render and click
      is refused with its reason instead of starting. */
   const startOp = useStartOperation()
-  const p = db.projects.find((x) => x.id === op.projectId)!
-  const pb = db.playbooks.find((x) => x.id === op.playbookId)
-  const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
-  const pfNow = clock.now()
-  const live = specChecks(db, op, pfNow)
-  const engine = computePreflightChecks(db, op, pfNow)
+  if (!view) return null
+  const p = view.project
+  const pb = view.playbook
+  const pl = view.plan
+  const pfNow = services.clock.now()
+  const live = readOperationSpecChecks(services, op, pfNow)
+  const engine = readOperationPreflight(services, op, pfNow)
   const enginePass = preflightPass(engine)
   const snap = persistFilters['preflight.' + op.id] as PfSnap | undefined
   const planV = pl ? planVer(pl) : '—'
@@ -458,13 +460,13 @@ function PreflightPage({ op }: { op: Operation }) {
       /* A refusal (role, in-flight, superseded scope) surfaces its reason and
          records nothing; a run re-derives the checks and commits atomically. */
       if (!r.ok) { toast(r.failure.message, 'bad'); return }
-      const cs = specChecks(db, op, clock.now())
+      const cs = readOperationSpecChecks(services, op, services.clock.now())
       setFilter('preflight.' + op.id, { at: stamp(), roe: p.roeVersion, plan: planV, checks: cs } as PfSnap)
       toast(pfOverall(cs) === 'fail' ? 'Preflight finished with failures. Start is unavailable.' : 'Preflight snapshot recorded.', pfOverall(cs) === 'fail' ? 'bad' : 'info')
     } })
   }
   useEffect(() => { if (route.tab === 'run' && !snap && allowed && !started) run() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  const approver = db.approvals.find((a) => a.projectId === p.id && a.status === 'approved')
+  const approver = view.approvals.find((a) => a.status === 'approved')
   const disabledEdit = !allowed || started
   const runWhy = !allowed ? (ro ? reason : 'You cannot run checks.') : started ? 'The operation has already started.' : undefined
   return (
@@ -549,7 +551,7 @@ function PreflightPage({ op }: { op: Operation }) {
 
 /* ═════════════ Scheduling with conflict detection ═════════════ */
 function SchedulePage({ op }: { op: Operation }) {
-  const db = useDb()
+  const view = useOperationView(op.id)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
   const { ro, reason } = useGuard(op.projectId)
@@ -558,15 +560,16 @@ function SchedulePage({ op }: { op: Operation }) {
      keeps the chosen input. */
   const scheduleOp = useScheduleOperation()
   const [saveErr, setSaveErr] = useState('')
-  const p = db.projects.find((x) => x.id === op.projectId)!
   const [mode, setMode] = useState<'now' | 'later'>(op.schedule && op.schedule !== 'now' ? 'later' : 'now')
   const [at, setAt] = useState(op.schedule && op.schedule !== 'now' ? op.schedule : '')
   const mins = stepMinutes(op)
   const nowInst = (parseStamp(stamp()) ?? 0) - PROJECT_TZ_OFFSET_MS
+  const inst = scheduleInstantOf(at)
+  const conflicts = useScheduleConflicts(mode === 'later' ? { id: op.id, agents: op.agents, assets: op.assets, at, mins, nowInst } : { agents: [], assets: [], at: '', mins, nowInst })
+  if (!view) return null
+  const p = view.project
   const locked = ['running', 'paused', 'done', 'cancelled', 'estop', 'error'].includes(op.status)
   const allowed = can('run', op.projectId) && !ro && !locked
-  const inst = scheduleInstantOf(at)
-  const conflicts = mode === 'later' && inst != null ? findScheduleConflicts(db, { id: op.id, agents: op.agents, assets: op.assets, start: inst, mins }, nowInst) : []
   const blocking = conflicts.filter((c) => c.kind === 'agent').length
   const win = mode === 'later' && inst != null ? roeWindowIssue(p, inst) : ''
   const why = locked ? 'The operation has already started and cannot be rescheduled.' : ro ? reason : !can('run', op.projectId) ? 'Only a Manager or Operator can schedule operations.'
@@ -581,7 +584,7 @@ function SchedulePage({ op }: { op: Operation }) {
       },
     })
   }
-  const others = db.operations.filter((o) => o.id !== op.id && o.projectId === op.projectId && (o.status === 'running' || o.status === 'paused' || (o.schedule && o.schedule !== 'now' && ['draft', 'ready'].includes(o.status))))
+  const others = view.siblings.filter((o) => o.id !== op.id && (o.status === 'running' || o.status === 'paused' || (o.schedule && o.schedule !== 'now' && ['draft', 'ready'].includes(o.status))))
   return (
     <div>
       <PageHeader title={`Schedule — ${op.id}`} sub={op.name} crumbs={[{ label: 'Operations', to: () => go('operations') }, { label: op.id, to: () => go('operation', { id: op.id }) }, { label: 'Schedule' }]} meta={<OpStatus value={op.status} />} />
@@ -593,7 +596,7 @@ function SchedulePage({ op }: { op: Operation }) {
             <fieldset disabled={!allowed} className="space-y-4">
               <Segmented value={mode} onChange={setMode} options={[{ id: 'now', label: 'Start manually after preflight' }, { id: 'later', label: 'Schedule' }]} />
               {mode === 'later' && <Field label="Scheduled start" required><Input type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} /></Field>}
-              {mode === 'later' && at && <ConflictPanel db={db} id={op.id} agents={op.agents} assets={op.assets} at={at} mins={mins} />}
+              {mode === 'later' && at && <ConflictPanel id={op.id} agents={op.agents} assets={op.assets} at={at} mins={mins} />}
             </fieldset>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Button variant="primary" icon={CalendarClock} disabled={!allowed || !!why} title={!allowed ? (locked ? why : ro ? reason : 'You cannot schedule operations.') : why || undefined} onClick={save}>Save schedule</Button>
@@ -606,7 +609,7 @@ function SchedulePage({ op }: { op: Operation }) {
         <div className="space-y-4">
           <Card>
             <CardHeader title="Reserved resources" />
-            <DescList cols={1} items={[{ k: 'Agents', v: op.agents.join(', ') || '—' }, { k: 'Assets', v: op.assets.map((a) => db.assets.find((x) => x.id === a)?.name || a).join(', ') || '—' }, { k: 'Estimated duration', v: `${mins} min (${op.steps.length || 8} steps)` }, { k: 'Current schedule', v: op.schedule && op.schedule !== 'now' ? fmtSched(op.schedule) : 'Manual start' }]} />
+            <DescList cols={1} items={[{ k: 'Agents', v: op.agents.join(', ') || '—' }, { k: 'Assets', v: op.assets.map((a) => view.assets.find((x) => x.id === a)?.name || a).join(', ') || '—' }, { k: 'Estimated duration', v: `${mins} min (${op.steps.length || 8} steps)` }, { k: 'Current schedule', v: op.schedule && op.schedule !== 'now' ? fmtSched(op.schedule) : 'Manual start' }]} />
           </Card>
           <Card>
             <CardHeader title="Other operations in this project" />

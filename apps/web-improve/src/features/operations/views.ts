@@ -15,7 +15,9 @@ import type { ConsoleServices } from '../../domain/service-factory'
 import { projectView } from '../../domain/projection'
 import { projectAccessible } from '../../auth/policy'
 import { useServiceProjection } from '../../state/projection'
-import { computePreflightChecks, type Check } from './preflight'
+import { computePreflightChecks, eligibility, scheduleInstantOf, type Check, type EligKind, type Reason } from './preflight'
+import { specChecks, type PfCheck } from './checklist'
+import { findScheduleConflicts, type ScheduleConflict } from './service'
 
 export interface OperationView {
   op: Operation
@@ -37,6 +39,10 @@ export interface OperationView {
   toolEvents: Db['toolEvents']
   channels: Db['channels']
   c2Nodes: Db['c2Nodes']
+  /** Project ROE approvals. */
+  approvals: Db['approvals']
+  /** Other operations of the same project. */
+  siblings: Db['operations']
   /** Audit rows addressed to the operation (newest-first, capped at 30). */
   audit: Db['audit']
 }
@@ -64,6 +70,8 @@ export function readOperationView(services: ConsoleServices, ctx: RequestContext
       toolEvents: db.toolEvents.filter((t) => t.opId === opId),
       channels: db.channels.filter((c) => c.projectId === op.projectId),
       c2Nodes: db.c2Nodes.filter((n) => n.projectIds.includes(op.projectId)),
+      approvals: db.approvals.filter((a) => a.projectId === op.projectId),
+      siblings: db.operations.filter((o) => o.projectId === op.projectId),
       audit: db.audit.filter((a) => a.obj.startsWith(opId)).slice(0, 30),
     }
   })
@@ -97,6 +105,36 @@ export function useOperationGate(opId: string): OperationGate {
 /** Re-derives the canonical preflight checks from current state at the caller's instant. */
 export function readOperationPreflight(services: ConsoleServices, op: Operation, now: Instant): Check[] {
   return computePreflightChecks(services.authority.snapshot(), op, now)
+}
+
+/** The displayed 8-check derivation, re-derived from current state at the caller's instant. */
+export function readOperationSpecChecks(services: ConsoleServices, op: Operation, now: Instant): PfCheck[] {
+  return specChecks(services.authority.snapshot(), op, now)
+}
+
+/** Project-level execution eligibility, derived from canonical state. */
+export type ProjectEligibility = { kind: EligKind; label: string; tone: 'ok' | 'warn' | 'bad' | 'neutral' | 'cyan'; reasons: Reason[] }
+
+export function readProjectEligibility(services: ConsoleServices, ctx: RequestContext, projectId: string): ProjectEligibility {
+  return projectView(services, ctx, 'eligibility.' + projectId, (db) => eligibility(db, projectId))
+}
+
+export function useProjectEligibility(projectId: string): ProjectEligibility {
+  return useServiceProjection((services, ctx) => readProjectEligibility(services, ctx, projectId))
+}
+
+/** Scheduling conflicts for a candidate start, re-derived from current state. */
+export interface ScheduleProbe { id?: string; agents: string[]; assets: string[]; at: string; mins: number; nowInst: number }
+
+export function readScheduleConflicts(services: ConsoleServices, ctx: RequestContext, probe: ScheduleProbe): ScheduleConflict[] {
+  return projectView(services, ctx, 'schedule.' + JSON.stringify(probe), (db) => {
+    const inst = scheduleInstantOf(probe.at)
+    return inst == null ? [] : findScheduleConflicts(db, { id: probe.id, agents: probe.agents, assets: probe.assets, start: inst, mins: probe.mins }, probe.nowInst)
+  })
+}
+
+export function useScheduleConflicts(probe: ScheduleProbe): ScheduleConflict[] {
+  return useServiceProjection((services, ctx) => readScheduleConflicts(services, ctx, probe))
 }
 
 /** Narrow existence/project lookup for lifecycle click handlers; the write handlers re-derive every gate themselves. */
