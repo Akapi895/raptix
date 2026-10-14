@@ -540,3 +540,56 @@ export function requestEmergencyStop(engagementId: string, input: { scope: 'oper
     typeof v === 'object' && v !== null && typeof (v as EmergencyStopView).id === 'string' && typeof (v as EmergencyStopView).outcome === 'string',
   { method: 'POST', body: input })
 }
+
+/* ───────────── Curated findings/evidence (integration ticket 10) ───────────── */
+
+export interface CuratedFindingView {
+  id: string
+  engagementId: string
+  title: string
+  severity: string
+  status: string
+  body: { detail: string }
+  expectedVersion: number
+  sourceType: 'authored' | 'imported'
+  producerRef: string | null
+  createdBy: string
+  updatedBy: string | null
+  updatedAt: string
+  evidence: { id: string; kind: 'artifact' | 'digest'; artifactPath: string | null; digest: string | null; producer: string | null; createdAt: string }[]
+}
+
+export interface CuratedFindingsView {
+  engagementId: string
+  findings: CuratedFindingView[]
+  transitions: Record<string, string[]>
+  source: 'db'
+}
+
+function isCuratedFindingsView(v: unknown): v is CuratedFindingsView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as CuratedFindingsView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.findings) && doc.source === 'db' && typeof doc.transitions === 'object'
+}
+
+export function fetchCuratedFindings(engagementId: string): Promise<CuratedFindingsView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings`, owned(engagementId, isCuratedFindingsView))
+}
+
+export function createCuratedFinding(engagementId: string, input: { title: string; severity: string; detail: string }): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings`, (v): v is CuratedFindingView =>
+    typeof v === 'object' && v !== null && typeof (v as CuratedFindingView).id === 'string' && (v as CuratedFindingView).status === 'draft',
+  { method: 'POST', body: input })
+}
+
+export function transitionCuratedFinding(engagementId: string, findingId: string, to: string): Promise<CuratedFindingView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/transition`, (v): v is CuratedFindingView =>
+    typeof v === 'object' && v !== null && typeof (v as CuratedFindingView).status === 'string',
+  { method: 'POST', body: { to } })
+}
+
+export function attachEvidence(engagementId: string, findingId: string, input: { kind: 'artifact' | 'digest'; artifactPath?: string; digest?: string; producer?: string }): Promise<{ id: string; kind: string }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/curated-findings/${encodeURIComponent(findingId)}/evidence`, (v): v is { id: string; kind: string } =>
+    typeof v === 'object' && v !== null && typeof (v as { id?: unknown }).id === 'string',
+  { method: 'POST', body: input })
+}
