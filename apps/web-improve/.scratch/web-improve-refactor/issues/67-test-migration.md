@@ -93,3 +93,26 @@ existing Vite config-loader warning and two jsdom document-navigation notices.
   session-console final rerun: 26/26, exit 0; delivery actor remains Alex
   with independent report approval by Pat.
 - Typecheck exit 0, all nine touched tests lint with zero diagnostics.
+
+## T2 auth/estop/grant + approval/notice batches
+
+- Committed 376dd28: harness accepts ComponentType | ReactNode UI; auth
+  probes, estop service/ui and safety grants/closure-facets migrated to
+  mountServices + demo runtime + final transactions. 63 tests pass (five
+  files); typecheck exit 0; all six touched files lint clean. Gated screen
+  controls (aria-disabled wrapper) are asserted through the mounted UI plus
+  the direct handler refusal.
+- Committed e77a52e: safety isolation/preflight, notices service, approvals
+  service (four-eyes confirmState asserted on useSessionStore). 26 tests
+  pass (four files); typecheck exit 0; lint clean on all four.
+
+## T2 operations/assets/grants batch (Batch C)
+
+- Operations lifecycle/preflight/workspace and asset writes migrated:
+  65 tests pass (five files, including c2 grants with the legacy-action
+  bridge proof restated through the final request transaction). Workspace
+  persona bug fixed (mountServices takes the persona as its second argument);
+  the workspace viewer case now asserts the Gated read-only control plus the
+  direct orbidden handler refusal; pending-asset selection is asserted as
+  an upfront draft-creation refusal followed by success after approval.
+- Typecheck exit 0; all five touched test files lint with zero diagnostics.

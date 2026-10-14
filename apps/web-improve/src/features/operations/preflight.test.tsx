@@ -11,21 +11,20 @@
  * steps and linked events from the same canonical state.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { DEMO_ANCHOR } from '../../domain/clock'
 import { APR } from '../../data'
 import type { Db, Operation } from '../../data'
 import { reviseScopeTransaction } from '../approvals/service'
 import { assignAgentTransaction } from '../agents/writes'
+import { selectProject, go } from '../../router/navigate'
 import { routes } from '../../screens/c'
 import { seed } from '../../data'
 import { computePreflightChecks, eligibility, preflightPass } from './preflight'
-import { createOperationDraft, listOperations, operationDetail, operationStartGate, runOperationPreflight } from './service'
+import { createOperationDraft, listOperations, operationDetail, operationStartGate, runOperationPreflight, updateOperationDraft } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
@@ -294,62 +293,39 @@ describe('operationDetail — console phases, steps and events from canonical re
 
 /* ───────────── Screen bridge and isolation ───────────── */
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
-function mountProbe(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
-  const ui = (children: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {children}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(null))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: (children: React.ReactNode) => view.rerender(ui(children)),
-    unmount: view.unmount,
-  }
-}
-
 describe('operation console (ticket 26 — screens)', () => {
-  it('bridge: a legacy draft edit reaches the typed detail read; a typed preflight run reaches the legacy store', async () => {
-    const h = mountProbe('Taylor Chen')
+  it('bridge: a typed draft edit reaches the typed detail read; a typed preflight run reaches the console projection', async () => {
+    const h = mountServices(null, 'Taylor Chen')
     // Setup: the pool assignment is role-gated at the typed handler (ticket
     // 49), so the setup runs it as the manager persona; the bridge proof
     // below still exercises the operator's preflight actions.
-    h.run(() => { h.store().setPid('RT-2026-014'); assignAgentTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX, 'all'), 'AG-012', { projectId: 'RT-2026-014' }) })
-    const opId = h.store().A.createOperation({ name: 'Bridge proof op', projectId: 'RT-2026-014', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
-    h.run(() => h.store().go('operation', { id: opId }))
+    h.run(() => selectProject('RT-2026-014'))
+    h.run(() => assignAgentTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX, 'all'), 'AG-012', { projectId: 'RT-2026-014' }))
+    let opId = ''
+    h.run(() => {
+      const created = createOperationDraft(h.svc().authority, h.svc().clock, ctxOf(TAYLOR, 'RT-2026-014'), { name: 'Bridge proof op', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
+      if (!created.ok) throw new Error(created.failure.message)
+      opId = created.data.op.id
+    })
+    h.run(() => go('operation', { id: opId }))
     h.show(<routes.operation />)
     await waitFor(() => expect(screen.getByText('Bridge proof op')).toBeInTheDocument())
-    // Direction 1 — legacy action (the store's delegating draft entry, which
-    // invalidates any preflight snapshot) → the Query detail read refetches.
-    h.run(() => h.store().A.updateOperation(opId, { name: 'Bridge proof op' }))
+    // Direction 1 — the typed draft edit (which invalidates any preflight
+    // snapshot) → the Query detail read refetches.
+    h.run(() => { updateOperationDraft(h.svc().authority, h.svc().clock, ctxOf(TAYLOR, 'RT-2026-014'), opId, { name: 'Bridge proof op' }) })
     await waitFor(() => expect(screen.getByText('Draft')).toBeInTheDocument())
-    // Direction 2 — the typed preflight run is observed by the legacy store projection.
+    // Direction 2 — the typed preflight run is observed by the console projection.
     await act(async () => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf(TAYLOR, 'RT-2026-014'), opId) })
     await waitFor(() => expect(screen.getByText('Ready')).toBeInTheDocument())
-    const op = h.store().db.operations.find((o) => o.id === opId)!
+    const op = h.db().operations.find((o) => o.id === opId)!
     expect(op.status).toBe('ready')
     expect(op.preflightAt).toBeDefined()
     h.unmount()
   })
 
   it('list rows show the canonical eligibility label for a locked project', async () => {
-    const h = mountProbe('Dana Whitfield')
-    h.run(() => h.store().setPid('RT-2026-017'))
+    const h = mountServices(null, 'Dana Whitfield')
+    h.run(() => selectProject('RT-2026-017'))
     h.show(<routes.operations />)
     await waitFor(() => expect(screen.getByText('Fabrikam discovery (draft)')).toBeInTheDocument())
     expect(screen.getByText('Execution locked — ROE not approved')).toBeInTheDocument()
@@ -359,7 +335,7 @@ describe('operation console (ticket 26 — screens)', () => {
   it('a delayed detail response for a superseded scope never pollutes the switched view', async () => {
     let resolveGate!: () => void
     const gate = new Promise<void>((r) => { resolveGate = r })
-    const h = mountProbe()
+    const h = mountServices()
     const svc = h.svc()
     const orig = svc.operations.bind(svc)
     vi.spyOn(svc, 'operations').mockImplementation((actor_, project) => {
@@ -367,12 +343,12 @@ describe('operation console (ticket 26 — screens)', () => {
       if (project !== 'all' || actor_.id !== 'Alex Morgan') return inner
       return { ...inner, detail: async (ctx: RequestContext, id: string) => { await gate; return inner.detail(ctx, id) } }
     })
-    h.run(() => h.store().go('operation', { id: 'OP-014' }))
+    h.run(() => go('operation', { id: 'OP-014' }))
     h.show(<routes.operation />)
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    // A persona switch supersedes the in-flight aggregate-scope read (setPid on a
+    // A persona switch supersedes the in-flight aggregate-scope read (selectProject on a
     // detail route is avoided — see the execution-ledger pinning notes).
-    h.run(() => h.store().setMe('Dana Whitfield'))
+    h.as('Dana Whitfield')
     await waitFor(() => expect(screen.getByText('Internal environment discovery')).toBeInTheDocument())
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getByText('Internal environment discovery')).toBeInTheDocument()
