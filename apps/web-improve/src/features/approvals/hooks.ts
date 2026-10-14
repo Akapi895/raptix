@@ -11,21 +11,29 @@
  * closure handler (role gate and required reason are enforced there); the
  * panel surfaces its refusal.
  */
-import { APR, type Project } from '../../data'
+import { APR, type Db, type Project } from '../../data'
 import { useServices } from '../../state/services'
-import { useDb, useMe } from '../../state/console'
+import { useMe } from '../../state/console'
 import { useToastStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
+import { useServiceProjection } from '../../state/projection'
+import { projectView } from '../../domain/projection'
+import type { RequestContext } from '../../domain/service'
+import type { ConsoleServices } from '../../domain/service-factory'
 import { submitApprovalTransaction } from './service'
 import { reopenProjectTransaction } from '../closure/service'
+
+/** The project's assets, for the submission readiness panel; the transaction re-derives the essentials itself. */
+export function readApprovalAssets(services: ConsoleServices, ctx: RequestContext, projectId: string): Db['assets'] {
+  return projectView(services, ctx, 'approval-assets.' + projectId, (db) => db.assets.filter((a) => a.projectId === projectId))
+}
 
 /** Submit/resubmit the project for approval; refusals surface as a bad toast with the handler's reason. */
 export function useSubmitApproval(p: Project) {
   const services = useServices()
   const me = useMe()
   const toast = useToastStore((s) => s.toast)
-  const db = useDb()
-  const assets = db.assets.filter((a) => a.projectId === p.id)
+  const assets = useServiceProjection((svcs, ctx) => readApprovalAssets(svcs, ctx, p.id))
   const issues: string[] = []
   if (!assets.some((a) => ['in', 'pending'].includes(a.scope))) issues.push('no in-scope assets')
   if (!p.emergency) issues.push('no emergency contact')
