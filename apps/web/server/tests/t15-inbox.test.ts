@@ -47,7 +47,7 @@ function memoryDb() {
   };
   const selectMany = async (name: string, pred: (row: Row) => boolean): Promise<Row[]> => [...table(name).values()].filter(pred).map((r) => ({ ...r }));
   const listMany = async (name: string, args: { where?: Row; orderBy?: { createdAt?: string }; take?: number }): Promise<Row[]> => {
-    let rows = [...table(name).values()].filter((r) => (args.where === undefined ? true : matches(r, args.where)));
+    const rows = [...table(name).values()].filter((r) => (args.where === undefined ? true : matches(r, args.where)));
     if (args.orderBy?.createdAt === 'desc') rows.sort((a, b) => ((b.createdAt as Date).getTime() - (a.createdAt as Date).getTime()));
     return rows.slice(0, args.take ?? rows.length).map((r) => ({ ...r }));
   };

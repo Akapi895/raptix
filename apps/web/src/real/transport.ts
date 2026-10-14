@@ -29,7 +29,7 @@ export class ApiTransportError extends Error {
 }
 
 export interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: unknown
   /** Per-request timeout in milliseconds (default 15 s). */
   timeoutMs?: number

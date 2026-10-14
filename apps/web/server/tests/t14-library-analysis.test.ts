@@ -49,10 +49,6 @@ type Db = ReturnType<typeof memoryDb>;
 
 const ENG = 'eng-1';
 
-function neo4jResponse(rows: unknown[][]): Response {
-  return new Response(JSON.stringify({ results: [{ data: rows.map((row) => ({ row })) }] }), { status: 200 });
-}
-
 function fakeGraph(view: Partial<GraphView>): never {
   return {
     graph: async (_userId: string, engagementId: string) => {
