@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, ArrowLeft, CheckCircle2, Download, Eye, FileText, History, Lock, RotateCcw, Save, Send, ShieldCheck, Wand2, XCircle, ListChecks, Plus, Table2 } from 'lucide-react'
-import { useDirty } from '../store'
+import { useDirty } from '../state/session'
 import { sevLabel } from '../features/findings/service'
 import type { Finding, Report } from '../data'
 import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui'

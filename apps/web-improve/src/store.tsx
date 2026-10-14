@@ -769,14 +769,4 @@ function LegacyStoreProjection({ children }: { children: ReactNode }): ReactElem
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 
-/** Marks a form as having unsaved changes. Call every render with (isDirty, saveDraftFn). */
-export function useDirty(isDirty: boolean, save?: () => void) {
-  const { setDirty } = useStore()
-  const saveRef = useRef(save)
-  saveRef.current = save
-  useEffect(() => {
-    setDirty(isDirty, () => saveRef.current?.())
-    return () => setDirty(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDirty])
-}
+export { useDirty } from './state/session'
