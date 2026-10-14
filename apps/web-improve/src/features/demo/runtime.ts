@@ -12,11 +12,8 @@
  * functions (one implementation, two entry points) until the store
  * retires.
  *
- * Every scheduled timer captures the runtime instance it was created with:
- * a callback that outlives its provider mount commits to that mount's own
- * authority (orphaned, invisible) — the same isolation the provider's
- * closure-bound `later` used to give, and the navigation module's
- * mount-epoch guard gives for routes.
+ * Every scheduled timer captures its runtime instance and is cancelled on
+ * unmount, so callbacks cannot change a later mount's transient UI state.
  *
  * The demo reset (ticket 67 wave 2) lives here too: it disposes the tracked
  * timers, reseeds the one dataset through the runtime's services, rebuilds
@@ -50,8 +47,14 @@ let rt: DemoRuntime | null = null
 
 /** Initializes the runtime with the provider's services (per-mount lifecycle). */
 export function initDemoRuntime(services: ConsoleServices): () => void {
-  rt = { services, pending: new Set(), aiTimers: new Map() }
-  return () => { if (rt?.services === services) rt = null }
+  const mounted: DemoRuntime = { services, pending: new Set(), aiTimers: new Map() }
+  rt = mounted
+  return () => {
+    mounted.pending.forEach((t) => window.clearTimeout(t))
+    mounted.pending.clear()
+    mounted.aiTimers.clear()
+    if (rt === mounted) rt = null
+  }
 }
 
 /** Disposes the current runtime's tracked timers (demo reset). */
