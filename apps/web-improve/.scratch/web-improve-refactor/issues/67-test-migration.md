@@ -154,3 +154,23 @@ existing Vite config-loader warning and two jsdom document-navigation notices.
   action's setPid is restated explicitly). 23/23 and 20/20 pass
   (55 across the three-file run).
 - Typecheck exit 0; all three touched files lint with zero diagnostics.
+
+## T2 screens batch (Batch F)
+
+- Harness: mountServices gains an optional wire hook (runs once at
+  services capture, before child effects) so scope-gated reads can be
+  intercepted before the first fetch.
+- b-portfolio migrated: the bridge directions run createProjectTransaction
+  and the portfolio handlers' setPinned; toasts/pin probes read the toast
+  store and useDb. 12/12 pass.
+- demo migrated: the walkthrough launches through the narrowed jumpSeam
+  (the launch module no longer takes the legacy store); the reset chain and
+  grant re-arm assertions run against the canonical snapshot via the
+  mountServices handle with the store resets in eforeEach. 13/13 pass.
+- project-detail migrated: mountProject is mountServices + hash router;
+  pid/dirty/unsaved reads use the shared authorities; the evidence bridge
+  case stages the canonical commit (evidence row + audit) directly on the
+  authority. 22/22 pass.
+- shell migrated: nav/collapse/drawer/switcher/breakpoint checks unchanged
+  except the seams (go/currentRoute/selectProject/theme/auth stores).
+  12/12 pass. Typecheck exit 0; all four files + helpers lint clean.

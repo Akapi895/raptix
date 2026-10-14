@@ -13,14 +13,18 @@ function ServicesProbe({ ready }: { ready: (services: ConsoleServices, client: Q
   return null
 }
 
-/** Mounts the actual service lifecycle and Query subscriptions, with optional rendered UI. */
-export function mountServices(ui: ComponentType | ReactNode = null, me = 'Alex Morgan') {
+/** Mounts the actual service lifecycle and Query subscriptions, with optional rendered UI. `wire` runs once when the services are first captured, before any child effect. */
+export function mountServices(ui: ComponentType | ReactNode = null, me = 'Alex Morgan', wire?: (services: ConsoleServices) => void) {
   let services!: ConsoleServices
   let client!: QueryClient
+  const wired = new WeakSet<ConsoleServices>()
   const tree = (children: ReactNode) => (
     <ServicesProvider>
       <ConsoleProviders>
-        <ServicesProbe ready={(s, c) => { services = s; client = c }} />
+        <ServicesProbe ready={(s, c) => {
+          services = s; client = c
+          if (wire && !wired.has(s)) { wired.add(s); wire(s) }
+        }} />
         {children}
       </ConsoleProviders>
     </ServicesProvider>
