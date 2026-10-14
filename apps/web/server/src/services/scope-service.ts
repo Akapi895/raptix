@@ -1,5 +1,6 @@
 ﻿import type { PrismaClient, ScopeRevision, WebAsset } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
+import { createNotice } from './inbox-service.js';
 import { assertNotExpired, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 
 /**
@@ -172,6 +173,7 @@ export class ScopeService {
       return row;
     });
     await this.audit(engagementId, actorId, `scope.revision_${decision}`, 'scope_revision', revision.id, comment ?? `v${revision.version}`);
+    await createNotice(this.db, { engagementId, actorId: revision.requestedBy, kind: 'scope.revision_decided', title: `Scope revision v${revision.version} was ${decision}`, detail: { revisionId: revision.id, decision, decidedBy: actorId } });
     return toRevisionView(updated);
   }
 
