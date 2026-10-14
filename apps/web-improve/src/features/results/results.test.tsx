@@ -15,11 +15,10 @@
  * Query-backed graph through the bridge.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { currentRoute, selectProject } from '../../router/navigate'
+import { useProjectStore } from '../../state/stores'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { GraphTab, ResultsTab } from '../../screens/c-results'
 import { seed } from '../../data'
@@ -27,35 +26,12 @@ import { operationResults } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
 /** Mounts the providers, a probe and one results/graph tab for one operation. */
 function mountTab(Tab: typeof GraphTab, opId: string, me = 'Taylor Chen') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const op = seed().operations.find((o) => o.id === opId)!
-  const ui = () => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        <Tab op={op} />
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui())
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    rerender: () => view.rerender(ui()),
-    unmount: view.unmount,
-  }
+  const ui = <Tab op={op} />
+  const h = mountServices(ui, me)
+  return { ...h, rerender: () => h.show(ui) }
 }
 
 const taylor = (): ActorRef => ({ id: 'Taylor Chen', role: 'operator' })
@@ -195,7 +171,7 @@ describe('execution graph screen (ticket 30)', () => {
     })
     h.rerender()
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Step S01, Completed — Collect system information' })).toBeInTheDocument())
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getByRole('button', { name: 'Step S01, Completed — Collect system information' })).toBeInTheDocument()
@@ -221,16 +197,16 @@ describe('results screen (ticket 30)', () => {
 
   it('technique and finding links resolve to migrated routes with the project scope kept', async () => {
     const h = mountTab(ResultsTab, 'OP-014')
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await screen.findByText('Provisional')
     fireEvent.click(screen.getByRole('button', { name: 'T1082' }))
-    await waitFor(() => expect(h.store().route.page).toBe('technique'))
-    expect(h.store().route.id).toBe('T1082')
-    expect(h.store().pid).toBe('RT-2026-014')
+    await waitFor(() => expect(currentRoute().page).toBe('technique'))
+    expect(currentRoute().id).toBe('T1082')
+    expect(useProjectStore.getState().pid).toBe('RT-2026-014')
     fireEvent.click(screen.getAllByRole('button', { name: 'FD-011' })[0]!)
-    await waitFor(() => expect(h.store().route.page).toBe('finding'))
-    expect(h.store().route.id).toBe('FD-011')
-    expect(h.store().pid).toBe('RT-2026-014')
+    await waitFor(() => expect(currentRoute().page).toBe('finding'))
+    expect(currentRoute().id).toBe('FD-011')
+    expect(useProjectStore.getState().pid).toBe('RT-2026-014')
     h.unmount()
   })
 

@@ -13,10 +13,10 @@
  * the workspace Inspector renders the same view as its AI-team entry point.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { ServicesProvider } from '../../state/services'
+import { mountServices } from '../../test/helpers'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { WorkerTeamView } from '../../screens/g-workers'
 import { seed } from '../../data'
@@ -24,37 +24,15 @@ import { listWorkers } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
 /** Mounts the providers, a probe and the worker team view for one project. */
 function mountWorkers(me = 'Taylor Chen', projectId = 'RT-2026-014') {
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = () => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        <WorkerTeamView projectId={projectId} />
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui())
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    rerender: () => view.rerender(ui()),
-    unmount: view.unmount,
-  }
+  const ui = <WorkerTeamView projectId={projectId} />
+  const h = mountServices(ui, me)
+  return { ...h, rerender: () => h.show(ui) }
 }
 
 const taylor = (): ActorRef => ({ id: 'Taylor Chen', role: 'operator' })
 const riley = (): ActorRef => ({ id: 'Riley Brooks', role: 'analyst' })
-const casey = (): ActorRef => ({ id: 'Casey Nguyen (Client)', role: 'viewer' })
 const ctx = (actor: ActorRef, projectId: string, corr = 't'): RequestContext => ({ actor, projectId, corr })
 
 describe('worker read model scope (ticket 44)', () => {
@@ -200,11 +178,11 @@ describe('worker graph screen (ticket 44)', () => {
     // The Inspector imports WorkerTeamView directly (the g-fanout forwarding
     // export retired in ticket 66); the workspace view is the migrated one.
     render(
-      <StoreProvider>
+      <ServicesProvider>
         <ConsoleProviders>
           <WorkerTeamView projectId="RT-2026-014" />
         </ConsoleProviders>
-      </StoreProvider>,
+      </ServicesProvider>,
     )
     await screen.findByRole('button', { name: /Worker AW-014-01/ })
   })

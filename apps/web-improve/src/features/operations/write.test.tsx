@@ -10,11 +10,10 @@
  * schedule page blocks invalid input and the deep link resolves.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { currentRoute, go, selectProject } from '../../router/navigate'
+import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { routes } from '../../screens/c'
 import { createOperationDraft, scheduleOperation, updateOperationDraft, type OperationDraftInput } from './service'
@@ -186,40 +185,15 @@ describe('operation write handlers (ticket 25)', () => {
 
 /* ───────────── Screen tests ───────────── */
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
 /** Mounts the providers with a probe; `show(ui)` then mounts the screens under test. */
 function mountProbe(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
-  const ui = (children: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {children}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(null))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: (children: React.ReactNode) => view.rerender(ui(children)),
-    unmount: view.unmount,
-  }
+  return mountServices(null, me)
 }
 
 describe('operation wizard (ticket 25 — screens)', () => {
   it('creates an operation with playbook/agents/assets selection; the ticket-24 list refetches it', async () => {
     const h = mountProbe()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     h.show(<>
       <Ops />
       <NewOp />
@@ -238,19 +212,19 @@ describe('operation wizard (ticket 25 — screens)', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Save Draft' })[0]!)
     // The ChangeSet invalidated the ticket-24 list query: the new draft appears without a reload.
     await waitFor(() => expect(screen.getByRole('button', { name: 'All 3' })).toBeInTheDocument())
-    const created = h.store().db.operations.find((o) => o.name === 'Service write proof')!
+    const created = h.db().operations.find((o) => o.name === 'Service write proof')!
     expect(created.id).toBe('OP-017')
     expect(created.playbookId).toBe('PB-001')
     expect(created.agents).toEqual(['AG-012'])
     expect(created.assets).toContain('AS-0141')
-    expect(h.store().db.agents.find((a) => a.id === 'AG-012')!.projectId).toBe('RT-2026-014')
+    expect(h.db().agents.find((a) => a.id === 'AG-012')!.projectId).toBe('RT-2026-014')
     h.unmount()
   })
 
   it('a refused write renders the reason, keeps the form data and never duplicates', async () => {
     const h = mountProbe()
-    h.run(() => h.store().setPid('RT-2026-014'))
-    const before = h.store().db.operations.length
+    h.run(() => selectProject('RT-2026-014'))
+    const before = h.db().operations.length
     h.show(<NewOp />)
     await waitFor(() => expect(screen.getByPlaceholderText('e.g. Environment discovery simulation')).toBeInTheDocument())
     fireEvent.change(screen.getByPlaceholderText('e.g. Environment discovery simulation'), { target: { value: 'Refused write proof' } })
@@ -264,7 +238,7 @@ describe('operation wizard (ticket 25 — screens)', () => {
     await waitFor(() => expect(screen.getByText(/Simulated service refusal\./)).toBeInTheDocument())
     // Form data preserved, no navigation, no operation created or duplicated.
     expect((screen.getByPlaceholderText('e.g. Environment discovery simulation') as HTMLInputElement).value).toBe('Refused write proof')
-    expect(h.store().db.operations).toHaveLength(before)
+    expect(h.db().operations).toHaveLength(before)
     h.unmount()
   })
 })
@@ -272,7 +246,7 @@ describe('operation wizard (ticket 25 — screens)', () => {
 describe('operation schedule (ticket 25 — screens)', () => {
   it('blocks invalid input at the button and saves a valid schedule through the service', async () => {
     const h = mountProbe()
-    h.run(() => { h.store().setPid('RT-2026-016'); h.store().go('operation-schedule', { id: 'OP-016' }) })
+    h.run(() => { selectProject('RT-2026-016'); go('operation-schedule', { id: 'OP-016' }) })
     h.show(<Schedule />)
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Schedule — OP-016' })).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Schedule' }))
@@ -282,13 +256,13 @@ describe('operation schedule (ticket 25 — screens)', () => {
     const save = screen.getByRole('button', { name: /Save schedule/ }) as HTMLButtonElement
     expect(save.disabled).toBe(true)
     expect(screen.getByText('Start time is in the past.')).toBeInTheDocument()
-    expect(h.store().db.operations.find((o) => o.id === 'OP-016')!.schedule).toBeUndefined()
+    expect(h.db().operations.find((o) => o.id === 'OP-016')!.schedule).toBeUndefined()
     // Valid schedule: the typed write commits and the screen navigates to preflight.
     fireEvent.change(at, { target: { value: '2026-10-20T10:00' } })
     expect((screen.getByRole('button', { name: /Save schedule/ }) as HTMLButtonElement).disabled).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: /Save schedule/ }))
-    await waitFor(() => expect(h.store().route.page).toBe('preflight'))
-    const op = h.store().db.operations.find((o) => o.id === 'OP-016')!
+    await waitFor(() => expect(currentRoute().page).toBe('preflight'))
+    const op = h.db().operations.find((o) => o.id === 'OP-016')!
     expect(op.schedule).toBe('2026-10-20T10:00')
     expect(op.scheduleAt).toBe('2026-10-20T03:00:00.000Z')
     expect(op.preflightAt).toBeUndefined()
