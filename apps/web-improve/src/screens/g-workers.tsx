@@ -13,7 +13,7 @@
  */
 import { useState } from 'react'
 import { Bot } from 'lucide-react'
-import { useStore } from '../store'
+import { go } from '../router/navigate'
 import { BRANCH_LABEL } from '../data'
 import type { BranchState, WorkerState } from '../domain/entities'
 import { WorkerReadError, useWorkers } from '../features/workers/query'
@@ -86,7 +86,6 @@ function WorkerGraph({ rows, selected, onSelect }: { rows: WorkerRow[]; selected
 
 /* ───────── Node detail (pointer selection and keyboard focus render the same panel) ───────── */
 function WorkerDetail({ row, onSelect, onClose }: { row: WorkerRow; onSelect: (id: string) => void; onClose: () => void }) {
-  const { go } = useStore()
   const w = row.worker
   return (
     <div role="region" aria-label={`Worker ${w.id} detail`} className="rounded-xl border border-line bg-panel p-3">
@@ -141,7 +140,6 @@ function WorkerTable({ rows }: { rows: WorkerRow[] }) {
 
 /* ───────── Workspace AI-team view (Inspector entry point) ───────── */
 export function WorkerTeamView({ projectId }: { projectId: string }) {
-  const { go } = useStore()
   const [view, setView] = useState<'graph' | 'table'>('graph')
   const [sel, setSel] = useState<string | null>(null)
   const q = useWorkers(projectId)
