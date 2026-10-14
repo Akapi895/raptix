@@ -16,6 +16,7 @@ import { RealOperationsPanel } from './operations-panel'
 import { RealPlanningPanel } from './planning-panel'
 import { RealTeamPanel } from './team'
 import { RealScopePanel } from './scope-panel'
+import { RealGovernancePanel } from './governance-panel'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status, Tabs } from '../../ui'
@@ -28,6 +29,7 @@ const TABS = [
   { id: 'reports', label: 'Reports' },
   { id: 'team', label: 'Team' },
   { id: 'scope', label: 'Scope & ROE' },
+  { id: 'governance', label: 'Governance' },
 ]
 
 function fmt(iso: string | null): string {
@@ -88,7 +90,7 @@ export function RealProjectDetail(): ReactElement {
         tabs={TABS.map((t) => ({ id: t.id, label: t.label }))}
       />
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'findings' ? <RealFindingsPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'findings' ? <RealFindingsPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
       </div>
     </>
   )

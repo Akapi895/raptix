@@ -1,11 +1,11 @@
-# 09: Execute governed plans and control operation lifecycle
+﻿# 09: Execute governed plans and control operation lifecycle
 
 **What to build:** The operator can propose/review a plan, bind an approved version
 to an operation, pass real preflight and use supported lifecycle/stop controls
 without bypassing scope, deadline or runtime authorization.
 
 **Blocked by:** 05 (execution/recovery), 08 (scope and ROE governance).
-**Status:** ready-for-agent
+**Status:** complete
 **Requirements:** R03-R09, R10; operation/plan model approved in 01.
 **Contract:** [execution.md](../execution.md).
 
@@ -44,3 +44,27 @@ ledger evidence unless controls modify those contracts. No full suite.
 This is one governed-operation work package, not one giant PR. Deliver bounded
 patches recorded here. Do not weaken existing runtime guardrails or claim a
 required control complete while leaving only a disabled button.
+
+## Evidence (2026-10-15)
+
+- `GovernanceService` + `/plans`, `/preflight`, `/bindings`, `/estops` routes:
+  draft -> propose (pins the approved scope revision) -> four-eyes decision
+  with an absolute 24h expiry enforced at the bind site (`assertNotExpired`).
+  OPPLAN documents and tool HITL decisions are untouched — this is the
+  distinct persisted business-plan record per D2.
+- Preflight checks project handoff, approved ROE + edited time window
+  (`roeWindowAllows`), in-scope targets, emergency contact and active stops;
+  the bind refuses (409) with the failed checks named. Scope revisions
+  invalidate the pinned version at submission (bind answers 409 until a fresh
+  approval), verified by test.
+- Emergency stop records requested/acknowledged/stopped/failed/unknown with
+  the runtime cancel bridge (acknowledged != terminated); binds refuse while a
+  stop is active; work never auto-resumes (`assertNoActiveStop`).
+- Tests: `server/tests/t09-governance.test.ts` (5) — four-eyes lifecycle +
+  deadline (decidedAt+24h exactly, expiry -1s refuses), scope-pin
+  invalidation + re-review path, estop outcome + refusal, preflight
+  fail/pass. Web: Governance tab in project detail (preflight checklist,
+  plan lifecycle, project estop).
+- Named gap: deadline +1 boundary and a live runtime dispatch through the
+  bound thread are covered structurally; the live dispatch probe runs in
+  ticket 18's deployment smoke.

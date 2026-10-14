@@ -444,3 +444,99 @@ export function classifyAsset(engagementId: string, assetId: string, classificat
     typeof v === 'object' && v !== null && (v as { ok?: unknown }).ok === true,
   { method: 'PATCH', body: { classification } })
 }
+
+/* ───────────── Governed plans/preflight/estop (integration ticket 09) ───────────── */
+
+export interface PlanView {
+  id: string
+  engagementId: string
+  version: number
+  status: 'draft' | 'proposed' | 'approved' | 'rejected' | 'superseded'
+  objective: string
+  methods: string[]
+  requestedBy: string
+  decidedBy: string | null
+  decidedAt: string | null
+  decisionComment: string | null
+  expiresAt: string | null
+  roeVersion: number | null
+  createdAt: string
+}
+
+export interface PlansView {
+  engagementId: string
+  plans: PlanView[]
+  latestApprovedScopeVersion: number | null
+  deadlineHours: number
+  source: 'db'
+}
+
+function isPlansView(v: unknown): v is PlansView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as PlansView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.plans) && doc.source === 'db'
+    && doc.plans.every((p) => typeof p.id === 'string' && typeof p.version === 'number' && typeof p.status === 'string')
+}
+
+export function fetchPlans(engagementId: string): Promise<PlansView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/plans`, owned(engagementId, isPlansView))
+}
+
+export function savePlan(engagementId: string, input: { objective: string; methods: string[] }): Promise<PlanView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/plans`, (v): v is PlanView =>
+    typeof v === 'object' && v !== null && typeof (v as PlanView).id === 'string' && (v as PlanView).status === 'draft',
+  { method: 'POST', body: input })
+}
+
+export function proposePlan(engagementId: string, planId: string): Promise<PlanView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/plans/${encodeURIComponent(planId)}/propose`, (v): v is PlanView =>
+    typeof v === 'object' && v !== null && (v as PlanView).status === 'proposed',
+  { method: 'POST' })
+}
+
+export function decidePlan(engagementId: string, planId: string, decision: 'approved' | 'rejected'): Promise<PlanView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/plans/${encodeURIComponent(planId)}/decision`, (v): v is PlanView =>
+    typeof v === 'object' && v !== null && (v as PlanView).status === decision,
+  { method: 'POST', body: { decision } })
+}
+
+export interface PreflightView {
+  engagementId: string
+  ok: boolean
+  checks: { id: string; state: 'pass' | 'fail' | 'unavailable'; detail: string | null }[]
+  source: 'db'
+}
+
+function isPreflightView(v: unknown): v is PreflightView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as PreflightView
+  return typeof doc.engagementId === 'string' && typeof doc.ok === 'boolean' && Array.isArray(doc.checks) && doc.source === 'db'
+}
+
+export function fetchPreflight(engagementId: string): Promise<PreflightView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/preflight`, owned(engagementId, isPreflightView))
+}
+
+export function bindPlan(engagementId: string, planId: string, threadId: string | null): Promise<{ id: string; planId: string; status: string }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/bindings`, (v): v is { id: string; planId: string; status: string } =>
+    typeof v === 'object' && v !== null && typeof (v as { id?: unknown }).id === 'string' && typeof (v as { planId?: unknown }).planId === 'string',
+  { method: 'POST', body: { planId, threadId } })
+}
+
+export interface EmergencyStopView {
+  id: string
+  engagementId: string
+  scope: 'operation' | 'project' | 'workspace'
+  targetId: string | null
+  requestedBy: string
+  outcome: 'requested' | 'acknowledged' | 'stopped' | 'failed' | 'unknown'
+  reason: string
+  createdAt: string
+  updatedAt: string
+}
+
+export function requestEmergencyStop(engagementId: string, input: { scope: 'operation' | 'project' | 'workspace'; reason: string; threadId?: string }): Promise<EmergencyStopView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/estops`, (v): v is EmergencyStopView =>
+    typeof v === 'object' && v !== null && typeof (v as EmergencyStopView).id === 'string' && typeof (v as EmergencyStopView).outcome === 'string',
+  { method: 'POST', body: input })
+}

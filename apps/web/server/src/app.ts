@@ -24,6 +24,7 @@ import { registerCampaignRoutes } from './http/routes/campaign.routes.js';
 import { registerVaultRoutes } from './http/routes/vault.routes.js';
 import { registerMembersRoutes } from './http/routes/members.routes.js';
 import { registerScopeRoutes } from './http/routes/scope.routes.js';
+import { registerGovernanceRoutes } from './http/routes/governance.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
@@ -38,6 +39,7 @@ import type { C2Service } from './services/c2-service.js';
 import type { VaultService } from './services/vault-service.js';
 import type { MembersService } from './services/members-service.js';
 import type { ScopeService } from './services/scope-service.js';
+import type { GovernanceService } from './services/governance-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -64,6 +66,9 @@ export interface AppOptions {
   readonly vaultService?: VaultService;
   readonly membersService?: MembersService;
   readonly scopeService?: ScopeService;
+  readonly governanceService?: GovernanceService;
+  /** Runtime cancel bridge for emergency stops (operation scope). */
+  readonly cancelRun?: (threadId: string, runId: string | null) => Promise<string>;
   /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
   readonly vaultKeyConfigured?: boolean;
   /** Local single-user identity; defaults to getLocalIdentity(). */
@@ -142,6 +147,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.vaultService) registerVaultRoutes(app, options.vaultService, identity);
   if (options.membersService) registerMembersRoutes(app, options.membersService, identity);
   if (options.scopeService) registerScopeRoutes(app, options.scopeService, identity);
+  if (options.governanceService) registerGovernanceRoutes(app, options.governanceService, identity, options.cancelRun);
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;
