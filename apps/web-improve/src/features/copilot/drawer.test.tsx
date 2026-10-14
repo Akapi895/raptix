@@ -13,14 +13,13 @@
  * reaches the open drawer without a reload); drawer close on project switch;
  * the all-projects guard.
  */
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import { ConsoleProviders } from '../../state/query'
+import { mountServices } from '../../test/helpers'
+import { selectProject } from '../../router/navigate'
 import { setActiveRouter } from '../../router/active'
 import { RouteHost } from '../../router/host'
-import type { ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 
 afterEach(() => {
@@ -29,35 +28,20 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
 function mountDrawer(me = 'Alex Morgan', pid?: string) {
   window.location.hash = '#/operations'
-  let store!: Store
-  let svc!: ConsoleServices
   const router = createHashRouter([
-    { path: '*', element: <><Probe ready={(s, v) => { store = s; svc = v }} /><RouteHost /></>, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <RouteHost />, errorElement: <div />, hydrateFallbackElement: null },
   ])
   setActiveRouter(router)
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
+  const h = mountServices(<RouterProvider router={router} />)
   fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  if (pid) act(() => { store.setPid(pid) })
+  h.as(me)
+  if (pid) act(() => { selectProject(pid) })
   return {
-    store: () => store,
-    svc: () => svc,
+    ...h,
     /** Runs a mutation inside act() so the store projection and Query refetch flush. */
     run: <T,>(fn: () => T): T => { let out!: T; act(() => { out = fn() }); return out },
-    unmount: view.unmount,
   }
 }
 
@@ -94,7 +78,7 @@ describe('copilot drawer via the shell slot (ticket 60)', () => {
     const h = mountDrawer('Sam Patel', 'RT-2026-015')
     const drawer = await openDrawer()
     await within(drawer).findByText('Draft a plan to validate the cloud lab configuration.')
-    act(() => { h.store().setMe('Riley Brooks') }) // analyst — not a member of RT-2026-015
+    h.as('Riley Brooks') // analyst — not a member of RT-2026-015
     const refusal = await within(drawer).findByTestId('copilot-refusal')
     expect(refusal.textContent).toContain('not available for your account')
     expect(within(drawer).queryByText('Draft a plan to validate the cloud lab configuration.')).not.toBeInTheDocument()
@@ -115,7 +99,7 @@ describe('copilot drawer via the shell slot (ticket 60)', () => {
     fireEvent.click(within(modal).getByRole('button', { name: 'Request proposal' }))
     expect(await screen.findByText('Proposal requested. It stays a proposal until a reviewer approves it.')).toBeInTheDocument()
     await act(async () => { await new Promise((r) => setTimeout(r, 1100)) })
-    const d = h.store().db
+    const d = h.db()
     const fromDrawer = d.plans.filter((p) => p.conversationId === 'CV-015-01' && p.id !== 'PL-022')
     expect(fromDrawer).toHaveLength(1)
     expect(fromDrawer[0]!.status).toBe('proposed')
@@ -149,14 +133,14 @@ describe('copilot drawer via the shell slot (ticket 60)', () => {
     const h = mountDrawer('Sam Patel', 'PT-2026-006')
     const drawer = await openDrawer()
     expect(await within(drawer).findByText(/Ask about Operations/)).toBeInTheDocument()
-    expect(h.store().db.conversations.find((c) => c.projectId === 'PT-2026-006')).toBeDefined()
+    expect(h.db().conversations.find((c) => c.projectId === 'PT-2026-006')).toBeDefined()
   })
 
   it('switching the active project closes the drawer instead of exposing other project content', async () => {
     const h = mountDrawer('Sam Patel', 'RT-2026-015')
     const drawer = await openDrawer()
     await within(drawer).findByText('Draft a plan to validate the cloud lab configuration.')
-    act(() => { h.store().setPid('RT-2026-014') })
+    act(() => { selectProject('RT-2026-014') })
     await waitFor(() => expect(screen.queryByTestId('copilot-drawer')).not.toBeInTheDocument())
     h.unmount()
   })

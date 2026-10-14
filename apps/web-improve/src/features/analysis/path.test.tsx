@@ -9,14 +9,12 @@
  * responses for a superseded scope never restore old visibility.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { mountServices } from '../../test/helpers'
+import { currentRoute, selectProject } from '../../router/navigate'
 import { analysisRoutes } from '../../screens/e-analysis'
 import { seed } from '../../data'
 import { pathOf } from './path'
@@ -27,39 +25,12 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 
 const TAYLOR: ActorRef = { id: 'Taylor Chen', role: 'operator' }
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 /** Mounts the providers with a probe, then optionally the real analysis route at `hash`. */
 function mountAnalysis(me = 'Alex Morgan', hash = '#/analysis?tab=chain') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const Analysis = analysisRoutes.analysis
-  const ui = (show: boolean) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {show ? <Analysis /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
   window.location.hash = hash
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+  const h = mountServices(null, me)
+  return { ...h, show: () => h.show(<Analysis />) }
 }
 
 const NUMERIC_ATTRS = ['x', 'y', 'x1', 'x2', 'y1', 'y2', 'cx', 'cy', 'r', 'width', 'height', 'rx']
@@ -166,7 +137,7 @@ describe('attack-path graph (ticket 55)', () => {
   it('renders the scoped chain with finite geometry; planned hops are never presented as observed', async () => {
     const h = mountAnalysis('Dana Whitfield')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     const svg = await waitFor(() => screen.getByRole('img', { name: 'Attack path graph for operation OP-014' }))
     expectFiniteGeometry(svg)
     // OP-014: 12 recorded steps; S01→S02 is an observed transition, S10→S11 (review) stays planned.
@@ -183,7 +154,7 @@ describe('attack-path graph (ticket 55)', () => {
     const user = userEvent.setup()
     const h = mountAnalysis('Dana Whitfield')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     const step = await waitFor(() => screen.getByRole('button', { name: 'Step S02 Enumerate local accounts' }))
     // Keyboard: focus + Enter opens the same drawer pointer selection would.
     step.focus()
@@ -207,14 +178,14 @@ describe('attack-path graph (ticket 55)', () => {
     const user = userEvent.setup()
     const h = mountAnalysis('Dana Whitfield')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     const step = await waitFor(() => screen.getByRole('button', { name: 'Step S02 Enumerate local accounts' }))
     step.focus()
     await user.keyboard('{Enter}')
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Open execution step' }))
-    await waitFor(() => expect(h.store().route.page).toBe('operation'))
-    expect(h.store().route.id).toBe('OP-014')
+    await waitFor(() => expect(currentRoute().page).toBe('operation'))
+    expect(currentRoute().id).toBe('OP-014')
     h.unmount()
   })
 
@@ -222,21 +193,21 @@ describe('attack-path graph (ticket 55)', () => {
     const user = userEvent.setup()
     const h = mountAnalysis('Dana Whitfield')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     const tech = await waitFor(() => screen.getByRole('button', { name: 'Technique T1078' }))
     tech.focus()
     await user.keyboard('{Enter}')
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Technique page' }))
-    await waitFor(() => expect(h.store().route.page).toBe('technique'))
-    expect(h.store().route.id).toBe('T1078')
+    await waitFor(() => expect(currentRoute().page).toBe('technique'))
+    expect(currentRoute().id).toBe('T1078')
     h.unmount()
   })
 
   it('a recorded step review updates the graph without a reload', async () => {
     const h = mountAnalysis('Taylor Chen')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('img', { name: 'Attack path graph for operation OP-014' })).toBeInTheDocument())
     // S11 awaits review: its hop from S10 is planned, never observed.
     expect(screen.getByText('In review')).toBeInTheDocument()
@@ -263,7 +234,7 @@ describe('attack-path graph (ticket 55)', () => {
     })
     h.show()
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('img', { name: 'Attack path graph for operation OP-014' })).toBeInTheDocument())
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getByRole('img', { name: 'Attack path graph for operation OP-014' })).toBeInTheDocument()

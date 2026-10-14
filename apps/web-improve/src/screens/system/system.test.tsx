@@ -11,7 +11,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
 
 vi.useFakeTimers()
-const { StoreProvider } = await import('../../store')
+const { ServicesProvider } = await import('../../state/services')
 const { ConsoleProviders } = await import('../../state/query')
 const { useAuthStore } = await import('../../state/stores')
 const { setActiveRouter } = await import('../../router/active')
@@ -32,11 +32,11 @@ function mountApp(hash?: string) {
   ])
   setActiveRouter(router)
   render(
-    <StoreProvider>
+    <ServicesProvider>
       <ConsoleProviders>
         <RouterProvider router={router} />
       </ConsoleProviders>
-    </StoreProvider>,
+    </ServicesProvider>,
   )
 }
 

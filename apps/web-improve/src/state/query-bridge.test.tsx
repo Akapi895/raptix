@@ -7,12 +7,14 @@
  */
 import { type ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
-import { QueryClient, hashKey, useQuery, useQueryClient } from '@tanstack/react-query'
-import { StoreProvider, useServices, useStore, type Store } from '../store'
-import type { ConsoleServices } from '../domain/service-factory'
+import { act, cleanup, screen, waitFor } from '@testing-library/react'
+import { hashKey, useQuery } from '@tanstack/react-query'
+import { useServices } from './services'
+import { mountServices } from '../test/helpers'
+import { selectProject } from '../router/navigate'
+import { resetDemo } from '../features/demo/runtime'
+import { useToastStore } from './stores'
 import type { ChangeSet } from '../domain/service'
-import { ConsoleProviders } from './query'
 import { consoleKeys, useQueryScope, type QueryScope } from './keys'
 
 afterEach(() => { cleanup(); vi.useRealTimers() })
@@ -26,24 +28,9 @@ function defer() {
   return { promise, resolve }
 }
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, client: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
 function mountConsole(ui?: ReactNode) {
-  let store!: Store
-  let svc!: ConsoleServices
-  let client!: QueryClient
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; client = c }} />
-        {ui}
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return { store: () => store, svc: () => svc, client: () => client, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  const h = mountServices(ui)
+  return { ...h, client: h.qc }
 }
 
 describe('query keys', () => {
@@ -128,9 +115,9 @@ describe('scope cancellation', () => {
     await waitFor(() => expect(screen.getByTestId('scoped-view')).toHaveTextContent('visible:all'))
     const cancelSpy = vi.spyOn(h.svc(), 'cancelScope')
 
-    h.run(() => { h.store().setPid('RT-2026-014') })
+    h.run(() => { selectProject('RT-2026-014') })
     await waitFor(() => expect(signals.length).toBe(2))
-    h.run(() => { h.store().setPid('RT-2026-015') })
+    h.run(() => { selectProject('RT-2026-015') })
     await waitFor(() => expect(screen.getByTestId('scoped-view')).toHaveTextContent('visible:RT-2026-015'))
 
     expect(signals[1].aborted).toBe(true)
@@ -165,7 +152,7 @@ describe('scope cancellation', () => {
     }
     const h = mountConsole(<ActorView />)
     await waitFor(() => expect(signals.length).toBe(1))
-    h.run(() => { h.store().setMe('Jordan Lee') })
+    h.as('Jordan Lee')
     await waitFor(() => expect(screen.getByTestId('actor-view')).toHaveTextContent('visible:Jordan Lee'))
     expect(signals[0].aborted).toBe(true)
     await act(async () => {
@@ -196,10 +183,10 @@ describe('demo reset and teardown', () => {
     await waitFor(() => expect(fetches).toBe(1))
     h.run(() => { h.svc().authority.commit(nextCorr(), (d) => { d.projects.find((p) => p.id === 'RT-2026-014')!.pinned = false }) })
     await waitFor(() => expect(screen.getByTestId('pinned')).toHaveTextContent('false'))
-    h.run(() => { h.store().resetDemo() })
+    h.run(() => { resetDemo() })
     await waitFor(() => expect(screen.getByTestId('pinned')).toHaveTextContent('true'))
     expect(fetches).toBeGreaterThanOrEqual(3)
-    expect(h.store().toasts.some((t) => t.text.startsWith('Demo state reset'))).toBe(true)
+    expect(useToastStore.getState().toasts.some((t) => t.text.startsWith('Demo state reset'))).toBe(true)
     h.unmount()
   })
 

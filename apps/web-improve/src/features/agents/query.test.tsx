@@ -8,11 +8,11 @@
  * switch. Plus focused handler tests for the denial/clamp edges.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { go, selectProject } from '../../router/navigate'
+import { assignAgentTransaction } from './writes'
+import { loseAgent, restoreAgent } from '../demo/runtime'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/d'
 import { seed } from '../../data'
@@ -21,42 +21,15 @@ import { getAgent, listAgents } from './service'
 beforeEach(() => { window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 /**
  * Mounts the providers with a probe, then optionally mounts a real agent
  * route. `show()` is separate so tests can install service spies before the
  * first query fires.
  */
 function mountAgents(page: 'agents' | 'agent', me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const Screen = routes[page]
-  const ui = (withScreen: boolean) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {withScreen ? <Screen /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+  const h = mountServices(null, me)
+  return { ...h, show: () => h.show(<Screen />) }
 }
 
 describe('agent fleet (ticket 48)', () => {
@@ -79,7 +52,7 @@ describe('agent fleet (ticket 48)', () => {
     h.show()
     await waitFor(() => expect(screen.getByRole('tab', { name: 'Project Agents7' })).toBeInTheDocument())
     expect(screen.queryByText('POOL-LAB-01')).not.toBeInTheDocument()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('tab', { name: 'Project Agents3' })).toBeInTheDocument())
     expect(screen.getAllByText('WIN-LAB-01').length).toBeGreaterThan(0)
     expect(screen.queryByText('CLOUD-LAB-01')).not.toBeInTheDocument()
@@ -108,7 +81,7 @@ describe('agent fleet (ticket 48)', () => {
     // Pool KPI: connected, unassigned, unreserved — both pool agents initially.
     fireEvent.click(screen.getByRole('button', { name: /Available in Shared Pool/ }))
     await waitFor(() => expect(screen.getByText('2 records')).toBeInTheDocument())
-    h.run(() => h.store().A.assignAgent('AG-012', 'RT-2026-014'))
+    h.run(() => { expect(assignAgentTransaction(h.svc().authority, h.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'RT-2026-014', corr: 'assignment-refetch' }, 'AG-012', { projectId: 'RT-2026-014' }).ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('1 records')).toBeInTheDocument())
     expect(screen.getByText('POOL-LAB-02')).toBeInTheDocument()
     expect(screen.queryByText('POOL-LAB-01')).not.toBeInTheDocument()
@@ -134,7 +107,7 @@ describe('agent fleet (ticket 48)', () => {
     const h = mountAgents('agents', 'Riley Brooks')
     h.show()
     await waitFor(() => expect(screen.getByText('WIN-LAB-01')).toBeInTheDocument())
-    h.run(() => h.store().setPid('RT-2026-015'))
+    h.run(() => selectProject('RT-2026-015'))
     await waitFor(() => expect(screen.getByText('Agents could not be loaded')).toBeInTheDocument())
     expect(screen.getByText('Agents for this project are not available for your account.')).toBeInTheDocument()
     expect(screen.queryByText('CLOUD-LAB-01')).not.toBeInTheDocument()
@@ -146,7 +119,7 @@ describe('agent detail (ticket 48)', () => {
   it('describes observed health, capabilities and history for an assigned agent', async () => {
     const h = mountAgents('agent')
     h.show()
-    h.run(() => h.store().go('agent', { id: 'AG-007' }))
+    h.run(() => go('agent', { id: 'AG-007' }))
     await waitFor(() => expect(screen.getAllByText('WIN-LAB-01').length).toBeGreaterThan(0))
     expect(screen.getAllByText('192.0.2.21').length).toBeGreaterThan(0)
     expect(screen.getAllByText('5.2.1').length).toBeGreaterThan(0)
@@ -166,7 +139,7 @@ describe('agent detail (ticket 48)', () => {
   it('a pool agent is readable in any scope and shows the pool banner and eligible projects', async () => {
     const h = mountAgents('agent')
     h.show()
-    h.run(() => { h.store().setPid('RT-2026-014'); h.store().go('agent', { id: 'AG-012' }) })
+    h.run(() => { selectProject('RT-2026-014'); go('agent', { id: 'AG-012' }) })
     await waitFor(() => expect(screen.getAllByText('POOL-LAB-01').length).toBeGreaterThan(0))
     expect(screen.getByText('Agent is not assigned to a project')).toBeInTheDocument()
     expect(screen.getByText('RT-2026-014, RT-2026-015, RT-2026-016')).toBeInTheDocument()
@@ -176,7 +149,7 @@ describe('agent detail (ticket 48)', () => {
   it('refuses an assigned agent outside the active project context with a switch action', async () => {
     const h = mountAgents('agent', 'Taylor Chen')
     h.show()
-    h.run(() => { h.store().setPid('RT-2026-015'); h.store().go('agent', { id: 'AG-007' }) })
+    h.run(() => { selectProject('RT-2026-015'); go('agent', { id: 'AG-007' }) })
     await waitFor(() => expect(screen.getByText('Agent belongs to a different project')).toBeInTheDocument())
     expect(screen.getByRole('button', { name: 'View all projects' })).toBeInTheDocument()
     expect(screen.queryByText('192.0.2.21')).not.toBeInTheDocument()
@@ -186,7 +159,7 @@ describe('agent detail (ticket 48)', () => {
   it('an agent in a project without a membership grant is not found', async () => {
     const h = mountAgents('agent', 'Riley Brooks')
     h.show()
-    h.run(() => h.store().go('agent', { id: 'AG-010' }))
+    h.run(() => go('agent', { id: 'AG-010' }))
     await waitFor(() => expect(screen.getByText('Agent not found')).toBeInTheDocument())
     h.unmount()
   })
@@ -194,7 +167,7 @@ describe('agent detail (ticket 48)', () => {
   it('gates agent management behind role and read-only context with reasons', async () => {
     const h = mountAgents('agent', 'Casey Nguyen (Client)') // viewer — member of RT-2026-014
     h.show()
-    h.run(() => { h.store().setPid('RT-2026-014'); h.store().go('agent', { id: 'AG-007' }) })
+    h.run(() => { selectProject('RT-2026-014'); go('agent', { id: 'AG-007' }) })
     await waitFor(() => expect(screen.getAllByText('WIN-LAB-01').length).toBeGreaterThan(0))
     const disable = screen.getByRole('button', { name: 'Disable Agent' }) as HTMLButtonElement
     expect(disable.disabled).toBe(true)
@@ -203,7 +176,7 @@ describe('agent detail (ticket 48)', () => {
     h.unmount()
     const a = mountAgents('agent', 'Riley Brooks') // analyst — can view, cannot manage
     a.show()
-    a.run(() => { a.store().setPid('RT-2026-014'); a.store().go('agent', { id: 'AG-007' }) })
+    a.run(() => { selectProject('RT-2026-014'); go('agent', { id: 'AG-007' }) })
     await waitFor(() => expect(screen.getAllByText('WIN-LAB-01').length).toBeGreaterThan(0))
     const disable2 = screen.getByRole('button', { name: 'Disable Agent' }) as HTMLButtonElement
     expect(disable2.disabled).toBe(true)
@@ -214,10 +187,10 @@ describe('agent detail (ticket 48)', () => {
   it('a legacy agent-state change appears in the new detail without a reload', async () => {
     const h = mountAgents('agent')
     h.show()
-    h.run(() => h.store().go('agent', { id: 'AG-007' }))
+    h.run(() => go('agent', { id: 'AG-007' }))
     await waitFor(() => expect(screen.getAllByText('WIN-LAB-01').length).toBeGreaterThan(0))
     expect(screen.getAllByText('Connected').length).toBeGreaterThan(0)
-    h.run(() => h.store().A.loseAgent('AG-007'))
+    h.run(() => loseAgent('AG-007'))
     await waitFor(() => expect(screen.getAllByText('Disconnected').length).toBeGreaterThan(0))
     expect(screen.getByText(/Health failure: AG-007/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /Event History/ }))
@@ -225,7 +198,7 @@ describe('agent detail (ticket 48)', () => {
     expect(screen.getByText('Disconnected — last heartbeat recorded')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: /Connectivity/ }))
     await waitFor(() => expect(screen.getByRole('img', { name: 'Heartbeat missing for the most recent samples' })).toBeInTheDocument())
-    h.run(() => h.store().A.restoreAgent('AG-007'))
+    h.run(() => restoreAgent('AG-007'))
     await waitFor(() => expect(screen.getAllByText('Connected').length).toBeGreaterThan(0))
     h.unmount()
   })
@@ -243,7 +216,7 @@ describe('agent detail (ticket 48)', () => {
     })
     h.show()
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getAllByText('WIN-LAB-01').length).toBeGreaterThan(0))
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getAllByText('WIN-LAB-01').length).toBeGreaterThan(0)

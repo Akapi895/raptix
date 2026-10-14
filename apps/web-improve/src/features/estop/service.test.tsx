@@ -4,21 +4,21 @@
  * never a passive status — the request transaction commits the requested
  * stop state, the Pending audit row and the workspace notice in ONE
  * immediate commit, before any simulated acknowledgement delay. The demo
- * outcome transitions run through the typed handlers, so legacy actions and
- * direct callers observe the same state (both bridge directions). Ticket 28
- * hardened the machine: a manual confirm completes it coherently (ledger
- * G-10) and the finalize sweep is scope-matched, so concurrent stops never
- * touch out-of-scope records.
+ * outcome transitions run through the typed handlers, so the demo runtime
+ * and direct typed callers observe the same authority state (one authority,
+ * both entries). Ticket 28 hardened the machine: a manual confirm completes
+ * it coherently (ledger G-10) and the finalize sweep is scope-matched, so
+ * concurrent stops never touch out-of-scope records.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup } from '@testing-library/react'
-import type { Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
 import type { RequestContext } from '../../domain/service'
 
 vi.useFakeTimers()
-const { mountStore } = await import('../../test/helpers')
+const { mountServices } = await import('../../test/helpers')
 const { createConsoleServices } = await import('../../domain/service-factory')
+const { emergencyStop, retryStop, resolveStop } = await import('../../features/demo/runtime')
+const { useSessionStore } = await import('../../state/session')
 const { requestEmergencyStopTransaction, acknowledgeEmergencyStopTransaction, finalizeEmergencyStopTransaction, failEmergencyStopTransaction, unknownEmergencyStopTransaction, resolveStopTransaction } = await import('./service')
 
 afterEach(() => {
@@ -43,42 +43,27 @@ describe('the stop request is an immediate committed action (invariant 1)', () =
     svc.dispose()
   })
 
-  it('the legacy emergencyStop action observes the same immediate state (legacy action â†’ typed handler)', () => {
-    const h = mountStore()
-    h.run(() => h.store().A.emergencyStop('operation', OP14, 'ROE violation observed'))
-    const d = h.store().db
+  it('the demo emergencyStop runtime observes the same immediate state (runtime → typed handler)', () => {
+    const h = mountServices()
+    h.run(() => emergencyStop('operation', OP14, 'ROE violation observed'))
+    const d = h.db()
     expect(d.stopState).toMatchObject({ phase: 'requested', by: 'Alex Morgan' })
     expect(d.audit[0]).toMatchObject({ action: 'Emergency stop requested', result: 'Pending' })
     expect(d.operations.find((o) => o.id === OP14)?.status).toBe('running')
     h.unmount()
   })
 
-  it('a direct typed request is observed by the legacy consumer and vice versa (both bridges)', async () => {
-    const { StoreProvider, useServices, useStore } = await import('../../store')
-    const { ConsoleProviders } = await import('../../state/query')
-    const { createElement } = await import('react')
-    const { render } = await import('@testing-library/react')
-    let store!: Store
-    let svc!: ConsoleServices
-    const BridgeProbe = ({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) => {
-      ready(useStore(), useServices())
-      return null
-    }
-    const view = render(
-      createElement(StoreProvider, null,
-        createElement(ConsoleProviders, null,
-          createElement(BridgeProbe, { ready: (s, v) => { store = s; svc = v } })),
-      ),
-    )
-    // Typed â†’ legacy: a direct handler request appears in the store context.
+  it('a typed request and the demo runtime resolve are observed through the one authority (both entries)', () => {
+    const h = mountServices()
+    // Typed → authority: a direct handler request is committed and visible in the snapshot.
     act(() => {
-      requestEmergencyStopTransaction(svc.authority, svc.clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: P14, corr: 'c-x1' }, { scope: 'operation', id: OP14, reason: 'halt now' })
+      requestEmergencyStopTransaction(h.svc().authority, h.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: P14, corr: 'c-x1' }, { scope: 'operation', id: OP14, reason: 'halt now' })
     })
-    expect(store.db.stopState).toMatchObject({ phase: 'requested', by: 'Alex Morgan' })
-    // Legacy â†’ typed: the store's dismiss is observed by the authority snapshot.
-    act(() => { store.A.resolveStop('dismiss') })
-    expect(svc.authority.snapshot().stopState).toBeNull()
-    view.unmount()
+    expect(h.db().stopState).toMatchObject({ phase: 'requested', by: 'Alex Morgan' })
+    // Runtime → authority: the demo dismiss clears the stop state in the same authority.
+    act(() => { resolveStop('dismiss') })
+    expect(h.db().stopState).toBeNull()
+    h.unmount()
   })
 })
 
@@ -182,17 +167,17 @@ describe('handler-level gates and transitions', () => {
   })
 })
 
-describe('the demo orchestration through the legacy action still reaches stopped', () => {
-  it('requested â†’ acknowledged â†’ stopped with sessions terminated and agents released', () => {
-    const h = mountStore()
-    h.run(() => h.store().A.emergencyStop('operation', OP14, 'ROE violation observed'))
+describe('the demo orchestration through the runtime handlers still reaches stopped', () => {
+  it('requested → acknowledged → stopped with sessions terminated and agents released', () => {
+    const h = mountServices()
+    h.run(() => emergencyStop('operation', OP14, 'ROE violation observed'))
     act(() => { vi.advanceTimersByTime(1800) })
-    let d = h.store().db
+    let d = h.db()
     expect(d.stopState?.phase).toBe('acknowledged')
     expect(d.operations.find((o) => o.id === OP14)?.status).toBe('estop')
     expect(d.sessions.filter((s) => s.opId === OP14).every((s) => s.state === 'revoking')).toBe(true)
     act(() => { vi.advanceTimersByTime(2000) })
-    d = h.store().db
+    d = h.db()
     expect(d.stopState?.phase).toBe('stopped')
     expect(d.sessions.filter((s) => s.opId === OP14).every((s) => s.state === 'terminated')).toBe(true)
     expect(d.agents.find((a) => a.id === 'AG-007')?.op).toBeNull()
@@ -200,17 +185,17 @@ describe('the demo orchestration through the legacy action still reaches stopped
   })
 
   it('a workspace stop and the failed/unknown outcome paths behave through the same handlers', () => {
-    const h = mountStore()
-    h.run(() => h.store().setStopOutcome('fail'))
-    h.run(() => h.store().A.emergencyStop('workspace', 'all', 'halt everything'))
+    const h = mountServices()
+    h.run(() => useSessionStore.getState().setStopOutcome('fail'))
+    h.run(() => emergencyStop('workspace', 'all', 'halt everything'))
     act(() => { vi.advanceTimersByTime(1800) })
-    expect(h.store().db.stopState?.phase).toBe('failed')
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Emergency stop failed', obj: 'Workspace', result: 'Failed' })
-    h.run(() => h.store().A.retryStop())
-    expect(h.store().db.stopState?.phase).toBe('requested')
+    expect(h.db().stopState?.phase).toBe('failed')
+    expect(h.db().audit[0]).toMatchObject({ action: 'Emergency stop failed', obj: 'Workspace', result: 'Failed' })
+    h.run(() => retryStop())
+    expect(h.db().stopState?.phase).toBe('requested')
     act(() => { vi.advanceTimersByTime(3800) })
-    expect(h.store().db.stopState?.phase).toBe('stopped')
-    expect(h.store().db.operations.every((o) => o.status !== 'running')).toBe(true)
+    expect(h.db().stopState?.phase).toBe('stopped')
+    expect(h.db().operations.every((o) => o.status !== 'running')).toBe(true)
     h.unmount()
   })
 })

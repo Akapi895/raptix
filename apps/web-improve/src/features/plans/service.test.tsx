@@ -18,16 +18,14 @@
  * bridge and the ChangeSet → My Tasks refetch are proven.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, screen, waitFor } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { DEMO_ANCHOR } from '../../domain/clock'
+import { mountServices } from '../../test/helpers'
 import { DAY_MS, effectivePlanStatus, usableApproval } from './service'
+import { createOperationFromPlanTransaction } from './bridge'
 import { MyTasks } from '../../screens/a-dashboard'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
@@ -36,40 +34,18 @@ const TAYLOR: ActorRef = { id: 'Taylor Chen', role: 'operator' }
 const SAM: ActorRef = { id: 'Sam Patel', role: 'manager' }
 const PAT: ActorRef = { id: 'Pat Kim', role: 'reviewer' }
 const ALEX: ActorRef = { id: 'Alex Morgan', role: 'manager' }
+const DANA: ActorRef = { id: 'Dana Whitfield', role: 'admin' }
 let corrSeq = 0
 const ctx = (actor: ActorRef, projectId = 'all'): RequestContext => ({ actor, projectId, corr: `corr-${++corrSeq}` })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
-/** Mounts the providers (optionally the My Tasks screen) with a probe capturing store, services and query client. */
+/** Mounts the providers (optionally the My Tasks screen). */
 function mountConsole(me = 'Alex Morgan', withTasks = false) {
   window.location.hash = withTasks ? '#/tasks' : ''
-  let store!: Store
-  let svc!: ConsoleServices
-  let client!: QueryClient
-  const router = withTasks
-    ? createHashRouter([{ path: '*', element: <><Probe ready={(s, v, q) => { store = s; svc = v; client = q }} /><MyTasks /></> }])
-    : undefined
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, q) => { store = s; svc = v; client = q }} />
-        {router ? <RouterProvider router={router} /> : null}
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    client: () => client,
-    as(name: string) { act(() => { store.setMe(name) }) },
-    run: <T,>(fn: () => T): T => { let out!: T; act(() => { out = fn() }); return out },
-    unmount: view.unmount,
+  if (withTasks) {
+    const router = createHashRouter([{ path: '*', element: <MyTasks /> }])
+    return mountServices(<RouterProvider router={router} />, me)
   }
+  return mountServices(null, me)
 }
 
 describe('plan review request gates (ticket 39)', () => {
@@ -175,7 +151,7 @@ describe('approval expiry (ticket 39)', () => {
     const plans = h.svc().plans(TAYLOR, 'all')
     const deadline = Date.parse('2026-10-14T09:25:00+07:00')
     const until = (t: number) => h.svc().clock.advance(t - h.svc().clock.now())
-    const raw = () => h.store().db.plans.find((p) => p.id === 'PL-021')!
+    const raw = () => h.db().plans.find((p) => p.id === 'PL-021')!
     const read = async () => {
       const r = await plans.get(ctx(TAYLOR), 'PL-021')
       return r.ok ? r.data.status : 'error'
@@ -185,17 +161,19 @@ describe('approval expiry (ticket 39)', () => {
     expect(effectivePlanStatus(raw(), h.svc().clock.now())).toBe('approved')
     expect(usableApproval(raw(), h.svc().clock.now()).ok).toBe(true)
     expect(await read()).toBe('approved')
-    expect(h.run(() => h.store().A.executePlan('PL-021'))).toMatchObject({ ok: true, opId: 'OP-014' })
+    const bound = h.run(() => createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021'))
+    expect(bound).toMatchObject({ ok: true })
+    expect(bound.ok ? bound.data.opId : '').toBe('OP-014')
     // At the deadline exactly, the approval is spent: the read flips and execution refuses.
     until(deadline)
     expect(effectivePlanStatus(raw(), h.svc().clock.now())).toBe('expired')
     expect(await read()).toBe('expired')
-    const refused = h.run(() => h.store().A.executePlan('PL-021'))
+    const refused = h.run(() => createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021'))
     expect(refused.ok).toBe(false)
-    if (!refused.ok) expect(refused.error).toContain('expired')
+    if (!refused.ok) expect(refused.failure.message).toContain('expired')
     // Past the deadline the refusal persists.
     until(deadline + 60_000)
-    expect(h.run(() => h.store().A.executePlan('PL-021')).ok).toBe(false)
+    expect(h.run(() => createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021')).ok).toBe(false)
     // The stored status string stays 'approved' — expiry is read-side until something commits.
     expect(raw().status).toBe('approved')
     expect(raw().expires).toBe('Oct 14, 2026, 9:25 AM (UTC+7)')
@@ -307,18 +285,17 @@ describe('withdraw review (ticket 39)', () => {
 })
 
 describe('legacy ↔ typed bridge (ticket 39)', () => {
-  it('the typed service write is observed by the legacy store, and a legacy decision is observed by the typed read', async () => {
+  it('the typed service write is observed by the canonical snapshot, and a typed decision is observed by the typed read', async () => {
     const h = mountConsole()
-    // Typed → legacy: the request commits through the authority; the store projection sees it.
+    // Write → snapshot: the request commits through the authority; the canonical projection sees it.
     const plans = h.svc().plans(TAYLOR, 'all')
     await act(async () => { await plans.requestReview(ctx(TAYLOR), 'PL-023') })
-    const d = h.store().db
+    const d = h.db()
     expect(d.plans.find((p) => p.id === 'PL-023')!.status).toBe('in_review')
     expect(d.conversations.find((c) => c.id === 'CV-016-01')!.messages.some((m) => m.text.includes('sent to Pat Kim for approval'))).toBe(true)
     expect(d.notices.some((n) => n.text === 'AI plan PL-023 needs review')).toBe(true)
-    // Legacy → typed: the admin decides through the store action; the typed read observes it.
-    h.as('Dana Whitfield')
-    expect(h.run(() => h.store().A.decidePlan('PL-023', 'rejected', 'Out of scope for this quarter')).ok).toBe(true)
+    // Decision → typed read: the admin decides through the typed boundary; the read observes it.
+    expect((await plans.decide(ctx(DANA), 'PL-023', 'rejected', 'Out of scope for this quarter')).ok).toBe(true)
     const read = await plans.get(ctx(TAYLOR), 'PL-023')
     expect(read.ok).toBe(true)
     if (read.ok) {

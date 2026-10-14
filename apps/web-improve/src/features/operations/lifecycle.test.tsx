@@ -7,18 +7,17 @@
  * same atomic commit as the terminal state. Start refuses without a currently
  * passing preflight (ticket 26's re-derived gate) and with an expired linked
  * plan approval; role gates refuse with reasons; stopped/estopped operations
- * never resume. Both entry points — the typed mutations and the legacy
- * A.stopOp/A.completeOp bridge — run the same handlers (the zero-caller
+ * never resume. Both consumers — the typed mutations and the mounted screens'
+ * controls — run the same handlers (the zero-caller
  * A.confirmPreflight/A.startOp wrappers were retired by ticket 65).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { useToastStore } from '../../state/stores'
+import { selectProject, go } from '../../router/navigate'
 import { routes } from '../../screens/c'
 import { useAgentList } from '../agents/query'
 import {
@@ -26,6 +25,8 @@ import {
   startOperation, stopOperation,
 } from './service'
 import type { OperationDraftInput } from './service'
+import { assignAgentTransaction } from '../agents/writes'
+import { reviseScopeTransaction } from '../approvals/service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
@@ -237,47 +238,34 @@ describe('pause/resume — rechecks enforced at the handler', () => {
 
 /* ───────────── Screen bridge: both control consumers, both refetch paths ───────────── */
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
-function mountProbe(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
-  const ui = (children: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {children}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(null))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: (children: React.ReactNode) => view.rerender(ui(children)),
-    unmount: view.unmount,
-  }
-}
-
 /** The agent-fleet probe: the KPI the fleet screen derives from the canonical reservations. */
 function FleetBusy() {
   const list = useAgentList({})
   return <div>fleet busy {list.data ? list.data.kpis.busy : '…'}</div>
 }
 
+const assign = (h: ReturnType<typeof mountServices>, agentId: string, projectId: string, actorRef: ActorRef = ALEX) => {
+  const res = assignAgentTransaction(h.svc().authority, h.svc().clock, ctxOf(actorRef, projectId), agentId, { projectId })
+  if (!res.ok) throw new Error(res.failure.message)
+}
+
+const newDraft = (h: ReturnType<typeof mountServices>, input: Partial<OperationDraftInput>, actorRef: ActorRef = ALEX) => {
+  let opId = ''
+  h.run(() => {
+    const res = createOperationDraft(h.svc().authority, h.svc().clock, ctxOf(actorRef, P14), draftInput(input))
+    if (!res.ok) throw new Error(res.failure.message)
+    opId = res.data.op.id
+  })
+  return opId
+}
+
 describe('operation controls (ticket 27 — screens)', () => {
-  it('the typed Start control starts through the handler; the fleet and the legacy store observe one commit', async () => {
-    const h = mountProbe('Alex Morgan')
-    h.run(() => { h.store().setPid(P14); h.store().A.assignAgent('AG-012', P14) })
-    const opId = h.store().A.createOperation({ name: 'Control bridge op', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
-    h.run(() => { h.store().go('preflight', { id: opId }) })
+  it('the typed Start control starts through the handler; the fleet and the authority observe one commit', async () => {
+    const h = mountServices()
+    h.run(() => selectProject(P14))
+    h.run(() => assign(h, 'AG-012', P14))
+    const opId = newDraft(h, { name: 'Control bridge op', mode: 'Manual approval', schedule: '' })
+    h.run(() => go('preflight', { id: opId }))
     h.show(<>
       <FleetBusy />
       <routes.preflight />
@@ -289,47 +277,51 @@ describe('operation controls (ticket 27 — screens)', () => {
     await waitFor(() => expect((screen.getByRole('button', { name: 'Start Operation' }) as HTMLButtonElement).disabled).toBe(false))
     // Direction 1 — the new typed control: the start binds the reservations atomically.
     fireEvent.click(screen.getByRole('button', { name: 'Start Operation' }))
-    await waitFor(() => expect(h.store().db.operations.find((o) => o.id === opId)!.status).toBe('running'))
-    expect(h.store().db.agents.find((a) => a.id === 'AG-012')!.op).toBe(opId)
+    await waitFor(() => expect(h.db().operations.find((o) => o.id === opId)!.status).toBe('running'))
+    expect(h.db().agents.find((a) => a.id === 'AG-012')!.op).toBe(opId)
     // The fleet query refetched from the same ChangeSet: the reservation is visible there.
     await waitFor(() => expect(screen.getByText('fleet busy 3')).toBeInTheDocument())
     h.unmount()
   })
 
-  it('a legacy A.stopOp releases the reservation observed by the typed fleet read', async () => {
-    const h = mountProbe('Alex Morgan')
-    h.run(() => { h.store().setPid(P14); h.store().A.assignAgent('AG-012', P14) })
-    const opId = h.store().A.createOperation({ name: 'Legacy stop bridge op', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
-    // Ticket 65 retired the A.confirmPreflight/A.startOp wrappers; the setup
-    // runs the same typed handlers they delegated to.
+  it('a typed stop releases the reservation observed by the typed fleet read', async () => {
+    const h = mountServices()
+    h.run(() => selectProject(P14))
+    h.run(() => assign(h, 'AG-012', P14))
+    const opId = newDraft(h, { name: 'Legacy stop bridge op', mode: 'Manual approval', schedule: '' })
+    // The setup runs the typed preflight + start handlers the retired wrappers delegated to.
     h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), opId) })
     h.run(() => { startOperation(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), opId) })
     h.show(<>
       <FleetBusy />
       <routes.operations />
     </>)
-    // Direction 2 — the legacy action runs the same handler; the typed fleet
+    // Direction 2 — the typed stop runs the same handler; the typed fleet
     // read observes the reservation (AG-007/AG-008 by OP-014 + AG-012 here).
     await waitFor(() => expect(screen.getByText('fleet busy 3')).toBeInTheDocument())
-    // The legacy stop releases it: the fleet KPI and the canonical agent both update.
-    h.run(() => { h.store().A.stopOp(opId, 'Bridge stop proof') })
+    // The stop releases it: the fleet KPI and the canonical agent both update.
+    h.run(() => { stopOperation(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), opId, 'Bridge stop proof') })
     await waitFor(() => expect(screen.getByText('fleet busy 2')).toBeInTheDocument())
-    await waitFor(() => expect(h.store().db.operations.find((o) => o.id === opId)!.status).toBe('cancelled'))
-    expect(h.store().db.agents.find((a) => a.id === 'AG-012')!.op).toBeNull()
+    await waitFor(() => expect(h.db().operations.find((o) => o.id === opId)!.status).toBe('cancelled'))
+    expect(h.db().agents.find((a) => a.id === 'AG-012')!.op).toBeNull()
     h.unmount()
   })
 
   it('a policy change after the snapshot invalidates the start; the click-time gate refuses with its reason', async () => {
-    const h = mountProbe()
-    h.run(() => { h.store().setPid(P14); h.store().A.assignAgent('AG-012', P14) })
-    const opId = h.store().A.createOperation({ name: 'Late policy change op', projectId: P14, owner: 'Alex Morgan', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
-    h.run(() => { h.store().go('preflight', { id: opId }) })
+    const h = mountServices()
+    h.run(() => selectProject(P14))
+    h.run(() => assign(h, 'AG-012', P14))
+    const opId = newDraft(h, { name: 'Late policy change op', owner: 'Alex Morgan', mode: 'Manual approval', schedule: '' })
+    h.run(() => go('preflight', { id: opId }))
     h.show(<routes.preflight />)
     fireEvent.click(screen.getByRole('button', { name: 'Run Preflight' }))
     await waitFor(() => expect((screen.getByRole('button', { name: 'Start Operation' }) as HTMLButtonElement).disabled).toBe(false))
     // The ROE is revised AFTER the snapshot the button was gated on: the
     // control reflects the refusal (disabled, invalidated snapshot banner).
-    h.run(() => h.store().A.editScope(P14, { window: 'Mon–Fri, 10:00 AM–4:00 PM (UTC+7)' }, 'Tighten the window'))
+    h.run(() => {
+      const res = reviseScopeTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), P14, { patch: { window: 'Mon–Fri, 10:00 AM–4:00 PM (UTC+7)' }, reason: 'Tighten the window' })
+      if (!res.ok) throw new Error(res.failure.message)
+    })
     await waitFor(() => expect((screen.getByRole('button', { name: 'Start Operation' }) as HTMLButtonElement).disabled).toBe(true))
     expect(screen.getByText('Snapshot invalidated')).toBeInTheDocument()
     // And the gate the click invokes re-derives at call time: it refuses with
@@ -339,16 +331,17 @@ describe('operation controls (ticket 27 — screens)', () => {
       expect(res.ok).toBe(false)
       if (!res.ok) expect(res.failure.message).toContain('PRE-02')
     })
-    expect(h.store().db.operations.find((o) => o.id === opId)!.status).toBe('draft')
-    expect(h.store().db.agents.find((a) => a.id === 'AG-012')!.op).toBeNull()
+    expect(h.db().operations.find((o) => o.id === opId)!.status).toBe('draft')
+    expect(h.db().agents.find((a) => a.id === 'AG-012')!.op).toBeNull()
     h.unmount()
   })
 
   it('a refused start renders its reason through the toast channel, keeping the operation unstarted', async () => {
-    const h = mountProbe('Alex Morgan')
-    h.run(() => { h.store().setPid(P14); h.store().A.assignAgent('AG-012', P14) })
-    const opId = h.store().A.createOperation({ name: 'Refusal render op', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
-    h.run(() => { h.store().go('preflight', { id: opId }) })
+    const h = mountServices()
+    h.run(() => selectProject(P14))
+    h.run(() => assign(h, 'AG-012', P14))
+    const opId = newDraft(h, { name: 'Refusal render op', mode: 'Manual approval', schedule: '' })
+    h.run(() => go('preflight', { id: opId }))
     h.show(<routes.preflight />)
     fireEvent.click(screen.getByRole('button', { name: 'Run Preflight' }))
     await waitFor(() => expect((screen.getByRole('button', { name: 'Start Operation' }) as HTMLButtonElement).disabled).toBe(false))
@@ -364,10 +357,10 @@ describe('operation controls (ticket 27 — screens)', () => {
     await waitFor(() => expect(useToastStore.getState().toasts.some((t) => t.text.includes('Simulated start refusal'))).toBe(true))
     // The refusal committed nothing: the operation stays in its (ready) state
     // with no reservation bound and no session created.
-    const op = h.store().db.operations.find((o) => o.id === opId)!
+    const op = h.db().operations.find((o) => o.id === opId)!
     expect(op.status).toBe('ready')
     expect(op.sessionId).toBeUndefined()
-    expect(h.store().db.agents.find((a) => a.id === 'AG-012')!.op).toBeNull()
+    expect(h.db().agents.find((a) => a.id === 'AG-012')!.op).toBeNull()
     h.unmount()
   })
 })
