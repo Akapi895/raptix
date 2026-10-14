@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, X, Search, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
-import { canAccessProject } from '../auth/policy'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
@@ -14,7 +13,8 @@ import {
   Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Kpi, Locked, Modal, Mono, PageHeader, Pager, Person, PersonaHint, SearchBox, Segmented, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx, useGuard,
 } from '../ui'
 import { go, useRoute } from '../router/navigate'
-import { useAccessible, useActiveProject, useCan, useDb, useMe, useReadOnly } from '../state/console'
+import { useAccessible, useActiveProject, useCan, useMe, useReadOnly } from '../state/console'
+import { useFindingFormRead, useFindingReportChoices, useFindingEvidenceChoices } from '../features/findings/projection'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 
@@ -276,7 +276,7 @@ interface Draft { title: string; severity: Severity; severityReason: string; ass
  */
 function FindingForm() {
   const route = useRoute()
-  const db = useDb()
+  const db = useFindingFormRead(route.id)
   const me = useMe()
   const pid = useProjectStore((s) => s.pid)
   const toast = useToastStore((s) => s.toast)
@@ -360,7 +360,6 @@ function FindingForm() {
     }
   })
 
-  if (editing && !canAccessProject(db, me, editing.projectId)) return <Empty icon={Lock} title="You do not have permission to edit this finding" action={<Button onClick={() => go('findings')}>Back to list</Button>} />
   if (editing && pid !== 'all' && editing.projectId !== pid) return <Empty icon={Lock} title={`${editing.id} belongs to project ${editing.projectId}`} action={<Button onClick={() => setSwitcherOpen(true)}>Select project</Button>}>Select the correct project to edit this finding.</Empty>
   if (route.id && !editing) return <Empty icon={AlertTriangle} title="Finding to edit not found" action={<Button onClick={() => go('findings')}>Back to list</Button>} />
   if (!projectId) {
@@ -497,7 +496,7 @@ function FindingDetail() {
   const services = useServices()
   const confirm = useSessionStore((s) => s.confirm)
   const toast = useToastStore((s) => s.toast)
-  const db = useDb()
+  const db = useFindingReportChoices()
   const writes = useFindingWrites()
   const detail = useFindingDetail(route.id)
   const [note, setNote] = useState('')
@@ -700,7 +699,7 @@ function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: ()
 /* ───────────── Evidence tab (ticket 31: masked read; ticket 32: typed link/upload) ───────────── */
 const OK_EXT = ['png', 'jpg', 'jpeg', 'txt', 'log', 'json', 'csv', 'pdf']
 function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: boolean }) {
-  const db = useDb()
+  const db = useFindingEvidenceChoices(f.projectId)
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
   const me = useMe()
