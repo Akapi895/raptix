@@ -8,6 +8,13 @@ import { createConsoleServices, type ConsoleServices } from './domain/service-fa
 // handlers (src/features/aichat); this layer keeps the demo's response
 // orchestration only.
 import { createChatHandlers } from './features/aichat/handlers'
+import {
+  initDemoRuntime, resetDemoRuntime,
+  emergencyStop as demoEmergencyStop, retryStop as demoRetryStop, resolveStop as demoResolveStop,
+  sendChat as demoSendChat, stopChat as demoStopChat,
+  loseAgent as demoLoseAgent, restoreAgent as demoRestoreAgent, fastForward as demoFastForward,
+  terminateSession as demoTerminateSession,
+} from './features/demo/runtime'
 // Ticket 39 append: the plan workbench lifecycle (request/decide/withdraw/
 // revise/edit/discard) and the approval-validity gate are feature-local
 // transactions (src/features/plans/service.ts); these legacy entries delegate
@@ -48,10 +55,8 @@ import {
 import {
   confirmCloseTransaction, reopenProjectTransaction, requestCloseTransaction,
 } from './features/closure/service'
-import {
-  acknowledgeEmergencyStopTransaction, failEmergencyStopTransaction, finalizeEmergencyStopTransaction,
-  requestEmergencyStopTransaction, resolveStopTransaction, unknownEmergencyStopTransaction,
-} from './features/estop/service'
+// Ticket 67 enabler E: the stop transitions delegate to the demo runtime —
+// its typed-handler imports live there now.
 // Ticket 37 append: the legacy export/delivery actions delegate to the typed
 // report handlers (one audited implementation for both entry points).
 import { deliverReportVersion, exportReportVersion, type DeliveryInput } from './features/reports/service'
@@ -351,18 +356,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const setAiMode = ui.setAiMode
   const stopOutcome = useSessionStore((s) => s.stopOutcome)
   const setStopOutcome = useSessionStore((s) => s.setStopOutcome)
-  const stopOutRef = useRef(stopOutcome); stopOutRef.current = stopOutcome
   const aiBusy = useSessionStore((s) => s.aiBusy)
-  const setAiBusy = useSessionStore((s) => s.setAiBusy)
-  const aiTimers = useRef(new Map<string, number>())
-  /* Dataset-bound delayed callbacks; demo reset disposes them so stale
-     callbacks never apply pre-reset state to the reseeded dataset. */
-  const pendingTimers = useRef(new Set<number>())
-  const later = useCallback((fn: () => void, ms: number) => {
-    const t = window.setTimeout(() => { pendingTimers.current.delete(t); fn() }, ms)
-    pendingTimers.current.add(t)
-    return t
-  }, [])
+  /* The demo runtime (ticket 67 enabler E) owns the dataset-bound delayed
+     callbacks and the AI response timers: the provider registers its
+     services on mount and `resetDemo` disposes the runtime's timers, so a
+     stale callback never applies pre-reset state to the reseeded dataset
+     (and a callback outliving its mount stays bound to that mount's own
+     authority). */
+  useEffect(() => initDemoRuntime(services), [services])
   const logs = useSessionStore((s) => s.logs)
   const setLogsS = useSessionStore((s) => s.setLogs)
   const pushLogS = useSessionStore((s) => s.pushLog)
@@ -436,9 +437,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => { setLogsS(buildLogs(dbRef.current)) }, [setLogsS])
 
   const resetDemo: Store['resetDemo'] = (scenario = 'default') => {
-    pendingTimers.current.forEach((t) => window.clearTimeout(t))
-    pendingTimers.current.clear()
-    aiTimers.current.clear()
+    resetDemoRuntime()
     services.reset(scenario)
     dbRef.current = services.authority.snapshot()
     setLogsS(buildLogs(dbRef.current))
@@ -465,15 +464,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
      stays here: it is the demo's execution outcome engine, not a control. */
 
   /* ───────── AI chat (ticket 38) ─────────
-     Conversations, mode selection and simulated proposal generation are owned
-     by the feature-local handlers (src/features/aichat): every commit goes
-     through the one authority and publishes the ChangeSet both the legacy
-     context and Query consumers observe. This action layer keeps only the
-     demo's response orchestration — the single busy flag and the 900 ms
-     response timer, disposed on stop and demo reset. The proposal invariant
-     (requirement 5) lives in the handler: no action here can start an
-     operation, approve a plan or allow a tool call. */
-  const chatApi = createChatHandlers(services, { id: me.name, role: me.role }, 'all')
+      Conversations, mode selection and simulated proposal generation are owned
+      by the feature-local handlers (src/features/aichat): every commit goes
+      through the one authority and publishes the ChangeSet both the legacy
+      context and Query consumers observe. The demo's response orchestration
+      lives in the demo runtime (ticket 67 enabler E). The proposal invariant
+      (requirement 5) lives in the handler: no action here can start an
+      operation, approve a plan or allow a tool call. */
 
   /* ───────── Actions ───────── */
   /* Legacy request context for the delegating actions: the current persona is
@@ -605,25 +602,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
        (src/features/estop/service.ts). The request handler commits the
        visible stop state (phase 'requested' + Pending audit + notice) in one
        immediate commit — an emergency stop is always an action with an
-       immediate response, never a passive status. This entry keeps only the
-       demo's simulated outcome switch and the tracked delays (disposed on
-       demo reset), so the stop banner never shows success that did not
-       happen. */
-    emergencyStop: (scope, id, reason) => {
-      const res = requestEmergencyStopTransaction(services.authority, services.clock, actorCtx(scope === 'project' ? id : ''), { scope, id, reason })
-      if (!res.ok) return
-      const affectedP = res.data.projectId
-      res.data.operations.forEach((opId) => pushLog(opId, { level: 'ERROR', agent: '—', stepId: '—', text: `EMERGENCY STOP requested by ${me.name}: ${reason} — waiting for agent acknowledgement` }))
-      const outcome = stopOutRef.current
-      later(() => {
-        if (outcome === 'fail') { failEmergencyStopTransaction(services.authority, services.clock, actorCtx(affectedP), { scope, id }); return }
-        if (outcome === 'unknown') { unknownEmergencyStopTransaction(services.authority, services.clock, actorCtx(affectedP), { scope, id }); return }
-        acknowledgeEmergencyStopTransaction(services.authority, services.clock, actorCtx(affectedP), { scope, id, reason })
-        later(() => { finalizeEmergencyStopTransaction(services.authority, services.clock, actorCtx(affectedP), { scope, id }) }, 2000)
-      }, 1800)
-    },
-    retryStop: () => { const s = dbRef.current.stopState; if (!s) return; setStopOutcome('ack'); stopOutRef.current = 'ack'; A.emergencyStop(s.scope, s.id, s.reason + ' (retry)') },
-    resolveStop: (outcome) => { resolveStopTransaction(services.authority, services.clock, actorCtx(''), outcome) },
+       immediate response, never a passive status. The demo's simulated
+       outcome switch and the tracked delays (disposed on demo reset) live in
+       the demo runtime (ticket 67 enabler E); these entries delegate. */
+    emergencyStop: (scope, id, reason) => demoEmergencyStop(scope, id, reason),
+    retryStop: () => demoRetryStop(),
+    resolveStop: (outcome) => demoResolveStop(outcome),
     /* Ticket 29: step decisions resolve through the typed handler — ticket 65
        retired the zero-caller reviewStep wrapper; the workspace screens and
        tests invoke reviewOperationStep directly. */
@@ -637,22 +621,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation completed' })
       return { ok: true }
     },
-    loseAgent: (agentId) => {
-      const ag = dbRef.current.agents.find((a) => a.id === agentId)!
-      mutate((d) => { const a = d.agents.find((x) => x.id === agentId)!; a.status = 'lost'; a.lastSeen = stamp(); d.operations.forEach((o) => o.steps.forEach((s) => { if (s.agent === agentId && s.status === 'running') { s.status = 'unknown'; s.output = 'Result unknown because the agent lost connection.' } })); d.sessions.forEach((s) => { if (s.agentId === agentId && s.state === 'connected') s.state = 'disconnected' }) })
-      mutate((d) => d.branches.forEach((b) => { if (b.agent === agentId && ['running', 'queued', 'waiting_approval', 'pending'].includes(b.state)) { b.state = b.state === 'running' ? 'unknown' : 'paused'; b.lastEvent = `${agentId} disconnected — branch ${b.state}`; b.timeline.push({ at: stamp(), text: `${agentId} lost heartbeat (simulated)` }) } }))
-      if (ag.op) pushLog(ag.op, { level: 'ERROR', agent: agentId, stepId: '—', text: `Lost connection to ${agentId} — running steps are now “Unknown”.` })
-      notify(`${agentId} disconnected while running ${ag.op || 'an operation'}`, ag.projectId, { name: 'agent', id: agentId }, 'update', 'agents')
-      audit('Agent disconnected', agentId, ag.projectId, 'Warning')
-    },
-    restoreAgent: (agentId) => { mutate((d) => { const a = d.agents.find((x) => x.id === agentId)!; a.status = 'online'; a.lastSeen = stamp(); d.sessions.forEach((s) => { if (s.agentId === agentId && s.state === 'disconnected') s.state = 'connected' }) }) },
-    fastForward: (opId) => {
-      mutate((d) => {
-        const o = d.operations.find((x) => x.id === opId)!
-        o.steps.forEach((s) => { if (['running', 'pending'].includes(s.status)) { s.status = 'ok'; s.ts = s.ts === '—' ? hhmm() : s.ts; s.dur = s.dur === '—' ? '01:00' : s.dur; s.output = s.output.startsWith('No output') || s.output.startsWith('Waiting') ? 'Sanitized output. No sensitive content.' : s.output } })
-      })
-      pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Simulation fast-forward: remaining steps completed.' })
-    },
+    /* The agent loss/restore, fast-forward and session-termination
+       simulations are the demo's outcome engine (ticket 67 enabler E) — the
+       runtime owns their commits, log mirrors, notices and tracked delays. */
+    loseAgent: (agentId) => demoLoseAgent(agentId),
+    restoreAgent: (agentId) => demoRestoreAgent(agentId),
+    fastForward: (opId) => demoFastForward(opId),
 
     createFinding: (dr, submit) => {
       const id = 'FD-' + String(dbRef.current.counters.finding + 1).padStart(3, '0')
@@ -729,34 +703,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setPlaybookStatus: (id, status) => mutate((d) => { const p = d.playbooks.find((x) => x.id === id); if (p) { p.status = status; p.updated = stamp() } }),
     togglePolicy: (id) => { mutate((d) => { const p = d.policies.find((x) => x.id === id)!; p.enabled = !p.enabled; p.updated = today() }); audit('Changed policy', id, '') },
 
-    /* ── AI Operator (ticket 38: handlers own the data; this layer keeps the
-       response orchestration only — busy flag + 900 ms timer, disposed on
-       stop and demo reset. The handler enforces the proposal invariant. ──) */
+    /* ── AI Operator (ticket 38: handlers own the data; the demo's response
+       orchestration — busy flag + 900 ms timer, disposed on stop and demo
+       reset — lives in the demo runtime (ticket 67 enabler E); the handler
+       enforces the proposal invariant. ──) */
     createConversation: (projectId, mode = aiMode) => {
-      const res = chatApi.create(projectId, mode)
+      const res = createChatHandlers(services, { id: me.name, role: me.role }, 'all').create(projectId, mode)
       return res.ok ? res.data.id : ''
     },
-    togglePinConv: (convId) => { chatApi.setPinned(convId) },
-    sendChat: (convId, text) => {
-      if (!text.trim() || aiBusy) return
-      const res = chatApi.send(convId, text)
-      if (!res.ok) return
-      setAiBusy(convId)
-      const timer = later(() => {
-        aiTimers.current.delete(convId)
-        chatApi.respond(convId, text)
-        setAiBusy(null)
-      }, 900)
-      aiTimers.current.set(convId, timer)
-    },
-    stopChat: (convId) => {
-      const timer = aiTimers.current.get(convId)
-      if (timer === undefined) return
-      window.clearTimeout(timer)
-      aiTimers.current.delete(convId)
-      setAiBusy(null)
-      chatApi.stop(convId)
-    },
+    togglePinConv: (convId) => { createChatHandlers(services, { id: me.name, role: me.role }, 'all').setPinned(convId) },
+    sendChat: (convId, text) => demoSendChat(convId, text),
+    stopChat: (convId) => demoStopChat(convId),
     requestPlanApproval: (planId) => {
       const projectId = planProjectOf(planId)
       if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
@@ -842,12 +799,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const res = decideSessionRequestTransaction(services.authority, services.clock, actorCtx(r.projectId), { requestId: id, decision, note, minutes })
       return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
     },
-    terminateSession: (sessionId, reason) => {
-      const s = dbRef.current.sessions.find((x) => x.id === sessionId)!
-      mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; x.state = 'revoking'; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: `Termination requested by ${me.name}: ${reason}` }) })
-      audit('Terminated session', sessionId, s.projectId, 'Success', reason)
-      later(() => mutate((d) => { const x = d.sessions.find((y) => y.id === sessionId)!; if (x.state === 'revoking') { x.state = 'terminated'; x.grants = []; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated. All grants revoked.' }) } }), 2000)
-    },
+    terminateSession: (sessionId, reason) => demoTerminateSession(sessionId, reason),
     revokeGrant: (sessionId, user, reason) => {
       const s = dbRef.current.sessions.find((x) => x.id === sessionId)
       if (!s) return { ok: false, error: `Session ${sessionId} does not exist.` }
