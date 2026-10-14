@@ -174,3 +174,27 @@ existing Vite config-loader warning and two jsdom document-navigation notices.
 - shell migrated: nav/collapse/drawer/switcher/breakpoint checks unchanged
   except the seams (go/currentRoute/selectProject/theme/auth stores).
   12/12 pass. Typecheck exit 0; all four files + helpers lint clean.
+
+## T2 settings/wizard batch (Batch G — final test files)
+
+- settings/service.test.tsx migrated: the bridge harnesses mount through
+  mountServices with a useMe probe (the persona projection case asserts
+  the role change lands on the switcher's useMe); the legacy?typed
+  directions run setIntegrationConnection/setPolicyEnabled and the
+  canonical audit commit (the store's exact 'legacy' row shape, staged via
+  uthority.commit); screen cases use show() and
+  useSessionStore.confirmState. 37/37 pass.
+- wizard.test.tsx migrated: four-eyes self-approval runs
+  decideApprovalTransaction (failure.message restated); the viewer
+  creation refusal runs createProjectTransaction (ServiceResult restated
+  from the legacy empty-string return); dirty/unsaved/route/pid/toasts read
+  the shared authorities. 18/18 pass.
+- Typecheck exit 0; both files lint with zero diagnostics.
+
+## T3 store-free census (pre-deletion)
+
+- git grep -l -E 'useStore|StoreProvider|mountStore|mountScreen' -- src
+  now matches only src/store.tsx (the deletion target) and the legacy
+  helpers in src/test/helpers.tsx (mountStore/mountScreen, deleted with
+  T4/T5). findings/writes + reports/* grep matches are false positives
+  (local mountScreenRoute helper names).
