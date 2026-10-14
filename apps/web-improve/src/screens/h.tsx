@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { Activity, ClipboardCheck, Download, Eye, Lock, OctagonX, Radio, RadioTower, ShieldAlert, SlidersHorizontal, TerminalSquare, TriangleAlert } from 'lucide-react'
-import { useServices } from '../store'
+import { useServices } from '../state/services'
 import { go, useRoute } from '../router/navigate'
 import { useAccessible, useCan, useDb, useMe } from '../state/console'
 import { useProjectStore, useToastStore } from '../state/stores'

@@ -14,7 +14,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { ListTree, PanelRight, Plus, Sparkles } from 'lucide-react'
-import { useServices } from '../store'
+import { useServices } from '../state/services'
 import { eligibility } from '../features/operations/preflight'
 import { actorRef } from '../auth/persona'
 import { useQueryScope } from '../state/keys'
