@@ -198,3 +198,35 @@ existing Vite config-loader warning and two jsdom document-navigation notices.
   helpers in src/test/helpers.tsx (mountStore/mountScreen, deleted with
   T4/T5). findings/writes + reports/* grep matches are false positives
   (local mountScreenRoute helper names).
+
+## T4/T5 harness cleanup and store deletion
+
+- src/test/helpers.tsx reduced to mountServices only: the legacy
+  mountStore/mountScreen wrappers (and the ../store import) are gone
+  with zero remaining callers.
+- src/store.tsx deleted (762 lines): zero runtime or test importers
+  remained. One atomic deletion commit — the file cannot be split; it is a
+  pure removal with no runtime-line additions. The single-writer route
+  census test had already dropped its store.tsx carve-out.
+- Full verification after deletion: 
+pm run typecheck exit 0;
+  
+px eslint src/test/helpers.tsx zero diagnostics; full
+  
+pm run test -- --maxWorkers=2: 959 tests / 74 files, exit 0
+  (77.74 s); 
+pm run build exit 0 (12.02 s).
+- One transient full-suite flake was observed on the first post-deletion
+  run (operations/write 'blocks invalid input' failed once under parallel
+  ordering, passed in isolation and on the immediate full-suite rerun and
+  in all focused runs); noted as pre-existing test-order interference, no
+  assertion was changed.
+
+## T6 final residual census
+
+- git grep -l -E 'useStore|StoreProvider|mountStore|mountScreen' --
+  apps/web-improve/src ? no matches. The legacy store bridge, its
+  provider, the action bag (A.*) and the legacy test harness are fully
+  retired; tests exercise the canonical seams (ServicesProvider +
+  useServices, Zustand shared authorities, the router navigate seam, and
+  the feature-local transactions) exclusively.
