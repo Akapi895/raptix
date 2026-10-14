@@ -19,6 +19,7 @@
 import { can, projectAccessible, projectLocked } from '../../auth/policy'
 import { USERS, type Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
+import { stamp } from '../../domain/demo-clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { ExportRec, Finding, FindingStatus, Project, Report, ReportSnapshot, ReportStatus, Role, Severity, Template } from '../../domain/entities'
@@ -518,6 +519,21 @@ export function setReportFindings(authority: DbAuthority, clock: Clock, ctx: Req
     d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Updated report findings', obj: reportId, projectId: r.projectId, result: 'Success', reason: '' })
   })
   return { ok: true, data: authority.snapshot().reports.find((x) => x.id === reportId)! }
+}
+
+/**
+ * Ticket 67 wave 6: the legacy `A.setReportFindings` entry, verbatim — a raw
+ * selection swap with an `updated` bump (no scope/status validation and no
+ * audit row), distinct from {@link setReportFindings} whose handler-side
+ * policy the e-findings Add-to-report flow must not inherit.
+ */
+export function setReportFindingsLegacyTransaction(authority: DbAuthority, ctx: RequestContext, id: string, ids: string[]): ServiceResult<Report> {
+  authority.commit(ctx.corr, (d) => {
+    const r = d.reports.find((x) => x.id === id)!
+    r.findings = ids
+    r.updated = stamp()
+  })
+  return { ok: true, data: authority.snapshot().reports.find((x) => x.id === id)! }
 }
 
 /* ───────────── Review checklist (moved from the screen — one implementation) ───────────── */
