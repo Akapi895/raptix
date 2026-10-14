@@ -1,8 +1,14 @@
 import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
+// Path-based resolution: a `new URL(template, import.meta.url)` pattern is
+// rewritten by Vite's asset transform, which cannot see JSON fixtures here.
+const fixtureDir = resolve(dirname(fileURLToPath(import.meta.url)), '../fixtures/w00')
+
 function fixture<T>(relative: string): T {
-  return JSON.parse(readFileSync(new URL(`../fixtures/w00/${relative}`, import.meta.url), 'utf8')) as T
+  return JSON.parse(readFileSync(resolve(fixtureDir, relative), 'utf8')) as T
 }
 
 interface HttpCapture<T> { provenance: string; status: number; contentType: string; contentDisposition?: string; body: T }
