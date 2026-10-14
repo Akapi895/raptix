@@ -10,7 +10,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
 
+/* Captured before the fake timers are installed: settling a lazy route chunk
+   needs a real event-loop turn (module I/O), which fake timers never flush. */
+const realSetTimeout = globalThis.setTimeout.bind(globalThis)
 vi.useFakeTimers()
+const realYield = () => new Promise<void>((r) => { realSetTimeout(r, 0) })
 const { ServicesProvider } = await import('../../state/services')
 const { ConsoleProviders } = await import('../../state/query')
 const { useAuthStore } = await import('../../state/stores')
@@ -129,9 +133,18 @@ describe('recovery behavior', () => {
 })
 
 describe('states gallery (ticket 61b)', () => {
-  it('renders at its key with every state sample and the status legend', () => {
+  /** Settles the lazy gallery chunk under fake timers (findBy's polling timer is faked). */
+  async function until(probe: () => boolean, what: string) {
+    for (let i = 0; i < 80 && !probe(); i++) {
+      await act(async () => { await vi.advanceTimersByTimeAsync(25); await realYield() })
+    }
+    if (!probe()) throw new Error(`condition not reached: ${what}`)
+  }
+
+  it('renders at its key with every state sample and the status legend', async () => {
     mountApp('#/states')
     signInAs('Alex Morgan')
+    await until(() => screen.queryByRole('heading', { name: 'Universal state set' }) !== null, 'gallery heading')
     expect(screen.getByRole('heading', { name: 'Universal state set' })).toBeInTheDocument()
     for (const sample of ['1. Loading', '2. Empty (natural / filtered)', '3. Network error / failed to load', '4. Insufficient permission', '5. Read-only', '6. Stale data', '7. Partial data', '8. No data from integration', '9. Status legend']) {
       expect(screen.getByText(sample)).toBeInTheDocument()
@@ -139,9 +152,10 @@ describe('states gallery (ticket 61b)', () => {
     expect(screen.getByText('Project', { selector: 'div' })).toBeInTheDocument()
   })
 
-  it('simulate reload shows the skeleton and recovers without a stale timer', () => {
+  it('simulate reload shows the skeleton and recovers without a stale timer', async () => {
     mountApp('#/states')
     signInAs('Alex Morgan')
+    await until(() => screen.queryByRole('table') !== null, 'gallery table')
     expect(screen.getByRole('table')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Simulate reload' }))
     expect(screen.getByLabelText('Loading data')).toBeInTheDocument()
@@ -149,9 +163,10 @@ describe('states gallery (ticket 61b)', () => {
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
 
-  it('sample actions navigate through the router seam', () => {
+  it('sample actions navigate through the router seam', async () => {
     mountApp('#/states')
     signInAs('Alex Morgan')
+    await until(() => screen.queryAllByRole('button', { name: 'Create operation' }).length > 0, 'gallery actions')
     fireEvent.click(screen.getAllByRole('button', { name: 'Create operation' })[0])
     expect(window.location.hash).toBe('#/operation-new')
   })
