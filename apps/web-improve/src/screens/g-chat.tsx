@@ -14,12 +14,17 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { ListTree, PanelRight, Plus, Sparkles } from 'lucide-react'
-import { useServices, useStore } from '../store'
+import { useServices } from '../store'
 import { eligibility } from '../features/operations/preflight'
 import { actorRef } from '../auth/persona'
 import { useQueryScope } from '../state/keys'
 import { createChatHandlers } from '../features/aichat/handlers'
 import { ChatReadError, useConversationList } from '../features/aichat/query'
+import { sendChat } from '../features/demo/runtime'
+import { go, useRoute } from '../router/navigate'
+import { useActiveProject, useDb, useReadOnly } from '../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
 import { Banner, Button, Drawer, Empty, PageHeader } from '../ui'
 import { AiSubNav, Composer, NoProject, Pill, STARTERS, Thread } from './g-common'
 import { ConvBanner, ConversationHeader, INSP, Inspector, LeftRail, RAIL, Separator, useResizable, useViewportW } from './g-workspace'
@@ -29,7 +34,18 @@ const LS_OPEN = 'raptix.ai.inspectorOpen'
 const readOpen = () => { try { return window.localStorage.getItem(LS_OPEN) !== '0' } catch { return true } }
 
 export function AiOperator() {
-  const { db, pid, project, route, A, aiMode, go, readOnly, guarded, toast } = useStore()
+  /* Ticket 67 wave 7: the legacy store reads leave the context — the console
+     read seam (db/project/readOnly), the router module (route/go), the shared
+     authorities (pid/aiMode/toast/guard) and the demo runtime's sendChat (the
+     A.sendChat delegate). */
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const route = useRoute()
+  const aiMode = useUiStore((s) => s.aiMode)
+  const readOnly = useReadOnly()
+  const guarded = useSessionStore((s) => s.guarded)
+  const toast = useToastStore((s) => s.toast)
   const services = useServices()
   const scope = useQueryScope()
   const vw = useViewportW()
@@ -107,14 +123,14 @@ export function AiOperator() {
               <ConvBanner conv={conv} />
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
                 {conv.messages.length === 0 ? (
-                  <Empty icon={Sparkles} title="Start a new conversation" action={<div className="flex flex-wrap justify-center gap-2">{STARTERS.map((s) => <Button key={s} size="sm" disabled={ro} onClick={() => A.sendChat(conv.id, s)}>{s}</Button>)}</div>}>
+                  <Empty icon={Sparkles} title="Start a new conversation" action={<div className="flex flex-wrap justify-center gap-2">{STARTERS.map((s) => <Button key={s} size="sm" disabled={ro} onClick={() => sendChat(conv.id, s)}>{s}</Button>)}</div>}>
                     Ask about {project.id} scope, agents or results. Answers are based on available project data only.
                   </Empty>
                 ) : <Thread conv={conv} />}
               </div>
               <div className="shrink-0 px-4 pb-3">
                 <Composer key={conv.id} conv={conv} />
-                {locked && <div className="mt-2 flex flex-wrap items-center gap-2 text-xs"><Button size="sm" onClick={() => A.sendChat(conv.id, 'Draft a plan outline for scope review')}>Save a draft plan outline</Button><span className="text-muted">Saved as Draft only. <Pill tone="bad">Request approval locked</Pill></span></div>}
+                {locked && <div className="mt-2 flex flex-wrap items-center gap-2 text-xs"><Button size="sm" onClick={() => sendChat(conv.id, 'Draft a plan outline for scope review')}>Save a draft plan outline</Button><span className="text-muted">Saved as Draft only. <Pill tone="bad">Request approval locked</Pill></span></div>}
               </div>
             </>
           ) : (
