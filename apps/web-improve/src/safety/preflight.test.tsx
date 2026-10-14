@@ -1,40 +1,23 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, render } from '@testing-library/react'
-import { StoreProvider, useServices, useStore, type Store } from '../store'
+import { cleanup } from '@testing-library/react'
+import { mountServices } from '../test/helpers'
 import { computePreflightChecks, preflightPass } from '../features/operations/preflight'
 import { MockClock } from '../domain/clock'
 import type { Db, Operation } from '../data'
-import type { ConsoleServices } from '../domain/service-factory'
 import type { ActorRef, RequestContext } from '../domain/service'
-import { runOperationPreflight, startOperation } from '../features/operations/service'
+import { createOperationDraft, runOperationPreflight, startOperation } from '../features/operations/service'
+import { assignAgentTransaction } from '../features/agents/writes'
 import { seed } from '../data'
 
 afterEach(cleanup)
 
 const ALEX: ActorRef = { id: 'Alex Morgan', role: 'manager' }
-const ctxOf = (projectId: string): RequestContext => ({ actor: ALEX, projectId, corr: 'legacy' })
+const TAYLOR: ActorRef = { id: 'Taylor Chen', role: 'operator' }
+const ctxOf = (projectId: string, actor: ActorRef = ALEX): RequestContext => ({ actor, projectId, corr: 'legacy' })
 
-function Probe({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
-/** Mounts the legacy store and its service factory (one authority, both handles). */
+/** Mounts the service authority (one handle since ticket 67). */
 function mountPreflight(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  render(
-    <StoreProvider>
-      <Probe ready={(s, v) => { store = s; svc = v }} />
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run(fn: () => unknown) { act(fn) },
-    unmount: () => { cleanup() },
-  }
+  return mountServices(me)
 }
 
 const db = seed()
@@ -45,6 +28,11 @@ const pf = (d: Db, op: Operation) => computePreflightChecks(d, op, new MockClock
 const checksFor = (opId: string) => {
   const op = db.operations.find((o) => o.id === opId)!
   return Object.fromEntries(pf(db, op).map((c) => [c.code, c]))
+}
+
+const assign = (h: ReturnType<typeof mountPreflight>, agentId: string, projectId: string) => {
+  const res = assignAgentTransaction(h.svc().authority, h.svc().clock, ctxOf(projectId), agentId, { projectId })
+  if (!res.ok) throw new Error(res.failure.message)
 }
 
 describe('operation preflight (8-point gate)', () => {
@@ -94,21 +82,31 @@ describe('preflight gates execution at the typed handlers', () => {
     // (ticket 49): managers/admins assign immediately, so this setup runs as
     // the manager persona; the preflight assertions are persona-independent.
     const h = mountPreflight()
-    h.run(() => h.store().A.assignAgent('AG-012', 'RT-2026-014'))
-    const opId = h.store().A.createOperation({ name: 'Preflight gate check', projectId: 'RT-2026-014', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
+    h.run(() => assign(h, 'AG-012', 'RT-2026-014'))
+    let opId = ''
+    h.run(() => {
+      const res = createOperationDraft(h.svc().authority, h.svc().clock, ctxOf('RT-2026-014'), { name: 'Preflight gate check', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
+      if (!res.ok) throw new Error(res.failure.message)
+      opId = res.data.op.id
+    })
     h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf('RT-2026-014'), opId) })
-    expect(h.store().db.operations.find((o) => o.id === opId)?.status).toBe('ready')
+    expect(h.db().operations.find((o) => o.id === opId)?.status).toBe('ready')
     h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf('RT-2026-017'), 'OP-DRAFT-017') })
-    expect(h.store().db.operations.find((o) => o.id === 'OP-DRAFT-017')?.status).toBe('draft')
+    expect(h.db().operations.find((o) => o.id === 'OP-DRAFT-017')?.status).toBe('draft')
     h.unmount()
   })
 
   it('startOperation refuses to start an operation whose preflight has a failing check', () => {
     const h = mountPreflight('Taylor Chen')
-    const opId = h.store().A.createOperation({ name: 'Blocked start', projectId: 'RT-2026-016', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-014'], assets: ['AS-0301'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
+    let opId = ''
+    h.run(() => {
+      const res = createOperationDraft(h.svc().authority, h.svc().clock, ctxOf('RT-2026-016', TAYLOR), { name: 'Blocked start', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-014'], assets: ['AS-0301'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
+      if (!res.ok) throw new Error(res.failure.message)
+      opId = res.data.op.id
+    })
     h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf('RT-2026-016'), opId) })
     h.run(() => { startOperation(h.svc().authority, h.svc().clock, ctxOf('RT-2026-016'), opId) })
-    const op = h.store().db.operations.find((o) => o.id === opId)!
+    const op = h.db().operations.find((o) => o.id === opId)!
     expect(op.status).toBe('draft')
     expect(op.startedAt).toBe('—')
     h.unmount()
