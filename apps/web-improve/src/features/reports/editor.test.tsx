@@ -180,9 +180,13 @@ describe('report editor screen (ticket 35)', () => {
     const h = mountScreenRoute('Alex Morgan')
     const svc = h.svc()
     const orig = svc.reports.bind(svc)
+    // Ticket 70: the facade returns a lazy-bound proxy, so the refusal is
+    // injected by delegating every method to it and overriding only the save
+    // handler — a spread would drop the lazy methods entirely.
     vi.spyOn(svc, 'reports').mockImplementation((a, p) => {
       const inner = orig(a, p)
-      return { ...inner, saveSection: async () => ({ ok: false as const, failure: { kind: 'unavailable' as const, message: 'Simulated save failure.' } }) }
+      const refused = async () => ({ ok: false as const, failure: { kind: 'unavailable' as const, message: 'Simulated save failure.' } })
+      return new Proxy(inner, { get: (t, prop) => (prop === 'saveSection' ? refused : Reflect.get(t, prop, t)) })
     })
     h.show(<Editor />)
     const box = (await screen.findByLabelText('Content of section Cover Page')) as HTMLTextAreaElement
