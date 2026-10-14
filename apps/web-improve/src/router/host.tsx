@@ -20,7 +20,7 @@ import { go, useRoute } from './navigate'
 import { Button } from '../ui'
 import { Shell } from '../shell'
 import { HeaderNotices } from '../features/notices/header-notices'
-import { CopilotDrawer } from '../features/copilot/drawer'
+import { LazyCopilotDrawer } from '../features/copilot/lazy'
 import { OUTSIDE_SHELL, type Route } from './history'
 import { routeComponent } from './registry'
 
@@ -89,7 +89,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
   }
   const Page = routeComponent(route.page) ?? routeComponent('notfound')
   return (
-    <Shell slots={{ notifications: HeaderNotices, copilotDrawer: CopilotDrawer }}>
+    <Shell slots={{ notifications: HeaderNotices, copilotDrawer: LazyCopilotDrawer }}>
       <Suspense fallback={<PageFallback />}>
         <PageBoundary key={key}>
           {Page ? <Page /> : null}
