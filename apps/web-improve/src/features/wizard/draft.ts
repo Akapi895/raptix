@@ -13,8 +13,15 @@
  * database is introduced.
  */
 import { z } from 'zod'
-import type { ProjectDraft } from '../../store'
 import type { Role } from '../../data'
+
+export interface ProjectDraft {
+  name: string; id: string; client: string; type: string; desc: string; start: string; end: string; tz: string; owner: string; tags: string[]
+  goal: string; objectives: { text: string; criteria: string }[]; metrics: string; unit: string; reportReq: string
+  scopeDesc: string; window: string; limits: string[]; emergency: string; channel: string; roeFile: string; approver: string
+  assets: { name: string; ident: string; type: string; scope: 'in' | 'out' }[]
+  members: { user: string; role: Role }[]
+}
 
 export const LIMIT_PRESETS = [
   'No service disruption',

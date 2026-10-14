@@ -19,7 +19,7 @@ import { APR } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
-import type { ProjectDraft } from '../../store'
+import type { ProjectDraft } from './draft'
 import { nextId } from './draft'
 
 const ROLE_LABEL: Record<string, string> = { admin: 'Organization Admin', manager: 'Red Team Manager', operator: 'Operator', reviewer: 'Reviewer', analyst: 'Analyst', viewer: 'Client / Viewer' }

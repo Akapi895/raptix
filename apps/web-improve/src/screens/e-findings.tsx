@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, X, Search, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
-import { canAccessProject } from '../store'
+import { canAccessProject } from '../auth/policy'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'

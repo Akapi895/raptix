@@ -49,6 +49,11 @@ export function projectAccessible(project: ProjectRef | undefined, actor: ActorR
   return project.members.some((m) => m.user === actor.id)
 }
 
+/** Transitional membership adapter for callers holding a database projection. */
+export function canAccessProject(db: { projects: readonly ProjectRef[] }, me: { name: string; role: Role }, projectId: string): boolean {
+  return projectAccessible(db.projects.find((x) => x.id === projectId), { id: me.name, role: me.role })
+}
+
 /** True when the project context itself forbids mutations (closed or cancelled). */
 export function projectLocked(project: ProjectRef | undefined): boolean {
   return !!project && (project.status === 'closed' || project.status === 'cancelled')
