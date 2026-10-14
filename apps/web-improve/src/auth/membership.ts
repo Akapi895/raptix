@@ -42,7 +42,7 @@ export function useProjectMemberships() {
   const scope = useQueryScope()
   return useQuery({
     queryKey: consoleKeys.view('project-memberships', scope),
-    queryFn: () => listProjectMemberships(services, actorRef(scope.actor), scope.project),
+    queryFn: () => listProjectMemberships(services, actorRef(scope.actor, scope.role), scope.project),
     enabled: !!services,
   })
 }

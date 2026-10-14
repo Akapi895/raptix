@@ -43,7 +43,7 @@ export function useTraceEvents() {
   return useQuery({
     queryKey: traceKeys.list(scope),
     queryFn: async (): Promise<TraceListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .trace(actor, scope.project)
         .list({ actor, projectId: scope.project, corr: 'trace-list' })
@@ -67,7 +67,7 @@ export function useTraceWrites() {
   const services = useServices()
   const scope = useQueryScope()
   return useMemo(() => {
-    const actor = actorRef(scope.actor)
+    const actor = actorRef(scope.actor, scope.role)
     const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
     return {
       decide: (id: string, decision: ToolDecision, reason: string): Promise<ServiceResult<ToolDecisionOutcome>> =>

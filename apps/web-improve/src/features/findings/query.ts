@@ -50,7 +50,7 @@ export function useFindingList(query: FindingListQuery) {
   return useQuery({
     queryKey: findingKeys.list(scope, query),
     queryFn: async (): Promise<FindingListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .findings(actor, scope.project)
         .list({ actor, projectId: scope.project, corr: 'findings-list' }, query)
@@ -68,7 +68,7 @@ export function useFindingDetail(id?: string) {
   return useQuery({
     queryKey: findingKeys.detail(scope, id || ''),
     queryFn: async (): Promise<FindingDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .findings(actor, scope.project)
         .get({ actor, projectId: scope.project, corr: 'finding-detail' }, id || '')
@@ -94,7 +94,7 @@ export function useEvidenceList(query: EvidenceListQuery) {
   return useQuery({
     queryKey: evidenceKeys.list(scope, query),
     queryFn: async (): Promise<EvidenceListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .findings(actor, scope.project)
         .listEvidence({ actor, projectId: scope.project, corr: 'evidence-list' }, query)
@@ -117,7 +117,7 @@ export function useEvidenceDetail(id?: string) {
   return useQuery({
     queryKey: evidenceKeys.detail(scope, id || ''),
     queryFn: async (): Promise<EvidenceDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .findings(actor, scope.project)
         .getEvidence({ actor, projectId: scope.project, corr: 'evidence-detail' }, id || '')
@@ -141,7 +141,7 @@ export function useFindingWrites() {
   const services = useServices()
   const scope = useQueryScope()
   return useMemo(() => {
-    const actor = actorRef(scope.actor)
+    const actor = actorRef(scope.actor, scope.role)
     const ctx = (corr: string): RequestContext => ({ actor, projectId: scope.project, corr })
     const svc = () => services.findings(actor, scope.project)
     return {

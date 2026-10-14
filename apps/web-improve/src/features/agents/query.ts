@@ -46,7 +46,7 @@ export function useAgentList(query: AgentListQuery) {
   return useQuery({
     queryKey: agentKeys.list(scope, query),
     queryFn: async (): Promise<AgentListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .agents(actor, scope.project)
         .list({ actor, projectId: scope.project, corr: 'agents-list' }, query)
@@ -64,7 +64,7 @@ export function useAgentDetail(id?: string) {
   return useQuery({
     queryKey: agentKeys.detail(scope, id || ''),
     queryFn: async (): Promise<AgentDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .agents(actor, scope.project)
         .get({ actor, projectId: scope.project, corr: 'agent-detail' }, id || '')
@@ -84,7 +84,7 @@ export function useAssignAgent() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { agentId: string; projectId: string; note?: string }): Promise<ServiceResult<Agent>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.agents(actor, scope.project).assign({ actor, projectId: scope.project, corr: corr('assign') }, v.agentId, { projectId: v.projectId, note: v.note } satisfies AssignmentInput)
     },
   })
@@ -96,7 +96,7 @@ export function useUnassignAgent() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { agentId: string; reason: string }): Promise<ServiceResult<Agent>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.agents(actor, scope.project).unassign({ actor, projectId: scope.project, corr: corr('unassign') }, v.agentId, v.reason)
     },
   })
@@ -108,7 +108,7 @@ export function useSaveGroup() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: GroupInput): Promise<ServiceResult<Group>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.agents(actor, scope.project).saveGroup({ actor, projectId: scope.project, corr: corr('group-save') }, v)
     },
   })
@@ -120,7 +120,7 @@ export function useRemoveFromGroup() {
   const scope = useQueryScope()
   return useMutation({
     mutationFn: async (v: { groupId: string; agentId: string; reason?: string }): Promise<ServiceResult<Group>> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       return services.agents(actor, scope.project).removeFromGroup({ actor, projectId: scope.project, corr: corr('group-remove') }, v.groupId, v.agentId, v.reason)
     },
   })
