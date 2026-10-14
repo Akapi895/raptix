@@ -313,3 +313,55 @@ Gaps: browser route exercise skipped (same optional HTTP-check gap; the
 switcher/loading/redirect behavior is pinned by the new navigate tests plus
 the shell/project-switcher, b-detail and dashboard suites that exercise
 `setPid` through real screens).
+
+### Enablers D+E (console read seam + demo runtime, `wi/67f-enabler-de`)
+
+The last two store-owned behaviors the consumer waves need, landed as one
+branch with two concerns:
+
+- **D — `src/state/console.ts` (new, 104 runtime lines):** the canonical
+  component-facing read seam over the one authority — `useDb` (the atomic
+  snapshot via `useSyncExternalStore`), `useMe` (the seeded persona with the
+  settings-committed org role override), `useAccessible`, `useActiveProject`,
+  `useScoped` (the G-12 filter, moved verbatim), `useCan`/`useReadOnly`
+  (policy decisions for the current persona + project). Feature data keeps
+  flowing through the feature-local Query read models; this seam covers only
+  the identity/project/scope/permission derivations screens need
+  synchronously, so consumers leave the store context with identical
+  render behavior.
+- **E — `src/features/demo/runtime.ts` (new, ~230 runtime lines):** the
+  demo's execution-outcome engine moves out of the provider's `A.*` entries
+  verbatim — the emergency-stop simulated outcome switch (with the
+  stop-outcome read from the session authority), the AI chat's 900 ms
+  response timer, agent loss/restore + fast-forward simulations and the
+  session-revoking delay. The provider registers its services per mount
+  (`initDemoRuntime`) and `resetDemo` disposes the tracked timers
+  (`resetDemoRuntime`); every scheduled timer captures its creating runtime,
+  so a callback outliving its mount commits to that mount's own orphaned
+  authority (the isolation the closure-bound `later` used to give).
+  The `A.emergencyStop`/`retryStop`/`resolveStop`/`sendChat`/`stopChat`/
+  `loseAgent`/`restoreAgent`/`fastForward`/`terminateSession` entries
+  delegate to the runtime — one implementation, two entry points, until the
+  store retires. The store's local timer bookkeeping (`pendingTimers`,
+  `aiTimers`, `stopOutRef`, `chatApi`) is deleted with the move.
+- `src/state/console.test.tsx` (new, 7 tests): the seam observes the same
+  authority object the legacy store projects (identity across commits);
+  `useMe` mirrors the override-aware persona across switches;
+  `useAccessible`/`useCan`/`useReadOnly`/`useScoped` agree with the legacy
+  seam for every seeded project; `useActiveProject` mirrors the projection
+  including 'all'; the viewer persona reads scoped decisions from the same
+  authority. Runtime: the emergency stop commits the same requested state
+  and honors the fail outcome switch on the tracked delay; `terminateSession`
+  drives revoking → terminated with revoked grants.
+
+Checks: `npm run typecheck` — 0 diagnostics. `npm run lint` — 0 errors;
+168 warnings (store.tsx 10; both new modules lint clean).
+`npm test -- --run --maxWorkers=2` — 955 tests / 72 files green (951
+baseline + 7 new − 3 re-enumerated navigate tests from enabler C's recount;
+no existing assertion changed). `npm run build` — succeeds (pre-existing
+chunk-size warning only).
+
+Gaps: browser route exercise skipped (same optional HTTP-check gap; the
+seam derivations are pinned by the new duality suite plus the rbac/policy
+suites, and the runtime paths by the estop/aichat/c-console suites that
+exercise them through real screens).
