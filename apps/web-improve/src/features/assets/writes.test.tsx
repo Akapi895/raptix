@@ -7,21 +7,21 @@
  * scope invalidates at submission (ROE bump, plan expiry, ready-operation
  * reset), and the independent approval admits them afterwards. Scope
  * changes are role-gated with reasons, a pending proposal opens the review
- * in the same commit, and both bridge directions observe one dataset: the
- * typed handler's commits appear in the legacy store, the legacy actions'
- * commits refetch the Query views.
+ * in the same commit, and both observations flow from one dataset: typed
+ * handler commits appear in the authority snapshot, and the same commits
+ * refetch the Query views.
  */
-import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
+import { act, cleanup, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
 import { computePreflightChecks } from '../operations/preflight'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
+import { selectProject } from '../../router/navigate'
 import { routes } from '../../screens/d'
 import { decideApprovalTransaction } from '../approvals/service'
-import { runOperationPreflight } from '../operations/service'
+import { assignAgentTransaction } from '../agents/writes'
+import { createOperationDraft, runOperationPreflight } from '../operations/service'
 import { changeAssetScopeTransaction, createAssetWriteHandlers, importAssetsTransaction, validateAssetRows } from './writes'
 import type { AssetImportRow } from './writes'
 
@@ -36,48 +36,15 @@ const P14 = 'RT-2026-014'
 let corrSeq = 0
 const ctxOf = (actor: ActorRef, projectId = P14): RequestContext => ({ actor, projectId, corr: `corr-${++corrSeq}` })
 
-function Probe({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
+/** Mounts the service authority + Query providers, so one mutation can be observed from every read. */
+function mountConsole(me = 'Alex Morgan') {
+  return mountServices(null, me)
 }
 
-/** Mounts the legacy store + Query providers and captures both, so one mutation can be observed from both bridges. */
-function mountConsole(me = 'Alex Morgan', extra?: ReactNode) {
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        {extra}
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    unmount: view.unmount,
-    rerender: view.rerender,
-  }
-}
-
-/** Mounts the providers with a probe plus a real asset route (Query consumers). */
+/** Mounts the providers plus a real asset route (Query consumers). */
 function mountAssets(page: 'assets' | 'asset-scope') {
-  let store!: Store
-  let svc!: ConsoleServices
   const Screen = routes[page]
-  const ui = (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        <Screen />
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui)
-  return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return mountServices(<Screen />)
 }
 
 const row = (over: Partial<AssetImportRow> = {}): AssetImportRow => ({ name: 'hook-01', ident: 'hook-01.example.test', type: 'Host', os: 'Linux', owner: 'Ops Team', scope: 'in', source: 'CSV import', ...over })
@@ -138,11 +105,13 @@ describe('import validation (ticket 51)', () => {
 
 describe('atomic import through the governance transaction (invariant a, asset path)', () => {
   const newReadyOperation = (h: ReturnType<typeof mountConsole>) => {
-    h.run(() => h.store().A.assignAgent('AG-012', P14))
+    h.run(() => { assignAgentTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), 'AG-012', { projectId: P14 }) })
     let opId = ''
-    h.run(() => { opId = h.store().A.createOperation({ name: 'Import probe', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' }) })
-    // Ticket 65 retired the A.confirmPreflight wrapper; the fixture runs the
-    // same typed handler the wrapper delegated to.
+    h.run(() => {
+      const res = createOperationDraft(h.svc().authority, h.svc().clock, ctxOf(ALEX), { name: 'Import probe', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
+      if (!res.ok) throw new Error(res.failure.message)
+      opId = res.data.op.id
+    })
     h.run(() => { runOperationPreflight(h.svc().authority, h.svc().clock, ctxOf(ALEX), opId) })
     return opId
   }
@@ -162,7 +131,7 @@ describe('atomic import through the governance transaction (invariant a, asset p
     expect(seen[0].projectId).toBe(P14)
     expect(res.data).toMatchObject({ added: 2, invalidated: true, roeVersion: 'ROE-014-v3', needsApproval: true, plansExpired: ['PL-021'], operationsReset: [opId] })
 
-    const d = h.store().db
+    const d = h.db()
     const pending = d.assets.find((a) => a.projectId === P14 && a.name === 'hook-01')!
     const out = d.assets.find((a) => a.projectId === P14 && a.name === 'hook-out')!
     expect(pending.scope).toBe('pending')
@@ -175,27 +144,35 @@ describe('atomic import through the governance transaction (invariant a, asset p
 
   it('imported pending assets cannot be targeted until the independent approval admits them', () => {
     const h = mountConsole()
-    h.run(() => h.store().A.assignAgent('AG-012', P14))
+    h.run(() => { assignAgentTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), 'AG-012', { projectId: P14 }) })
     let res!: ReturnType<typeof importAssetsTransaction>
     act(() => { res = importAssetsTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), P14, [row()]) })
     expect(res.ok).toBe(true)
-    const importedId = h.store().db.assets.find((a) => a.projectId === P14 && a.name === 'hook-01')!.id
-    let opId = ''
-    h.run(() => { opId = h.store().A.createOperation({ name: 'Pending target probe', projectId: P14, owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: [importedId], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' }) })
-
-    // Still pending: preflight refuses the target (PRE-03) before any approval.
-    const before = computePreflightChecks(h.store().db, h.store().db.operations.find((o) => o.id === opId)!, h.svc().clock.now())
-    expect(before.find((c) => c.code === 'PRE-03')?.state).toBe('fail')
-    expect(before.find((c) => c.code === 'PRE-03')?.detail).toContain('hook-01')
+    const importedId = h.db().assets.find((a) => a.projectId === P14 && a.name === 'hook-01')!.id
+    // Still pending: the typed draft creation refuses the target outright — a
+    // pending asset can never be selected for an operation (stronger than the
+    // preflight's PRE-03 fail: the refusal happens before any draft exists).
+    let refused!: ReturnType<typeof createOperationDraft>
+    h.run(() => { refused = createOperationDraft(h.svc().authority, h.svc().clock, ctxOf(ALEX), { name: 'Pending target probe', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: [importedId], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' }) })
+    expect(refused.ok).toBe(false)
+    if (!refused.ok) expect(refused.failure.message).toContain('not approved in scope')
 
     // The independent reviewer admits the revision (invalidation did not wait
     // for this approval — it already happened at submission above).
-    const apr = h.store().db.approvals.find((a) => a.projectId === P14 && a.type === 'Scope change' && a.status === 'pending')!
+    const apr = h.db().approvals.find((a) => a.projectId === P14 && a.type === 'Scope change' && a.status === 'pending')!
     let decided!: ReturnType<typeof decideApprovalTransaction>
     act(() => { decided = decideApprovalTransaction(h.svc().authority, h.svc().clock, ctxOf(PAT), apr.id, 'approved', 'Accepted into scope') })
     expect(decided.ok).toBe(true)
-    expect(h.store().db.assets.find((a) => a.id === importedId)?.scope).toBe('in')
-    expect(computePreflightChecks(h.store().db, h.store().db.operations.find((o) => o.id === opId)!, h.svc().clock.now()).find((c) => c.code === 'PRE-03')?.state).toBe('pass')
+    expect(h.db().assets.find((a) => a.id === importedId)?.scope).toBe('in')
+
+    // Only then can the asset be targeted: the draft is created and PRE-03 passes.
+    let opId = ''
+    h.run(() => {
+      const created = createOperationDraft(h.svc().authority, h.svc().clock, ctxOf(ALEX), { name: 'Pending target probe', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: [importedId], mode: 'Manual approval', schedule: '', needConfirm: true, note: '' })
+      if (!created.ok) throw new Error(created.failure.message)
+      opId = created.data.op.id
+    })
+    expect(computePreflightChecks(h.db(), h.db().operations.find((o) => o.id === opId)!, h.svc().clock.now()).find((c) => c.code === 'PRE-03')?.state).toBe('pass')
     h.unmount()
   })
 })
@@ -229,7 +206,7 @@ describe('scope changes (ticket 51)', () => {
     if (!res.ok) return
     expect(seen).toHaveLength(1)
     expect(res.data.reviewRequested).toBeDefined()
-    const d = h.store().db
+    const d = h.db()
     expect(d.assets.find((a) => a.id === 'AS-0141')?.scope).toBe('pending')
     const aprId = res.data.reviewRequested!
     const apr = d.approvals.find((a) => a.id === aprId)!
@@ -240,7 +217,7 @@ describe('scope changes (ticket 51)', () => {
     let second!: ReturnType<typeof changeAssetScopeTransaction>
     act(() => { second = changeAssetScopeTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), 'AS-0142', 'pending', { reason: 'Same ROE question' }) })
     expect(second.ok && second.data.reviewRequested).toBeUndefined()
-    expect(h.store().db.assets.find((a) => a.id === 'AS-0142')?.scope).toBe('pending')
+    expect(h.db().assets.find((a) => a.id === 'AS-0142')?.scope).toBe('pending')
     h.unmount()
   })
 
@@ -261,11 +238,11 @@ describe('bridge both directions (ticket 51)', () => {
     h.svc().subscribe((cs) => seen.push(cs))
     act(() => { importAssetsTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), P14, [row()]) })
     expect(seen.map((cs) => cs.corr)).toEqual(['corr-' + corrSeq])
-    const d = h.store().db
+    const d = h.db()
     expect(d.assets.find((a) => a.projectId === P14 && a.name === 'hook-01')?.scope).toBe('pending')
     expect(d.projects.find((x) => x.id === P14)?.roeVersion).toBe('ROE-014-v3')
     expect(d.audit.some((a) => a.action === 'Added assets' && a.obj.includes('hook-01'))).toBe(true)
-    expect(h.store().db).toBe(h.svc().authority.snapshot())
+    expect(h.db()).toBe(h.svc().authority.snapshot())
     h.unmount()
   })
 
@@ -282,12 +259,12 @@ describe('bridge both directions (ticket 51)', () => {
   it('a typed handler import and scope change refetch the catalog and scope views (ticket 50 keys)', async () => {
     const h = mountAssets('assets')
     await waitFor(() => expect(screen.getByText('Page 1 of 3')).toBeInTheDocument())
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     await waitFor(() => expect(screen.getByText('14 records')).toBeInTheDocument())
     const write = createAssetWriteHandlers(h.svc(), ALEX, P14)
     await act(async () => { await write.importRows([row(), row({ name: 'hook-02', ident: 'hook-02.example.test' })]) })
     await waitFor(() => expect(screen.getByText('16 records')).toBeInTheDocument())
-    const importedId = h.store().db.assets.find((a) => a.projectId === P14 && a.name === 'hook-02')!.id
+    const importedId = h.db().assets.find((a) => a.projectId === P14 && a.name === 'hook-02')!.id
     await act(async () => { await write.changeScope(importedId, 'out', { reason: 'Out for the demo' }) })
     // The scope view (same [asset] key prefix) refetches the changed classification.
     const scope = await h.svc().assets(ALEX, P14).scope({ actor: ALEX, projectId: P14, corr: 'scope-read' })

@@ -21,17 +21,16 @@
  *   emergency-stop propagation across the workspace;
  * - step/evidence links resolve into migrated routes;
  * - late-response isolation for the superseded scope;
- * - bridge acceptance: a legacy mutation (A.pauseOp) and a typed review
+ * - mutation acceptance: a typed pause/resume and a typed review
  *   decision observe the typed workspace, one dataset both ways.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { useToastStore } from '../../state/stores'
+import { currentRoute, go } from '../../router/navigate'
 import { routes } from '../../screens/c'
 import {
   acknowledgeEmergencyStopTransaction, finalizeEmergencyStopTransaction, requestEmergencyStopTransaction,
@@ -135,40 +134,15 @@ describe('reviewOperationStep — the human review gate (ticket 29)', () => {
 
 /* ───────────── Screens: the live workspace ───────────── */
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
 function mountWorkspace(me = 'Taylor Chen') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
-  const ui = (withRoute: boolean, children?: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {withRoute ? (children ?? <routes.operation />) : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    show: (children?: React.ReactNode) => view.rerender(ui(true, children)),
-    run: (fn: () => unknown) => act(fn),
-    unmount: view.unmount,
-  }
+  return mountServices(null, me)
 }
 
 describe('live workspace (ticket 29 — screens)', () => {
   it('derives from the canonical read; an authorized reviewer progresses the gate', async () => {
     const h = mountWorkspace()
-    h.show()
-    h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
+    h.show(<routes.operation />)
+    h.run(() => go('operation', { id: 'OP-014', tab: 'live' }))
     // S11 awaits its human decision; the gate says who decides.
     await screen.findByRole('button', { name: S11_REVIEW })
     expect(screen.getByText('A human reviewer decides. The AI cannot approve, skip or reject.')).toBeInTheDocument()
@@ -176,27 +150,34 @@ describe('live workspace (ticket 29 — screens)', () => {
     // One typed decision: the pipeline repaints from the canonical read, no reload.
     await waitFor(() => expect(screen.queryByText('A human reviewer decides. The AI cannot approve, skip or reject.')).not.toBeInTheDocument())
     await screen.findByRole('button', { name: S11_OK })
-    expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('ok')
+    expect(h.db().operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('ok')
     h.unmount()
   })
 
   it('blocks unauthorized viewers at the handler with its reason — the AI never decides', async () => {
     const h = mountWorkspace('Casey Nguyen (Client)')
-    h.show()
-    h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
+    h.show(<routes.operation />)
+    h.run(() => go('operation', { id: 'OP-014', tab: 'live' }))
     await screen.findByRole('button', { name: S11_REVIEW })
-    fireEvent.click(screen.getByRole('button', { name: 'Approve' }))
-    await waitFor(() => expect(useToastStore.getState().toasts.some((t) => t.text.includes('read-only access'))).toBe(true))
-    // The refusal came from the handler: the step is untouched.
-    expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('review')
+    // The UI keeps the control rendered but visibly disabled and explains why
+    // (the enforcement itself stays at the handler, asserted below).
+    const gated = screen.getByRole('button', { name: 'Approve' }).closest('[aria-disabled="true"]')
+    expect(gated).not.toBeNull()
+    fireEvent.click(gated!)
+    expect(screen.getAllByText(/read-only/).length).toBeGreaterThan(0)
+    // The handler refuses a viewer's decision with its reason and commits nothing.
+    const refused = reviewOperationStep(h.svc().authority, h.svc().clock, ctxOf(CASEY, P14), 'OP-014', 'S11', 'approve')
+    expect(refused).toMatchObject({ ok: false, failure: { kind: 'forbidden', message: expect.stringContaining('read-only access') } })
+    // The step is untouched.
+    expect(h.db().operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('review')
     await screen.findByRole('button', { name: S11_REVIEW })
     h.unmount()
   })
 
   it('reflects 27’s typed transitions and refuses review decisions while paused', async () => {
     const h = mountWorkspace()
-    h.show()
-    h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
+    h.show(<routes.operation />)
+    h.run(() => go('operation', { id: 'OP-014', tab: 'live' }))
     await screen.findByRole('button', { name: S11_REVIEW })
     // A typed pause (27's handler) repaints the live workspace: while the step
     // awaits its review, the banner shows the review gate, not the pause.
@@ -205,33 +186,33 @@ describe('live workspace (ticket 29 — screens)', () => {
     // Review blocking: the paused operation refuses decisions at the handler.
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }))
     await waitFor(() => expect(useToastStore.getState().toasts.some((t) => t.text.includes('while it is running'))).toBe(true))
-    expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('review')
+    expect(h.db().operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('review')
     await screen.findByRole('button', { name: S11_REVIEW })
     h.unmount()
   })
 
-  it('accepts mutations from both sides of the bridge: A.pauseOp and the typed review handler', async () => {
+  it('accepts mutations from both entry points: the typed pause/resume and the typed review handler', async () => {
     const h = mountWorkspace()
-    h.show()
-    h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
+    h.show(<routes.operation />)
+    h.run(() => go('operation', { id: 'OP-014', tab: 'live' }))
     await screen.findByRole('button', { name: S11_REVIEW })
-    // The legacy pause action runs the typed handler; the workspace refetches.
-    h.run(() => h.store().A.pauseOp('OP-014', 'Legacy bridge pause'))
-    expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.status).toBe('paused')
-    h.run(() => h.store().A.resumeOp('OP-014'))
-    expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.status).toBe('running')
+    // The typed pause runs the handler; the workspace refetches.
+    h.run(() => { pauseOperation(h.svc().authority, h.svc().clock, ctxOf(TAYLOR, P14), 'OP-014', 'Bridge pause') })
+    expect(h.db().operations.find((o) => o.id === 'OP-014')!.status).toBe('paused')
+    h.run(() => { resumeOperation(h.svc().authority, h.svc().clock, ctxOf(TAYLOR, P14), 'OP-014') })
+    expect(h.db().operations.find((o) => o.id === 'OP-014')!.status).toBe('running')
     // The review decision runs the typed handler too (ticket 65 retired the
     // A.reviewStep wrapper): the gate resolves.
     h.run(() => { reviewOperationStep(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), 'OP-014', 'S11', 'fail', 'Wrong target window') })
     await waitFor(() => expect(screen.queryByText('A human reviewer decides. The AI cannot approve, skip or reject.')).not.toBeInTheDocument())
-    expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('fail')
+    expect(h.db().operations.find((o) => o.id === 'OP-014')!.steps.find((s) => s.id === 'S11')!.status).toBe('fail')
     h.unmount()
   })
 
   it('propagates an emergency stop honestly across the live workspace', async () => {
     const h = mountWorkspace()
-    h.show()
-    h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
+    h.show(<routes.operation />)
+    h.run(() => go('operation', { id: 'OP-014', tab: 'live' }))
     await screen.findByRole('button', { name: S11_REVIEW })
     const svc = h.svc()
     // Request → requested: operations keep running until agents acknowledge.
@@ -241,7 +222,7 @@ describe('live workspace (ticket 29 — screens)', () => {
     // Acknowledge → the operation halts: the pending review dissolves into notrun.
     h.run(() => { acknowledgeEmergencyStopTransaction(svc.authority, svc.clock, ctxOf(ALEX, P14), { scope: 'operation', id: 'OP-014', reason: 'Customer requested an immediate halt.' }) })
     await waitFor(() => expect(screen.queryByText('A human reviewer decides. The AI cannot approve, skip or reject.')).not.toBeInTheDocument())
-    expect(h.store().db.operations.find((o) => o.id === 'OP-014')!.status).toBe('estop')
+    expect(h.db().operations.find((o) => o.id === 'OP-014')!.status).toBe('estop')
     // Finalize → stopped, with no fabricated success beyond the audit trail.
     h.run(() => { finalizeEmergencyStopTransaction(svc.authority, svc.clock, ctxOf(ALEX, P14), { scope: 'operation', id: 'OP-014' }) })
     expect(screen.getByText(/acknowledged by agents\. No automatic restart\./)).toBeInTheDocument()
@@ -250,8 +231,8 @@ describe('live workspace (ticket 29 — screens)', () => {
 
   it('resolves step and evidence links into migrated routes', async () => {
     const h = mountWorkspace()
-    h.show()
-    h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
+    h.show(<routes.operation />)
+    h.run(() => go('operation', { id: 'OP-014', tab: 'live' }))
     await screen.findByRole('button', { name: S11_REVIEW })
     // A pipeline step opens the step inspector.
     fireEvent.click(screen.getByRole('button', { name: S11_REVIEW }))
@@ -259,15 +240,15 @@ describe('live workspace (ticket 29 — screens)', () => {
     expect(drawer).toBeInTheDocument()
     // The inspector's technique link resolves into the (migrated) technique page.
     fireEvent.click(screen.getByText('T1119'))
-    await waitFor(() => expect(h.store().route.page).toBe('technique'))
-    expect(h.store().route.id).toBe('T1119')
-    h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
+    await waitFor(() => expect(currentRoute().page).toBe('technique'))
+    expect(currentRoute().id).toBe('T1119')
+    h.run(() => go('operation', { id: 'OP-014', tab: 'live' }))
     // The dock's evidence link resolves into the operation's Results tab.
     await screen.findByRole('button', { name: S11_REVIEW })
     fireEvent.click(screen.getByRole('tab', { name: 'evidence' }))
     fireEvent.click(await screen.findByText('EV-014-01'))
-    await waitFor(() => expect(h.store().route.page).toBe('operation'))
-    expect(h.store().route.tab).toBe('results')
+    await waitFor(() => expect(currentRoute().page).toBe('operation'))
+    expect(currentRoute().tab).toBe('results')
     h.unmount()
   })
 
@@ -282,13 +263,11 @@ describe('live workspace (ticket 29 — screens)', () => {
       if (project !== 'all' || a.id !== 'Taylor Chen') return inner
       return { ...inner, detail: async (ctx, id) => { await gate; return inner.detail(ctx, id) } }
     })
-    h.show()
-    h.run(() => h.store().go('operation', { id: 'OP-014', tab: 'live' }))
+    h.show(<routes.operation />)
+    h.run(() => go('operation', { id: 'OP-014', tab: 'live' }))
     // Taylor's aggregate-scope read is gated, so the workspace stays pending…
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    await act(async () => {
-      h.store().setMe('Alex Morgan')
-    })
+    h.as('Alex Morgan')
     // …the new scope's workspace renders, unpolluted by the delayed response…
     await screen.findByRole('button', { name: S11_REVIEW })
     await act(async () => {

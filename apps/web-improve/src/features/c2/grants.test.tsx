@@ -13,12 +13,12 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { createElement, useState } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
+import { act, cleanup, screen, waitFor } from '@testing-library/react'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import type { Clock, RequestContext } from '../../domain/service'
+import { go, selectProject } from '../../router/navigate'
 import { routes } from '../../screens/h'
+import { mountServices } from '../../test/helpers'
 import {
   decideSessionRequestTransaction, requestSessionAccessTransaction, revokeGrantTransaction,
   sessionCommandTransaction, sweepExpiredGrants,
@@ -36,33 +36,15 @@ const clockAt = (t: number): Clock => ({ now: () => t })
 let svc!: ConsoleServices
 afterEach(() => { svc?.dispose() })
 
-function Probe({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
 function mount(hash: string, me = 'Alex Morgan') {
-  let store!: Store
-  let services!: ConsoleServices
   window.location.hash = hash
   const page = hash.replace(/^#\//, '').split(/[/?]/)[0]
   const Screen = routes[page] ?? routes.c2
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; services = v }} />
-        <Screen />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { store: () => store, svc: () => services, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return mountServices(createElement(Screen), me)
 }
 
 /** Mounts the shell behind a toggle, so the C2 page can be unmounted while the provider (and the lifecycle) stays up. */
 function mountToggle(me = 'Taylor Chen') {
-  let store!: Store
-  let services!: ConsoleServices
   let setOn!: (on: boolean) => void
   window.location.hash = '#/c2'
   function Switch() {
@@ -70,22 +52,14 @@ function mountToggle(me = 'Taylor Chen') {
     setOn = set
     return on ? createElement(routes['c2-console']) : null
   }
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; services = v }} />
-        <Switch />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
+  const h = mountServices(createElement(Switch), me)
   // setPid must run while the route is not a detail page (its redirect branch).
-  act(() => { store.setPid('RT-2026-014') })
+  act(() => { selectProject('RT-2026-014') })
   return {
-    store: () => store, svc: () => services,
-    show: () => act(() => { store.go('c2-console', { id: 'SS-041' }); setOn(true) }),
+    svc: h.svc, db: h.db,
+    show: () => act(() => { go('c2-console', { id: 'SS-041' }); setOn(true) }),
     hide: () => act(() => setOn(false)),
-    unmount: view.unmount,
+    unmount: h.unmount,
   }
 }
 
@@ -223,10 +197,10 @@ describe('canonical lifecycle (ticket 46: deadlines without screens, reset, no d
     await waitFor(() => expect(screen.getByRole('button', { name: 'Show host summary' })).toBeEnabled())
     h.hide() // no C2 page mounted — the factory lifecycle keeps running
     act(() => { h.svc().clock.advance(33 * MIN) })
-    expect(h.store().db.sessions.find((s) => s.id === 'SS-041')!.grants).toEqual([])
+    expect(h.db().sessions.find((s) => s.id === 'SS-041')!.grants).toEqual([])
     h.show()
     await waitFor(() => expect(screen.getByLabelText('Command input')).toBeDisabled())
-    expect(h.store().db.sessions.find((s) => s.id === 'SS-041')!.transcript.filter((l) => l.text === 'Interactive grant for Taylor Chen expired.').length).toBe(1)
+    expect(h.db().sessions.find((s) => s.id === 'SS-041')!.transcript.filter((l) => l.text === 'Interactive grant for Taylor Chen expired.').length).toBe(1)
     h.unmount()
   })
 })
@@ -244,7 +218,7 @@ describe('bridge proof (ticket 46: both directions)', () => {
   it('a legacy request reaches the typed reads', async () => {
     const h = mount('#/c2?tab=sessions', 'Taylor Chen')
     h.run(() => {
-      const r = h.store().A.requestSessionAccess('SS-042', 'interactive', '1 hour', 'Validate step 8 output on the domain controller.')
+      const r = requestSessionAccessTransaction(h.svc().authority, h.svc().clock, ctx(taylor), { sessionId: 'SS-042', mode: 'interactive' as const, duration: '1 hour', reason: 'Validate step 8 output on the domain controller.' })
       expect(r.ok).toBe(true)
     })
     const read = await h.svc().c2(taylor, 'RT-2026-014').requests({ actor: taylor, projectId: 'RT-2026-014', corr: 't' })
