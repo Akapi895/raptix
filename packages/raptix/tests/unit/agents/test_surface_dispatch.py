@@ -144,8 +144,8 @@ def test_orchestrator_prompt_allows_bounded_parallel_surface_exploit_tasks() -> 
     prompt = _PROMPT.read_text(encoding="utf-8")
 
     prompt_lower = prompt.lower()
-    assert "max_in_flight" in prompt
-    assert "up to 3 " in prompt
+    assert "recommended_in_flight" in prompt
+    assert "never more than 3 regardless" in prompt_lower
     assert "distinct session" in prompt_lower
     assert "authorized by adr-0021" in prompt_lower
     assert "sequential" in prompt_lower

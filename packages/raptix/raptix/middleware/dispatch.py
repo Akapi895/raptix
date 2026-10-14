@@ -9,8 +9,10 @@
 # ``atask() missing 1 required positional argument: 'runtime'``.
 # (deepagents' own task tool works precisely because it has no future import.)
 
+import asyncio
 import hashlib
 import json
+import os
 import threading
 from copy import copy
 from typing import Annotated, Any, NotRequired
@@ -37,11 +39,64 @@ from raptix_core.types.dispatch_outcome import (
 
 MAX_DISPATCHES = 256
 
+# A runaway sub-agent (unbounded probe/debug loop, no stop condition) is
+# currently only caught by the per-role LangGraph ``recursion_limit``
+# (1000 for exploit, 400 for postexploit) — a step count, not a time bound.
+# Across real recorded engagements this ceiling has fired repeatedly, and
+# the dispatch ran for as long as ~70 minutes before the step ceiling
+# caught it, while every *legitimate* dispatch observed across those same
+# engagements finished well under 40 minutes. 45 minutes (with headroom
+# above the largest observed legitimate dispatch) bounds that worst case
+# without touching the step-count ceiling itself, whose steps don't map
+# cleanly to the per-dispatch tool/model-call counts we can observe.
+# Override with ``RAPTIX_DISPATCH_TIMEOUT_SECONDS`` for scenarios that
+# need deliberately longer dispatches.
+DISPATCH_TIMEOUT_ENV = "RAPTIX_DISPATCH_TIMEOUT_SECONDS"
+DEFAULT_DISPATCH_TIMEOUT_SECONDS = 45 * 60
+
+# ADR-0021/0023/0026 justify a 3-wide parallel fan-out bound entirely on
+# orchestrator-side isolation (distinct tmux sessions, distinct workspace
+# dirs) — none of them consider the TARGET side: a single-worker service
+# can be permanently wedged by one blocking dispatch, and every sibling
+# (and every later recovery attempt) queues behind the same wedge. That
+# has happened in a real engagement. "Up to 3 concurrent dispatches" has
+# so far only ever been a convention written into the orchestrator prompt
+# — nothing here actually stopped a 4th, 5th, ... Nth distinct dispatch
+# from running at once. This ceiling is the real backstop.
+# Override with ``RAPTIX_MAX_CONCURRENT_DISPATCHES`` for scenarios that
+# deliberately need wider fan-out.
+DISPATCH_CONCURRENCY_ENV = "RAPTIX_MAX_CONCURRENT_DISPATCHES"
+DEFAULT_MAX_CONCURRENT_DISPATCHES = 3
+
 # Child state keys that never merge into the parent update (ADR-0045).
 # StreamingRunnable already withholds PrivateStateAttr channels before the
 # child state reaches deepagents' task tool; this second layer survives a
 # future wrapper change at the dispatch seam.
 _PARENT_PRIVATE_STATE_KEYS = PRIVATE_CHILD_STATE_KEYS
+
+
+def _resolve_dispatch_timeout_seconds() -> float:
+    raw = os.environ.get(DISPATCH_TIMEOUT_ENV)
+    if raw:
+        try:
+            value = float(raw)
+        except ValueError:
+            value = 0.0
+        if value > 0:
+            return value
+    return DEFAULT_DISPATCH_TIMEOUT_SECONDS
+
+
+def _resolve_max_concurrent_dispatches() -> int:
+    raw = os.environ.get(DISPATCH_CONCURRENCY_ENV)
+    if raw:
+        try:
+            value = int(raw)
+        except ValueError:
+            value = 0
+        if value > 0:
+            return value
+    return DEFAULT_MAX_CONCURRENT_DISPATCHES
 
 
 def merge_dispatch_ledger(left: dict | None, right: dict | None) -> dict:
@@ -84,6 +139,8 @@ class DispatchMiddleware(SubAgentMiddleware):
         self._task = self.tools[0]
         self._lock = threading.Lock()
         self._active: set[tuple[str, str]] = set()
+        self._timeout_seconds = _resolve_dispatch_timeout_seconds()
+        self._max_concurrent = _resolve_max_concurrent_dispatches()
         self.tools = [self._guarded_tool()]
 
     def _prepare(
@@ -146,6 +203,14 @@ class DispatchMiddleware(SubAgentMiddleware):
                     runtime,
                     "dispatch_in_flight",
                     "An invocation of this dispatch is already active",
+                )
+            active_in_scope = sum(1 for active_scope, _ in self._active if active_scope == scope)
+            if active_in_scope >= self._max_concurrent:
+                return _reply(
+                    runtime,
+                    "dispatch_capacity_exceeded",
+                    f"Max {self._max_concurrent} concurrent dispatches already active for "
+                    "this engagement; wait for one to finish before starting another",
                 )
             self._active.add(key)
         return (
@@ -265,10 +330,13 @@ class DispatchMiddleware(SubAgentMiddleware):
             token = active_dispatch.set(context)
             try:
                 try:
-                    result = await self._task.coroutine(
-                        description=description,
-                        subagent_type=subagent_type,
-                        runtime=self._child_runtime(runtime, context),
+                    result = await asyncio.wait_for(
+                        self._task.coroutine(
+                            description=description,
+                            subagent_type=subagent_type,
+                            runtime=self._child_runtime(runtime, context),
+                        ),
+                        timeout=self._timeout_seconds,
                     )
                 except Exception as exc:
                     return self._finish(None, context, fingerprint, runtime, exc)
