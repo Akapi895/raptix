@@ -9,11 +9,9 @@
  * asset change appears in the new views without a reload).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { currentRoute, go, selectProject } from '../../router/navigate'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { routes } from '../../screens/d'
 import { hasRoute } from '../../router/registry'
@@ -29,38 +27,11 @@ const legacyCtx = (projectId: string): RequestContext => ({ actor: ALEX, project
 beforeEach(() => { window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 /** Mounts the providers with a probe, then optionally mounts a real asset route. */
 function mountAssets(page: 'assets' | 'asset' | 'asset-scope', me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const Screen = routes[page]
-  const ui = (withScreen: boolean) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {withScreen ? <Screen /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+  const h = mountServices(null, me)
+  return { ...h, show: () => h.show(<Screen />) }
 }
 
 describe('asset catalog (ticket 50)', () => {
@@ -127,7 +98,7 @@ describe('asset catalog (ticket 50)', () => {
     const h = mountAssets('assets', 'Riley Brooks')
     h.show()
     await waitFor(() => expect(screen.getByText('web-01')).toBeInTheDocument())
-    h.run(() => h.store().setPid(P15))
+    h.run(() => selectProject(P15))
     await waitFor(() => expect(screen.getByText('Assets could not be loaded')).toBeInTheDocument())
     expect(screen.getByText('Assets for this project are not available for your account.')).toBeInTheDocument()
     expect(screen.queryByText('cloud-app-01')).not.toBeInTheDocument()
@@ -139,7 +110,7 @@ describe('asset detail (ticket 50)', () => {
   it('describes scoped surfaces: operations, findings, evidence, agents and approvals', async () => {
     const h = mountAssets('asset')
     h.show()
-    h.run(() => h.store().go('asset', { id: 'AS-0143' }))
+    h.run(() => go('asset', { id: 'AS-0143' }))
     await waitFor(() => expect(screen.getAllByText('win-dc-01').length).toBeGreaterThan(0))
     expect(screen.getAllByText('ROE-014-v2').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('tab', { name: /Related operations/ }))
@@ -156,7 +127,7 @@ describe('asset detail (ticket 50)', () => {
   it('resolves technique references to the live library routes and links related records', async () => {
     const h = mountAssets('asset')
     h.show()
-    h.run(() => h.store().go('asset', { id: 'AS-0143' }))
+    h.run(() => go('asset', { id: 'AS-0143' }))
     await waitFor(() => expect(screen.getAllByText('win-dc-01').length).toBeGreaterThan(0))
     fireEvent.click(screen.getByRole('tab', { name: /Findings & Evidence/ }))
     await waitFor(() => expect(screen.getByText('FD-011')).toBeInTheDocument())
@@ -164,14 +135,14 @@ describe('asset detail (ticket 50)', () => {
     // The reference targets the live technique route (library routes are live since ticket 52).
     expect(hasRoute('technique')).toBe(true)
     fireEvent.click(screen.getAllByRole('button', { name: 'T1078' })[0])
-    await waitFor(() => expect(h.store().route).toMatchObject({ page: 'technique', id: 'T1078' }))
+    await waitFor(() => expect(currentRoute()).toMatchObject({ page: 'technique', id: 'T1078' }))
     h.unmount()
   })
 
   it('an asset scope change appears in the new detail without a reload', async () => {
     const h = mountAssets('asset')
     h.show()
-    h.run(() => h.store().go('asset', { id: 'AS-0141' }))
+    h.run(() => go('asset', { id: 'AS-0141' }))
     await waitFor(() => expect(screen.getAllByText('web-01').length).toBeGreaterThan(0))
     expect(screen.getAllByText('In Scope').length).toBeGreaterThan(0)
     h.run(() => changeAssetScopeTransaction(h.svc().authority, h.svc().clock, legacyCtx(''), 'AS-0141', 'out'))
@@ -183,7 +154,7 @@ describe('asset detail (ticket 50)', () => {
   it('masks sensitive evidence for a role without viewSensitive', async () => {
     const h = mountAssets('asset', 'Casey Nguyen (Client)') // viewer — member of RT-2026-014
     h.show()
-    h.run(() => h.store().go('asset', { id: 'AS-0143' }))
+    h.run(() => go('asset', { id: 'AS-0143' }))
     await waitFor(() => expect(screen.getAllByText('win-dc-01').length).toBeGreaterThan(0))
     fireEvent.click(screen.getByRole('tab', { name: /Findings & Evidence/ }))
     await waitFor(() => expect(screen.getByText('EV-014-02')).toBeInTheDocument())
@@ -192,7 +163,7 @@ describe('asset detail (ticket 50)', () => {
     h.unmount()
     const t = mountAssets('asset', 'Taylor Chen') // operator — viewSensitive granted
     t.show()
-    t.run(() => t.store().go('asset', { id: 'AS-0143' }))
+    t.run(() => go('asset', { id: 'AS-0143' }))
     await waitFor(() => expect(screen.getAllByText('win-dc-01').length).toBeGreaterThan(0))
     fireEvent.click(screen.getByRole('tab', { name: /Findings & Evidence/ }))
     await waitFor(() => expect(screen.getByText(/evidence-027\.png/)).toBeInTheDocument())
@@ -202,7 +173,7 @@ describe('asset detail (ticket 50)', () => {
   it('an asset in a project without a membership grant is not found (no existence leak)', async () => {
     const h = mountAssets('asset', 'Riley Brooks')
     h.show()
-    h.run(() => h.store().go('asset', { id: 'AS-0201' }))
+    h.run(() => go('asset', { id: 'AS-0201' }))
     await waitFor(() => expect(screen.getByText('Asset not found')).toBeInTheDocument())
     expect(screen.getByText('Asset AS-0201 does not exist or is not available for your account.')).toBeInTheDocument()
     expect(screen.queryByText('cloud-app-01')).not.toBeInTheDocument()
@@ -213,7 +184,7 @@ describe('asset detail (ticket 50)', () => {
   it('refuses an accessible asset outside the active project context with a switch action', async () => {
     const h = mountAssets('asset')
     h.show()
-    h.run(() => { h.store().setPid(P15); h.store().go('asset', { id: 'AS-0143' }) })
+    h.run(() => { selectProject(P15); go('asset', { id: 'AS-0143' }) })
     await waitFor(() => expect(screen.getByText('Asset belongs to a different project')).toBeInTheDocument())
     expect(screen.getByText(/you are working in RT-2026-015/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'View all projects' })).toBeInTheDocument()
@@ -224,7 +195,7 @@ describe('asset detail (ticket 50)', () => {
   it('gates scope changes behind role and read-only context with reasons', async () => {
     const h = mountAssets('asset', 'Casey Nguyen (Client)')
     h.show()
-    h.run(() => { h.store().setPid(P14); h.store().go('asset', { id: 'AS-0143' }) })
+    h.run(() => { selectProject(P14); go('asset', { id: 'AS-0143' }) })
     await waitFor(() => expect(screen.getAllByText('win-dc-01').length).toBeGreaterThan(0))
     const out = screen.getByRole('button', { name: 'Mark out of scope' }) as HTMLButtonElement
     expect(out.disabled).toBe(true)
@@ -233,7 +204,7 @@ describe('asset detail (ticket 50)', () => {
     h.unmount()
     const a = mountAssets('asset', 'Riley Brooks')
     a.show()
-    a.run(() => { a.store().setPid(P14); a.store().go('asset', { id: 'AS-0143' }) })
+    a.run(() => { selectProject(P14); go('asset', { id: 'AS-0143' }) })
     await waitFor(() => expect(screen.getAllByText('win-dc-01').length).toBeGreaterThan(0))
     const out2 = screen.getByRole('button', { name: 'Mark out of scope' }) as HTMLButtonElement
     expect(out2.disabled).toBe(true)
@@ -249,7 +220,7 @@ describe('scope classification (ticket 50)', () => {
     await waitFor(() => expect(screen.getByText('Scope classification')).toBeInTheDocument())
     expect(screen.getAllByText('staging-erp').length).toBeGreaterThan(0)
     expect(screen.queryByText('cloud-app-01')).not.toBeInTheDocument()
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     await waitFor(() => expect(screen.getByText('Scope diff & approval impact')).toBeInTheDocument())
     expect(screen.getAllByText('staging-erp').length).toBeGreaterThan(0)
     expect(screen.queryByText('purple-lab-dc')).not.toBeInTheDocument()
@@ -263,7 +234,7 @@ describe('scope classification (ticket 50)', () => {
     const h = mountAssets('asset-scope', 'Riley Brooks')
     h.show()
     await waitFor(() => expect(screen.getByText('Scope classification')).toBeInTheDocument())
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     await waitFor(() => expect(screen.getByText(/Only Reviewers and Admins can approve or reject scope changes./)).toBeInTheDocument())
     const approve = screen.getByRole('button', { name: 'Approve Change' }) as HTMLButtonElement
     expect(approve.disabled).toBe(true)

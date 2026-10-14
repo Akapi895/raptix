@@ -10,57 +10,29 @@
  * denial, aggregate scope folding).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { mountServices } from '../../test/helpers'
+import { currentRoute, selectProject } from '../../router/navigate'
+import { setIntegrationConnection } from '../settings/service'
 import { analysisRoutes } from '../../screens/e-analysis'
 import { seed } from '../../data'
 import { coverageOf } from './service'
 import { reviewOperationStep } from '../operations/service'
-import type { ActorRef, RequestContext } from '../../domain/service'
+import type { ActorRef } from '../../domain/service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 
 const TAYLOR: ActorRef = { id: 'Taylor Chen', role: 'operator' }
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 /** Mounts the providers with a probe, then optionally the real analysis route at `hash`. */
 function mountAnalysis(me = 'Alex Morgan', hash = '#/analysis') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const Analysis = analysisRoutes.analysis
-  const ui = (show: boolean) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {show ? <Analysis /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
   window.location.hash = hash
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+  const h = mountServices(null, me)
+  return { ...h, show: () => h.show(<Analysis />) }
 }
 
 describe('ATT&CK coverage matrix (ticket 54)', () => {
@@ -72,7 +44,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
     const cell = screen.getByRole('button', { name: /T1046/ })
     expect(cell).toHaveTextContent('Executed & Detected')
     // Scoping to one project drops the out-of-scope observation: the cell falls back to No Data.
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('button', { name: /T1046/ })).toHaveTextContent('Executed & No Data'))
     expect(screen.getByText(/11\/22 techniques tested/)).toBeInTheDocument()
     // Catalog techniques with no recorded events stay explicitly "Not Tested".
@@ -92,7 +64,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
   it('the heatmap separates detected, verified-undetected and unverified no-data outcomes', async () => {
     const h = mountAnalysis('Taylor Chen', '#/analysis?tab=detection') // operator — viewSensitive granted
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('67%')).toBeInTheDocument()) // 2 detected / 3 with data
     // Tactic bars label their split: Discovery has 2 detected + 2 no data; Initial Access is the verified gap.
     expect(screen.getByRole('img', { name: '2 detected, 0 not detected, 2 no data' })).toBeInTheDocument()
@@ -107,9 +79,9 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
   it('a disconnected detection source reads as No Data, never as Not Detected', async () => {
     const h = mountAnalysis('Taylor Chen', '#/analysis?tab=matrix')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('button', { name: /T1078/ })).toHaveTextContent('Executed & Not Detected'))
-    h.run(() => h.store().A.toggleIntegration('IN-1'))
+    h.run(() => { expect(setIntegrationConnection(h.svc().authority, h.svc().clock, { actor: { id: 'Dana Whitfield', role: 'admin' }, projectId: 'all', corr: 'test-disconnect' }, 'IN-1', 'disconnect', 'Verify disconnected detection source').ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('Detection integration unavailable')).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /T1078/ })).toHaveTextContent('Executed & No Data')
     expect(screen.getByRole('button', { name: /T1082/ })).toHaveTextContent('Executed & No Data')
@@ -126,15 +98,15 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
     expect(screen.getByText(/High-level description of Account Discovery/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Open technique in Playbooks' }))
-    await waitFor(() => expect(h.store().route.page).toBe('technique'))
-    expect(h.store().route.id).toBe('T1087')
+    await waitFor(() => expect(currentRoute().page).toBe('technique'))
+    expect(currentRoute().id).toBe('T1087')
     h.unmount()
   })
 
   it('a recorded step review updates the aggregate without a reload', async () => {
     const h = mountAnalysis('Taylor Chen', '#/analysis?tab=matrix')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByText(/11\/22 techniques tested/)).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /T1119/ })).toHaveTextContent('Planned Only')
     // Ticket 65 retired the A.reviewStep wrapper; the review commits through
@@ -158,7 +130,7 @@ describe('ATT&CK coverage matrix (ticket 54)', () => {
     })
     h.show()
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('All operations (2)')).toBeInTheDocument())
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getByText('All operations (2)')).toBeInTheDocument()

@@ -10,35 +10,22 @@
  * other one. The screen-reader sweep of the real UI remains a recorded gap
  * (see the ticket's Evidence).
  */
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { StoreProvider, useStore, type Store } from '../store'
-import { ConsoleProviders } from '../state/query'
+import { mountServices } from '../test/helpers'
+import { go } from '../router/navigate'
 import { setActiveRouter } from '../router/active'
 import { RouteHost } from '../router/host'
 
-function Probe({ ready }: { ready: (s: Store) => void }) {
-  ready(useStore())
-  return null
-}
-
 function mountApp(hash?: string) {
   if (hash !== undefined) window.location.hash = hash
-  let store!: Store
   const router = createHashRouter([
-    { path: '*', element: <><Probe ready={(s) => (store = s)} /><RouteHost /></>, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <RouteHost />, errorElement: <div />, hydrateFallbackElement: null },
   ])
   setActiveRouter(router)
-  render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return { store: () => store }
+  return mountServices(<RouterProvider router={router} />)
 }
 
 function signIn() {
@@ -91,10 +78,10 @@ describe('menu keyboard operability on real routes (projects table)', () => {
 
 describe('accessible names on the real settings route', () => {
   it('Theme and Table-density segmented options keep their own names inside the wrapping labels', async () => {
-    const { store } = mountApp('#/command-center')
+    mountApp('#/command-center')
     await signIn()
     await screen.findByRole('heading', { name: /command center/i })
-    act(() => { store().go('settings', { tab: 'notifications' }) })
+    act(() => { go('settings', { tab: 'notifications' }) })
     await screen.findByText('Notification preferences')
     const theme = screen.getByText('Theme').closest('label')!
     expect(theme.querySelector('button[aria-label="Light (default)"]')).not.toBeNull()
@@ -108,18 +95,18 @@ describe('accessible names on the real settings route', () => {
 
 describe('announcements and state (shell)', () => {
   it('announces each route change once through a single polite region and stays silent on same-page tab changes', async () => {
-    const { store } = mountApp('#/command-center')
+    mountApp('#/command-center')
     await signIn()
     await screen.findByRole('heading', { name: /command center/i })
     expect(screen.getAllByTestId('route-announcer')).toHaveLength(1)
     const announcer = screen.getByTestId('route-announcer')
     expect(announcer).toHaveTextContent('Navigated to Command Center')
-    act(() => { store().go('projects') })
+    act(() => { go('projects') })
     await waitFor(() => expect(announcer).toHaveTextContent('Navigated to Projects'))
-    act(() => { store().go('project', { id: 'RT-2026-014' }) })
+    act(() => { go('project', { id: 'RT-2026-014' }) })
     await waitFor(() => expect(announcer).toHaveTextContent('Navigated to Projects RT-2026-014'))
     // Same page + id (tab/filter change only): no second, duplicated output.
-    act(() => { store().go('project', { id: 'RT-2026-014', tab: 'scope' }) })
+    act(() => { go('project', { id: 'RT-2026-014', tab: 'scope' }) })
     await screen.findByRole('tab', { name: 'Scope & ROE' })
     expect(announcer.textContent).toBe('Navigated to Projects RT-2026-014')
   })
