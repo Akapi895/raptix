@@ -24,6 +24,7 @@ const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileTe
 }
 
 /** Shared read states for the migrated catalog tabs (ticket 34). */
+// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function ReadError({ error, retry }: { error: unknown; retry: () => void }) {
   return (
     <Empty icon={AlertTriangle} title="Could not load reports" action={<Button onClick={retry}>Retry</Button>}>
@@ -32,6 +33,7 @@ function ReadError({ error, retry }: { error: unknown; retry: () => void }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function ReportsPage() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -66,6 +68,7 @@ function ReportsPage() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function ReportList() {
   const pid = useProjectStore((s) => s.pid)
   const persistFilters = useSessionStore((s) => s.persistFilters)
@@ -138,6 +141,7 @@ function ReportList() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function Templates() {
   const services = useServices()
   const me = useMe()
@@ -202,6 +206,7 @@ function Templates() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- reports route bundle: sub-screens co-exported for the registry
 function Exports() {
   const me = useMe()
   const can = useCan()

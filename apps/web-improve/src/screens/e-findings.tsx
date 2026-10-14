@@ -1058,5 +1058,6 @@ function EvidenceInspector() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- findings screen module: helper co-exported with screens
 export const findingRoutes: Record<string, ComponentType> = { findings: FindingList, 'finding-new': FindingForm, finding: FindingDetail, evidence: EvidenceInspector, 'evidence-inspector': EvidenceInspector }
 export { Segmented }

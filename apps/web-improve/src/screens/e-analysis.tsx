@@ -54,12 +54,14 @@ function useCreateFinding() {
   return { reason, start }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function CreateFindingBtn({ prefill, label = 'Create Finding', size = 'md', variant = 'secondary' }: { prefill: Prefill; label?: string; size?: 'sm' | 'md'; variant?: 'primary' | 'secondary' }) {
   const { reason, start } = useCreateFinding()
   const r = reason(prefill.projectId)
   return <Button size={size} variant={variant} icon={Bug} disabled={!!r} title={r || 'Open the finding form prefilled with the project, operation, and technique'} onClick={() => start(prefill)}>{label}</Button>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function EvidenceList({ ids }: { ids: string[] }) {
   const db = useAnalysisEvidence(ids)
   const can = useCan()
@@ -84,6 +86,7 @@ function EvidenceList({ ids }: { ids: string[] }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function Chip({ children, onRemove }: { children: ReactNode; onRemove?: () => void }) {
   return (
     <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 pl-3 pr-1.5 text-xs text-fg">
@@ -93,11 +96,13 @@ function Chip({ children, onRemove }: { children: ReactNode; onRemove?: () => vo
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function DetectBadge({ state }: { state: DetectState }) {
   return <Status kind="detect" value={state} size="sm" label={state === 'nodata' ? 'No Data' : undefined} />
 }
 
 /* ───────────── Main page ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function Analysis() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -180,6 +185,7 @@ function Analysis() {
 }
 
 /** Empty state for projects with no executed steps (e.g. RT-2026-017): reason + next action. */
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function NoProjectData({ ops }: { ops: Operation[] }) {
   const pid = useProjectStore((s) => s.pid)
   const el = useEligibility(pid)
@@ -206,6 +212,7 @@ function NoProjectData({ ops }: { ops: Operation[] }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function NoOps() {
   const pid = useProjectStore((s) => s.pid)
   return (
@@ -216,6 +223,7 @@ function NoOps() {
 }
 
 /* ───────────── ANL-01 ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function MiniChain({ op }: { op: Operation }) {
   const n = op.steps.length
   if (!n) return <span className="text-xs text-neutral">No steps</span>
@@ -229,6 +237,7 @@ function MiniChain({ op }: { op: Operation }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function TacticBars({ ana }: { ana: Ana }) {
   const rows = TACTICS.map((t) => {
     const all = TECHNIQUES.filter((x) => x.tactic === t)
@@ -251,6 +260,7 @@ function TacticBars({ ana }: { ana: Ana }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function CoverageBar({ ana }: { ana: Ana }) {
   const parts = [
     { k: 'Executed & Detected', v: ana.nDetected, c: 'var(--c-ok)' }, { k: 'Executed & Not Detected', v: ana.nUndetected, c: 'var(--c-bad)' },
@@ -273,6 +283,7 @@ function CoverageBar({ ana }: { ana: Ana }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function OpTimeline({ ana }: { ana: Ana }) {
   const op = ana.ops.find((o) => o.steps.length && ana.entries.some((e) => e.op.id === o.id && e.tested))
   if (!op) return null
@@ -296,6 +307,7 @@ function OpTimeline({ ana }: { ana: Ana }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function Overview({ ana }: { ana: Ana }) {
   const route = useRoute()
   const hasData = ana.entries.some((e) => e.tested)
@@ -422,6 +434,7 @@ const STEP_COL: Record<StepStatus, string> = { ok: 'var(--c-ok)', fail: 'var(--c
 const STEP_GLYPH: Record<StepStatus, ComponentType<LucideProps>> = { ok: CheckCircle2, fail: XCircle, running: CircleDashed, unknown: AlertTriangle, pending: CircleDashed, notrun: MinusCircle, review: Eye }
 const STEP_TXT: Record<StepStatus, string> = { ok: 'Succeeded', fail: 'Failed', running: 'Running', unknown: 'Unknown', pending: 'Pending', notrun: 'Not run', review: 'In review' }
 
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function Chain({ opId }: { opId?: string }) {
   const db = useAnalysisAssets()
   const can = useCan()
@@ -637,6 +650,7 @@ function Chain({ opId }: { opId?: string }) {
 }
 
 /* ───────────── MITRE ATT&CK matrix ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function Matrix({ ana }: { ana: Ana }) {
   const route = useRoute()
   const setFilter = useSessionStore((s) => s.setFilter)
@@ -743,6 +757,7 @@ function Matrix({ ana }: { ana: Ana }) {
 }
 
 /* ───────────── Detection Coverage ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- analysis route bundle: sub-screens co-exported for the registry
 function Detection({ ana, canAdmin }: { ana: Ana; canAdmin: boolean }) {
   const can = useCan()
   const me = useMe()
