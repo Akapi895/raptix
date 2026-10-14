@@ -14,7 +14,7 @@
  *   cross-project visibility.
  *
  * Both bridges unsubscribe on unmount, so repeated provider mounts rewire
- * exactly once. Render inside StoreProvider (the bridges need services).
+ * exactly once. Render inside ServicesProvider (the bridges need services).
  */
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { notifyManager, QueryClientProvider, type QueryClient } from '@tanstack/react-query'
@@ -94,7 +94,7 @@ function ScopeCancelBridge({ client, services }: { client: QueryClient; services
   return null
 }
 
-/** Query provider + authority bridges; mount inside StoreProvider. */
+/** Query provider + authority bridges; mount inside ServicesProvider. */
 export function ConsoleProviders({ children }: { children: ReactNode }) {
   const services = useServices()
   const client = useMemo(() => createConsoleQueryClient(), [])
