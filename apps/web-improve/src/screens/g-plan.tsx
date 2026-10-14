@@ -1,21 +1,95 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Plus, Rocket, Trash2, XCircle } from 'lucide-react'
-import { useDirty, useServices, useStore } from '../store'
-import { planVer } from '../data'
-import type { Plan, PlanStep } from '../data'
+import { useDirty, useServices } from '../store'
+import { planVer, USERS } from '../data'
+import type { Db, Plan, PlanStep } from '../data'
 import { policyChecks } from '../features/plans/policy'
-import { effectivePlanStatus } from '../features/plans/service'
+import {
+  decidePlanTransaction, discardPlanTransaction, editPlanDraftTransaction, effectivePlanStatus, requestPlanReviewTransaction,
+  revisePlanTransaction, withdrawPlanReviewTransaction,
+} from '../features/plans/service'
+import { createOperationFromPlanTransaction } from '../features/plans/bridge'
 import { PlanCompareError, usePlanCompare } from '../features/plans/compare'
 import type { Chk } from '../features/plans/policy'
+import { go, selectProject, useRoute } from '../router/navigate'
+import { useAccessible, useCan, useDb, useMe, useReadOnly } from '../state/console'
+import { useAuthStore, useProjectStore, useToastStore } from '../state/stores'
+import type { ConsoleServices } from '../domain/service-factory'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui'
 import { NoProject, ReplanPanel, tz, useReplan } from './g-common'
 import { FanOutCard } from './g-fanout'
 
-type Db = ReturnType<typeof useStore>['db']
+/* The legacy Res bridge shape (the store's private `Res`). */
+type Res = { ok: boolean; error?: string }
+
+/* Ticket 67 wave 7: the store's request context (actorCtx), mirrored — the
+   persona resolves at call time (the override-aware `me`, read from the
+   authorities so a failing authority read never reaches this render) with
+   corr 'legacy'. */
+function actorCtxOf(services: ConsoleServices, projectId: string) {
+  const name = useAuthStore.getState().meName
+  const base = USERS.find((u) => u.name === name)!
+  const ov = services.authority.snapshot().org.members[name]?.role
+  const me = ov ? { ...base, role: ov } : base
+  return { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }
+}
+
+/* Ticket 67 wave 7: the legacy A.* plan-workbench entries, mirrored — each
+   addressed plan's project binding resolves from the one authority at call
+   time (same `Plan <id> does not exist.` copy), the request context carries
+   the override-aware persona with corr 'legacy', and the typed results
+   bridge back to the legacy shapes. */
+function usePlanActions() {
+  const services = useServices()
+  const planProjectOf = (planId: string) => services.authority.snapshot().plans.find((x) => x.id === planId)?.projectId
+  return {
+    requestApproval: (planId: string): Res => {
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = requestPlanReviewTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
+    decide: (planId: string, decision: 'approved' | 'rejected' | 'returned', note: string): Res => {
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = decidePlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId, decision, note)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
+    withdraw: (planId: string): Res => {
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = withdrawPlanReviewTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
+    revise: (planId: string, changes: string[], note?: string): string => {
+      const projectId = planProjectOf(planId)
+      if (!projectId) return ''
+      const res = revisePlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId, changes, note)
+      return res.ok ? res.data.planId : ''
+    },
+    editDraft: (planId: string, patch: { steps?: Plan['steps']; title?: string }): Res => {
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = editPlanDraftTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId, patch)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
+    discard: (planId: string): Res => {
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = discardPlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
+      return res.ok ? { ok: true } : { ok: false, error: res.failure.message }
+    },
+    execute: (planId: string): { ok: boolean; opId?: string; error?: string } => {
+      const projectId = planProjectOf(planId)
+      if (!projectId) return { ok: false, error: `Plan ${planId} does not exist.` }
+      const res = createOperationFromPlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), planId)
+      return res.ok ? { ok: true, opId: res.data.opId } : { ok: false, error: res.failure.message }
+    },
+  }
+}
 
 /** Breadcrumb: AI Operator > conversation > plan > leaf. */
 function useCrumbs(plan: Plan, leaf?: string) {
-  const { go } = useStore()
   const c = [
     { label: 'AI Operator', to: () => go('ai-operator') },
     { label: plan.conversationId, to: () => go('ai-operator', { id: plan.conversationId }) },
@@ -30,7 +104,7 @@ function useCrumbs(plan: Plan, leaf?: string) {
    read the derived diff through the typed service instead of the database. */
 
 function StepDrawer({ plan, stepId, onClose }: { plan: Plan; stepId?: string; onClose: () => void }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const s = plan.steps.find((x) => x.id === stepId)
   const i = s ? plan.steps.findIndex((x) => x.id === s.id) : -1
   const op = plan.opId ? db.operations.find((o) => o.id === plan.opId) : undefined
@@ -73,12 +147,17 @@ function versionChain(plan: Plan, db: Db): Plan[] {
 const RISK_CLS = { low: 'text-ok', medium: 'text-warn', high: 'text-bad' }
 const Risk = ({ v }: { v: PlanStep['risk'] }) => <span className={cx('font-medium capitalize', RISK_CLS[v])}>{v}</span>
 
+/* Ticket 67 wave 7: the legacy store reads leave the context — the console
+   read seam (db/pid/accessible), the router module (route/go + the guarded
+   selectProject for the store's setPid) project the same derivations. */
 export function usePlan() {
-  const s = useStore()
-  const { route, db, pid } = s
+  const route = useRoute()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const accessible = useAccessible()
   const plan = route.id ? db.plans.find((p) => p.id === route.id) : undefined
   const foreign = !!plan && pid !== 'all' && plan.projectId !== pid
-  return { ...s, plan, foreign }
+  return { route, db, pid, go, setPid: selectProject, accessible, plan, foreign }
 }
 
 function PlanGuard({ children, title }: { children: (plan: Plan) => React.ReactNode; title: string }) {
@@ -113,7 +192,7 @@ function approvalState(p: Plan) {
 }
 
 function Validation({ plan }: { plan: Plan }) {
-  const { db } = useStore()
+  const db = useDb()
   const p = db.projects.find((x) => x.id === plan.projectId)!
   const agents = plan.agents.map((a) => db.agents.find((x) => x.id === a))
   const assets = plan.assets.map((a) => db.assets.find((x) => x.id === a))
@@ -136,14 +215,15 @@ function Validation({ plan }: { plan: Plan }) {
 }
 
 function ReviseDialog({ plan, open, onClose }: { plan: Plan; open: boolean; onClose: () => void }) {
-  const { A, go, toast } = useStore()
+  const actions = usePlanActions()
+  const toast = useToastStore((s) => s.toast)
   const [changes, setChanges] = useState<string[]>([''])
   const [note, setNote] = useState('')
   const set = (i: number, v: string) => setChanges((c) => c.map((x, j) => (j === i ? v : x)))
   const list = changes.map((c) => c.trim()).filter(Boolean)
   const gated = plan.status === 'approved' || plan.status === 'executed'
   const submit = () => {
-    const id = A.revisePlan(plan.id, list, note)
+    const id = actions.revise(plan.id, list, note)
     if (!id) { toast('The revision could not be created — the plan must be approved and at least one change described.', 'bad'); return }
     toast(`Revision ${id} created. Re-approval required.`, 'warn')
     onClose(); setChanges(['']); setNote('')
@@ -172,7 +252,11 @@ function ReviseDialog({ plan, open, onClose }: { plan: Plan; open: boolean; onCl
 }
 
 function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void; request: React.ReactNode }) {
-  const { db, A, can, toast, go, readOnly } = useStore()
+  const db = useDb()
+  const actions = usePlanActions()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
+  const readOnly = useReadOnly()
   const editable = (plan.status === 'draft' || plan.status === 'proposed') && !readOnly(plan.projectId)
   const canPlan = can('plan')
   const [edit, setEdit] = useState(false)
@@ -183,7 +267,7 @@ function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void
   const [discard, setDiscard] = useState(false)
   useEffect(() => { if (!edit) setSteps(plan.steps) }, [plan.steps, edit])
   const dirty = edit && JSON.stringify(steps) !== JSON.stringify(plan.steps)
-  const save = () => { const r = A.editPlan(plan.id, { steps }); if (!r.ok) { toast(r.error || 'The draft could not be saved.', 'bad'); return }; setEdit(false); setReorder(false); toast(`${plan.id} saved as ${plan.status}. Not submitted for review.`, 'ok') }
+  const save = () => { const r = actions.editDraft(plan.id, { steps }); if (!r.ok) { toast(r.error || 'The draft could not be saved.', 'bad'); return }; setEdit(false); setReorder(false); toast(`${plan.id} saved as ${plan.status}. Not submitted for review.`, 'ok') }
   useDirty(dirty, save)
   const view: Plan = { ...plan, steps }
   const step = steps.find((x) => x.id === sel) || steps[0]
@@ -254,7 +338,7 @@ function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void
           <PolicyChecks plan={view} />
         </div>
       </div>
-      <Modal open={discard} onClose={() => setDiscard(false)} title={`Discard ${plan.id}?`} danger footer={<><Button onClick={() => setDiscard(false)}>Keep draft</Button><Button variant="danger" onClick={() => { const r = A.discardPlan(plan.id); setDiscard(false); if (r.ok) { toast(`${plan.id} discarded.`, 'warn'); go('ai-operator', { id: plan.conversationId }) } else toast(r.error || 'The draft could not be discarded.', 'bad') }}>Discard draft</Button></>}>
+      <Modal open={discard} onClose={() => setDiscard(false)} title={`Discard ${plan.id}?`} danger footer={<><Button onClick={() => setDiscard(false)}>Keep draft</Button><Button variant="danger" onClick={() => { const r = actions.discard(plan.id); setDiscard(false); if (r.ok) { toast(`${plan.id} discarded.`, 'warn'); go('ai-operator', { id: plan.conversationId }) } else toast(r.error || 'The draft could not be discarded.', 'bad') }}>Discard draft</Button></>}>
         <p className="text-sm">The draft and its chat card are removed. This cannot be undone; approved plans are never discarded.</p>
       </Modal>
     </div>
@@ -266,8 +350,12 @@ export function AiPlan() {
 }
 
 function PlanDetail({ plan }: { plan: Plan }) {
-  const { db, go, A, can, toast, readOnly } = useStore()
-  const { route } = useStore()
+  const db = useDb()
+  const route = useRoute()
+  const actions = usePlanActions()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
+  const readOnly = useReadOnly()
   const deepStep = route.tab?.startsWith('step-') ? route.tab.slice(5) : undefined
   const [tab, setTab] = useState(deepStep ? 'steps' : route.tab && ['builder', 'overview', 'steps', 'branches', 'assets', 'risk', 'refs', 'history'].includes(route.tab) ? route.tab : plan.status === 'draft' || plan.status === 'proposed' ? 'builder' : 'overview')
   const [stepId, setStepId] = useState<string | undefined>(deepStep)
@@ -295,7 +383,7 @@ function PlanDetail({ plan }: { plan: Plan }) {
   const reqWhy = !proposal ? `Review can only be requested for a draft or proposed plan (this one is ${plan.status.replace('_', ' ')}).` : roeBlocked ? `Cannot request approval: ${p.roeVersion} is ${p.roeStatus === 'none' ? 'missing' : p.roeStatus}. The plan can still be saved as a draft.` : !canPlan ? whyPlan : ''
   const request = (
     <span className="inline-flex items-center gap-2">
-      <Gated allowed={!reqWhy} reason={reqWhy}><Button variant="primary" onClick={() => { const r = A.requestPlanApproval(plan.id); if (r.ok) toast(`${plan.id} ${planVer(plan)} sent to ${plan.reviewer} for review.`, 'ok'); else toast(r.error || 'The review request could not be recorded.', 'bad') }}>Request Review</Button></Gated>
+      <Gated allowed={!reqWhy} reason={reqWhy}><Button variant="primary" onClick={() => { const r = actions.requestApproval(plan.id); if (r.ok) toast(`${plan.id} ${planVer(plan)} sent to ${plan.reviewer} for review.`, 'ok'); else toast(r.error || 'The review request could not be recorded.', 'bad') }}>Request Review</Button></Gated>
       {roeBlocked && proposal && <button className="text-xs text-accent hover:underline" onClick={() => go('project', { id: p.id, tab: 'scope' })}>Fix ROE →</button>}
     </span>
   )
@@ -433,7 +521,7 @@ export function AiPlanReview() {
 const CHK_ICON = { pass: <CheckCircle2 size={16} className="text-ok" aria-label="Pass" />, warn: <AlertTriangle size={16} className="text-warn" aria-label="Warn" />, fail: <XCircle size={16} className="text-bad" aria-label="Fail" /> }
 const CHK_LABEL = { pass: 'PASS', warn: 'WARN', fail: 'FAIL' }
 function PolicyChecks({ plan }: { plan: Plan }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const cs = policyChecks(plan, db)
   const n = (k: Chk['state']) => cs.filter((c) => c.state === k).length
   return (
@@ -452,14 +540,14 @@ function PolicyChecks({ plan }: { plan: Plan }) {
   )
 }
 
-function stepState(s: PlanStep, plan: Plan, db: ReturnType<typeof useStore>['db']): 'pass' | 'warn' | 'fail' {
+function stepState(s: PlanStep, plan: Plan, db: Db): 'pass' | 'warn' | 'fail' {
   const a = db.assets.find((x) => x.name === s.asset && x.projectId === plan.projectId)
   const ag = db.agents.find((x) => x.id === s.agent)
   if ((a && a.scope !== 'in') || (ag && ag.status === 'lost')) return 'fail'
   return s.needsApproval ? 'warn' : 'pass'
 }
 const phasesOf = (steps: PlanStep[]) => { const out: { name: string; steps: PlanStep[] }[] = []; steps.forEach((s) => { const n = s.phase || 'Steps'; const g = out.find((x) => x.name === n); if (g) g.steps.push(s); else out.push({ name: n, steps: [s] }) }); return out }
-const detailOf = (s: PlanStep, steps: PlanStep[], db: ReturnType<typeof useStore>['db']) => {
+const detailOf = (s: PlanStep, steps: PlanStep[], db: Db) => {
   const i = steps.findIndex((x) => x.id === s.id); const ag = db.agents.find((x) => x.id === s.agent)
   return [
     { k: 'Goal', v: s.name }, { k: 'ATT&CK technique', v: <Mono>{s.technique}</Mono> }, { k: 'Expected evidence', v: `Sanitized output and a note linked to ${s.technique}` },
@@ -472,7 +560,7 @@ const detailOf = (s: PlanStep, steps: PlanStep[], db: ReturnType<typeof useStore
 const SPILL = { pass: 'text-ok', warn: 'text-warn', fail: 'text-bad' }
 
 function StepGroups({ plan, steps, sel, onSel, edit, move, remove }: { plan: Plan; steps: PlanStep[]; sel?: string; onSel: (id: string) => void; edit?: boolean; move?: (id: string, d: -1 | 1) => void; remove?: (id: string) => void }) {
-  const { db } = useStore()
+  const db = useDb()
   return (
     <div className="space-y-3">
       {phasesOf(steps).map((g, gi) => (
@@ -499,7 +587,7 @@ function StepGroups({ plan, steps, sel, onSel, edit, move, remove }: { plan: Pla
 }
 
 function ApprovalImpact({ s, plan }: { s: PlanStep; plan: Plan }) {
-  const { db } = useStore(); const st = stepState(s, plan, db)
+  const db = useDb(); const st = stepState(s, plan, db)
   return <div className={cx('rounded-lg border px-3 py-2 text-xs', st === 'fail' ? 'border-bad/30 bg-bad-soft' : st === 'warn' ? 'border-warn/30 bg-warn-soft' : 'border-line bg-subtle')}>
     <span className="font-semibold">Approval impact: </span>{st === 'fail' ? 'This step cannot run — its asset is out of scope or its agent is disconnected.' : st === 'warn' ? 'Approving the plan does not auto-approve this step; it pauses for an explicit gate when reached.' : 'Runs under plan approval; no extra gate.'}
   </div>
@@ -509,7 +597,11 @@ type Decision = 'approved' | 'returned' | 'rejected'
 const DEC = { approved: { title: 'Approve plan', btn: 'Confirm approval', variant: 'primary' as const, hint: 'Reason / comment (required)' }, returned: { title: 'Return for changes', btn: 'Return for changes', variant: 'primary' as const, hint: 'What needs to change (required)' }, rejected: { title: 'Reject plan', btn: 'Reject plan', variant: 'danger' as const, hint: 'Reason for rejection (required)' } }
 
 function ReviewBody({ plan }: { plan: Plan }) {
-  const { db, go, A, can, me, toast } = useStore()
+  const db = useDb()
+  const actions = usePlanActions()
+  const can = useCan()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
   const [sel, setSel] = useState<string | undefined>(plan.steps[0]?.id)
   const [dec, setDec] = useState<Decision | null>(null)
   const [reason, setReason] = useState('')
@@ -540,13 +632,13 @@ function ReviewBody({ plan }: { plan: Plan }) {
   const whyNo = (k: Decision) => !inReview ? `Plan is ${plan.status.replace('_', ' ')}; no decision is pending.` : !allowed ? `Your role (${me.role}) cannot decide AI plans. A reviewer or admin must do this.` : k === 'approved' && self ? 'You requested this plan; another reviewer must approve it.' : k === 'approved' && fails.length ? `${fails.length} policy check(s) FAIL: ${fails.map((f) => f.label).join(', ')}. Fix them or return the plan.` : ''
   const submit = () => {
     if (!dec) return
-    const r = A.decidePlan(plan.id, dec, reason.trim())
+    const r = actions.decide(plan.id, dec, reason.trim())
     if (!r.ok) { setErr(r.error || 'The decision could not be recorded.'); setDec(null); return }
     setErr(''); setDec(null); setReason(''); setAck(false)
     toast(`${plan.id} ${planVer(plan)} ${dec === 'approved' ? 'approved' : dec === 'returned' ? 'returned for changes' : 'rejected'}.`, dec === 'approved' ? 'ok' : 'warn')
   }
   const create = () => {
-    const r = A.executePlan(plan.id)
+    const r = actions.execute(plan.id)
     if (!r.ok || !r.opId) { setErr(r.error || 'Could not create the operation.'); return }
     toast(`Operation ${r.opId} created. Complete preflight before starting.`, 'ok')
     go('preflight', { id: r.opId })
@@ -614,7 +706,7 @@ function ReviewBody({ plan }: { plan: Plan }) {
             <Gated allowed={!whyNo('approved')} reason={whyNo('approved')}><Button variant="primary" onClick={() => setDec('approved')}>Approve Plan</Button></Gated>
             {/* Ticket 39: the requester (or a scope manager) can pull the plan out of review before a decision. */}
             <Gated allowed={me.name === plan.requestedBy || can('editScope', plan.projectId)} reason={me.name === plan.requestedBy ? '' : 'Only the requester, a Red Team Manager or an Organization Admin can withdraw this review.'}>
-              <Button onClick={() => { const r = A.withdrawPlanReview(plan.id); if (r.ok) toast(`${plan.id} withdrawn from review.`, 'warn'); else toast(r.error || 'The review could not be withdrawn.', 'bad') }}>Withdraw from review</Button>
+              <Button onClick={() => { const r = actions.withdraw(plan.id); if (r.ok) toast(`${plan.id} withdrawn from review.`, 'warn'); else toast(r.error || 'The review could not be withdrawn.', 'bad') }}>Withdraw from review</Button>
             </Gated>
             <span className="text-xs text-muted">A reason is required for every decision and is written to the audit trail.</span>
           </> : plan.status === 'approved' ? <>
@@ -648,7 +740,9 @@ export function AiPlanCompare() {
 
 /** Ticket 42: the compare route renders the typed compare read (diff + notes derived from the stored revisions). */
 function CompareBody({ plan }: { plan: Plan }) {
-  const { go, A, can, toast } = useStore()
+  const actions = usePlanActions()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const cmp = usePlanCompare(plan.id)
   const crumbs = useCrumbs(plan, 'Compare')
   if (cmp.isPending) return <><PageHeader title="Plan Revision Compare" crumbs={crumbs} /><p className="py-3 text-sm text-muted" role="status">Loading comparison…</p></>
@@ -672,7 +766,7 @@ function CompareBody({ plan }: { plan: Plan }) {
           <Button onClick={() => go('ai-plan-review', { id: newP.id })}>Approval Review</Button>
           <Button onClick={() => { toast(`${newP.id} kept as a draft proposal.`, 'info'); go('ai-plan', { id: newP.id }) }}>Accept Revision as Draft</Button>
           <Gated allowed={canReq} reason={!can('plan') ? 'Your role cannot request plan approval.' : `${newP.id} is already ${newP.status}; re-approval was requested or decided.`}>
-            <Button variant="primary" onClick={() => { const r = A.requestPlanApproval(newP.id); if (r.ok) toast(`Re-approval requested for ${newP.id}.`, 'ok'); else toast(r.error || 'The re-approval request could not be recorded.', 'bad') }}>Request Reapproval</Button>
+            <Button variant="primary" onClick={() => { const r = actions.requestApproval(newP.id); if (r.ok) toast(`Re-approval requested for ${newP.id}.`, 'ok'); else toast(r.error || 'The re-approval request could not be recorded.', 'bad') }}>Request Reapproval</Button>
           </Gated>
         </>} />
       <div className="space-y-4">

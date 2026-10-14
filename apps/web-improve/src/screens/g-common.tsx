@@ -1,11 +1,18 @@
 import { FanOutCard } from './g-fanout'
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Ban, BarChart3, Bot, Check, FileText, GitBranch, Info, Lock, Send, ShieldCheck, Terminal, User, Cog, X } from 'lucide-react'
-import { useDirty, useStore } from '../store'
+import { useDirty, useServices } from '../store'
 import { eligibility } from '../features/operations/preflight'
-import { planVer, toolFacets } from '../data'
+import { planVer, toolFacets, USERS } from '../data'
 import type { AiMode, ChatMsg, Conversation, Plan, ToolEvent } from '../data'
+import { sendChat, stopChat } from '../features/demo/runtime'
+import { editPlanDraftTransaction, revisePlanTransaction } from '../features/plans/service'
 import { useTraceWrites } from '../features/trace/query'
+import { go, useRoute } from '../router/navigate'
+import { useCan, useDb, useReadOnly } from '../state/console'
+import { useAuthStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import type { ConsoleServices } from '../domain/service-factory'
 import { Banner, Button, DemoTag, Field, Gated, IdLink, Modal, Status, Tabs, Textarea, cx } from '../ui'
 
 export const MODES: { id: AiMode; label: string; hint: string }[] = [
@@ -14,6 +21,18 @@ export const MODES: { id: AiMode; label: string; hint: string }[] = [
   { id: 'execution', label: 'Approved Execution', hint: 'Runs only approved plans after preflight and confirmation.' },
 ]
 export const STARTERS = ['Summarize the approved scope', 'Review agent readiness', 'Propose a validation plan', 'Explain recent operation results']
+
+/* Ticket 67 wave 7: the store's request context (actorCtx), mirrored — the
+   persona resolves at call time (the override-aware `me`, read from the
+   authorities so a failing authority read never reaches this render) with
+   corr 'legacy'. */
+function actorCtxOf(services: ConsoleServices, projectId: string) {
+  const name = useAuthStore.getState().meName
+  const base = USERS.find((u) => u.name === name)!
+  const ov = services.authority.snapshot().org.members[name]?.role
+  const me = ov ? { ...base, role: ov } : base
+  return { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }
+}
 
 /** Ensure a timestamp always carries the (UTC+7) label. */
 export const tz = (t?: string) => (!t ? '—' : /UTC\+7/.test(t) ? t : `${t} (UTC+7)`)
@@ -25,7 +44,7 @@ export function Pill({ tone = 'neutral', children }: { tone?: keyof typeof TONE_
 
 /** Execution eligibility — separate from the selected AI mode. */
 export function EligBadge({ pid }: { pid: string }) {
-  const { db } = useStore()
+  const db = useDb()
   const el = eligibility(db, pid)
   const Icon = el.kind === 'locked' ? Lock : el.kind === 'closed' ? Ban : Check
   return <span title={el.reasons.map((r) => r.text).join('; ') || el.label}><Pill tone={el.tone}><Icon size={12} aria-hidden />Eligibility: {el.label}</Pill></span>
@@ -33,7 +52,7 @@ export function EligBadge({ pid }: { pid: string }) {
 
 /** Failure / agent-loss detection for the running operation of a project (AI-V3-07). */
 export function useReplan(pid: string) {
-  const { db } = useStore()
+  const db = useDb()
   const op = db.operations.find((o) => o.projectId === pid && ['running', 'paused'].includes(o.status) && o.planId)
   if (!op) return null
   const idx = op.steps.findIndex((x) => ['review', 'fail', 'unknown'].includes(x.status))
@@ -45,7 +64,10 @@ export function useReplan(pid: string) {
 }
 
 export function ReplanPanel({ pid, compact }: { pid: string; compact?: boolean }) {
-  const { db, A, go, can, toast } = useStore()
+  const db = useDb()
+  const services = useServices()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const r = useReplan(pid)
   if (!r || !r.cur) return null
   const { op, idx, step, lost, cur, pending } = r
@@ -56,9 +78,15 @@ export function ReplanPanel({ pid, compact }: { pid: string; compact?: boolean }
   const changed = lost.length ? `Replace lost agent ${lost.join(', ')} with ${healthy[0] || 'an available project agent'}` : planStep ? `Step ${planStep.id} (${planStep.name}): add operator re-check before continuing; fallback = skip and record` : 'Re-validate remaining steps'
   const create = () => {
     const changes = [changed]
-    const id = A.revisePlan(cur.id, changes, 'Created after step review / agent loss')
+    /* Ticket 67 wave 7: the legacy A.revisePlan/A.editPlan entries, mirrored —
+       the plan's project binding resolves from the one authority at call time
+       and the typed results bridge back to the legacy shapes (a refused
+       revision leaves `id` empty and the edit refuses the same way). */
+    const projectId = services.authority.snapshot().plans.find((x) => x.id === cur.id)?.projectId
+    const revised = projectId ? revisePlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), cur.id, changes, 'Created after step review / agent loss') : undefined
+    const id = revised?.ok ? revised.data.planId : ''
     const base = cur.steps.map((x, i) => (i === idx ? { ...x, needsApproval: true, risk: (x.risk === 'low' ? 'medium' : x.risk) as typeof x.risk, rationale: `${x.rationale} Revised after review: operator re-check required.` } : lost.includes(x.agent) && healthy[0] ? { ...x, agent: healthy[0] } : x))
-    A.editPlan(id, { steps: base })
+    if (projectId) editPlanDraftTransaction(services.authority, services.clock, actorCtxOf(services, projectId), id, { steps: base })
     toast(`Revision ${id} created as a draft. ${op.id} is paused until it is re-approved.`, 'warn')
   }
   const why = !can('plan') ? 'Your role cannot create plan revisions.' : ''
@@ -97,7 +125,7 @@ const bumpLabel = (p: Plan) => { const m = planVer(p).match(/^v(\d+)\.(\d+)$/); 
 
 /** Banner that explains the relationship between selected AI mode and execution eligibility. */
 export function ExecBanner({ conv }: { conv: Conversation }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const el = eligibility(db, conv.projectId)
   const locked = el.kind === 'locked' || el.kind === 'closed'
   if (conv.mode === 'observe') return <div className="border-b border-cyan/30 bg-info-soft px-4 py-1.5 text-xs text-cyan">Observe mode: read-only summaries. No proposals are created.</div>
@@ -122,7 +150,7 @@ export function ExecBanner({ conv }: { conv: Conversation }) {
 }
 
 export function AiSubNav({ current }: { current: string }) {
-  const { go, route } = useStore()
+  const route = useRoute()
   const tabs = [
     { id: 'ai-operator', label: 'Workspace' },
     { id: 'ai-trace', label: 'Tool trace' },
@@ -134,7 +162,7 @@ export function AiSubNav({ current }: { current: string }) {
 }
 
 export function NoProject({ compact }: { compact?: boolean }) {
-  const { setSwitcherOpen } = useStore()
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   return (
     <div role="status" className={cx('flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line bg-subtle text-center', compact ? 'p-5' : 'p-10')}>
       <Lock size={22} className="text-muted" aria-hidden />
@@ -146,7 +174,6 @@ export function NoProject({ compact }: { compact?: boolean }) {
 }
 
 export function PlanCard({ plan, compact }: { plan: Plan; compact?: boolean }) {
-  const { go } = useStore()
   const proposal = plan.status === 'proposed' || plan.status === 'draft'
   return (
     <div className={cx('mt-2 rounded-xl border bg-panel', proposal ? 'border-dashed border-warn/60' : 'border-line')}>
@@ -170,9 +197,8 @@ export function PlanCard({ plan, compact }: { plan: Plan; compact?: boolean }) {
   )
 }
 
-/** Deep link to the trace page; the route path id highlights the event (ticket 41's router projection — the `?event=` duplicate retired in ticket 42). Written through the store's guarded `go` — the single-writer navigation seam (ticket 61e); `go` serializes to the same `#/ai-trace/<encoded-id>` URL the raw hash write used to produce. */
+/** Deep link to the trace page; the route path id highlights the event (ticket 41's router projection — the `?event=` duplicate retired in ticket 42). Written through the router module's guarded `go` — the single-writer navigation seam (ticket 61e); `go` serializes to the same `#/ai-trace/<encoded-id>` URL the raw hash write used to produce. */
 export function useTraceLink() {
-  const { go } = useStore()
   return (id: string) => go('ai-trace', { id })
 }
 
@@ -180,7 +206,10 @@ const FACET_TONE: Record<string, keyof typeof TONE_CLS> = { Allowed: 'ok', Block
 
 /** Tool proposal: Proposed / Policy / Approval / Execution are four INDEPENDENT facets (Policy Allowed is not Executed). */
 export function ToolProposalCard({ tool, compact }: { tool: ToolEvent; compact?: boolean }) {
-  const { db, go, can, readOnly, toast } = useStore()
+  const db = useDb()
+  const can = useCan()
+  const readOnly = useReadOnly()
+  const toast = useToastStore((s) => s.toast)
   const writes = useTraceWrites()
   const trace = useTraceLink()
   const [decision, setDecision] = useState<'allowed' | 'denied' | null>(null)
@@ -261,7 +290,7 @@ const CARD: Record<CardKind, { label: string; icon: typeof Info; tone: keyof typ
 const REF_ROUTE: [RegExp, string][] = [[/^OP-/, 'operation'], [/^PL-/, 'ai-plan'], [/^AG-/, 'agent'], [/^AS-/, 'asset'], [/^EV-/, 'evidence'], [/^FD-/, 'finding']]
 
 function Msg({ m, compact }: { m: ChatMsg; compact?: boolean }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const trace = useTraceLink()
   const plan = m.planId ? db.plans.find((p) => p.id === m.planId) : undefined
   const tool = m.toolId ? db.toolEvents.find((t) => t.id === m.toolId) : undefined
@@ -307,7 +336,8 @@ function Msg({ m, compact }: { m: ChatMsg; compact?: boolean }) {
 }
 
 export function Thread({ conv, compact }: { conv: Conversation | undefined; compact?: boolean }) {
-  const { aiBusy, db } = useStore()
+  const aiBusy = useSessionStore((s) => s.aiBusy)
+  const db = useDb()
   const end = useRef<HTMLDivElement>(null)
   const n = conv?.messages.length
   useEffect(() => { end.current?.scrollIntoView?.({ block: 'end' }) }, [n, aiBusy])
@@ -325,7 +355,12 @@ export function Thread({ conv, compact }: { conv: Conversation | undefined; comp
 
 const drafts: Record<string, string> = {}
 export function Composer({ conv, suggestions = STARTERS, compact }: { conv: Conversation | undefined; suggestions?: string[]; compact?: boolean }) {
-  const { A, aiBusy, readOnly, toast } = useStore()
+  /* Ticket 67 wave 7: the legacy A.sendChat/A.stopChat entries are the demo
+     runtime's own functions (the store's one-line delegates) — the busy flag
+     and the response timer behavior are identical. */
+  const aiBusy = useSessionStore((s) => s.aiBusy)
+  const readOnly = useReadOnly()
+  const toast = useToastStore((s) => s.toast)
   const [text, setText] = useState(() => (conv ? drafts[conv.id] || '' : ''))
   // typed-but-unsent chat input counts as an unsaved draft: project/page switches ask before discarding it
   useDirty(text.trim().length > 0, () => { if (conv) drafts[conv.id] = text })
@@ -335,7 +370,7 @@ export function Composer({ conv, suggestions = STARTERS, compact }: { conv: Conv
   const disabledWhy = !conv ? 'No conversation selected.' : ro ? 'This project is read-only (closed). Reopen it to continue.' : ''
   const send = (t: string) => {
     if (!conv || !t.trim() || busy || ro) return
-    A.sendChat(conv.id, t.trim()); setText(''); delete drafts[conv.id]
+    sendChat(conv.id, t.trim()); setText(''); delete drafts[conv.id]
   }
   return (
     <div className="sticky bottom-0 z-10 border-t border-line bg-panel pt-3">
@@ -353,7 +388,7 @@ export function Composer({ conv, suggestions = STARTERS, compact }: { conv: Conv
           placeholder="Ask Raptix AI about this project..." className="min-h-[44px] flex-1 resize-none rounded-lg border border-line bg-panel px-3 py-2 text-sm placeholder:text-muted focus:border-accent focus:outline-none disabled:opacity-60" />
         <div className="flex flex-col gap-1.5">
           {!compact && <Button size="sm" onClick={() => toast('Evidence picker is not available in this demo.', 'info' as any)}>Attach Evidence</Button>}
-          {conv && aiBusy === conv.id ? <Button size="sm" variant="danger" onClick={() => { A.stopChat(conv.id); toast('Response generation stopped.', 'info') }}>Stop</Button>
+          {conv && aiBusy === conv.id ? <Button size="sm" variant="danger" onClick={() => { stopChat(conv.id); toast('Response generation stopped.', 'info') }}>Stop</Button>
             : <Button variant="primary" icon={Send} disabled={!text.trim() || !!disabledWhy || busy} title={busy ? 'Wait for the current response or stop it before sending another message.' : undefined} onClick={() => send(text)}>Send</Button>}
         </div>
       </div>

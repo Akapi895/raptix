@@ -19,12 +19,14 @@ import { useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { Ban, CheckCircle2, CircleDashed, Clock, HelpCircle, Layers, Loader2, PauseCircle, RotateCcw, ShieldQuestion, Users, XCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useStore } from '../store'
 import { BRANCH_LABEL, BRANCH_TERMINAL } from '../data'
 import type { Agent, Branch, BranchState, Db } from '../data'
 import { BranchReadError, useBranch, useBranchGroup, useBranchGroups, useCancelBranch, useReassignBranch, useRetryBranch } from '../features/branches/query'
 import type { BranchCounts, BranchRow } from '../features/branches/service'
 import type { BranchGroup } from '../domain/entities'
+import { go, useRoute } from '../router/navigate'
+import { useCan, useDb } from '../state/console'
+import { useToastStore } from '../state/stores'
 import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Kpi, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Table, Textarea, Timeline, cx } from '../ui'
 import { tz } from './g-common'
 
@@ -71,7 +73,7 @@ const isConn = (a?: Agent) => !!a && (a.status === 'online' || a.status === 'idl
 const APPROVAL_LABEL: Record<Branch['approval'], string> = { none: 'Not required', pending: 'Pending', approved: 'Approved', denied: 'Denied' }
 
 function useLinks() {
-  const { go, db } = useStore()
+  const db = useDb()
   return {
     agent: (id: string) => <IdLink onClick={() => go('agent', { id })}>{id}</IdLink>,
     op: (id: string) => <IdLink onClick={() => go('operation', { id })}>{id}</IdLink>,
@@ -88,7 +90,7 @@ function useLinks() {
 
 /* ───────── Compact card ───────── */
 export function FanOutCard({ groupId }: { groupId: string }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const g = db.branchGroups.find((x) => x.id === groupId)
   if (!g) return <Card><div className="text-sm text-muted">Branch group {groupId} was not found.</div></Card>
   const s = groupSummary(db, groupId)
@@ -116,7 +118,7 @@ export function FanOutCard({ groupId }: { groupId: string }) {
 /* ───────── Allocation view ───────── */
 type AllocFilter = 'all' | 'connected' | 'busy' | 'available' | 'disc'
 export function AllocationView({ projectId }: { projectId: string }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const L = useLinks()
   const [f, setF] = useState<AllocFilter>('all')
   const al = allocation(db, projectId)
@@ -178,7 +180,7 @@ export function AllocationView({ projectId }: { projectId: string }) {
 
 /* ───────── Branch detail (drawer + page share) ───────── */
 function BranchBody({ id }: { id: string }) {
-  const { go, can } = useStore()
+  const can = useCan()
   const L = useLinks()
   const q = useBranch(id)
   const retry = useRetryBranch()
@@ -259,7 +261,6 @@ function BranchBody({ id }: { id: string }) {
   )
 }
 function IdLinkGroup({ id }: { id: string }) {
-  const { go } = useStore()
   return <IdLink onClick={() => go('ai-fanout', { id })}>{id}</IdLink>
 }
 
@@ -268,7 +269,7 @@ type ReassignRun = ReturnType<typeof useReassignBranch>
 type CancelRun = ReturnType<typeof useCancelBranch>
 
 function RetryModal({ id, open, onClose, run }: { id: string; open: boolean; onClose: () => void; run: RetryRun }) {
-  const { toast } = useStore()
+  const toast = useToastStore((s) => s.toast)
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
   const submit = () => {
@@ -289,7 +290,7 @@ function RetryModal({ id, open, onClose, run }: { id: string; open: boolean; onC
   )
 }
 function ReassignModal({ id, current, candidates, open, onClose, run }: { id: string; current: string; candidates: { id: string; host: string; connected: boolean }[]; open: boolean; onClose: () => void; run: ReassignRun }) {
-  const { toast } = useStore()
+  const toast = useToastStore((s) => s.toast)
   const [agent, setAgent] = useState('')
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
@@ -321,7 +322,7 @@ function ReassignModal({ id, current, candidates, open, onClose, run }: { id: st
   )
 }
 function CancelModal({ id, groupSize, stepId, open, onClose, run }: { id: string; groupSize: number; stepId: string; open: boolean; onClose: () => void; run: CancelRun }) {
-  const { toast } = useStore()
+  const toast = useToastStore((s) => s.toast)
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
   const submit = () => {
@@ -343,7 +344,6 @@ function CancelModal({ id, groupSize, stepId, open, onClose, run }: { id: string
 }
 
 export function BranchDrawer({ branchId, onClose }: { branchId: string; onClose: () => void }) {
-  const { go } = useStore()
   return (
     <Drawer open onClose={onClose} width={560} title={<span className="flex items-center gap-2">Branch Inspector <Mono>{branchId}</Mono></span>}
       footer={<Button onClick={() => go('ai-branch', { id: branchId })}>Open full page</Button>}>
@@ -353,7 +353,7 @@ export function BranchDrawer({ branchId, onClose }: { branchId: string; onClose:
 }
 
 export function BranchPage() {
-  const { route, go } = useStore()
+  const route = useRoute()
   const crumbs = [{ label: 'AI Operator', to: () => go('ai-operator') }, { label: 'Execution Graph', to: () => go('ai-fanout', { id: 'BG-014-01' }) }, { label: route.id || 'Branch' }]
   const q = useBranch(route.id || '')
   if (q.isPending) return <><PageHeader title="Branch Inspector" crumbs={crumbs} /><p className="text-sm text-muted">Loading branch…</p></>
@@ -456,7 +456,7 @@ function FanIn({ counts, rows }: { counts: BranchCounts; rows: BranchRow[] }) {
 /* ───────── Fan-out page ───────── */
 const ALL = 'all'
 export function FanOutPage() {
-  const { route, go } = useStore()
+  const route = useRoute()
   const L = useLinks()
   const groupsQ = useBranchGroups()
   const gid = route.id || groupsQ.data?.groups[0]?.group.id
