@@ -9,7 +9,8 @@
 import {
   Activity, BookOpen, Bot, FileText, FolderKanban, LayoutDashboard, Network, RadioTower, Server, Settings, ShieldAlert, Monitor, type LucideIcon,
 } from 'lucide-react'
-import { useStore } from '../store'
+import type { Operation } from '../data'
+import { useDb, useCan, useMe, useScoped } from '../state/console'
 
 export const NAV: { group: string; items: { page: string; label: string; icon: LucideIcon; match: string[] }[] }[] = [
   { group: 'OVERVIEW', items: [{ page: 'command-center', label: 'Command Center', icon: LayoutDashboard, match: ['command-center', 'dashboard', 'tasks'] }] },
@@ -51,7 +52,10 @@ export const isWide = (r: { page: string; tab?: string }) => WIDE_PAGES.includes
 
 /** Pending-work badges shown on the sidebar items, derived from the shared store read model. */
 export function useBadges() {
-  const { db, scoped, me, can } = useStore()
+  const db = useDb()
+  const me = useMe()
+  const can = useCan()
+  const scoped = useScoped<Operation>()
   const d = db as any
   const pendingAppr = (d.approvals || []).filter((a: any) => a.status === 'pending').length
   return {

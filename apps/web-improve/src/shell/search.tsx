@@ -3,9 +3,10 @@
  * monolith verbatim). Results are scoped reads from the shared store; recent
  * searches stay session-local module state exactly as before.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CornerDownLeft, History, Search } from 'lucide-react'
-import { useStore } from '../store'
+import { go } from '../router/navigate'
+import { useAccessible, useActiveProject, useDb, useMe, useScoped } from '../state/console'
 import { sessionPermOf } from '../features/c2/service'
 import { IconButton, cx } from '../ui'
 import { NAV } from './nav'
@@ -14,7 +15,14 @@ let RECENT: string[] = []
 type Hit = { group: string; id: string; label: string; meta?: string; to: () => void }
 const GROUP_ORDER = ['Projects', 'Operations', 'Plans', 'Findings', 'Sessions', 'Agents', 'Pages']
 export function GlobalSearch() {
-  const { accessible, db, scoped, go, project, me } = useStore()
+  const db = useDb()
+  const accessible = useAccessible()
+  /* The seam's filter keeps the element type at each call site (it returns
+     exactly the elements it receives), like the store's generic `scoped`. */
+  const scopeFilter = useScoped()
+  const scoped = useCallback(<T extends { projectId: string }>(arr: T[]) => scopeFilter(arr) as T[], [scopeFilter])
+  const project = useActiveProject()
+  const me = useMe()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const [idx, setIdx] = useState(0)
@@ -47,7 +55,9 @@ export function GlobalSearch() {
       ...NAV.flatMap((g) => g.items).filter((i) => m(i.label, i.page)).map((i) => ({ group: 'Pages', id: i.label, label: 'Open page', to: () => go(i.page) })),
     ]
     return GROUP_ORDER.flatMap((g) => all.filter((h) => h.group === g).slice(0, 4))
-  }, [q, db, accessible, scoped, go, me])
+    /* `go` is the navigate module's stable function (an outer-scope value, not
+       a dependency): the memo is pure over its data inputs, as before. */
+  }, [q, db, accessible, scoped, me])
   const choose = (h: Hit) => {
     const k = q.trim()
     if (k) RECENT = [k, ...RECENT.filter((x) => x !== k)].slice(0, 5)
