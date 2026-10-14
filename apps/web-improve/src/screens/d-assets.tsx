@@ -626,6 +626,7 @@ function AssetDetail() {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- assets screen module: helper co-exported with screens
 export const assetRoutes = {
   assets: withLoading(function Assets() { const route = useRoute(); return route.tab === 'scope-map' ? <AssetScope /> : <AssetList /> }),
   'asset-new': withLoading(AssetNew),

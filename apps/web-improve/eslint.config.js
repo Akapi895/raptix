@@ -2,9 +2,8 @@ import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
-// Rules are 'warn' only where the pre-Figma-export baseline still violates them;
-// see .scratch/web-improve-refactor/diagnostics.md for the recorded inventory and
-// the owning tickets that must re-promote each rule to 'error'.
+// Rules are 'error' since ticket 69 cleared the last recorded warnings; the
+// historical inventory lives in .scratch/web-improve-refactor/diagnostics.md.
 
 export default tseslint.config(
   { ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.ua/**'] },
@@ -13,22 +12,22 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: {
-      'react-hooks/rules-of-hooks': 'warn',
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
     },
   },
   {
     files: ['src/**/*.{ts,tsx}'],
     plugins: { 'react-refresh': reactRefresh },
     rules: {
-      'react-refresh/only-export-components': 'warn',
+      'react-refresh/only-export-components': 'error',
     },
   },
   {
     files: ['**/*.{ts,tsx}'],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': 'error',
     },
   },
 )
