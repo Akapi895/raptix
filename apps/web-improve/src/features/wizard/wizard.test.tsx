@@ -9,31 +9,23 @@
  * reasons; the handler refuses unauthorized/invalid creations).
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { StoreProvider, useServices, useStore, type ProjectDraft, type Store } from '../../store'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import type { ProjectDraft } from './draft'
+import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
+import { useSessionStore } from '../../state/session'
+import { useProjectStore, useToastStore } from '../../state/stores'
+import { currentRoute, go } from '../../router/navigate'
+import { decideApprovalTransaction } from '../approvals/service'
+import { mountServices } from '../../test/helpers'
 import { ProjectNew } from '../../screens/b-wizard'
 import { defaultWizardDraft, toLegacyProjectDraft, validateWizardStep } from './draft'
 import { createProjectTransaction } from './service'
 
 afterEach(cleanup)
 
-function Probe({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
 function mountWizard() {
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <Probe ready={(s, v) => { store = s; svc = v }} />
-      <ProjectNew />
-    </StoreProvider>,
-  )
-  return { store: () => store, svc: () => svc!, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return mountServices(<ProjectNew />)
 }
 
 const fillInfo = () => {
@@ -184,7 +176,7 @@ describe('migrated scope/ROE steps (ticket 18)', () => {
     expect(await screen.findByText('web-lab-01')).toBeInTheDocument()
     addAsset('web-lab-01-dup', 'web-lab-01.lab.local')
     expect(screen.getByText('Identifier web-lab-01.lab.local is already in the list.')).toBeInTheDocument()
-    expect(h.store().db.projects.length).toBe(6)
+    expect(h.db().projects.length).toBe(6)
   })
 
   it('step 4 enforces the approver cross-field rules before advancing', async () => {
@@ -220,7 +212,7 @@ describe('migrated scope/ROE steps (ticket 18)', () => {
   })
 
   it('asset additions and ROE entries survive back/forward navigation with the dirty guard armed', async () => {
-    const h = await walkToScope()
+    await walkToScope()
     fireEvent.change(screen.getByLabelText(/Scope Description/), { target: { value: 'Lab environment, restricted zone excluded.' } })
     addAsset('web-lab-01', 'web-lab-01.lab.local')
     fireEvent.click(screen.getByRole('tab', { name: /Excluded Targets/ }))
@@ -228,7 +220,7 @@ describe('migrated scope/ROE steps (ticket 18)', () => {
     expect(screen.getByText('restricted-zone')).toBeInTheDocument()
     expect(screen.getByText('Do not touch. Excluded from operation target selection')).toBeInTheDocument()
     expect(screen.getByText('Draft: not saved')).toBeInTheDocument()
-    await waitFor(() => expect(h.store().dirty).toBe(true))
+    await waitFor(() => expect(useSessionStore.getState().dirty).toBe(true))
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }))
     await screen.findByLabelText(/Emergency Contact/)
@@ -255,7 +247,7 @@ describe('migrated scope/ROE steps (ticket 18)', () => {
     await screen.findByLabelText(/Scope Description/)
     fireEvent.change(screen.getByLabelText(/Scope Description/), { target: { value: 'Lab environment.' } })
 
-    h.run(() => { h.store().setMe('Jordan Lee') })
+    h.as('Jordan Lee')
     expect(screen.getByLabelText(/Scope Description/)).toHaveValue('Lab environment.')
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByLabelText(/Main Objective/)).toHaveValue('Assess SOC detection and response against an insider-threat scenario.')
@@ -280,27 +272,26 @@ describe('migrated scope/ROE steps (ticket 18)', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /I confirm the scope/ }))
     expect(submit).toBeEnabled()
     fireEvent.click(submit)
-    await waitFor(() => expect(h.store().db.projects.length).toBe(7))
-    const p = h.store().db.projects[0]
+    await waitFor(() => expect(h.db().projects.length).toBe(7))
+    const p = h.db().projects[0]
     expect(p.id).toBe('RT-2026-021')
     expect(p.status).toBe('pending')
     expect(p.roeStatus).toBe('pending')
     expect(p.emergency).toBe('Robin Vale — +1 (555) 010-0100')
-    const assets = h.store().db.assets.filter((a) => a.projectId === 'RT-2026-021')
+    const assets = h.db().assets.filter((a) => a.projectId === 'RT-2026-021')
     expect(assets).toHaveLength(1)
     expect(assets[0].scope).toBe('pending')
 
-    const apr = h.store().db.approvals.find((a) => a.projectId === 'RT-2026-021' && a.type === 'Project creation')
+    const apr = h.db().approvals.find((a) => a.projectId === 'RT-2026-021' && a.type === 'Project creation')
     expect(apr?.status).toBe('pending')
     // Four-eyes (ticket 21): the submitting manager cannot decide their own request.
-    let self!: { ok: boolean; error?: string }
-    h.run(() => { self = h.store().A.decideApproval(apr!.id, 'approved', 'ok') })
+    const self = h.run(() => decideApprovalTransaction(h.svc().authority, h.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'all', corr: 'wizard-self' }, apr!.id, 'approved', 'ok'))
     expect(self.ok).toBe(false)
-    expect(self.error).toContain('Only a Reviewer or Organization Admin')
-    h.run(() => { h.store().setMe('Pat Kim') })
-    h.run(() => { h.store().A.decideApproval(apr!.id, 'approved', 'ok') })
-    expect(h.store().db.projects[0].status).toBe('approved')
-    expect(h.store().db.assets.find((a) => a.projectId === 'RT-2026-021')!.scope).toBe('in')
+    if (!self.ok) expect(self.failure.message).toContain('Only a Reviewer or Organization Admin')
+    h.as('Pat Kim')
+    h.run(() => { expect(decideApprovalTransaction(h.svc().authority, h.svc().clock, { actor: { id: 'Pat Kim', role: 'reviewer' }, projectId: 'all', corr: 'wizard-decide' }, apr!.id, 'approved', 'ok').ok).toBe(true) })
+    expect(h.db().projects[0].status).toBe('approved')
+    expect(h.db().assets.find((a) => a.projectId === 'RT-2026-021')!.scope).toBe('in')
   })
 })
 
@@ -309,31 +300,31 @@ describe('dirty guard (story 5 foundation)', () => {
     const h = mountWizard()
     fireEvent.change(screen.getByLabelText(/Project Name/), { target: { value: 'Dirty Draft' } })
     expect(screen.getByText('Draft: not saved')).toBeInTheDocument()
-    await waitFor(() => expect(h.store().dirty).toBe(true))
+    await waitFor(() => expect(useSessionStore.getState().dirty).toBe(true))
 
-    h.run(() => { h.store().go('projects') })
-    expect(h.store().unsaved).not.toBeNull()
-    expect(h.store().unsaved?.save).toBeTypeOf('function')
+    h.run(() => { go('projects') })
+    expect(useSessionStore.getState().unsaved).not.toBeNull()
+    expect(useSessionStore.getState().unsaved?.save).toBeTypeOf('function')
     expect(screen.getByLabelText(/Project Name/)).toBeInTheDocument()
 
-    h.run(() => { h.store().unsaved!.next() })
-    await waitFor(() => expect(h.store().route.page).toBe('projects'))
-    expect(h.store().dirty).toBe(false)
-    expect(h.store().db.projects.length).toBe(6)
+    h.run(() => { useSessionStore.getState().unsaved!.next() })
+    await waitFor(() => expect(currentRoute().page).toBe('projects'))
+    expect(useSessionStore.getState().dirty).toBe(false)
+    expect(h.db().projects.length).toBe(6)
   })
 
   it('the guard Save Draft callback creates the draft through the legacy action and leaves', async () => {
     const h = mountWizard()
     fillInfo()
     fireEvent.change(screen.getByLabelText(/Project Name/), { target: { value: 'Guard Saved Draft' } })
-    await waitFor(() => expect(h.store().dirty).toBe(true))
+    await waitFor(() => expect(useSessionStore.getState().dirty).toBe(true))
 
-    h.run(() => { h.store().go('projects') })
-    h.run(() => { h.store().unsaved!.save!() })
-    await waitFor(() => expect(h.store().db.projects.length).toBe(7))
-    expect(h.store().db.projects[0].status).toBe('draft')
-    await waitFor(() => expect(h.store().route.page).toBe('project'))
-    expect(h.store().pid).toBe('RT-2026-021')
+    h.run(() => { go('projects') })
+    h.run(() => { useSessionStore.getState().unsaved!.save!() })
+    await waitFor(() => expect(h.db().projects.length).toBe(7))
+    expect(h.db().projects[0].status).toBe('draft')
+    await waitFor(() => expect(currentRoute().page).toBe('project'))
+    expect(useProjectStore.getState().pid).toBe('RT-2026-021')
   })
 })
 
@@ -359,28 +350,28 @@ describe('compat creation flow (single legacy path)', () => {
     expect(screen.getByText(/Submit is blocked by:/)).toBeInTheDocument()
     expect(screen.getAllByText('At least one in-scope asset').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Emergency contact provided').length).toBeGreaterThan(0)
-    expect(h.store().db.projects.length).toBe(6)
+    expect(h.db().projects.length).toBe(6)
 
     fireEvent.click(screen.getByRole('button', { name: 'Create Draft' }))
-    await waitFor(() => expect(h.store().db.projects.length).toBe(7))
-    const p = h.store().db.projects[0]
+    await waitFor(() => expect(h.db().projects.length).toBe(7))
+    const p = h.db().projects[0]
     expect(p.id).toBe('RT-2026-021')
     expect(p.status).toBe('draft')
     expect(p.roeStatus).toBe('draft')
     expect(p.start).toBe('Oct 20, 2026')
     expect(p.desc).toContain('Main objective: Assess SOC detection and response against an insider-threat scenario.')
     expect(p.objectives[0].text).toBe('Reach the lab domain admin')
-    await waitFor(() => expect(h.store().route.page).toBe('project'))
-    expect(h.store().pid).toBe('RT-2026-021')
-    expect(h.store().toasts.some((t) => t.text === 'Saved draft RT-2026-021 with draft ROE-021-v1')).toBe(true)
+    await waitFor(() => expect(currentRoute().page).toBe('project'))
+    expect(useProjectStore.getState().pid).toBe('RT-2026-021')
+    expect(useToastStore.getState().toasts.some((t) => t.text === 'Saved draft RT-2026-021 with draft ROE-021-v1')).toBe(true)
   })
 
   it('Save Draft on an invalid step 1 refuses with a warning and stays on the wizard', async () => {
     const h = mountWizard()
     fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }))
     expect(await screen.findByText('Enter a project name.')).toBeInTheDocument()
-    expect(h.store().db.projects.length).toBe(6)
-    expect(h.store().toasts.some((t) => t.text === 'Complete a valid Step 1 before saving a draft.')).toBe(true)
+    expect(h.db().projects.length).toBe(6)
+    expect(useToastStore.getState().toasts.some((t) => t.text === 'Complete a valid Step 1 before saving a draft.')).toBe(true)
     expect(screen.getByLabelText(/Project Name/)).toBeInTheDocument()
   })
 })
@@ -413,7 +404,7 @@ describe('review gates, the submission transaction and handler refusals (ticket 
     expect(screen.getByText(/Submit is blocked by:/)).toBeInTheDocument()
     expect(screen.getAllByText('At least one in-scope asset').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Emergency contact provided').length).toBeGreaterThan(0)
-    expect(h.store().db.projects.length).toBe(6)
+    expect(h.db().projects.length).toBe(6)
 
     /* The failed attempt changed nothing: retry is permitted on the same draft. */
     fireEvent.click(screen.getAllByRole('button', { name: 'Resolve' })[0])
@@ -431,19 +422,19 @@ describe('review gates, the submission transaction and handler refusals (ticket 
     const submit = screen.getByRole('button', { name: 'Submit for Approval' })
     expect(submit).toBeEnabled()
     fireEvent.click(submit)
-    await waitFor(() => expect(h.store().db.projects.length).toBe(7))
+    await waitFor(() => expect(h.db().projects.length).toBe(7))
 
-    const created = h.store().db.projects.filter((p) => p.id === 'RT-2026-021')
+    const created = h.db().projects.filter((p) => p.id === 'RT-2026-021')
     expect(created).toHaveLength(1)
     expect(created[0].status).toBe('pending')
     expect(created[0].roeStatus).toBe('pending')
     expect(created[0].members.map((m) => m.user)).toEqual(expect.arrayContaining(['Alex Morgan', 'Pat Kim']))
-    expect(h.store().db.assets.filter((a) => a.projectId === 'RT-2026-021')).toHaveLength(1)
-    const aprs = h.store().db.approvals.filter((a) => a.projectId === 'RT-2026-021' && a.type === 'Project creation')
+    expect(h.db().assets.filter((a) => a.projectId === 'RT-2026-021')).toHaveLength(1)
+    const aprs = h.db().approvals.filter((a) => a.projectId === 'RT-2026-021' && a.type === 'Project creation')
     expect(aprs).toHaveLength(1)
     expect(aprs[0].status).toBe('pending')
-    expect(h.store().db.notices.some((n) => n.text === 'RT-2026-021 is waiting for your ROE approval' && n.projectId === 'RT-2026-021')).toBe(true)
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Created project and submitted for approval', obj: 'RT-2026-021', actor: 'Alex Morgan' })
+    expect(h.db().notices.some((n) => n.text === 'RT-2026-021 is waiting for your ROE approval' && n.projectId === 'RT-2026-021')).toBe(true)
+    expect(h.db().audit[0]).toMatchObject({ action: 'Created project and submitted for approval', obj: 'RT-2026-021', actor: 'Alex Morgan' })
     off()
 
     /* One atomic commit published every created entity together, and the
@@ -451,8 +442,8 @@ describe('review gates, the submission transaction and handler refusals (ticket 
     expect(seen).toHaveLength(1)
     expect(seen[0].corr).toBe('legacy')
     expect(seen[0].entities.map((e) => e.kind)).toEqual(expect.arrayContaining(['project', 'asset', 'approval', 'notice', 'audit']))
-    await waitFor(() => expect(h.store().pid).toBe('RT-2026-021'))
-    expect(h.store().toasts.some((t) => t.text === 'Created RT-2026-021 and submitted for approval')).toBe(true)
+    await waitFor(() => expect(useProjectStore.getState().pid).toBe('RT-2026-021'))
+    expect(useToastStore.getState().toasts.some((t) => t.text === 'Created RT-2026-021 and submitted for approval')).toBe(true)
   })
 
   it('the creation handler refuses unauthorized actors and invalid drafts without committing', () => {
@@ -481,16 +472,15 @@ describe('review gates, the submission transaction and handler refusals (ticket 
   it('an unauthorized persona is gated in the UI and refused by the handler-backed action', async () => {
     const h = mountWizard()
     fillInfo()
-    await waitFor(() => expect(h.store().dirty).toBe(true))
+    await waitFor(() => expect(useSessionStore.getState().dirty).toBe(true))
 
-    h.run(() => { h.store().setMe('Casey Nguyen (Client)') })
+    h.as('Casey Nguyen (Client)')
     expect(screen.getByText('You do not have permission to create projects')).toBeInTheDocument()
 
     const draft: ProjectDraft = toLegacyProjectDraft({ ...defaultWizardDraft([], 'Casey Nguyen (Client)'), name: 'Viewer Probe', client: 'Probe Client (Demo)' })
-    let out!: string
-    h.run(() => { out = h.store().A.createProject(draft, false) })
-    expect(out).toBe('')
-    expect(h.store().db.projects.length).toBe(6)
+    const refused = h.run(() => createProjectTransaction(h.svc().authority, h.svc().clock, { actor: { id: 'Casey Nguyen (Client)', role: 'viewer' }, projectId: '', corr: 'wizard-viewer' }, draft, false))
+    expect(refused.ok).toBe(false)
+    expect(h.db().projects.length).toBe(6)
     expect(screen.getByText('You do not have permission to create projects')).toBeInTheDocument()
   })
 })
