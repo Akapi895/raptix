@@ -18,7 +18,7 @@ import { useServices } from '../state/services'
 import { go, navRawRoute, useRoute } from '../router/navigate'
 import { useMe } from '../state/console'
 import { useServiceProjection } from '../state/projection'
-import { readHeaderNotices, markAllNoticesRead } from '../features/notices/service'
+import { readHeaderNotices, markAllNoticesRead, type NoticeView } from '../features/notices/service'
 import { useSessionStore } from '../state/session'
 import { useAuthStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx } from '../state/stores'
 import { signOut } from '../auth/persona'
@@ -92,7 +92,7 @@ function WorkspaceSwitcher() {
 /* ───────────── Notices ───────────── */
 const CHIPS = ['Approvals', 'Agents', 'Sessions', 'AI plans', 'Reports', 'System'] as const
 type Chip = (typeof CHIPS)[number]
-const catOf = (n: any): Chip => {
+const catOf = (n: NoticeView): Chip => {
   const c = String(n.category || '').toLowerCase()
   if (c) {
     if (c.startsWith('approv')) return 'Approvals'
