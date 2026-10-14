@@ -14,7 +14,8 @@
  */
 import { useMemo } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useServices, useStore } from '../../store'
+import { useServices } from '../../store'
+import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'
 import type { NoticeListRead, NoticeView } from './service'
@@ -34,13 +35,13 @@ export class NoticeReadError extends Error {
 
 /**
  * Query-backed persona-scoped notification list for the header badge and
- * popover. The actor comes from the store's persona projection, so a role
+ * popover. The actor comes from the canonical persona projection, so a role
  * override committed in settings applies to the notice gate immediately.
  */
 export function useNotices() {
   const services = useServices()
   const scope = useQueryScope()
-  const { me } = useStore()
+  const me = useMe()
   return useQuery({
     queryKey: noticeKeys.list(scope),
     queryFn: async (): Promise<NoticeListRead> => {
@@ -69,7 +70,7 @@ const corr = (act: string) => `${act}-${++corrSeq}`
 export function useNoticeWrites() {
   const services = useServices()
   const scope = useQueryScope()
-  const { me } = useStore()
+  const me = useMe()
   return useMemo(() => {
     const actor = () => ({ id: me.name, role: me.role })
     const svc = () => services.notices(actor(), scope.project)

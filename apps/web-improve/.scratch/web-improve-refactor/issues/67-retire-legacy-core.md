@@ -361,7 +361,75 @@ baseline + 7 new − 3 re-enumerated navigate tests from enabler C's recount;
 no existing assertion changed). `npm run build` — succeeds (pre-existing
 chunk-size warning only).
 
-Gaps: browser route exercise skipped (same optional HTTP-check gap; the
-seam derivations are pinned by the new duality suite plus the rbac/policy
-suites, and the runtime paths by the estop/aichat/c-console suites that
+Gaps: browser route exercise skipped (same optional HTTP-check gap as the
+previous batches; the seam derivations are pinned by the new duality suite
+plus the rbac/policy suites, and the runtime paths by the estop/aichat/c-console suites that
 exercise them through real screens).
+
+### Wave 1 (features/ui/router off the store, `wi/67w1-features`)
+
+The first consumer wave: the 10 feature/UI/router files that only consumed
+read state or demo-runtime `A.*` entries leave `useStore()` entirely (the
+remaining `useServices`/`useDirty` imports are canonical seams). Exactly 10
+runtime files touched, +147/−78 runtime lines — far under the caps.
+
+- `src/features/approvals/hooks.ts` (+24/−12): `useSubmitApproval` /
+  `useReopen` call `submitApprovalTransaction` / `reopenProjectTransaction`
+  directly via `useServices()` with the A entry's exact ctx
+  (`{ actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }`,
+  actor from `useMe()`), same refusals (`''`/nothing committed), same
+  toasts (`r.failure.message || '<original fallback>'`), `confirm` from the
+  session authority, `toast` from the toast authority, `db` from `useDb()`.
+- `src/features/copilot/drawer.tsx` (+24/−11): `copilotOpen`/`copilotCtx`/
+  `setCopilotOpen`/`aiMode` ← useUiStore; `pid` ← useProjectStore;
+  `project` ← `useActiveProject()`; `can`/`readOnly` ← `useCan()`/
+  `useReadOnly()`; `toast` ← toast authority; `go` ← router navigate;
+  `A.sendChat` → `sendChat` from the demo runtime.
+- `src/features/estop/ui.tsx` (+31/−19): the 4 sites — `useStopMachine`/
+  `StopProgress`/`EmergencyStopDialog` read `db` via `useDb()`;
+  `EmergencyStopDialog` + `StopStatePanel` use runtime `emergencyStop`/
+  `retryStop`, `useMe()`, `useCan()`, toast store, session store
+  (`stopOutcome`/`setStopOutcome`) and navigate `go`; the estop-`ctx` /
+  acknowledge-now logic and every toast byte are unchanged.
+- `src/features/notices/header-notices.tsx` (+10/−3): useUiStore
+  (`noticesOpen`/`setNoticesOpen`/`setCopilotOpen`), `useMe()`, toast +
+  session (`confirm`) stores, navigate `go`.
+- `src/features/notices/query.ts` (+5/−4) and
+  `src/features/settings/query.ts` (+8/−6): `me` (and settings' `useOrgActor`)
+  re-pointed to `useMe()` from `state/console` — same override-aware
+  authority, same `[me.name, me.role]` memo for the actor ref.
+- `src/features/wizard/use-project-wizard.ts` (+24/−12): `create` runs
+  `createProjectTransaction` directly (ctx `{ actor, projectId: '', corr:
+  'legacy' }`), refusal keeps `''`-semantics (nothing committed, draft kept,
+  same error copy), committed creation performs the raw pid write via
+  `useProjectStore.getState().setPid(res.data.id)`; `db` ← `useDb()`,
+  `me` ← `useMe()`, `go` ← navigate, `toast` ← toast store.
+- `src/ui/guard.tsx` (+4/−2) + `src/ui/use-guard.ts` (+9/−5):
+  `PersonaHint` reads `useMe()` + `useAuthStore((s) => s.setMe)`;
+  `useGuard` composes `useReadOnly`/`useMe`/`useDb`/`useProjectStore` with
+  the identical reason cascade.
+- `src/router/host.tsx` (+8/−4): `DirtyNavBlocker` reads
+  `dirty`/`guarded`/`setDirty` from the session authority; `BoundaryFallback`
+  and `RouteHost` use navigate `go()`/`useRoute()` plus
+  `useAuthStore((s) => s.authed)`.
+
+Checks: `npm run typecheck` — 6 diagnostics, ALL pre-existing at base
+`b02622c` (verified by stashing the wave and re-running; they are the six
+TS2345 `'edit-project'` findings in `src/state/console.test.tsx`, a test
+file this wave must not touch — 0 new, recorded as a gap below).
+`npm run lint` — 168 warnings / 0 errors, unchanged from the enabler-D+E
+tip; all 10 touched files lint clean individually (`$LASTEXITCODE` 0).
+`npm test -- --run --maxWorkers=2` — 955 tests / 72 files green,
+`$LASTEXITCODE` 0, the known parallel-load flake pair did not surface.
+`npm run build` — succeeds, `$LASTEXITCODE` 0 (pre-existing chunk-size
+warning only).
+
+Gaps: the six TS2345 `'edit-project'` errors in
+`src/state/console.test.tsx` predate this wave (present at the base with
+the wave's changes stashed) and sit in a test file outside this wave's
+touch scope — they belong to the enabler-D evidence record / console-suite
+owner. Browser route exercise skipped (same optional HTTP-check gap as the
+earlier batches; the migrated reads/writes are pinned by the drawer, estop,
+notices, settings, wizard, composed-ui and route-host suites that exercise
+them through real mounted screens, and `npm run build` covers the module
+graph).

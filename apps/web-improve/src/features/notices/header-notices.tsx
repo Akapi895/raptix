@@ -10,14 +10,21 @@
  */
 import { useState } from 'react'
 import { Bell, CheckCheck, Mail, MailOpen, X } from 'lucide-react'
-import { useStore } from '../../store'
+import { useMe } from '../../state/console'
+import { useToastStore, useUiStore } from '../../state/stores'
+import { useSessionStore } from '../../state/session'
+import { go } from '../../router/navigate'
 import { Button, IconButton, cx } from '../../ui'
 import { useNotices, useNoticeMutations } from './query'
 import { NOTICE_CHIPS, type NoticeChip } from './service'
 
 export function HeaderNotices() {
-  const s = useStore()
-  const { noticesOpen, setNoticesOpen, setCopilotOpen, go, toast, confirm, me } = s
+  const noticesOpen = useUiStore((s) => s.noticesOpen)
+  const setNoticesOpen = useUiStore((s) => s.setNoticesOpen)
+  const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
   const notices = useNotices()
   const { setRead, dismiss, markAllRead } = useNoticeMutations()
   const [tab, setTab] = useState<'unread' | 'all'>('unread')

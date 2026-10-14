@@ -12,7 +12,8 @@
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useServices, useStore } from '../../store'
+import { useServices } from '../../store'
+import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
 import type { Integration, OrgInvite, OrgProfile, Policy, Role } from '../../domain/entities'
@@ -38,13 +39,14 @@ export class OrgReadError extends Error {
 }
 
 /**
- * The actor for org reads/writes comes from the store's persona projection,
- * which applies committed role overrides — a member whose role was changed in
- * settings is authorized under the new role immediately (no fork between the
- * legacy seam and this typed one). Query keys stay scoped by persona/project.
+ * The actor for org reads/writes comes from the canonical persona projection
+ * (the `useMe` read seam), which applies committed role overrides — a member
+ * whose role was changed in settings is authorized under the new role
+ * immediately (no fork between the legacy seam and this typed one). Query
+ * keys stay scoped by persona/project.
  */
 function useOrgActor() {
-  const { me } = useStore()
+  const me = useMe()
   return useMemo(() => ({ id: me.name, role: me.role }), [me.name, me.role])
 }
 
