@@ -21,6 +21,7 @@
 import { can, projectAccessible, readOnlyContext } from '../../auth/policy'
 import type { Db } from '../../data'
 import { formatDemoInstant } from '../../domain/clock'
+import { stamp } from '../../domain/demo-clock'
 import type { DbAuthority } from '../../domain/database'
 import type { Agent, Group, Project } from '../../domain/entities'
 import type { Clock, RequestContext, ServiceResult } from '../../domain/service'
@@ -157,6 +158,25 @@ export function unassignAgentTransaction(authority: DbAuthority, clock: Clock, c
     d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + clock.now() % 10000, group: 'update', text: `${agentId} was returned to the shared pool`, projectId: from, at, read: false, to: { name: 'project', id: from }, category: 'agents' })
   })
   return { ok: true, data: authority.snapshot().agents.find((x) => x.id === agentId)! }
+}
+
+/* ───────────── Agent status (the legacy raw mutation, ticket 67 wave 5) ───────────── */
+
+/**
+ * Sets an agent's status (the detail screen's disable/enable action). This
+ * is the legacy `A.setAgentStatus` entry moved verbatim — mutate first, then
+ * the 'Disabled agent'/'Enabled agent' audit row bound to the agent's own
+ * project, two commits in the same order with the same demo stamp. No
+ * eligibility gate lives here (the legacy entry had none): the screen owns
+ * the role/read-only reasons, and the disable reason is audited separately
+ * by the caller.
+ */
+export function setAgentStatusTransaction(authority: DbAuthority, ctx: RequestContext, agentId: string, s: Agent['status']): void {
+  const projectId = authority.snapshot().agents.find((x) => x.id === agentId)?.projectId ?? ''
+  authority.commit(ctx.corr, (d) => { d.agents.find((x) => x.id === agentId)!.status = s })
+  authority.commit(ctx.corr, (d) => {
+    d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(agentId) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: ctx.actor.id, role: ROLE_LABEL[ctx.actor.role], action: s === 'disabled' ? 'Disabled agent' : 'Enabled agent', obj: agentId, projectId, result: 'Success', reason: '' })
+  })
 }
 
 /* ───────────── Groups (create / rename / membership) ───────────── */

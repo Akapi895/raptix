@@ -1,16 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
-import { useStore } from '../store'
-import { USERS, type Agent, type Group } from '../data'
+import { useServices } from '../store'
+import { USERS, type Agent, type Group, type Step } from '../data'
 import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from './d-shared'
 import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../features/agents/query'
 import type { AgentKpi } from '../features/agents/service'
 import { BRANCH_LABEL } from '../data'
+import { go, selectProject, useRoute } from '../router/navigate'
+import { useAccessible, useCan, useDb, useMe, useScoped } from '../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { stamp } from '../domain/demo-clock'
+import { ROLE_LABEL } from '../auth/policy'
+import { loseAgent, restoreAgent } from '../features/demo/runtime'
+import { submitApprovalTransaction } from '../features/approvals/service'
+import { setAgentStatusTransaction } from '../features/agents/writes'
 
 const POLICIES = ['Project use only', 'Shared with approval', 'Observe only (no execution)']
 const STATUS_LABEL: Record<string, string> = { online: 'Connected', idle: 'Idle', lost: 'Disconnected', disabled: 'Disabled', unknown: 'Unknown', unhealthy: 'Unhealthy' }
 const ACTIVE_PROJECT = ['active', 'approved']
+
+/** The legacy updateOperation patch fields (the store's private OpDraft subset the raw entry reads). */
+type OpPatch = { name?: string; owner?: string; playbookId?: string; agents?: string[]; assets?: string[]; mode?: string; schedule?: string }
+
+const pad = (n: number) => String(n).padStart(2, '0')
+/** The store's private step-draft builder, verbatim (the raw `A.updateOperation` mirror rebuilds draft steps). */
+const stepsFrom = (names: string[], techs: string[], agents: string[], assets: string[]): Step[] =>
+  names.map((name, i) => ({ id: 'S' + pad(i + 1), name, agent: agents.length ? agents[i % agents.length] : '—', asset: assets.length ? assets[i % assets.length] : '—', technique: techs[i % techs.length], status: 'notrun' as const, ts: '—', dur: '—', output: 'Not run.' }))
 
 /* ───────────── Heartbeat bars (simulated) ───────────── */
 function Heartbeat({ a }: { a: Agent }) {
@@ -31,7 +48,12 @@ function Heartbeat({ a }: { a: Agent }) {
 
 /* ───────────── Group modal (AG-03, ticket 49: typed write handler) ───────────── */
 function GroupModal({ group, onClose }: { group: Group | null; onClose: () => void }) {
-  const { db, pid, accessible, toast, confirm, me } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const accessible = useAccessible()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
   const saveGroup = useSaveGroup()
   const projs = accessible.filter((p) => !['closed', 'cancelled'].includes(p.status))
   const [f, setF] = useState({
@@ -104,7 +126,13 @@ function GroupModal({ group, onClose }: { group: Group | null; onClose: () => vo
 /* ───────────── Request assignment drawer (AG-V3-03, ticket 49: typed immediate assign) ───────────── */
 const isAssignReq = (t: string) => t.startsWith('Agent assignment')
 function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose: () => void }) {
-  const { db, pid, accessible, A, toast, go, can } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const accessible = useAccessible()
+  const me = useMe()
+  const services = useServices()
+  const toast = useToastStore((s) => s.toast)
+  const can = useCan()
   const assign = useAssignAgent()
   const pool = db.agents.filter((a) => a.projectId === '')
   const [agentId, setAgentId] = useState(fixed?.id || pool.find((a) => (a.status === 'online' || a.status === 'idle') && !a.op)?.id || '')
@@ -137,7 +165,8 @@ function AssignDrawer({ agent: fixed, onClose }: { agent: Agent | null; onClose:
   const request = () => {
     setTried(true)
     if (reqWhy || !agent) return
-    A.submitApproval(projectId, 'Agent assignment', note || `Request to assign ${agent.id} for ${duration}`, diff)
+    /* The legacy `A.submitApproval` entry's exact transaction + request context. */
+    submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { projectId, type: 'Agent assignment', note: note || `Request to assign ${agent.id} for ${duration}`, diff })
     toast(`Assignment of ${agent.id} requested. It takes effect only after ${reviewer} approves.`, 'info')
     setSent({ agentId: agent.id, projectId, reviewer, duration })
   }
@@ -236,7 +265,29 @@ const STEP_IMPACT: Record<string, { label: string; tone: string }> = {
   notrun: { label: 'Not run; needs another agent', tone: 'text-muted' },
 }
 function FailurePanel({ a }: { a: Agent }) {
-  const { db, A, go, can, toast, confirm, accessible } = useStore()
+  const db = useDb()
+  const accessible = useAccessible()
+  const me = useMe()
+  const services = useServices()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  const can = useCan()
+  /* The legacy raw `A.updateOperation`/`A.audit` entries, mirrored exactly:
+     one 'legacy' commit each through the one authority (the typed draft
+     update adds role gates and audit rows this path does not take). */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+  const updateOperation = (id: string, dr: OpPatch) =>
+    services.authority.commit('legacy', (d) => {
+      const o = d.operations.find((x) => x.id === id)!
+      Object.assign(o, { name: dr.name ?? o.name, owner: dr.owner ?? o.owner, playbookId: dr.playbookId ?? o.playbookId, agents: dr.agents ?? o.agents, assets: dr.assets ?? o.assets, mode: dr.mode ?? o.mode, schedule: dr.schedule ?? o.schedule })
+      o.preflightAt = undefined; if (o.status === 'ready') o.status = 'draft'; o.updated = stamp()
+      if ((dr.playbookId || dr.agents || dr.assets) && o.status === 'draft' && !o.planId) {
+        const pb = d.playbooks.find((x) => x.id === o.playbookId)
+        const as = o.assets.map((a) => d.assets.find((x) => x.id === a)!).filter(Boolean)
+        o.steps = pb ? stepsFrom(pb.steps, pb.techniques, o.agents, as.map((a) => a.name)) : []
+      }
+    })
   const guard = useGuard(a.projectId || undefined)
   const ops = db.operations.filter((o) => o.agents.includes(a.id) && !['done', 'cancelled'].includes(o.status) && accessible.some((p) => p.id === o.projectId))
   const plans = db.plans.filter((p) => p.agents.includes(a.id) && accessible.some((x) => x.id === p.projectId))
@@ -250,16 +301,16 @@ function FailurePanel({ a }: { a: Agent }) {
   const swap = (o: typeof ops[number], c: Agent) => confirm({
     title: `Replace ${a.id} with ${c.id} in ${o.id}?`, confirmLabel: 'Replace agent', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o.id} is {o.status}. {a.id} ({a.host}) is replaced by {c.id} ({c.host}), same project and scope. Preflight must be re-run before the operation starts; nothing is marked complete.</>,
-    onConfirm: (r) => { A.updateOperation(o.id, { agents: o.agents.map((x) => (x === a.id ? c.id : x)) }); A.audit('Replaced offline agent in operation', `${o.id}: ${a.id} → ${c.id}`, o.projectId, 'Success', r); toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
+    onConfirm: (r) => { updateOperation(o.id, { agents: o.agents.map((x) => (x === a.id ? c.id : x)) }); audit('Replaced offline agent in operation', `${o.id}: ${a.id} → ${c.id}`, o.projectId, 'Success', r); toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
   })
   const requestRepl = (o: typeof ops[number] | null, c: Agent) => confirm({
     title: `Request ${c.id} as replacement for ${a.id}?`, confirmLabel: 'Submit request', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o ? `${o.id} keeps running; ` : ''}the replacement is only reserved after a reviewer approves{!c.projectId ? ` and ${c.id} is assigned from the shared pool to ${a.projectId}` : ''}. The operation is not marked successful and the interrupted steps stay Unknown until re-run.</>,
-    onConfirm: (r) => { A.submitApproval(a.projectId, 'Agent assignment (replacement)', r, `${c.id} → ${a.projectId}; replaces ${a.id}${o ? ` in ${o.id}` : ''}`); toast('Replacement request sent for review.', 'info') },
+    onConfirm: (r) => { submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: a.projectId, corr: 'legacy' }, { projectId: a.projectId, type: 'Agent assignment (replacement)', note: r, diff: `${c.id} → ${a.projectId}; replaces ${a.id}${o ? ` in ${o.id}` : ''}` }); toast('Replacement request sent for review.', 'info') },
   })
   return (
     <div className="mb-4 space-y-4">
-      <Banner tone="bad" title={`Health failure: ${a.id} (${a.host}) is disconnected`} action={<Button size="sm" icon={RefreshCw} disabled={!!editWhy} title={editWhy || 'Restore connection (simulated)'} onClick={() => { A.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore connection</Button>}>
+      <Banner tone="bad" title={`Health failure: ${a.id} (${a.host}) is disconnected`} action={<Button size="sm" icon={RefreshCw} disabled={!!editWhy} title={editWhy || 'Restore connection (simulated)'} onClick={() => { restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore connection</Button>}>
         Last heartbeat: <b>{a.lastSeen}</b>. Status reflects the last observation and may be stale. Disconnection never marks an operation as completed or successful.
       </Banner>
       <div className="grid gap-4 xl:grid-cols-2">
@@ -282,7 +333,7 @@ function FailurePanel({ a }: { a: Agent }) {
         <Card><CardHeader title="Replace or restore" sub="Offered only when scope and approval match" />
           {editWhy && <div className="mb-2"><Locked reason={editWhy} /></div>}
           <ul className="divide-y divide-line rounded-lg border border-line text-sm">
-            <li className="flex flex-wrap items-center gap-2 px-3 py-2"><span className="min-w-0 flex-1"><b>Restore {a.id}</b><span className="block text-xs text-muted">Reconnect the same agent; keeps the original scope and approvals. Simulated.</span></span><Button size="sm" icon={RefreshCw} disabled={!!editWhy} title={editWhy} onClick={() => { A.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button></li>
+            <li className="flex flex-wrap items-center gap-2 px-3 py-2"><span className="min-w-0 flex-1"><b>Restore {a.id}</b><span className="block text-xs text-muted">Reconnect the same agent; keeps the original scope and approvals. Simulated.</span></span><Button size="sm" icon={RefreshCw} disabled={!!editWhy} title={editWhy} onClick={() => { restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button></li>
             {cands.map(({ c, why, kind }) => (
               <li key={c.id} className="px-3 py-2">
                 <div className="flex flex-wrap items-center gap-2"><IdL onClick={() => go('agent', { id: c.id })}>{c.id}</IdL><span className="text-xs text-muted">{c.host} · {c.os}</span><Status kind="agent" value={c.status} size="sm" /></div>
@@ -312,7 +363,10 @@ function FailurePanel({ a }: { a: Agent }) {
 type FleetRow = Agent & { sessions: number; pending?: { id: string; by: string; at: string; reviewer: string } }
 
 function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project' | 'pool'; onNewGroup: () => void; newGroupWhy: string; onAssign: (a: Agent | null) => void }) {
-  const { go, pid, can, confirm, toast } = useStore()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
   const release = useUnassignAgent()
   const [q, setQ] = useState(''), [st, setSt] = useState(''), [os, setOs] = useState(''), [pj, setPj] = useState(''), [gr, setGr] = useState(''), [kpi, setKpi] = useState<'' | AgentKpi>('')
   const [page, setPage] = useState(1)
@@ -420,7 +474,13 @@ function FleetList({ mode, onNewGroup, newGroupWhy, onAssign }: { mode: 'project
 
 /* ───────────── Groups (AG-03, ticket 49: typed membership writes) ───────────── */
 function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: Group) => void; newWhy: string }) {
-  const { db, scoped, go, pid, confirm, toast, setFilter, can } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const scoped = useScoped<Group>()
+  const can = useCan()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
+  const setFilter = useSessionStore((s) => s.setFilter)
   const removeMember = useRemoveFromGroup()
   const groups = scoped(db.groups)
   const guard = useGuard(pid === 'all' ? undefined : pid)
@@ -490,10 +550,12 @@ function GroupsTab({ onNew, onEdit, newWhy }: { onNew: () => void; onEdit: (g: G
 
 /* ───────────── Connectivity & health (AG-04, ticket 48: typed service read) ───────────── */
 function HealthTab() {
-  const { go, A, toast, pid, can, now } = useStore()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const [gr, setGr] = useState('')
-  const [obs, setObs] = useState(now())
+  const [obs, setObs] = useState(stamp())
   const [busy, setBusy] = useState(false)
   /* The whole scoped base (assigned + pool): the connectivity tab reads every
      row the actor may see, filtered by group server-side. */
@@ -512,7 +574,7 @@ function HealthTab() {
     ...(a.status === 'unknown' ? [{ a, kind: 'Unknown state', note: 'Not enough data to conclude the agent state.', fix: 'Refresh and wait for the next heartbeat.', tone: 'warn' as const }] : []),
     ...(a.version < '5.2.0' ? [{ a, kind: 'Outdated version', note: `Agent ${a.version} is behind 5.2.1 and may cause connection errors.`, fix: 'Schedule an agent update.', tone: 'warn' as const }] : []),
   ]), [rows])
-  const refresh = () => { setBusy(true); setTimeout(() => { setBusy(false); setObs(now()); toast('Connectivity refreshed.', 'info') }, 600) }
+  const refresh = () => { setBusy(true); setTimeout(() => { setBusy(false); setObs(stamp()); toast('Connectivity refreshed.', 'info') }, 600) }
   const restoreWhy = guard.ro ? guard.reason : !can('run') ? 'Only Managers and Operators can restore connections.' : ''
   return (
     <>
@@ -554,7 +616,7 @@ function HealthTab() {
               { key: 'act', header: '', render: (a) => (
                 <span className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                   <Button size="sm" variant="ghost" onClick={() => go('agent', { id: a.id })}>Open Details</Button>
-                  {a.status === 'lost' && <Button size="sm" disabled={!!restoreWhy} title={restoreWhy || 'Restore connection (simulated)'} onClick={() => { A.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button>}
+                  {a.status === 'lost' && <Button size="sm" disabled={!!restoreWhy} title={restoreWhy || 'Restore connection (simulated)'} onClick={() => { restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }}>Restore</Button>}
                 </span>
               ) },
             ]}
@@ -581,7 +643,9 @@ function HealthTab() {
 
 /* ───────────── Main page ───────────── */
 function Agents() {
-  const { route, go, pid, can } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const tab = route.tab === 'pool' || route.tab === 'groups' || route.tab === 'health' ? route.tab : 'list'
   const [modal, setModal] = useState<{ g: Group | null } | null>(null)
@@ -605,7 +669,17 @@ function Agents() {
 
 /* ───────────── Detail (AG-02, ticket 48: typed service read + Query) ───────────── */
 function AgentDetail() {
-  const { route, go, pid, me, can, A, confirm, toast, setPid, setSwitcherOpen } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const me = useMe()
+  const can = useCan()
+  const services = useServices()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  /* The legacy `A.audit` entry, mirrored exactly: one 'legacy' commit with the store helper's exact row shape. */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const detail = useAgentDetail(route.id)
   const read = detail.data
   const tab = route.tab || 'overview'
@@ -617,7 +691,7 @@ function AgentDetail() {
   if (detail.isError) {
     const failure = (detail.error as AgentReadError).failure
     if (failure.kind === 'forbidden' && failure.entity?.projectId)
-      return <><PageHeader title={`Agent ${route.id}`} back={back} /><Blocked title="Agent belongs to a different project" actions={<><Button onClick={() => go('agents')}>Back to agents</Button><Button onClick={() => setPid('all')}>View all projects</Button></>}>{failure.message} Data is isolated between projects to prevent using the wrong resources.</Blocked></>
+      return <><PageHeader title={`Agent ${route.id}`} back={back} /><Blocked title="Agent belongs to a different project" actions={<><Button onClick={() => go('agents')}>Back to agents</Button><Button onClick={() => selectProject('all')}>View all projects</Button></>}>{failure.message} Data is isolated between projects to prevent using the wrong resources.</Blocked></>
     return <><PageHeader title="Agent not found" back={back} /><Empty icon={Layers} title={`No agent “${route.id}”`} action={<Button onClick={() => go('agents')}>Back to agents</Button>}>The agent may have been removed, or your account has not been granted access to its project.</Empty></>
   }
   if (!read) return null
@@ -632,11 +706,11 @@ function AgentDetail() {
   const doDisable = () => confirm({
     title: `Disable ${a.id}?`, danger: true, confirmLabel: 'Disable agent', reasonLabel: 'Reason for disabling', reasonRequired: true,
     body: a.op ? <>This agent is used by operation <b>{a.op}</b>. Disabling it may move running steps on this agent to “Unknown”. The operation is not stopped automatically, so check it afterwards.</> : <>The agent cannot be selected for new operations until it is enabled again.</>,
-    onConfirm: (r) => { A.setAgentStatus(a.id, 'disabled'); A.audit('Reason for disabling agent', a.id, a.projectId, 'Success', r); toast(`${a.id} disabled.`, 'warn') },
+    onConfirm: (r) => { setAgentStatusTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: a.projectId, corr: 'legacy' }, a.id, 'disabled'); audit('Reason for disabling agent', a.id, a.projectId, 'Success', r); toast(`${a.id} disabled.`, 'warn') },
   })
   const doEnable = () => confirm({
     title: `Enable ${a.id}?`, confirmLabel: 'Enable agent', body: 'The agent can be selected for operations in its assigned project again.',
-    onConfirm: () => { A.setAgentStatus(a.id, 'online'); toast(`${a.id} enabled.`) },
+    onConfirm: () => { setAgentStatusTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: a.projectId, corr: 'legacy' }, a.id, 'online'); toast(`${a.id} enabled.`) },
   })
   const hist = read.history
   const eligible = read.eligibleProjects
@@ -651,7 +725,7 @@ function AgentDetail() {
         actions={<>
           <Button onClick={() => go('agent', { id: a.id, tab: 'log' })}>View Activity</Button>
           {a.op && <Button icon={ExternalLink} onClick={() => go('operation', { id: a.op! })}>View {a.op}</Button>}
-          {(a.status === 'online' || a.status === 'idle') && !!a.projectId && <Button icon={WifiOff} disabled={!can('run') || projRO} title={projRO ? guard.reason : !can('run') ? 'Only Managers and Operators can simulate this.' : 'Demo: simulate a heartbeat loss (E2E-05)'} onClick={() => confirm({ title: `Simulate disconnect of ${a.id}?`, confirmLabel: 'Simulate disconnect', body: 'Demo only: marks the agent Disconnected so you can review the health-failure and replacement flow. Nothing real is disconnected.', onConfirm: () => { A.loseAgent(a.id); toast(`${a.id} marked disconnected (simulated).`, 'warn') } })}>Simulate disconnect</Button>}
+          {(a.status === 'online' || a.status === 'idle') && !!a.projectId && <Button icon={WifiOff} disabled={!can('run') || projRO} title={projRO ? guard.reason : !can('run') ? 'Only Managers and Operators can simulate this.' : 'Demo: simulate a heartbeat loss (E2E-05)'} onClick={() => confirm({ title: `Simulate disconnect of ${a.id}?`, confirmLabel: 'Simulate disconnect', body: 'Demo only: marks the agent Disconnected so you can review the health-failure and replacement flow. Nothing real is disconnected.', onConfirm: () => { loseAgent(a.id); toast(`${a.id} marked disconnected (simulated).`, 'warn') } })}>Simulate disconnect</Button>}
           {isPool && <Button variant="primary" icon={UserPlus} disabled={!!assignWhy} title={assignWhy || 'Request assignment to a project (approval-gated)'} onClick={() => setAssign(true)}>Request Assignment</Button>}
           {a.status === 'disabled' ? <Button icon={Power} disabled={!!manageWhy} title={manageWhy || 'Enable agent'} onClick={doEnable}>Enable Agent</Button> : <Button variant="danger" icon={Power} disabled={!!manageWhy} title={manageWhy || 'Disable agent'} onClick={doDisable}>Disable Agent</Button>}
         </>} />
@@ -697,7 +771,7 @@ function AgentDetail() {
         <Card><CardHeader title="Connection health & heartbeat" sub="Simulated data, not live measurements." />
           <div className="mb-4"><Heartbeat a={a} /></div>
           <DescList cols={3} items={[{ k: 'Channel', v: a.conn }, { k: 'Average latency', v: a.status === 'lost' ? '—' : <Mono>{Math.round(lat.reduce((x, y) => x + y, 0) / lat.length)} ms</Mono> }, { k: 'Last verified', v: a.lastSeen }, { k: 'Alert threshold', v: '15 minutes' }, { k: 'Heartbeat', v: a.status === 'lost' ? <span className="text-bad">Signal lost</span> : a.status === 'unhealthy' ? <span className="text-warn">Delayed</span> : 'Every 30 seconds' }, { k: 'Version', v: a.version }]} />
-          {a.status === 'lost' && <div className="mt-4 flex flex-wrap items-center gap-3"><Button disabled={guard.ro || !can('run')} onClick={() => { A.restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }} title={guard.ro ? guard.reason : !can('run') ? 'Only Managers and Operators can restore connections.' : ''}>Restore connection (simulated)</Button>{(guard.ro || !can('run')) && <Locked reason={guard.ro ? guard.reason : 'Only Managers and Operators can restore connections.'} />}</div>}
+          {a.status === 'lost' && <div className="mt-4 flex flex-wrap items-center gap-3"><Button disabled={guard.ro || !can('run')} onClick={() => { restoreAgent(a.id); toast(`${a.id} connection restored (simulated).`) }} title={guard.ro ? guard.reason : !can('run') ? 'Only Managers and Operators can restore connections.' : ''}>Restore connection (simulated)</Button>{(guard.ro || !can('run')) && <Locked reason={guard.ro ? guard.reason : 'Only Managers and Operators can restore connections.'} />}</div>}
         </Card>
       )}
       {tab === 'ops' && (

@@ -577,3 +577,63 @@ Gaps: browser route exercise skipped (optional HTTP-check gap per AGENTS.md
 surfaces are pinned by the auth/login, tasks, portfolio, wizard,
 project-detail, console-seam and session-duality suites that exercise them
 through real mounted screens, and `npm run build` covers the module graph).
+### Wave 5 (d screens off the store, `wi/67w5-d`)
+
+The three "d" screens (agents/assets/library) leave `useStore()` entirely —
+19 sites across 3 screens; 4 files touched, +200/-46 runtime lines (including
+the one new transaction), far under the caps.
+
+- `src/features/agents/writes.ts` (+20): new `setAgentStatusTransaction` —
+  the legacy raw `A.setAgentStatus` entry moved verbatim: two commits in the
+  same order (mutate, then the 'Disabled agent'/'Enabled agent' audit row
+  bound to the agent's own project) with the store helper's exact row shape
+  (COR-014-01 corr for RT-2026-014 SS/AR agents, `stamp()` demo time,
+  `ROLE_LABEL` actor) and no eligibility gate (the entry had none — the
+  screen owns the role/read-only reasons, and the disable reason is audited
+  separately by the caller).
+- `src/screens/d-agents.tsx` (8 sites): db/accessibles/me/can/pid/toast/
+  confirm/route/setFilter → the console/authority seams; `A.submitApproval`
+  (AssignDrawer, replacement request) → `submitApprovalTransaction` with the
+  A entry's exact ctx; `A.setAgentStatus` (doDisable/doEnable) →
+  `setAgentStatusTransaction`; `A.restoreAgent`/`A.loseAgent` → the canonical
+  demo-runtime functions; `now()` → `stamp()`; `setPid('all')` →
+  `selectProject('all')`; `setSwitcherOpen` → useUiStore. FailurePanel's
+  `A.updateOperation` + `A.audit` are mirrored exactly through the one
+  authority as 'legacy' commits (the store's private OpDraft step-rebuild is
+  a verbatim module-level `stepsFrom`, header.tsx wave-2 precedent — the
+  typed draft update adds role gates and audit rows this path does not
+  take); AgentDetail mirrors `A.audit` the same way.
+- `src/screens/d-assets.tsx` (7 sites): the same seams; `A.submitApproval`
+  (AssetScope request) → `submitApprovalTransaction` verbatim;
+  `setPid('all')` → `selectProject('all')`; `route` → `useRoute`; module
+  `go` (a stable outer value) let AssetNew's redirect effect drop its now-
+  stale `eslint-disable-line react-hooks/exhaustive-deps`; the canonical
+  `useServices`/`useDirty` store imports stay.
+- `src/screens/d-library.tsx` (4 sites): the same seams;
+  `A.audit` ×3 + `A.notify` ×1 (requestApproval/dup/attach) mirrored exactly
+  as 'legacy' commits (the store helper's exact audit/notice row shapes,
+  including the todo notice); `persistFilters['operation-new.assets']`
+  gains the `as string[] | undefined` cast (the session store types
+  persistFilters as `Record<string, unknown>`); `setSwitcherOpen` →
+  useUiStore.
+
+Gap: the wave instructions' `setPlaybookStatusTransaction`/
+`decidePlaybookRevisionTransaction` for `features/library/service.ts` were
+NOT added — the d-library screen has zero callers of
+`A.setPlaybookStatus`/`A.decidePlaybookRevision` (only test files reach them
+via `h.store()`), so the transactions would be dead code; the screen's review
+flow already runs through the typed `usePlaybookReview` (ticket 53). If a
+later wave retires the raw entries, the transactions belong with their first
+real caller.
+
+Checks: `npm run typecheck` — 0 diagnostics. `npm run lint` — 0 errors;
+167 warnings (baseline; file-level over the touched files: d-agents 9,
+d-assets 1, d-library 5, writes.ts 0 — unchanged, 0 new findings).
+`npm test -- --run --maxWorkers=2` — 955 tests / 72 files green.
+`npm run build` — succeeds (pre-existing chunk-size warning only).
+
+Gaps: browser route exercise skipped (same optional HTTP-check gap per
+AGENTS.md § Windows Temporary Process Safety as the earlier waves; the
+screens are pinned by the agents, assets, library, console-seam and
+session-duality suites exercising them through real renders, and the build
+covers the module graph).
