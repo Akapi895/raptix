@@ -2,18 +2,19 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Plus, Rocket, Trash2, XCircle } from 'lucide-react'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
-import { planVer, USERS } from '../data'
-import type { Db, Plan, PlanStep } from '../data'
-import { policyChecks } from '../features/plans/policy'
+import { planVer } from '../data'
+import type { Plan, PlanStep } from '../data'
+import type { Chk } from '../features/plans/policy'
 import {
   decidePlanTransaction, discardPlanTransaction, editPlanDraftTransaction, effectivePlanStatus, requestPlanReviewTransaction,
   revisePlanTransaction, withdrawPlanReviewTransaction,
 } from '../features/plans/service'
-import { createOperationFromPlanTransaction } from '../features/plans/bridge'
+import { createOperationFromPlanTransaction, readPlanProject } from '../features/plans/bridge'
+import { readPlanChecksNow, usePlanChecks, usePlanView, useProjectPlans, type PlanView } from '../features/plans/projection'
 import { PlanCompareError, usePlanCompare } from '../features/plans/compare'
-import type { Chk } from '../features/plans/policy'
+import { readActor } from '../auth/identity'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { useAccessible, useCan, useDb, useMe, useReadOnly } from '../state/console'
+import { useAccessible, useCan, useMe, useReadOnly } from '../state/console'
 import { useAuthStore, useProjectStore, useToastStore } from '../state/stores'
 import type { ConsoleServices } from '../domain/service-factory'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Input, Modal, PageHeader, Select, Status, Table, Tabs, Textarea, Check, Mono, cx } from '../ui'
@@ -24,25 +25,21 @@ import { FanOutCard } from './g-fanout'
 type Res = { ok: boolean; error?: string }
 
 /* Ticket 67 wave 7: the store's request context (actorCtx), mirrored — the
-   persona resolves at call time (the override-aware `me`, read from the
-   authorities so a failing authority read never reaches this render) with
-   corr 'legacy'. */
+   persona resolves at call time through the identity service (the
+   override-aware `me`, read from the authorities so a failing authority read
+   never reaches this render) with corr 'legacy'. */
 function actorCtxOf(services: ConsoleServices, projectId: string) {
-  const name = useAuthStore.getState().meName
-  const base = USERS.find((u) => u.name === name)!
-  const ov = services.authority.snapshot().org.members[name]?.role
-  const me = ov ? { ...base, role: ov } : base
-  return { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }
+  return { actor: readActor(services, useAuthStore.getState().meName), projectId, corr: 'legacy' }
 }
 
 /* Ticket 67 wave 7: the legacy A.* plan-workbench entries, mirrored — each
-   addressed plan's project binding resolves from the one authority at call
-   time (same `Plan <id> does not exist.` copy), the request context carries
-   the override-aware persona with corr 'legacy', and the typed results
-   bridge back to the legacy shapes. */
+   addressed plan's project binding resolves through the typed plans bridge
+   at call time (same `Plan <id> does not exist.` copy), the request context
+   carries the override-aware persona with corr 'legacy', and the typed
+   results bridge back to the legacy shapes. */
 function usePlanActions() {
   const services = useServices()
-  const planProjectOf = (planId: string) => services.authority.snapshot().plans.find((x) => x.id === planId)?.projectId
+  const planProjectOf = (planId: string) => readPlanProject(services.authority, planId)
   return {
     requestApproval: (planId: string): Res => {
       const projectId = planProjectOf(planId)
@@ -102,24 +99,27 @@ function useCrumbs(plan: Plan, leaf?: string) {
 
 /* Ticket 42: the revision-diff derivation (stepDiff/reapprovalNotes) moved to
    the plans feature (src/features/plans/compare.ts) — the compare surfaces
-   read the derived diff through the typed service instead of the database. */
+   read the derived diff through the typed service instead of the database.
+   Ticket 67: the plan's linked records and version chain assemble in the
+   plans feature's typed PlanView (src/features/plans/projection.ts). */
 
 function StepDrawer({ plan, stepId, onClose }: { plan: Plan; stepId?: string; onClose: () => void }) {
-  const db = useDb()
+  const pv = usePlanView(plan.id)
+  if (!pv) return null
   const s = plan.steps.find((x) => x.id === stepId)
   const i = s ? plan.steps.findIndex((x) => x.id === s.id) : -1
-  const op = plan.opId ? db.operations.find((o) => o.id === plan.opId) : undefined
+  const op = pv.op
   const ops = s && op ? op.steps.find((x) => x.id === s.id) : undefined
-  const group = db.branchGroups.find((g) => g.planId === plan.id)
-  const branches = s && group ? db.branches.filter((b) => b.groupId === group.id && b.stepId === s.id) : []
-  const tools = s && plan.opId ? db.toolEvents.filter((t) => t.opId === plan.opId && t.stepId === s.id) : []
+  const group = pv.branchGroups.find((g) => g.planId === plan.id)
+  const branches = s && group ? pv.branches.filter((b) => b.groupId === group.id && b.stepId === s.id) : []
+  const tools = s && plan.opId ? pv.toolEvents.filter((t) => t.opId === plan.opId && t.stepId === s.id) : []
   return (
     <Drawer open={!!s} onClose={onClose} title={s ? <span><Mono>{s.id}</Mono> {s.name}</span> : 'Step'} width={520}
       footer={<><Button disabled={i <= 0} title={i <= 0 ? 'This is the first step.' : undefined} onClick={() => go('ai-plan', { id: plan.id, tab: `step-${plan.steps[i - 1].id}` })}>Previous step</Button><Button disabled={i < 0 || i >= plan.steps.length - 1} title={i >= plan.steps.length - 1 ? 'This is the last step.' : undefined} onClick={() => go('ai-plan', { id: plan.id, tab: `step-${plan.steps[i + 1].id}` })}>Next step</Button><Button onClick={onClose}>Close</Button></>}>
       {s && (
         <div className="space-y-4">
           <p className="text-xs text-muted">Read-only view of {plan.id} {planVer(plan)} ({plan.status.replace('_', ' ')}). Step content is plain-language; nothing here is executed.</p>
-          <DescList cols={1} items={detailOf(s, plan.steps, db)} />
+          <DescList cols={1} items={detailOf(s, plan.steps, pv)} />
           <ApprovalImpact s={s} plan={plan} />
           {ops && <p className="text-sm">Runtime state in <IdLink onClick={() => go('operation', { id: op!.id })}>{op!.id}</IdLink>: <Status kind="step" value={ops.status} size="sm" /></p>}
           <div>
@@ -136,36 +136,28 @@ function StepDrawer({ plan, stepId, onClose }: { plan: Plan; stepId?: string; on
   )
 }
 
-/** Version chain (root → latest) containing this plan. */
-function versionChain(plan: Plan, db: Db): Plan[] {
-  const back: Plan[] = []
-  for (let c: Plan | undefined = plan; c; c = c.prevPlanId ? db.plans.find((x) => x.id === c!.prevPlanId) : undefined) back.unshift(c)
-  const fwd: Plan[] = []
-  for (let c = db.plans.find((x) => x.prevPlanId === plan.id); c; c = db.plans.find((x) => x.prevPlanId === c!.id)) fwd.push(c)
-  return [...back, ...fwd]
-}
-
 const RISK_CLS = { low: 'text-ok', medium: 'text-warn', high: 'text-bad' }
 const Risk = ({ v }: { v: PlanStep['risk'] }) => <span className={cx('font-medium capitalize', RISK_CLS[v])}>{v}</span>
 
 /* Ticket 67 wave 7: the legacy store reads leave the context — the console
-   read seam (db/pid/accessible), the router module (route/go + the guarded
-   selectProject for the store's setPid) project the same derivations. */
+   read seam (pid/accessible), the router module (route/go + the guarded
+   selectProject for the store's setPid) and the plans feature's typed views
+   (PlanView per route plan, the selected project's plan list) project the
+   same derivations. */
 export function usePlan() {
   const route = useRoute()
-  const db = useDb()
   const pid = useProjectStore((s) => s.pid)
   const accessible = useAccessible()
-  const plan = route.id ? db.plans.find((p) => p.id === route.id) : undefined
-  const foreign = !!plan && pid !== 'all' && plan.projectId !== pid
-  return { route, db, pid, go, setPid: selectProject, accessible, plan, foreign }
+  const view = usePlanView(route.id ?? '')
+  const list = useProjectPlans(pid)
+  return { route, pid, go, setPid: selectProject, accessible, plan: view?.plan, foreign: !!view?.plan && pid !== 'all' && view.plan.projectId !== pid, plans: list.plans }
 }
 
 function PlanGuard({ children, title }: { children: (plan: Plan) => React.ReactNode; title: string }) {
-  const { plan, foreign, db, pid, go, route, setPid, accessible } = usePlan()
+  const { plan, foreign, plans, pid, go, route, setPid, accessible } = usePlan()
   if (!route.id) {
     if (pid === 'all') return <><PageHeader title={title} /><NoProject /></>
-    const list = db.plans.filter((p) => p.projectId === pid)
+    const list = plans
     return (
       <>
         <PageHeader title={title} sub="Choose a plan." />
@@ -193,10 +185,11 @@ function approvalState(p: Plan) {
 }
 
 function Validation({ plan }: { plan: Plan }) {
-  const db = useDb()
-  const p = db.projects.find((x) => x.id === plan.projectId)!
-  const agents = plan.agents.map((a) => db.agents.find((x) => x.id === a))
-  const assets = plan.assets.map((a) => db.assets.find((x) => x.id === a))
+  const pv = usePlanView(plan.id)
+  if (!pv) return null
+  const p = pv.project
+  const agents = plan.agents.map((a) => pv.agentOf(a))
+  const assets = plan.assets.map((a) => pv.assetOf(a))
   const checks = [
     { ok: p.roeStatus === 'approved', t: `ROE approved (${p.roeVersion} is ${p.roeStatus})` },
     { ok: plan.roeVersion === p.roeVersion, t: `Plan pinned to ${plan.roeVersion}; project is on ${p.roeVersion}` },
@@ -253,11 +246,12 @@ function ReviseDialog({ plan, open, onClose }: { plan: Plan; open: boolean; onCl
 }
 
 function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void; request: React.ReactNode }) {
-  const db = useDb()
+  const services = useServices()
   const actions = usePlanActions()
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
   const readOnly = useReadOnly()
+  const pv = usePlanView(plan.id)
   const editable = (plan.status === 'draft' || plan.status === 'proposed') && !readOnly(plan.projectId)
   const canPlan = can('plan')
   const [edit, setEdit] = useState(false)
@@ -270,6 +264,7 @@ function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void
   const dirty = edit && JSON.stringify(steps) !== JSON.stringify(plan.steps)
   const save = () => { const r = actions.editDraft(plan.id, { steps }); if (!r.ok) { toast(r.error || 'The draft could not be saved.', 'bad'); return }; setEdit(false); setReorder(false); toast(`${plan.id} saved as ${plan.status}. Not submitted for review.`, 'ok') }
   useDirty(dirty, save)
+  if (!pv) return null
   const view: Plan = { ...plan, steps }
   const step = steps.find((x) => x.id === sel) || steps[0]
   const upd = (id: string, patch: Partial<PlanStep>) => setSteps((x) => x.map((s) => (s.id === id ? { ...s, ...patch } : s)))
@@ -283,7 +278,9 @@ function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void
     setSteps((x) => [...x, n]); setSel(id)
   }
   const validate = () => {
-    const f = policyChecks(view, db).filter((c) => c.state === 'fail')
+    /* Ticket 67: the validation read re-derives the policy checks for the
+       edited version from current state at click time. */
+    const f = readPlanChecksNow(services, view).filter((c) => c.state === 'fail')
     setMsg(f.length ? { ok: false, t: `Scope validation failed: ${f.map((c) => `${c.label} — ${c.detail}`).join(' ')}` } : { ok: true, t: 'Scope validation passed: all targets and agents are within the approved ROE. (Simulated check)' })
   }
   const tip = !canPlan ? 'Your role cannot edit plans.' : !editable ? 'Approved or in-review plans are frozen. Use “Revise” to create a new version.' : ''
@@ -319,19 +316,19 @@ function Builder({ plan, onRevise, request }: { plan: Plan; onRevise: () => void
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Risk class"><Select value={step.risk} onChange={(e) => upd(step.id, { risk: e.target.value as PlanStep['risk'] })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></Field>
                 <Field label="Assigned agent"><Select value={step.agent} onChange={(e) => upd(step.id, { agent: e.target.value })}>{plan.agents.map((a) => <option key={a} value={a}>{a}</option>)}</Select></Field>
-                <Field label="Allowed asset"><Select value={step.asset} onChange={(e) => upd(step.id, { asset: e.target.value })}>{[...new Set([...steps.map((s) => s.asset), ...plan.assets.map((a) => db.assets.find((x) => x.id === a)?.name || a)])].map((a) => <option key={a} value={a}>{a}</option>)}</Select></Field>
+                <Field label="Allowed asset"><Select value={step.asset} onChange={(e) => upd(step.id, { asset: e.target.value })}>{[...new Set([...steps.map((s) => s.asset), ...plan.assets.map((a) => pv.assetOf(a)?.name || a)])].map((a) => <option key={a} value={a}>{a}</option>)}</Select></Field>
               </div>
               <Check checked={step.needsApproval} onChange={(v) => upd(step.id, { needsApproval: v })} label="Require explicit approval gate for this step" />
             </div>
           ) : (
-            <><CardHeader title={<><Mono>{step.id}</Mono> {step.name}</>} sub={step.phase} /><DescList cols={2} items={detailOf(step, steps, db)} /><div className="mt-3"><ApprovalImpact s={step} plan={view} /></div><div className="mt-2"><Button size="sm" disabled={dirty} title={dirty ? 'Save the draft first.' : undefined} onClick={() => go('ai-plan', { id: plan.id, tab: `step-${step.id}` })}>Open step detail</Button></div></>
+            <><CardHeader title={<><Mono>{step.id}</Mono> {step.name}</>} sub={step.phase} /><DescList cols={2} items={detailOf(step, steps, pv)} /><div className="mt-3"><ApprovalImpact s={step} plan={view} /></div><div className="mt-2"><Button size="sm" disabled={dirty} title={dirty ? 'Save the draft first.' : undefined} onClick={() => go('ai-plan', { id: plan.id, tab: `step-${step.id}` })}>Open step detail</Button></div></>
           )}
         </Card>
         <div className="space-y-4">
           <Card><CardHeader title="Risk, scope & approval" />
             <DescList cols={1} items={[
               { k: 'Steps / phases', v: `${steps.length} / ${phasesOf(steps).length}` }, { k: 'Risk mix', v: `${steps.filter((s) => s.risk === 'low').length} low · ${steps.filter((s) => s.risk === 'medium').length} medium · ${steps.filter((s) => s.risk === 'high').length} high` },
-              { k: 'Approval gates', v: impact }, { k: 'ROE / window', v: `${plan.roeVersion} · ${db.projects.find((x) => x.id === plan.projectId)?.window}` },
+              { k: 'Approval gates', v: impact }, { k: 'ROE / window', v: `${plan.roeVersion} · ${pv.project.window}` },
               { k: 'Approval', v: plan.status === 'in_review' ? `Waiting for ${plan.reviewer}` : plan.decision ? `${plan.decision.by} · ${tz(plan.decision.at)}` : 'Not requested' }, { k: 'Expiry', v: plan.expires ? tz(plan.expires) : '—' },
             ]} />
             <div className="mt-2"><Button size="sm" onClick={() => go('ai-plan-review', { id: plan.id })}>Open approval review</Button></div>
@@ -351,7 +348,7 @@ export function AiPlan() {
 }
 
 function PlanDetail({ plan }: { plan: Plan }) {
-  const db = useDb()
+  const pv = usePlanView(plan.id)
   const route = useRoute()
   const actions = usePlanActions()
   const can = useCan()
@@ -362,21 +359,22 @@ function PlanDetail({ plan }: { plan: Plan }) {
   const [stepId, setStepId] = useState<string | undefined>(deepStep)
   useEffect(() => { if (route.tab?.startsWith('step-')) { setStepId(route.tab.slice(5)); setTab('steps') } }, [route.tab])
   const [revise, setRevise] = useState(false)
-  const p = db.projects.find((x) => x.id === plan.projectId)!
-  const ro = readOnly(plan.projectId)
-  const next = db.plans.find((x) => x.prevPlanId === plan.id)
   const replan = useReplan(plan.projectId)
-  const history = versionChain(plan, db)
   const crumbs = useCrumbs(plan)
-  const op = plan.opId ? db.operations.find((o) => o.id === plan.opId) : undefined
-  const prevPlan = plan.prevPlanId ? db.plans.find((x) => x.id === plan.prevPlanId) : undefined
+  if (!pv) return null
+  const p = pv.project
+  const ro = readOnly(plan.projectId)
+  const next = pv.next
+  const history = pv.chain
+  const op = pv.op
+  const prevPlan = pv.prev
   const isRevision = !!prevPlan
   const readOnlyPlan = ['superseded', 'rejected', 'expired'].includes(plan.status)
   const fwd = plan.status === 'superseded' ? [...history].reverse().find((x) => x.id !== plan.id && x.version > plan.version) : undefined
   const reviseOk = plan.status === 'approved' || plan.status === 'executed'
   const openDraft = next && ['draft', 'proposed', 'in_review'].includes(next.status) ? next : undefined
-  const groups = db.branchGroups.filter((g) => g.planId === plan.id)
-  const sibling = groups.length === 0 ? db.branchGroups.find((g) => history.some((h) => h.id === g.planId)) : undefined
+  const groups = pv.branchGroups.filter((g) => g.planId === plan.id)
+  const sibling = groups.length === 0 ? pv.branchGroups.find((g) => history.some((h) => h.id === g.planId)) : undefined
   const canPlan = can('plan') && !ro
   const whyPlan = ro ? 'This project is read-only.' : 'Your role cannot request plan approval. Ask a Red Team Operator or Lead.'
   const proposal = plan.status === 'proposed' || plan.status === 'draft'
@@ -432,11 +430,11 @@ function PlanDetail({ plan }: { plan: Plan }) {
                 { k: 'Operation', v: op ? <><IdLink onClick={() => go('operation', { id: op.id })}>{op.id}</IdLink>{op.planId === plan.id ? ' (uses this version)' : ` (uses ${op.planId})`}</> : 'None' },
                 { k: 'Approval status', v: <Status kind="plan" value={plan.status} size="sm" /> },
                 { k: 'Execution status', v: op && op.planId === plan.id ? `${op.id} is ${op.status.replace('_', ' ')}` : 'Not executed — no operation uses this version' },
-                { k: 'Required agents', v: plan.agents.map((a) => `${a} ${db.agents.find((x) => x.id === a)?.host || ''}`.trim()).join(', ') || 'None' },
-                { k: 'Targets', v: plan.assets.map((a) => db.assets.find((x) => x.id === a)?.name || a).join(', ') || 'None' },
+                { k: 'Required agents', v: plan.agents.map((a) => `${a} ${pv.agentOf(a)?.host || ''}`.trim()).join(', ') || 'None' },
+                { k: 'Targets', v: plan.assets.map((a) => pv.assetOf(a)?.name || a).join(', ') || 'None' },
                 { k: 'Policy constraints', v: [`${plan.roeVersion} (${p.roeStatus})`, ...p.restrictions].join('; ') },
                 { k: 'Risk summary', v: `${plan.steps.filter((s) => s.risk === 'low').length} low · ${plan.steps.filter((s) => s.risk === 'medium').length} medium · ${plan.steps.filter((s) => s.risk === 'high').length} high; ${plan.steps.filter((s) => s.needsApproval).length} approval gate(s)` },
-                { k: 'Evidence links', v: (() => { const ev = plan.opId ? db.evidence.filter((e) => e.opId === plan.opId) : []; return ev.length ? <span className="flex flex-wrap gap-2">{ev.map((e) => <IdLink key={e.id} onClick={() => go('evidence', { id: e.id })}>{e.id}</IdLink>)}</span> : 'None yet' })() },
+                { k: 'Evidence links', v: (() => { const ev = plan.opId ? pv.evidence.filter((e) => e.opId === plan.opId) : []; return ev.length ? <span className="flex flex-wrap gap-2">{ev.map((e) => <IdLink key={e.id} onClick={() => go('evidence', { id: e.id })}>{e.id}</IdLink>)}</span> : 'None yet' })() },
                 { k: 'Business objective', v: p.objectives[0]?.text || p.desc },
                 { k: 'Purpose', v: plan.rationale },
                 { k: 'Success criteria', v: p.objectives[0]?.criteria || 'All steps complete with evidence and no scope violations.' },
@@ -470,8 +468,8 @@ function PlanDetail({ plan }: { plan: Plan }) {
         )}
         {tab === 'assets' && (
           <div className="grid gap-4 md:grid-cols-2">
-            <Card><CardHeader title="Assets" /><ul className="space-y-1 text-sm">{plan.assets.map((id) => { const a = db.assets.find((x) => x.id === id); return <li key={id} className="flex justify-between"><span>{a?.name || id}</span><span className="text-xs text-muted">{id} · {a?.scope || 'unknown'}</span></li> })}</ul></Card>
-            <Card><CardHeader title="Agents" /><ul className="space-y-1 text-sm">{plan.agents.map((id) => { const a = db.agents.find((x) => x.id === id); return <li key={id} className="flex justify-between"><span>{a?.host || id}</span><span className={cx('text-xs', a?.status === 'online' ? 'text-ok' : 'text-warn')}>{id} · {a?.status || 'unknown'}</span></li> })}</ul></Card>
+            <Card><CardHeader title="Assets" /><ul className="space-y-1 text-sm">{plan.assets.map((id) => { const a = pv.assetOf(id); return <li key={id} className="flex justify-between"><span>{a?.name || id}</span><span className="text-xs text-muted">{id} · {a?.scope || 'unknown'}</span></li> })}</ul></Card>
+            <Card><CardHeader title="Agents" /><ul className="space-y-1 text-sm">{plan.agents.map((id) => { const a = pv.agentOf(id); return <li key={id} className="flex justify-between"><span>{a?.host || id}</span><span className={cx('text-xs', a?.status === 'online' ? 'text-ok' : 'text-warn')}>{id} · {a?.status || 'unknown'}</span></li> })}</ul></Card>
           </div>
         )}
         {tab === 'risk' && (
@@ -497,8 +495,8 @@ function PlanDetail({ plan }: { plan: Plan }) {
               { key: 'v', header: 'Version', render: (x) => <span className="whitespace-nowrap font-medium">{planVer(x)}{x.id === plan.id && <span className="ml-1 text-xs text-muted">(viewing)</span>}</span> },
               { key: 'id', header: 'Plan', render: (x) => <Mono className="whitespace-nowrap">{x.id}</Mono> },
               { key: 's', header: 'Status', render: (x) => <span className="whitespace-nowrap"><Status kind="plan" value={x.status} size="sm" /></span> },
-              { key: 'u', header: 'Used by', render: (x) => { const o = db.operations.find((y) => y.planId === x.id); return o ? <span className="whitespace-nowrap">{o.id} (current)</span> : <span className="text-muted">—</span> } },
-              { key: 'pv', header: 'Parent', render: (x) => <span className="whitespace-nowrap">{x.prevPlanId ? `${x.prevPlanId} ${planVer(db.plans.find((y) => y.id === x.prevPlanId) || x)}` : '—'}</span> },
+              { key: 'u', header: 'Used by', render: (x) => { const o = pv.operations.find((y) => y.planId === x.id); return o ? <span className="whitespace-nowrap">{o.id} (current)</span> : <span className="text-muted">—</span> } },
+              { key: 'pv', header: 'Parent', render: (x) => <span className="whitespace-nowrap">{x.prevPlanId ? `${x.prevPlanId} ${planVer(pv.chain.find((y) => y.id === x.prevPlanId) || x)}` : '—'}</span> },
               { key: 'c', header: 'Changes', render: (x) => x.changes?.join('; ') || 'Initial proposal' },
               { key: 'up', header: 'Updated', render: (x) => <span className="whitespace-nowrap">{x.updated}</span> },
               { key: 'cmp', header: '', render: (x) => <Button size="sm" disabled={!x.prevPlanId && !history.some((y) => y.prevPlanId === x.id)} title={!x.prevPlanId && !history.some((y) => y.prevPlanId === x.id) ? 'No adjacent version.' : undefined} onClick={(e) => { e.stopPropagation(); go('ai-plan-compare', { id: x.id }) }}>Compare</Button> },
@@ -522,8 +520,7 @@ export function AiPlanReview() {
 const CHK_ICON = { pass: <CheckCircle2 size={16} className="text-ok" aria-label="Pass" />, warn: <AlertTriangle size={16} className="text-warn" aria-label="Warn" />, fail: <XCircle size={16} className="text-bad" aria-label="Fail" /> }
 const CHK_LABEL = { pass: 'PASS', warn: 'WARN', fail: 'FAIL' }
 function PolicyChecks({ plan }: { plan: Plan }) {
-  const db = useDb()
-  const cs = policyChecks(plan, db)
+  const cs = usePlanChecks(plan)
   const n = (k: Chk['state']) => cs.filter((c) => c.state === k).length
   return (
     <Card>
@@ -541,15 +538,15 @@ function PolicyChecks({ plan }: { plan: Plan }) {
   )
 }
 
-function stepState(s: PlanStep, plan: Plan, db: Db): 'pass' | 'warn' | 'fail' {
-  const a = db.assets.find((x) => x.name === s.asset && x.projectId === plan.projectId)
-  const ag = db.agents.find((x) => x.id === s.agent)
+function stepState(s: PlanStep, pv: PlanView): 'pass' | 'warn' | 'fail' {
+  const a = pv.assetByName(s.asset)
+  const ag = pv.agentOf(s.agent)
   if ((a && a.scope !== 'in') || (ag && ag.status === 'lost')) return 'fail'
   return s.needsApproval ? 'warn' : 'pass'
 }
 const phasesOf = (steps: PlanStep[]) => { const out: { name: string; steps: PlanStep[] }[] = []; steps.forEach((s) => { const n = s.phase || 'Steps'; const g = out.find((x) => x.name === n); if (g) g.steps.push(s); else out.push({ name: n, steps: [s] }) }); return out }
-const detailOf = (s: PlanStep, steps: PlanStep[], db: Db) => {
-  const i = steps.findIndex((x) => x.id === s.id); const ag = db.agents.find((x) => x.id === s.agent)
+const detailOf = (s: PlanStep, steps: PlanStep[], pv: PlanView) => {
+  const i = steps.findIndex((x) => x.id === s.id); const ag = pv.agentOf(s.agent)
   return [
     { k: 'Goal', v: s.name }, { k: 'ATT&CK technique', v: <Mono>{s.technique}</Mono> }, { k: 'Expected evidence', v: `Sanitized output and a note linked to ${s.technique}` },
     { k: 'Allowed assets', v: s.asset }, { k: 'Agent capability', v: `${s.agent}${ag ? ` · ${ag.host} (${ag.os})` : ''} · ${s.tool}` }, { k: 'Dependency', v: i > 0 ? steps[i - 1].id : 'None' },
@@ -561,7 +558,8 @@ const detailOf = (s: PlanStep, steps: PlanStep[], db: Db) => {
 const SPILL = { pass: 'text-ok', warn: 'text-warn', fail: 'text-bad' }
 
 function StepGroups({ plan, steps, sel, onSel, edit, move, remove }: { plan: Plan; steps: PlanStep[]; sel?: string; onSel: (id: string) => void; edit?: boolean; move?: (id: string, d: -1 | 1) => void; remove?: (id: string) => void }) {
-  const db = useDb()
+  const pv = usePlanView(plan.id)
+  if (!pv) return null
   return (
     <div className="space-y-3">
       {phasesOf(steps).map((g, gi) => (
@@ -569,7 +567,7 @@ function StepGroups({ plan, steps, sel, onSel, edit, move, remove }: { plan: Pla
           <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">Phase {gi + 1} · {g.name}</h3>
           <ul className="space-y-1">
             {g.steps.map((s) => {
-              const st = stepState(s, plan, db)
+              const st = stepState(s, pv)
               return (
                 <li key={s.id} className={cx('flex items-center gap-1 rounded-lg border', sel === s.id ? 'border-accent-line bg-accent-soft' : 'border-line bg-panel hover:bg-hover')}>
                   <button onClick={() => onSel(s.id)} aria-current={sel === s.id} className="flex min-w-0 flex-1 items-center gap-2 px-2.5 py-1.5 text-left text-sm">
@@ -588,7 +586,9 @@ function StepGroups({ plan, steps, sel, onSel, edit, move, remove }: { plan: Pla
 }
 
 function ApprovalImpact({ s, plan }: { s: PlanStep; plan: Plan }) {
-  const db = useDb(); const st = stepState(s, plan, db)
+  const pv = usePlanView(plan.id)
+  if (!pv) return null
+  const st = stepState(s, pv)
   return <div className={cx('rounded-lg border px-3 py-2 text-xs', st === 'fail' ? 'border-bad/30 bg-bad-soft' : st === 'warn' ? 'border-warn/30 bg-warn-soft' : 'border-line bg-subtle')}>
     <span className="font-semibold">Approval impact: </span>{st === 'fail' ? 'This step cannot run — its asset is out of scope or its agent is disconnected.' : st === 'warn' ? 'Approving the plan does not auto-approve this step; it pauses for an explicit gate when reached.' : 'Runs under plan approval; no extra gate.'}
   </div>
@@ -598,7 +598,8 @@ type Decision = 'approved' | 'returned' | 'rejected'
 const DEC = { approved: { title: 'Approve plan', btn: 'Confirm approval', variant: 'primary' as const, hint: 'Reason / comment (required)' }, returned: { title: 'Return for changes', btn: 'Return for changes', variant: 'primary' as const, hint: 'What needs to change (required)' }, rejected: { title: 'Reject plan', btn: 'Reject plan', variant: 'danger' as const, hint: 'Reason for rejection (required)' } }
 
 function ReviewBody({ plan }: { plan: Plan }) {
-  const db = useDb()
+  const pv = usePlanView(plan.id)
+  const services = useServices()
   const actions = usePlanActions()
   const can = useCan()
   const me = useMe()
@@ -611,12 +612,14 @@ function ReviewBody({ plan }: { plan: Plan }) {
   const [audit, setAudit] = useState(false)
   const [stepOpen, setStepOpen] = useState(false)
   const crumbs = useCrumbs(plan, 'Approval review')
-  const p = db.projects.find((x) => x.id === plan.projectId)!
-  const next = db.plans.find((x) => x.prevPlanId === plan.id)
-  const prev = plan.prevPlanId ? db.plans.find((x) => x.id === plan.prevPlanId) : undefined
-  const pb = db.playbooks.find((x) => x.id === plan.playbookId)
-  const op = plan.opId ? db.operations.find((o) => o.id === plan.opId) : undefined
-  const checks = policyChecks(plan, db)
+  const checks = usePlanChecks(plan)
+  const cmp = usePlanCompare(plan.id)
+  if (!pv) return null
+  const p = pv.project
+  const next = pv.next
+  const prev = pv.prev
+  const pb = pv.playbook
+  const op = pv.op
   const fails = checks.filter((c) => c.state === 'fail'), warns = checks.filter((c) => c.state === 'warn')
   const inReview = plan.status === 'in_review'
   const allowed = can('approvePlan')
@@ -624,11 +627,10 @@ function ReviewBody({ plan }: { plan: Plan }) {
   const step = plan.steps.find((x) => x.id === sel) || plan.steps[0]
   /* Ticket 42: the review diff and re-approval notes derive from the typed
      compare read — the same derivation the side-by-side route renders. */
-  const cmp = usePlanCompare(plan.id)
   const cmpData = cmp.data && cmp.data.current.id === plan.id ? cmp.data : undefined
   const d = prev && cmpData ? cmpData.diff : undefined
   const notes = cmpData?.notes
-  const online = plan.agents.filter((a) => db.agents.find((x) => x.id === a && (x.status === 'online' || x.status === 'idle'))).length
+  const online = plan.agents.filter((a) => { const x = pv.agentOf(a); return x && (x.status === 'online' || x.status === 'idle') }).length
   const highest = plan.steps.some((s) => s.risk === 'high') ? 'high' : plan.steps.some((s) => s.risk === 'medium') ? 'medium' : 'low'
   const whyNo = (k: Decision) => !inReview ? `Plan is ${plan.status.replace('_', ' ')}; no decision is pending.` : !allowed ? `Your role (${me.role}) cannot decide AI plans. A reviewer or admin must do this.` : k === 'approved' && self ? 'You requested this plan; another reviewer must approve it.' : k === 'approved' && fails.length ? `${fails.length} policy check(s) FAIL: ${fails.map((f) => f.label).join(', ')}. Fix them or return the plan.` : ''
   const submit = () => {
@@ -648,13 +650,12 @@ function ReviewBody({ plan }: { plan: Plan }) {
      the bridge handler enforces — an approval past its absolute deadline is
      unusable even while the stored status still reads approved. The handler
      re-checks at click time either way; this only surfaces the reason. */
-  const services = useServices()
   const bridgeable = services ? effectivePlanStatus(plan, services.clock.now()) : plan.status
   const expiredApproval = plan.status === 'approved' && bridgeable === 'expired'
   const createWhyBridge = expiredApproval
     ? `The approval expired ${plan.expires ? tz(plan.expires) : ''} — re-approve the plan before an operation can be created.`
     : 'Your role cannot create operations.'
-  const rows = db.audit.filter((a) => a.obj === plan.id)
+  const rows = pv.audit
   const expired = plan.status === 'expired'
   return (
     <>
@@ -683,7 +684,7 @@ function ReviewBody({ plan }: { plan: Plan }) {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
           <Card><CardHeader title="Steps by phase" sub="PASS / WARN (gate) / FAIL" /><StepGroups plan={plan} steps={plan.steps} sel={step?.id} onSel={setSel} /></Card>
           <div className="space-y-4">
-            {step && <Card><CardHeader title={<><Mono>{step.id}</Mono> {step.name}</>} sub={step.phase} actions={<Button size="sm" onClick={() => setStepOpen(true)}>Step detail</Button>} /><DescList cols={2} items={detailOf(step, plan.steps, db)} /><div className="mt-3"><ApprovalImpact s={step} plan={plan} /></div></Card>}
+            {step && <Card><CardHeader title={<><Mono>{step.id}</Mono> {step.name}</>} sub={step.phase} actions={<Button size="sm" onClick={() => setStepOpen(true)}>Step detail</Button>} /><DescList cols={2} items={detailOf(step, plan.steps, pv)} /><div className="mt-3"><ApprovalImpact s={step} plan={plan} /></div></Card>}
             <PolicyChecks plan={plan} />
             <Card>
               <CardHeader title={prev ? `Diff vs ${prev.id} ${planVer(prev)}` : 'Revision diff'} actions={(prev || next) ? <Button size="sm" onClick={() => go('ai-plan-compare', { id: plan.id })}>Side-by-side</Button> : undefined} />
@@ -696,7 +697,7 @@ function ReviewBody({ plan }: { plan: Plan }) {
               )}
             </Card>
             {prev && notes && <Card><CardHeader title="Re-approval notes" sub={notes.length ? 'These changes are not covered by the earlier approval.' : undefined} />{notes.length ? <ul className="list-disc space-y-0.5 pl-5 text-xs">{notes.map((x) => <li key={x}>{x}</li>)}</ul> : <p className="text-sm text-muted">No scope, tool, target, risk or concurrency changes detected. A new approval is still required for this version.</p>}</Card>}
-            {db.branchGroups.filter((g) => g.planId === plan.id).map((g) => <div key={g.id}><FanOutCard groupId={g.id} /></div>)}
+            {pv.branchGroups.filter((g) => g.planId === plan.id).map((g) => <div key={g.id}><FanOutCard groupId={g.id} /></div>)}
             {plan.risks.length > 0 && <Card><CardHeader title="Risks" /><ul className="list-disc space-y-1 pl-5 text-sm">{plan.risks.map((r) => <li key={r}>{r}</li>)}</ul></Card>}
           </div>
         </div>
