@@ -8,18 +8,19 @@
  * and a legacy approval mutation appears in the inbox without reload through
  * the ChangeSet bridge.
  */
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { seed, APR } from '../../data'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { ConsoleProviders } from '../../state/query'
 import { consoleKeys } from '../../state/keys'
 import { useAuthStore, useProjectStore } from '../../state/stores'
+import { useSessionStore } from '../../state/session'
+import { selectProject } from '../../router/navigate'
+import { requestPlanReviewTransaction } from '../../features/plans/service'
+import { submitApprovalTransaction } from '../../features/approvals/service'
+import { mountServices } from '../../test/helpers'
 import { aggregateFor } from '../dashboard/service'
 import { formatCountdown } from '../dashboard/domain'
 import { minutesLeft, planExpiry, taskItems } from './domain'
@@ -37,24 +38,13 @@ const ctxOf = (actor: ActorRef, projectId: string): RequestContext => ({ actor, 
 
 function mountTasks() {
   window.location.hash = '#/tasks'
-  let store!: Store
-  let svc!: ConsoleServices
-  let client!: QueryClient
   const pendingStates: boolean[] = []
-  function StoreCapture() { store = useStore(); return null }
-  function WireCapture() { svc = useServices(); client = useQueryClient(); return null }
   function PendingProbe() { pendingStates.push(useTasks().isPending); return null }
   const router = createHashRouter([
-    { path: '*', element: <><StoreCapture /><WireCapture /><PendingProbe /><MyTasks /></>, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <><PendingProbe /><MyTasks /></>, errorElement: <div />, hydrateFallbackElement: null },
   ])
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return { view, store: () => store, svc: () => svc, client: () => client, pendingStates }
+  const view = mountServices(<RouterProvider router={router} />)
+  return { view, svc: view.svc, client: view.qc, db: view.db, pendingStates }
 }
 
 describe('inbox projection scoping (no cross-project leak)', () => {
@@ -201,13 +191,13 @@ describe('mounted tasks inbox (services/Query only)', () => {
   it('switching project narrows the inbox and a late stale response cannot restore the previous scope', async () => {
     const h = mountTasks()
     await screen.findByText(/All \(4\)/)
-    act(() => { h.store().setPid('RT-2026-015') })
+    act(() => { selectProject('RT-2026-015') })
     expect(await screen.findByText('PL-022 — Cloud configuration validation plan')).toBeInTheDocument()
     expect(screen.queryByText('Project creation — PT-2026-006')).not.toBeInTheDocument()
     expect(screen.queryByText('AR-012 — interactive access to SS-042')).not.toBeInTheDocument()
     const staleKey = consoleKeys.view('tasks', { actor: 'Alex Morgan', role: 'manager', project: 'all' })
     expect(h.client().getQueryData(staleKey)).toBeUndefined()
-    act(() => { h.store().setPid('all') })
+    act(() => { selectProject('all') })
     expect(await screen.findByText(/All \(4\)/)).toBeInTheDocument()
     h.view.unmount()
   })
@@ -253,8 +243,8 @@ describe('mounted tasks inbox (services/Query only)', () => {
     // PL-022 has no expiry; the plan created through the request action carries the 24h window.
     expect(screen.queryByText(/expires in 2\d h/)).not.toBeInTheDocument()
     act(() => {
-      useAuthStore.getState().setMe('Pat Kim')
-      h.store().A.requestPlanApproval('PL-023')
+      useAuthStore.getState().setMe('Taylor Chen')
+      requestPlanReviewTransaction(h.svc().authority, h.svc().clock, ctxOf({ id: 'Taylor Chen', role: 'operator' }, 'all'), 'PL-023')
     })
     expect(await screen.findByText('PL-023 — External exposure mapping plan')).toBeInTheDocument()
     expect(screen.getByText(/expires in 23 h \d+ min|expires in 24 h/)).toBeInTheDocument()
@@ -267,7 +257,7 @@ describe('mounted tasks inbox (services/Query only)', () => {
   it('a legacy approval submitted from a project appears in the inbox without reload', async () => {
     const h = mountTasks()
     await screen.findByText(/All \(4\)/)
-    act(() => { h.store().A.submitApproval('RT-2026-014', APR.scope, 'Add staging-erp after approval', 'ROE-014-v3: staging-erp moves in scope') })
+    act(() => { submitApprovalTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX, 'RT-2026-014'), { projectId: 'RT-2026-014', type: APR.scope, note: 'Add staging-erp after approval', diff: 'ROE-014-v3: staging-erp moves in scope' }) })
     expect(await screen.findByText('Scope change — RT-2026-014')).toBeInTheDocument()
     expect(screen.getByText('All (5)')).toBeInTheDocument()
     expect(screen.getByText(/staging-erp moves in scope/)).toBeInTheDocument()
@@ -279,11 +269,11 @@ describe('mounted tasks inbox (services/Query only)', () => {
     act(() => { useAuthStore.getState().setMe('Pat Kim') })
     expect(await screen.findByText(/4 actionable by you/)).toBeInTheDocument()
     fireEvent.click(screen.getAllByRole('button', { name: 'Return' })[0])
-    expect(h.store().confirmState).not.toBeNull()
-    act(() => { h.store().confirmState!.onConfirm('ROE window is not finalized for the exercise.') })
+    expect(useSessionStore.getState().confirmState).not.toBeNull()
+    act(() => { useSessionStore.getState().confirmState!.onConfirm('ROE window is not finalized for the exercise.') })
     await waitFor(() => expect(screen.queryByText('Project creation — PT-2026-006')).not.toBeInTheDocument())
     expect(screen.getByText(/All \(3\)/)).toBeInTheDocument()
-    expect(h.store().db.approvals.find((a) => a.id === 'APR-061')!.status).toBe('returned')
+    expect(h.db().approvals.find((a) => a.id === 'APR-061')!.status).toBe('returned')
     h.view.unmount()
   })
 

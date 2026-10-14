@@ -8,18 +8,17 @@
  * the aggregate through the ChangeSet bridge, and quick actions reach the
  * correct routes.
  */
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { seed } from '../../data'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
-import { ConsoleProviders } from '../../state/query'
 import { consoleKeys } from '../../state/keys'
 import { useAuthStore, useProjectStore } from '../../state/stores'
+import { selectProject } from '../../router/navigate'
+import { createProjectTransaction } from '../../features/wizard/service'
+import { mountServices } from '../../test/helpers'
 import { aggregateFor, dashboardForScope, readDashboard } from './service'
 import { attentionItems, completion, dashboardKpis, eligibility, formatCountdown, grantMinutesLeft, readiness } from './domain'
 import { Dashboard } from '../../screens/a-dashboard'
@@ -34,24 +33,13 @@ const ctxOf = (actor: ActorRef, projectId: string): RequestContext => ({ actor, 
 
 function mountDashboard() {
   window.location.hash = '#/command-center'
-  let store!: Store
-  let svc!: ConsoleServices
-  let client!: QueryClient
   const pendingStates: boolean[] = []
-  function StoreCapture() { store = useStore(); return null }
-  function WireCapture() { svc = useServices(); client = useQueryClient(); return null }
   function PendingProbe() { pendingStates.push(useDashboard().isPending); return null }
   const router = createHashRouter([
-    { path: '*', element: <><StoreCapture /><WireCapture /><PendingProbe /><Dashboard /></>, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <><PendingProbe /><Dashboard /></>, errorElement: <div />, hydrateFallbackElement: null },
   ])
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return { view, store: () => store, svc: () => svc, client: () => client, pendingStates }
+  const view = mountServices(<RouterProvider router={router} />)
+  return { view, svc: view.svc, client: view.qc, pendingStates }
 }
 
 describe('readiness/completion domain functions (baseline expectations)', () => {
@@ -232,12 +220,12 @@ describe('mounted dashboard (services/Query only)', () => {
   it('switching project shows only that project and a late stale response cannot restore the previous scope', async () => {
     const h = mountDashboard()
     await screen.findByText(/All projects · 6 accessible/)
-    act(() => { h.store().setPid('RT-2026-015') })
+    act(() => { selectProject('RT-2026-015') })
     expect(await screen.findByText('Cloud Security Assessment · Fabrikam Cloud (Demo)')).toBeInTheDocument()
     expect(screen.queryByText('OP-014')).not.toBeInTheDocument()
     const staleKey = consoleKeys.view('dashboard', { actor: 'Alex Morgan', role: 'manager', project: 'all' })
     expect(h.client().getQueryData(staleKey)).toBeUndefined()
-    act(() => { h.store().setPid('all') })
+    act(() => { selectProject('all') })
     await screen.findByText(/All projects · 6 accessible/)
     expect(screen.getAllByText('OP-014').length).toBeGreaterThan(0)
     h.view.unmount()
@@ -246,7 +234,7 @@ describe('mounted dashboard (services/Query only)', () => {
   it('renders readiness and completion panels from the pure domain functions', async () => {
     const h = mountDashboard()
     await screen.findByText(/All projects/)
-    act(() => { h.store().setPid('RT-2026-014') })
+    act(() => { selectProject('RT-2026-014') })
     expect(await screen.findByText('Execution Readiness')).toBeInTheDocument()
     expect(screen.getByText('5/6 gates passed')).toBeInTheDocument()
     expect(screen.getByText('Project Completion')).toBeInTheDocument()
@@ -266,17 +254,18 @@ describe('mounted dashboard (services/Query only)', () => {
     h.view.unmount()
   })
 
-  it('a legacy mutation (create project) publishes through the bridge and refreshes the aggregate view', async () => {
+  it('a project creation transaction publishes through the bridge and refreshes the aggregate view', async () => {
     const h = mountDashboard()
     await screen.findByText(/All projects · 6 accessible/)
     act(() => {
-      h.store().A.createProject({
+      createProjectTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX, 'all'), {
         name: 'Isolation Probe', id: 'RT-2026-018', client: 'Probe Client (Demo)', type: 'Red Team', desc: '', start: 'Oct 13, 2026', end: 'Nov 13, 2026', tz: 'UTC+07:00', owner: 'Alex Morgan', tags: [],
         goal: '', objectives: [{ text: 'Probe', criteria: 'Probe' }], metrics: '', unit: '', reportReq: '', scopeDesc: '', window: 'Mon–Fri, 9:00 AM–5:00 PM (UTC+7)', limits: [],
         emergency: 'Robin Vale — +1 (555) 010-0014', channel: '', roeFile: '', approver: 'Pat Kim',
         assets: [{ name: 'probe-01', ident: 'probe-01.example.test', type: 'Host', scope: 'in' }], members: [],
       }, false)
     })
+    act(() => { selectProject('RT-2026-018') })
     await screen.findByText(/Isolation Probe · Probe Client \(Demo\)/)
     act(() => { useProjectStore.getState().setPid('all') })
     await screen.findByText(/All projects · 7 accessible/)
