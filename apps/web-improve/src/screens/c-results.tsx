@@ -21,8 +21,8 @@ import { go } from '../router/navigate'
 import { useCan, useMe } from '../state/console'
 import { useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { stamp as demoStamp } from '../domain/demo-clock'
-import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
+import { addOperationEvidence } from '../features/results/writes'
 import type { Operation } from '../data'
 import { MASK, STEP_BORDER } from './c-common'
 import { StepDrawer } from './c-console'
@@ -65,7 +65,7 @@ function GraphView({ read }: { read: OperationResultsRead }) {
      store helper's exact row shape (the RT-2026-014 SS/AR corr rule, the demo
      stamp, the override-aware persona). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: demoStamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const op = read.op
   const [sel, setSel] = useState<string | null>(null)
   const [fa, setFa] = useState('')
@@ -181,12 +181,11 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
      'legacy' commit each through the one authority (the store helper's exact
      audit/evidence row shapes and the live-count evidence id derivation). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: demoStamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const addEvidence = (e: { name: string; kind: string; source: string; projectId: string; opId?: string; findingId?: string; sensitive: boolean }) => {
-    const id = 'EV-' + (400 + services.authority.snapshot().evidence.length + 1)
-    services.authority.commit('legacy', (d) => { d.evidence.push({ id, name: e.name, kind: e.kind, source: e.source, at: demoStamp(), by: me.name, projectId: e.projectId, opId: e.opId, findingId: e.findingId, sensitive: e.sensitive }) })
-    audit('Uploaded evidence', id, e.projectId)
-    return id
+    const res = addOperationEvidence(services, { actor: { id: me.name, role: me.role }, projectId: e.projectId, corr: 'legacy' }, e)
+    if (!res.ok) { toast(res.failure.message, 'bad'); return '' }
+    return res.data.id
   }
   const fbr = read.failedBranches
   const outcome = op.steps.length === 0 || c.ok + c.fail === 0 ? { v: 'neutral', t: 'Not determined', d: 'No step has a result yet.' }
@@ -285,7 +284,7 @@ function ResultsView({ read }: { read: OperationResultsRead }) {
       <StepDrawer op={op} step={read.steps.find((x) => x.step.id === stepSel)?.step ?? null} onClose={() => setStepSel(null)} logs={logs[op.id] || []} />
       <Modal open={attach} onClose={() => setAttach(false)} title="Attach evidence" footer={<>
         <Button onClick={() => setAttach(false)}>Cancel</Button>
-        <Button variant="primary" disabled={!nm.trim()} title={nm.trim() ? undefined : 'Enter an evidence file name.'} onClick={() => { const id = addEvidence({ name: nm.trim(), kind, source: `${op.id} / ${src}`, projectId: op.projectId, opId: op.id, sensitive: sens }); toast(`Evidence ${id} attached.`); setAttach(false); setNm(''); setSens(false) }}>Attach</Button>
+        <Button variant="primary" disabled={!nm.trim()} title={nm.trim() ? undefined : 'Enter an evidence file name.'} onClick={() => { const id = addEvidence({ name: nm.trim(), kind, source: `${op.id} / ${src}`, projectId: op.projectId, opId: op.id, sensitive: sens }); if (!id) return; toast(`Evidence ${id} attached.`); setAttach(false); setNm(''); setSens(false) }}>Attach</Button>
       </>}>
         <div className="space-y-4">
           <Field label="File name (simulated)" required><Input value={nm} onChange={(e) => setNm(e.target.value)} placeholder="e.g. screenshot-step-08.png" /></Field>
