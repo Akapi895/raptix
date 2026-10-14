@@ -1,3 +1,4 @@
+/** Transitional test harness; the application mounts state/services directly. */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { USERS, APR, type Db, type Project, type Step, type Finding, type Agent, type Group, type Plan, type PlanStatus, type AiMode, type Session, type SeedVariant, type ToolEvent } from './data'
 import { signIn, signOut } from './auth/persona'
@@ -759,5 +760,3 @@ function LegacyStoreProjection({ children }: { children: ReactNode }): ReactElem
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
-
-export { useDirty } from './state/session'
