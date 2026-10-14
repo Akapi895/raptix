@@ -35,6 +35,7 @@ import { ReportsService } from './services/reports-service.js';
 import { C2GrantsService } from './services/c2-grants-service.js';
 import { FleetService } from './services/fleet-service.js';
 import { LibraryService } from './services/library-service.js';
+import { InboxService } from './services/inbox-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
@@ -114,6 +115,7 @@ async function main(): Promise<void> {
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
   const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService) : undefined;
+  const inboxService = dbClient && governanceService ? new InboxService(dbClient, governanceService) : undefined;
   const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient) : undefined;
   const reportsService = dbClient && exportService ? new ReportsService(dbClient, async (userId, engagementId, format) => {
     const result = await exportService.export(userId, engagementId, format as 'json' | 'markdown');
@@ -139,6 +141,7 @@ async function main(): Promise<void> {
   c2Grants,
   fleetService,
   libraryService,
+  inboxService,
   vaultService,
   membersService,
   scopeService,

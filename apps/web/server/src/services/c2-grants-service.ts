@@ -1,5 +1,6 @@
 import type { PrismaClient, C2Grant } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
+import { createNotice } from './inbox-service.js';
 import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 
 /**
@@ -92,6 +93,7 @@ export class C2GrantsService {
     }
     const updated = await this.db.c2Grant.update({ where: { id: row.id }, data: { status: decision, reviewerId: actorId } });
     await this.audit(engagementId, actorId, `c2.grant_${decision}`, 'c2_grant', row.id, `session ${row.sessionId}`);
+    await createNotice(this.db, { engagementId, actorId: row.actorId, kind: 'c2.grant_decided', title: `C2 session grant for ${row.sessionId} was ${decision}`, detail: { grantId: row.id, decision, decidedBy: actorId } });
     return this.toView(updated);
   }
 

@@ -1,5 +1,6 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
+import { createNotice } from './inbox-service.js';
 import type { ScopeService } from './scope-service.js';
 import { assertNotExpired, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 
@@ -174,6 +175,9 @@ export class GovernanceService {
       },
     });
     await this.audit(engagementId, actorId, `plan.${decision}`, 'business_plan', plan.id, `v${plan.version} by ${actorId}`);
+    const planBody = plan.body as { title?: unknown } | null;
+    const planTitle = typeof planBody?.title === 'string' && planBody.title.length > 0 ? planBody.title : 'untitled';
+    await createNotice(this.db, { engagementId, actorId: plan.requestedBy, kind: 'plan.decided', title: `Plan "${planTitle}" v${plan.version} was ${decision}`, detail: { planId: plan.id, decision, decidedBy: actorId } });
     return toPlanView(updated as never);
   }
 

@@ -25,6 +25,8 @@ import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
 import { RealAssets } from '../real/screens/assets-panel'
 import { RealLibrary } from '../real/screens/library'
+import { RealCommandCenter } from '../real/screens/command-center'
+import { RealHeaderNotices } from '../real/screens/notices-bell'
 import { RealLogin } from '../real/screens/login'
 import { Button } from '../ui'
 import { Shell } from '../shell'
@@ -43,6 +45,7 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   'ai-operator': RealWorkspace,
   assets: RealAssets,
   playbooks: RealLibrary,
+  'command-center': RealCommandCenter,
   login: RealLogin,
 }
 
@@ -107,7 +110,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
     const Real = REAL_PAGES[route.page] ?? undefined
     if (Real) {
       return (
-        <Shell slots={{}}>
+        <Shell slots={{ notifications: RealHeaderNotices }}>
           <PageBoundary key={key}>
             <Real />
           </PageBoundary>
@@ -117,7 +120,7 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
     if (REAL_INTEGRATED_ROUTES.has(route.page)) {
       const Page = routeComponent(route.page)
       return (
-        <Shell slots={{}}>
+        <Shell slots={{ notifications: RealHeaderNotices }}>
           <Suspense fallback={<PageFallback />}>
             <PageBoundary key={key}>
               {Page ? <Page /> : null}

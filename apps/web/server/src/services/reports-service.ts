@@ -1,5 +1,6 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
+import { createNotice } from './inbox-service.js';
 import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 
 /**
@@ -143,6 +144,7 @@ export class ReportsService {
       },
     });
     await this.audit(engagementId, actorId, `report.review_${decision}`, 'report', row.id, `v${row.version}: ${comment}`);
+    await createNotice(this.db, { engagementId, actorId: row.createdBy, kind: 'report.review_decided', title: `Report "${row.title}" v${row.version} was ${decision === 'approved' ? 'approved' : 'sent back with comments'}`, detail: { reportId: row.id, decision, reviewedBy: actorId } });
     return this.toView(updated as never, []);
   }
 
