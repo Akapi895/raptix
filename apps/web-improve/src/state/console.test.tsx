@@ -77,10 +77,10 @@ describe('console read seam (enabler D)', () => {
     render(<StoreProvider><Probe /></StoreProvider>)
     expect(latest.accessible.map((p) => p.id)).toEqual(latest.store.accessible.map((p) => p.id))
     for (const p of latest.db.projects) {
-      expect(latest.can('edit-project', p.id)).toBe(latest.store.can('edit-project', p.id))
+      expect(latest.can('editScope', p.id)).toBe(latest.store.can('editScope', p.id))
       expect(latest.readOnly(p.id)).toBe(latest.store.readOnly(p.id))
     }
-    expect(latest.can('edit-project')).toBe(latest.store.can('edit-project'))
+    expect(latest.can('editScope')).toBe(latest.store.can('editScope'))
     const rows = [...latest.db.findings, ...latest.db.operations]
     expect(latest.scoped(rows)).toEqual(latest.store.scoped(rows))
   })
@@ -101,7 +101,7 @@ describe('console read seam (enabler D)', () => {
     expect(latest.me.role).toBe('viewer')
     const viewerRows = latest.db.findings.filter((f) => latest.scoped([f]).length > 0)
     expect(viewerRows.length).toBeGreaterThan(0)
-    expect(latest.can('edit-project')).toBe(latest.store.can('edit-project'))
+    expect(latest.can('editScope')).toBe(latest.store.can('editScope'))
   })
 })
 
