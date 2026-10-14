@@ -1,6 +1,7 @@
 /** Owns the console authority and its mounted demo lifecycle. */
 import { createContext, useContext, useEffect, useRef, type ReactElement, type ReactNode } from 'react'
 import { createConsoleServices, type ConsoleServices } from '../domain/service-factory'
+import { resetDemoClock } from '../domain/demo-clock'
 import { buildLogs, initDemoRuntime, tickOperations } from '../features/demo/runtime'
 import { resetNavStores } from '../router/navigate'
 import { resetSharedStores } from './stores'
@@ -18,6 +19,7 @@ export function ServicesProvider({ children }: { children: ReactNode }): ReactEl
   const lifecycle = useRef({ epoch: 0 })
   if (!servicesRef.current) {
     servicesRef.current = createConsoleServices()
+    resetDemoClock()
     resetSharedStores()
     resetSessionStores()
     resetNavStores()
@@ -29,7 +31,9 @@ export function ServicesProvider({ children }: { children: ReactNode }): ReactEl
     const offRuntime = initDemoRuntime(services)
     useSessionStore.getState().setLogs(buildLogs(services.authority.snapshot()))
     let last = Date.now()
-    const offReset = services.subscribe((cs) => { if (cs.corr === 'reset') last = Date.now() })
+    const offReset = services.subscribe((cs) => {
+      if (cs.corr === 'reset') { last = Date.now(); resetDemoClock() }
+    })
     const clock = window.setInterval(() => {
       const elapsed = Date.now() - last
       last = Date.now()
