@@ -9,54 +9,26 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type ComponentType } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { currentRoute, go, selectProject } from '../../router/navigate'
+import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/e'
 import { seed } from '../../data'
-import { getFinding, listFindings } from './service'
+import { getFinding, importFindingSuggestion, listFindings, saveFinding, transitionFinding, uploadFindingEvidence } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 /** Mounts the providers, optionally rendering the findings route matching the current hash. */
 function mountFindings(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const screenFor = (): ComponentType =>
     window.location.hash.startsWith('#/finding/') ? routes.finding : routes.findings
-  const ui = (withScreens: boolean) => {
+  const h = mountServices(null, me)
+  return { ...h, show: () => {
     const Screen = screenFor()
-    return (
-      <StoreProvider>
-        <ConsoleProviders>
-          <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-          {withScreens ? <Screen /> : null}
-        </ConsoleProviders>
-      </StoreProvider>
-    )
-  }
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+    h.show(<Screen />)
+  } }
 }
 
 describe('findings inventory (ticket 31)', () => {
@@ -98,11 +70,11 @@ describe('findings inventory (ticket 31)', () => {
     window.location.hash = '#/findings'
     const h = mountFindings('Taylor Chen')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('tab', { name: 'All2' })).toBeInTheDocument())
     h.run(() => {
       for (let i = 0; i < 9; i++) {
-        h.store().A.createFinding({ projectId: 'RT-2026-014', title: `Pagination probe finding ${i + 1}`, severity: 'low', owner: 'Taylor Chen', kind: 'Configuration / access control', desc: 'd', scopeNote: '', asset: 'web-01', impact: 'i', rec: 'r', technique: '', op: '', evidence: [], severityReason: '' }, false)
+        expect(saveFinding(h.svc().authority, h.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'RT-2026-014', corr: 'finding-pagination' }, null, { title: `Pagination probe finding ${i + 1}`, severity: 'low', owner: 'Taylor Chen', kind: 'Configuration / access control', desc: 'd', scopeNote: '', asset: 'web-01', impact: 'i', rec: 'r', technique: '', op: '', evidence: [], severityReason: '', submit: false }).ok).toBe(true)
       }
     })
     await waitFor(() => expect(screen.getByText('Page 1 of 2')).toBeInTheDocument())
@@ -157,14 +129,14 @@ describe('findings inventory (ticket 31)', () => {
     h.show()
     await waitFor(() => expect(screen.getByText('Excessive account privileges (simulated)')).toBeInTheDocument())
     // Select RT-2026-015 (the store redirects a detail route to its list), then revisit the finding.
-    h.run(() => h.store().setPid('RT-2026-015'))
-    h.run(() => h.store().go('finding', { id: 'FD-011' }))
+    h.run(() => selectProject('RT-2026-015'))
+    h.run(() => go('finding', { id: 'FD-011' }))
     await waitFor(() => expect(screen.getByText('Finding FD-011 belongs to another project')).toBeInTheDocument())
     expect(screen.getByText(/content from RT-2026-014 is not shown in this context/)).toBeInTheDocument()
     expect(screen.queryByText('Excessive account privileges (simulated)')).not.toBeInTheDocument()
     expect(screen.queryByText('A demo account in the lab holds more privileges than its business role requires.')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Switch to RT-2026-014' }))
-    await waitFor(() => expect(h.store().pid).toBe('RT-2026-014'))
+    await waitFor(() => expect(useProjectStore.getState().pid).toBe('RT-2026-014'))
     // The explicit switch returns to the detail route with the matching scope.
     await waitFor(() => expect(screen.getByText('Excessive account privileges (simulated)')).toBeInTheDocument(), { timeout: 3000 })
     h.unmount()
@@ -198,11 +170,19 @@ describe('findings inventory (ticket 31)', () => {
     window.location.hash = '#/findings'
     const h = mountFindings('Taylor Chen')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('tab', { name: 'AI Suggestions1' })).toBeInTheDocument())
     expect(screen.queryByText('Bridge-proof probe')).not.toBeInTheDocument()
     // Legacy action (ticket 32 will replace it) moves the AI suggestion into review.
-    h.run(() => h.store().A.setFindingStatus('FD-012', 'review', 'Verified from AI suggestion by a human'))
+    h.run(() => {
+      const ctx: RequestContext = { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'RT-2026-014', corr: 'finding-refetch' }
+      expect(transitionFinding(h.svc().authority, h.svc().clock, ctx, 'FD-012', 'review').ok).toBe(false)
+      expect(h.db().findings.find((f) => f.id === 'FD-012')?.status).toBe('ai_suggested')
+      expect(importFindingSuggestion(h.svc().authority, h.svc().clock, ctx, 'FD-012').ok).toBe(true)
+      expect(transitionFinding(h.svc().authority, h.svc().clock, ctx, 'FD-012', 'review')).toMatchObject({ ok: false, failure: { kind: 'validation' } })
+      expect(uploadFindingEvidence(h.svc().authority, h.svc().clock, ctx, { findingId: 'FD-012', name: 'human-verification.txt', kind: 'Text', source: 'Manual verification', sensitive: false }).ok).toBe(true)
+      expect(transitionFinding(h.svc().authority, h.svc().clock, ctx, 'FD-012', 'review', 'Verified from AI suggestion by a human').ok).toBe(true)
+    })
     await waitFor(() => expect(screen.getByRole('tab', { name: 'AI Suggestions0' })).toBeInTheDocument())
     expect(screen.getByRole('tab', { name: 'In Review1' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', { name: 'In Review1' }))
@@ -215,15 +195,15 @@ describe('findings inventory (ticket 31)', () => {
     window.location.hash = '#/findings'
     const h = mountFindings('Taylor Chen')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-014')) // a specific project enables Create Finding
+    h.run(() => selectProject('RT-2026-014')) // a specific project enables Create Finding
     await waitFor(() => expect(screen.getByText('Excessive account privileges (simulated)')).toBeInTheDocument())
     fireEvent.click(screen.getByText('Excessive account privileges (simulated)'))
-    await waitFor(() => expect(h.store().route.page).toBe('finding'))
-    expect(h.store().route.id).toBe('FD-011')
-    h.run(() => h.store().go('findings'))
-    await waitFor(() => expect(h.store().route.page).toBe('findings'))
+    await waitFor(() => expect(currentRoute().page).toBe('finding'))
+    expect(currentRoute().id).toBe('FD-011')
+    h.run(() => go('findings'))
+    await waitFor(() => expect(currentRoute().page).toBe('findings'))
     fireEvent.click(screen.getByRole('button', { name: 'Create Finding' }))
-    await waitFor(() => expect(h.store().route.page).toBe('finding-new'))
+    await waitFor(() => expect(currentRoute().page).toBe('finding-new'))
     h.unmount()
   })
 })

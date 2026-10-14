@@ -10,11 +10,9 @@
  * must NOT fake a termination).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { go, selectProject } from '../../router/navigate'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/h'
 import { seed } from '../../data'
@@ -28,36 +26,10 @@ import { getChannel, getOverview, listAudit, listRequests, listSessions } from '
 beforeEach(() => { window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 function mountC2(hash: string, me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   window.location.hash = hash
   const Screen = routes[hash.startsWith('#/c2-channel') ? 'c2-channel' : 'c2']
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        <Screen />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    unmount: view.unmount,
-  }
+  return mountServices(<Screen />, me)
 }
 
 const opCtx = (projectId = 'RT-2026-014'): RequestContext => ({ actor: { id: 'Alex Morgan', role: 'manager' }, projectId, corr: 'test' })
@@ -72,7 +44,7 @@ describe('C2 overview (ticket 45)', () => {
 
   it('a non-member specific-project read is refused without leaking data', async () => {
     const h = mountC2('#/c2', 'Riley Brooks') // analyst — member of RT-2026-014 only
-    h.run(() => h.store().setPid('RT-2026-015'))
+    h.run(() => selectProject('RT-2026-015'))
     await waitFor(() => expect(screen.getByText('C2 data could not be loaded')).toBeInTheDocument())
     expect(screen.getByText('C2 data for this project is not available for your account.')).toBeInTheDocument()
     expect(screen.queryByText('CH-015')).not.toBeInTheDocument()
@@ -84,7 +56,7 @@ describe('C2 overview (ticket 45)', () => {
     const h = mountC2('#/c2?tab=sessions')
     await waitFor(() => expect(screen.getAllByText('SS-041').length).toBeGreaterThan(0))
     expect(screen.getAllByText('Connected').length).toBeGreaterThanOrEqual(3)
-    h.run(() => { h.store().A.emergencyStop('operation', 'OP-014', 'halt now') })
+    h.run(() => { expect(requestEmergencyStopTransaction(h.svc().authority, h.svc().clock, opCtx(), { scope: 'operation', id: 'OP-014', reason: 'halt now' }).ok).toBe(true) })
     await waitFor(() => expect(screen.getByText(/Emergency stop requested/)).toBeInTheDocument())
     // Requested: nothing terminated yet.
     expect(screen.getAllByText('Connected').length).toBeGreaterThanOrEqual(3)
@@ -118,7 +90,7 @@ describe('C2 overview (ticket 45)', () => {
 describe('sessions tab (ticket 45)', () => {
   it('lists only accessible sessions; links resolve to the session detail route', async () => {
     const h = mountC2('#/c2?tab=sessions', 'Riley Brooks')
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getAllByText('SS-041').length).toBeGreaterThan(0))
     expect(screen.getByText('SS-042')).toBeInTheDocument()
     expect(screen.queryByText('SS-043')).not.toBeInTheDocument() // RT-2026-015 — isolated
@@ -143,7 +115,7 @@ describe('sessions tab (ticket 45)', () => {
 
   it('a typed grant decision refetches the mounted session list through the bridge', async () => {
     const h = mountC2('#/c2?tab=sessions', 'Riley Brooks')
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getAllByText('SS-042').length).toBeGreaterThan(0))
     expect(screen.getAllByText('Pending request').length).toBeGreaterThan(0)
     // Ticket 46: the decision is the feature-local transaction — one commit
@@ -167,7 +139,7 @@ describe('sessions tab (ticket 45)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Submit request' })).toBeInTheDocument())
     fireEvent.change(screen.getByPlaceholderText(/Why do you need this access/), { target: { value: 'Validate step 8 output on the domain controller.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit request' }))
-    h.run(() => h.store().go('c2', { tab: 'sessions' }))
+    h.run(() => go('c2', { tab: 'sessions' }))
     await waitFor(() => expect(screen.getAllByText('Pending request').length).toBeGreaterThanOrEqual(1))
     h.unmount()
   })
@@ -245,7 +217,7 @@ describe('requests and audit tabs (ticket 45)', () => {
 
   it('scopes audit views and finds events by correlation id', async () => {
     const h = mountC2('#/c2?tab=audit', 'Riley Brooks')
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('Requested interactive session access')).toBeInTheDocument())
     expect(screen.queryByText('Started operation')).not.toBeInTheDocument() // AU-6 belongs to RT-2026-015 and does not match the access view
     fireEvent.change(screen.getByPlaceholderText('Search or paste COR-014-01…'), { target: { value: 'COR-014-01' } })
@@ -269,7 +241,7 @@ describe('late-response isolation (ticket 45)', () => {
       return { ...inner, overview: async (ctx) => { await gate; return inner.overview(ctx) } }
     })
     await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('2/3')).toBeInTheDocument())
     await act(async () => { resolveGate(); await Promise.resolve() })
     expect(screen.getByText('2/3')).toBeInTheDocument()

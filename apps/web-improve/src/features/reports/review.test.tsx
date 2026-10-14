@@ -21,14 +21,14 @@
  * handlers (legacy export refetches the typed delivery history).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { ConsoleProviders } from '../../state/query'
 import { useProjectStore } from '../../state/stores'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
+import { mountServices } from '../../test/helpers'
+import { currentRoute } from '../../router/navigate'
+import { useSessionStore } from '../../state/session'
 import { setActiveRouter } from '../../router/active'
 import { RouteErrorBoundary, RouteHost } from '../../router/host'
-import type { ConsoleServices } from '../../domain/service-factory'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext } from '../../domain/service'
@@ -329,31 +329,10 @@ describe('report export and delivery records (ticket 37)', () => {
 })
 
 /* ───────────── screen harness ───────────── */
-function ScreenProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
 function mountScreenRoute(me = 'Alex Morgan', pid?: string) {
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = (node: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <ScreenProbe ready={(s, v) => { store = s; svc = v }} />
-        {node}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(null))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
+  const h = mountServices(null, me)
   if (pid) act(() => { useProjectStore.getState().setPid(pid) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    show: (node: React.ReactNode) => view.rerender(ui(node)),
-    unmount: view.unmount,
-  }
+  return h
 }
 
 const Review = routes['report-review'] as React.ComponentType
@@ -389,21 +368,21 @@ describe('report review screen (ticket 36)', () => {
     // Delivery is gated until the export exists (step 2 first).
     expect(screen.getByRole('button', { name: 'Mark as Delivered' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'Approve Report' }))
-    h.run(() => { h.store().confirmState!.onConfirm('Content verified against IAM evidence.') })
-    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('approved'), { timeout: 3000 })
-    expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.reviews[1]!.note).toBe('Content verified against IAM evidence.')
+    h.run(() => { useSessionStore.getState().confirmState!.onConfirm('Content verified against IAM evidence.') })
+    await waitFor(() => expect(h.db().reports.find((r) => r.id === 'REP-015')!.status).toBe('approved'), { timeout: 3000 })
+    expect(h.db().reports.find((r) => r.id === 'REP-015')!.reviews[1]!.note).toBe('Content verified against IAM evidence.')
     // The refetched read re-gates the buttons before the next step.
     await waitFor(() => expect(screen.getByRole('button', { name: 'Export PDF' })).toBeEnabled(), { timeout: 3000 })
     fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }))
-    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('exported'), { timeout: 3000 })
+    await waitFor(() => expect(h.db().reports.find((r) => r.id === 'REP-015')!.status).toBe('exported'), { timeout: 3000 })
     await waitFor(() => expect(screen.getAllByText(/EX-92/).length).toBeGreaterThan(0), { timeout: 3000 })
     // The delivery card requires the handover record: recipient + confirmation.
     fireEvent.change(screen.getByLabelText(/Recipient/), { target: { value: 'Fabrikam Cloud (Demo)' } })
     fireEvent.click(screen.getByRole('checkbox', { name: /Handover to the recipient is confirmed/ }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Mark as Delivered' })).toBeEnabled(), { timeout: 3000 })
     fireEvent.click(screen.getByRole('button', { name: 'Mark as Delivered' }))
-    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('delivered'), { timeout: 3000 })
-    const rec = h.store().db.exportsList.find((e) => e.id === 'EX-92')!
+    await waitFor(() => expect(h.db().reports.find((r) => r.id === 'REP-015')!.status).toBe('delivered'), { timeout: 3000 })
+    const rec = h.db().exportsList.find((e) => e.id === 'EX-92')!
     expect(rec).toMatchObject({ status: 'Delivered', recipient: 'Fabrikam Cloud (Demo)', channel: 'Secure portal' })
     expect(await screen.findByText(/Awaiting recipient acknowledgement/)).toBeInTheDocument()
     h.unmount()
@@ -415,7 +394,7 @@ describe('report review screen (ticket 36)', () => {
     h.show(<Review />)
     await screen.findByText('Cloud Lab Report — Fabrikam Cloud')
     expect(screen.queryByText('Version v1.0 is locked')).not.toBeInTheDocument()
-    h.run(() => { h.store().A.approveReport('REP-015') })
+    h.run(() => { expect(decideReport(h.svc().authority, h.svc().clock, ctxOf(pat, P15), 'REP-015', 'approve', 'Independent content review').ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('Version v1.0 is locked')).toBeInTheDocument(), { timeout: 3000 })
     h.unmount()
   })
@@ -426,11 +405,11 @@ describe('report review screen (ticket 36)', () => {
     h.show(<Editor />)
     await screen.findByLabelText('Content of section Cover Page')
     fireEvent.click(screen.getByRole('button', { name: 'Submit for Review' }))
-    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-014')!.status).toBe('review'), { timeout: 3000 })
-    const rep = h.store().db.reports.find((r) => r.id === 'REP-014')!
+    await waitFor(() => expect(h.db().reports.find((r) => r.id === 'REP-014')!.status).toBe('review'), { timeout: 3000 })
+    const rep = h.db().reports.find((r) => r.id === 'REP-014')!
     expect(rep.snapshots![0]).toMatchObject({ version: 'v0.3', by: 'Alex Morgan' })
     expect(rep.snapshots![0].bodies['exec']).toContain('During the assessment period')
-    expect(h.store().db.notices.some((n) => n.text.includes('REP-014 needs review'))).toBe(true)
+    expect(h.db().notices.some((n) => n.text.includes('REP-014 needs review'))).toBe(true)
     h.unmount()
   })
 })
@@ -449,16 +428,16 @@ describe('report export/delivery legacy bridge (ticket 37)', () => {
     // The legacy entry points delegate to the canonical handlers: approve through
     // the legacy action, then export — the handler's export commit publishes the
     // report-export ChangeSet the typed delivery history refetches.
-    h.run(() => { h.store().A.approveReport('REP-015') })
-    h.run(() => { h.store().A.exportReport('REP-015', 'DOCX') })
+    h.run(() => { expect(decideReport(h.svc().authority, h.svc().clock, ctxOf(pat, P15), 'REP-015', 'approve', 'Independent content review').ok).toBe(true) })
+    h.run(() => { expect(exportReportVersion(h.svc().authority, h.svc().clock, ctxOf(alex, P15), 'REP-015', 'DOCX').ok).toBe(true) })
     await waitFor(() => expect(hist!.items.some((i) => i.rec.reportId === 'REP-015' && i.rec.version === 'v1.0' && i.rec.format === 'DOCX' && i.rec.status === 'Completed')).toBe(true), { timeout: 3000 })
     const rec = hist!.items.find((i) => i.rec.reportId === 'REP-015')!.rec
     // The checksum lives on the export record (the delivery history), never on preview content.
     expect(rec.checksum).toMatch(/^sha256:[0-9a-f]{4}…[0-9a-f]{4}$/)
-    expect(h.store().db.exportsList.some((e) => e.id === rec.id && e.checksum === rec.checksum)).toBe(true)
+    expect(h.db().exportsList.some((e) => e.id === rec.id && e.checksum === rec.checksum)).toBe(true)
     // The legacy deliver action goes through the same confirmation-gated handler.
-    h.run(() => { h.store().A.deliverReport('REP-015', { recipient: 'Fabrikam Cloud (Demo)', channel: 'Secure portal', notes: '', confirm: true }) })
-    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-015')!.status).toBe('delivered'), { timeout: 3000 })
+    h.run(() => { expect(deliverReportVersion(h.svc().authority, h.svc().clock, ctxOf(alex, P15), 'REP-015', { recipient: 'Fabrikam Cloud (Demo)', channel: 'Secure portal', notes: '', confirm: true }).ok).toBe(true) })
+    await waitFor(() => expect(h.db().reports.find((r) => r.id === 'REP-015')!.status).toBe('delivered'), { timeout: 3000 })
     await waitFor(() => expect(hist!.items.some((i) => i.rec.reportId === 'REP-015' && i.rec.status === 'Delivered' && i.rec.deliveredBy === 'Alex Morgan')).toBe(true), { timeout: 3000 })
     h.unmount()
   })
@@ -470,26 +449,14 @@ describe('report export/delivery legacy bridge (ticket 37)', () => {
    run the real route host so the destination screen, the URL and the addressed
    report id are all observed after the write commits. */
 
-function RouteProbe({ ready }: { ready: (s: Store) => void }) {
-  ready(useStore())
-  return null
-}
-
 function mountRouterApp(hash: string) {
   window.location.hash = hash
-  let store!: Store
   const router = createHashRouter([
-    { path: '*', element: <><RouteProbe ready={(s) => { store = s }} /><RouteHost /></>, errorElement: <RouteErrorBoundary />, hydrateFallbackElement: null },
+    { path: '*', element: <RouteHost />, errorElement: <RouteErrorBoundary />, hydrateFallbackElement: null },
   ])
   setActiveRouter(router)
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  return { view, store: () => store, run: (fn: () => unknown) => act(fn) }
+  const view = mountServices(<RouterProvider router={router} />)
+  return { view, run: view.run }
 }
 
 describe('report post-write navigation through the guarded seam (ticket 61e)', () => {
@@ -498,11 +465,11 @@ describe('report post-write navigation through the guarded seam (ticket 61e)', (
     fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
     const box = await screen.findByLabelText('Content of section Cover Page')
     fireEvent.change(box, { target: { value: 'Submitted straight from a dirty editor.' } })
-    await waitFor(() => expect(h.store().dirty).toBe(true))
+    await waitFor(() => expect(useSessionStore.getState().dirty).toBe(true))
     fireEvent.click(screen.getByRole('button', { name: 'Submit for Review' }))
     await waitFor(() => expect(window.location.hash).toBe('#/report-review/REP-014'), { timeout: 3000 })
-    expect(h.store().unsaved).toBeNull()
-    expect(h.store().route).toEqual({ page: 'report-review', id: 'REP-014' })
+    expect(useSessionStore.getState().unsaved).toBeNull()
+    expect(currentRoute()).toEqual({ page: 'report-review', id: 'REP-014' })
     expect((await screen.findAllByText(/Only a Reviewer can approve or return reports/)).length).toBeGreaterThan(0)
     h.view.unmount()
   })
@@ -512,7 +479,7 @@ describe('report post-write navigation through the guarded seam (ticket 61e)', (
     fireEvent.click(screen.getByRole('button', { name: /Alex Morgan/ }))
     fireEvent.click(await screen.findByRole('button', { name: 'Submit for Review' }))
     await waitFor(() => expect(window.location.hash).toBe('#/report-review/REP-014'), { timeout: 3000 })
-    expect(h.store().route).toEqual({ page: 'report-review', id: 'REP-014' })
+    expect(currentRoute()).toEqual({ page: 'report-review', id: 'REP-014' })
     expect(await screen.findByText('Review requests')).toBeInTheDocument()
     h.view.unmount()
   })
@@ -521,11 +488,11 @@ describe('report post-write navigation through the guarded seam (ticket 61e)', (
     const h = mountRouterApp('#/report-review/REP-015')
     fireEvent.click(screen.getByRole('button', { name: /Pat Kim/ }))
     fireEvent.click(await screen.findByRole('button', { name: 'Return with Comments' }))
-    h.run(() => { h.store().confirmState!.onConfirm('Tighten the executive summary.') })
+    h.run(() => { useSessionStore.getState().confirmState!.onConfirm('Tighten the executive summary.') })
     await waitFor(() => expect(window.location.hash).toBe('#/report/REP-015'), { timeout: 3000 })
-    expect(h.store().route).toEqual({ page: 'report', id: 'REP-015' })
+    expect(currentRoute()).toEqual({ page: 'report', id: 'REP-015' })
     expect(await screen.findByLabelText('Content of section Cover Page')).toBeInTheDocument()
-    expect(h.store().unsaved).toBeNull()
+    expect(useSessionStore.getState().unsaved).toBeNull()
     h.view.unmount()
   })
 })

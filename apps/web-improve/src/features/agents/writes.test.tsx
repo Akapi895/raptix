@@ -7,11 +7,10 @@
  * (legacy actions and typed service/mutations observe one another).
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { go, selectProject } from '../../router/navigate'
+import { useSessionStore } from '../../state/session'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { useToastStore } from '../../state/stores'
 import { createDatabaseAuthority, type DbAuthority } from '../../domain/database'
@@ -290,58 +289,31 @@ describe('removeFromGroupTransaction (ticket 49)', () => {
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Mounted screens: ChangeSet â†’ fleet + detail refetch, bridge both directions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 function mountAgents(page: 'agents' | 'agent', me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   const Screen = routes[page]
-  const ui = (withScreen: boolean) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        {withScreen ? <Screen /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+  const h = mountServices(null, me)
+  return { ...h, show: () => h.show(<Screen />) }
 }
 
 describe('agent allocation screens on typed services (ticket 49)', () => {
   it('a legacy assign action (typed handler underneath) refetches the Query detail without a reload', async () => {
     const h = mountAgents('agent')
     h.show()
-    h.run(() => { h.store().setPid(P14); h.store().go('agent', { id: 'AG-012' }) })
+    h.run(() => { selectProject(P14); go('agent', { id: 'AG-012' }) })
     await waitFor(() => expect(screen.getByText('Agent is not assigned to a project')).toBeInTheDocument())
-    h.run(() => h.store().A.assignAgent('AG-012', P14))
+    h.run(() => { expect(assignAgentTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), 'AG-012', { projectId: P14 }).ok).toBe(true) })
     await waitFor(() => expect(screen.queryByText('Agent is not assigned to a project')).not.toBeInTheDocument())
     expect(screen.getByText(/Assigned to/)).toBeInTheDocument()
-    expect(h.store().db.agents.find((a) => a.id === 'AG-012')!.projectId).toBe(P14)
+    expect(h.db().agents.find((a) => a.id === 'AG-012')!.projectId).toBe(P14)
     h.unmount()
   })
 
   it('the typed fleet refetches after a legacy group write; the pool badge follows the assignment', async () => {
     const h = mountAgents('agents')
     h.show()
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     await waitFor(() => expect(screen.getByRole('tab', { name: 'Shared Pool2' })).toBeInTheDocument())
-    h.run(() => h.store().A.saveGroup({ name: 'Lab C', projectId: P14, desc: '', agents: ['AG-012'], owner: 'Alex Morgan', policy: 'Project use only' }))
+    h.run(() => { expect(saveGroupTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX, P14), { name: 'Lab C', projectId: P14, desc: '', agents: ['AG-012'], owner: 'Alex Morgan', policy: 'Project use only' }).ok).toBe(true) })
     await waitFor(() => expect(screen.getByRole('tab', { name: 'Shared Pool1' })).toBeInTheDocument())
     // AG-012 left the pool and now renders as an assigned row of RT-2026-014; POOL-LAB-02 is still pool-only.
     expect(screen.getByText('POOL-LAB-01')).toBeInTheDocument()
@@ -352,23 +324,23 @@ describe('agent allocation screens on typed services (ticket 49)', () => {
   it('the fleet Return-to-pool action runs the typed unassign and the legacy store observes it', async () => {
     const h = mountAgents('agents')
     h.show()
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     await waitFor(() => expect(screen.getByText('WIN-LAB-03')).toBeInTheDocument())
     const enabled = screen.getAllByRole('button', { name: 'Return to pool' }).find((b) => !(b as HTMLButtonElement).disabled)
     expect(enabled).toBeTruthy() // only AG-009 (lost, unreserved) is releasable
     fireEvent.click(enabled!)
-    expect(h.store().confirmState?.title).toBe('Return AG-009 to the shared pool?')
-    await act(async () => { h.store().confirmState!.onConfirm('Decommissioned for this engagement') })
+    expect(useSessionStore.getState().confirmState?.title).toBe('Return AG-009 to the shared pool?')
+    await act(async () => { useSessionStore.getState().confirmState!.onConfirm('Decommissioned for this engagement') })
     await waitFor(() => expect(useToastStore.getState().toasts.some((t) => t.text === 'AG-009 returned to the shared pool.')).toBe(true))
-    expect(h.store().db.agents.find((a) => a.id === 'AG-009')!.projectId).toBe('')
-    expect(h.store().db.audit.find((x) => x.action === 'Released agent to shared pool')).toBeTruthy()
+    expect(h.db().agents.find((a) => a.id === 'AG-009')!.projectId).toBe('')
+    expect(h.db().audit.find((x) => x.action === 'Released agent to shared pool')).toBeTruthy()
     h.unmount()
   })
 
   it('the AssignDrawer immediate path runs the typed assign; a handler refusal surfaces as a toast', async () => {
     const h = mountAgents('agents', 'Taylor Chen') // operator — cannot assign immediately
     h.show()
-    h.run(() => { h.store().setPid(P14); h.store().go('agents', { tab: 'pool' }) })
+    h.run(() => { selectProject(P14); go('agents', { tab: 'pool' }) })
     const req = await waitFor(() => screen.getAllByRole('button', { name: 'Request assignment' }).find((b) => !(b as HTMLButtonElement).disabled))
     fireEvent.click(req!)
     await waitFor(() => expect(screen.getByText(/Request agent assignment/)).toBeInTheDocument())
@@ -378,44 +350,44 @@ describe('agent allocation screens on typed services (ticket 49)', () => {
     h.unmount()
     const m = mountAgents('agents') // manager — the immediate path is enabled and runs the typed handler
     m.show()
-    m.run(() => { m.store().setPid(P14); m.store().go('agents', { tab: 'pool' }) })
+    m.run(() => { selectProject(P14); go('agents', { tab: 'pool' }) })
     const req2 = await waitFor(() => screen.getAllByRole('button', { name: 'Request assignment' }).find((b) => !(b as HTMLButtonElement).disabled))
     fireEvent.click(req2!)
     await waitFor(() => expect(screen.getByText(/Request agent assignment/)).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Assign immediately' }))
     await waitFor(() => expect(useToastStore.getState().toasts.some((t) => t.text === 'AG-012 assigned to RT-2026-014.')).toBe(true))
-    expect(m.store().db.agents.find((a) => a.id === 'AG-012')!.projectId).toBe(P14)
-    expect(m.store().db.audit.find((x) => x.action === 'Assigned agent to project' && x.obj === 'AG-012')).toBeTruthy()
+    expect(m.db().agents.find((a) => a.id === 'AG-012')!.projectId).toBe(P14)
+    expect(m.db().audit.find((x) => x.action === 'Assigned agent to project' && x.obj === 'AG-012')).toBeTruthy()
     m.unmount()
   })
 
   it('the GroupModal create path commits through the typed handler and the legacy groups view observes it', async () => {
     const h = mountAgents('agents')
     h.show()
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     fireEvent.click(await screen.findByRole('tab', { name: 'Groups' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Create Group' }))
     await waitFor(() => expect(screen.getByText('Create agent group')).toBeInTheDocument())
     fireEvent.change(screen.getByLabelText(/Group name/), { target: { value: 'Windows Lab B' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create group' }))
     await waitFor(() => expect(useToastStore.getState().toasts.some((t) => t.text === 'Group Windows Lab B created (GR-04).')).toBe(true))
-    expect(h.store().db.groups.some((g) => g.name === 'Windows Lab B' && g.projectId === P14)).toBe(true)
-    expect(h.store().db.audit.find((x) => x.action === 'Created agent group')).toBeTruthy()
+    expect(h.db().groups.some((g) => g.name === 'Windows Lab B' && g.projectId === P14)).toBe(true)
+    expect(h.db().audit.find((x) => x.action === 'Created agent group')).toBeTruthy()
     h.unmount()
   })
 
   it('the GroupsTab unlink action runs the typed membership removal with the confirm reason', async () => {
     const h = mountAgents('agents')
     h.show()
-    h.run(() => h.store().setPid(P14))
+    h.run(() => selectProject(P14))
     fireEvent.click(await screen.findByRole('tab', { name: 'Groups' }))
     await waitFor(() => expect(screen.getByText('Windows Lab A')).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Remove AG-009 from group' }))
-    expect(h.store().confirmState?.title).toBe('Remove AG-009 from Windows Lab A?')
-    await act(async () => { h.store().confirmState!.onConfirm('Agent re-imaged') })
+    expect(useSessionStore.getState().confirmState?.title).toBe('Remove AG-009 from Windows Lab A?')
+    await act(async () => { useSessionStore.getState().confirmState!.onConfirm('Agent re-imaged') })
     await waitFor(() => expect(useToastStore.getState().toasts.some((t) => t.text === 'AG-009 removed from Windows Lab A.')).toBe(true))
-    expect(h.store().db.groups.find((g) => g.id === 'GR-01')!.agents).toEqual(['AG-007'])
-    expect(h.store().db.agents.find((a) => a.id === 'AG-009')!.group).toBe('')
+    expect(h.db().groups.find((g) => g.id === 'GR-01')!.agents).toEqual(['AG-007'])
+    expect(h.db().agents.find((a) => a.id === 'AG-009')!.group).toBe('')
     h.unmount()
   })
 })
