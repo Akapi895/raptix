@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Ban, BookOpen, CheckCircle2, FileUp, Map as MapIcon, Plus, Radar, Server, Upload, X } from 'lucide-react'
-import { useServices, useStore, useDirty } from '../store'
+import { useServices, useDirty } from '../store'
 import type { Asset, Db } from '../data'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, PickProjectBanner, shortDate, Trunc, withLoading } from './d-shared'
@@ -12,6 +12,11 @@ import type { AssetListItem, AssetScopeProject } from '../features/assets/servic
 // Ticket 51: imports and scope changes run through the feature-local write
 // transactions (validated, atomic, role-gated) via the screen handlers.
 import { ASSET_TYPES, createAssetWriteHandlers, okIp, validateAssetRows, validateIdent, type AssetImportRow } from '../features/assets/writes'
+import { go, selectProject, useRoute } from '../router/navigate'
+import { useActiveProject, useCan, useDb, useMe } from '../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { submitApprovalTransaction } from '../features/approvals/service'
 
 const SCOPES: Asset['scope'][] = ['in', 'out', 'pending', 'unclassified']
 const SCOPE_LABEL: Record<Asset['scope'], string> = { in: 'Approved In Scope', out: 'Approved Out of Scope', pending: 'Pending Approval', unclassified: 'Unclassified' }
@@ -26,7 +31,7 @@ const SCOPE_WHY: Record<Asset['scope'], string> = {
   unclassified: 'Present in the inventory but not classified. It is not targetable until it is proposed and approved.',
 }
 export function ScopeBadge({ a }: { a: Asset }) {
-  const { db } = useStore()
+  const db = useDb()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
   const p = db.projects.find((x) => x.id === a.projectId)
@@ -54,7 +59,13 @@ export function ScopeBadge({ a }: { a: Asset }) {
 
 /* ───────────── List (AS-01, ticket 50: typed service read + Query) ───────────── */
 function AssetList() {
-  const { go, pid, can, confirm, me, toast, setFilter, persistFilters } = useStore()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const me = useMe()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
   const svc = useServices()
   const guard = useGuard(pid === 'all' ? undefined : pid)
   /* Filter convention: persistFilters['assets.scope'] = 'in' | 'out' | 'pending' | 'unclassified' ('in' = Approved In Scope) */
@@ -170,7 +181,6 @@ function AssetList() {
 /* ───────────── Scope diff & approval impact (AS-V3-03, ticket 50: typed scope read) ───────────── */
 const bumpV = (v: string) => (/v\d+$/.test(v) ? v.replace(/v(\d+)$/, (_, n) => 'v' + (+n + 1)) : `${v} (proposed)`)
 function ScopeDiff({ pending, proj, impactedOps }: { pending: Asset[]; proj?: AssetScopeProject; impactedOps: string[] }) {
-  const { go } = useStore()
   if (!proj) return <Card className="mb-4"><p className="text-sm text-muted">Select a project to compare its approved ROE against the proposed version.</p></Card>
   const approved = proj.roeStatus === 'approved'
   const apr = proj.pendingScopeApproval
@@ -201,8 +211,12 @@ function ScopeDiff({ pending, proj, impactedOps }: { pending: Asset[]; proj?: As
 
 /* ───────────── Scope map + review (AS-04, asset-scope, ticket 50: typed scope read) ───────────── */
 function AssetScope() {
-  const { go, pid, can, me, A, confirm, toast } = useStore()
-  const svc = useServices()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const me = useMe()
+  const services = useServices()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const scope = useAssetScope()
   const read = scope.data
@@ -221,7 +235,7 @@ function AssetScope() {
   const reqWhy = pid === 'all' ? 'Select a specific project to request scope approval.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can request scope approval.' : ''
   /* Ticket 51: the review decision flips each pending asset through the
      role-gated transaction; refusals surface with the handler's reason. */
-  const write = useMemo(() => createAssetWriteHandlers(svc, { id: me.name, role: me.role }, pid), [svc, me.name, me.role, pid])
+  const write = useMemo(() => createAssetWriteHandlers(services, { id: me.name, role: me.role }, pid), [services, me.name, me.role, pid])
   const reviewMut = useMutation({
     mutationFn: async (input: { decision: 'approved' | 'rejected'; reason: string }) => {
       const action = input.decision === 'approved' ? 'Approved scope change' : 'Rejected scope change'
@@ -248,7 +262,7 @@ function AssetScope() {
   const requestApproval = () => confirm({
     title: 'Request scope approval?', confirmLabel: 'Submit request', reasonLabel: 'Justification', reasonRequired: true,
     body: <>A scope change request covering {pending.length || 'the selected'} pending {pending.length === 1 ? 'asset' : 'assets'} is sent to the reviewer. Nothing becomes in scope until it is approved.</>,
-    onConfirm: (r) => { A.submitApproval(pid, 'Scope change', r, pending.map((a) => `${a.name} → in scope`).join(', ') || 'Scope review'); toast('Scope approval requested.', 'info') },
+    onConfirm: (r) => { /* The legacy `A.submitApproval` entry's exact transaction + request context. */ submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: pid, corr: 'legacy' }, { projectId: pid, type: 'Scope change', note: r, diff: pending.map((a) => `${a.name} → in scope`).join(', ') || 'Scope review' }); toast('Scope approval requested.', 'info') },
   })
   const impactedOps = [...new Set(pending.flatMap((a) => impactedOf(a.id)))]
   return (
@@ -398,7 +412,15 @@ function ImportPreview({ rows, setRows, onConfirm, disabled, why, db, pid }: { r
 }
 
 function AssetNew() {
-  const { db, go, pid, project, can, me, toast, dirty, setSwitcherOpen, route } = useStore()
+  const db = useDb()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const can = useCan()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const dirty = useSessionStore((s) => s.dirty)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const route = useRoute()
   const svc = useServices()
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const [tab, setTab] = useState<'manual' | 'bulk' | 'disc'>(route.tab === 'bulk' || route.tab === 'disc' ? route.tab : 'manual')
@@ -415,7 +437,7 @@ function AssetNew() {
   const why = pid === 'all' ? 'Select a specific project before adding assets.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can add assets.' : ''
   const isDirty = (!!(f.name || f.ident || f.desc || f.owner || f.labels || f.note) || !!paste || rows.length > 0)
   useDirty(isDirty, () => toast('Asset form draft saved.', 'info'))
-  useEffect(() => { if (done && !done.needs && !done.stay && !dirty) go('assets') }, [done, dirty]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (done && !done.needs && !done.stay && !dirty) go('assets') }, [done, dirty])
 
   /* Ticket 51: manual and bulk saves run through the atomic import
      transaction — the handler re-validates every row, so a refusal (with its
@@ -523,7 +545,12 @@ function AssetNew() {
 
 /* ───────────── Asset detail (AS-03, ticket 50: typed service read + Query) ───────────── */
 function AssetDetail() {
-  const { route, go, pid, can, me, confirm, toast, setPid } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const me = useMe()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
   const svc = useServices()
   const detail = useAssetDetail(route.id)
   const read = detail.data
@@ -545,7 +572,7 @@ function AssetDetail() {
   if (detail.isPending) return <div aria-busy="true" aria-label="Loading asset"><Skeleton className="h-96" /></div>
   if (detail.isError || !read) {
     const failure = detail.isError ? (detail.error as AssetReadError).failure : undefined
-    if (failure?.kind === 'forbidden' && failure.entity?.projectId) return <><PageHeader title={`Asset ${route.id}`} back={back} /><Blocked title="Asset belongs to a different project" actions={<><Button onClick={() => go('assets')}>Back to assets</Button><Button onClick={() => setPid('all')}>View all projects</Button></>}>This asset belongs to {failure.entity.projectId}, but you are working in {pid}.</Blocked></>
+    if (failure?.kind === 'forbidden' && failure.entity?.projectId) return <><PageHeader title={`Asset ${route.id}`} back={back} /><Blocked title="Asset belongs to a different project" actions={<><Button onClick={() => go('assets')}>Back to assets</Button><Button onClick={() => selectProject('all')}>View all projects</Button></>}>This asset belongs to {failure.entity.projectId}, but you are working in {pid}.</Blocked></>
     return <><PageHeader title="Asset not found" back={back} /><Empty icon={Server} title={`No asset “${route.id}”`} action={<Button onClick={() => go('assets')}>Back to assets</Button>}>{failure?.message || 'No asset data available.'}</Empty></>
   }
   const { asset: a, project: p, operations: ops, findings: fs, evidence: ev, agents, approvals: apprs, techniques, history: hist, canViewSensitive } = read
@@ -598,7 +625,7 @@ function AssetDetail() {
 }
 
 export const assetRoutes = {
-  assets: withLoading(function Assets() { const { route } = useStore(); return route.tab === 'scope-map' ? <AssetScope /> : <AssetList /> }),
+  assets: withLoading(function Assets() { const route = useRoute(); return route.tab === 'scope-map' ? <AssetScope /> : <AssetList /> }),
   'asset-new': withLoading(AssetNew),
   'asset-scope': withLoading(AssetScope),
   asset: withLoading(AssetDetail),
