@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Activity, AlertTriangle, ArrowRight, Bug, CheckCircle2, ClipboardCheck, FileBarChart, FolderKanban, Inbox, KeyRound, Plus, Radar, Server, ShieldAlert, ShieldCheck, Sparkles, Terminal, WifiOff, Workflow, type LucideIcon } from 'lucide-react'
-import { useServices } from '../store'
+import { useServices } from '../state/services'
 import { APR, USERS } from '../data'
 import type { Severity } from '../data'
 import { actorRef } from '../auth/persona'

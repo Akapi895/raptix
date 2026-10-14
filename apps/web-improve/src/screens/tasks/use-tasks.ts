@@ -10,7 +10,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope } from '../../state/keys'
 import { tasksForScope } from './service'
 import type { TasksData } from './service'

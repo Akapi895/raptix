@@ -1,6 +1,5 @@
 import { useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut, type LucideProps } from 'lucide-react'
-import type { Store } from '../store'
 import { ROLE_LABEL } from '../auth/policy'
 import { eligibility } from '../features/operations/preflight'
 import { TACTICS, TECHNIQUES, type DetectState, type Operation, type Step, type StepStatus, type Technique } from '../data'
@@ -892,4 +891,3 @@ function Detection({ ana, canAdmin }: { ana: Ana; canAdmin: boolean }) {
 }
 
 export const analysisRoutes: Record<string, ComponentType> = { analysis: Analysis }
-export type { Store }

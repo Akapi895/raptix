@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRound, Lock, LogOut, MinusCircle, MoreHorizontal, OctagonX, Plug, RefreshCw, Save, ShieldAlert, ShieldCheck, Trash2, UserPlus, XCircle } from 'lucide-react'
-import { useServices, useDirty } from '../store'
+import { useServices } from '../state/services'
+import { useDirty } from '../state/session'
 import { ROLE_LABEL } from '../auth/policy'
 import { signOut } from '../auth/persona'
 import { USERS, TECHNIQUES, type Integration, type Policy, type Retention, type Role, type DetectState } from '../data'

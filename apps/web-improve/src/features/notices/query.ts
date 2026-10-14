@@ -14,7 +14,7 @@
  */
 import { useMemo } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { useMe } from '../../state/console'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure, ServiceResult } from '../../domain/service'

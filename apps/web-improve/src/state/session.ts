@@ -16,7 +16,7 @@
  * provider mount never inherits a previous mount's session state.
  */
 import { create } from 'zustand'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 /* ───────────── Live log ───────────── */
 export interface LogLine { id: string; ts: string; level: 'INFO' | 'WARN' | 'ERROR'; agent: string; stepId: string; text: string }
@@ -110,4 +110,15 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
 /** Restores every session value's initial state (provider-mount safety). */
 export function resetSessionStores() {
   useSessionStore.setState({ ...initialSession })
+}
+
+/** Registers unsaved changes and the latest draft save callback. */
+export function useDirty(isDirty: boolean, save?: () => void): void {
+  const setDirty = useSessionStore((s) => s.setDirty)
+  const saveRef = useRef(save)
+  saveRef.current = save
+  useEffect(() => {
+    setDirty(isDirty, () => saveRef.current?.())
+    return () => setDirty(false)
+  }, [isDirty, setDirty])
 }

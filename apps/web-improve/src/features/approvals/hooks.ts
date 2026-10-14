@@ -12,7 +12,7 @@
  * panel surfaces its refusal.
  */
 import { APR, type Project } from '../../data'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { useDb, useMe } from '../../state/console'
 import { useToastStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'
