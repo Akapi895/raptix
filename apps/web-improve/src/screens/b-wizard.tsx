@@ -15,9 +15,10 @@
 import { useState } from 'react'
 import { Controller, useFieldArray } from 'react-hook-form'
 import { AlertTriangle, ArrowDown, ArrowUp, Check as CheckIcon, FileText, Lock, Plus, Trash2, Upload, X } from 'lucide-react'
-import { useStore } from '../store'
 import { ROLE_LABEL } from '../auth/policy'
 import { USERS, type Role } from '../data'
+import { useDb, useMe } from '../state/console'
+import { go } from '../router/navigate'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, IconButton, Input, PageHeader, Select, Status, Tabs, Textarea, cx } from '../ui'
 import { LIMIT_PRESETS, WIZARD_STEPS, fmtDate } from '../features/wizard/draft'
 import { useProjectWizard } from '../features/wizard/use-project-wizard'
@@ -32,7 +33,8 @@ const asMessage = (e: unknown): string | undefined =>
   e && typeof e === 'object' && 'message' in e ? String((e as { message?: string }).message) : undefined
 
 export function ProjectNew() {
-  const { db, me, go } = useStore()
+  const db = useDb()
+  const me = useMe()
   const wiz = useProjectWizard()
   const { form, w, step, maxStep, isDirty, issues: submitIssues, blocking, saving, err, setErr, next, back, jump, create, saveDraft, set, update, shown } = wiz
   const { register, control, formState: { errors } } = form

@@ -1,9 +1,16 @@
 import { useState } from 'react'
 import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
-import { useStore } from '../store'
+import { useServices } from '../store'
 import { ROLE_LABEL } from '../auth/policy'
 import { useReopen } from '../features/approvals/hooks'
 import { APR, USERS, type Project, type Role, type Approval } from '../data'
+import { decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, type ScopeFieldPatch } from '../features/approvals/service'
+import { confirmCloseTransaction, requestCloseTransaction } from '../features/closure/service'
+import { stamp } from '../domain/demo-clock'
+import { useCan, useMe } from '../state/console'
+import { useSessionStore } from '../state/session'
+import { useProjectStore, useToastStore } from '../state/stores'
+import { go, selectProject } from '../router/navigate'
 import type { DashboardAggregate } from './dashboard/domain'
 import type { ProjectDetail } from './project-detail/service'
 import { Banner, Button, Check, Card, CardHeader, DescList, Empty, Field, IconButton, IdLink, Input, Kpi, Locked, Modal, PersonaHint, Person, Progress, Segmented, Select, Status, Table, Textarea, useGuard, type Col } from '../ui'
@@ -24,11 +31,27 @@ const CREATE_OR_SCOPE: readonly string[] = [APR.create, APR.scope]
 /* ───────────── PR-04 Scope & ROE ───────────── */
 type Sub = 'in' | 'out' | 'roe' | 'docs' | 'hist'
 export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
-  const { go, can, A, confirm, toast, setPid, pid } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const can = useCan()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
+  const pid = useProjectStore((s) => s.pid)
   const guard = useGuard(p.id)
   const [sub, setSub] = useState<Sub>('in')
   const [edit, setEdit] = useState(false)
   const [scopeErr, setScopeErr] = useState('')
+  /* Ticket 67 wave 3: the legacy A.submitApproval/A.editScope entries mirrored —
+     the transactions run directly with the same request context (corr 'legacy')
+     and the same Res bridge. */
+  const submitApproval = (projectId: string, type: string, note: string, diff?: string) => {
+    const res = submitApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { projectId, type, note, diff })
+    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
+  }
+  const editScope = (projectId: string, patch: ScopeFieldPatch, reason?: string) => {
+    const res = reviseScopeTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, projectId, { patch, reason })
+    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
+  }
   const assets = ds.assets
   const list = sub === 'in' ? assets.filter((a) => a.scope !== 'out') : assets.filter((a) => a.scope === 'out')
   const editable = !guard.ro && can('editScope', p.id)
@@ -63,13 +86,13 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   ]
 
   const rePropose = () => {
-    const r = A.submitApproval(p.id, APR.scope, 'Resubmitted ROE after addressing reviewer feedback.', p.roeVersion)
+    const r = submitApproval(p.id, APR.scope, 'Resubmitted ROE after addressing reviewer feedback.', p.roeVersion)
     if (!r.ok) { setScopeErr(r.error || 'The resubmission was refused.'); return }
     setScopeErr('')
     toast('Requested re-approval of scope')
   }
   const download = () => toast(`Downloading ${p.id}_${p.roeVersion.replace(' ', '')}.pdf (simulated)`, 'info')
-  const addAsset = () => { if (pid !== p.id) { setPid(p.id); setTimeout(() => go('asset-new'), 80) } else go('asset-new') }
+  const addAsset = () => { if (pid !== p.id) { selectProject(p.id); setTimeout(() => go('asset-new'), 80) } else go('asset-new') }
 
   return (
     <>
@@ -149,13 +172,13 @@ export function ScopeTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
         if (needRe) {
           setEdit(false)
           confirm({ title: 'Edit an approved scope?', body: `This creates ${bumpRoeLabel(p.roeVersion)} as a new draft and sends it for approval. ${ds.plans.filter((x) => x.status === 'approved').length} approved plan(s) will need re-approval and ${ds.operations.filter((x) => x.status === 'ready').length} ready operation(s) return to Draft. Running operations continue under ${p.roeVersion} until the new version is approved.`, confirmLabel: 'Submit change', danger: true, reasonLabel: 'Reason for scope change', reasonRequired: true, onConfirm: (r) => {
-            const res = A.editScope(p.id, patch, r)
+            const res = editScope(p.id, patch, r)
             if (!res.ok) { setScopeErr(res.error || 'The scope change was refused.'); return }
             setScopeErr('')
             toast(`${bumpRoeLabel(p.roeVersion)} created. Dependent plans and operations need re-validation`, 'warn')
           } })
         } else {
-          const res = A.editScope(p.id, patch)
+          const res = editScope(p.id, patch)
           if (!res.ok) { setScopeErr(res.error || 'The scope change was refused.'); return }
           setScopeErr(''); toast('Scope updated'); setEdit(false)
         }
@@ -247,12 +270,26 @@ function EditScope({ p, onClose, confirmReason }: { p: Project; onClose: () => v
 
 /* ───────────── PR-05 / PR-07 Members & Approvals ───────────── */
 export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
-  const { me, go, can, A, confirm, toast } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const can = useCan()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
   const guard = useGuard(p.id)
   const [err, setErr] = useState('')
   const [open, setOpen] = useState<string | null>(null)
   const [add, setAdd] = useState(false)
   const [nu, setNu] = useState<{ user: string; role: Role }>({ user: '', role: 'operator' })
+  /* Ticket 67 wave 3: the legacy A.decideApproval/A.confirmClose entries mirrored —
+     the transactions run directly with the same request context and Res bridge. */
+  const decideApproval = (id: string, decision: 'approved' | 'returned', note: string) => {
+    const res = decideApprovalTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: '', corr: 'legacy' }, id, decision, note)
+    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
+  }
+  const confirmClose = (apId: string) => {
+    const res = confirmCloseTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: '', corr: 'legacy' }, apId)
+    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
+  }
   const canEdit = !guard.ro && can('editScope', p.id)
   const why = guard.ro ? guard.reason : 'Only a Red Team Manager or Organization Admin can manage members.'
   const appr = ds.approvals
@@ -260,20 +297,23 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const mayApprove = can('approve', p.id)
   const names = Array.from(new Set(USERS.map((u) => u.name))).filter((n) => !p.members.some((m) => m.user === n) && n !== p.owner)
 
+  /* Ticket 67 wave 3: the legacy A.updateProject/A.audit entries mirrored — the
+     same two raw 'legacy' commits (the member write stamped, then the audit row
+     with the RT-2026-014 SS/AR correlation rule) and the same toast. */
   const setMembers = (members: Project['members'], act: string, obj: string) => {
-    A.updateProject(p.id, { members })
-    A.audit(act, obj, p.id)
+    services.authority.commit('legacy', (d) => { const pr = d.projects.find((x) => x.id === p.id)!; Object.assign(pr, { members }); pr.updated = stamp() })
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: p.id === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action: act, obj, projectId: p.id, result: 'Success', reason: '' }) })
     toast(act)
   }
   const changeRole = (user: string, role: Role) => setMembers(p.members.map((m) => (m.user === user ? { ...m, role } : m)), `Changed ${user}'s role to ${ROLE_LABEL[role]}`, user)
   const remove = (user: string) => confirm({ title: `Remove ${user} from the project?`, body: 'The member loses access to the project immediately.', confirmLabel: 'Remove member', danger: true, onConfirm: () => setMembers(p.members.filter((m) => m.user !== user), `Removed ${user} from the project`, user) })
 
   const decide = (a: Approval, d: 'approved' | 'returned', note: string) => {
-    const r = A.decideApproval(a.id, d, note)
+    const r = decideApproval(a.id, d, note)
     if (!r.ok) { setErr(r.error || 'Could not complete the decision'); return }
     setErr(''); toast(d === 'approved' ? `Approved: ${a.type}` : `Returned: ${a.type}`)
   }
-  const approve = (a: Approval) => confirm({ title: `Approve “${a.type}”?`, body: `Project ${p.id} moves to its next state based on this decision.`, confirmLabel: 'Approve', reasonLabel: 'Comment (optional)', onConfirm: (r) => { if (a.type !== APR.close) { decide(a, 'approved', r); return } /* Ticket 22: closure resolution is gated by the handler (four-eyes + re-derived checklist); the refusal renders here. */ const c = A.confirmClose(a.id); if (c.ok) toast('Project closure confirmed'); else setErr(c.error || 'Could not confirm closure') } })
+  const approve = (a: Approval) => confirm({ title: `Approve “${a.type}”?`, body: `Project ${p.id} moves to its next state based on this decision.`, confirmLabel: 'Approve', reasonLabel: 'Comment (optional)', onConfirm: (r) => { if (a.type !== APR.close) { decide(a, 'approved', r); return } /* Ticket 22: closure resolution is gated by the handler (four-eyes + re-derived checklist); the refusal renders here. */ const c = confirmClose(a.id); if (c.ok) toast('Project closure confirmed'); else setErr(c.error || 'Could not confirm closure') } })
   const ret = (a: Approval) => confirm({ title: `Request changes to “${a.type}”`, body: 'The submitter is notified with your reason so they can revise and resubmit.', confirmLabel: 'Request Changes', danger: true, reasonLabel: 'Reason for changes', reasonRequired: true, onConfirm: (r) => decide(a, 'returned', r) })
   const more = (a: Approval) => confirm({ title: 'Request more information', body: 'The request is returned to the submitter with what is needed.', confirmLabel: 'Send request', reasonLabel: 'Information needed', reasonRequired: true, onConfirm: (r) => decide(a, 'returned', 'More information requested: ' + r) })
 
@@ -347,9 +387,23 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
 
 /* ───────────── PR-09 Closure ───────────── */
 export function CloseTab({ p, d, setTab }: { p: Project; d: ProjectDetail; setTab: (t: string) => void }) {
-  const { me, go, can, A, confirm, toast } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const can = useCan()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
   const guard = useGuard(p.id)
   const reopen = useReopen(p)
+  /* Ticket 67 wave 3: the legacy A.confirmClose/A.requestClose entries mirrored —
+     the closure transactions run directly with the same request context and Res bridge. */
+  const confirmClose = (apId: string) => {
+    const res = confirmCloseTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: '', corr: 'legacy' }, apId)
+    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
+  }
+  const requestClose = (pid_: string, input?: { reason?: string; waiverNoFindings?: boolean }) => {
+    const res = requestCloseTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: pid_, corr: 'legacy' }, pid_, { reason: input?.reason ?? '', waiverNoFindings: input?.waiverNoFindings })
+    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
+  }
   const [modal, setModal] = useState(false)
   const [reason, setReason] = useState('')
   const [noFind, setNoFind] = useState(false)
@@ -420,7 +474,7 @@ export function CloseTab({ p, d, setTab }: { p: Project; d: ProjectDetail; setTa
         ) : p.status === 'review' && closePending ? (
           can('confirmClose', p.id) ? (
             <div className="flex flex-wrap items-center gap-3">
-              <Button variant="primary" onClick={() => confirm({ title: `Approve closure of ${p.id}?`, body: 'The project becomes read-only; data is retained per policy.', confirmLabel: 'Approve Closure', danger: true, onConfirm: () => { const r = A.confirmClose(closePending.id); if (r.ok) toast(`Closed ${p.id}`); else toast(r.error || 'The closure could not be confirmed.', 'bad') } })}>Approve Closure</Button>
+              <Button variant="primary" onClick={() => confirm({ title: `Approve closure of ${p.id}?`, body: 'The project becomes read-only; data is retained per policy.', confirmLabel: 'Approve Closure', danger: true, onConfirm: () => { const r = confirmClose(closePending.id); if (r.ok) toast(`Closed ${p.id}`); else toast(r.error || 'The closure could not be confirmed.', 'bad') } })}>Approve Closure</Button>
               <span className="text-xs text-muted">Requested by {closePending.by} on {closePending.at}</span>
             </div>
           ) : (
@@ -434,7 +488,7 @@ export function CloseTab({ p, d, setTab }: { p: Project; d: ProjectDetail; setTa
         )}
       </Card>
 
-      <Modal open={modal} onClose={() => setModal(false)} title="Close Project" footer={<><Button onClick={() => setModal(false)}>Cancel</Button><Button variant="primary" disabled={failing.length > 0 || !reason.trim()} title={failing.length ? 'Resolve the blockers first' : !reason.trim() ? 'A reason is required' : undefined} onClick={() => { const r = A.requestClose(p.id, { reason: reason.trim(), waiverNoFindings: noFind && noFindingsOk }); if (!r.ok) { toast(r.error || 'The closure request was refused.', 'bad'); return } setModal(false); setReason(''); toast('Closure request submitted for sign-off') }}>Submit closure request</Button></>}>
+      <Modal open={modal} onClose={() => setModal(false)} title="Close Project" footer={<><Button onClick={() => setModal(false)}>Cancel</Button><Button variant="primary" disabled={failing.length > 0 || !reason.trim()} title={failing.length ? 'Resolve the blockers first' : !reason.trim() ? 'A reason is required' : undefined} onClick={() => { const r = requestClose(p.id, { reason: reason.trim(), waiverNoFindings: noFind && noFindingsOk }); if (!r.ok) { toast(r.error || 'The closure request was refused.', 'bad'); return } setModal(false); setReason(''); toast('Closure request submitted for sign-off') }}>Submit closure request</Button></>}>
         {failing.length === 0 ? (
           <p className="mb-3 flex items-center gap-2 text-sm"><CheckCircle2 size={16} className="text-ok" />All conditions are met. A Reviewer or Admin signs off. Closing makes the project read-only and keeps all logs.</p>
         ) : (

@@ -514,3 +514,66 @@ Gaps: browser route exercise skipped (optional HTTP-check gap per AGENTS.md
 surfaces are pinned by the shell, navigate, console-seam, session-duality,
 estop, aichat and demo suites that exercise them through real screens, and
 `npm run build` covers the module graph).
+
+### Wave 3 (a/b screens off the store, `wi/67w3-ab`)
+
+The a/b screen batch leaves the legacy store context entirely: the 6 screens
+`a-dashboard` (MyTasks), `a-login`, `b-portfolio`, `b-wizard`, `b-detail`
+(12 sites) and `b-detail2` (3 tabs) — 6 touched files, +170/−47 raw
+(≈ +143/−47 runtime after the migration comments), far under the caps. Every
+replacement is the canonical hook the enablers host, and the observable
+behavior (toasts, confirms, refusals, audit rows, corr values, the loading
+gate and the safe-return login navigation) is unchanged.
+
+- `a-dashboard.tsx` (MyTasks): the `A.decidePlan`/`A.decideApproval`/
+  `A.decideSessionRequest` entries run their transactions directly
+  (`features/plans/service`, `features/approvals/service`, `features/c2/grants`)
+  with the store's exact request context (`corr: 'legacy'`, the override-aware
+  persona, the plan/access-request project lookups from the one authority at
+  call time, the same not-found copy) and the same Res bridge; `confirm`/
+  `toast` come from the session/toast authorities. The context resolves at
+  call time, not render (see Checks — the pinned failing-aggregate-read error
+  state must survive a throwing authority snapshot).
+- `a-login.tsx`: the store's `login` entry mirrored —
+  `signIn(useAuthStore.getState().meName, org)` + the safe-return check
+  (`isKnownPage`/`OUTSIDE_SHELL` + `currentRoute()`, `clearDirty()` in the
+  known-page branch) + the `command-center` fallback through `navRawRoute`;
+  `me` → `useMe()`.
+- `b-portfolio.tsx`: `db`/`me`/`can` → `useDb`/`useMe`/`useCan`; `pid` →
+  `useProjectStore`; `go` → navigate; `toast` → toast authority;
+  `persistFilters`/`setFilter` → session authority. Pinning already runs the
+  typed `handlers.setPinned` write (ticket 16) — kept; this screen has no
+  `A.updateProject` path.
+- `b-wizard.tsx`: `db`/`me` → `useDb`/`useMe`, `go` → navigate.
+- `b-detail.tsx` (12 sites): navigate module (`go`/`useRoute`/`selectProject`
+  for the guarded via-switch), `useMe`, `useCan`, toast authority,
+  `useProjectStore`; the one-time raw switcher sync on entry
+  (`useProjectStore.getState().setPid`) stays as documented.
+- `b-detail2.tsx` (3 tabs): the same mapping plus the A entries — ScopeTab's
+  `A.submitApproval`/`A.editScope` → `submitApprovalTransaction`/
+  `reviseScopeTransaction`; TeamTab's `A.decideApproval`/`A.confirmClose` →
+  their transactions, and `A.updateProject`/`A.audit` → the same two raw
+  `'legacy'` commits (the member write stamped, then the audit row with the
+  RT-2026-014 SS/AR corr rule, actor/role from the override-aware `useMe()`);
+  CloseTab's `A.confirmClose`/`A.requestClose` → `confirmCloseTransaction`/
+  `requestCloseTransaction`. Same ctx, same Res bridge, same refusal/toast
+  copy.
+
+Checks: `npm run typecheck` — 0 diagnostics (`$LASTEXITCODE` 0). `npm run
+lint` — 0 errors; 167 warnings, unchanged from the wave-2 tip; all 6 touched
+files lint clean individually (`$LASTEXITCODE` 0) — 0 new findings.
+`npm test -- --run --maxWorkers=2` — 955 tests / 72 files green. The first
+full run surfaced `tasks.test.tsx`'s failing-aggregate-read case: an earlier
+iteration read the persona through `useMe()` (a render-time authority
+snapshot), which crashes under that test's throwing `snapshot` spy where the
+legacy provider's captured `me` did not — fixed by resolving the decide
+context at call time (no authority read on this render path); the suite then
+passed in two consecutive full runs and the file passes in isolation (23/23).
+No existing assertion changed. `npm run build` — succeeds (pre-existing
+chunk-size warning only).
+
+Gaps: browser route exercise skipped (optional HTTP-check gap per AGENTS.md
+§ Windows Temporary Process Safety, same as the earlier waves; the migrated
+surfaces are pinned by the auth/login, tasks, portfolio, wizard,
+project-detail, console-seam and session-duality suites that exercise them
+through real mounted screens, and `npm run build` covers the module graph).
