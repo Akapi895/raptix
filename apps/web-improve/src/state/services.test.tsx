@@ -8,6 +8,7 @@ const { useSessionStore } = await import('./session')
 const { createChatHandlers } = await import('../features/aichat/handlers')
 const { sendChat, resetDemo } = await import('../features/demo/runtime')
 const { useState } = await import('react')
+const { hhmm } = await import('../domain/demo-clock')
 
 afterEach(() => { cleanup(); vi.clearAllTimers() })
 
@@ -55,4 +56,19 @@ it('resetting twice between clock ticks does not charge pre-reset elapsed time t
   fireEvent.click(screen.getByRole('button', { name: 'Reset and schedule' }))
   act(() => { vi.advanceTimersByTime(8000) })
   expect(screen.getByText('Deadline pending')).toBeInTheDocument()
+})
+
+function ResetDisplay(): React.JSX.Element {
+  const [label, setLabel] = useState('')
+  return <>
+    <button onClick={() => { resetDemo(); resetDemo(); setLabel(hhmm()) }}>Reset display clock</button>
+    <span>{label}</span>
+  </>
+}
+
+it('demo reset restores the countdown display to the dataset anchor', () => {
+  render(<ServicesProvider><ResetDisplay /></ServicesProvider>)
+  act(() => { vi.advanceTimersByTime(60_000) })
+  fireEvent.click(screen.getByRole('button', { name: 'Reset display clock' }))
+  expect(screen.getByText('10:42')).toBeInTheDocument()
 })
