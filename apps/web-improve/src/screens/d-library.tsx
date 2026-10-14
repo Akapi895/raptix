@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, BookOpen, Eye, ClipboardCheck, Copy, Crosshair, ExternalLink, GitCompare, Layers, Play, Plus, Send, Sparkles, Upload, X } from 'lucide-react'
-import { useStore } from '../store'
-import { TACTICS, TECHNIQUES, type Playbook } from '../data'
+import { useServices } from '../store'
+import { TACTICS, TECHNIQUES, type Db, type Playbook } from '../data'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
 import { Id, IdL, MoreFilters, withLoading } from './d-shared'
 import { LibraryReadError, usePlaybookDetail, usePlaybookList, usePlaybookReview, usePlaybookReviewQueue, useTechniqueDetail } from '../features/library/query'
+import { go, useRoute } from '../router/navigate'
+import { useActiveProject, useCan, useMe } from '../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { stamp } from '../domain/demo-clock'
+import { ROLE_LABEL } from '../auth/policy'
 
 const tName = (id: string) => TECHNIQUES.find((t) => t.id === id)?.name ?? id
 
@@ -14,7 +20,12 @@ function PbStatus({ s }: { s: Playbook['status'] }) {
 
 /* ───────────── Playbooks & TTPs (PB-01, ticket 52: typed service read + Query) ───────────── */
 function Playbooks() {
-  const { route, go, pid, persistFilters, setFilter, can, toast } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
   const tab = route.tab || 'playbooks'
   const [q, setQ] = useState(''), [tac, setTac] = useState(''), [os, setOs] = useState(''), [st, setSt] = useState('')
   const [page, setPage] = useState(1)
@@ -25,7 +36,7 @@ function Playbooks() {
   const list = usePlaybookList({ kind, q: q || undefined, tactic: tac || undefined, os: os || undefined, status: st || undefined, page: page > 1 ? page : undefined })
   useEffect(() => { setPage(1) }, [q, tac, os, st, tab])
   const read = list.data
-  const pre: string[] | undefined = persistFilters['operation-new.assets']
+  const pre = persistFilters['operation-new.assets'] as string[] | undefined
   const filtered = !!(q || tac || os || st)
   const clear = () => { setQ(''); setTac(''); setOs(''); setSt('') }
   const createWhy = !can('editScope') ? 'Only editors (Red Team Managers and Admins) can create playbooks.' : ''
@@ -107,7 +118,23 @@ function Playbooks() {
 
 /* ───────────── Playbook detail (PB-02, PB-03) ───────────── */
 function PlaybookDetail() {
-  const { route, go, pid, project, can, A, toast, setFilter, setSwitcherOpen, confirm } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const me = useMe()
+  const can = useCan()
+  const services = useServices()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  /* The legacy `A.audit`/`A.notify` entries, mirrored exactly: one 'legacy'
+     commit per row through the one authority (the store helper's exact
+     shape — audit rows and the todo notice are untyped demo mirrors). */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+  const notify = (text: string, projectId: string, to: { name: string; id?: string }, group: 'todo' | 'update' | 'system' = 'update', category?: NonNullable<Db['notices'][number]['category']>) =>
+    services.authority.commit('legacy', (d) => { d.notices.unshift({ id: 'N' + (d.notices.length + 1) + '-' + Date.now() % 10000, group, text, projectId, at: stamp(), read: false, to, category }) })
   const guard = useGuard(pid === 'all' ? undefined : pid)
   const read = usePlaybookDetail(route.id)
   const [asked, setAsked] = useState(false)
@@ -119,19 +146,19 @@ function PlaybookDetail() {
   const useWhy = p.status !== 'approved' ? 'This playbook is not approved yet. Request approval or ask a reviewer to approve it.' : pid === 'all' ? 'Select a specific project in the top bar to create an operation.' : guard.ro ? guard.reason : !can('run') ? 'Your role cannot create test operations.' : !['approved', 'active'].includes(project?.status || '') ? 'The project is not approved yet, so operations cannot be created.' : ''
   const pendingRev = pending
   const startNew = () => { setFilter('operation-new.playbook', p.id); go('operation-new') }
-  const requestApproval = () => { A.audit('Playbook approval requested', p.id, '', 'Pending'); A.notify(`Playbook ${p.id} v${p.version} submitted for review`, '', { name: 'playbook', id: p.id }, 'todo'); setAsked(true); toast('Playbook review requested.', 'info') }
+  const requestApproval = () => { audit('Playbook approval requested', p.id, '', 'Pending'); notify(`Playbook ${p.id} v${p.version} submitted for review`, '', { name: 'playbook', id: p.id }, 'todo'); setAsked(true); toast('Playbook review requested.', 'info') }
   const editWhy = !can('editScope') ? 'Only Red Team Managers and Admins can change playbooks.' : ''
   const approvalWhy = p.status === 'approved' ? 'Already approved.' : asked ? 'Request already sent.' : editWhy
   const attachWhy = p.status !== 'approved' ? 'Only approved playbooks can be added to a project.' : pid === 'all' ? 'Select a specific project to add this playbook.' : guard.ro ? guard.reason : !can('editScope') ? 'Only Red Team Managers and Admins can add playbooks to a project.' : ''
   const winOnly = compat?.winOnly ?? false
   const dup = () => confirm({
     title: `Duplicate ${p.id} as a draft?`, confirmLabel: 'Create draft copy', body: 'A draft copy is created for editing. It must be reviewed and approved before it can be used.',
-    onConfirm: () => { A.audit('Playbook duplicated as draft', p.id, '', 'Success'); toast(`Draft copy of ${p.id} created (simulated).`, 'info') },
+    onConfirm: () => { audit('Playbook duplicated as draft', p.id, '', 'Success'); toast(`Draft copy of ${p.id} created (simulated).`, 'info') },
   })
   const attach = () => confirm({
     title: `Add ${p.id} v${p.version} to ${pid}?`, confirmLabel: 'Add to project', reasonLabel: 'Note (optional)',
     body: <>The playbook version is locked for this project. Later versions will not apply until a manager updates the project.</>,
-    onConfirm: () => { setAttached(true); A.audit('Playbook added to project', p.id, pid, 'Success'); toast(`${p.id} added to ${pid}.`) },
+    onConfirm: () => { setAttached(true); audit('Playbook added to project', p.id, pid, 'Success'); toast(`${p.id} added to ${pid}.`) },
   })
   return (
     <>
@@ -209,7 +236,11 @@ function PlaybookDetail() {
 
 /* ───────────── Playbook review (PB-V3-03 / V3-14, ticket 53: typed service) ───────────── */
 function PlaybookReview() {
-  const { route, go, can, me, confirm, toast } = useStore()
+  const route = useRoute()
+  const can = useCan()
+  const me = useMe()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
   const detail = usePlaybookDetail(route.id)
   const queue = usePlaybookReviewQueue()
   const review = usePlaybookReview()
@@ -372,7 +403,9 @@ function PlaybookReview() {
 
 /* ───────────── Technique detail (PB-04, ticket 52: typed service read + Query) ───────────── */
 function TechniqueDetail() {
-  const { route, go, pid, setFilter } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const setFilter = useSessionStore((s) => s.setFilter)
   const read = useTechniqueDetail(route.id)
   if (read.isPending) return <div aria-busy="true" aria-label="Loading technique"><Skeleton className="h-96" /></div>
   if (read.isError || !read.data) return <><PageHeader title="Technique not found" back={{ label: 'MITRE ATT&CK techniques', to: () => go('playbooks', { tab: 'techniques' }) }} /><Empty icon={Crosshair} title={`No technique “${route.id}”`} action={<Button onClick={() => go('playbooks', { tab: 'techniques' })}>Back to catalog</Button>} /></>
