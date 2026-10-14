@@ -73,3 +73,8 @@ are owned by the concurrent worker and are outside this branch's edits.
   subscribe instrumentation from observing attachment. The next bounded
   helper fix restores initial child mounting before effects; the teardown
   assertion remains intact. This is test setup, not a runtime change.
+
+Harness ordering fix: Query teardown rerun 7/7, exit 0; full
+`npm run test -- --maxWorkers=2`: 959 tests / 74 files, exit 0 (85.60s).
+Typecheck exit 0; helper and Query suite lint clean. Full output retains the
+existing Vite config-loader warning and two jsdom document-navigation notices.
