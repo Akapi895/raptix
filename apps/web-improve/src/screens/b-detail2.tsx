@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { Download, FileText, Lock, Pencil, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
+import { setProjectMembers } from '../features/projects/team-service'
 import { useReopen } from '../features/approvals/hooks'
 import { APR, USERS, type Project, type Role, type Approval } from '../data'
 import { decideApprovalTransaction, reviseScopeTransaction, submitApprovalTransaction, type ScopeFieldPatch } from '../features/approvals/service'
 import { confirmCloseTransaction, requestCloseTransaction } from '../features/closure/service'
-import { stamp } from '../domain/demo-clock'
 import { useCan, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
 import { useProjectStore, useToastStore } from '../state/stores'
@@ -297,12 +297,10 @@ export function TeamTab({ p, ds }: { p: Project; ds: DashboardAggregate }) {
   const mayApprove = can('approve', p.id)
   const names = Array.from(new Set(USERS.map((u) => u.name))).filter((n) => !p.members.some((m) => m.user === n) && n !== p.owner)
 
-  /* Ticket 67 wave 3: the legacy A.updateProject/A.audit entries mirrored — the
-     same two raw 'legacy' commits (the member write stamped, then the audit row
-     with the RT-2026-014 SS/AR correlation rule) and the same toast. */
+  // Membership and audit publish atomically through the project service.
   const setMembers = (members: Project['members'], act: string, obj: string) => {
-    services.authority.commit('legacy', (d) => { const pr = d.projects.find((x) => x.id === p.id)!; Object.assign(pr, { members }); pr.updated = stamp() })
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: p.id === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action: act, obj, projectId: p.id, result: 'Success', reason: '' }) })
+    const res = setProjectMembers(services, { actor: { id: me.name, role: me.role }, projectId: p.id, corr: 'legacy' }, members, act, obj)
+    if (!res.ok) { toast(res.failure.message, 'bad'); return }
     toast(act)
   }
   const changeRole = (user: string, role: Role) => setMembers(p.members.map((m) => (m.user === user ? { ...m, role } : m)), `Changed ${user}'s role to ${ROLE_LABEL[role]}`, user)
