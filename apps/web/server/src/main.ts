@@ -30,6 +30,7 @@ import { VaultService } from './services/vault-service.js';
 import { MembersService } from './services/members-service.js';
 import { ScopeService } from './services/scope-service.js';
 import { GovernanceService } from './services/governance-service.js';
+import { FindingsWorkflowService } from './services/findings-workflow-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
@@ -106,6 +107,7 @@ async function main(): Promise<void> {
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
   const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService) : undefined;
+  const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient) : undefined;
   const app = await buildApp({
     logger: { level: env.logLevel },
     projectsService,
@@ -127,6 +129,7 @@ async function main(): Promise<void> {
   membersService,
   scopeService,
   governanceService,
+  findingsWorkflow,
   vaultKeyConfigured: env.vaultKey !== undefined,
   authMode: env.authMode,
   authDb: dbClient,

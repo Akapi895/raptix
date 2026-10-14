@@ -25,6 +25,7 @@ import { registerVaultRoutes } from './http/routes/vault.routes.js';
 import { registerMembersRoutes } from './http/routes/members.routes.js';
 import { registerScopeRoutes } from './http/routes/scope.routes.js';
 import { registerGovernanceRoutes } from './http/routes/governance.routes.js';
+import { registerFindingsWorkflowRoutes } from './http/routes/findings-workflow.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
@@ -40,6 +41,7 @@ import type { VaultService } from './services/vault-service.js';
 import type { MembersService } from './services/members-service.js';
 import type { ScopeService } from './services/scope-service.js';
 import type { GovernanceService } from './services/governance-service.js';
+import type { FindingsWorkflowService } from './services/findings-workflow-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -67,6 +69,7 @@ export interface AppOptions {
   readonly membersService?: MembersService;
   readonly scopeService?: ScopeService;
   readonly governanceService?: GovernanceService;
+  readonly findingsWorkflow?: FindingsWorkflowService;
   /** Runtime cancel bridge for emergency stops (operation scope). */
   readonly cancelRun?: (threadId: string, runId: string | null) => Promise<string>;
   /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
@@ -148,6 +151,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.membersService) registerMembersRoutes(app, options.membersService, identity);
   if (options.scopeService) registerScopeRoutes(app, options.scopeService, identity);
   if (options.governanceService) registerGovernanceRoutes(app, options.governanceService, identity, options.cancelRun);
+  if (options.findingsWorkflow) registerFindingsWorkflowRoutes(app, options.findingsWorkflow, identity);
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;
