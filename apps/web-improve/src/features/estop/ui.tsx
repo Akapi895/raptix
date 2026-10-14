@@ -18,7 +18,7 @@
 import { useState } from 'react'
 import { CheckCircle2, CircleDot, Clock, OctagonX, XCircle } from 'lucide-react'
 import { Banner, Button, Check, DemoTag, Field, Gated, Modal, Select, Textarea, cx } from '../../ui'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { useCan, useDb, useMe } from '../../state/console'
 import { useToastStore } from '../../state/stores'
 import { useSessionStore } from '../../state/session'

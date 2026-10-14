@@ -16,7 +16,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { actorRef } from '../../auth/persona'
-import { useServices } from '../../store'
+import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
 import type { ServiceFailure } from '../../domain/service'
 import type {

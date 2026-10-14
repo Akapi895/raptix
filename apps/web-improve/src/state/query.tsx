@@ -18,7 +18,7 @@
  */
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
-import { useServices } from '../store'
+import { useServices } from './services'
 import { actorRef } from '../auth/persona'
 import type { ConsoleServices } from '../domain/service-factory'
 import type { ChangeSet, EntityKind } from '../domain/service'
