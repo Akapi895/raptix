@@ -23,22 +23,24 @@ ConOps.
 
 ## Playbooks
 
-> **Inline technique reference — not separately loadable skills.** The entries below
-> are summarized here for direct use; there is no separate `SKILL.md` to open for
-> each. Do NOT call the skill loader on them — apply the technique with your tools
-> using this summary and the Workflow in this file.
+> **Mixed depth.** Most entries below are summarized inline for direct
+> use — no separate `SKILL.md` to open. One entry (marked ✅ below) DOES
+> have a deeper, separately loadable skill under
+> `standard/exploit/supplychain/` (alias-resolves to the same
+> `supply-chain` subdomain, so `load_skill` resolves it) — call the
+> loader on it when you need command-level depth. Treat everything else
+> in this table as inline-only; apply it with your tools directly.
 
-
-| Technique | Use for |
-|---|---|
-| **typo-name-gen** | Generate typosquat candidates for a target package; reachability + popularity score |
-| **dep-confusion-probe** | Check whether an internal package name is squat-able on PyPI / NPM / RubyGems / NuGet |
-| **post-install-script** | Author + sandboxed publish of a benign post-install probe |
-| **gh-actions-fork-pr** | Fork-PR secret mining; `pull_request_target` misconfiguration scan |
-| **oauth-app-impersonation** | Lookalike OAuth app + scope-creep social engineering |
-| **internal-mirror-poison** | Verdaccio / Artifactory / Nexus index manipulation |
-| **sbom-divergence** | Audit SBOM vs actual installed packages for drift |
-| **vendor-portal-creds** | SaaS vendor admin portal credential abuse paths |
+| Technique | Use for | Deeper skill |
+|---|---|---|
+| **typo-name-gen** | Generate typosquat candidates for a target package; reachability + popularity score | inline only |
+| **dep-confusion-probe** | Check whether an internal package name is squat-able on PyPI / NPM / RubyGems / NuGet | ✅ `standard/exploit/supplychain/dep-confusion` |
+| **post-install-script** | Author + sandboxed publish of a benign post-install probe | inline only |
+| **gh-actions-fork-pr** | Fork-PR secret mining; `pull_request_target` misconfiguration scan | inline only |
+| **oauth-app-impersonation** | Lookalike OAuth app + scope-creep social engineering | inline only |
+| **internal-mirror-poison** | Verdaccio / Artifactory / Nexus index manipulation | inline only |
+| **sbom-divergence** | Audit SBOM vs actual installed packages for drift | inline only |
+| **vendor-portal-creds** | SaaS vendor admin portal credential abuse paths | inline only |
 
 ## Dry-run mode
 

@@ -40,9 +40,9 @@ metadata:
 | [deauth-pmf](deauth-pmf/SKILL.md) | Any target needing client reconnect or 802.11w posture finding | T1498, T1040 | shipped |
 | [krack-fragattacks](krack-fragattacks/SKILL.md) | Legacy / embedded supplicant, key-reinstallation / fragmentation test | T1557, T1040 | shipped |
 
-> BLE GATT, Zigbee Touchlink, Z-Wave, LoRaWAN, and sub-GHz attacks
-> are scoped to `standard/iot/`. Cross-reference that suite when the
-> objective targets non-802.11 RF.
+> BLE GATT, Bluetooth Classic (BR/EDR), Zigbee Touchlink, Z-Wave,
+> LoRaWAN, and sub-GHz attacks are scoped to `standard/iot/`.
+> Cross-reference that suite when the objective targets non-802.11 RF.
 
 ## Hardware mode pointer
 

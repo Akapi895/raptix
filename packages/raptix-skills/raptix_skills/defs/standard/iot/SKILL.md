@@ -4,12 +4,12 @@ description: >
   Use when the engagement target is IoT, embedded Linux, RTOS, or any device
   reachable via UART/JTAG/SWD or by extracting its firmware. Covers firmware
   acquisition, binwalk extraction, filesystem mounting, default-credential
-  hunting, bootloader attacks, wireless protocol sidebands (BLE, Zigbee,
-  Z-Wave, LoRaWAN, sub-GHz).
+  hunting, bootloader attacks, wireless protocol sidebands (BLE,
+  Bluetooth Classic, Zigbee, Z-Wave, LoRaWAN, sub-GHz).
 metadata:
   subdomain: iot
-  when_to_use: "iot embedded linux rtos uart jtag swd firmware binwalk filesystem bootloader ble zigbee z-wave lorawan sub-ghz wireless"
-  tags: iot, firmware, embedded, binwalk, uart, jtag, ble, zigbee
+  when_to_use: "iot embedded linux rtos uart jtag swd firmware binwalk filesystem bootloader ble bluetooth classic br/edr zigbee z-wave lorawan sub-ghz wireless"
+  tags: iot, firmware, embedded, binwalk, uart, jtag, ble, zigbee, bluetooth
   mitre_attack: T1542, T1542.005, T1601, T1499.004
 ---
 
@@ -30,6 +30,7 @@ attacks because IoT engagements routinely chain across both.
 | `/skills/standard/iot/bootloader-uboot/SKILL.md` | U-Boot console interrupt; environment variables; secure-boot bypass |
 | `/skills/standard/iot/dev-mem/SKILL.md` | /dev/mem, /dev/kmem, MTD writes on embedded Linux |
 | `/skills/standard/iot/ble-gatt/SKILL.md` | GATT enumeration, characteristic read/write without auth, pairing downgrade |
+| `/skills/standard/iot/bluetooth-classic/SKILL.md` | BR/EDR SDP enumeration, KNOB/BIAS downgrade attacks, BlueBorne-class RCE, HID spoofing |
 | `/skills/standard/iot/zigbee-touchlink/SKILL.md` | Touchlink commissioning abuse, well-known transport key, ZCL command abuse |
 | `/skills/standard/iot/z-wave/SKILL.md` | S0 derivation flaw, S2 ECDH analysis, replay on unauthenticated nodes |
 | `/skills/standard/iot/lorawan-otaa/SKILL.md` | OTAA join, frame-counter replay, downlink injection |

@@ -15,6 +15,27 @@ metadata:
 
 # Android Pentest Playbook
 
+> Static decompile (apktool/jadx/MobSF) to map exported components,
+> hardcoded secrets, and insecure storage, then Frida/Objection for
+> SSL-pinning and root-detection bypass once the attack surface is
+> known. For a Unity IL2CPP game APK specifically, use
+> `mobile/android/il2cpp/SKILL.md` instead — jadx/apktool expose
+> nothing of the native game logic there.
+
+## Prerequisites
+
+- `adb` + a rooted device or emulator (required for `run-as` data
+  pulls, Frida server push, and Magisk-based tooling like
+  `magisk-trust-user-certs`).
+- Tools: `apktool`, `jadx` (`jadx-gui` for interactive use), `dex2jar`,
+  `jd-gui`, `androguard`, `apkanalyzer`/`aapt`, MobSF
+  (`docker run ... opensecurity/mobile-security-framework-mobsf`).
+- Dynamic: `frida-server` (device-side) + `frida` / `objection` (host).
+- Proxy: Burp Suite Community or mitmproxy, with the root CA installed
+  on the device for TLS interception.
+- `drozer` for IPC/content-provider testing, `abe.jar` for `adb backup`
+  unpacking, `apkleaks` for static secret sweeps.
+
 ## 1. Static — decompile + inspect
 
 ### Pull APK

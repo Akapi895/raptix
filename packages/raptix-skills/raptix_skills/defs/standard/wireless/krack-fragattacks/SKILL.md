@@ -17,6 +17,21 @@ metadata:
 
 # KRACK + FragAttacks
 
+## Prerequisites
+
+- Monitor-mode + injection-capable adapter; a second adapter or a
+  channel-capable MITM position between client and AP is required for
+  the KRACK test (the modified hostapd acts as both client-to-real-AP
+  and AP-to-victim-client).
+- Tools: `aircrack-ng` suite (`airodump-ng`), `tshark`, `git`,
+  `python3` + `pip3`, build deps for the modified hostapd
+  (`libnl-3-dev`, `libnl-genl-3-dev`, `make`).
+- Test frameworks (cloned on demand, not preinstalled): Vanhoef's
+  `krackattacks-scripts` and `fragattacks` repos — see the command
+  blocks below for clone + build.
+- Both test families are active-TX and loud (continuous management/
+  data frames); gate on `posture=loud` per the OPSEC notes below.
+
 > **Viability gate:** Both vulnerability families are largely
 > mitigated on patched stacks. Modern Linux kernel ≥ 5.7, Android
 > ≥ 10 (November 2017 patch), Windows ≥ October 2017, iOS ≥ 11.1,

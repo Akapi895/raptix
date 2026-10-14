@@ -27,7 +27,17 @@ shared Frida tooling for runtime work.
 > are summarized here for direct use; there is no separate `SKILL.md` to open for
 > each. Do NOT call the skill loader on them — apply the technique with your tools
 > using this summary and the Workflow in this file.
-
+>
+> **Exception — full-depth sibling skills exist for this platform.**
+> `mobile/android/SKILL.md` has command-level coverage of every row in
+> this table (pull/decompile, manifest review, insecure storage, intent
+> fuzzing, WebView flaws, Frida SSL-pin bypass, root-detect bypass) plus
+> keystore extraction and backup-restore attacks this table doesn't even
+> list. `mobile/android/il2cpp/SKILL.md` goes deeper still for Unity
+> IL2CPP games specifically (`libil2cpp.so` / `global-metadata.dat`
+> symbol recovery, IAP/license/anti-cheat bypass). Load one of those
+> when this summary isn't enough — don't stop at the one-line entries
+> below.
 
 | Technique | Use for |
 |---|---|
@@ -41,6 +51,16 @@ shared Frida tooling for runtime work.
 
 ## Playbooks — iOS
 
+> **Partial sibling coverage.** `mobile/ios/dynamic/SKILL.md` has
+> command-level coverage of **frida-trust-killer**,
+> **jailbreak-detect-bypass**, and **keychain-acl** below (plus
+> biometric/LAContext bypass, not listed in this table at all) — load it
+> for those three. **ipa-triage** (static, no jailbreak) is a different
+> subdomain's skill (`reverser/ios-static/SKILL.md`) and is not
+> necessarily visible to this role — treat it as inline-only here unless
+> confirmed otherwise. **url-scheme-abuse** and **xpc-services** have no
+> deeper sibling skill found in this corpus; they remain inline-only.
+
 | Technique | Use for |
 |---|---|
 | **ipa-triage** | class-dump-z + Hopper; Mach-O headers; entitlements |
@@ -51,6 +71,13 @@ shared Frida tooling for runtime work.
 | **jailbreak-detect-bypass** | DTAppJailbreakDetectorSwift, Liberty Lite, common patterns |
 
 ## Cross-platform
+
+> **Flutter/Dart apps are out-of-scope for both tables above.** Neither
+> the Android nor iOS table covers a Flutter app (`libapp.so` /
+> `Flutter.framework`, Dart AOT) — jadx/apktool/class-dump show only an
+> empty shell for these. `mobile/flutter/SKILL.md` is the full-depth
+> sibling skill for that case (reFlutter BoringSSL-pinning bypass,
+> `libapp.so` static analysis, Dart snapshot dump).
 
 | Technique | Use for |
 |---|---|
