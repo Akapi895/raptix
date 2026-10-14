@@ -17,7 +17,8 @@ import { Controller, useFieldArray } from 'react-hook-form'
 import { AlertTriangle, ArrowDown, ArrowUp, Check as CheckIcon, FileText, Lock, Plus, Trash2, Upload, X } from 'lucide-react'
 import { ROLE_LABEL } from '../auth/policy'
 import { USERS, type Role } from '../data'
-import { useDb, useMe } from '../state/console'
+import { useMe } from '../state/console'
+import { useWizardReferences } from '../features/wizard/projection'
 import { go } from '../router/navigate'
 import { Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, IconButton, Input, PageHeader, Select, Status, Tabs, Textarea, cx } from '../ui'
 import { LIMIT_PRESETS, WIZARD_STEPS, fmtDate } from '../features/wizard/draft'
@@ -33,7 +34,7 @@ const asMessage = (e: unknown): string | undefined =>
   e && typeof e === 'object' && 'message' in e ? String((e as { message?: string }).message) : undefined
 
 export function ProjectNew() {
-  const db = useDb()
+  const references = useWizardReferences()
   const me = useMe()
   const wiz = useProjectWizard()
   const { form, w, step, maxStep, isDirty, issues: submitIssues, blocking, saving, err, setErr, next, back, jump, create, saveDraft, set, update, shown } = wiz
@@ -60,7 +61,7 @@ export function ProjectNew() {
    * without a new blur/trigger, matching the legacy show-on-attempt behavior. */
   const e3 = shown(3)
 
-  const clients = Array.from(new Set(db.projects.map((p) => p.client)))
+  const clients = references.clients
   const assignable = (Object.keys(RANK) as Role[]).filter((r) => RANK[r] <= RANK[me.role])
   const candidates = USERS.filter((u) => u.name !== w.owner && !w.members.some((m) => m.user === u.name))
 
@@ -77,7 +78,7 @@ export function ProjectNew() {
     const dup = inAssets.filter((a) => outAssets.some((o) => o.ident === a.ident))
     lines.push(`${inAssets.length} in-scope assets, ${outAssets.length} out-of-scope assets.`)
     if (dup.length) lines.push(`Conflict: ${dup.map((a) => a.ident).join(', ')} appears in both lists.`)
-    const other = db.assets.filter((a) => inAssets.some((x) => x.ident === a.ident) && a.projectId)
+    const other = references.assetIdentifiers.filter((a) => inAssets.some((x) => x.ident === a.ident) && a.projectId)
     if (other.length) lines.push(`Warning: ${other.map((a) => `${a.ident} already belongs to project ${a.projectId}`).join('; ')}.`)
     if (!inAssets.length) lines.push('No in-scope assets. You can save a draft but cannot submit for approval.')
     if (!dup.length && !other.length && inAssets.length) lines.push('No conflicts found. This is a preview only and does not replace reviewer approval.')

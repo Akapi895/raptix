@@ -18,7 +18,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useDirty } from '../../state/session'
 import { useServices } from '../../state/services'
-import { useDb, useMe } from '../../state/console'
+import { useMe } from '../../state/console'
+import { useWizardReferences } from './projection'
 import { useProjectStore, useToastStore } from '../../state/stores'
 import { go } from '../../router/navigate'
 import { createProjectTransaction } from './service'
@@ -29,14 +30,14 @@ import {
 
 export function useProjectWizard() {
   const services = useServices()
-  const db = useDb()
+  const references = useWizardReferences()
   const me = useMe()
   const toast = useToastStore((s) => s.toast)
   const canCreate = me.role === 'admin' || me.role === 'manager'
   /* Frozen at mount: the wizard cannot create projects mid-flow, so the
    * duplicate-code check and the auto-suggested code stay stable for the
    * whole draft. */
-  const [ids] = useState(() => db.projects.map((p) => p.id))
+  const [ids] = useState(() => references.projectIds)
   const [defaults] = useState(() => defaultWizardDraft(ids, me.name))
   const [schema] = useState(() => makeWizardSchema(ids))
 
