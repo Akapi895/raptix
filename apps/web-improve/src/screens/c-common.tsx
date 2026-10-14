@@ -1,46 +1,40 @@
 import { useRef, type ComponentType } from 'react'
 import { Eye, Lock, ShieldX, SearchX, GitBranch } from 'lucide-react'
 import { Button, Empty, Status } from '../ui'
-import { canAccessProject } from '../auth/policy'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { useDb, useMe } from '../state/console'
-import { useProjectStore } from '../state/stores'
-import type { Route } from '../router/history'
 import type { Branch, Db, Operation, Plan, Project, Step } from '../data'
 import type { PfCheck, PfState } from '../features/operations/checklist'
 export { specChecks } from '../features/operations/checklist'
 export type { PfCheck, PfState } from '../features/operations/checklist'
+import { useOperationGate, useOperationView } from '../features/operations/views'
 import { PROJECT_TZ_OFFSET_MS, draftMinutes, roeWindowIssue } from '../features/operations/service'
 
 /** Operation access gate: checks existence, project access and the selected project */
 export function OpGate({ C }: { C: ComponentType<{ op: Operation }> }) {
-  const db = useDb()
   const route = useRoute()
-  const me = useMe()
-  const pid = useProjectStore((s) => s.pid)
-  const op = db.operations.find((o) => o.id === route.id)
-  if (!op) {
+  const gate = useOperationGate(route.id || '')
+  if (gate.state === 'missing') {
     return (
       <Empty icon={SearchX} title="Operation not found" action={<Button onClick={() => go('operations')}>Back to operations</Button>}>
         Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} does not exist or has been removed.
       </Empty>
     )
   }
-  if (!canAccessProject(db, me, op.projectId)) {
+  if (gate.state === 'denied') {
     return (
       <Empty icon={Lock} title="You do not have access to this operation" action={<Button onClick={() => go('operations')}>Back to operations</Button>}>
-        Operation {op.id} belongs to a project your account has not been granted access to. Ask a project manager to add you to the team.
+        Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} belongs to a project your account has not been granted access to. Ask a project manager to add you to the team.
       </Empty>
     )
   }
-  if (pid !== 'all' && pid !== op.projectId) {
+  if (gate.state === 'foreign') {
     return (
-      <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => selectProject(op.projectId)}>Switch to {op.projectId}</Button>}>
-        Operation {op.id} belongs to project {op.projectId}. To avoid mixing data between projects, switch to that project before viewing it.
+      <Empty icon={ShieldX} title="Operation belongs to a different project" action={<Button variant="primary" onClick={() => selectProject(gate.projectId)}>Switch to {gate.projectId}</Button>}>
+        Operation {route.id ? <span className="font-mono">{route.id}</span> : ''} belongs to project {gate.projectId}. To avoid mixing data between projects, switch to that project before viewing it.
       </Empty>
     )
   }
-  return <C op={op} />
+  return <C op={gate.op} />
 }
 
 /* ───────────── Time helpers (wall-clock UTC+7, encoded as UTC ms) ───────────── */
@@ -117,16 +111,16 @@ export const OpStatus = ({ value, size }: { value: string; size?: 'sm' | 'md' })
 /** Operation Runtime State (separate from AI mode, eligibility and policy). A step in review pauses new dispatch. */
 export const hasReview = (op: Operation) => (op.status === 'running' || op.status === 'paused') && op.steps.some((s) => s.status === 'review')
 export const runtimeLabel = (op: Operation) => (hasReview(op) ? 'Paused — Awaiting Review' : op.status === 'estop' ? 'Emergency stopped' : op.status === 'paused' ? 'Paused' : op.status === 'cancelled' ? 'Stopped' : op.status === 'done' ? 'Completed' : op.status === 'running' ? 'Running' : op.status.charAt(0).toUpperCase() + op.status.slice(1))
-export const stepBranches = (db: Db, opId: string, stepId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.stepId === stepId)
-export const failedBranches = (db: Db, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.state === 'failed')
-export const opGroups = (db: Db, opId: string) => db.branchGroups.filter((g) => g.opId === opId)
+export const stepBranches = (db: Pick<Db, 'branches'>, opId: string, stepId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.stepId === stepId)
+export const failedBranches = (db: Pick<Db, 'branches'>, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.state === 'failed')
+export const opGroups = (db: Pick<Db, 'branchGroups'>, opId: string) => db.branchGroups.filter((g) => g.opId === opId)
 /** Conversation linked via the operation's plan */
-export const opConversation = (db: Db, op: Operation) => { const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined; return pl ? db.conversations.find((c) => c.id === pl.conversationId) : undefined }
+export const opConversation = (db: Pick<Db, 'plans' | 'conversations'>, op: Operation) => { const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined; return pl ? db.conversations.find((c) => c.id === pl.conversationId) : undefined }
 
 /** Status pill that shows the runtime state (e.g. "Paused — Awaiting Review") and flags failed branches; a failed branch is never shown as plain success. */
 export function RuntimeStatus({ op, size }: { op: Operation; size?: 'sm' | 'md' }) {
-  const db = useDb()
-  const fb = failedBranches(db, op.id).length
+  const view = useOperationView(op.id)
+  const fb = view ? failedBranches(view, op.id).length : 0
   const review = hasReview(op)
   const h = size === 'sm' ? 'h-6' : 'h-7'
   return (
