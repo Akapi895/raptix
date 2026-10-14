@@ -17,7 +17,7 @@ import { useActiveProject, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
 import { useToastStore, useUiStore } from '../state/stores'
 import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from '../ui'
-import { CopilotDrawer } from '../features/copilot/drawer'
+import { LazyCopilotDrawer } from '../features/copilot/lazy'
 import { DemoGuide } from '../screens/demo/guide'
 import { isWide, NAV } from './nav'
 import { Sidebar } from './sidebar'
@@ -121,7 +121,7 @@ export function Shell({ children, slots = {} }: { children: ReactNode; slots?: S
   useEffect(() => { document.title = 'Raptix — AI Red Team Platform' }, [])
   useEffect(() => { if (copilotOpen) setNoticesOpen(false) }, [copilotOpen, setNoticesOpen])
   const wide = isWide(route)
-  const CopilotDrawerSlot = slots.copilotDrawer ?? CopilotDrawer
+  const CopilotDrawerSlot = slots.copilotDrawer ?? LazyCopilotDrawer
   return (
     <div className="flex h-full bg-bg text-fg">
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus() }} className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[200] focus:rounded-[10px] focus:bg-accent focus:px-4 focus:py-2 focus:text-white">Skip to main content</a>
