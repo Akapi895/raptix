@@ -3,14 +3,17 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Ban, BarChart3, Bot, Check, FileText, GitBranch, Info, Lock, Send, ShieldCheck, Terminal, User, Cog, X } from 'lucide-react'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
-import { eligibility } from '../features/operations/preflight'
-import { planVer, toolFacets, USERS } from '../data'
+import { planVer, toolFacets } from '../data'
 import type { AiMode, ChatMsg, Conversation, Plan, ToolEvent } from '../data'
 import { sendChat, stopChat } from '../features/demo/runtime'
 import { editPlanDraftTransaction, revisePlanTransaction } from '../features/plans/service'
+import { readPlanProject } from '../features/plans/bridge'
+import { readActor } from '../auth/identity'
+import { useMsgRefs, useToolProposalRefs, useConversationGroups } from '../features/aichat/projection'
+import { useProjectEligibility, useProjectReplan } from '../features/operations/views'
 import { useTraceWrites } from '../features/trace/query'
 import { go, useRoute } from '../router/navigate'
-import { useCan, useDb, useReadOnly } from '../state/console'
+import { useCan, useReadOnly } from '../state/console'
 import { useAuthStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import type { ConsoleServices } from '../domain/service-factory'
@@ -24,15 +27,11 @@ export const MODES: { id: AiMode; label: string; hint: string }[] = [
 export const STARTERS = ['Summarize the approved scope', 'Review agent readiness', 'Propose a validation plan', 'Explain recent operation results']
 
 /* Ticket 67 wave 7: the store's request context (actorCtx), mirrored — the
-   persona resolves at call time (the override-aware `me`, read from the
-   authorities so a failing authority read never reaches this render) with
-   corr 'legacy'. */
+   persona resolves at call time through the identity service (the
+   override-aware `me`, read from the authorities so a failing authority read
+   never reaches this render) with corr 'legacy'. */
 function actorCtxOf(services: ConsoleServices, projectId: string) {
-  const name = useAuthStore.getState().meName
-  const base = USERS.find((u) => u.name === name)!
-  const ov = services.authority.snapshot().org.members[name]?.role
-  const me = ov ? { ...base, role: ov } : base
-  return { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }
+  return { actor: readActor(services, useAuthStore.getState().meName), projectId, corr: 'legacy' }
 }
 
 /** Ensure a timestamp always carries the (UTC+7) label. */
@@ -45,45 +44,31 @@ export function Pill({ tone = 'neutral', children }: { tone?: keyof typeof TONE_
 
 /** Execution eligibility — separate from the selected AI mode. */
 export function EligBadge({ pid }: { pid: string }) {
-  const db = useDb()
-  const el = eligibility(db, pid)
+  const el = useProjectEligibility(pid)
   const Icon = el.kind === 'locked' ? Lock : el.kind === 'closed' ? Ban : Check
   return <span title={el.reasons.map((r) => r.text).join('; ') || el.label}><Pill tone={el.tone}><Icon size={12} aria-hidden />Eligibility: {el.label}</Pill></span>
 }
 
 /** Failure / agent-loss detection for the running operation of a project (AI-V3-07). */
-export function useReplan(pid: string) {
-  const db = useDb()
-  const op = db.operations.find((o) => o.projectId === pid && ['running', 'paused'].includes(o.status) && o.planId)
-  if (!op) return null
-  const idx = op.steps.findIndex((x) => ['review', 'fail', 'unknown'].includes(x.status))
-  const lost = op.agents.filter((id) => db.agents.find((a) => a.id === id)?.status === 'lost')
-  const cur = db.plans.find((p) => p.id === op.planId)
-  const pending = !!cur && !['approved', 'executed'].includes(cur.status)
-  if (idx < 0 && !lost.length && !pending) return null
-  return { op, idx, step: idx >= 0 ? op.steps[idx] : undefined, lost, cur, pending }
-}
+export const useReplan = useProjectReplan
 
 export function ReplanPanel({ pid, compact }: { pid: string; compact?: boolean }) {
-  const db = useDb()
   const services = useServices()
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
-  const r = useReplan(pid)
-  if (!r || !r.cur) return null
-  const { op, idx, step, lost, cur, pending } = r
+  const r = useProjectReplan(pid)
+  if (!r) return null
+  const { op, idx, step, lost, cur, pending, prev: prevOk, healthy } = r
   const revisionDraft = pending && !!cur.prevPlanId
-  const prevOk = cur.prevPlanId ? db.plans.find((p) => p.id === cur.prevPlanId) : undefined
   const planStep = idx >= 0 ? cur.steps[idx] : undefined
-  const healthy = op.agents.filter((id) => db.agents.find((a) => a.id === id && (a.status === 'online' || a.status === 'idle')))
   const changed = lost.length ? `Replace lost agent ${lost.join(', ')} with ${healthy[0] || 'an available project agent'}` : planStep ? `Step ${planStep.id} (${planStep.name}): add operator re-check before continuing; fallback = skip and record` : 'Re-validate remaining steps'
   const create = () => {
     const changes = [changed]
     /* Ticket 67 wave 7: the legacy A.revisePlan/A.editPlan entries, mirrored —
-       the plan's project binding resolves from the one authority at call time
-       and the typed results bridge back to the legacy shapes (a refused
-       revision leaves `id` empty and the edit refuses the same way). */
-    const projectId = services.authority.snapshot().plans.find((x) => x.id === cur.id)?.projectId
+       the plan's project binding resolves through the typed plans bridge at
+       call time and the typed results bridge back to the legacy shapes (a
+       refused revision leaves `id` empty and the edit refuses the same way). */
+    const projectId = readPlanProject(services.authority, cur.id)
     const revised = projectId ? revisePlanTransaction(services.authority, services.clock, actorCtxOf(services, projectId), cur.id, changes, 'Created after step review / agent loss') : undefined
     const id = revised?.ok ? revised.data.planId : ''
     const base = cur.steps.map((x, i) => (i === idx ? { ...x, needsApproval: true, risk: (x.risk === 'low' ? 'medium' : x.risk) as typeof x.risk, rationale: `${x.rationale} Revised after review: operator re-check required.` } : lost.includes(x.agent) && healthy[0] ? { ...x, agent: healthy[0] } : x))
@@ -126,8 +111,7 @@ const bumpLabel = (p: Plan) => { const m = planVer(p).match(/^v(\d+)\.(\d+)$/); 
 
 /** Banner that explains the relationship between selected AI mode and execution eligibility. */
 export function ExecBanner({ conv }: { conv: Conversation }) {
-  const db = useDb()
-  const el = eligibility(db, conv.projectId)
+  const el = useProjectEligibility(conv.projectId)
   const locked = el.kind === 'locked' || el.kind === 'closed'
   if (conv.mode === 'observe') return <div className="border-b border-cyan/30 bg-info-soft px-4 py-1.5 text-xs text-cyan">Observe mode: read-only summaries. No proposals are created.</div>
   if (!locked) {
@@ -207,17 +191,15 @@ const FACET_TONE: Record<string, keyof typeof TONE_CLS> = { Allowed: 'ok', Block
 
 /** Tool proposal: Proposed / Policy / Approval / Execution are four INDEPENDENT facets (Policy Allowed is not Executed). */
 export function ToolProposalCard({ tool, compact }: { tool: ToolEvent; compact?: boolean }) {
-  const db = useDb()
   const can = useCan()
   const readOnly = useReadOnly()
   const toast = useToastStore((s) => s.toast)
   const writes = useTraceWrites()
   const trace = useTraceLink()
+  const { plan, asset } = useToolProposalRefs(tool)
   const [decision, setDecision] = useState<'allowed' | 'denied' | null>(null)
   const [reason, setReason] = useState('')
   const f = toolFacets(tool)
-  const plan = tool.planId ? db.plans.find((p) => p.id === tool.planId) : undefined
-  const asset = db.assets.find((x) => x.projectId === tool.projectId && x.name === tool.target)
   const canDecide = can('approvePlan') && !readOnly(tool.projectId)
   const approver = plan?.reviewer || 'Pat Kim'
   const facet = (k: string, v: string) => <span className="inline-flex items-center gap-1"><span className="text-muted">{k}</span><Pill tone={FACET_TONE[v] || 'neutral'}>{v}</Pill></span>
@@ -291,10 +273,8 @@ const CARD: Record<CardKind, { label: string; icon: typeof Info; tone: keyof typ
 const REF_ROUTE: [RegExp, string][] = [[/^OP-/, 'operation'], [/^PL-/, 'ai-plan'], [/^AG-/, 'agent'], [/^AS-/, 'asset'], [/^EV-/, 'evidence'], [/^FD-/, 'finding']]
 
 function Msg({ m, compact }: { m: ChatMsg; compact?: boolean }) {
-  const db = useDb()
   const trace = useTraceLink()
-  const plan = m.planId ? db.plans.find((p) => p.id === m.planId) : undefined
-  const tool = m.toolId ? db.toolEvents.find((t) => t.id === m.toolId) : undefined
+  const { plan, tool } = useMsgRefs(m)
   if (m.role === 'system') return <div className="flex items-center justify-center gap-2 py-1 text-center text-xs text-muted"><Info size={12} aria-hidden />{m.text}<span>· {m.at}</span></div>
   const user = m.role === 'user'
   const kind: CardKind = m.card ?? (m.kind === 'blocked' ? 'policy' : m.kind === 'tool' ? 'tool' : m.kind === 'plan' ? (plan?.prevPlanId ? 'revision' : 'proposal') : 'answer')
@@ -338,14 +318,14 @@ function Msg({ m, compact }: { m: ChatMsg; compact?: boolean }) {
 
 export function Thread({ conv, compact }: { conv: Conversation | undefined; compact?: boolean }) {
   const aiBusy = useSessionStore((s) => s.aiBusy)
-  const db = useDb()
+  const { groups } = useConversationGroups(conv)
   const end = useRef<HTMLDivElement>(null)
   const n = conv?.messages.length
   useEffect(() => { end.current?.scrollIntoView?.({ block: 'end' }) }, [n, aiBusy])
   return (
     <div className="flex flex-col gap-4" role="log" aria-live="polite" aria-label="Conversation">
       {conv?.messages.map((m) => <Msg key={m.id} m={m} compact={compact} />)}
-      {conv && db.branchGroups.filter((g) => g.projectId === conv.projectId && db.plans.some((p) => p.id === g.planId && p.conversationId === conv.id)).map((g) => <FanOutCard key={g.id} groupId={g.id} />)}
+      {conv && groups.map((g) => <FanOutCard key={g.id} groupId={g.id} />)}
       {conv && aiBusy === conv.id && (
         <div className="flex items-center gap-2 text-sm text-muted" role="status"><Cog size={14} className="motion-safe:animate-spin" aria-hidden />Raptix AI is generating a response…</div>
       )}
