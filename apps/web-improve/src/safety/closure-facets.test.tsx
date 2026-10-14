@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen } from '@testing-library/react'
-import { toolFacets } from '../data'
+import { seed, toolFacets } from '../data'
 
 vi.useFakeTimers()
-const { mountStore, mountScreen } = await import('../test/helpers')
-const { evaluateCloseChecklist: closureChecklist } = await import('../features/closure/service')
-const { useStore } = await import('../store')
+const { mountServices } = await import('../test/helpers')
+const { evaluateCloseChecklist: closureChecklist, confirmCloseTransaction, requestCloseTransaction } = await import('../features/closure/service')
+const { useDb, useMe } = await import('../state/console')
 const { CloseTab } = await import('../screens/b-detail2')
 const { detailFor } = await import('../screens/project-detail/service')
 
@@ -33,11 +33,11 @@ describe('tool facets separate policy, approval and execution (requirement 42)',
   })
 })
 
-describe('closure checklist mirrors the store state (requirement 22)', () => {
-  const h = mountStore()
+describe('closure checklist mirrors the seeded authority state (requirement 22)', () => {
+  const db = seed()
 
   it('RT-2026-014 is not closable: live operations, live sessions and no delivered report', () => {
-    const chk = closureChecklist(h.store().db, 'RT-2026-014')
+    const chk = closureChecklist(db, 'RT-2026-014')
     expect(chk.map((c) => [c.id, c.ok])).toEqual([
       ['c1', false], ['c1b', false], ['c2', true], ['c3', false], ['c4', true],
     ])
@@ -46,7 +46,7 @@ describe('closure checklist mirrors the store state (requirement 22)', () => {
   })
 
   it('RT-2026-016 only fails on the undelivered report', () => {
-    const chk = closureChecklist(h.store().db, 'RT-2026-016')
+    const chk = closureChecklist(db, 'RT-2026-016')
     expect(chk.map((c) => [c.id, c.ok])).toEqual([
       ['c1', true], ['c1b', true], ['c2', true], ['c3', false], ['c4', true],
     ])
@@ -54,21 +54,22 @@ describe('closure checklist mirrors the store state (requirement 22)', () => {
   })
 
   it('the closed RT-2026-009 satisfies every condition', () => {
-    const chk = closureChecklist(h.store().db, 'RT-2026-009')
+    const chk = closureChecklist(db, 'RT-2026-009')
     expect(chk.every((c) => c.ok)).toBe(true)
     expect(chk.find((c) => c.id === 'c3')!.detail).toBe('A report is Delivered')
   })
 })
 
 const Tab = ({ pid }: { pid: string }) => {
-  const { db, me } = useStore()
+  const db = useDb()
+  const me = useMe()
   const d = detailFor(db, { id: me.name, role: me.role }, pid)!
   return <CloseTab p={d.project} d={d} setTab={() => {}} />
 }
 
 describe('requesting closure is manager-gated and blocked while the checklist fails (requirement 22)', () => {
   it('a manager sees the failing condition and cannot submit the request yet', () => {
-    const view = mountScreen(<Tab pid="RT-2026-016" />)
+    const view = mountServices(<Tab pid="RT-2026-016" />)
     const close = screen.getByRole('button', { name: 'Close Project' })
     expect(close).toBeEnabled()
     fireEvent.click(close)
@@ -84,7 +85,7 @@ describe('requesting closure is manager-gated and blocked while the checklist fa
   })
 
   it('an operator cannot request closure', () => {
-    const view = mountScreen(<Tab pid="RT-2026-016" />, 'Taylor Chen')
+    const view = mountServices(<Tab pid="RT-2026-016" />, 'Taylor Chen')
     const close = screen.getByRole('button', { name: 'Close Project' })
     expect(close).toBeDisabled()
     expect(close).toHaveAttribute('title', 'Only a Red Team Manager can request project closure')
@@ -93,23 +94,21 @@ describe('requesting closure is manager-gated and blocked while the checklist fa
   })
 
   it('the request accepts a failing checklist (UI-only request) while the confirmation stays gated by the re-derived checklist (ticket 22)', () => {
-    const view = mountScreen(<Tab pid="RT-2026-016" />)
+    const view = mountServices(<Tab pid="RT-2026-016" />)
     act(() => {
-      view.store().A.requestClose('RT-2026-016', { reason: 'Requesting review of closure readiness.' })
+      requestCloseTransaction(view.svc().authority, view.svc().clock, { actor: { id: 'Alex Morgan', role: 'manager' }, projectId: 'RT-2026-016', corr: 'close-req' }, 'RT-2026-016', { reason: 'Requesting review of closure readiness.' })
     })
-    const h = view.store()
-    expect(h.db.projects.find((p) => p.id === 'RT-2026-016')!.status).toBe('review')
-    expect(h.db.approvals.some((a) => a.projectId === 'RT-2026-016' && a.status === 'pending' && a.note === 'Requesting project closure — 1 checklist condition still open.')).toBe(true)
+    expect(view.db().projects.find((p) => p.id === 'RT-2026-016')!.status).toBe('review')
+    expect(view.db().approvals.some((a) => a.projectId === 'RT-2026-016' && a.status === 'pending' && a.note === 'Requesting project closure — 1 checklist condition still open.')).toBe(true)
 
-    act(() => {
-      view.store().setMe('Pat Kim')
-    })
+    view.as('Pat Kim')
     expect(screen.getByRole('button', { name: 'Approve Closure' })).toBeEnabled()
     expect(screen.getByText(/Requested by Alex Morgan on/)).toBeInTheDocument()
-    const refused = view.store().A.confirmClose(h.db.approvals.find((a) => a.projectId === 'RT-2026-016')!.id)
+    const aprId = view.db().approvals.find((a) => a.projectId === 'RT-2026-016')!.id
+    const refused = confirmCloseTransaction(view.svc().authority, view.svc().clock, { actor: { id: 'Pat Kim', role: 'reviewer' }, projectId: 'RT-2026-016', corr: 'close-confirm' }, aprId)
     expect(refused.ok).toBe(false)
-    expect(refused.error).toContain('Final report approved and delivered')
-    expect(view.store().db.projects.find((p) => p.id === 'RT-2026-016')!.status).toBe('review')
+    if (!refused.ok) expect(refused.failure.message).toContain('Final report approved and delivered')
+    expect(view.db().projects.find((p) => p.id === 'RT-2026-016')!.status).toBe('review')
     view.unmount()
   })
 })
