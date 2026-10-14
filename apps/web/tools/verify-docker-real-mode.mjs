@@ -6,7 +6,10 @@ import { resolve } from 'node:path'
 import { chromium } from 'playwright'
 
 // CI bootstrap smoke, not the DB/LLM-backed deployed gate. No .env, credentials,
-// host data volumes or API interception. The Dockerfile's default mode is tested.
+// host data volumes or API interception. The Dockerfile's default mode is
+// tested (VITE_DATA_MODE=real): the API starts degraded without DATABASE_URL,
+// the console boots on the real capabilities document, refuses unavailable
+// data sources and never falls back to demo data (ADR-0068).
 const uiImage = process.env.IW05_UI_IMAGE ?? 'raptix-web-raptix-ui:ci'
 const apiImage = process.env.IW05_API_IMAGE ?? 'raptix-web-raptix-server:ci'
 const output = resolve(process.env.IW05_EVIDENCE_DIR ?? 'apps/web/test-results-deployed/iw05')
@@ -41,20 +44,23 @@ try {
   assert.equal(health?.service, 'web-raptix-server', 'nginx must reach the actual compiled new API')
   const capabilities = await (await fetch(`${base}/api/capabilities`)).json()
   assert.equal(capabilities.capabilities.projects.available, false, 'This smoke intentionally has no database')
+  const unconfigured = await fetch(`${base}/api/engagements`)
+  assert.ok(unconfigured.status >= 400, 'The unconfigured engagements API must not fabricate a successful data response')
   browser = await chromium.launch({ channel: 'chromium' })
   page = await browser.newPage()
   page.on('request', request => { if (request.url().startsWith(`${base}/api/`)) requests.push(request.url()) })
-  const [response] = await Promise.all([
-    page.waitForResponse(response => response.url() === `${base}/api/engagements` && response.request().method() === 'GET', { timeout: 15000 }),
-    page.goto(`${base}/projects`, { waitUntil: 'domcontentloaded' }),
+  await Promise.all([
+    page.waitForResponse(response => response.url() === `${base}/api/capabilities`, { timeout: 15000 }),
+    page.goto(`${base}/#/projects`, { waitUntil: 'domcontentloaded' }),
   ])
-  assert.ok(response.status() >= 400, 'Unconfigured projects must not fabricate a successful data response')
-  await page.getByRole('heading', { name: 'Projects Management' }).waitFor({ timeout: 15000 })
+  await page.getByRole('heading', { name: 'Projects', exact: true }).waitFor({ timeout: 15000 })
+  await page.getByText('Projects are unavailable on this server').waitFor({ timeout: 15000 })
+  assert.ok(!requests.some(url => url === `${base}/api/engagements`), 'The console must not read engagement data while the capability is unavailable')
   const body = await page.locator('body').innerText()
-  for (const fixture of ['Acme Corp External Assessment', 'NovaPay', 'Alex Kim']) assert.ok(!body.includes(fixture), `Docker must not render demo fixture ${fixture}`)
+  for (const fixture of ['RT-2026-014', 'Internal Red Team Q4', 'Alex Morgan']) assert.ok(!body.includes(fixture), `Docker must not render demo fixture ${fixture}`)
   await page.screenshot({ path: resolve(output, 'docker-real-mode.png'), fullPage: true })
-  writeFileSync(resolve(output, 'smoke.json'), JSON.stringify({ uiImage, apiImage, bootstrapOnly: true, apiRequests: requests, projectsStatus: response.status(), passed: true }, null, 2))
-  console.log('PASS Docker default real-mode: browser calls the actual API; bootstrap errors have no demo fallback')
+  writeFileSync(resolve(output, 'smoke.json'), JSON.stringify({ uiImage, apiImage, bootstrapOnly: true, apiRequests: requests, unconfiguredProjectsStatus: unconfigured.status, passed: true }, null, 2))
+  console.log('PASS Docker default real-mode: the console boots on the real capabilities document, refuses unavailable data sources and never falls back to demo data')
 } catch (error) {
   writeFileSync(resolve(output, 'smoke.json'), JSON.stringify({ uiImage, apiImage, bootstrapOnly: true, apiRequests: requests, passed: false, error: error.message }, null, 2))
   for (const name of containers) {
