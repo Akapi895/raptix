@@ -521,31 +521,29 @@ jobs:
           npm run lint --workspace=@raptix/web-raptix
           npm run build --workspace=@raptix/web-raptix
           npm run test --workspace=@raptix/web-raptix
-      # Suspended during the ticket-02 cutover: verify-docker-real-mode.mjs
-      # drives the previous UI's real-mode bootstrap expectations, which the
-      # new console restores with integration ticket 03 (real bootstrap) and
-      # ticket 18 (final deployment gate). Chromium installation returns with
-      # them; the tool itself is retained under apps/web/tools/.
-      # - name: Install Chromium for Docker mode smoke
-      #   if: needs.changes.outputs['web-raptix'] == 'true'
-      #   working-directory: apps/web
-      #   run: npx playwright install --with-deps chromium
+      - name: Install Chromium for Docker mode smoke
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
       - name: Build Docker UI and bootstrap API images
         if: needs.changes.outputs['web-raptix'] == 'true'
         run: |
           docker build -f infra/containers/web-raptix.Dockerfile -t raptix-web-raptix-ui:ci .
           docker build -f infra/containers/web-raptix-server.Dockerfile -t raptix-web-raptix-server:ci .
-      # - name: Docker default real-mode smoke (bootstrap API, no DB or LLM)
-      #   if: needs.changes.outputs['web-raptix'] == 'true'
-      #   run: node apps/web/tools/verify-docker-real-mode.mjs
-      # - name: Upload Docker mode smoke evidence
-      #   if: always() && needs.changes.outputs['web-raptix'] == 'true'
-      #   uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      #   with:
-      #     name: web-raptix-docker-mode-smoke
-      #     path: apps/web/test-results-deployed/iw05/
-      #     if-no-files-found: ignore
-      #     retention-days: 7
+      # Ticket 18 deployment gate: the real-mode console (VITE_DATA_MODE=real)
+      # boots on the degraded API's capabilities document and must refuse
+      # unavailable data sources — no demo fallback.
+      - name: Docker default real-mode smoke (bootstrap API, no DB or LLM)
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        run: node apps/web/tools/verify-docker-real-mode.mjs
+      - name: Upload Docker mode smoke evidence
+        if: always() && needs.changes.outputs['web-raptix'] == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: web-raptix-docker-mode-smoke
+          path: apps/web/test-results-deployed/iw05/
+          if-no-files-found: ignore
+          retention-days: 7
 
   # Go launcher: vet + test. Mirrors what release.yml runs before GoReleaser
   # builds the binaries on tag push, so a broken `go test ./...` is caught

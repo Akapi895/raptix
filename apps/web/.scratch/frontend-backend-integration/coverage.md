@@ -232,3 +232,88 @@ schedulable. Ticket 01 is the initial frontier.
 The first usable real flow ends at 06. Continue the other frontier tickets toward
 full approved parity. A ticket does not complete a required domain merely by
 rendering an unavailable state; an exclusion must be explicitly approved in 01.
+
+## 8. Final acceptance ledger (ticket 18)
+
+Status: recorded 2026-10-15 on branch `web-improve-refactor`, tested tree
+`643e16d..7eb9826` (tickets 01-17) plus the ticket-18 commit (CI smoke restore +
+this ledger). Environments: local Windows/PowerShell for type/lint/test/build
+gates; the container smoke executes in the `web-raptix` CI lane (this
+environment has no Docker/Postgres/runtime — see named gaps).
+
+### Deployment (R01/R11)
+
+- Independent builds verified locally this session: `@raptix/web-raptix-server`
+  (tsc, clean), `@raptix/web-raptix` (vite, clean; pre-existing >500 kB chunk
+  warning only), `@raptix/web-raptix` + server lint/typecheck clean.
+- CI lane `.github/workflows/ci.yml` → `web-raptix`: prisma generate,
+  typecheck, lint, build, test (server); typecheck, lint, build, test (UI);
+  docker build of both container images; **the suspended Docker real-mode smoke
+  is restored** (Chromium install + `apps/web/tools/verify-docker-real-mode.mjs`
+  + evidence artifact). The tool was adapted to the new console: hash-route
+  `/#/projects`, browser consumes the real `/api/capabilities` document, the
+  capability-unavailable state renders ("Projects are unavailable on this
+  server"), the browser issues no `/api/engagements` read while unavailable,
+  the unconfigured API answers >= 400 directly, and no demo fixture
+  (`RT-2026-014`, `Internal Red Team Q4`, `Alex Morgan`) renders.
+- Same-origin proxy: `infra/containers/web-raptix-proxy.conf` routes `/api/` to
+  the API upstream with `proxy_buffering off` (unbuffered SSE, disconnects do
+  not cancel runs — server owns run lifetime) and never falls API paths back to
+  SPA HTML. Image default is real mode (`VITE_DATA_MODE=real`,
+  `web-raptix.Dockerfile`). Database generation/migration stays explicit
+  (startup never migrates; API container runs `prisma migrate deploy`).
+
+### 53-key coverage disposition (R10/R12)
+
+Real mode resolves every key as a real page, a real system page, real content
+inside project detail, or the honest not-integrated panel (`RealNotIntegrated`,
+D4) — mock screens are unreachable in real mode; no key fabricates data.
+
+| Disposition | Keys |
+|---|---|
+| Real page (9) | `login`, `projects`, `project-new`, `project`, `ai-operator`, `assets`, `playbooks`, `command-center`, `settings` |
+| Real system pages (5) | `notfound`, `error`, `offline`, `forbidden`, `session-expired` — render actual transport/router outcomes |
+| Real via project detail tabs (domains under `project`) | overview, planning, operations, fleet, c2, findings, analysis, reports, team, scope, governance, vault, audit, close — absorbing the governed flows of the standalone `operations`/`findings`/`reports`/`evidence`/`c2*`/`agents`-family keys (tickets 08-17) |
+| Honest not-integrated in real mode (39) | `states`, `tasks`, `operations`, `operation-new`, `operation`, `preflight`, `operation-schedule`, `agents`, `agent`, `asset`, `asset-new`, `asset-scope`, `playbook`, `technique`, `playbook-review`, `analysis`, `findings`, `finding`, `finding-new`, `evidence`, `evidence-inspector`, `reports`, `report-new`, `report`, `report-preview`, `report-review`, `ai-plan`, `ai-plan-review`, `ai-plan-compare`, `ai-trace`, `ai-history`, `ai-fanout`, `ai-branch`, `c2`, `c2-channel`, `c2-session`, `c2-console`, `scenarios`, `workspaces` |
+| Demo-only within the 39 | `states`, `scenarios`, `workspaces` (explicit demo surfaces; mock mode only) |
+
+Old-frontend retirement (R01/D5): the legacy app was replaced in 02; campaigns
+placement is the recorded W17 exclusion (backend APIs retained, ticket 12),
+vault placement landed as the ticket-16 detail tab, members placement landed in
+ticket 07.
+
+### Affected-suite evidence
+
+| Ticket | Commit | Evidence |
+|---|---|---|
+| 01-02 | `643e16d`, `8045cf3` | decisions/contracts frozen; canonical cutover + mock baseline |
+| 03-06 | `b3da0d7` | real bootstrap, portfolio, planning/conversations, execution/streaming, observed reads |
+| 07-11 | `6a2ff14`, `6f2a605`, `9a38dbc`, `ac05e64`, `31613a1` | identity/team, scope/ROE, governed operations, findings/evidence, reports |
+| 12-17 | `2eb5145`, `13566bc`, `58929f9`, `25171dc`, `3742cd8`, `7eb9826` | C2 grants, fleet, library/analysis, command center/inbox, settings/audit/vault, closure |
+
+Suite state at `7eb9826` (unchanged sources since; only CI/docs/tool changes
+after): server 38 files / 327 tests green, web `src/real` 19 files / 105 tests
+green. Per-ticket selections and live-flow caveats are recorded in each ticket
+md under `issues/`. Reusable harness commands: see `execution.md` §5/§6 plus
+the CI `web-raptix` lane (the authoritative reproducible deployment smoke).
+
+### Named gaps (explicitly not certified)
+
+1. **No live deployed stack in this environment** (no Docker/Postgres): the
+   Docker real-mode smoke runs in CI, not locally; persistence across API
+   restart, `prisma migrate deploy` on a real volume and the preserved-data
+   cutover probe remain CI/deployment-time checks.
+2. **No live runtime/provider round-trips** (LangGraph runtime, Sliver, Neo4j
+   KG, GoPhish/Evilginx, LLM): R06 execution, C2 command dispatch, KG-backed
+   analysis and campaign generation are verified against server-owned fakes,
+   stub client surfaces and recorded fixtures — never presented as live
+   provider evidence.
+3. **Performance probe not executed** (cold authenticated asset closure, five
+   interactive samples, API latency, quiet-window TTI): requires the deployed
+   environment; recorded budget targets stay targets, no selective accounting.
+4. **Browser viewport/theme/AT matrix**: earlier per-ticket a11y/theme evidence
+   retained; no new matrix run (evidence-reuse rule, `execution.md` §8).
+5. **39 keys render the honest not-integrated panel** in real mode; their
+   required functionality is recorded as unresolved (returning to owning
+   tickets per the scope boundary), never certified by rendering an
+   unavailable state.
