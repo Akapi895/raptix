@@ -27,6 +27,7 @@ const SELECT_PROJECT = 'Select a project to continue'
 const STATUS_OPTS: [string, string][] = [['draft', 'Draft'], ['ready', 'Ready'], ['running', 'Running'], ['paused', 'Paused'], ['done', 'Completed'], ['cancelled', 'Stopped'], ['estop', 'Emergency stopped'], ['error', 'Error']]
 
 /* ═════════════ OP-01 — Operations list (ticket 24: typed service read + Query) ═════════════ */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function Operations() {
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
@@ -144,6 +145,7 @@ function Operations() {
 /* ───────────── Conflict panel (shared by wizard and schedule page). Candidate
    and stored instants are absolute (service boundary); the display converts to
    the project timezone's wall clock. ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function ConflictPanel({ id, agents, assets, at, mins }: { id?: string; agents: string[]; assets: string[]; at: string; mins: number }) {
   const view = useOperationView(id || '')
   const inst = scheduleInstantOf(at)
@@ -179,6 +181,7 @@ function ConflictPanel({ id, agents, assets, at, mins }: { id?: string; agents: 
 
 /* ═════════════ OP-02 — Create / edit wizard ═════════════ */
 const STEPS = ['Basics', 'Playbook', 'Targets and agents', 'Schedule and mode', 'Review']
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function OperationNew() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -412,6 +415,7 @@ function OperationNew() {
 }
 
 /* ═════════════ OP-03 — Preflight ═════════════ */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function PreflightPage({ op }: { op: Operation }) {
   const view = useOperationView(op.id)
   const pid = useProjectStore((s) => s.pid)
@@ -552,6 +556,7 @@ function PreflightPage({ op }: { op: Operation }) {
 }
 
 /* ═════════════ Scheduling with conflict detection ═════════════ */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function SchedulePage({ op }: { op: Operation }) {
   const view = useOperationView(op.id)
   const can = useCan()
@@ -631,6 +636,7 @@ const TABS = [
   { id: 'timeline', label: 'Timeline' }, { id: 'graph', label: 'Execution Graph' }, { id: 'results', label: 'Results & Evidence' },
 ]
 const TAB_ALIAS: Record<string, string> = { console: 'live', evidence: 'results' }
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function OperationDetail({ d }: { d: OperationDetailRead }) {
   const route = useRoute()
   const staleOps = useSessionStore((s) => s.staleOps)
@@ -675,6 +681,7 @@ function OperationDetail({ d }: { d: OperationDetailRead }) {
 
 /** Linked context: plan, conversation, branch group, runtime state, Open in AI Operator.
  *  Ticket 26: plan, conversation and branch groups come from the canonical detail read. */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function OpLinks({ d }: { d: OperationDetailRead }) {
   const op = d.op
   const pl = d.plan
@@ -696,6 +703,7 @@ function OpLinks({ d }: { d: OperationDetailRead }) {
  *  direct store lookup. Loading shows a skeleton; a refusal renders the
  *  handler's reason — with the switch affordance only for members addressing
  *  the operation from another specific project (no existence leak). */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 const Detail = () => {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -719,7 +727,9 @@ const Detail = () => {
   }
   return <OperationDetail d={read.data} />
 }
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 const Preflight = () => <OpGate C={PreflightPage} />
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 const Schedule = () => <OpGate C={SchedulePage} />
 
 export const routes: Record<string, ComponentType> = {

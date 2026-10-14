@@ -4,6 +4,7 @@ import { Button, Empty, Status } from '../ui'
 import { go, selectProject, useRoute } from '../router/navigate'
 import type { Branch, Db, Operation, Plan, Project, Step } from '../data'
 import type { PfCheck, PfState } from '../features/operations/checklist'
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export { specChecks } from '../features/operations/checklist'
 export type { PfCheck, PfState } from '../features/operations/checklist'
 import { useOperationGate, useOperationView } from '../features/operations/views'
@@ -40,6 +41,7 @@ export function OpGate({ C }: { C: ComponentType<{ op: Operation }> }) {
 /* ───────────── Time helpers (wall-clock UTC+7, encoded as UTC ms) ───────────── */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 /** Parses "Oct 13, 2026, 10:42 AM (UTC+7)" */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const parseStamp = (s?: string): number | null => {
   const m = /([A-Z][a-z]{2}) (\d{1,2}), (\d{4}), (\d{1,2}):(\d{2}) (AM|PM)/.exec(s || '')
   if (!m) return null
@@ -50,17 +52,21 @@ export const parseStamp = (s?: string): number | null => {
   return Date.UTC(+m[3], mo, +m[2], h, +m[5])
 }
 /** Parses a datetime-local value ("2026-10-14T10:00") */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const schedMs = (v?: string): number | null => {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || '')
   return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null
 }
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const fmtMs = (ms: number) => {
   const d = new Date(ms)
   const h = d.getUTCHours()
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}, ${h % 12 || 12}:${String(d.getUTCMinutes()).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'} (UTC+7)`
 }
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const fmtSched = (v?: string) => { const ms = schedMs(v); return ms == null ? '' : fmtMs(ms) }
 const fmtMin = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m} min`)
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export function elapsed(op: Operation, nowStamp: string) {
   const a = parseStamp(op.startedAt)
   if (a == null) return '—'
@@ -73,17 +79,20 @@ export function elapsed(op: Operation, nowStamp: string) {
 /** ROE window check for a scheduled start (default window: Mon–Fri, 9:00 AM–5:00 PM UTC+7).
  * Delegates to the one canonical rule in the operations service; screen-layer
  * wall-clock values are converted to absolute instants at the boundary. */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export function windowIssue(p: Project | undefined, ms: number | null) {
   if (ms == null) return ''
   return roeWindowIssue(p, ms - PROJECT_TZ_OFFSET_MS)
 }
 
 /* ───────────── Step helpers ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export function stepCounts(steps: Step[]) {
   const c = { ok: 0, fail: 0, pending: 0, running: 0, notrun: 0, unknown: 0, review: 0, total: steps.length }
   steps.forEach((s) => { c[s.status]++ })
   return c
 }
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const progressOf = (steps: Step[]) => {
   if (!steps.length) return null
   const c = stepCounts(steps)
@@ -91,15 +100,18 @@ export const progressOf = (steps: Step[]) => {
 }
 
 /** Mask for sensitive data depending on permissions */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const MASK = '••••••••  (sensitive data — masked for your role)'
 
 /** Keeps a snapshot of a value while real-time data is delayed */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export function useFrozen<T>(value: T, frozen: boolean): T {
   const ref = useRef(value)
   if (!frozen) ref.current = value
   return ref.current
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const STEP_BORDER: Record<string, string> = {
   ok: 'border-ok/50', fail: 'border-bad/60', pending: 'border-line', running: 'border-cyan', notrun: 'border-line', unknown: 'border-warn/60', review: 'border-warn/60',
 }
@@ -109,12 +121,18 @@ export const OpStatus = ({ value, size }: { value: string; size?: 'sm' | 'md' })
 
 /* ───────────── V3.1 runtime state + branch links ───────────── */
 /** Operation Runtime State (separate from AI mode, eligibility and policy). A step in review pauses new dispatch. */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const hasReview = (op: Operation) => (op.status === 'running' || op.status === 'paused') && op.steps.some((s) => s.status === 'review')
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const runtimeLabel = (op: Operation) => (hasReview(op) ? 'Paused — Awaiting Review' : op.status === 'estop' ? 'Emergency stopped' : op.status === 'paused' ? 'Paused' : op.status === 'cancelled' ? 'Stopped' : op.status === 'done' ? 'Completed' : op.status === 'running' ? 'Running' : op.status.charAt(0).toUpperCase() + op.status.slice(1))
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const stepBranches = (db: Pick<Db, 'branches'>, opId: string, stepId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.stepId === stepId)
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const failedBranches = (db: Pick<Db, 'branches'>, opId: string): Branch[] => db.branches.filter((b) => b.opId === opId && b.state === 'failed')
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const opGroups = (db: Pick<Db, 'branchGroups'>, opId: string) => db.branchGroups.filter((g) => g.opId === opId)
 /** Conversation linked via the operation's plan */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const opConversation = (db: Pick<Db, 'plans' | 'conversations'>, op: Operation) => { const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined; return pl ? db.conversations.find((c) => c.id === pl.conversationId) : undefined }
 
 /** Status pill that shows the runtime state (e.g. "Paused — Awaiting Review") and flags failed branches; a failed branch is never shown as plain success. */
@@ -132,14 +150,19 @@ export function RuntimeStatus({ op, size }: { op: Operation; size?: 'sm' | 'md' 
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const planApprovalState = (pl?: Plan): 'none' | 'waiting' | 'approved' | 'rejected' | 'expired' =>
   !pl ? 'none' : pl.status === 'approved' || pl.status === 'executed' ? 'approved' : pl.status === 'in_review' || pl.status === 'proposed' ? 'waiting' : pl.status === 'rejected' ? 'rejected' : pl.status === 'draft' ? 'none' : 'expired'
 
 /* ───────────── Scheduling / conflicts (canonical rule lives in the operations service) ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const stepMinutes = (op: Operation) => draftMinutes(op.steps.length)
 
 /* ───────────── V3 preflight: 8 spec checks with PASS / WARN / FAIL / NOT CHECKED ───────────── */
 export interface PfSnap { at: string; roe: string; plan: string; checks: PfCheck[] }
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const PF_LABEL: Record<PfState, string> = { pass: 'PASS', warn: 'WARN', fail: 'FAIL', nc: 'NOT CHECKED' }
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const PF_TONE: Record<PfState, string> = { pass: 'border-ok/30 bg-ok-soft text-ok', warn: 'border-warn/30 bg-warn-soft text-warn', fail: 'border-bad/30 bg-bad-soft text-bad', nc: 'border-line bg-subtle text-muted' }
+// eslint-disable-next-line react-refresh/only-export-components -- operation screen shared helpers consumed across operation routes
 export const pfOverall = (cs: PfCheck[]): PfState => (cs.some((c) => c.state === 'fail') ? 'fail' : cs.some((c) => c.state === 'nc') ? 'nc' : cs.some((c) => c.state === 'warn') ? 'warn' : 'pass')

@@ -12,13 +12,16 @@ import type { ReactNode } from 'react'
 import { Ban, Clock, Eye, Info, Lightbulb, Lock, WifiOff, Zap, type LucideIcon } from 'lucide-react'
 import { cx } from './ui/cx'
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared UI kit: constants/helpers co-exported with primitives
 export { cx } from './ui/cx'
+// eslint-disable-next-line react-refresh/only-export-components -- shared UI kit: constants/helpers co-exported with primitives
 export { STATUS, toneText, type StatusKind, type Tone } from './ui/status-map'
 export { Status, Sev } from './ui/status'
 export { Button, IconButton } from './ui/button'
 export { Field, Input, Textarea, Select, SearchBox, Check, Toggle } from './ui/input'
 export { Mono, IdLink, Avatar, Person } from './ui/identity'
 export { Table, type Col } from './ui/table'
+// eslint-disable-next-line react-refresh/only-export-components -- shared UI kit: constants/helpers co-exported with primitives
 export { usePaged } from './ui/use-paged'
 export { Pager } from './ui/pager'
 export { Tabs } from './ui/tabs'
@@ -33,7 +36,9 @@ export { Skeleton, PageSkeleton } from './ui/skeleton'
 export { DescList, Kpi, Progress, Timeline, Stepper } from './ui/data'
 export { DemoTag } from './ui/demo-tag'
 export { Gated, Locked, PersonaHint } from './ui/guard'
+// eslint-disable-next-line react-refresh/only-export-components -- shared UI kit: constants/helpers co-exported with primitives
 export { useGuard } from './ui/use-guard'
+// eslint-disable-next-line react-refresh/only-export-components -- shared UI kit: constants/helpers co-exported with primitives
 export { useDebounced, useMemoList } from './ui/use-debounced'
 export { Donut, Legend, BarChart, LineChart } from './ui/charts'
 
