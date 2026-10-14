@@ -167,7 +167,7 @@ export interface C2SessionDetailRead {
   access: C2AccessInfo
   /** Sensitive unmasking gate — the shared `viewSensitive` policy action. */
   canViewSensitive: boolean
-  project?: { id: string; name: string; roeVersion: string; window: string }
+  project?: { id: string; name: string; roeVersion: string; window: string; approvers: string[] }
   op?: { id: string; name: string; owner: string; status: string }
   agent?: { id: string; host: string }
   /** Connection health of the channel/node as recorded — separate from the access grant. */
@@ -183,6 +183,12 @@ export interface C2SessionDetailRead {
   evidence: C2SessionEvidenceRow[]
   /** Findings recorded against the session's target. */
   findings: { id: string; title: string }[]
+  stop?: Db['stopState']
+}
+
+export interface C2GrantWatchRead {
+  sessions: Pick<Session, 'id' | 'grants' | 'transcript'>[]
+  operations: { id: string; name: string }[]
 }
 
 export interface C2Service {
@@ -395,7 +401,7 @@ export function getSessionDetail(db: Db, ctx: RequestContext, id: string): Servi
       perm: sessionPermOf(db, ctx, s),
       access: accessOf(db, ctx, s),
       canViewSensitive,
-      project: project && { id: project.id, name: project.name, roeVersion: project.roeVersion, window: project.window },
+      project: project && { id: project.id, name: project.name, roeVersion: project.roeVersion, window: project.window, approvers: project.members.filter((m) => m.role === 'manager' || m.role === 'admin').map((m) => m.user) },
       op: op && { id: op.id, name: op.name, owner: op.owner, status: op.status },
       agent: agent && { id: agent.id, host: agent.host },
       channel: channel && { id: channel.id, status: channel.status, last: channel.last, nodeLatency: node?.latency },
@@ -407,8 +413,19 @@ export function getSessionDetail(db: Db, ctx: RequestContext, id: string): Servi
         .filter((e) => e.projectId === s.projectId && e.opId === s.opId)
         .map((e) => ({ id: e.id, name: e.sensitive && !canViewSensitive ? '•••••• (redacted)' : e.name, kind: e.kind, source: e.source, sensitive: e.sensitive })),
       findings: db.findings.filter((f) => f.asset === s.asset && f.projectId === s.projectId).map((f) => ({ id: f.id, title: f.title })),
+      stop: db.stopState?.id === s.opId ? db.stopState : undefined,
     },
   }
+}
+
+/** Scoped, unpaginated projection for synchronous expiry notifications. */
+export function getGrantWatch(db: Db, ctx: RequestContext): ServiceResult<C2GrantWatchRead> {
+  const scope = scopeSets(db, ctx)
+  if (!scope.ok) return scope
+  return { ok: true, data: {
+    sessions: scopedSessions(db, ctx, scope.data).map(({ id, grants, transcript }) => ({ id, grants, transcript })),
+    operations: db.operations.filter((o) => inProject(o.projectId, ctx, scope.data)).map(({ id, name }) => ({ id, name })),
+  } }
 }
 
 /** Builds the typed C2 read service; `guard` is the factory's superseded-scope read guard. */
