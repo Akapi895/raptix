@@ -10,13 +10,13 @@
 import { useMemo, useState } from 'react'
 import { Check as CheckIcon, ChevronDown, FolderKanban, Layers, Loader2, Lock, Pin } from 'lucide-react'
 import { go, selectProject, useRoute } from '../router/navigate'
-import { useAccessible, useActiveProject, useCan, useDb, useMe } from '../state/console'
+import { useAccessible, useActiveProject, useCan, usePolicyProjects, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
 import { useProjectStore, useUiStore } from '../state/stores'
 import { Button, cx, SearchBox, Status } from '../ui'
 
 export function ProjectSwitcher() {
-  const db = useDb()
+  const projects = usePolicyProjects()
   const accessible = useAccessible()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
@@ -32,10 +32,10 @@ export function ProjectSwitcher() {
   const [st, setSt] = useState('')
   const [cl, setCl] = useState('')
   const accessIds = useMemo(() => new Set(accessible.map((p) => p.id)), [accessible])
-  const clients = useMemo(() => Array.from(new Set(db.projects.map((p) => p.client))).sort(), [db.projects])
-  const statuses = useMemo(() => Array.from(new Set(db.projects.map((p) => p.status))), [db.projects])
+  const clients = useMemo(() => Array.from(new Set(projects.map((p) => p.client))).sort(), [projects])
+  const statuses = useMemo(() => Array.from(new Set(projects.map((p) => p.status))), [projects])
   const list = useMemo(() => {
-    let l = tab === 'all' || q.trim() ? db.projects : accessible
+    let l = tab === 'all' || q.trim() ? projects : accessible
     if (tab === 'pinned') l = l.filter((p) => p.pinned)
     if (tab === 'recent') l = l.filter((p) => p.status !== 'closed').slice(0, 5)
     if (st) l = l.filter((p) => p.status === st)
@@ -43,7 +43,7 @@ export function ProjectSwitcher() {
     const k = q.trim().toLowerCase()
     if (k) l = l.filter((p) => (p.id + p.name + p.client).toLowerCase().includes(k))
     return l
-  }, [db.projects, accessible, tab, q, st, cl])
+  }, [projects, accessible, tab, q, st, cl])
   const sel = 'h-9 min-w-0 flex-1 rounded-[10px] border border-line bg-panel px-2 text-xs text-fg'
   return (
     <div className="relative min-w-0">

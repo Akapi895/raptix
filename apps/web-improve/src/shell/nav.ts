@@ -9,8 +9,8 @@
 import {
   Activity, BookOpen, Bot, FileText, FolderKanban, LayoutDashboard, Network, RadioTower, Server, Settings, ShieldAlert, Monitor, type LucideIcon,
 } from 'lucide-react'
-import type { Operation } from '../data'
-import { useDb, useCan, useMe, useScoped } from '../state/console'
+import { useServiceProjection } from '../state/projection'
+import { readNavigationBadges } from '../features/navigation/service'
 
 export const NAV: { group: string; items: { page: string; label: string; icon: LucideIcon; match: string[] }[] }[] = [
   { group: 'OVERVIEW', items: [{ page: 'command-center', label: 'Command Center', icon: LayoutDashboard, match: ['command-center', 'dashboard', 'tasks'] }] },
@@ -51,17 +51,6 @@ const WIDE_PAGES = ['c2-console', 'ai-operator']
 export const isWide = (r: { page: string; tab?: string }) => WIDE_PAGES.includes(r.page) || (r.page === 'operation' && r.tab === 'live')
 
 /** Pending-work badges shown on the sidebar items, derived from the shared store read model. */
-export function useBadges() {
-  const db = useDb()
-  const me = useMe()
-  const can = useCan()
-  const scoped = useScoped<Operation>()
-  const d = db as any
-  const pendingAppr = (d.approvals || []).filter((a: any) => a.status === 'pending').length
-  return {
-    projects: me.role === 'reviewer' || can('approve') ? pendingAppr : 0,
-    'ai-operator': (d.plans?.filter((p: any) => p.status === 'in_review' || p.status === 'proposed').length as number) || 0,
-    c2: (d.sessionRequests?.filter((r: any) => r.status === 'pending').length as number) || 0,
-    operations: scoped(db.operations).filter((o) => o.status === 'running').length,
-  } as Record<string, number>
+export function useBadges(): Record<string, number> {
+  return useServiceProjection(readNavigationBadges)
 }

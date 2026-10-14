@@ -3,11 +3,12 @@
  * monolith verbatim). Results are scoped reads from the shared store; recent
  * searches stay session-local module state exactly as before.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CornerDownLeft, History, Search } from 'lucide-react'
 import { go } from '../router/navigate'
-import { useAccessible, useActiveProject, useDb, useMe, useScoped } from '../state/console'
-import { sessionPermOf } from '../features/c2/service'
+import { useActiveProject } from '../state/console'
+import { useServiceProjection } from '../state/projection'
+import { readSearchResults } from '../features/navigation/service'
 import { IconButton, cx } from '../ui'
 import { NAV } from './nav'
 
@@ -15,16 +16,10 @@ let RECENT: string[] = []
 type Hit = { group: string; id: string; label: string; meta?: string; to: () => void }
 const GROUP_ORDER = ['Projects', 'Operations', 'Plans', 'Findings', 'Sessions', 'Agents', 'Pages']
 export function GlobalSearch() {
-  const db = useDb()
-  const accessible = useAccessible()
-  /* The seam's filter keeps the element type at each call site (it returns
-     exactly the elements it receives), like the store's generic `scoped`. */
-  const scopeFilter = useScoped()
-  const scoped = useCallback(<T extends { projectId: string }>(arr: T[]) => scopeFilter(arr) as T[], [scopeFilter])
   const project = useActiveProject()
-  const me = useMe()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
+  const results = useServiceProjection((services, ctx) => readSearchResults(services, ctx, q))
   const [idx, setIdx] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -40,24 +35,14 @@ export function GlobalSearch() {
     const k = q.trim().toLowerCase()
     if (!k) return []
     const m = (...s: (string | undefined)[]) => s.join(' ').toLowerCase().includes(k)
-    const d = db as any
-    const pName = (id: string) => id
-    const ags = scoped((d.agents || []) as { projectId: string; id: string; host: string; status: string }[])
-    const plans = scoped((d.plans || []) as { projectId: string; id: string; title: string; status: string; ver?: string; version: number }[])
-    const sess = scoped((d.sessions || []) as any[]).filter((x) => sessionPermOf(db, { actor: { id: me.name, role: me.role }, projectId: x.projectId, corr: 'legacy' }, x) !== 'none')
     const all: Hit[] = [
-      ...accessible.filter((p) => m(p.id, p.name, p.client)).map((p) => ({ group: 'Projects', id: p.id, label: p.name, meta: `${p.status} · ${p.client}`, to: () => go('project', { id: p.id }) })),
-      ...scoped(db.operations).filter((o) => m(o.id, o.name)).map((o) => ({ group: 'Operations', id: o.id, label: o.name, meta: `${o.status} · ${pName(o.projectId)}`, to: () => go('operation', { id: o.id }) })),
-      ...plans.filter((p) => m(p.id, p.title)).map((p) => ({ group: 'Plans', id: p.id, label: p.title, meta: `${p.ver ?? 'v' + p.version} · ${p.status.replace('_', ' ')} · ${p.projectId}`, to: () => go('ai-plan', { id: p.id }) })),
-      ...scoped(db.findings).filter((f) => m(f.id, f.title)).map((f) => ({ group: 'Findings', id: f.id, label: f.title, meta: `${f.status === 'ai_suggested' ? 'AI suggestion' : f.status} · ${f.projectId}`, to: () => go('finding', { id: f.id }) })),
-      ...sess.filter((x) => m(x.id, x.asset, x.account)).map((x) => ({ group: 'Sessions', id: x.id as string, label: `${x.asset}`, meta: `${x.state} · ${x.projectId}`, to: () => go('c2-session', { id: x.id }) })),
-      ...ags.filter((a) => m(a.id, a.host)).map((a) => ({ group: 'Agents', id: a.id, label: a.host, meta: `${a.status} · ${a.projectId}`, to: () => go('agent', { id: a.id }) })),
+      ...results.map((hit) => ({ ...hit, to: () => go(hit.page, { id: hit.id }) })),
       ...NAV.flatMap((g) => g.items).filter((i) => m(i.label, i.page)).map((i) => ({ group: 'Pages', id: i.label, label: 'Open page', to: () => go(i.page) })),
     ]
     return GROUP_ORDER.flatMap((g) => all.filter((h) => h.group === g).slice(0, 4))
     /* `go` is the navigate module's stable function (an outer-scope value, not
        a dependency): the memo is pure over its data inputs, as before. */
-  }, [q, db, accessible, scoped, me])
+  }, [q, results])
   const choose = (h: Hit) => {
     const k = q.trim()
     if (k) RECENT = [k, ...RECENT.filter((x) => x !== k)].slice(0, 5)
