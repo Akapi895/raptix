@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Ban, Bot, Clock, Copy, Eye, FileText, Loader2, Lock, OctagonX, Radio, ShieldCheck, TerminalSquare, Unplug } from 'lucide-react'
-import { useStore } from '../store'
+import { useStore, useServices } from '../store'
+import { go, useRoute } from '../router/navigate'
+import { useCan, useMe } from '../state/console'
+import { useProjectStore, useToastStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { emergencyStop } from '../features/demo/runtime'
+import { expireGrantTransaction, sessionCommandTransaction } from '../features/c2/grants'
 import type { Session } from '../data'
 import { C2ReadError, useC2Session, useC2Sessions } from '../features/c2/query'
 import { hhmm } from '../features/c2/service'
@@ -22,7 +28,8 @@ export function minutesUntil(exp: string, nowHHMM: string) {
 
 /* ───────── Request access drawer (C2-08) ───────── */
 export function RequestAccessDrawer({ session, open, onClose, initialMode = 'interactive' }: { session: Session; open: boolean; onClose: () => void; initialMode?: 'read-only' | 'interactive' }) {
-  const { A, db, toast, go } = useStore()
+  const { A, db, go } = useStore()
+  const toast = useToastStore((s) => s.toast)
   const [mode, setMode] = useState<'read-only' | 'interactive'>(initialMode)
   const [duration, setDuration] = useState('1 hour')
   const [reason, setReason] = useState('')
@@ -83,7 +90,8 @@ export function AccessChip({ a }: { a: C2AccessInfo }) {
  * the holder when the lifecycle just expired their grant.
  */
 export function useGrantWatch() {
-  const { db, toast, me } = useStore()
+  const { db, me } = useStore()
+  const toast = useToastStore((s) => s.toast)
   const [t, tick] = useState(0)
   useEffect(() => { const i = setInterval(() => tick((n) => n + 1), 15000); return () => clearInterval(i) }, [])
   const held = useRef<Map<string, string>>(new Map())
@@ -109,7 +117,9 @@ export function useRevokeSim() {
 export const setFailNext = (v: boolean) => setSim({ failNext: v })
 
 export function useTerminate() {
-  const { A, db, confirm, toast } = useStore()
+  const { A, db } = useStore()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
   return (s: Session) => {
     const op = db.operations.find((o) => o.id === s.opId)
     confirm({
@@ -131,7 +141,9 @@ export function useTerminate() {
 }
 
 export function useRevoke() {
-  const { A, confirm, toast, me } = useStore()
+  const { A, me } = useStore()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
   const perform = (s: Session, user: string, reason: string) => {
     if (sim.failNext) {
       setSim({ failNext: false, fails: [...sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)), { sessionId: s.id, user, reason }] })
@@ -157,7 +169,10 @@ export function useRevoke() {
 const Row = ({ children }: { children: ReactNode }) => <div className="flex flex-wrap items-center gap-2">{children}</div>
 
 export function SessionDetail() {
-  const { route, go, me, can, pid } = useStore()
+  const route = useRoute()
+  const me = useMe()
+  const can = useCan()
+  const pid = useProjectStore((s) => s.pid)
   useGrantWatch()
   const allProjects = pid === 'all'
   const [drawer, setDrawer] = useState(false)
@@ -298,7 +313,19 @@ const ACTIONS: Record<Session['kind'], string[]> = {
 const BUSY_MS = 2500
 
 export function Console() {
-  const { db, route, go, me, can, A, toast, confirm, pid } = useStore()
+  /* Ticket 67 wave 8: the console keeps the store-context reads (the A.*
+     entries retire below; db/me/toast/confirm/pid ride the provider's
+     projection). The canonical useDb seam subscribes to the authority via
+     useSyncExternalStore, and under the pinned ticket-47 suite (a commit
+     inside a delayed timer) that subscription desyncs the mounted Query
+     observers' React subscriptions — the cache refetches but the console
+     never re-renders. Revisit with the enabler-D follow-up. */
+  const services = useServices()
+  const { db, go, me, can } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
   useGrantWatch()
   const allProjects = pid === 'all'
   const [drawer, setDrawer] = useState(false)
@@ -315,6 +342,21 @@ export function Console() {
   const list = useC2Sessions({})
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 15000); return () => { clearInterval(t); clearTimeout(timer.current) } }, [])
   const back = { label: 'C2 & Sessions', to: () => go('c2', { tab: 'sessions' }) }
+  /* Ticket 67 wave 8: the legacy raw `A.sessionCommand` entry, mirrored — the
+     session lookup resolves from the one authority at call time (the store's
+     dbRef semantics) and the typed result bridges back to the legacy Res. */
+  const command = (sessionId: string, label: string) => {
+    const x = services.authority.snapshot().sessions.find((y) => y.id === sessionId)
+    if (!x) return { ok: false as const, error: `Session ${sessionId} does not exist.` }
+    const res = sessionCommandTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: x.projectId, corr: 'legacy' }, { sessionId, label })
+    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
+  }
+  /* The legacy raw `A.expireGrant` entry, mirrored — the idempotent
+     single-grant expiry through the canonical transaction. */
+  const expireGrant = (sessionId: string, user: string) => {
+    const x = services.authority.snapshot().sessions.find((y) => y.id === sessionId)
+    if (x) expireGrantTransaction(services.authority, services.clock, 'legacy', sessionId, user)
+  }
   if (detail.isPending) return <div aria-busy="true" aria-label="Loading console"><PageSkeleton /></div>
   if (detail.isError || !detail.data) {
     return <><PageHeader title="Console unavailable" back={back} /><Empty icon={TerminalSquare} title="Session not found in this project" action={<Button onClick={() => go('c2', { tab: 'sessions' })}>Back to sessions</Button>}>{(detail.error as C2ReadError | null)?.failure.message ?? 'This session does not exist or belongs to another project.'}</Empty></>
@@ -357,7 +399,7 @@ export function Console() {
        is refused there and the interrupt is surfaced here. */
     timer.current = window.setTimeout(() => {
       setBusy(null)
-      const res = A.sessionCommand(s.id, label)
+      const res = command(s.id, label)
       if (!res.ok) toast('Command interrupted — access changed while it was running.', 'warn')
     }, BUSY_MS)
   }
@@ -380,7 +422,7 @@ export function Console() {
           <Clock size={14} aria-hidden />{st === 'interactive' || st === 'revokefail' ? `Expires in ${Math.max(left, 0)} min (${grant?.expires.replace('Oct 13, 2026, ', '')})` : hasExpiredLine ? 'Grant expired' : 'No active grant'}
         </span>
         <Gated allowed={can('estop') && !blocked} reason={blocked || 'Only a Red Team Manager or Organization Admin can trigger an emergency stop.'}>
-          <Button size="sm" variant="danger" icon={OctagonX} onClick={() => confirm({ title: `Emergency stop ${s.opId}?`, confirmLabel: 'Request emergency stop', danger: true, reasonRequired: true, reasonLabel: 'Reason', body: <p className="text-sm">A stop is requested for operation {s.opId}. It is not confirmed until the node and agents acknowledge it.</p>, onConfirm: (r) => { A.emergencyStop('operation', s.opId, r); toast('Emergency stop requested — waiting for acknowledgement.', 'warn') } })}>Emergency stop</Button>
+          <Button size="sm" variant="danger" icon={OctagonX} onClick={() => confirm({ title: `Emergency stop ${s.opId}?`, confirmLabel: 'Request emergency stop', danger: true, reasonRequired: true, reasonLabel: 'Reason', body: <p className="text-sm">A stop is requested for operation {s.opId}. It is not confirmed until the node and agents acknowledge it.</p>, onConfirm: (r) => { emergencyStop('operation', s.opId, r); toast('Emergency stop requested — waiting for acknowledgement.', 'warn') } })}>Emergency stop</Button>
         </Gated>
       </div>
       <div className="mb-3"><Banner tone="info" icon={ShieldCheck} title="Simulated Console — no real commands are executed">All output is synthetic and labelled Demo data. Only the safe actions below can be sent.</Banner></div>
@@ -433,7 +475,7 @@ export function Console() {
             <Gated allowed={!!grant && !blocked} reason="You do not currently hold a grant."><Button variant="danger" onClick={() => revoke(s, me.name)}>Revoke my access</Button></Gated>
             <Gated allowed={can('terminate') && !blocked && st !== 'terminated'} reason={blocked || (!can('terminate') ? 'Only a Red Team Manager or Organization Admin can terminate sessions.' : 'Session is already terminated.')}><Button variant="danger" icon={OctagonX} onClick={() => terminate(s)}>Terminate session</Button></Gated>
             <Button size="sm" variant="ghost" onClick={() => go('c2-session', { id: s.id })}>Close</Button>
-            <Gated allowed={st === 'interactive'} reason="Demo control is only available while a grant is active."><Button size="sm" variant="ghost" onClick={() => { A.expireGrant(s.id, me.name); toast('Demo: grant expiry simulated.', 'warn') }}>Demo: simulate expiry</Button></Gated>
+            <Gated allowed={st === 'interactive'} reason="Demo control is only available while a grant is active."><Button size="sm" variant="ghost" onClick={() => { expireGrant(s.id, me.name); toast('Demo: grant expiry simulated.', 'warn') }}>Demo: simulate expiry</Button></Gated>
             <label className="ml-auto flex items-center gap-1.5 text-xs text-muted"><input type="checkbox" checked={rs.failNext} onChange={(e) => setFailNext(e.target.checked)} />Demo: next revoke fails</label>
             <Gated allowed={!!s.transcript.length && !blocked} reason={blocked}><Button size="sm" variant="ghost" icon={Copy} onClick={() => { navigator.clipboard?.writeText(s.transcript.map((l) => `${l.ts} ${l.who} ${l.text}`).join('\n')); toast('Transcript copied (demo data).') }}>Copy transcript</Button></Gated>
           </div>

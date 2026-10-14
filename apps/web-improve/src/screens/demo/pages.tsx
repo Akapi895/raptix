@@ -5,22 +5,25 @@
  * `workspaces`; route-inventory rows 52–53). Persona selection and workspace
  * sign-in flow through the ticket-06 auth actions and the single `signIn`
  * entry; the Reset Demo State action runs the ONE authority reset chain
- * (store `resetDemo` → `services.reset(variant)`: Scheduler clear + clock
- * anchor restore + `authority.reset(variant)`, with the Query bridge treating
- * corr `reset` as wholesale invalidation) and cancels the owned demo timers;
- * guide launches go through the walkthrough module. These pages render their
+ * (the demo runtime's `resetDemo` → `services.reset(variant)`: Scheduler
+ * clear + clock anchor restore + `authority.reset(variant)`, with the Query
+ * bridge treating corr `reset` as wholesale invalidation) and cancels the
+ * owned demo timers; guide launches go through the walkthrough module over
+ * the canonical navigation seam (ticket 67 wave 8). These pages render their
  * own confirm/toast host (`DemoChrome`) — the shell chrome they render
  * outside of is not mounted on public routes.
  */
-import { useRef, useState, type ComponentType } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { ArrowRight, Building2, ExternalLink, FlaskConical, LogIn, Play, RotateCcw, Search, Target, UserRound } from 'lucide-react'
 import { USERS } from '../../data'
 import { signIn, signOut, switchPersona } from '../../auth/persona'
 import { useAuthStore, useToastStore, type Toast } from '../../state/stores'
-import { useStore } from '../../store'
+import { useSessionStore } from '../../state/session'
+import { go } from '../../router/navigate'
+import { resetDemo } from '../../features/demo/runtime'
 import { Avatar, Button, Card, Input, Modal, Tabs } from '../../ui'
 import { GUIDES, type Dest } from './guides'
-import { jump, launchGuide } from './launch'
+import { jump, jumpSeam, launchGuide } from './launch'
 
 const DEMOS = [
   { key: 'A', title: 'Demo A — Authorized Execution', project: 'RT-2026-014', blurb: 'Plan PL-021 to approval, preflight, live OP-014, evidence, finding FD-011, report REP-014 and closeout.', ids: ['E2E-01'] },
@@ -149,7 +152,8 @@ const td = 'border-b border-line px-3 py-2 align-top text-[13px]'
 
 /** Confirm + toast host for the public pages (the shell chrome is not mounted on OUTSIDE_SHELL routes). */
 function DemoChrome() {
-  const { confirmState, closeConfirm } = useStore()
+  const confirmState = useSessionStore((s) => s.confirmState)
+  const closeConfirm = useSessionStore((s) => s.closeConfirm)
   const toasts = useToastStore((s) => s.toasts)
   return (
     <>
@@ -176,14 +180,15 @@ function DemoChrome() {
 }
 
 function ScenariosPage() {
-  const S = useStore()
-  const { go, confirm, resetDemo } = S
   const meName = useAuthStore((s) => s.meName)
   const authed = useAuthStore((s) => s.authed)
   const toastFn = useToastStore((s) => s.toast)
-  const ref = useRef(S)
-  ref.current = S
-  const get = () => ref.current
+  const confirm = useSessionStore((s) => s.confirm)
+  /* Ticket 67 wave 8: the walkthrough seam over the canonical authorities; the
+     delayed jump navigate is scoped to this page's mount. */
+  const alive = useRef(true)
+  useEffect(() => () => { alive.current = false }, [])
+  const getS = jumpSeam(() => alive.current)
   const [tab, setTab] = useState('scenarios')
   const persona = USERS.find((u) => u.name === meName)
 
@@ -192,11 +197,11 @@ function ScenariosPage() {
     body: 'All changes made in this prototype session are discarded and the default dataset is restored. This only affects demo data.',
     onConfirm: () => { resetDemo('default') },
   })
-  const open = (to: Dest, pid?: string, who?: string) => { jump(get, to, who, pid) }
+  const open = (to: Dest, pid?: string, who?: string) => { jump(getS, to, who, pid) }
   const Link = ({ to, pid, label = 'Open screen' }: { to: Dest; pid?: string; label?: string }) => (
     <button className="inline-flex items-center gap-1 whitespace-nowrap text-accent hover:underline" onClick={() => open(to, pid)}>{label}<ExternalLink size={12} aria-hidden /></button>
   )
-  const start = (id: string) => launchGuide(get, id)
+  const start = (id: string) => launchGuide(getS, id)
 
   return (
     <div className="min-h-screen bg-bg text-fg">
@@ -256,7 +261,7 @@ function ScenariosPage() {
                         {g.steps.map((st, i) => (
                           <li key={i} className="flex items-start gap-2">
                             <span className="w-4 shrink-0 text-right text-xs text-muted">{i + 1}.</span>
-                            <button className="text-left text-accent hover:underline" onClick={() => launchGuide(get, g.id, i)}>{st.t}</button>
+                            <button className="text-left text-accent hover:underline" onClick={() => launchGuide(getS, g.id, i)}>{st.t}</button>
                             {st.run && <span className="whitespace-nowrap rounded-full border border-line bg-side px-1.5 text-[10px] text-muted">Simulated action</span>}
                           </li>
                         ))}
@@ -370,7 +375,6 @@ function ScenariosPage() {
 }
 
 function WorkspacesPage() {
-  const { go } = useStore()
   const meName = useAuthStore((s) => s.meName)
   const toast = useToastStore((s) => s.toast)
   const [q, setQ] = useState('')

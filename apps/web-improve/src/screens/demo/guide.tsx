@@ -6,36 +6,39 @@
  * (src/screens/demo/guides.ts). Identity/auth flow through the shared
  * ticket-05 auth authority, toasts through the toast authority, the projected
  * route comes from the router location; navigation and persona/project writes
- * stay on the store's guarded entries (jump → setMe/login/setPid/go), and the
- * simulated agent actions run through the bridged demo actions behind the
- * corpus's {@link DemoKit} seam.
+ * go through the canonical seams the walkthrough seam composes (jump →
+ * setMe/login/selectProject/go — ticket 67 wave 8), and the simulated agent
+ * actions run through the demo runtime behind the corpus's {@link DemoKit}
+ * seam.
  */
 import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router'
 import { ChevronDown, ChevronLeft, ChevronRight, Compass, X } from 'lucide-react'
-import { useStore, type Store } from '../../store'
 import { parseLocation } from '../../router/history'
+import { loseAgent, restoreAgent } from '../../features/demo/runtime'
 import { useAuthStore, useToastStore } from '../../state/stores'
 import { GUIDES, type DemoKit, type Dest } from './guides'
-import { jump, setGs, stepArgs, stopGuide, useGs } from './launch'
+import { jump, jumpSeam, setGs, stepArgs, stopGuide, useGs } from './launch'
 
 const same = (a: Dest, b: Dest) => a.page === b.page && (a.id ?? '') === (b.id ?? '') && (a.tab ?? '') === (b.tab ?? '')
 
-/** The store-backed kit a simulated step runs with (bridge seam over the demo actions). */
-const kitOf = (S: Store, toast: DemoKit['toast']): DemoKit => ({
-  loseAgent: (id) => S.A.loseAgent(id),
-  restoreAgent: (id) => S.A.restoreAgent(id),
+/** The kit a simulated step runs with (the demo runtime's agent simulations + the toast authority). */
+const kitOf = (toast: DemoKit['toast']): DemoKit => ({
+  loseAgent: (id) => loseAgent(id),
+  restoreAgent: (id) => restoreAgent(id),
   toast: (text, kind) => toast(text, kind),
 })
 
 export function DemoGuide() {
-  const S = useStore()
   const meName = useAuthStore((s) => s.meName)
   const authed = useAuthStore((s) => s.authed)
   const toast = useToastStore((s) => s.toast)
   const st = useGs()
-  const ref = useRef(S)
-  ref.current = S
+  /* Ticket 67 wave 8: the walkthrough seam over the canonical authorities; the
+     delayed jump navigate is scoped to this panel's mount. */
+  const alive = useRef(true)
+  useEffect(() => () => { alive.current = false }, [])
+  const getS = jumpSeam(() => alive.current)
   const location = useLocation()
   const route = parseLocation({ pathname: location.pathname, search: location.search })
   const g = GUIDES.find((x) => x.id === st.id)
@@ -54,7 +57,7 @@ export function DemoGuide() {
   const step = g.steps[st.step]
   const total = g.steps.length
   const a = stepArgs(g, st.step)
-  const go = (i: number) => { setGs({ step: i }); const b = stepArgs(g, i); jump(() => ref.current, g.steps[i].to, b.persona, b.pid) }
+  const go = (i: number) => { setGs({ step: i }); const b = stepArgs(g, i); jump(getS, g.steps[i].to, b.persona, b.pid) }
   const onScreen = same(step.to, route)
   const personaMismatch = meName !== a.persona
 
@@ -82,7 +85,7 @@ export function DemoGuide() {
         {onScreen
           ? <p className="text-[11px] text-ok">You are on this screen. Click Next when done{g.steps[st.step + 1] ? ', or open the next screen and the guide advances itself.' : '.'}</p>
           : <p className="text-[11px] text-muted">Tip: opening the next step's screen advances this guide automatically.</p>}
-        {step.run && <button className="h-8 w-full rounded-md border border-accent-line bg-accent-soft px-3 text-xs font-medium text-accent hover:opacity-90" onClick={() => step.run!(kitOf(ref.current, toast))}>Simulated action: {step.runLabel}</button>}
+        {step.run && <button className="h-8 w-full rounded-md border border-accent-line bg-accent-soft px-3 text-xs font-medium text-accent hover:opacity-90" onClick={() => step.run!(kitOf(toast))}>Simulated action: {step.runLabel}</button>}
         <button className="h-8 w-full rounded-md bg-accent px-3 text-xs font-medium text-white hover:opacity-90" onClick={() => go(st.step)}>Go to this screen</button>
         <div className="flex items-center justify-between gap-2">
           <button className="flex h-7 items-center gap-1 rounded-md border border-line px-2 text-xs hover:bg-hover disabled:opacity-40" disabled={st.step === 0} onClick={() => go(st.step - 1)}><ChevronLeft size={13} aria-hidden />Prev</button>

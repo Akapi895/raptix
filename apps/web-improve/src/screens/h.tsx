@@ -1,6 +1,10 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { Activity, ClipboardCheck, Download, Eye, Lock, OctagonX, Radio, RadioTower, ShieldAlert, SlidersHorizontal, TerminalSquare, TriangleAlert } from 'lucide-react'
-import { useStore } from '../store'
+import { useServices } from '../store'
+import { go, useRoute } from '../router/navigate'
+import { useAccessible, useCan, useDb, useMe } from '../state/console'
+import { useProjectStore, useToastStore } from '../state/stores'
+import { decideSessionRequestTransaction } from '../features/c2/grants'
 import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Gated, IdLink, Kpi, Mono, PageHeader, PageSkeleton, Person, Progress, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Pager, DemoTag, Modal, cx } from '../ui'
 import { AccessChip, Console, RequestAccessDrawer, SELECT_PROJECT, SessionDetail, kindLabel, useGrantWatch, useTerminate, MIN_REASON } from './h-session'
 import { C2ReadError, useC2Audit, useC2Channel, useC2Overview, useC2Requests, useC2Sessions } from '../features/c2/query'
@@ -19,7 +23,9 @@ const short = (t: string) => t.replace('Oct 13, 2026, ', '')
    ticket 46 moves the deadline lifecycle into the service. Request/grant
    decisions and termination keep the legacy bridge until 46. */
 function C2Overview() {
-  const { db, route, go, pid } = useStore()
+  const db = useDb()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
   useGrantWatch()
   const tab = route.tab || 'infrastructure'
   const all = pid === 'all'
@@ -72,7 +78,9 @@ function C2Overview() {
 }
 
 function Infra({ nodes, channels, noC2 }: { nodes: C2NodeRow[]; channels: Channel[]; noC2: boolean }) {
-  const { go, route, pid, accessible } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const accessible = useAccessible()
   const [sel, setSel] = useState<string | null>(route.id && nodes.some((x) => x.id === route.id) ? route.id : null)
   const n = nodes.find((x) => x.id === sel)
   const chans = (id: string) => channels.filter((c) => c.nodeId === id)
@@ -109,7 +117,7 @@ function Infra({ nodes, channels, noC2 }: { nodes: C2NodeRow[]; channels: Channe
 }
 
 function Channels({ rows, noC2 }: { rows: Channel[]; noC2: boolean }) {
-  const { go, pid } = useStore()
+  const pid = useProjectStore((s) => s.pid)
   return <Card pad={false}><Table rows={rows} rowKey={(r) => r.id} onRow={(r) => go('c2-channel', { id: r.id })} empty={<Empty icon={Activity} title="No channels for this project" action={noC2 ? <Button onClick={() => go('project', { id: pid })}>Open project readiness</Button> : undefined}>Channels are created when a C2 node is allocated to the project.</Empty>}
     cols={[
       { key: 'id', header: 'Channel', render: (r) => <IdLink onClick={() => go('c2-channel', { id: r.id })}>{r.id}</IdLink> }, { key: 'n', header: 'Name', render: (r) => r.name },
@@ -119,7 +127,9 @@ function Channels({ rows, noC2 }: { rows: Channel[]; noC2: boolean }) {
 }
 
 function Sessions({ all }: { all: boolean }) {
-  const { go, can, route, pid } = useStore()
+  const route = useRoute()
+  const can = useCan()
+  const pid = useProjectStore((s) => s.pid)
   const [q, setQ] = useState(''), [f, setF] = useState('all'), [type, setType] = useState('all')
   const [more, setMore] = useState(false), [agent, setAgent] = useState(route.id && route.id.startsWith('AG-') ? route.id : 'all'), [op, setOp] = useState('all'), [acc, setAcc] = useState<'all' | C2AccessKey>('all')
   const [page, setPage] = useState(1)
@@ -183,7 +193,11 @@ function Sessions({ all }: { all: boolean }) {
 }
 
 function Requests({ all }: { all: boolean }) {
-  const { A, db, me, can, toast, go } = useStore()
+  const services = useServices()
+  const db = useDb()
+  const me = useMe()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const approver = can('approveAccess')
   const [sel, setSel] = useState<{ r: SessionRequest; d: 'approved' | 'rejected' | 'changes' } | null>(null)
   const [note, setNote] = useState('')
@@ -193,10 +207,19 @@ function Requests({ all }: { all: boolean }) {
   const list = useC2Requests()
   const rows = list.data?.items ?? []
   const open = (r: SessionRequest, d: 'approved' | 'rejected' | 'changes') => { setSel({ r, d }); setMins(/^30/.test(r.duration) ? '30' : '60'); setNote(''); setErr(false) }
+  /* Ticket 67 wave 8: the legacy raw `A.decideSessionRequest` entry, mirrored —
+     the request lookup resolves from the one authority at call time (the
+     store's dbRef semantics) and the typed result bridges back to the legacy Res. */
+  const decideSessionRequest = (id: string, decision: 'approved' | 'rejected' | 'changes', note: string, minutes?: number) => {
+    const r = services.authority.snapshot().sessionRequests.find((x) => x.id === id)
+    if (!r) return { ok: false as const, error: `Access request ${id} does not exist.` }
+    const res = decideSessionRequestTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: r.projectId, corr: 'legacy' }, { requestId: id, decision, note, minutes })
+    return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
+  }
   const submit = () => {
     if (!sel) return
     if (note.trim().length < MIN_REASON / 2) { setErr(true); return }
-    const res = A.decideSessionRequest(sel.r.id, sel.d, note.trim(), sel.d === 'approved' ? parseInt(mins) : undefined)
+    const res = decideSessionRequest(sel.r.id, sel.d, note.trim(), sel.d === 'approved' ? parseInt(mins) : undefined)
     if (!res.ok) { toast(res.error || 'The decision was refused.', 'bad'); return }
     toast(sel.d === 'approved' ? `${sel.r.id} approved for ${mins} minutes. The grant applies to ${sel.r.sessionId} only.` : `${sel.r.id} ${sel.d === 'changes' ? 'returned for changes' : 'rejected'}.`); setSel(null)
   }
@@ -233,7 +256,9 @@ function Requests({ all }: { all: boolean }) {
 }
 
 function AuditViewer() {
-  const { toast, can, pid, go } = useStore()
+  const toast = useToastStore((s) => s.toast)
+  const can = useCan()
+  const pid = useProjectStore((s) => s.pid)
   const [t, setT] = useState<C2AuditView>('access')
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
@@ -269,7 +294,7 @@ function AuditViewer() {
 }
 
 function ChannelDetail() {
-  const { route, go } = useStore()
+  const route = useRoute()
   const [tab, setTab] = useState('overview')
   const [reveal, setReveal] = useState(false)
   const back = { label: 'C2 & Sessions', to: () => go('c2', { tab: 'channels' }) }
