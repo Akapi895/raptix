@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useServices } from '../state/services'
 import { go, navRawRoute, useRoute } from '../router/navigate'
-import { useAccessible, useMe } from '../state/console'
+import { useMe } from '../state/console'
 import { useServiceProjection } from '../state/projection'
 import { readHeaderNotices, markAllNoticesRead } from '../features/notices/service'
 import { useSessionStore } from '../state/session'

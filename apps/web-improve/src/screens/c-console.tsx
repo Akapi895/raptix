@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, PanelRightClose, PanelRightOpen, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
-import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, SearchBox, Select, Status, Table, Timeline, Toggle, useGuard, cx } from '../ui'
+import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
+import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, Select, Status, Table, Timeline, useGuard, cx } from '../ui'
 import { useServices } from '../state/services'
 import { go } from '../router/navigate'
 import { useCan, useMe } from '../state/console'
@@ -16,7 +16,7 @@ import { useSessionPerm } from '../features/c2/projection'
 import { useStopRead } from '../features/estop/projection'
 import { BRANCH_LABEL, planVer, toolFacets } from '../data'
 import type { Db, Operation, Step } from '../data'
-import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, runtimeLabel, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
+import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
 import { useReviewStep } from '../features/operations/query'
 import { FanOutCard } from './g-fanout'
 /* Ticket 28: the emergency-stop machine UI (request dialog, phase banner,
@@ -247,7 +247,6 @@ export function OverviewTab({ op }: { op: Operation }) {
   const assets = view.assets
   const sessions = view.sessions.filter((s) => s.opId === op.id)
   const recent = (logs[op.id] || []).slice(-6).reverse()
-  const lost = ags.filter((a) => a.status !== 'online' && a.status !== 'idle')
   const pl = view.plan
   const active = op.status === 'running' || op.status === 'paused'
   const groups = view.branchGroups
@@ -483,7 +482,6 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const lines = useMemo(() => logs.filter((l) => evf === 'all' || evCat(l) === evf).slice(-300), [logs, evf])
   const step = op.steps.find((s) => s.id === sel) || null
   const reviewStep = op.steps.find((s) => s.status === 'review')
-  const current = op.steps.find((s) => s.status === 'running') || reviewStep
   const chan = view ? view.channels.find((ch) => agents.some((a) => a.id === (ch as any).agentId)) || view.channels.find((ch) => (ch as any).nodeId) : undefined
   const node = view ? view.c2Nodes.find((n) => n.projectIds.includes(op.projectId)) || view.c2Nodes[0] : undefined
   const auditRows = view?.audit ?? []

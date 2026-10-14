@@ -512,7 +512,6 @@ export function updateOperationDraft(authority: DbAuthority, clock: Clock, ctx: 
   const db = authority.snapshot()
   const gated = addressedOperationGate(db, ctx, db.operations.find((o) => o.id === id), 'edit operations', 'edited')
   if (!gated.ok) return gated
-  const { op } = gated.data
   const project = gated.data.project
   if (patch.owner !== undefined && !memberOwnersOf(project).includes(patch.owner)) {
     return { ok: false, failure: { kind: 'validation', message: `${patch.owner || 'The owner'} is not a Manager or Operator on project ${project.id}.` } }
