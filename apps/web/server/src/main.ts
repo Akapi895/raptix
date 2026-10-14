@@ -33,6 +33,7 @@ import { GovernanceService } from './services/governance-service.js';
 import { FindingsWorkflowService } from './services/findings-workflow-service.js';
 import { ReportsService } from './services/reports-service.js';
 import { C2GrantsService } from './services/c2-grants-service.js';
+import { FleetService } from './services/fleet-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
@@ -96,6 +97,7 @@ async function main(): Promise<void> {
   const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
     ? new RuntimeContextService({ config: runtimeConfig, projects: projectsService, ownership, workspaceRoot: env.workspacePath, runtime }) : undefined;
   const runsService = ownership && runtimeContext && runtime ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime }) : undefined;
+  const fleetService = dbClient && runtimeContext && runsService ? new FleetService(dbClient, runtimeContext, runsService) : undefined;
   const approvalsService = dbClient && projectsService && env.workspacePath ? new ApprovalsService(dbClient, env.workspacePath) : undefined;
   const findingsService = dbClient && env.workspacePath ? new FindingsService(dbClient, env.workspacePath) : undefined;
   const artifactsService = dbClient && env.workspacePath ? new ArtifactsService(dbClient, env.workspacePath) : undefined;
@@ -133,6 +135,7 @@ async function main(): Promise<void> {
   campaignsService,
   c2Service,
   c2Grants,
+  fleetService,
   vaultService,
   membersService,
   scopeService,

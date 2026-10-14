@@ -20,6 +20,7 @@ import { RealGovernancePanel } from './governance-panel'
 import { RealCurationPanel } from './curation-panel'
 import { RealReportsPanel } from './reports-panel'
 import { RealC2Panel } from './c2-panel'
+import { RealFleetPanel } from './fleet-panel'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status, Tabs } from '../../ui'
@@ -28,6 +29,7 @@ const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'planning', label: 'Planning' },
   { id: 'operations', label: 'Operations' },
+  { id: 'fleet', label: 'Fleet' },
   { id: 'c2', label: 'C2 Access' },
   { id: 'findings', label: 'Findings' },
   { id: 'reports', label: 'Reports' },
@@ -94,7 +96,7 @@ export function RealProjectDetail(): ReactElement {
         tabs={TABS.map((t) => ({ id: t.id, label: t.label }))}
       />
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><RealFindingsPanel engagementId={data.id} /><RealCurationPanel engagementId={data.id} /></div> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <RealReportsPanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'fleet' ? <RealFleetPanel engagementId={data.id} /> : tab === 'c2' ? <RealC2Panel engagementId={data.id} /> : tab === 'findings' ? <div className="space-y-4"><RealFindingsPanel engagementId={data.id} /><RealCurationPanel engagementId={data.id} /></div> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : tab === 'governance' ? <RealGovernancePanel engagementId={data.id} /> : tab === 'reports' ? <RealReportsPanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
       </div>
     </>
   )

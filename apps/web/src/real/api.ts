@@ -690,3 +690,51 @@ export function decideC2Grant(engagementId: string, grantId: string, decision: '
     typeof v === 'object' && v !== null && typeof (v as C2GrantView).status === 'string',
   { method: 'POST', body: { decision } })
 }
+
+/* ───────────── Agent fleet/fanout projection (integration ticket 13) ───────────── */
+
+export interface FleetAgentView {
+  graphId: string
+  source: 'catalog'
+}
+
+export interface FleetThreadView {
+  threadId: string
+  assistantId: string | null
+  kind: string | null
+  rawStatus: string | null
+  updatedAt: string | null
+  activeRunId: string | null
+}
+
+export interface FleetBranchView {
+  threadId: string
+  key: string
+  agent: string
+  state: 'running' | 'ended' | 'unknown'
+  outcome: string | null
+  startedAt: string | null
+  endedAt: string | null
+  provenance: 'checkpoint'
+}
+
+export interface FleetView {
+  engagementId: string
+  agents: FleetAgentView[]
+  threads: FleetThreadView[]
+  branches: FleetBranchView[]
+  counts: { threads: number; threadsTruncated: boolean; activeRuns: number; branches: number; runningBranches: number }
+  excludedActions: string[]
+  sources: { agents: string; threads: string; branches: string }
+  source: 'runtime'
+}
+
+function isFleetView(v: unknown): v is FleetView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as FleetView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.agents) && Array.isArray(doc.threads) && Array.isArray(doc.branches) && doc.source === 'runtime'
+}
+
+export function fetchFleet(engagementId: string): Promise<FleetView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/fleet`, owned(engagementId, isFleetView))
+}
