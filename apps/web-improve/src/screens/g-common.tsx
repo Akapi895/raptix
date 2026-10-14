@@ -368,7 +368,7 @@ export function Composer({ conv, suggestions = STARTERS, compact }: { conv: Conv
           onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(text) } }}
           placeholder="Ask Raptix AI about this project..." className="min-h-[44px] flex-1 resize-none rounded-lg border border-line bg-panel px-3 py-2 text-sm placeholder:text-muted focus:border-accent focus:outline-none disabled:opacity-60" />
         <div className="flex flex-col gap-1.5">
-          {!compact && <Button size="sm" onClick={() => toast('Evidence picker is not available in this demo.', 'info' as any)}>Attach Evidence</Button>}
+          {!compact && <Button size="sm" onClick={() => toast('Evidence picker is not available in this demo.', 'info')}>Attach Evidence</Button>}
           {conv && aiBusy === conv.id ? <Button size="sm" variant="danger" onClick={() => { stopChat(conv.id); toast('Response generation stopped.', 'info') }}>Stop</Button>
             : <Button variant="primary" icon={Send} disabled={!text.trim() || !!disabledWhy || busy} title={busy ? 'Wait for the current response or stop it before sending another message.' : undefined} onClick={() => send(text)}>Send</Button>}
         </div>

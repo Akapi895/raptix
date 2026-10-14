@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, isValidElement } from 'react'
 import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
 import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, Select, Status, Table, Timeline, useGuard, cx } from '../ui'
 import { useServices } from '../state/services'
@@ -64,7 +64,7 @@ export function OpBanner({ op }: { op: Operation }) {
   else if (op.status === 'done') main = fb.length
     ? <Banner tone="warn" icon={GitBranch} title="Operation ended with failed branches — not a success" action={<Button size="sm" onClick={() => go('operation', { id: op.id, tab: 'results' })}>Review Results</Button>}>{fb.length} branch{fb.length === 1 ? '' : 'es'} failed, so the outcome is Partially Completed. Review evidence and failures before analysis.{tail}</Banner>
     : <Banner tone="ok" icon={CheckCircle2} title="Operation completed" action={<Button size="sm" onClick={() => go('operation', { id: op.id, tab: 'results' })}>Review Results</Button>}>All steps finished. The workspace is read-only. Next: review evidence, analyze, then findings.{tail}</Banner>
-  else if (fb.length && active) main = <Banner tone="bad" icon={GitBranch} title={`${fb.length} branch${fb.length === 1 ? '' : 'es'} failed`} action={<Button size="sm" onClick={() => go('ai-branch', { id: fb[0].id })}>Open {fb[0].id}</Button>}>{fb[0].error || 'A branch ended in failure.'} The operation will not be shown as successful.{notes.filter((n) => (n as any).key !== 'fb').length ? <ul className="mt-2 space-y-0.5 text-xs">{notes.filter((n) => (n as any).key !== 'fb').map((n, i) => <li key={i}>{n}</li>)}</ul> : null}</Banner>
+  else if (fb.length && active) main = <Banner tone="bad" icon={GitBranch} title={`${fb.length} branch${fb.length === 1 ? '' : 'es'} failed`} action={<Button size="sm" onClick={() => go('ai-branch', { id: fb[0].id })}>Open {fb[0].id}</Button>}>{fb[0].error || 'A branch ended in failure.'} The operation will not be shown as successful.{notes.filter((n) => !isValidElement(n) || n.key !== 'fb').length ? <ul className="mt-2 space-y-0.5 text-xs">{notes.filter((n) => !isValidElement(n) || n.key !== 'fb').map((n, i) => <li key={i}>{n}</li>)}</ul> : null}</Banner>
   else if (notes.length) main = <Banner tone={stale ? 'warn' : 'info'} title={stale ? 'Data delayed — showing a snapshot' : 'Notice'}>{tail}</Banner>
   return main
 }
@@ -483,7 +483,9 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const lines = useMemo(() => logs.filter((l) => evf === 'all' || evCat(l) === evf).slice(-300), [logs, evf])
   const step = op.steps.find((s) => s.id === sel) || null
   const reviewStep = op.steps.find((s) => s.status === 'review')
-  const chan = view ? view.channels.find((ch) => agents.some((a) => a.id === (ch as any).agentId)) || view.channels.find((ch) => (ch as any).nodeId) : undefined
+  /* Channel records carry no agentId in the demo model; the agent-link probe
+     stays for forward compatibility and falls through to the node match. */
+  const chan = view ? view.channels.find((ch) => agents.some((a) => a.id === (ch as { agentId?: string }).agentId)) || view.channels.find((ch) => ch.nodeId) : undefined
   const node = view ? view.c2Nodes.find((n) => n.projectIds.includes(op.projectId)) || view.c2Nodes[0] : undefined
   const auditRows = view?.audit ?? []
   const evs = view?.evidence ?? []
