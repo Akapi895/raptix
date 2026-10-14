@@ -1,13 +1,14 @@
 import { useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Clock, Sparkles, CheckCircle2, CircleDashed, Crosshair, Download, ExternalLink, Eye, Grid3x3, Lock, Maximize2, MinusCircle, Network, Plug, Radar, RotateCcw, ShieldAlert, X, XCircle, ZoomIn, ZoomOut, type LucideProps } from 'lucide-react'
 import { ROLE_LABEL } from '../auth/policy'
-import { eligibility } from '../features/operations/preflight'
 import { TACTICS, TECHNIQUES, type DetectState, type Operation, type Step, type StepStatus, type Technique } from '../data'
 import { Banner, Button, SearchBox, Card, CardHeader, Drawer, Empty, Kpi, Mono, PageHeader, Segmented, Select, Status, Table, Tabs, cx } from '../ui'
 import { AnalysisReadError, useAnalysisCoverage, useAttackPath } from '../features/analysis/query'
 import type { AnalysisCoverageRead, CoverageCell, CoverageCellState, CoveragePair } from '../features/analysis/service'
 import { go, useRoute } from '../router/navigate'
-import { useAccessible, useActiveProject, useCan, useDb, useMe, useReadOnly } from '../state/console'
+import { useAccessible, useActiveProject, useCan, useMe, useReadOnly } from '../state/console'
+import { useAnalysisEvidence, useAnalysisAssets } from '../features/analysis/projection'
+import { useEligibility } from '../features/operations/eligibility-read'
 import { useProjectStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 
@@ -60,7 +61,7 @@ function CreateFindingBtn({ prefill, label = 'Create Finding', size = 'md', vari
 }
 
 function EvidenceList({ ids }: { ids: string[] }) {
-  const db = useDb()
+  const db = useAnalysisEvidence(ids)
   const can = useCan()
   if (!ids.length) return <div className="text-xs text-muted">No evidence attached.</div>
   return (
@@ -180,9 +181,8 @@ function Analysis() {
 
 /** Empty state for projects with no executed steps (e.g. RT-2026-017): reason + next action. */
 function NoProjectData({ ops }: { ops: Operation[] }) {
-  const db = useDb()
   const pid = useProjectStore((s) => s.pid)
-  const el = eligibility(db, pid)
+  const el = useEligibility(pid)
   return (
     <div className="space-y-4">
       <Empty icon={Radar} title={`No execution data in ${pid} yet`}
@@ -423,7 +423,7 @@ const STEP_GLYPH: Record<StepStatus, ComponentType<LucideProps>> = { ok: CheckCi
 const STEP_TXT: Record<StepStatus, string> = { ok: 'Succeeded', fail: 'Failed', running: 'Running', unknown: 'Unknown', pending: 'Pending', notrun: 'Not run', review: 'In review' }
 
 function Chain({ opId }: { opId?: string }) {
-  const db = useDb()
+  const db = useAnalysisAssets()
   const can = useCan()
   const me = useMe()
   const toast = useToastStore((s) => s.toast)
