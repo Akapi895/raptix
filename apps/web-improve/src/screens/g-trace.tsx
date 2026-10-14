@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Columns3, Download, ExternalLink, Filter, X } from 'lucide-react'
-import { useServices } from '../store'
+import { useServices } from '../state/services'
 import { actorRef } from '../auth/persona'
 import { planVer } from '../data'
 import type { Audit, Conversation, Facets, ToolEvent } from '../data'

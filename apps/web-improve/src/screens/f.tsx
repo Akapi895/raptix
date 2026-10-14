@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { AlertTriangle, Copy, Download, Eye, FileText, History, Lock, Plus, Rocket, Send, Upload } from 'lucide-react'
-import { useServices } from '../store'
+import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
 import type { Template } from '../data'
 import { Banner, Button, Card, Drawer, Empty, FilterBar, IdLink, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, cx } from '../ui'
