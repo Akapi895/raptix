@@ -14,7 +14,7 @@ import { useState, type ComponentType } from 'react'
 import {
   Bell, Bot, Building2, Check as CheckIcon, CheckCheck, ChevronDown, FlaskConical, Home, Lock, LogOut, Menu as MenuIcon, RotateCcw, Settings, Sparkles,
 } from 'lucide-react'
-import { useServices } from '../store'
+import { useServices } from '../state/services'
 import { go, navRawRoute, useRoute } from '../router/navigate'
 import { useAccessible, useDb, useMe } from '../state/console'
 import { useSessionStore } from '../state/session'
