@@ -144,6 +144,7 @@ const Risk = ({ v }: { v: PlanStep['risk'] }) => <span className={cx('font-mediu
    selectProject for the store's setPid) and the plans feature's typed views
    (PlanView per route plan, the selected project's plan list) project the
    same derivations. */
+// eslint-disable-next-line react-refresh/only-export-components -- plan screen module: helper co-exported with screens
 export function usePlan() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)

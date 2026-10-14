@@ -1,5 +1,5 @@
 import { useEffect, useState, type ComponentType } from 'react'
-import { AlertTriangle, ArrowRight, GitBranch, MessageSquare, CalendarClock, CheckCircle2, ClipboardCheck, Lock, Play, Plus, Radio, RefreshCw, ShieldAlert, SlidersHorizontal, ShieldCheck, ShieldX, Wrench, X, Save } from 'lucide-react'
+import { AlertTriangle, ArrowRight, MessageSquare, CalendarClock, CheckCircle2, ClipboardCheck, Lock, Play, Plus, Radio, RefreshCw, ShieldAlert, SlidersHorizontal, ShieldCheck, ShieldX, Wrench, X, Save } from 'lucide-react'
 import { ApprovalBanner, Banner, Button, Card, CardHeader, Check, DescList, Empty, Field, FilterBar, IdLink, Input, Mono, Pager, PageHeader, Person, PersonaHint, Progress, SearchBox, Segmented, Select, Skeleton, Status, Stepper, Table, Tabs, Textarea, Toggle, useGuard, cx } from '../ui'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
@@ -13,13 +13,13 @@ import { readPlanProject } from '../features/plans/bridge'
 import { readOperationPreflight, readOperationSpecChecks, useOperationView, useProjectEligibility, useScheduleConflicts } from '../features/operations/views'
 import { createOperationFromPlanTransaction } from '../features/plans/bridge'
 import { planVer } from '../data'
-import type { Db, Operation } from '../data'
+import type { Operation } from '../data'
 import type { PfCheck, PfSnap, PfState } from './c-common'
-import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, elapsed, pfOverall, specChecks, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
+import { runtimeLabel as runtimeText, PF_LABEL, PF_TONE, OpGate, OpStatus, RuntimeStatus, elapsed, pfOverall, fmtMs, fmtSched, parseStamp, planApprovalState, progressOf, schedMs, stepCounts, stepMinutes, windowIssue } from './c-common'
 import { AgentsTab, ConsoleTab, OpBanner, OpControls, OverviewTab, TimelineTab } from './c-console'
 import { GraphTab, ResultsTab } from './c-results'
 import { useCreateOperation, useOperationDetail, useOperationDraftOptions, useOperationList, useRunPreflight, useScheduleOperation, useStartOperation, useUpdateOperation, OperationReadError } from '../features/operations/query'
-import { PROJECT_TZ_OFFSET_MS, findScheduleConflicts, roeWindowIssue, scheduleInstantOf } from '../features/operations/service'
+import { PROJECT_TZ_OFFSET_MS, roeWindowIssue, scheduleInstantOf } from '../features/operations/service'
 import type { OperationCategory, OperationDetailRead, OperationWriteRead } from '../features/operations/service'
 import type { ServiceResult } from '../domain/service'
 
@@ -27,6 +27,7 @@ const SELECT_PROJECT = 'Select a project to continue'
 const STATUS_OPTS: [string, string][] = [['draft', 'Draft'], ['ready', 'Ready'], ['running', 'Running'], ['paused', 'Paused'], ['done', 'Completed'], ['cancelled', 'Stopped'], ['estop', 'Emergency stopped'], ['error', 'Error']]
 
 /* ═════════════ OP-01 — Operations list (ticket 24: typed service read + Query) ═════════════ */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function Operations() {
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
@@ -144,6 +145,7 @@ function Operations() {
 /* ───────────── Conflict panel (shared by wizard and schedule page). Candidate
    and stored instants are absolute (service boundary); the display converts to
    the project timezone's wall clock. ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function ConflictPanel({ id, agents, assets, at, mins }: { id?: string; agents: string[]; assets: string[]; at: string; mins: number }) {
   const view = useOperationView(id || '')
   const inst = scheduleInstantOf(at)
@@ -179,6 +181,7 @@ function ConflictPanel({ id, agents, assets, at, mins }: { id?: string; agents: 
 
 /* ═════════════ OP-02 — Create / edit wizard ═════════════ */
 const STEPS = ['Basics', 'Playbook', 'Targets and agents', 'Schedule and mode', 'Review']
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function OperationNew() {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -412,6 +415,7 @@ function OperationNew() {
 }
 
 /* ═════════════ OP-03 — Preflight ═════════════ */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function PreflightPage({ op }: { op: Operation }) {
   const view = useOperationView(op.id)
   const pid = useProjectStore((s) => s.pid)
@@ -431,6 +435,9 @@ function PreflightPage({ op }: { op: Operation }) {
      is re-derived at click time, so a policy change between render and click
      is refused with its reason instead of starting. */
   const startOp = useStartOperation()
+  /* rules-of-hooks: registered before the not-found early return; the guard
+     keeps the pre-return render a no-op exactly like the missing call did. */
+  useEffect(() => { if (!view) return; if (route.tab === 'run' && !snap && allowed && !started) run() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   if (!view) return null
   const p = view.project
   const pb = view.playbook
@@ -465,7 +472,6 @@ function PreflightPage({ op }: { op: Operation }) {
       toast(pfOverall(cs) === 'fail' ? 'Preflight finished with failures. Start is unavailable.' : 'Preflight snapshot recorded.', pfOverall(cs) === 'fail' ? 'bad' : 'info')
     } })
   }
-  useEffect(() => { if (route.tab === 'run' && !snap && allowed && !started) run() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const approver = view.approvals.find((a) => a.status === 'approved')
   const disabledEdit = !allowed || started
   const runWhy = !allowed ? (ro ? reason : 'You cannot run checks.') : started ? 'The operation has already started.' : undefined
@@ -550,6 +556,7 @@ function PreflightPage({ op }: { op: Operation }) {
 }
 
 /* ═════════════ Scheduling with conflict detection ═════════════ */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function SchedulePage({ op }: { op: Operation }) {
   const view = useOperationView(op.id)
   const can = useCan()
@@ -629,6 +636,7 @@ const TABS = [
   { id: 'timeline', label: 'Timeline' }, { id: 'graph', label: 'Execution Graph' }, { id: 'results', label: 'Results & Evidence' },
 ]
 const TAB_ALIAS: Record<string, string> = { console: 'live', evidence: 'results' }
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function OperationDetail({ d }: { d: OperationDetailRead }) {
   const route = useRoute()
   const staleOps = useSessionStore((s) => s.staleOps)
@@ -673,6 +681,7 @@ function OperationDetail({ d }: { d: OperationDetailRead }) {
 
 /** Linked context: plan, conversation, branch group, runtime state, Open in AI Operator.
  *  Ticket 26: plan, conversation and branch groups come from the canonical detail read. */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 function OpLinks({ d }: { d: OperationDetailRead }) {
   const op = d.op
   const pl = d.plan
@@ -694,6 +703,7 @@ function OpLinks({ d }: { d: OperationDetailRead }) {
  *  direct store lookup. Loading shows a skeleton; a refusal renders the
  *  handler's reason — with the switch affordance only for members addressing
  *  the operation from another specific project (no existence leak). */
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 const Detail = () => {
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
@@ -717,7 +727,9 @@ const Detail = () => {
   }
   return <OperationDetail d={read.data} />
 }
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 const Preflight = () => <OpGate C={PreflightPage} />
+// eslint-disable-next-line react-refresh/only-export-components -- operations route bundle: sub-screens co-exported for the registry
 const Schedule = () => <OpGate C={SchedulePage} />
 
 export const routes: Record<string, ComponentType> = {

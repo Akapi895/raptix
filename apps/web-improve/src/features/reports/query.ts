@@ -198,5 +198,5 @@ export function useReportWrites() {
         svc().deliver(ctx('report-deliver'), id, input),
       acknowledge: (id: string) => svc().acknowledge(ctx('report-ack'), id),
     }
-  }, [services, scope.actor, scope.project])
+  }, [services, scope.actor, scope.role, scope.project])
 }

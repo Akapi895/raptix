@@ -15,7 +15,9 @@ import { AllocationView, FanOutCard } from './g-fanout'
 import { WorkerTeamView } from './g-workers'
 
 /* ───────────── Resizable panes ───────────── */
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
 export const RAIL = { def: 280, min: 220, max: 380 }
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
 export const INSP = { def: 360, min: 280, max: 520 }
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 const readLS = (k: string) => { try { return window.localStorage.getItem(k) } catch { return null } }
@@ -33,6 +35,7 @@ const moveChoice = (e: ReactKeyboardEvent<HTMLButtonElement>, role: 'tab' | 'rad
   buttons[next].click()
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
 export function useViewportW() {
   const [w, setW] = useState(() => window.innerWidth)
   useEffect(() => { const on = () => setW(window.innerWidth); window.addEventListener('resize', on); return () => window.removeEventListener('resize', on) }, [])
@@ -40,6 +43,7 @@ export function useViewportW() {
 }
 
 /** Persisted pane width: live while dragging, written to localStorage on release, reset to default on double-click. */
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared sub-screens
 export function useResizable(key: string, cfg: { def: number; min: number; max: number }) {
   const [w, setW] = useState(() => { const n = Number(readLS(key)); return n ? clamp(n, cfg.min, cfg.max) : cfg.def })
   const ref = useRef(w)

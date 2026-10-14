@@ -19,11 +19,13 @@ import { useSessionStore } from '../state/session'
 import type { ConsoleServices } from '../domain/service-factory'
 import { Banner, Button, DemoTag, Field, Gated, IdLink, Modal, Status, Tabs, Textarea, cx } from '../ui'
 
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared helpers consumed across AI routes
 export const MODES: { id: AiMode; label: string; hint: string }[] = [
   { id: 'observe', label: 'Observe', hint: 'Read-only. Summaries and explanations; no proposals.' },
   { id: 'propose', label: 'Propose', hint: 'Drafts plans. Nothing runs until a reviewer approves.' },
   { id: 'execution', label: 'Approved Execution', hint: 'Runs only approved plans after preflight and confirmation.' },
 ]
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared helpers consumed across AI routes
 export const STARTERS = ['Summarize the approved scope', 'Review agent readiness', 'Propose a validation plan', 'Explain recent operation results']
 
 /* Ticket 67 wave 7: the store's request context (actorCtx), mirrored — the
@@ -35,6 +37,7 @@ function actorCtxOf(services: ConsoleServices, projectId: string) {
 }
 
 /** Ensure a timestamp always carries the (UTC+7) label. */
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared helpers consumed across AI routes
 export const tz = (t?: string) => (!t ? '—' : /UTC\+7/.test(t) ? t : `${t} (UTC+7)`)
 
 const TONE_CLS = { ok: 'border-ok/30 bg-ok-soft text-ok', warn: 'border-warn/30 bg-warn-soft text-warn', bad: 'border-bad/30 bg-bad-soft text-bad', cyan: 'border-cyan/30 bg-info-soft text-cyan', neutral: 'border-line bg-subtle text-muted' }
@@ -50,6 +53,7 @@ export function EligBadge({ pid }: { pid: string }) {
 }
 
 /** Failure / agent-loss detection for the running operation of a project (AI-V3-07). */
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared helpers consumed across AI routes
 export const useReplan = useProjectReplan
 
 export function ReplanPanel({ pid, compact }: { pid: string; compact?: boolean }) {
@@ -183,6 +187,7 @@ export function PlanCard({ plan, compact }: { plan: Plan; compact?: boolean }) {
 }
 
 /** Deep link to the trace page; the route path id highlights the event (ticket 41's router projection — the `?event=` duplicate retired in ticket 42). Written through the router module's guarded `go` — the single-writer navigation seam (ticket 61e); `go` serializes to the same `#/ai-trace/<encoded-id>` URL the raw hash write used to produce. */
+// eslint-disable-next-line react-refresh/only-export-components -- AI workspace shared helpers consumed across AI routes
 export function useTraceLink() {
   return (id: string) => go('ai-trace', { id })
 }
@@ -368,7 +373,7 @@ export function Composer({ conv, suggestions = STARTERS, compact }: { conv: Conv
           onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(text) } }}
           placeholder="Ask Raptix AI about this project..." className="min-h-[44px] flex-1 resize-none rounded-lg border border-line bg-panel px-3 py-2 text-sm placeholder:text-muted focus:border-accent focus:outline-none disabled:opacity-60" />
         <div className="flex flex-col gap-1.5">
-          {!compact && <Button size="sm" onClick={() => toast('Evidence picker is not available in this demo.', 'info' as any)}>Attach Evidence</Button>}
+          {!compact && <Button size="sm" onClick={() => toast('Evidence picker is not available in this demo.', 'info')}>Attach Evidence</Button>}
           {conv && aiBusy === conv.id ? <Button size="sm" variant="danger" onClick={() => { stopChat(conv.id); toast('Response generation stopped.', 'info') }}>Stop</Button>
             : <Button variant="primary" icon={Send} disabled={!text.trim() || !!disabledWhy || busy} title={busy ? 'Wait for the current response or stop it before sending another message.' : undefined} onClick={() => send(text)}>Send</Button>}
         </div>

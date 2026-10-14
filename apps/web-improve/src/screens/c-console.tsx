@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, PanelRightClose, PanelRightOpen, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
-import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, SearchBox, Select, Status, Table, Timeline, Toggle, useGuard, cx } from '../ui'
+import { useEffect, useMemo, useRef, useState, isValidElement } from 'react'
+import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
+import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, Select, Status, Table, Timeline, useGuard, cx } from '../ui'
 import { useServices } from '../state/services'
 import { go } from '../router/navigate'
 import { useCan, useMe } from '../state/console'
@@ -16,7 +16,7 @@ import { useSessionPerm } from '../features/c2/projection'
 import { useStopRead } from '../features/estop/projection'
 import { BRANCH_LABEL, planVer, toolFacets } from '../data'
 import type { Db, Operation, Step } from '../data'
-import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, runtimeLabel, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
+import { MASK, RuntimeStatus, failedBranches, hasReview, parseStamp, stepBranches, windowIssue, elapsed, planApprovalState, progressOf, stepCounts, useFrozen } from './c-common'
 import { useReviewStep } from '../features/operations/query'
 import { FanOutCard } from './g-fanout'
 /* Ticket 28: the emergency-stop machine UI (request dialog, phase banner,
@@ -64,7 +64,7 @@ export function OpBanner({ op }: { op: Operation }) {
   else if (op.status === 'done') main = fb.length
     ? <Banner tone="warn" icon={GitBranch} title="Operation ended with failed branches — not a success" action={<Button size="sm" onClick={() => go('operation', { id: op.id, tab: 'results' })}>Review Results</Button>}>{fb.length} branch{fb.length === 1 ? '' : 'es'} failed, so the outcome is Partially Completed. Review evidence and failures before analysis.{tail}</Banner>
     : <Banner tone="ok" icon={CheckCircle2} title="Operation completed" action={<Button size="sm" onClick={() => go('operation', { id: op.id, tab: 'results' })}>Review Results</Button>}>All steps finished. The workspace is read-only. Next: review evidence, analyze, then findings.{tail}</Banner>
-  else if (fb.length && active) main = <Banner tone="bad" icon={GitBranch} title={`${fb.length} branch${fb.length === 1 ? '' : 'es'} failed`} action={<Button size="sm" onClick={() => go('ai-branch', { id: fb[0].id })}>Open {fb[0].id}</Button>}>{fb[0].error || 'A branch ended in failure.'} The operation will not be shown as successful.{notes.filter((n) => (n as any).key !== 'fb').length ? <ul className="mt-2 space-y-0.5 text-xs">{notes.filter((n) => (n as any).key !== 'fb').map((n, i) => <li key={i}>{n}</li>)}</ul> : null}</Banner>
+  else if (fb.length && active) main = <Banner tone="bad" icon={GitBranch} title={`${fb.length} branch${fb.length === 1 ? '' : 'es'} failed`} action={<Button size="sm" onClick={() => go('ai-branch', { id: fb[0].id })}>Open {fb[0].id}</Button>}>{fb[0].error || 'A branch ended in failure.'} The operation will not be shown as successful.{notes.filter((n) => !isValidElement(n) || n.key !== 'fb').length ? <ul className="mt-2 space-y-0.5 text-xs">{notes.filter((n) => !isValidElement(n) || n.key !== 'fb').map((n, i) => <li key={i}>{n}</li>)}</ul> : null}</Banner>
   else if (notes.length) main = <Banner tone={stale ? 'warn' : 'info'} title={stale ? 'Data delayed — showing a snapshot' : 'Notice'}>{tail}</Banner>
   return main
 }
@@ -247,7 +247,6 @@ export function OverviewTab({ op }: { op: Operation }) {
   const assets = view.assets
   const sessions = view.sessions.filter((s) => s.opId === op.id)
   const recent = (logs[op.id] || []).slice(-6).reverse()
-  const lost = ags.filter((a) => a.status !== 'online' && a.status !== 'idle')
   const pl = view.plan
   const active = op.status === 'running' || op.status === 'paused'
   const groups = view.branchGroups
@@ -445,6 +444,7 @@ export function StepDrawer({ op, step, onClose, logs }: { op: Operation; step: S
 const EV_FILTERS = [['all', 'All events'], ['exec', 'Execution'], ['ai', 'AI proposals'], ['approval', 'Approval'], ['error', 'Errors'], ['session', 'Session activity']] as const
 const evCat = (l: { level: string; text: string }) => (l.level === 'ERROR' ? 'error' : /approv|review|reject|skipp/i.test(l.text) ? 'approval' : /session/i.test(l.text) ? 'session' : /\bAI\b|propos|plan/i.test(l.text) ? 'ai' : 'exec')
 const NODE_TONE: Record<string, string> = { ok: 'border-ok/40 bg-ok-soft', running: 'border-cyan bg-info-soft', fail: 'border-bad/50 bg-bad-soft', unknown: 'border-warn/60 bg-warn-soft', review: 'border-warn bg-warn-soft ring-1 ring-warn', pending: 'border-line bg-panel', notrun: 'border-line bg-subtle' }
+const NO_LOGS: LogLine[] = []
 
 export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const view = useOperationView(liveOp.id)
@@ -462,7 +462,7 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const polBlock = !!persistFilters['polblock.' + liveOp.id]
   const setPolBlock = (v: boolean) => setFilter('polblock.' + liveOp.id, v ? true : undefined)
   const op = useFrozen(liveOp, stale)
-  const logs = useFrozen(liveLogs[liveOp.id], stale) || []
+  const logs = useFrozen(liveLogs[liveOp.id], stale) || NO_LOGS
   const [err, setErr] = useState('')
   const [sel, setSel] = useState<string | null>(null)
   const [dock, setDock] = useState('output')
@@ -483,8 +483,9 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
   const lines = useMemo(() => logs.filter((l) => evf === 'all' || evCat(l) === evf).slice(-300), [logs, evf])
   const step = op.steps.find((s) => s.id === sel) || null
   const reviewStep = op.steps.find((s) => s.status === 'review')
-  const current = op.steps.find((s) => s.status === 'running') || reviewStep
-  const chan = view ? view.channels.find((ch) => agents.some((a) => a.id === (ch as any).agentId)) || view.channels.find((ch) => (ch as any).nodeId) : undefined
+  /* Channel records carry no agentId in the demo model; the agent-link probe
+     stays for forward compatibility and falls through to the node match. */
+  const chan = view ? view.channels.find((ch) => agents.some((a) => a.id === (ch as { agentId?: string }).agentId)) || view.channels.find((ch) => ch.nodeId) : undefined
   const node = view ? view.c2Nodes.find((n) => n.projectIds.includes(op.projectId)) || view.c2Nodes[0] : undefined
   const auditRows = view?.audit ?? []
   const evs = view?.evidence ?? []
