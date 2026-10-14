@@ -16,7 +16,9 @@ import {
 } from 'lucide-react'
 import { useServices } from '../state/services'
 import { go, navRawRoute, useRoute } from '../router/navigate'
-import { useAccessible, useDb, useMe } from '../state/console'
+import { useAccessible, useMe } from '../state/console'
+import { useServiceProjection } from '../state/projection'
+import { readHeaderNotices, markAllNoticesRead } from '../features/notices/service'
 import { useSessionStore } from '../state/session'
 import { useAuthStore, useThemeStore, useToastStore, useUiStore, type CopilotCtx } from '../state/stores'
 import { signOut } from '../auth/persona'
@@ -109,20 +111,17 @@ const catOf = (n: any): Chip => {
   return 'System'
 }
 function Notices() {
-  const db = useDb()
-  const accessible = useAccessible()
+  const read = useServiceProjection(readHeaderNotices)
+  const me = useMe()
   const noticesOpen = useUiStore((s) => s.noticesOpen)
   const setNoticesOpen = useUiStore((s) => s.setNoticesOpen)
   const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
   const services = useServices()
-  /* The legacy `A.markNoticesRead` entry, mirrored exactly: one 'legacy'
-     commit marking every notice read (the typed markAllRead handler scopes
-     to the persona — a behavior change this surface does not take). */
-  const markAllRead = () => services.authority.commit('legacy', (d) => d.notices.forEach((n) => (n.read = true)))
+  // Mark only notices visible to the captured persona.
+  const markAllRead = () => markAllNoticesRead(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: 'all', corr: 'legacy' })
   const [tab, setTab] = useState<'unread' | 'all'>('unread')
   const [chip, setChip] = useState<Chip | ''>('')
-  const ids = new Set(accessible.map((p) => p.id))
-  const all = db.notices.filter((n) => n.projectId === '' || ids.has(n.projectId))
+  const all = read.items
   const unread = all.filter((n) => !n.read).length
   const list = all.filter((n) => (tab === 'all' || !n.read) && (!chip || catOf(n) === chip))
   const toggle = () => { if (!noticesOpen) setCopilotOpen(false); setNoticesOpen(!noticesOpen) }
