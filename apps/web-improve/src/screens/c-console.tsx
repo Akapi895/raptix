@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Eye, GitBranch, MessageSquare, Activity, AlertTriangle, CheckCircle2, Clock, Download, FlaskConical, Flag, Gauge, HelpCircle, Lightbulb, OctagonX, PanelRightClose, PanelRightOpen, Pause, Play, Radio, ShieldAlert, Sparkles, Square, Users, Video, WifiOff, XCircle } from 'lucide-react'
 import { Banner, Button, Card, CardHeader, DemoTag, Field, Tabs, Textarea, DescList, Drawer, Empty, Gated, IdLink, Kpi, ApprovalBanner, Mono, Person, Progress, ConsolePane, SearchBox, Select, Status, Table, Timeline, Toggle, useGuard, cx } from '../ui'
-import { useServices, useStore } from '../store'
+import { useServices } from '../store'
+import { go } from '../router/navigate'
+import { useCan, useDb, useMe } from '../state/console'
+import { useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore, type LogLine } from '../state/session'
+import { hhmm, stamp } from '../domain/demo-clock'
+import { ROLE_LABEL } from '../auth/policy'
 import { computePreflightChecks, preflightPass } from '../features/operations/preflight'
+import { completeOperation, pauseOperation, resumeOperation, stopOperation } from '../features/operations/service'
+import { fastForward, loseAgent, restoreAgent } from '../features/demo/runtime'
 import { sessionPermOf } from '../features/c2/service'
 import { BRANCH_LABEL, planVer, toolFacets } from '../data'
 import type { Agent, Operation, Step } from '../data'
@@ -15,8 +23,14 @@ import { FanOutCard } from './g-fanout'
 import { EmergencyStopDialog, StopProgress, StopStatePanel } from '../features/estop/ui'
 
 /* ───────────── ONE banner per operation (V3.1): highest-priority condition wins, the rest become notes ───────────── */
+const pad = (n: number) => String(n).padStart(2, '0')
+
 export function OpBanner({ op }: { op: Operation }) {
-  const { db, go, staleOps, setStale, toast, persistFilters } = useStore()
+  const db = useDb()
+  const staleOps = useSessionStore((s) => s.staleOps)
+  const setStale = useSessionStore((s) => s.setStale)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const toast = useToastStore((s) => s.toast)
   const { ro, reason } = useGuard(op.projectId)
   const p = db.projects.find((x) => x.id === op.projectId)!
   const pl = op.planId ? db.plans.find((x) => x.id === op.planId) : undefined
@@ -54,8 +68,12 @@ export function OpBanner({ op }: { op: Operation }) {
 
 /* ───────────── Operation controls (pause / resume / stop) ───────────── */
 export function OpControls({ op, onError, size = 'md' }: { op: Operation; onError: (e: string) => void; size?: 'sm' | 'md' }) {
-  const { A, db, confirm, toast, can, go } = useStore()
-  const { clock } = useServices()
+  const db = useDb()
+  const me = useMe()
+  const services = useServices()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
+  const can = useCan()
   const { ro, reason } = useGuard(op.projectId)
   const [stopping, setStopping] = useState(false)
   const [es, setEs] = useState(false)
@@ -73,14 +91,50 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
   const p = db.projects.find((x) => x.id === op.projectId)!
   const lost = op.agents.map((id) => db.agents.find((a) => a.id === id)).filter((a) => a && a.status !== 'online' && a.status !== 'idle')
 
+  /* Ticket 67 wave 4: the store's delegating pause/resume/stop/complete entries,
+     mirrored at the call site — the typed lifecycle handlers run with the
+     store's exact request context ('legacy' corr, persona + the operation's
+     project at call time) and the demo log mirrors keep the store's pushLog
+     ts format (hhmm + seconds). */
+  const entryCtx = (projectId: string) => ({ actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' })
+  const pushLog = (opId: string, line: Omit<LogLine, 'id' | 'ts'>) =>
+    useSessionStore.getState().pushLog(opId, line, hhmm() + ':' + pad(new Date().getSeconds()))
+  const pauseOp = (opId: string, reason: string) => {
+    const target = services.authority.snapshot().operations.find((o) => o.id === opId)
+    if (!target) return
+    const res = pauseOperation(services.authority, services.clock, entryCtx(target.projectId), opId, reason)
+    if (res.ok) pushLog(opId, { level: 'WARN', agent: '—', stepId: '—', text: `Operation paused by ${me.name}` })
+  }
+  const resumeOp = (opId: string) => {
+    const target = services.authority.snapshot().operations.find((o) => o.id === opId)
+    if (!target) return { ok: false, error: 'Operation not found.' }
+    const res = resumeOperation(services.authority, services.clock, entryCtx(target.projectId), opId)
+    if (!res.ok) return { ok: false, error: res.failure.message }
+    pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: `Operation resumed by ${me.name}` })
+    return { ok: true }
+  }
+  const stopOp = (opId: string, reason: string) => {
+    const target = services.authority.snapshot().operations.find((o) => o.id === opId)
+    if (!target) return
+    stopOperation(services.authority, services.clock, entryCtx(target.projectId), opId, reason)
+  }
+  const completeOp = (opId: string) => {
+    const target = services.authority.snapshot().operations.find((o) => o.id === opId)
+    if (!target) return { ok: false, error: 'Operation not found.' }
+    const res = completeOperation(services.authority, services.clock, entryCtx(target.projectId), opId)
+    if (!res.ok) return { ok: false, error: res.failure.message }
+    pushLog(opId, { level: 'INFO', agent: '—', stepId: '—', text: 'Operation completed' })
+    return { ok: true }
+  }
+
   const pause = () => confirm({
     title: `Pause ${op.id}?`,
     body: <div className="space-y-2"><p>No new steps are dispatched until you resume. Steps already running finish or time out; progress does not advance while paused.</p><ul className="list-disc space-y-0.5 pl-5 text-muted"><li>{c.running} running step(s) finish first</li><li>{c.pending + c.review} queued or review step(s) wait</li><li>{sessions.length} linked session(s) stay connected, read-only</li></ul><p className="text-muted">The action is audited.</p></div>,
     confirmLabel: 'Pause operation', reasonLabel: 'Reason for pausing', reasonRequired: true,
-    onConfirm: (r) => { A.pauseOp(op.id, r); toast('Operation paused.', 'warn') },
+    onConfirm: (r) => { pauseOp(op.id, r); toast('Operation paused.', 'warn') },
   })
   const resume = () => {
-    const checks = computePreflightChecks(db, op, clock.now())
+    const checks = computePreflightChecks(db, op, services.clock.now())
     const rows: [string, boolean, string][] = [
       ['ROE', p.roeStatus === 'approved', `ROE ${p.roeVersion} is ${p.roeStatus}`],
       ['Permissions', allowed, allowed ? 'You may run operations' : 'Your role cannot run operations'],
@@ -94,7 +148,7 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
       confirmLabel: okAll ? 'Resume operation' : 'Recheck blocked — close',
       onConfirm: () => {
         if (!okAll) { const msg = `Cannot resume: ${rows.filter((r) => !r[1]).map((r) => r[0]).concat(checks.filter((x) => x.state !== 'pass').map((x) => x.label)).join('; ') || 'preflight re-evaluation failed'}.`; onError(msg); toast('Resume blocked by recheck.', 'bad'); return }
-        const r = A.resumeOp(op.id)
+        const r = resumeOp(op.id)
         if (r.ok) { onError(''); toast('Rechecks passed. Operation resumed.') } else { onError(r.error || 'Cannot resume.'); toast(r.error || 'Cannot resume.', 'bad') }
       },
     })
@@ -104,9 +158,9 @@ export function OpControls({ op, onError, size = 'md' }: { op: Operation; onErro
     body: <div className="space-y-2"><p>A graceful stop. The operation moves to <b>Stopping</b>, then <b>Stopped</b>, and cannot be resumed.</p>
       <ul className="list-disc space-y-0.5 pl-5 text-muted"><li>{c.running} running step(s) become “Unknown”</li><li>{c.pending + c.review} queued step(s) become “Not run”</li><li>{sessions.length} linked session(s) are terminated</li></ul><p className="text-muted">Results so far are kept as partial results. Audited.</p></div>,
     confirmLabel: 'Stop operation', danger: true, reasonLabel: 'Reason for stopping', reasonRequired: true,
-    onConfirm: (r) => { setStopping(true); onError(''); toast('Stop requested. Stopping…', 'warn'); setTimeout(() => { A.stopOp(op.id, r); setStopping(false); toast('Operation stopped.', 'warn') }, 1400) },
+    onConfirm: (r) => { setStopping(true); onError(''); toast('Stop requested. Stopping…', 'warn'); setTimeout(() => { stopOp(op.id, r); setStopping(false); toast('Operation stopped.', 'warn') }, 1400) },
   })
-  const complete = () => { const r = A.completeOp(op.id); if (r.ok) { onError(''); toast('Operation completed.'); go('operation', { id: op.id, tab: 'results' }) } else { onError(r.error || ''); toast(r.error || 'Cannot complete.', 'bad') } }
+  const complete = () => { const r = completeOp(op.id); if (r.ok) { onError(''); toast('Operation completed.'); go('operation', { id: op.id, tab: 'results' }) } else { onError(r.error || ''); toast(r.error || 'Cannot complete.', 'bad') } }
   const G = ({ ok, w, children }: { ok: boolean; w: string; children: React.ReactNode }) => <Gated allowed={allowed && ok} reason={!allowed ? why : w}>{children}</Gated>
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -127,7 +181,8 @@ const LVL: Record<string, string> = { INFO: 'text-console-info', WARN: 'text-con
 const LVL_ICON = { INFO: '●', WARN: '▲', ERROR: '✕' } as Record<string, string>
 
 function SessionCards({ op }: { op: Operation }) {
-  const { db, me, go } = useStore()
+  const db = useDb()
+  const me = useMe()
   const list = db.sessions.filter((s) => s.opId === op.id || s.id === op.sessionId)
   if (list.length === 0) {
     return <p className="text-sm text-muted">{op.status === 'running' || op.status === 'paused' ? 'No session is linked to this operation.' : 'No session yet. A session appears only after the operation starts.'}</p>
@@ -151,7 +206,7 @@ function SessionCards({ op }: { op: Operation }) {
 }
 
 function PlanCard({ op }: { op: Operation }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const pl = op.planId ? db.plans.find((p) => p.id === op.planId) : undefined
   const conv = opConversation(db, op)
   if (!op.planId) return <p className="text-sm text-muted">This operation was created manually from a playbook. No AI plan is linked.</p>
@@ -169,7 +224,9 @@ function PlanCard({ op }: { op: Operation }) {
 
 /* ───────────── Overview (OP-04) ───────────── */
 export function OverviewTab({ op }: { op: Operation }) {
-  const { db, go, now, logs, setCopilotOpen } = useStore()
+  const db = useDb()
+  const logs = useSessionStore((s) => s.logs)
+  const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
   const p = db.projects.find((x) => x.id === op.projectId)!
   const pb = db.playbooks.find((x) => x.id === op.playbookId)
   const c = stepCounts(op.steps)
@@ -291,7 +348,10 @@ export function OverviewTab({ op }: { op: Operation }) {
 
 /* ───────────── Step inspector (OP-V3-06) ───────────── */
 export function StepDrawer({ op, step, onClose, logs }: { op: Operation; step: Step | null; onClose: () => void; logs: { id: string; ts: string; level: string; text: string; stepId: string }[] }) {
-  const { db, go, can, setFilter, setCopilotOpen } = useStore()
+  const db = useDb()
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
+  const can = useCan()
   const { ro } = useGuard(op.projectId)
   const [tab, setTab] = useState('summary')
   useEffect(() => { setTab('summary') }, [step?.id])
@@ -376,7 +436,16 @@ const evCat = (l: { level: string; text: string }) => (l.level === 'ERROR' ? 'er
 const NODE_TONE: Record<string, string> = { ok: 'border-ok/40 bg-ok-soft', running: 'border-cyan bg-info-soft', fail: 'border-bad/50 bg-bad-soft', unknown: 'border-warn/60 bg-warn-soft', review: 'border-warn bg-warn-soft ring-1 ring-warn', pending: 'border-line bg-panel', notrun: 'border-line bg-subtle' }
 
 export function ConsoleTab({ op: liveOp }: { op: Operation }) {
-  const { db, logs: liveLogs, staleOps, setStale, A, go, now, toast, setCopilotOpen, aiMode, can, persistFilters, setFilter } = useStore()
+  const db = useDb()
+  const liveLogs = useSessionStore((s) => s.logs)
+  const staleOps = useSessionStore((s) => s.staleOps)
+  const setStale = useSessionStore((s) => s.setStale)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const setCopilotOpen = useUiStore((s) => s.setCopilotOpen)
+  const aiMode = useUiStore((s) => s.aiMode)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const review = useReviewStep()
   const stale = !!staleOps[liveOp.id]
   const polBlock = !!persistFilters['polblock.' + liveOp.id]
@@ -456,7 +525,7 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
               <span>Plan <b className="text-fg">{pl ? <IdLink onClick={() => go('ai-plan-review', { id: pl.id })}>{pl.id} {planVer(pl)}</IdLink> : 'None'}</b></span>
               <span>ROE <b className="text-fg">{p.roeVersion}</b></span><span className="whitespace-nowrap">Window <b className="text-fg">{p.window}</b></span>
-              <span>Elapsed <b className="text-fg">{elapsed(op, now())}</b></span><span>AI mode <b className="capitalize text-fg">{aiMode}</b></span>
+              <span>Elapsed <b className="text-fg">{elapsed(op, stamp())}</b></span><span>AI mode <b className="capitalize text-fg">{aiMode}</b></span>
               <span className="whitespace-nowrap">Steps <b className="text-fg">{c.ok + c.fail}/{c.total}</b></span>
             </div>
           </div>
@@ -529,13 +598,13 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
                 const a = db.agents.find((x) => x.id === id); const online = a?.status === 'online'
                 return (
                   <div key={id} className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-muted">{id}</span>
-                    <Button size="sm" icon={WifiOff} disabled={op.status !== 'running' || !online} title={op.status !== 'running' ? 'Available while the operation is running.' : !online ? `${id} is already disconnected.` : undefined} onClick={() => { A.loseAgent(id); toast(`Simulated agent offline: ${id}.`, 'warn') }}>Offline</Button>
-                    <Button size="sm" icon={Radio} disabled={online} title={online ? `${id} is already connected.` : undefined} onClick={() => { A.restoreAgent(id); toast(`${id} restored.`) }}>Restore</Button></div>
+                    <Button size="sm" icon={WifiOff} disabled={op.status !== 'running' || !online} title={op.status !== 'running' ? 'Available while the operation is running.' : !online ? `${id} is already disconnected.` : undefined} onClick={() => { loseAgent(id); toast(`Simulated agent offline: ${id}.`, 'warn') }}>Offline</Button>
+                    <Button size="sm" icon={Radio} disabled={online} title={online ? `${id} is already connected.` : undefined} onClick={() => { restoreAgent(id); toast(`${id} restored.`) }}>Restore</Button></div>
                 )
               })}
               <Button size="sm" icon={ShieldAlert} disabled={!active} title={active ? undefined : 'Available while the operation is active.'} onClick={() => setPolBlock(!polBlock)}>{polBlock ? 'Clear policy block' : 'Simulate policy block'}</Button>
               {stale ? <Button size="sm" icon={Radio} onClick={() => setStale(op.id, false)}>Restore live data</Button> : <Button size="sm" icon={AlertTriangle} disabled={!active} title={active ? undefined : 'Available while the operation is active.'} onClick={() => setStale(op.id, true)}>Simulate delayed data</Button>}
-              <Button size="sm" icon={FlaskConical} disabled={!active || !!reviewStep} title={!active ? 'Available while the operation is active.' : reviewStep ? 'A step is waiting for review. Decide first.' : 'Finish remaining steps with demo output.'} onClick={() => { A.fastForward(op.id); toast('Demo fast-forward applied.') }}>Fast-forward steps</Button>
+              <Button size="sm" icon={FlaskConical} disabled={!active || !!reviewStep} title={!active ? 'Available while the operation is active.' : reviewStep ? 'A step is waiting for review. Decide first.' : 'Finish remaining steps with demo output.'} onClick={() => { fastForward(op.id); toast('Demo fast-forward applied.') }}>Fast-forward steps</Button>
             </div>
           </Card>
         </aside>
@@ -581,7 +650,7 @@ export function ConsoleTab({ op: liveOp }: { op: Operation }) {
 
 /* ───────────── Agents & Sessions ───────────── */
 export function AgentsTab({ op }: { op: Operation }) {
-  const { db, go } = useStore()
+  const db = useDb()
   const rows = op.agents.map((id) => db.agents.find((a) => a.id === id)!).filter(Boolean)
   const per = rows.map((a) => ({ a, st: stepCounts(op.steps.filter((s) => s.agent === a.id)) }))
   return (
@@ -622,7 +691,16 @@ export function AgentsTab({ op }: { op: Operation }) {
 
 /* ───────────── Timeline ───────────── */
 export function TimelineTab({ op }: { op: Operation }) {
-  const { logs, can, A, toast, go } = useStore()
+  const logs = useSessionStore((s) => s.logs)
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
+  const services = useServices()
+  const me = useMe()
+  /* The legacy `A.audit` entry, mirrored exactly: one 'legacy' commit with the
+     store helper's exact row shape (the RT-2026-014 SS/AR corr rule, the demo
+     stamp, the override-aware persona). */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const [lvl, setLvl] = useState('')
   const [ag, setAg] = useState('')
   const [pick, setPick] = useState<string | null>(null)
@@ -636,7 +714,7 @@ export function TimelineTab({ op }: { op: Operation }) {
         <Select value={lvl} onChange={(e) => setLvl(e.target.value)} aria-label="Filter by event type" className="w-44"><option value="">All event types</option><option value="INFO">Information</option><option value="WARN">Warning</option><option value="ERROR">Error</option></Select>
         <Select value={ag} onChange={(e) => setAg(e.target.value)} aria-label="Filter by source" className="w-48"><option value="">All sources</option><option value="—">System / operator</option>{op.agents.map((a) => <option key={a}>{a}</option>)}</Select>
         <Button className="ml-auto" icon={Download} disabled={!allowExport} title={allowExport ? undefined : 'Your role cannot export logs.'}
-          onClick={() => { A.audit('Exported operation log', op.id, op.projectId); toast('Log exported (sensitive data masked).') }}>Export log</Button>
+          onClick={() => { audit('Exported operation log', op.id, op.projectId); toast('Log exported (sensitive data masked).') }}>Export log</Button>
       </div>
       {!allowExport && <p className="mb-3 text-xs text-muted">Log export is limited to roles allowed to view sensitive data.</p>}
       <Card>
