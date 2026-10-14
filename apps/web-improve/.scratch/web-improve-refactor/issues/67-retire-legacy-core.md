@@ -1,4 +1,4 @@
-# 67: Remove the final legacy store/navigation/UI bridge
+﻿# 67: Remove the final legacy store/navigation/UI bridge
 
 **What to build:** Remove residual Context/store/hash-router/UI forwarding infrastructure after all screen consumers are gone; keep the canonical database/services/providers as the final architecture.
 **Blocked by:** 66.
@@ -433,3 +433,84 @@ earlier batches; the migrated reads/writes are pinned by the drawer, estop,
 notices, settings, wizard, composed-ui and route-host suites that exercise
 them through real mounted screens, and `npm run build` covers the module
 graph).
+### Wave 2 (shell off the store, `wi/67w2-shell`)
+
+The shell consumers leave the legacy store context: 8 shell/console surfaces
+(`context-ribbon`, `nav`, `project-switcher`, `search`, `sidebar`, `shell`,
+`header`, `screens/d-shared`) plus the resetDemo canonicalization, 10 touched
+files, +181/−75 — one concern, far under the caps. Every replacement is the
+canonical hook the enablers host, and the observable behavior (toasts,
+confirms, refusals, log mirrors, audit rows, corr values, the shell loading
+gate, the dirty guard and the switcher close) is unchanged.
+
+- `context-ribbon.tsx` (6 sites): `db`→`useDb`, `project`→`useActiveProject`,
+  `me`→`useMe`, `pid`→`useProjectStore`, `route`→`useRoute`, `can`→`useCan`,
+  `setFilter`→`useSessionStore`, `go`→navigate; `A.emergencyStop`/
+  `A.retryStop`/`A.resolveStop` are demo-runtime entries → the same-name
+  runtime functions (the `void go` lint-silencer and the `(A as any)` cast
+  left with them); `ProjectHeader`'s prop type resolves `Project` directly
+  instead of `ReturnType<typeof useStore>['project']`.
+- `nav.ts`: `db/scoped/me/can` → `useDb`/`useScoped<Operation>()`/`useMe`/
+  `useCan` (the seam's `useScoped` is generic at the hook; the one call site
+  instantiates the element type).
+- `project-switcher.tsx`: `db/accessible/project/can/me` → console hooks;
+  `pid`→`useProjectStore`; `switcherOpen/setSwitcherOpen`→`useUiStore`;
+  `loading`→`useSessionStore`; `route`→`useRoute`; `setPid`→`selectProject`
+  (the store entry's own implementation — guard/redirect/450 ms loading gate/
+  switcher close identical); `go`→navigate.
+- `search.tsx`: console hooks + navigate; a one-line local generic adapter
+  keeps the memo's five scoped-read call sites typed like the store's generic
+  `scoped` (the seam's hook returns its filter for one element type), and the
+  module-level `go` (a stable outer value) left the memo deps — pure memo,
+  same recomputation inputs otherwise.
+- `sidebar.tsx`: `route`→`useRoute`, `go`→navigate.
+- `shell.tsx` (4 sites): confirm/unsaved/toasts/loading → session/toast
+  authorities; `route`→`useRoute`; `project`→`useActiveProject`;
+  `me`→`useMe`; `copilotOpen/setNoticesOpen/setSwitcherOpen`→`useUiStore`;
+  `go`→navigate. The `Route` type re-export and the compatibility re-exports
+  on the shell root are unchanged.
+- `header.tsx` (5 sites): `me`→`useMe` + `useAuthStore((s) => s.setMe)` for
+  the persona write; `theme/setTheme`→`useThemeStore`; `aiMode/setAiMode`/
+  `noticesOpen/setNoticesOpen/setCopilotOpen`→`useUiStore`;
+  `toast`→`useToastStore`; `stopOutcome/setStopOutcome`/`confirm`→session
+  store; `route`→`useRoute`; `go`→navigate; `logout` is the store entry
+  verbatim (`signOut()` + `navRawRoute({ page: 'login' })`); `resetDemo` is
+  the runtime's canonical function (below); `A.markNoticesRead` — the store
+  implementation is one unscoped 'legacy' commit, so `Notices` mirrors it
+  through the canonical `useServices()` authority commit instead of the
+  typed `markAllRead` handler (which scopes to the persona — a behavior
+  change this surface does not take).
+- `screens/d-shared.tsx`: `loading`→`useSessionStore`;
+  `setSwitcherOpen`→`useUiStore`.
+- **resetDemo canonicalization (enabler E extension):** `resetDemo(scenario?)
+  ` moved verbatim into `src/features/demo/runtime.ts` — the runtime's
+  `demand()` services, `resetDemoRuntime()` timers disposal, the logs rebuild
+  (`buildLogs` moved from the provider into the runtime module, next to the
+  log mirrors it seeds; the provider's mount effect imports it), the
+  session/UI/toast clears in the exact order (setLogs → session
+  clearTransient → raw pid 'all' → UI clearTransient → toast clear → final
+  info toast, including the e2e01 message) and loading/stopOutcome left
+  untouched. The provider's `dbRef` sync happens through the authority's
+  synchronous 'reset' publication as before. The store's `resetDemo` is now a
+  one-line delegate (`demoResetDemo(scenario)`) — the only store.tsx change
+  in this wave besides repointing `buildLogs` for the mount effect.
+- `src/state/console.test.tsx` type errors: pre-existing at the tip
+  (`edit-project` CanAction, 6 errors, verified by typechecking the stashed
+  base) — test files are out of this wave's scope, untouched, still the
+  ticket's outstanding diagnostics.
+
+Checks: `npm run typecheck` — 0 new diagnostics (the 6 pre-existing
+console.test errors above are the only output). `npm run lint` — 0 errors;
+168 → 167 warnings. File-level diff over the 10 touched files (base linted
+before the edits): every file unchanged except `context-ribbon.tsx`
+(12 → 11 — the `(A as any)` cast left with the demo-runtime call) — 0 new
+findings. `npm test -- --run --maxWorkers=2` — 955 tests / 72 files green in
+two full runs; the known parallel-load flake pair did not surface (no timer/
+fake-clock assertion changed). `npm run build` — succeeds (pre-existing
+chunk-size warning only).
+
+Gaps: browser route exercise skipped (optional HTTP-check gap per AGENTS.md
+§ Windows Temporary Process Safety, same as the earlier batches; the migrated
+surfaces are pinned by the shell, navigate, console-seam, session-duality,
+estop, aichat and demo suites that exercise them through real screens, and
+`npm run build` covers the module graph).

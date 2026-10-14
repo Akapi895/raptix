@@ -9,7 +9,7 @@ import { createConsoleServices, type ConsoleServices } from './domain/service-fa
 // orchestration only.
 import { createChatHandlers } from './features/aichat/handlers'
 import {
-  initDemoRuntime, resetDemoRuntime,
+  buildLogs, initDemoRuntime, resetDemo as demoResetDemo,
   emergencyStop as demoEmergencyStop, retryStop as demoRetryStop, resolveStop as demoResolveStop,
   sendChat as demoSendChat, stopChat as demoStopChat,
   loseAgent as demoLoseAgent, restoreAgent as demoRestoreAgent, fastForward as demoFastForward,
@@ -424,28 +424,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const logout = () => { signOut(); navRawRoute({ page: 'login' }, navEpochRef.current) }
 
   /* ───────── Helpers ───────── */
-  const buildLogs = (d: Db) => {
-    const init: Record<string, LogLine[]> = {}
-    d.operations.forEach((o) => {
-      init[o.id] = o.steps.filter((s) => s.ts !== '—').flatMap((s) => [
-        { id: o.id + s.id + 'a', ts: s.ts + ':00', level: 'INFO' as const, agent: s.agent, stepId: s.id, text: `Started step ${s.id} — ${s.name}` },
-        ...(s.status === 'running' ? [] : [{ id: o.id + s.id + 'b', ts: s.ts + ':30', level: (s.status === 'fail' ? 'ERROR' : 'INFO') as 'ERROR' | 'INFO', agent: s.agent, stepId: s.id, text: s.status === 'fail' ? `Step ${s.id} failed: ${s.output}` : `Completed step ${s.id} (${s.dur})` }]),
-      ])
-    })
-    return init
-  }
+  /* Ticket 67 wave 2: the demo live-log rebuild is hosted by the demo runtime
+     (src/features/demo/runtime) next to the log mirrors it seeds; the provider
+     rebuilds the logs from its own dataset snapshot on mount. */
   useEffect(() => { setLogsS(buildLogs(dbRef.current)) }, [setLogsS])
 
-  const resetDemo: Store['resetDemo'] = (scenario = 'default') => {
-    resetDemoRuntime()
-    services.reset(scenario)
-    dbRef.current = services.authority.snapshot()
-    setLogsS(buildLogs(dbRef.current))
-    useSessionStore.getState().clearTransient(); setPidRaw('all')
-    useUiStore.getState().clearTransient()
-    useToastStore.getState().clear()
-    toast(scenario === 'e2e01' ? 'Demo state reset — RT-2026-017 scenario dataset loaded.' : 'Demo state reset.', 'info')
-  }
+  /* Ticket 67 wave 2: the demo reset (timers disposal, reseed, log rebuild,
+     transient session/UI/toast clears and the final toast) lives in the demo
+     runtime; this entry is a one-line delegate until the store retires. */
+  const resetDemo: Store['resetDemo'] = (scenario) => demoResetDemo(scenario)
 
   const audit: Actions['audit'] = (action, obj, projectId, result = 'Success', reason = '') =>
     mutate((d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
