@@ -232,3 +232,47 @@ Gaps: browser route exercise skipped (same optional HTTP-check gap as the
 earlier batches; the transient state is pinned by the new session duality
 suite, the ticket 05 authority suite and the shell/estop/c-console/aichat
 suites that exercise these fields through real screens).
+
+### Enabler B (canonical navigation, `wi/67d-navigate`)
+
+Navigation (the raw router forward, the guarded `go`, the route projection
+and the auth navigation) moves out of the provider into the canonical router
+module `src/router/navigate.ts`, so the ~40 screen files still taking
+`go`/`route` from `useStore()` have a store-free replacement. The router
+stays the single location writer (ticket 07/61e): the fallback branch only
+serves router-less mounts, the projection keeps exactly one router
+subscription (now owned by the module's `useRoute()` hook), and there is
+deliberately no window hashchange listener.
+
+- `src/router/navigate.ts` (new, 91 runtime lines): `go()` (guarded through
+  the session authority — synchronous `getState()`, so the
+  clear-then-navigate-in-one-tick behavior is never held), `navRawRoute()`,
+  `useRoute()`, `currentRoute()` (synchronous read for the provider's
+  `login`/`setPid` redirect logic) and a mount-epoch guard: a navigation
+  closure that outlives its provider mount (a screen's delayed redirect)
+  must not move a later mount's projected route — sequential provider mounts
+  (the test suites) rely on that isolation, matching the old provider-local
+  `setRoute` no-op-after-unmount.
+- `src/store.tsx` (+~40/−45): the store's `navRaw`/`go`/route state/`useEffect`
+  subscription are deleted; `Store['go']` forwards to the module with this
+  mount's epoch, `setPid`'s DETAIL_MAP redirect and `login`/`logout` navigate
+  through `navRawRoute` with the same redirect conditions, and `route` is the
+  module projection. The `Store` interface is unchanged — zero consumer edits
+  in this batch.
+- `src/router/navigate.test.tsx` (new, 147 test lines): guarded `go` holds a
+  dirty navigation behind the unsaved guard and proceeds through `next()`;
+  the clear-then-navigate-in-one-tick is not held; `useRoute()` reflects
+  router navigation (hash router mounted) and the router-less fallback writes
+  route state + hash; `go` works from non-component code; the mount-epoch
+  guard keeps a captured redirect from moving a later mount's route.
+
+Checks: `npm run typecheck` — 0 diagnostics. `npm run lint` — 0 errors;
+169 warnings (unchanged from the enabler A tip; both new files lint clean).
+`npm test -- --run --maxWorkers=2` — 950 tests / 71 files green (938 baseline
++ 12 new; the known parallel-load flake did not surface). `npm run build` —
+succeeds (pre-existing chunk-size warning only).
+
+Gaps: browser route exercise skipped (same optional HTTP-check gap;
+navigation semantics are pinned by the new navigate suite plus the
+route/host/shell/dashboard suites that exercise `go`/`route` through real
+mounted routes).
