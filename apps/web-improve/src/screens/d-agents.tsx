@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, AlertTriangle, ExternalLink, FolderPlus, Layers, Pencil, Plus, Power, RefreshCw, ShieldAlert, Trash2, UserPlus, Wifi, WifiOff, X, Zap } from 'lucide-react'
 import { useServices } from '../state/services'
-import { USERS, type Agent, type Group, type Step } from '../data'
+import { USERS, type Agent, type Group } from '../data'
+import { replaceOperationAgent } from '../features/operations/service'
 import { Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, IdLink, Input, Kpi, LineChart, Locked, Modal, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, Mono, cx, PageSkeleton } from '../ui'
 import { Blocked, DTable, hashNum, Id, IdL, MoreFilters, POOL_LABEL, shortDate, Trunc, withLoading } from './d-shared'
 import { AgentReadError, useAgentDetail, useAgentList, useAssignAgent, useRemoveFromGroup, useSaveGroup, useUnassignAgent } from '../features/agents/query'
@@ -20,14 +21,6 @@ import { setAgentStatusTransaction } from '../features/agents/writes'
 const POLICIES = ['Project use only', 'Shared with approval', 'Observe only (no execution)']
 const STATUS_LABEL: Record<string, string> = { online: 'Connected', idle: 'Idle', lost: 'Disconnected', disabled: 'Disabled', unknown: 'Unknown', unhealthy: 'Unhealthy' }
 const ACTIVE_PROJECT = ['active', 'approved']
-
-/** The legacy updateOperation patch fields (the store's private OpDraft subset the raw entry reads). */
-type OpPatch = { name?: string; owner?: string; playbookId?: string; agents?: string[]; assets?: string[]; mode?: string; schedule?: string }
-
-const pad = (n: number) => String(n).padStart(2, '0')
-/** The store's private step-draft builder, verbatim (the raw `A.updateOperation` mirror rebuilds draft steps). */
-const stepsFrom = (names: string[], techs: string[], agents: string[], assets: string[]): Step[] =>
-  names.map((name, i) => ({ id: 'S' + pad(i + 1), name, agent: agents.length ? agents[i % agents.length] : '—', asset: assets.length ? assets[i % assets.length] : '—', technique: techs[i % techs.length], status: 'notrun' as const, ts: '—', dur: '—', output: 'Not run.' }))
 
 /* ───────────── Heartbeat bars (simulated) ───────────── */
 function Heartbeat({ a }: { a: Agent }) {
@@ -272,22 +265,6 @@ function FailurePanel({ a }: { a: Agent }) {
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
   const can = useCan()
-  /* The legacy raw `A.updateOperation`/`A.audit` entries, mirrored exactly:
-     one 'legacy' commit each through the one authority (the typed draft
-     update adds role gates and audit rows this path does not take). */
-  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
-  const updateOperation = (id: string, dr: OpPatch) =>
-    services.authority.commit('legacy', (d) => {
-      const o = d.operations.find((x) => x.id === id)!
-      Object.assign(o, { name: dr.name ?? o.name, owner: dr.owner ?? o.owner, playbookId: dr.playbookId ?? o.playbookId, agents: dr.agents ?? o.agents, assets: dr.assets ?? o.assets, mode: dr.mode ?? o.mode, schedule: dr.schedule ?? o.schedule })
-      o.preflightAt = undefined; if (o.status === 'ready') o.status = 'draft'; o.updated = stamp()
-      if ((dr.playbookId || dr.agents || dr.assets) && o.status === 'draft' && !o.planId) {
-        const pb = d.playbooks.find((x) => x.id === o.playbookId)
-        const as = o.assets.map((a) => d.assets.find((x) => x.id === a)!).filter(Boolean)
-        o.steps = pb ? stepsFrom(pb.steps, pb.techniques, o.agents, as.map((a) => a.name)) : []
-      }
-    })
   const guard = useGuard(a.projectId || undefined)
   const ops = db.operations.filter((o) => o.agents.includes(a.id) && !['done', 'cancelled'].includes(o.status) && accessible.some((p) => p.id === o.projectId))
   const plans = db.plans.filter((p) => p.agents.includes(a.id) && accessible.some((x) => x.id === p.projectId))
@@ -301,7 +278,7 @@ function FailurePanel({ a }: { a: Agent }) {
   const swap = (o: typeof ops[number], c: Agent) => confirm({
     title: `Replace ${a.id} with ${c.id} in ${o.id}?`, confirmLabel: 'Replace agent', reasonLabel: 'Reason', reasonRequired: true,
     body: <>{o.id} is {o.status}. {a.id} ({a.host}) is replaced by {c.id} ({c.host}), same project and scope. Preflight must be re-run before the operation starts; nothing is marked complete.</>,
-    onConfirm: (r) => { updateOperation(o.id, { agents: o.agents.map((x) => (x === a.id ? c.id : x)) }); audit('Replaced offline agent in operation', `${o.id}: ${a.id} → ${c.id}`, o.projectId, 'Success', r); toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
+    onConfirm: (r) => { const res = replaceOperationAgent(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: o.projectId, corr: 'legacy' }, o.id, a.id, c.id, r); if (!res.ok) { toast(res.failure.message, 'bad'); return }; toast(`${c.id} now replaces ${a.id} in ${o.id}. Re-run preflight.`) },
   })
   const requestRepl = (o: typeof ops[number] | null, c: Agent) => confirm({
     title: `Request ${c.id} as replacement for ${a.id}?`, confirmLabel: 'Submit request', reasonLabel: 'Reason', reasonRequired: true,
