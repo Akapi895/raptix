@@ -1,11 +1,11 @@
-# 11: Draft, review and deliver real reports
+﻿# 11: Draft, review and deliver real reports
 
 **What to build:** Users create reports from recorded findings/evidence, edit
 sections, obtain independent version-pinned review and record export/delivery as
 distinct persistent actions.
 
 **Blocked by:** 10 (finding lifecycle and evidence authoring).
-**Status:** ready-for-agent
+**Status:** complete
 **Requirements:** R03-R05, R08-R10.
 **Contract:** [execution.md](../execution.md).
 
@@ -37,3 +37,21 @@ findings/auth evidence. No full suite.
 
 Do not introduce an unrequested document/email provider. Project closure consumes
 the delivery state in 17 rather than being inferred from an export click.
+
+## Evidence (2026-10-15)
+
+- `ReportsService` + `/report-records` routes: draft create/edit with
+  expectedVersion conflicts (409 preserves the stored body and names both
+  versions), post-approval edits refused (re-review required), independent
+  review (`requireIndependentActor` + mandatory comment) pinning
+  `approvedVersion`, and export/delivery as separate audited records with
+  truthful completed/failed outcomes (the engagement export path is reused;
+  it is never relabeled as a reviewed deliverable).
+- Delivery is gated on approval; replay with the same requestId returns the
+  recorded outcome without a duplicate row (found + fixed a real bug here:
+  the replay check ran after the approval gate and misread Prisma `null`).
+- Tests: `server/tests/t11-reports.test.ts` (4). Web: Reports tab in project
+  detail (draft/edit, submit review, approve/request-changes, export MD,
+  record delivery) with refusal surfacing.
+- Named gap: PDF/email providers remain intentionally unsupported — the
+  format list is only json/markdown, matching the existing export service.

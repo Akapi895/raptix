@@ -593,3 +593,56 @@ export function attachEvidence(engagementId: string, findingId: string, input: {
     typeof v === 'object' && v !== null && typeof (v as { id?: unknown }).id === 'string',
   { method: 'POST', body: input })
 }
+
+/* ───────────── Report lifecycle/delivery (integration ticket 11) ───────────── */
+
+export interface ReportView {
+  id: string
+  engagementId: string
+  title: string
+  version: number
+  status: 'draft' | 'in_review' | 'approved' | 'changes_requested' | 'delivered'
+  body: { summary: string; sections: { title: string; content: string }[] }
+  createdBy: string
+  reviewedBy: string | null
+  reviewedAt: string | null
+  reviewComment: string | null
+  approvedVersion: number | null
+  updatedAt: string
+  deliveries: { id: string; kind: string; format: string; status: string; createdAt: string }[]
+}
+
+export interface ReportsView {
+  engagementId: string
+  reports: ReportView[]
+  exportFormats: string[]
+  source: 'db'
+}
+
+function isReportsView(v: unknown): v is ReportsView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as ReportsView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.reports) && doc.source === 'db'
+}
+
+export function fetchReports(engagementId: string): Promise<ReportsView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records`, owned(engagementId, isReportsView))
+}
+
+export function createReport(engagementId: string, input: { title: string; summary: string }): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records`, (v): v is ReportView =>
+    typeof v === 'object' && v !== null && typeof (v as ReportView).id === 'string' && (v as ReportView).status === 'draft',
+  { method: 'POST', body: input })
+}
+
+export function decideReportReview(engagementId: string, reportId: string, body: Record<string, unknown>): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/review`, (v): v is ReportView =>
+    typeof v === 'object' && v !== null && typeof (v as ReportView).status === 'string',
+  { method: 'POST', body })
+}
+
+export function deliverReport(engagementId: string, reportId: string, input: { kind: 'export' | 'delivery'; format: string; requestId: string }): Promise<ReportView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/report-records/${encodeURIComponent(reportId)}/deliveries`, (v): v is ReportView =>
+    typeof v === 'object' && v !== null && Array.isArray((v as ReportView).deliveries),
+  { method: 'POST', body: input })
+}

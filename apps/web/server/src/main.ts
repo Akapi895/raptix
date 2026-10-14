@@ -31,6 +31,7 @@ import { MembersService } from './services/members-service.js';
 import { ScopeService } from './services/scope-service.js';
 import { GovernanceService } from './services/governance-service.js';
 import { FindingsWorkflowService } from './services/findings-workflow-service.js';
+import { ReportsService } from './services/reports-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
@@ -108,6 +109,10 @@ async function main(): Promise<void> {
   const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
   const governanceService = dbClient && scopeService ? new GovernanceService(dbClient, scopeService) : undefined;
   const findingsWorkflow = dbClient ? new FindingsWorkflowService(dbClient) : undefined;
+  const reportsService = dbClient && exportService ? new ReportsService(dbClient, async (userId, engagementId, format) => {
+    const result = await exportService.export(userId, engagementId, format as 'json' | 'markdown');
+    return { ok: result.body.length > 0, format };
+  }) : undefined;
   const app = await buildApp({
     logger: { level: env.logLevel },
     projectsService,
@@ -130,6 +135,7 @@ async function main(): Promise<void> {
   scopeService,
   governanceService,
   findingsWorkflow,
+  reportsService,
   vaultKeyConfigured: env.vaultKey !== undefined,
   authMode: env.authMode,
   authDb: dbClient,
