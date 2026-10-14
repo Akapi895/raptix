@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, BookOpen, Eye, ClipboardCheck, Copy, Crosshair, ExternalLink, GitCompare, Layers, Play, Plus, Send, Sparkles, Upload, X } from 'lucide-react'
-import { useServices } from '../store'
+import { useServices } from '../state/services'
 import { TACTICS, TECHNIQUES, type Db, type Playbook } from '../data'
 import { Banner, Button, Card, CardHeader, DescList, Empty, Field, FilterBar, IdLink, Input, Kpi, Locked, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, useGuard, cx } from '../ui'
 import { Id, IdL, MoreFilters, withLoading } from './d-shared'
