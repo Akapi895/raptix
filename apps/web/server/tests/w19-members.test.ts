@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { isMembersView } from '@raptix/web-contracts';
@@ -19,7 +19,7 @@ function buildDb() {
 function buildApp(): FastifyInstance {
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
-  registerMembersRoutes(app, new MembersService(buildDb()), IDENTITY);
+  registerMembersRoutes(app, new MembersService(buildDb(), false), IDENTITY);
   return app;
 }
 

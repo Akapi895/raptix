@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises';
+﻿import { mkdir } from 'node:fs/promises';
 import { getLocalIdentity } from './auth/identity-provider.js';
 import { buildApp } from './app.js';
 import { EnvValidationError, readServerEnv } from './config/env.js';
@@ -28,6 +28,7 @@ import { C2Service } from './services/c2-service.js';
 import { SliverClient } from './integrations/c2/sliver-client.js';
 import { VaultService } from './services/vault-service.js';
 import { MembersService } from './services/members-service.js';
+import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
 
@@ -57,7 +58,7 @@ async function main(): Promise<void> {
   let databaseHealth: DatabaseHealth | undefined;
 
   // The workspace root is validated/created ONLY at the explicitly passed
-  // location — never a default, never derived from request input.
+  // location â€” never a default, never derived from request input.
   if (env.workspacePath !== undefined) {
     try {
       await mkdir(env.workspacePath, { recursive: true });
@@ -100,7 +101,7 @@ async function main(): Promise<void> {
   const campaignsService = dbClient ? new CampaignService(dbClient, env.gophish ? new GoPhishClient(env.gophish) : undefined, env.evilginx ? new EvilginxClient(env.evilginx) : undefined) : undefined;
   const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined) : undefined;
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
-  const membersService = dbClient ? new MembersService(dbClient) : undefined;
+  const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const app = await buildApp({
     logger: { level: env.logLevel },
     projectsService,
@@ -121,7 +122,14 @@ async function main(): Promise<void> {
   vaultService,
   membersService,
   vaultKeyConfigured: env.vaultKey !== undefined,
+  authMode: env.authMode,
+  authDb: dbClient,
+  secureCookies: env.secureCookies,
+  adminBootstrap: env.adminBootstrap,
   });
+  if (env.authMode === 'multi' && dbClient && env.adminBootstrap) {
+    await ensureBootstrapAdmin(dbClient, env.adminBootstrap.username, env.adminBootstrap.password, env.adminBootstrap.displayName);
+  }
 
   const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
     if (closing) return;

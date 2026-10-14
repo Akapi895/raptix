@@ -39,6 +39,19 @@ export interface RequestOptions {
 const API_BASE = '/api'
 const DEFAULT_TIMEOUT_MS = 15_000
 
+/**
+ * Per-session CSRF token (ticket 07 multi-user deployments). The token comes
+ * from `/api/auth/session` after sign-in; mutations attach it as a header so
+ * the server-side origin/CSRF boundary accepts them. Local single-user
+ * deployments never set it.
+ */
+let csrfToken: string | null = null
+
+/** Stores the session CSRF token (or clears it with null). */
+export function setCsrfToken(token: string | null): void {
+  csrfToken = token
+}
+
 async function parseBody(response: Response): Promise<unknown> {
   const text = await response.text()
   if (!text) return undefined
@@ -102,6 +115,7 @@ export async function apiFetch<T>(
       headers: {
         Accept: 'application/json',
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(method !== 'GET' && csrfToken !== null ? { 'x-csrf-token': csrfToken } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
       credentials: 'same-origin',

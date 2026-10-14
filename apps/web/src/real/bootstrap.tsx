@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Real-mode composition root (integration ticket 03, ADR-0068).
  *
  * Bootstraps the trusted server document (capabilities + deployment mode)
  * BEFORE any data read happens, then exposes the transport + identity to the
  * app through context. The mock authority, demo timers and seed data are
  * never created in this mode (R02): a bootstrap failure renders an
- * actionable error with an explicit opt-in switch back to demo mode — it
+ * actionable error with an explicit opt-in switch back to demo mode â€” it
  * never falls back automatically.
  */
 import { useQuery, QueryClientProvider } from '@tanstack/react-query'
@@ -16,6 +16,7 @@ import { switchDataMode } from './mode'
 import { REAL_IDENTITY, type RealIdentity } from './identity'
 import { createConsoleQueryClient } from '../state/keys'
 import { Button } from '../ui'
+import { RealLoginGate } from './screens/login'
 
 export { REAL_IDENTITY, REAL_PERSONA, type RealIdentity } from './identity'
 
@@ -64,7 +65,7 @@ function BootLoading() {
     <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-label="Connecting to the Raptix API">
       <div className="flex flex-col items-center gap-3 text-muted">
         <Loader2 size={24} className="animate-spin text-cyan" aria-hidden />
-        <span className="text-sm">Connecting to the Raptix API…</span>
+        <span className="text-sm">Connecting to the Raptix APIâ€¦</span>
       </div>
     </div>
   )
@@ -87,7 +88,7 @@ function RealBoot({ children }: { children: ReactNode }): ReactElement {
   if (boot.isError || !boot.data) {
     return <BootError message={boot.error instanceof Error ? boot.error.message : 'The bootstrap request failed.'} onRetry={() => void boot.refetch()} />
   }
-  return <RealContext.Provider value={{ document: boot.data, identity: REAL_IDENTITY }}>{children}</RealContext.Provider>
+  return <RealContext.Provider value={{ document: boot.data, identity: REAL_IDENTITY }}><RealLoginGate>{children}</RealLoginGate></RealContext.Provider>
 }
 
 /** Whether a capability is usable right now (supported AND available). */

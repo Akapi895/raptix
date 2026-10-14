@@ -1,8 +1,8 @@
-/**
+﻿/**
  * Typed real-mode API adapters (integration tickets 03-04). Every function
  * validates its wire response with the shared web-contracts guards and maps
  * the public DTO onto the console's UI entity shape with explicit unavailable
- * fields — mapping never invents demo values (client, owner, ROE, dates) for
+ * fields â€” mapping never invents demo values (client, owner, ROE, dates) for
  * data the engagement API does not carry.
  */
 import {
@@ -39,7 +39,7 @@ import {
   type GraphView,
   type AssetsView,
 } from '@raptix/web-contracts'
-import { apiFetch } from './transport'
+import { apiFetch, ApiTransportError, setCsrfToken } from './transport'
 
 export type {
   CapabilitiesDocument, Capability, ProjectViewModel, PlanningView,
@@ -97,7 +97,7 @@ export function confirmHandoff(engagementId: string): Promise<ProjectViewModel> 
   })
 }
 
-/* ───────────── Planning documents (ticket 04) ───────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Planning documents (ticket 04) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function fetchPlanning(engagementId: string): Promise<PlanningView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/plan-docs`, owned(engagementId, isPlanningView))
@@ -107,7 +107,7 @@ function owned<T extends { engagementId: string }>(id: string, guard: (v: unknow
   return (v): v is T => guard(v) && v.engagementId === id
 }
 
-/* ───────────── Scoped runtime threads (ticket 04) ───────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Scoped runtime threads (ticket 04) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export interface CreateThreadInput {
   requestId: string
@@ -201,7 +201,7 @@ export function reconcileRequest(engagementId: string, requestId: string): Promi
   )
 }
 
-/* ───────────── Execution runtime (ticket 05) ───────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Execution runtime (ticket 05) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 /** Server-verified runtime context; `executionReady` gates execution runs. */
 export function fetchRuntimeContext(engagementId: string, kind: ThreadKind, threadId: string): Promise<RuntimeContextView> {
@@ -232,7 +232,7 @@ function isApprovalDecision(v: unknown): v is ApprovalDecisionView {
     typeof (v as Record<string, unknown>).decidedAtSeconds === 'number'
 }
 
-/* ───────────── Observed results (ticket 06, read-only) ───────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Observed results (ticket 06, read-only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function fetchFindings(engagementId: string): Promise<FindingsView> {
   return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/findings`, (v): v is FindingsView => isFindingsView(v) && v.engagementId === engagementId && v.findings.every(f => f.engagementId === engagementId))
@@ -290,4 +290,75 @@ export function engagementToProject(dto: ProjectViewModel): import('../domain/en
     members: [],
     updated: dto.updatedAt,
   }
+}
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Identity + team (integration ticket 07) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+import { isMembersView, type MembersView } from '@raptix/web-contracts'
+
+/** Response of GET /api/auth/session (multi-user deployments; local 404s). */
+export interface AuthSessionView {
+  authenticated: boolean
+  actor?: { id: string; username: string; displayName: string }
+  csrfToken?: string
+  mode: 'multi-user'
+}
+
+function isAuthSessionView(v: unknown): v is AuthSessionView {
+  return typeof v === 'object' && v !== null && typeof (v as AuthSessionView).authenticated === 'boolean'
+    && (v as AuthSessionView).mode === 'multi-user'
+}
+
+/**
+ * Resolves the trusted session. A 404 (or any failure that says the route is
+ * absent) means the server runs the local single-user identity â€” the caller
+ * falls back to REAL_IDENTITY instead of inventing a session.
+ */
+export async function fetchAuthSession(): Promise<AuthSessionView | null> {
+  try {
+    return await apiFetch('/auth/session', isAuthSessionView)
+  } catch (error) {
+    if (error instanceof ApiTransportError && (error.status === 404 || error.status === 0)) return null
+    throw error
+  }
+}
+
+export interface LoginInput { username: string; password: string }
+
+export async function login(input: LoginInput): Promise<AuthSessionView> {
+  const view = await apiFetch('/auth/login', isAuthSessionView, { method: 'POST', body: input })
+  setCsrfToken(view.csrfToken ?? null)
+  return view
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await apiFetch('/auth/logout', (v): v is { authenticated: boolean } => typeof v === 'object' && v !== null && typeof (v as { authenticated: unknown }).authenticated === 'boolean', { method: 'POST' })
+  } finally {
+    setCsrfToken(null)
+  }
+}
+
+export function fetchMembers(engagementId: string): Promise<MembersView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/members`, owned(engagementId, isMembersView))
+}
+
+export interface InviteMemberInput { username: string; displayName?: string; password: string; role: 'operator' | 'reviewer' | 'viewer' }
+
+export function inviteMember(engagementId: string, input: InviteMemberInput): Promise<{ ok: true; memberId: string }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/members`, (v): v is { ok: true; memberId: string } =>
+    typeof v === 'object' && v !== null && (v as { ok?: unknown }).ok === true && typeof (v as { memberId?: unknown }).memberId === 'string',
+  { method: 'POST', body: input })
+}
+
+export function updateMemberRole(engagementId: string, memberId: string, role: 'operator' | 'reviewer' | 'viewer'): Promise<{ ok: true; role: string }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/members/${encodeURIComponent(memberId)}`, (v): v is { ok: true; role: string } =>
+    typeof v === 'object' && v !== null && (v as { ok?: unknown }).ok === true && typeof (v as { role?: unknown }).role === 'string',
+  { method: 'PATCH', body: { role } })
+}
+
+export function removeMember(engagementId: string, memberId: string): Promise<{ ok: true }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/members/${encodeURIComponent(memberId)}`, (v): v is { ok: true } =>
+    typeof v === 'object' && v !== null && (v as { ok?: unknown }).ok === true,
+  { method: 'DELETE' })
 }

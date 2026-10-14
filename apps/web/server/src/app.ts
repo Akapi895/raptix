@@ -1,7 +1,10 @@
-import Fastify from 'fastify';
+﻿import Fastify from 'fastify';
 import type { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { getLocalIdentity } from './auth/identity-provider.js';
 import type { LocalIdentity } from './auth/identity-provider.js';
+import type { PrismaClient } from './generated/prisma/client.js';
+import { ActorContextStore, registerMultiUserAuth, sessionAwareIdentity } from './auth/request-identity.js';
+import { ensureBootstrapAdmin, registerAuthRoutes } from './http/routes/auth.routes.js';
 import { registerErrorHandler } from './http/error-handler.js';
 import { registerCapabilitiesRoutes } from './http/routes/capabilities.routes.js';
 import { registerHealthRoutes } from './http/routes/health.routes.js';
@@ -62,6 +65,12 @@ export interface AppOptions {
   readonly vaultKeyConfigured?: boolean;
   /** Local single-user identity; defaults to getLocalIdentity(). */
   readonly identity?: LocalIdentity;
+  /** Ticket 07: `multi` enables session/CSRF/origin auth at the HTTP boundary. */
+  readonly authMode?: 'local' | 'multi';
+  /** Prisma client for session lookup + bootstrap admin; required in multi mode. */
+  readonly authDb?: PrismaClient;
+  readonly secureCookies?: boolean;
+  readonly adminBootstrap?: { readonly username: string; readonly password: string; readonly displayName: string };
   /**
    * Dependency-aware database readiness probe. Its optional `dispose` runs
    * once via the Fastify onClose hook when the app closes.
@@ -73,6 +82,21 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   const app = Fastify({
     logger: options.logger ?? false,
   });
+
+  // Ticket 07: in multi mode the session gate must be registered before any
+  // route so every handler (including previously registered ones is not a
+  // thing â€” registration order below) runs behind the same-origin/CSRF check.
+  const actors = new ActorContextStore();
+  let identity: LocalIdentity = options.identity ?? getLocalIdentity();
+  const multiAuth = options.authMode === 'multi' && options.authDb !== undefined;
+  if (multiAuth && options.authDb) {
+    registerMultiUserAuth(app, actors, {
+      db: options.authDb,
+      publicUrls: ['/api/auth/login', '/api/auth/session', '/api/auth/logout', '/api/health', '/api/health/ready'],
+    });
+    identity = sessionAwareIdentity(actors);
+    registerAuthRoutes(app, options.authDb, actors, options.secureCookies ?? false);
+  }
 
   registerErrorHandler(app);
   registerHealthRoutes(app, { databaseHealth: options.databaseHealth, runtimeContext: options.runtimeContext });
@@ -96,7 +120,6 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   });
 
   if (options.projectsService !== undefined) {
-    const identity: LocalIdentity = options.identity ?? getLocalIdentity();
     registerProjectRoutes(app, {
       service: options.projectsService,
       identity,
@@ -105,16 +128,16 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     });
   }
 
-  if (options.runsService) registerRunRoutes(app, options.runsService, options.identity ?? getLocalIdentity());
-  if (options.streamService) registerEventRoutes(app, options.streamService, options.identity ?? getLocalIdentity());
-  if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, options.identity ?? getLocalIdentity());
-  if (options.findingsService && options.artifactsService) registerFindingsRoutes(app, options.findingsService, options.artifactsService, options.identity ?? getLocalIdentity());
-  if (options.graphService) registerGraphRoutes(app, options.graphService, options.identity ?? getLocalIdentity());
-  if (options.timelineService && options.exportService) registerTimelineRoutes(app, options.timelineService, options.exportService, options.identity ?? getLocalIdentity());
-  if (options.settingsService) registerSettingsRoutes(app, options.settingsService, options.identity ?? getLocalIdentity());
-  if (options.campaignsService && options.c2Service) registerCampaignRoutes(app, options.campaignsService, options.c2Service, options.identity ?? getLocalIdentity());
-  if (options.vaultService) registerVaultRoutes(app, options.vaultService, options.identity ?? getLocalIdentity());
-  if (options.membersService) registerMembersRoutes(app, options.membersService, options.identity ?? getLocalIdentity());
+  if (options.runsService) registerRunRoutes(app, options.runsService, identity);
+  if (options.streamService) registerEventRoutes(app, options.streamService, identity);
+  if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, identity);
+  if (options.findingsService && options.artifactsService) registerFindingsRoutes(app, options.findingsService, options.artifactsService, identity);
+  if (options.graphService) registerGraphRoutes(app, options.graphService, identity);
+  if (options.timelineService && options.exportService) registerTimelineRoutes(app, options.timelineService, options.exportService, identity);
+  if (options.settingsService) registerSettingsRoutes(app, options.settingsService, identity);
+  if (options.campaignsService && options.c2Service) registerCampaignRoutes(app, options.campaignsService, options.c2Service, identity);
+  if (options.vaultService) registerVaultRoutes(app, options.vaultService, identity);
+  if (options.membersService) registerMembersRoutes(app, options.membersService, identity);
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Route host (ticket 07): resolves the store route to a page inside the React
  * Router data router. Owns the auth guard (login rendered in place so the
  * requested protected URL survives sign-in as the safe return destination),
@@ -24,6 +24,7 @@ import { RealProjectCreate } from '../real/screens/create'
 import { RealProjectDetail } from '../real/screens/detail'
 import { RealWorkspace } from '../real/screens/workspace'
 import { RealAssets } from '../real/screens/assets-panel'
+import { RealLogin } from '../real/screens/login'
 import { Button } from '../ui'
 import { Shell } from '../shell'
 import { HeaderNotices } from '../features/notices/header-notices'
@@ -40,6 +41,7 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   project: RealProjectDetail,
   'ai-operator': RealWorkspace,
   assets: RealAssets,
+  login: RealLogin,
 }
 
 /** Holds popstate/URL-edit traversals while a form is dirty and routes the held navigation through the same unsaved-changes modal as in-app navigation. */
@@ -97,10 +99,10 @@ function ResolvedRoute({ route, authed }: { route: Route; authed: boolean }) {
   const key = pageKey(route)
   if (DATA_MODE === 'real') {
     // Real mode (integration ticket 03, ADR-0068): there is no sign-in and no
-    // demo identity — every route either has a real implementation, renders
+    // demo identity â€” every route either has a real implementation, renders
     // itself (system pages that read no console data), or renders the honest
     // unavailable panel (D4). Mock screens are never reached.
-    const Real = REAL_PAGES[route.page] ?? (route.page === 'login' ? RealPortfolio : undefined)
+    const Real = REAL_PAGES[route.page] ?? undefined
     if (Real) {
       return (
         <Shell slots={{}}>

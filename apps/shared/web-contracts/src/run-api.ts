@@ -321,28 +321,30 @@ export function isVaultRevealView(v: unknown): v is VaultRevealView {
   return isNonEmptyString(v.revealedAt) && !Number.isNaN(Date.parse(v.revealedAt))
 }
 /**
- * W19 members: the truthful local single-user topology. The auth bridge
- * always resolves the local operator (no hosted authentication exists), so
- * the view states the mode, the single operator and the explicit reason why
- * invite/RBAC APIs are absent — never a fake Owner/Viewer hierarchy.
+ * W19 members, extended by integration ticket 07: the local single-user
+ * topology stays truthful (single operator, invites unsupported); multi-user
+ * deployments (RAPTIX_WEB_AUTH_MODE=multi) report persisted memberships with
+ * invite/role APIs backed by session-authenticated, server-side checks.
  */
 export interface MemberView {
-  id: string; label: string; role: string; source: 'local'
+  id: string; label: string; role: string; source: 'local' | 'membership'
 }
 export interface MembersView {
-  engagementId: string; mode: 'local-single-user'
+  engagementId: string; mode: 'local-single-user' | 'multi-user'
   members: MemberView[]
   inviteSupported: boolean; reason: string | null
   source: 'db'
 }
 export function isMemberView(v: unknown): v is MemberView {
-  return isRecord(v) && isNonEmptyString(v.id) && isNonEmptyString(v.label) && isNonEmptyString(v.role) && v.source === 'local'
+  return isRecord(v) && isNonEmptyString(v.id) && isNonEmptyString(v.label) && isNonEmptyString(v.role) && (v.source === 'local' || v.source === 'membership')
 }
 export function isMembersView(v: unknown): v is MembersView {
-  if (!isRecord(v) || !isNonEmptyString(v.engagementId) || v.mode !== 'local-single-user') return false
+  if (!isRecord(v) || !isNonEmptyString(v.engagementId)) return false
+  if (v.mode !== 'local-single-user' && v.mode !== 'multi-user') return false
   if (!Array.isArray(v.members) || !v.members.every(isMemberView)) return false
   // In the local single-user topology invites can never be supported; a view
   // claiming otherwise would be a fake membership hierarchy.
-  if (v.inviteSupported !== false || v.source !== 'db') return false
+  if (v.mode === 'local-single-user' && v.inviteSupported !== false) return false
+  if (v.source !== 'db') return false
   return v.reason === null || isNonEmptyString(v.reason)
 }
