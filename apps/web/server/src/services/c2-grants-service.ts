@@ -1,6 +1,7 @@
 import type { PrismaClient, C2Grant } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
+import { assertEngagementOpen } from './closure-service.js';
 import { requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 
 /**
@@ -68,6 +69,7 @@ export class C2GrantsService {
 
   public async request(actorId: string, engagementId: string, input: unknown): Promise<C2GrantView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_REQUEST);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { sessionId?: unknown; reason?: unknown; expiresAt?: unknown; commandPrefix?: unknown };
     const sessionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : '';
     const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
@@ -119,6 +121,7 @@ export class C2GrantsService {
 
   /** The command gate wired into C2Service.dispatchCommand. */
   public async assertCommandAuthorized(engagementId: string, sessionId: string, actorId: string): Promise<void> {
+    await assertEngagementOpen(this.db, engagementId);
     await this.sweep(engagementId);
     const grant = await this.db.c2Grant.findFirst({
       where: { engagementId, sessionId, actorId, status: 'approved' },

@@ -38,6 +38,7 @@ import { LibraryService } from './services/library-service.js';
 import { InboxService } from './services/inbox-service.js';
 import { WorkspaceSettingsService } from './services/workspace-settings-service.js';
 import { AuditService } from './services/audit-service.js';
+import { ClosureService } from './services/closure-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
@@ -98,11 +99,21 @@ async function main(): Promise<void> {
 
   const ownership = dbClient ? new RuntimeOwnershipService(dbClient) : undefined;
   const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl) : undefined;
+  const approvalsService = dbClient && projectsService && env.workspacePath ? new ApprovalsService(dbClient, env.workspacePath) : undefined;
+  const closureService = dbClient ? new ClosureService(dbClient, approvalsService ? async (userId, engagementId) => (await approvalsService.list(userId, engagementId)).approvals.length : undefined) : undefined;
   const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
-    ? new RuntimeContextService({ config: runtimeConfig, projects: projectsService, ownership, workspaceRoot: env.workspacePath, runtime }) : undefined;
+    ? new RuntimeContextService({
+        config: runtimeConfig,
+        projects: projectsService,
+        ownership,
+        workspaceRoot: env.workspacePath,
+        runtime,
+        // Ticket 17: every create-thread/submit/resume resolves context first —
+        // this is the atomic post-close execution gate.
+        assertEngagementOpen: closureService ? (engagementId) => closureService.assertOpen(engagementId) : undefined,
+      }) : undefined;
   const runsService = ownership && runtimeContext && runtime ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime }) : undefined;
   const fleetService = dbClient && runtimeContext && runsService ? new FleetService(dbClient, runtimeContext, runsService) : undefined;
-  const approvalsService = dbClient && projectsService && env.workspacePath ? new ApprovalsService(dbClient, env.workspacePath) : undefined;
   const findingsService = dbClient && env.workspacePath ? new FindingsService(dbClient, env.workspacePath) : undefined;
   const artifactsService = dbClient && env.workspacePath ? new ArtifactsService(dbClient, env.workspacePath) : undefined;
   const graphService = dbClient && env.graph ? new GraphService(dbClient, env.graph) : undefined;
@@ -148,6 +159,7 @@ async function main(): Promise<void> {
   inboxService,
   workspaceSettings,
   auditService,
+  closureService,
   vaultService,
   membersService,
   scopeService,

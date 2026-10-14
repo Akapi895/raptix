@@ -2,6 +2,7 @@
 import { ProjectApiError } from './projects-service.js';
 import { createNotice } from './inbox-service.js';
 import { assertNotExpired, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
+import { assertEngagementOpen } from './closure-service.js';
 
 /**
  * Ticket 08: operator-managed scope/ROE revisions with persisted independent
@@ -124,6 +125,7 @@ export class ScopeService {
 
   public async submitRevision(actorId: string, engagementId: string, input: unknown): Promise<RevisionView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_WRITE);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { diff?: unknown; roe?: unknown };
     const diff = normalizeDiff(body.diff);
     const roe = normalizeRoe(body.roe);
@@ -201,6 +203,7 @@ export class ScopeService {
 
   public async importAssets(actorId: string, engagementId: string, input: unknown): Promise<{ imported: number; skipped: number }> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_WRITE);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { identifiers?: unknown; kind?: unknown };
     const identifiers = Array.isArray(body.identifiers) ? body.identifiers.filter((v): v is string => typeof v === 'string' && v.trim().length > 0).map((v) => v.trim()) : [];
     if (identifiers.length === 0) throw new ProjectApiError(400, 'identifiers (non-empty array) is required.');
@@ -220,6 +223,7 @@ export class ScopeService {
 
   public async classifyAsset(actorId: string, engagementId: string, assetId: string, input: unknown): Promise<AssetView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, MIN_WRITE);
+    await assertEngagementOpen(this.db, engagementId);
     const body = (input ?? {}) as { classification?: unknown };
     const classification = typeof body.classification === 'string' ? body.classification : '';
     if (classification !== 'in_scope' && classification !== 'out_of_scope' && classification !== 'pending') {

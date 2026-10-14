@@ -26,7 +26,7 @@ export function parseContextSelection(raw: unknown): ContextSelection {
   return v as unknown as ContextSelection;
 }
 export class RuntimeContextService {
-  public constructor(private readonly options: { config: RuntimeConfig; workspaceRoot: string; projects: Pick<ProjectsService, 'getProject' | 'getPlanning'>; ownership: Pick<RuntimeOwnershipService, 'getBinding' | 'prepareBinding'>; runtime: RuntimeReadPort }) {}
+  public constructor(private readonly options: { config: RuntimeConfig; workspaceRoot: string; projects: Pick<ProjectsService, 'getProject' | 'getPlanning'>; ownership: Pick<RuntimeOwnershipService, 'getBinding' | 'prepareBinding'>; runtime: RuntimeReadPort; assertEngagementOpen?: (engagementId: string) => Promise<void> }) {}
   public async agents(): Promise<{ source: 'runtime'; graphs: readonly string[] }> {
     const graphs = await this.options.runtime.catalog();
     return { source: 'runtime', graphs: graphs.filter(g => this.options.config.assistants.includes(g)) };
@@ -35,6 +35,9 @@ export class RuntimeContextService {
     const selection = parseContextSelection(raw);
     const { projects, ownership, runtime, config } = this.options;
     const project = await projects.getProject(userId, engagementId);
+    // Ticket 17: closed engagements refuse execution at the context gate —
+    // every create-thread/submit/resume passes through here.
+    if (this.options.assertEngagementOpen !== undefined) await this.options.assertEngagementOpen(engagementId);
     assertProjectTarget(project.targetType, project.targetValue);
     const dir = await resolveEngagementWorkspaceDir(this.options.workspaceRoot, project.workspaceSlug);
     let realRoot: string;
