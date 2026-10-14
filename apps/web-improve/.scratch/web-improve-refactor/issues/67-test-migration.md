@@ -135,3 +135,22 @@ existing Vite config-loader warning and two jsdom document-navigation notices.
   expired at/after it); the admin decision runs through plans.decide with
   an explicit Dana actor. 11/11 pass (33 across the three-file run).
 - Typecheck exit 0; all three touched files lint with zero diagnostics.
+
+## T2 router/screens inbox batch (Batch E)
+
+- router/routes.test.tsx migrated: mountApp is mountServices +
+  esetNavStores + setActiveRouter with a bare RouteHost; authed,
+  pid, dirty and route reads use the auth/project/session stores and
+  currentRoute; the single-writer closure test drops its store.tsx
+  carve-out ahead of the deletion. 12/12 pass.
+- screens/tasks and screens/dashboard migrated: PendingProbe stays in the
+  router tree; persona/project switches use the auth store and
+  selectProject; the inbox approval cases run
+  equestPlanReviewTransaction (Taylor: the typed boundary correctly
+  refuses reviewer-initiated review requests, so the persona restates to a
+  plan-capable member — the countdown assertions are unchanged) and
+  submitApprovalTransaction; dashboard creation runs
+  createProjectTransaction and reselects the created project (the legacy
+  action's setPid is restated explicitly). 23/23 and 20/20 pass
+  (55 across the three-file run).
+- Typecheck exit 0; all three touched files lint with zero diagnostics.
