@@ -25,6 +25,7 @@
 import { projectAccessible, projectLocked, can as policyCan } from '../../auth/policy'
 import type { CanAction } from '../../domain/permissions'
 import { formatDemoInstant } from '../../domain/clock'
+import { stamp } from '../../domain/demo-clock'
 import { TECHNIQUES, type Db } from '../../data'
 import type { DbAuthority } from '../../domain/database'
 import type { Clock, RequestContext, ServiceFailure, ServiceResult } from '../../domain/service'
@@ -738,6 +739,19 @@ export function recordFindingRetest(authority: DbAuthority, clock: Clock, ctx: R
     else if (backToRemediation) { f.status = 'remediation'; f.history.push({ at, by: ctx.actor.id, text: `Sent to remediation: Retest not passed (${input.result}): ${input.note.trim()}` }) }
     f.updated = at
     d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at, actor: ctx.actor.id, role: ROLE_TEXT[ctx.actor.role], action: 'Retested', obj: id, projectId: f.projectId, result: 'Success', reason: input.note.trim() })
+  })
+  return { ok: true, data: authority.snapshot().findings.find((x) => x.id === id)! }
+}
+
+/**
+ * Ticket 67 wave 6: the legacy `A.addFindingComment` entry, verbatim — one
+ * raw comment append (no history entry, no audit row, no `updated` bump),
+ * so the detail screen's composer keeps its exact behavior while the store
+ * retires. The actor id is the comment author, matching the legacy entry.
+ */
+export function addFindingCommentTransaction(authority: DbAuthority, ctx: RequestContext, id: string, text: string): ServiceResult<Finding> {
+  authority.commit(ctx.corr, (d) => {
+    d.findings.find((x) => x.id === id)!.comments.push({ by: ctx.actor.id, at: stamp(), text })
   })
   return { ok: true, data: authority.snapshot().findings.find((x) => x.id === id)! }
 }

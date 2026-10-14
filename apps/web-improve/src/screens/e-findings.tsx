@@ -1,14 +1,20 @@
-import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { AlertTriangle, Bug, Download, ExternalLink, FileImage, FilePlus2, FileText, Link2, Lock, Sparkles, Eye, EyeOff, Fingerprint, X, Search, Paperclip, Pencil, Plus, RotateCcw, Send, ShieldCheck, Upload } from 'lucide-react'
-import { canAccessProject, useDirty, useStore } from '../store'
+import { canAccessProject, useDirty, useServices } from '../store'
 import { ROLE_LABEL } from '../auth/policy'
-import { sevLabel } from '../features/findings/service'
+import { sevLabel, addFindingCommentTransaction } from '../features/findings/service'
+import { setReportFindingsLegacyTransaction } from '../features/reports/service'
 import { TECHNIQUES, type Finding, type FindingStatus, type Severity } from '../data'
 import { EvidenceReadError, FindingReadError, useEvidenceDetail, useEvidenceList, useFindingDetail, useFindingList, useFindingWrites } from '../features/findings/query'
 import type { EvidenceView, FindingSort, FindingTransitionTarget } from '../features/findings/service'
 import {
   Banner, Button, Card, CardHeader, Check, DescList, Drawer, Empty, Field, FilterBar, Input, Kpi, Locked, Modal, Mono, PageHeader, Pager, Person, PersonaHint, SearchBox, Segmented, Select, Sev, Skeleton, Status, Table, Tabs, Textarea, Timeline, cx, useGuard,
 } from '../ui'
+import { go, useRoute } from '../router/navigate'
+import { useAccessible, useActiveProject, useCan, useDb, useMe, useReadOnly } from '../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { stamp } from '../domain/demo-clock'
 
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const STATUSES: FindingStatus[] = ['draft', 'review', 'returned', 'confirmed', 'remediation', 'retest', 'resolved']
@@ -23,9 +29,25 @@ const TABS: { id: string; label: string }[] = [
   { id: 'remediation', label: 'Remediation' },
 ]
 
+/**
+ * Delayed navigation scoped to the component's mount: a captured redirect
+ * that outlives the provider must not move a later mount's projected route —
+ * sequential provider mounts (the test suites) rely on that isolation, which
+ * the store's epoch-scoped `go` used to give (router enabler B). A screen
+ * taking the module `go` recovers it with this liveness guard.
+ */
+function useDelayedNav() {
+  const alive = useRef(true)
+  useEffect(() => () => { alive.current = false }, [])
+  return (fn: () => void, ms: number) => window.setTimeout(() => { if (alive.current) fn() }, ms)
+}
+
 /** Reason creation is not allowed (empty = allowed) */
 function useCreateReason(projectId?: string) {
-  const { pid, can, readOnly, me } = useStore()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const readOnly = useReadOnly()
+  const me = useMe()
   const p = projectId || pid
   if (p === 'all') return 'Select a specific project before creating a finding.'
   if (readOnly(p)) return me.role === 'viewer' ? 'The Client / Viewer role is read-only.' : 'Project is closed — read-only.'
@@ -41,9 +63,20 @@ function useCreateReason(projectId?: string) {
  * at the handler) — curation and the submit to review stay human-driven.
  */
 function useAiActions() {
-  const { A, confirm, toast, go, can, readOnly, me, persistFilters, setFilter } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
+  const can = useCan()
+  const readOnly = useReadOnly()
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
   const writes = useFindingWrites()
-  const dismissed: Record<string, string> = persistFilters['fd-dismissed'] || {}
+  /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
+     through the one authority (the typed dismiss path has no audit row). */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+  const dismissed: Record<string, string> = (persistFilters['fd-dismissed'] as Record<string, string> | undefined) || {}
   const why = (f: Finding) => (readOnly(f.projectId) ? 'Project is read-only.' : !can('createFinding', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot verify or dismiss AI suggestions. An Analyst or Operator can.` : '')
   const verify = (f: Finding) => confirm({
     title: `Verify & import ${f.id} as a draft?`, confirmLabel: 'Verify & create finding',
@@ -57,7 +90,7 @@ function useAiActions() {
   const dismiss = (f: Finding) => confirm({
     title: `Dismiss ${f.id}?`, confirmLabel: 'Dismiss suggestion', danger: true, reasonLabel: 'Reason for dismissing', reasonRequired: true,
     body: 'The suggestion is removed from the active AI Suggestions list. It is never added to confirmed counts or reports. The reason is recorded.',
-    onConfirm: (r) => { setFilter('fd-dismissed', { ...dismissed, [f.id]: r }); A.addFindingComment(f.id, `AI suggestion dismissed: ${r}`); A.audit('Dismissed AI suggestion', f.id, f.projectId, 'Success', r); toast(`${f.id} dismissed.`, 'warn') },
+    onConfirm: (r) => { setFilter('fd-dismissed', { ...dismissed, [f.id]: r }); addFindingCommentTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: f.projectId, corr: 'legacy' }, f.id, `AI suggestion dismissed: ${r}`); audit('Dismissed AI suggestion', f.id, f.projectId, 'Success', r); toast(`${f.id} dismissed.`, 'warn') },
   })
   return { dismissed, why, verify, dismiss, restore: (f: Finding) => { const d = { ...dismissed }; delete d[f.id]; setFilter('fd-dismissed', d) } }
 }
@@ -88,7 +121,11 @@ function MoreFilters({ children, active }: { children: ReactNode; active: number
  * the detail form still use the bridged legacy routes (owner: ticket 32).
  */
 function FindingList() {
-  const { go, pid, project, setSwitcherOpen, accessible, route } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const accessible = useAccessible()
   const ai = useAiActions()
   const [q, setQ] = useState('')
   const [sev, setSev] = useState('')
@@ -207,11 +244,14 @@ function FindingList() {
  * content, with an explicit switch offered here.
  */
 function FindingDenied({ id, error }: { id?: string; error: FindingReadError }) {
-  const { go, pid, setPid, setSwitcherOpen } = useStore()
+  const pid = useProjectStore((s) => s.pid)
+  const setPid = useProjectStore((s) => s.setPid)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const nav = useDelayedNav()
   const other = error.failure.kind === 'forbidden' ? error.failure.entity?.projectId : undefined
   if (other) {
     return (
-      <Empty icon={Lock} title={`Finding ${id} belongs to another project`} action={<div className="flex gap-2"><Button variant="primary" onClick={() => { setPid(other); setTimeout(() => go('finding', { id }), 80) }}>Switch to {other}</Button><Button onClick={() => setSwitcherOpen(true)}>Select another project</Button></div>}>
+      <Empty icon={Lock} title={`Finding ${id} belongs to another project`} action={<div className="flex gap-2"><Button variant="primary" onClick={() => { setPid(other); nav(() => go('finding', { id }), 80) }}>Switch to {other}</Button><Button onClick={() => setSwitcherOpen(true)}>Select another project</Button></div>}>
         The selected project is {pid}. To avoid mixing data, content from {other} is not shown in this context.
       </Empty>
     )
@@ -233,7 +273,16 @@ interface Draft { title: string; severity: Severity; severityReason: string; ass
  * in the form with the failure message rendered above it.
  */
 function FindingForm() {
-  const { db, me, pid, route, go, toast, persistFilters, setFilter, setSwitcherOpen, can } = useStore()
+  const route = useRoute()
+  const db = useDb()
+  const me = useMe()
+  const pid = useProjectStore((s) => s.pid)
+  const toast = useToastStore((s) => s.toast)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const can = useCan()
+  const nav = useDelayedNav()
   const writes = useFindingWrites()
   const editing = route.id ? db.findings.find((f) => f.id === route.id) : undefined
   const projectId = editing?.projectId || (pid !== 'all' ? pid : '')
@@ -275,7 +324,7 @@ function FindingForm() {
   const finish = (id: string, msg: string) => {
     setSaved(true)
     toast(msg)
-    setTimeout(() => go('finding', { id }), 80)
+    nav(() => go('finding', { id }), 80)
   }
   const [saving, setSaving] = useState(false)
   const [saveErr, setSaveErr] = useState<string | null>(null)
@@ -439,7 +488,14 @@ const FLOW_IDX: Record<string, number> = { ai_suggested: -1, draft: 0, returned:
  * the bridged legacy actions until ticket 36 migrates reports.
  */
 function FindingDetail() {
-  const { route, go, can, readOnly, me, A, confirm, toast, db, setPid, setSwitcherOpen } = useStore()
+  const route = useRoute()
+  const can = useCan()
+  const readOnly = useReadOnly()
+  const me = useMe()
+  const services = useServices()
+  const confirm = useSessionStore((s) => s.confirm)
+  const toast = useToastStore((s) => s.toast)
+  const db = useDb()
   const writes = useFindingWrites()
   const detail = useFindingDetail(route.id)
   const [note, setNote] = useState('')
@@ -506,7 +562,7 @@ function FindingDetail() {
     <Button key="rep" icon={FilePlus2} disabled={!!reportReason} title={reportReason || 'Add this finding to a report in the same project'} onClick={() => setRep(true)}>Add to Report</Button>,
   )
 
-  const postComment = () => { if (!note.trim()) return; A.addFindingComment(f.id, note.trim()); setNote(''); toast('Comment posted.') }
+  const postComment = () => { if (!note.trim()) return; addFindingCommentTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: f.projectId, corr: 'legacy' }, f.id, note.trim()); setNote(''); toast('Comment posted.') }
 
   return (
     <div>
@@ -614,7 +670,10 @@ function FindingDetail() {
 }
 
 function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: () => void; f: Finding; reports: { id: string; title: string; version: string; status: string; findings: string[] }[] }) {
-  const { A, go, toast, setFilter } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const setFilter = useSessionStore((s) => s.setFilter)
   return (
     <Modal open={open} onClose={onClose} title="Add finding to report" footer={<Button onClick={onClose}>Close</Button>}>
       <p className="mb-3 text-muted">Only editable reports in the same project <Mono>{f.projectId}</Mono> are shown.</p>
@@ -625,7 +684,7 @@ function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: ()
             return (
               <li key={r.id} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2.5">
                 <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{r.title}</div><div className="text-xs text-muted"><Mono>{r.id}</Mono> · {r.version} · {r.findings.length} finding(s)</div></div>
-                <Button size="sm" variant="primary" onClick={() => { if (!has) A.setReportFindings(r.id, [...r.findings, f.id]); toast(has ? `${f.id} is already in ${r.id}.` : `Added ${f.id} to ${r.id}.`); onClose(); go('report', { id: r.id }) }}>{has ? 'Open report' : 'Add'}</Button>
+                <Button size="sm" variant="primary" onClick={() => { if (!has) setReportFindingsLegacyTransaction(services.authority, { actor: { id: me.name, role: me.role }, projectId: f.projectId, corr: 'legacy' }, r.id, [...r.findings, f.id]); toast(has ? `${f.id} is already in ${r.id}.` : `Added ${f.id} to ${r.id}.`); onClose(); go('report', { id: r.id }) }}>{has ? 'Open report' : 'Add'}</Button>
               </li>
             )
           })}
@@ -639,7 +698,10 @@ function AddToReport({ open, onClose, f, reports }: { open: boolean; onClose: ()
 /* ───────────── Evidence tab (ticket 31: masked read; ticket 32: typed link/upload) ───────────── */
 const OK_EXT = ['png', 'jpg', 'jpeg', 'txt', 'log', 'json', 'csv', 'pdf']
 function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: boolean }) {
-  const { db, can, toast, me, go } = useStore()
+  const db = useDb()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
+  const me = useMe()
   const writes = useFindingWrites()
   const [view, setView] = useState<EvidenceView | null>(null)
   const [attach, setAttach] = useState(false)
@@ -698,7 +760,7 @@ function EvidenceTab({ f, evs, ro }: { f: Finding; evs: EvidenceView[]; ro: bool
 }
 
 function UploadModal({ open, onClose, f }: { open: boolean; onClose: () => void; f: Finding }) {
-  const { toast } = useStore()
+  const toast = useToastStore((s) => s.toast)
   const writes = useFindingWrites()
   const [name, setName] = useState('')
   const [kind, setKind] = useState('Image')
@@ -762,7 +824,9 @@ const RETEST_STATE: Record<string, { label: string; tone: 'ok' | 'bad' | 'warn' 
   'Resolved': { label: 'Resolved', tone: 'ok' }, 'Persists': { label: 'Still present', tone: 'bad' }, 'Partial': { label: 'Partially resolved', tone: 'warn' },
 }
 function RetestTab({ f, ro, roReason }: { f: Finding; ro: boolean; roReason: string }) {
-  const { toast, can, me } = useStore()
+  const toast = useToastStore((s) => s.toast)
+  const can = useCan()
+  const me = useMe()
   const writes = useFindingWrites()
   const [result, setResult] = useState('Resolved')
   const [note, setNote] = useState('')
@@ -820,7 +884,7 @@ function RetestTab({ f, ro, roReason }: { f: Finding; ro: boolean; roReason: str
  * are handler refusals rendered as errors, never content.
  */
 function EvidenceList() {
-  const { go, pid } = useStore()
+  const pid = useProjectStore((s) => s.pid)
   const [q, setQ] = useState('')
   const [kind, setKind] = useState('')
   const list = useEvidenceList({ q: q || undefined, kind: kind || undefined })
@@ -868,7 +932,18 @@ function EvidenceList() {
  * offers an explicit, access-checked switch.
  */
 function EvidenceInspector() {
-  const { route, go, pid, setPid, setSwitcherOpen, A, toast, confirm, setFilter, me, can, readOnly } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const setPid = useProjectStore((s) => s.setPid)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const services = useServices()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const confirm = useSessionStore((s) => s.confirm)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const can = useCan()
+  const readOnly = useReadOnly()
+  const nav = useDelayedNav()
   const [orig, setOrig] = useState(false)
   const [log, setLog] = useState<{ at: string; text: string }[]>([])
   const detail = useEvidenceDetail(route.id || undefined)
@@ -879,7 +954,7 @@ function EvidenceInspector() {
     const other = err.kind === 'forbidden' ? err.entity?.projectId : undefined
     if (other) {
       return (
-        <Empty icon={Lock} title={`Evidence ${route.id} belongs to another project`} action={<div className="flex gap-2"><Button variant="primary" onClick={() => { setPid(other); setTimeout(() => go('evidence', { id: route.id }), 80) }}>Switch to {other}</Button><Button onClick={() => setSwitcherOpen(true)}>Select another project</Button></div>}>
+        <Empty icon={Lock} title={`Evidence ${route.id} belongs to another project`} action={<div className="flex gap-2"><Button variant="primary" onClick={() => { setPid(other); nav(() => go('evidence', { id: route.id }), 80) }}>Switch to {other}</Button><Button onClick={() => setSwitcherOpen(true)}>Select another project</Button></div>}>
           The selected project is {pid}. To avoid mixing data, content from {other} is not shown in this context.
         </Empty>
       )
@@ -898,9 +973,13 @@ function EvidenceInspector() {
   const ro = readOnly(ev.projectId)
   const createWhy = ro ? 'Project is read-only.' : !can('createFinding', ev.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot create findings.` : ''
   const sample = ev.kind === 'JSON' ? '{\n  "role": "service-demo",\n  "permissions": ["read", "list"]\n}' : 'user=demo_account\ngroups=Users, Backup (simulated)\n[synthetic content — no real data]'
+  /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
+     through the one authority. */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const toggle = () => {
     if (!orig) {
-      confirm({ title: 'View original content?', confirmLabel: 'View original', body: 'Original (unmasked) content will be shown on screen. This access is recorded in the review log (simulated).', onConfirm: () => { setOrig(true); setLog((l) => [{ at: 'Just now (UTC+7)', text: `${me.name} viewed original content` }, ...l]); A.audit('Viewed original evidence', ev.ref, ev.projectId) } })
+      confirm({ title: 'View original content?', confirmLabel: 'View original', body: 'Original (unmasked) content will be shown on screen. This access is recorded in the review log (simulated).', onConfirm: () => { setOrig(true); setLog((l) => [{ at: 'Just now (UTC+7)', text: `${me.name} viewed original content` }, ...l]); audit('Viewed original evidence', ev.ref, ev.projectId) } })
     } else { setOrig(false); toast('Masked view restored.', 'info') }
   }
   const createFinding = () => {
