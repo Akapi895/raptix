@@ -11,8 +11,11 @@
  */
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import { Activity, Lock, ShieldAlert } from 'lucide-react'
-import { useStore } from '../store'
+import { go, useRoute } from '../router/navigate'
 import type { Route } from '../router/history'
+import { useActiveProject, useMe } from '../state/console'
+import { useSessionStore } from '../state/session'
+import { useToastStore, useUiStore } from '../state/stores'
 import { Banner, Button, Modal, Field, Textarea, Tabs, Segmented, cx } from '../ui'
 import { CopilotDrawer } from '../features/copilot/drawer'
 import { DemoGuide } from '../screens/demo/guide'
@@ -29,7 +32,11 @@ export interface ShellSlots extends HeaderSlots {
 
 /* ───────────── Global modals ───────────── */
 function GlobalModals() {
-  const { confirmState, closeConfirm, unsaved, closeUnsaved, toast } = useStore()
+  const confirmState = useSessionStore((s) => s.confirmState)
+  const closeConfirm = useSessionStore((s) => s.closeConfirm)
+  const unsaved = useSessionStore((s) => s.unsaved)
+  const closeUnsaved = useSessionStore((s) => s.closeUnsaved)
+  const toast = useToastStore((s) => s.toast)
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
   useEffect(() => { setReason(''); setErr('') }, [confirmState])
@@ -71,7 +78,7 @@ function GlobalModals() {
   )
 }
 function Toasts() {
-  const { toasts } = useStore()
+  const toasts = useToastStore((s) => s.toasts)
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2" aria-live="polite">
       {toasts.map((t) => (
@@ -90,7 +97,7 @@ function Toasts() {
  * same-page tab/filter updates stay silent (no duplicate live-region output).
  */
 function RouteAnnouncer() {
-  const { route } = useStore()
+  const route = useRoute()
   const ref = useRef<HTMLParagraphElement>(null)
   const nav = NAV.flatMap((g) => g.items).find((i) => i.match.includes(route.page))
   const text = `Navigated to ${nav?.label || route.page}${route.id ? ` ${route.id}` : ''}`
@@ -102,7 +109,13 @@ function RouteAnnouncer() {
 
 /* ───────────── Shell ───────────── */
 export function Shell({ children, slots = {} }: { children: ReactNode; slots?: ShellSlots }) {
-  const { project, loading, me, go, route, copilotOpen, setNoticesOpen, setSwitcherOpen } = useStore()
+  const project = useActiveProject()
+  const loading = useSessionStore((s) => s.loading)
+  const me = useMe()
+  const copilotOpen = useUiStore((s) => s.copilotOpen)
+  const setNoticesOpen = useUiStore((s) => s.setNoticesOpen)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const route = useRoute()
   const [collapsed, setCollapsed] = useState(false)
   const [mobile, setMobile] = useState(false)
   useEffect(() => { document.title = 'Raptix — AI Red Team Platform' }, [])

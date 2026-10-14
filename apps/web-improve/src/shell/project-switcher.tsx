@@ -1,18 +1,31 @@
 /**
  * Project switcher (ticket 08b, extracted from the shell monolith verbatim).
  *
- * Scope selection flows through the shared active-project authority
- * (`pid`/`setPid` on the store context, which forwards to the ticket-05
- * project store) — this component owns no project state. Access gating,
- * search/filter tabs and the isolation invariants are unchanged.
+ * Scope selection flows through the shared active-project authority (the
+ * ticket-05 project store's `pid` read here; selection goes through the
+ * navigate module's guarded `selectProject`) — this component owns no
+ * project state. Access gating, search/filter tabs and the isolation
+ * invariants are unchanged.
  */
 import { useMemo, useState } from 'react'
 import { Check as CheckIcon, ChevronDown, FolderKanban, Layers, Loader2, Lock, Pin } from 'lucide-react'
-import { useStore } from '../store'
+import { go, selectProject, useRoute } from '../router/navigate'
+import { useAccessible, useActiveProject, useCan, useDb, useMe } from '../state/console'
+import { useSessionStore } from '../state/session'
+import { useProjectStore, useUiStore } from '../state/stores'
 import { Button, cx, SearchBox, Status } from '../ui'
 
 export function ProjectSwitcher() {
-  const { db, accessible, pid, setPid, project, switcherOpen, setSwitcherOpen, go, can, me, loading, route } = useStore()
+  const db = useDb()
+  const accessible = useAccessible()
+  const pid = useProjectStore((s) => s.pid)
+  const project = useActiveProject()
+  const switcherOpen = useUiStore((s) => s.switcherOpen)
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
+  const can = useCan()
+  const me = useMe()
+  const loading = useSessionStore((s) => s.loading)
+  const route = useRoute()
   const isNew = route.page === 'project-new'
   const [tab, setTab] = useState<'recent' | 'pinned' | 'all'>('recent')
   const [q, setQ] = useState('')
@@ -59,7 +72,7 @@ export function ProjectSwitcher() {
               ))}
             </div>
             <div className="no-scrollbar max-h-[320px] overflow-y-auto">
-              <button onClick={() => setPid('all')} className={cx('mb-1 flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-left hover:bg-hover', pid === 'all' && 'bg-hover')}>
+              <button onClick={() => selectProject('all')} className={cx('mb-1 flex min-h-12 w-full items-center gap-3 rounded-[10px] px-3 text-left hover:bg-hover', pid === 'all' && 'bg-hover')}>
                 <Layers size={16} className="text-cyan" aria-hidden />
                 <div className="flex-1"><div className="text-sm font-medium">All Projects</div><div className="text-xs text-muted">Aggregate view — read-only, cannot start operations</div></div>
                 {pid === 'all' && <CheckIcon size={16} className="text-accent" aria-label="Current" />}
@@ -69,7 +82,7 @@ export function ProjectSwitcher() {
               ) : list.map((p) => {
                 const ok = accessIds.has(p.id)
                 return (
-                  <button key={p.id} disabled={!ok} title={ok ? undefined : 'No access'} onClick={() => setPid(p.id)} className={cx('flex min-h-14 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left', ok ? 'hover:bg-hover' : 'cursor-not-allowed opacity-60', pid === p.id && 'bg-hover')}>
+                  <button key={p.id} disabled={!ok} title={ok ? undefined : 'No access'} onClick={() => selectProject(p.id)} className={cx('flex min-h-14 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left', ok ? 'hover:bg-hover' : 'cursor-not-allowed opacity-60', pid === p.id && 'bg-hover')}>
                     {p.pinned ? <Pin size={14} className="shrink-0 text-warn" aria-label="Pinned" /> : <span className="w-3.5" />}
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium"><span className="font-mono text-[13px]">{p.id}</span> · {p.name}</div>

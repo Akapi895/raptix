@@ -6,12 +6,12 @@
  */
 import { useEffect } from 'react'
 import { Crosshair, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
-import { useStore } from '../store'
+import { go, useRoute } from '../router/navigate'
 import { cx } from '../ui'
 import { NAV, useBadges } from './nav'
 
 export function Sidebar({ collapsed, setCollapsed, mobileOpen, closeMobile }: { collapsed: boolean; setCollapsed: (b: boolean) => void; mobileOpen: boolean; closeMobile: () => void }) {
-  const { route, go } = useStore()
+  const route = useRoute()
   const badges = useBadges()
   const navKey = (e: React.KeyboardEvent<HTMLElement>) => {
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return

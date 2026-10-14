@@ -17,9 +17,15 @@
  * authority (orphaned, invisible) — the same isolation the provider's
  * closure-bound `later` used to give, and the navigation module's
  * mount-epoch guard gives for routes.
+ *
+ * The demo reset (ticket 67 wave 2) lives here too: it disposes the tracked
+ * timers, reseeds the one dataset through the runtime's services, rebuilds
+ * the live logs and clears the transient session/UI/toast state — the exact
+ * sequence the provider's `resetDemo` ran (loading and the stop-outcome
+ * switch are left alone).
  */
-import { USERS } from '../../data'
-import { useAuthStore } from '../../state/stores'
+import { USERS, type SeedVariant } from '../../data'
+import { useAuthStore, useProjectStore, useToastStore, useUiStore } from '../../state/stores'
 import { useSessionStore, type LogLine } from '../../state/session'
 import { hhmm, stamp } from '../../domain/demo-clock'
 import { ROLE_LABEL } from '../../auth/policy'
@@ -204,4 +210,38 @@ export function terminateSession(sessionId: string, reason: string) {
   mutate(r, (d) => { const x = d.sessions.find((y) => y.id === sessionId)!; x.state = 'revoking'; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: `Termination requested by ${currentActor(r).id}: ${reason}` }) })
   audit(r, 'Terminated session', sessionId, s.projectId, 'Success', reason)
   later(r, (rr) => mutate(rr, (d) => { const x = d.sessions.find((y) => y.id === sessionId)!; if (x.state === 'revoking') { x.state = 'terminated'; x.grants = []; x.transcript.push({ ts: hhmm() + ':00', who: 'system', text: 'Session terminated. All grants revoked.' }) } }), 2000)
+}
+
+/* ───────────── Demo reset (ticket 67 wave 2) ───────────── */
+
+/** Rebuilds the demo's live logs from a dataset snapshot (moved verbatim from the provider). */
+export const buildLogs = (d: Db) => {
+  const init: Record<string, LogLine[]> = {}
+  d.operations.forEach((o) => {
+    init[o.id] = o.steps.filter((s) => s.ts !== '—').flatMap((s) => [
+      { id: o.id + s.id + 'a', ts: s.ts + ':00', level: 'INFO' as const, agent: s.agent, stepId: s.id, text: `Started step ${s.id} — ${s.name}` },
+      ...(s.status === 'running' ? [] : [{ id: o.id + s.id + 'b', ts: s.ts + ':30', level: (s.status === 'fail' ? 'ERROR' : 'INFO') as 'ERROR' | 'INFO', agent: s.agent, stepId: s.id, text: s.status === 'fail' ? `Step ${s.id} failed: ${s.output}` : `Completed step ${s.id} (${s.dur})` }]),
+    ])
+  })
+  return init
+}
+
+/**
+ * The demo reset, verbatim from the provider's `resetDemo`: disposes the
+ * runtime's tracked timers, reseeds the one dataset (the 'reset' publication
+ * re-arms the grant lifecycle and invalidates the Query caches), rebuilds the
+ * live logs from the fresh dataset and clears the demo's transient
+ * session/UI/toast state. Loading and the stop-outcome switch stay as they
+ * are, and the final info toast names the e2e01 scenario dataset.
+ */
+export function resetDemo(scenario: SeedVariant = 'default') {
+  const r = demand()
+  resetDemoRuntime()
+  r.services.reset(scenario)
+  useSessionStore.getState().setLogs(buildLogs(r.services.authority.snapshot()))
+  useSessionStore.getState().clearTransient()
+  useProjectStore.getState().setPid('all')
+  useUiStore.getState().clearTransient()
+  useToastStore.getState().clear()
+  useToastStore.getState().toast(scenario === 'e2e01' ? 'Demo state reset — RT-2026-017 scenario dataset loaded.' : 'Demo state reset.', 'info')
 }
