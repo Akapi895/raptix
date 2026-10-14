@@ -646,3 +646,47 @@ export function deliverReport(engagementId: string, reportId: string, input: { k
     typeof v === 'object' && v !== null && Array.isArray((v as ReportView).deliveries),
   { method: 'POST', body: input })
 }
+
+/* ───────────── C2 session grants (integration ticket 12) ───────────── */
+
+export interface C2GrantView {
+  id: string
+  engagementId: string
+  sessionId: string
+  actorId: string
+  reviewerId: string | null
+  status: 'requested' | 'approved' | 'rejected' | 'revoked' | 'expired'
+  reason: string
+  commandPrefix: string | null
+  expiresAt: string
+  createdAt: string
+}
+
+export interface C2GrantsView {
+  engagementId: string
+  grants: C2GrantView[]
+  maxGrantHours: number
+  source: 'db'
+}
+
+function isC2GrantsView(v: unknown): v is C2GrantsView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as C2GrantsView
+  return typeof doc.engagementId === 'string' && Array.isArray(doc.grants) && doc.source === 'db'
+}
+
+export function fetchC2Grants(engagementId: string): Promise<C2GrantsView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/grants`, owned(engagementId, isC2GrantsView))
+}
+
+export function requestC2Grant(engagementId: string, input: { sessionId: string; reason: string; expiresAt: string }): Promise<C2GrantView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/grants`, (v): v is C2GrantView =>
+    typeof v === 'object' && v !== null && typeof (v as C2GrantView).id === 'string' && (v as C2GrantView).status === 'requested',
+  { method: 'POST', body: input })
+}
+
+export function decideC2Grant(engagementId: string, grantId: string, decision: 'approved' | 'rejected' | 'revoked'): Promise<C2GrantView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/c2/grants/${encodeURIComponent(grantId)}/decision`, (v): v is C2GrantView =>
+    typeof v === 'object' && v !== null && typeof (v as C2GrantView).status === 'string',
+  { method: 'POST', body: { decision } })
+}

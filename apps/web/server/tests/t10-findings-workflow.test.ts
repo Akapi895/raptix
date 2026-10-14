@@ -1,5 +1,4 @@
-import { describe, expect, it } from 'vitest';
-import Fastify from 'fastify';
+﻿import { describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';
@@ -82,8 +81,6 @@ function memoryDb() {
   return db;
 }
 
-type Db = ReturnType<typeof memoryDb>;
-
 const ENG = 'eng-1';
 
 async function setup(): Promise<{ app: FastifyInstance; owner: { cookie: string; csrf: string }; viewer: { cookie: string; csrf: string } }> {
@@ -109,7 +106,7 @@ describe('ticket 10 finding lifecycle and evidence', () => {
     expect(created.json().status).toBe('draft');
     expect(created.json().sourceType).toBe('authored');
 
-    const imported = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'Scanner claim: XSS', producerRef: 'findings/FIND-9.md#claim-1', detail: 'AI claim — unverified.' } });
+    const imported = await app.inject({ method: 'POST', url: `/api/engagements/${ENG}/curated-findings/import`, headers: { cookie: owner.cookie, 'x-csrf-token': owner.csrf }, payload: { title: 'Scanner claim: XSS', producerRef: 'findings/FIND-9.md#claim-1', detail: 'AI claim â€” unverified.' } });
     expect(imported.statusCode).toBe(200);
     expect(imported.json().sourceType).toBe('imported');
     expect(imported.json().producerRef).toBe('findings/FIND-9.md#claim-1');

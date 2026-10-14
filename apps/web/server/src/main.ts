@@ -32,6 +32,7 @@ import { ScopeService } from './services/scope-service.js';
 import { GovernanceService } from './services/governance-service.js';
 import { FindingsWorkflowService } from './services/findings-workflow-service.js';
 import { ReportsService } from './services/reports-service.js';
+import { C2GrantsService } from './services/c2-grants-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
@@ -103,7 +104,8 @@ async function main(): Promise<void> {
   const exportService = dbClient && env.workspacePath ? new ExportService(dbClient, env.workspacePath) : undefined;
   const settingsService = dbClient ? new SettingsService(dbClient, getLocalIdentity()) : undefined;
   const campaignsService = dbClient ? new CampaignService(dbClient, env.gophish ? new GoPhishClient(env.gophish) : undefined, env.evilginx ? new EvilginxClient(env.evilginx) : undefined) : undefined;
-  const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined) : undefined;
+  const c2Grants = dbClient ? new C2GrantsService(dbClient) : undefined;
+  const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined, c2Grants?.assertCommandAuthorized.bind(c2Grants)) : undefined;
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
   const scopeService = dbClient ? new ScopeService(dbClient) : undefined;
@@ -130,6 +132,7 @@ async function main(): Promise<void> {
   settingsService,
   campaignsService,
   c2Service,
+  c2Grants,
   vaultService,
   membersService,
   scopeService,

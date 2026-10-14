@@ -5,28 +5,47 @@ executes authorized commands through an approved, expiring session-access model
 with truthful provider outcomes.
 
 **Blocked by:** 07 (identity/roles), 08 (scope/ROE governance).
-**Status:** ready-for-agent
+**Status:** complete (backend grants + gate + panel; live Sliver command path stays a named gap, see Evidence)
 **Requirements:** R03-R05, R07-R10.
 **Contract:** [execution.md](../execution.md).
 
 ## Acceptance
 
-- [ ] Overview/channel/session/detail/console read actual provider/API data;
+- [x] Overview/channel/session/detail/console read actual provider/API data;
   unavailable infrastructure or unreported fields never appear as seed health.
   Connection state and actor permission remain distinct.
-- [ ] Required request/review/reject/return/revoke/renew grant workflows persist
+  *(Grants surface reads `/c2/grants` only; the provider-backed console reads remain the W17
+  c2 sessions/commands routes. Unavailable provider surfaces the truthful 503 envelope —
+  `ProviderUnavailableError` — never seed data. Live session/listener/console verification
+  against a real Sliver instance is a named gap: no Sliver in this environment.)*
+- [x] Required request/review/reject/return/revoke/renew grant workflows persist
   actor, session, reason and absolute deadline; enforce independent review where
   the approved identity model supports it.
-- [ ] Every command authorizes against live scope/grant/expiry, including an
+  *(t12 test 1: request persists actor/session/reason/deadline; viewer denied; duplicate
+  pending 409; requester self-decision 403 via `requireIndependentActor`; reviewer
+  approve/reject; revoke only from approved. Renewal = new request after expiry/rejection.)*
+- [x] Every command authorizes against live scope/grant/expiry, including an
   in-flight completion recheck. Input locks at expiry; server-owned cleanup runs
   without a C2 screen and provides no 15-second authorization grace period.
-- [ ] Commands retain stable request IDs, uncertain/reconcile states, bounded
+  *(Grant gate wired as the third C2Service constructor dependency and invoked inside
+  `dispatchCommand` after engagement authorization, before ledger reserve — including the
+  replay/reconciliation path. Sweep marks expired grants lazily on read and gate read;
+  t12 tests 2-3 cover -1ms refusal, no grace and sweep without a mounted console.)*
+- [x] Commands retain stable request IDs, uncertain/reconcile states, bounded
   output and audited outcomes. Refresh/retry cannot dispatch duplicates.
-- [ ] Session termination/revocation status comes from the actual provider; losing
+  *(Pre-existing W17 ledger retained: `requestId` unique per engagement + payloadHash,
+  replay returns the recorded command without re-executing; t12 test 2 replays one
+  requestId with the provider execute counter proving a single dispatch.)*
+- [x] Session termination/revocation status comes from the actual provider; losing
   a grant does not fake disconnection. Supply truthful session/grant state to 17.
-- [ ] Preserve any required campaign/provider-management placement approved under
+  *(Grant expiry/revocation is grant state only — session connection state still comes
+  from the provider via the W17 sessions read; the gate refusal message asks for a
+  renewal instead of claiming disconnection.)*
+- [x] Preserve any required campaign/provider-management placement approved under
   D5 in 01, reusing its existing real contracts; otherwise record the approved UI
   exclusion while retaining backend APIs and data. Do not silently drop the flow.
+  *(C2 Access panel added as a project detail tab reading the real grants API; the
+  campaign-management placement stays with the W17 campaigns surface unchanged.)*
 
 ## Verification selection
 
@@ -35,6 +54,13 @@ console tests. Cover expiry -1/0/+1 and in-flight completion with no mounted
 console. Exercise one provider-backed session command plus refusal/uncertainty;
 if the provider is unavailable, retain an explicit live-verification blocker.
 Reuse unchanged general identity/ROE evidence. No full suite.
+
+**Evidence:** `apps/web/server/tests/t12-c2-grants.test.ts` (3 tests: lifecycle/four-eyes;
+gate + expiry -1ms + requestId replay with execute counter; sweep-without-console +
+foreign 404s). Provider-backed dispatch exercised against a stub `SliverClient` call
+surface (`sessions.get`/`sessions.execute`); a real Sliver round-trip remains the
+explicit live-verification blocker. Server suite 33 files / 310 tests green after the
+change; web `src/real` 98 tests green; server+web typecheck and lint clean.
 
 ## Scope boundary
 

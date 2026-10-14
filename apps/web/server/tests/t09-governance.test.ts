@@ -1,5 +1,4 @@
 ﻿import { describe, expect, it } from 'vitest';
-import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';

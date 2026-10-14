@@ -1,5 +1,4 @@
 ﻿import { describe, expect, it } from 'vitest';
-import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { hashPassword } from '../src/auth/multi-user.js';
@@ -35,7 +34,7 @@ function memoryDb() {
   const db = {
     tables,
     engagement: {
-      findFirst: async ({ where, select }: { where: { id: string; userId?: string }; select?: unknown }) =>
+      findFirst: async ({ where }: { where: { id: string; userId?: string } }) =>
         find('engagement', (r) => r.id === where.id && (where.userId === undefined || r.userId === where.userId)),
     },
     webUser: {
@@ -111,7 +110,7 @@ function memoryDb() {
     },
   };
   (db as unknown as { $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown> }).$transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(db);
-  return db as never;
+  return db;
 }
 
 type Db = ReturnType<typeof memoryDb>;

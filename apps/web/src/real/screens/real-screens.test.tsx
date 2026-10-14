@@ -122,14 +122,16 @@ describe('RealProjectCreate', () => {
 })
 
 describe('RealProjectDetail', () => {
-  it('renders the server identity explicitly and honest unavailability for unintegrated tabs', async () => {
+  it('renders the server identity explicitly and honest unavailability when a tab data source is absent', async () => {
     stubApi()
     go('project', { id: 'eng-8f3c92a1' })
     ui(<RealProjectDetail />)
     await screen.findAllByText('Q1 External Assessment')
     expect(screen.getAllByText('eng-8f3c92a1').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/workspace slug/).length).toBeGreaterThan(0)
+    // Reports is integrated since ticket 11; with no report-records source the
+    // panel still renders an honest unavailable alert, never demo data.
     await userEvent.setup().click(await screen.findByRole('tab', { name: 'Reports' }))
-    expect(await screen.findByText('Reports is not integrated yet')).toBeTruthy()
+    expect(await screen.findByText(/Reports unavailable/)).toBeTruthy()
   })
 })

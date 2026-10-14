@@ -1,6 +1,6 @@
 import type { PrismaClient } from '../generated/prisma/client.js';
 import { ProjectApiError } from './projects-service.js';
-import { ScopeService } from './scope-service.js';
+import type { ScopeService } from './scope-service.js';
 import { assertNotExpired, requireEngagementAccess, requireIndependentActor, type ActorContext, type MemberRole } from '../auth/membership-policy.js';
 
 /**
@@ -244,15 +244,15 @@ export class GovernanceService {
     if (scope.length === 0) throw new ProjectApiError(400, "scope must be 'operation', 'project' or 'workspace'.");
     if (reason.length === 0) throw new ProjectApiError(400, 'reason is required.');
     let outcome: EmergencyStopView['outcome'] = 'requested';
-    let detail: string | null = null;
+    let detail = '';
     if (cancelRun !== undefined && typeof body.threadId === 'string' && body.threadId.length > 0) {
       try {
         const reported = await cancelRun(body.threadId, typeof body.runId === 'string' ? body.runId : null);
         outcome = reported === 'stopped' ? 'stopped' : 'acknowledged';
-        detail = reported;
+        detail = ` (${reported})`;
       } catch (err) {
         outcome = 'unknown';
-        detail = err instanceof Error ? err.message : 'The runtime did not report a terminal outcome.';
+        detail = ` (${err instanceof Error ? err.message : 'the runtime did not report a terminal outcome'})`;
       }
     }
     const row = await this.db.emergencyStop.create({
@@ -265,7 +265,7 @@ export class GovernanceService {
         reason,
       },
     });
-    await this.audit(engagementId, actorId, 'estop.requested', 'emergency_stop', row.id, `${scope}: ${reason} -> ${outcome}`);
+    await this.audit(engagementId, actorId, 'estop.requested', 'emergency_stop', row.id, `${scope}: ${reason} -> ${outcome}${detail}`);
     return this.toEstopView(row as never);
   }
 
