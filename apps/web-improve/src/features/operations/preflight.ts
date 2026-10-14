@@ -54,15 +54,52 @@ export function scheduleLabelOf(instant: Instant): string {
   return `${w.getUTCFullYear()}-${pad2(w.getUTCMonth() + 1)}-${pad2(w.getUTCDate())}T${pad2(w.getUTCHours())}:${pad2(w.getUTCMinutes())}`
 }
 
+/** Weekday lookup for ROE window text ("Mon" → 1 … "Sun" → 0). */
+const ROE_DAYS: Record<string, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 }
+
+/** The fixed baseline window applied when the project's window text does not parse. */
+const BASELINE_WINDOW = { days: [1, 2, 3, 4, 5], from: 9 * 60, to: 17 * 60 }
+
 /**
- * The one ROE window rule (Mon–Fri, 9:00 AM–5:00 PM project time) over an
- * absolute instant. The screen-layer helper delegates its wall-clock input.
+ * Parses the canonical ROE window text ("Mon–Fri, 9:00 AM–5:00 PM (UTC+7)")
+ * into the allowed weekdays and a minute-of-day range; a range whose end is
+ * not after its start wraps midnight. Undefined for any other wording.
+ */
+function parseWindowRule(text: string): { days: number[]; from: number; to: number } | undefined {
+  const m = /^\s*([A-Za-z]{3})(?:\s*[–—-]\s*([A-Za-z]{3}))?\s*,\s*(\d{1,2})(?::(\d{2}))?\s*([APap])\.?\s*[Mm]\.?\s*[–—-]\s*(\d{1,2})(?::(\d{2}))?\s*([APap])\.?\s*[Mm]\.?/.exec(text)
+  if (!m) return undefined
+  const first = ROE_DAYS[m[1]!.toLowerCase()]
+  const last = m[2] ? ROE_DAYS[m[2]!.toLowerCase()] : first
+  if (first === undefined || last === undefined) return undefined
+  const minutesOf = (h: string, mi: string | undefined, ap: string) => {
+    const n = +h
+    if (n < 1 || n > 12 || (mi !== undefined && +mi > 59)) return undefined
+    return (n % 12) * 60 + (mi ? +mi : 0) + (ap.toLowerCase() === 'p' ? 12 * 60 : 0)
+  }
+  const start = minutesOf(m[3]!, m[4], m[5]!)
+  const end = minutesOf(m[6]!, m[7], m[8]!)
+  if (start === undefined || end === undefined || start === end) return undefined
+  const days: number[] = []
+  for (let d = first; ; d = (d + 1) % 7) { days.push(d); if (d === last) break }
+  return { days, from: start, to: end }
+}
+
+/**
+ * The ROE window rule over an absolute instant: the project's own window
+ * text is evaluated in the project timezone — an edited (narrowed, widened
+ * or shifted) ROE is honored as soon as it is approved — falling back to the
+ * fixed Mon–Fri 9:00 AM–5:00 PM baseline when the text does not parse. The
+ * screen-layer helper delegates its wall-clock input.
  */
 export function roeWindowIssue(project: Pick<Project, 'window'> | undefined, instant: Instant): string {
   const w = new Date(instant + PROJECT_TZ_OFFSET_MS)
   const day = w.getUTCDay()
-  const hour = w.getUTCHours() + w.getUTCMinutes() / 60
-  return day >= 1 && day <= 5 && hour >= 9 && hour < 17
+  const minute = w.getUTCHours() * 60 + w.getUTCMinutes()
+  const rule = (project && parseWindowRule(project.window)) || BASELINE_WINDOW
+  const inside = rule.to > rule.from
+    ? rule.days.includes(day) && minute >= rule.from && minute < rule.to
+    : (rule.days.includes(day) && minute >= rule.from) || (rule.days.map((d) => (d + 1) % 7).includes(day) && minute < rule.to)
+  return inside
     ? ''
     : `Start time is outside the ROE window (${project?.window || 'Mon–Fri, 9:00 AM–5:00 PM (UTC+7)'}).`
 }

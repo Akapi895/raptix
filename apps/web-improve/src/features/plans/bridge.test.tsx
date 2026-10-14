@@ -22,7 +22,7 @@ import { createConsoleServices, type ConsoleServices } from '../../domain/servic
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
 import { selectProject } from '../../router/navigate'
 import { mountServices } from '../../test/helpers'
-import { pauseOperation, resumeOperation, runOperationPreflight, startOperation, stopOperation } from '../operations/service'
+import { createOperationDraft, pauseOperation, resumeOperation, runOperationPreflight, startOperation, stopOperation } from '../operations/service'
 import { DAY_MS } from './service'
 import { createOperationFromPlanTransaction } from './bridge'
 import { MyTasks } from '../../screens/a-tasks'
@@ -149,17 +149,51 @@ describe('the operation API keeps the binding honest (ticket 40)', () => {
     svc.dispose()
   })
 
-  it('resume refuses at the approval deadline — valid one instant before, spent at it', () => {
+  it('start honors the approval deadline exactly: deadline−1 starts, deadline and deadline+1 refuse', async () => {
+    const svc = createConsoleServices()
+    await approveRevisedPlan(svc)
+    const deadline = Date.parse('2026-10-14T10:42:00+07:00')
+    svc.clock.advance(deadline - 1 - svc.clock.now())
+    // deadline−1: bind, preflight and start all succeed at the re-derived gate.
+    const bridged = createOperationFromPlanTransaction(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), 'PL-024')
+    expect(bridged.ok).toBe(true)
+    const opId = bridged.ok ? bridged.data.opId : ''
+    expect(stopOperation(svc.authority, svc.clock, ctx(SAM, 'RT-2026-014'), 'OP-014', 'Hand over to the revised plan').ok).toBe(true)
+    expect(runOperationPreflight(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), opId).ok).toBe(true)
+    expect(startOperation(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), opId).ok).toBe(true)
+    expect(svc.authority.snapshot().plans.find((p) => p.id === 'PL-024')!.status).toBe('executed')
+    // A second bound operation — the executed approval stays usable inside the window.
+    const second = createOperationDraft(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), { name: 'Deadline boundary probe', owner: 'Taylor Chen', desc: '', objective: '', playbookId: 'PB-001', agents: ['AG-012'], assets: ['AS-0141'], mode: 'Manual approval', needConfirm: true, note: '', schedule: 'now', planId: 'PL-024' })
+    expect(second.ok).toBe(true)
+    const nextId = second.ok ? second.data.op.id : ''
+    const pf = runOperationPreflight(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), nextId)
+    expect(pf.ok && pf.data.pass).toBe(true)
+    // At the deadline exactly the re-derived start gate refuses…
+    svc.clock.advance(1)
+    expect(startOperation(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), nextId))
+      .toMatchObject({ ok: false, failure: { kind: 'validation', message: expect.stringContaining('expired') } })
+    // …and one instant past it the refusal persists — nothing was started either way.
+    svc.clock.advance(1)
+    expect(startOperation(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), nextId).ok).toBe(false)
+    expect(svc.authority.snapshot().operations.find((o) => o.id === nextId)!.status).toBe('ready')
+    expect(svc.authority.snapshot().plans.find((p) => p.id === 'PL-024')!.status).toBe('executed')
+    svc.dispose()
+  })
+
+  it('resume honors the approval deadline exactly: deadline−1 resumes, deadline and deadline+1 refuse', () => {
     const svc = createConsoleServices()
     expect(pauseOperation(svc.authority, svc.clock, ctx(SAM, 'RT-2026-014'), 'OP-014', 'Investigate the failed step').ok).toBe(true)
     const deadline = Date.parse('2026-10-14T09:25:00+07:00')
-    svc.clock.advance(deadline - 60_000 - svc.clock.now())
+    svc.clock.advance(deadline - 1 - svc.clock.now())
     expect(resumeOperation(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), 'OP-014').ok).toBe(true)
     expect(pauseOperation(svc.authority, svc.clock, ctx(SAM, 'RT-2026-014'), 'OP-014', 'Investigate again').ok).toBe(true)
-    svc.clock.advance(60_000)
+    svc.clock.advance(1)
     const refused = resumeOperation(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), 'OP-014')
     expect(refused.ok).toBe(false)
     if (!refused.ok) expect(refused.failure.message).toContain('expired')
+    // One instant past the deadline the refusal persists — the run state never moved.
+    svc.clock.advance(1)
+    expect(resumeOperation(svc.authority, svc.clock, ctx(TAYLOR, 'RT-2026-014'), 'OP-014').ok).toBe(false)
     // The stored status string stays untouched — expiry is enforced at the gate.
     expect(svc.authority.snapshot().plans.find((p) => p.id === 'PL-021')!.status).toBe('approved')
     expect(svc.authority.snapshot().operations.find((o) => o.id === 'OP-014')!.status).toBe('paused')

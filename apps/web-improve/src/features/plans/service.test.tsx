@@ -20,11 +20,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, screen, waitFor } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { DEMO_ANCHOR } from '../../domain/clock'
 import { mountServices } from '../../test/helpers'
-import { DAY_MS, effectivePlanStatus, usableApproval } from './service'
+import { DAY_MS, createPlanService, effectivePlanStatus, usableApproval } from './service'
 import { createOperationFromPlanTransaction } from './bridge'
 import { MyTasks } from '../../screens/a-tasks'
 
@@ -164,6 +164,10 @@ describe('approval expiry (ticket 39)', () => {
     const bound = h.run(() => createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021'))
     expect(bound).toMatchObject({ ok: true })
     expect(bound.ok ? bound.data.opId : '').toBe('OP-014')
+    // The factory-wired typed bind surface reads the same window at the same handler.
+    let bridged!: Awaited<ReturnType<ReturnType<ConsoleServices['plansBridge']>['createOperation']>>
+    await act(async () => { bridged = await h.svc().plansBridge(TAYLOR, 'all').createOperation(ctx(TAYLOR), 'PL-021') })
+    expect(bridged.ok && bridged.data.opId === 'OP-014' && bridged.data.created === false).toBe(true)
     // At the deadline exactly, the approval is spent: the read flips and execution refuses.
     until(deadline)
     expect(effectivePlanStatus(raw(), h.svc().clock.now())).toBe('expired')
@@ -171,7 +175,16 @@ describe('approval expiry (ticket 39)', () => {
     const refused = h.run(() => createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021'))
     expect(refused.ok).toBe(false)
     if (!refused.ok) expect(refused.failure.message).toContain('expired')
-    // Past the deadline the refusal persists.
+    await act(async () => { bridged = await h.svc().plansBridge(TAYLOR, 'all').createOperation(ctx(TAYLOR), 'PL-021') })
+    expect(bridged.ok).toBe(false)
+    if (!bridged.ok) expect(bridged.failure.message).toContain('expired')
+    // One instant past the deadline both bind entries still refuse.
+    until(deadline + 1)
+    expect(usableApproval(raw(), h.svc().clock.now()).ok).toBe(false)
+    expect(h.run(() => createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021')).ok).toBe(false)
+    await act(async () => { bridged = await h.svc().plansBridge(TAYLOR, 'all').createOperation(ctx(TAYLOR), 'PL-021') })
+    expect(bridged.ok).toBe(false)
+    // Farther past the deadline the refusal persists.
     until(deadline + 60_000)
     expect(h.run(() => createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021')).ok).toBe(false)
     // The stored status string stays 'approved' — expiry is read-side until something commits.
@@ -213,7 +226,10 @@ describe('proposal import path (invariant 5 at the plan boundary)', () => {
     const proposed = svc.authority.snapshot().plans[0]!
     expect(proposed.status).toBe('proposed')
     // Surface keys: proposal-shaped capabilities only — no execute, no start.
-    expect(Object.keys(svc.plans(SAM, 'all')).sort()).toEqual(['decide', 'discard', 'editDraft', 'get', 'requestReview', 'revise', 'withdrawReview'])
+    // (Ticket 70 binds feature services lazily; the key surface the factory
+    // scope wires is the feature service created on first call.)
+    const materialized = createPlanService(svc.authority, svc.clock, (produce) => Promise.resolve(produce()))
+    expect(Object.keys(materialized).sort()).toEqual(['decide', 'discard', 'editDraft', 'get', 'requestReview', 'revise', 'withdrawReview'])
     // A reviewer cannot import the proposal; a plan-capable member can.
     const byPat = await svc.plans(PAT, 'all').requestReview(ctx(PAT), proposed.id)
     expect(byPat.ok).toBe(false)

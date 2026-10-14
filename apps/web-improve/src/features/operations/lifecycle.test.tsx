@@ -10,6 +10,24 @@
  * never resume. Both consumers — the typed mutations and the mounted screens'
  * controls — run the same handlers (the zero-caller
  * A.confirmPreflight/A.startOp wrappers were retired by ticket 65).
+ *
+ * resumeOperation — the rechecks the corrected spec requires at the handler
+ * (stories 19/22, ticket 27's re-derived controls, ticket 40's live approval
+ * deadline), each with its boundary test in this file or bridge.test.tsx:
+ * 1. existence and scope — out-of-scope or foreign requests are not-found,
+ *    no existence leak (lifecycleGate);
+ * 2. read-only context — the Viewer role and closed/cancelled projects
+ *    refuse (lifecycleGate);
+ * 3. role — only a Manager or Operator (`run`) resumes (lifecycleGate);
+ * 4. lifecycle state — only a `paused` operation resumes: stopped,
+ *    emergency-stopped, running, ready and done never resume automatically;
+ * 5. agent readiness — every assigned agent must still be online;
+ * 6. linked plan state — the plan must be approved/executed; a revision
+ *    needs re-approval;
+ * 7. live approval deadline — `usableApproval` re-checks the absolute 24h
+ *    deadline at the resume instant (stored status may still read approved).
+ * The resume dialog additionally previews ROE/window and full preflight rows
+ * in the UI; the handler's own enforcement set is the list above.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
@@ -232,6 +250,27 @@ describe('pause/resume — rechecks enforced at the handler', () => {
     svc.authority.commit('fixture', (d) => { const o = d.operations.find((x) => x.id === planned)!; o.status = 'paused'; d.plans.find((p) => p.id === 'PL-021')!.status = 'expired' })
     expect(resumeOperation(svc.authority, svc.clock, ctxOf(TAYLOR, P14), planned))
       .toMatchObject({ ok: false, failure: { kind: 'validation', message: expect.stringContaining('needs re-approval') } })
+    svc.dispose()
+  })
+
+  it('resume rechecks scope, read-only context and the run role at the handler, committing nothing', () => {
+    const svc = createConsoleServices()
+    const opId = readyOperation(svc)
+    expect(startOperation(svc.authority, svc.clock, ctxOf(TAYLOR, P14), opId).ok).toBe(true)
+    expect(pauseOperation(svc.authority, svc.clock, ctxOf(TAYLOR, P14), opId, 'Recheck probe').ok).toBe(true)
+    const before = svc.authority.snapshot()
+    // A viewer cannot resume a paused run…
+    expect(resumeOperation(svc.authority, svc.clock, ctxOf(CASEY, P14), opId))
+      .toMatchObject({ ok: false, failure: { kind: 'forbidden', message: expect.stringContaining('read-only access') } })
+    // …nor can a non-run role…
+    expect(resumeOperation(svc.authority, svc.clock, ctxOf(RILEY, P14), opId))
+      .toMatchObject({ ok: false, failure: { kind: 'forbidden', message: 'Only a Manager or Operator can resume operations.' } })
+    // …and an out-of-scope actor learns nothing: not-found with no existence leak.
+    expect(resumeOperation(svc.authority, svc.clock, ctxOf(RILEY, 'RT-2026-016'), opId))
+      .toMatchObject({ ok: false, failure: { kind: 'not-found' } })
+    const after = svc.authority.snapshot()
+    expect(after.operations).toEqual(before.operations)
+    expect(after.audit).toEqual(before.audit)
     svc.dispose()
   })
 })
