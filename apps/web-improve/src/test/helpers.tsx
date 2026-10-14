@@ -2,6 +2,41 @@ import { act, render } from '@testing-library/react'
 import { createElement, type ComponentType, type ReactNode } from 'react'
 import { StoreProvider, useStore, type Store } from '../store'
 import { ConsoleProviders } from '../state/query'
+import { ServicesProvider, useServices } from '../state/services'
+import { useQueryClient, type QueryClient } from '@tanstack/react-query'
+import type { ConsoleServices } from '../domain/service-factory'
+import { useAuthStore } from '../state/stores'
+
+// eslint-disable-next-line react-refresh/only-export-components -- test-only provider capture
+function ServicesProbe({ ready }: { ready: (services: ConsoleServices, client: QueryClient) => void }): null {
+  ready(useServices(), useQueryClient())
+  return null
+}
+
+/** Mounts the actual service lifecycle and Query subscriptions, with optional rendered UI. */
+export function mountServices(ui: ReactNode = null, me = 'Alex Morgan') {
+  let services!: ConsoleServices
+  let client!: QueryClient
+  const tree = (children: ReactNode) => (
+    <ServicesProvider>
+      <ConsoleProviders>
+        <ServicesProbe ready={(s, c) => { services = s; client = c }} />
+        {children}
+      </ConsoleProviders>
+    </ServicesProvider>
+  )
+  const view = render(tree(null))
+  act(() => { useAuthStore.getState().setMe(me) })
+  if (ui !== null) view.rerender(tree(ui))
+  return Object.assign(view, {
+    svc: (): ConsoleServices => services,
+    qc: (): QueryClient => client,
+    db: () => services.authority.snapshot(),
+    as: (name: string): void => { act(() => { useAuthStore.getState().setMe(name) }) },
+    run: (fn: () => unknown): void => { act(fn) },
+    show: (children: ReactNode): void => { view.rerender(tree(children)) },
+  })
+}
 
 // eslint-disable-next-line react-refresh/only-export-components
 function Probe({ ready }: { ready: (s: Store) => void }) {
