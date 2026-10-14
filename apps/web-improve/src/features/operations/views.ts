@@ -142,3 +142,46 @@ export function readOperationMeta(services: ConsoleServices, opId: string): { id
   const op = services.authority.snapshot().operations.find((o) => o.id === opId)
   return op ? { id: op.id, projectId: op.projectId } : undefined
 }
+
+/** Failure / agent-loss replanning read for a project's active operation (AI-V3-07). */
+export interface ReplanRead {
+  op: Operation
+  idx: number
+  step?: Operation['steps'][number]
+  /** Disconnected assigned agent ids. */
+  lost: string[]
+  /** The operation's active plan revision; without one there is no replan surface. */
+  cur: Db['plans'][number]
+  pending: boolean
+  /** The revision's parent version, for the draft banner. */
+  prev?: Db['plans'][number]
+  /** Connected assigned agent ids, for replacement suggestions. */
+  healthy: string[]
+}
+
+export function readProjectReplan(services: ConsoleServices, ctx: RequestContext, projectId: string): ReplanRead | undefined {
+  return projectView(services, ctx, 'replan.' + projectId, (db) => {
+    const op = db.operations.find((o) => o.projectId === projectId && ['running', 'paused'].includes(o.status) && o.planId)
+    if (!op) return undefined
+    const idx = op.steps.findIndex((x) => ['review', 'fail', 'unknown'].includes(x.status))
+    const lost = op.agents.filter((id) => db.agents.find((a) => a.id === id)?.status === 'lost')
+    const cur = db.plans.find((p) => p.id === op.planId)
+    if (!cur) return undefined
+    const pending = !['approved', 'executed'].includes(cur.status)
+    if (idx < 0 && !lost.length && !pending) return undefined
+    return {
+      op,
+      idx,
+      step: idx >= 0 ? op.steps[idx] : undefined,
+      lost,
+      cur,
+      pending,
+      prev: cur.prevPlanId ? db.plans.find((p) => p.id === cur.prevPlanId) : undefined,
+      healthy: op.agents.filter((id) => db.agents.find((a) => a.id === id && (a.status === 'online' || a.status === 'idle'))),
+    }
+  })
+}
+
+export function useProjectReplan(projectId: string): ReplanRead | undefined {
+  return useServiceProjection((services, ctx) => readProjectReplan(services, ctx, projectId))
+}
