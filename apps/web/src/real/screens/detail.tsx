@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Real project detail (integration ticket 03). The engagement contract's
  * identity fields (server id vs display name vs workspace slug) render
  * explicitly; feature tabs without a real integration render the honest
@@ -15,6 +15,7 @@ import { RealFindingsPanel } from './findings-panel'
 import { RealOperationsPanel } from './operations-panel'
 import { RealPlanningPanel } from './planning-panel'
 import { RealTeamPanel } from './team'
+import { RealScopePanel } from './scope-panel'
 import { go, useRoute } from '../../router/navigate'
 import { useProjectStore } from '../../state/stores'
 import { Banner, Button, Card, CardHeader, DescList, Empty, PageHeader, Skeleton, Status, Tabs } from '../../ui'
@@ -26,10 +27,11 @@ const TABS = [
   { id: 'findings', label: 'Findings' },
   { id: 'reports', label: 'Reports' },
   { id: 'team', label: 'Team' },
+  { id: 'scope', label: 'Scope & ROE' },
 ]
 
 function fmt(iso: string | null): string {
-  return iso ? iso.replace('T', ' ').slice(0, 16) + 'Z' : '—'
+  return iso ? iso.replace('T', ' ').slice(0, 16) + 'Z' : 'â€”'
 }
 
 export function RealProjectDetail(): ReactElement {
@@ -76,7 +78,7 @@ export function RealProjectDetail(): ReactElement {
     <>
       <PageHeader
         title={data.displayName}
-        sub={<span><span className="font-mono">{data.id}</span> · workspace slug <span className="font-mono">{data.workspaceSlug}</span></span>}
+        sub={<span><span className="font-mono">{data.id}</span> Â· workspace slug <span className="font-mono">{data.workspaceSlug}</span></span>}
         crumbs={[{ label: 'Projects', to: () => go('projects') }, { label: data.displayName }]}
         meta={<Status kind="project" value={data.lifecycleStatus} size="sm" />}
       />
@@ -86,7 +88,7 @@ export function RealProjectDetail(): ReactElement {
         tabs={TABS.map((t) => ({ id: t.id, label: t.label }))}
       />
       <div className="mt-5">
-        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'findings' ? <RealFindingsPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
+        {tab === 'overview' ? <Overview d={data} /> : tab === 'planning' ? <RealPlanningPanel engagementId={data.id} handoffConfirmedAt={data.handoffConfirmedAt} /> : tab === 'operations' ? <RealOperationsPanel engagementId={data.id} /> : tab === 'findings' ? <RealFindingsPanel engagementId={data.id} /> : tab === 'team' ? <RealTeamPanel engagementId={data.id} /> : tab === 'scope' ? <RealScopePanel engagementId={data.id} /> : <NotYetIntegrated label={TABS.find((t) => t.id === tab)?.label ?? tab} />}
       </div>
     </>
   )

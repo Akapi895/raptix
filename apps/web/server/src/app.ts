@@ -23,6 +23,7 @@ import { registerSettingsRoutes } from './http/routes/settings.routes.js';
 import { registerCampaignRoutes } from './http/routes/campaign.routes.js';
 import { registerVaultRoutes } from './http/routes/vault.routes.js';
 import { registerMembersRoutes } from './http/routes/members.routes.js';
+import { registerScopeRoutes } from './http/routes/scope.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
@@ -36,6 +37,7 @@ import type { CampaignService } from './services/campaign-service.js';
 import type { C2Service } from './services/c2-service.js';
 import type { VaultService } from './services/vault-service.js';
 import type { MembersService } from './services/members-service.js';
+import type { ScopeService } from './services/scope-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -61,6 +63,7 @@ export interface AppOptions {
   readonly c2Service?: C2Service;
   readonly vaultService?: VaultService;
   readonly membersService?: MembersService;
+  readonly scopeService?: ScopeService;
   /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
   readonly vaultKeyConfigured?: boolean;
   /** Local single-user identity; defaults to getLocalIdentity(). */
@@ -138,6 +141,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.campaignsService && options.c2Service) registerCampaignRoutes(app, options.campaignsService, options.c2Service, identity);
   if (options.vaultService) registerVaultRoutes(app, options.vaultService, identity);
   if (options.membersService) registerMembersRoutes(app, options.membersService, identity);
+  if (options.scopeService) registerScopeRoutes(app, options.scopeService, identity);
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;

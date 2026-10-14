@@ -1,11 +1,11 @@
-# 08: Persist scope, assets and ROE revisions
+﻿# 08: Persist scope, assets and ROE revisions
 
 **What to build:** Authorized users maintain engagement scope and asset inventory,
 submit ROE changes for independent review and see their immediate effect on
 readiness and execution eligibility.
 
 **Blocked by:** 07 (identity, roles and team).
-**Status:** ready-for-agent
+**Status:** complete
 **Requirements:** R03-R05, R08-R10; decisions D2/D3.
 **Contract:** [execution.md](../execution.md).
 
@@ -38,3 +38,22 @@ project tests; test only affected consumers of version changes. No full suite.
 
 Do not rewrite runtime egress/ROE controls. Persisted business plan execution and
 preflight are integrated by 09; this ticket provides their scope/version inputs.
+
+## Evidence (2026-10-15)
+
+- `ScopeService` + `/scope/revisions` and `/assets/inventory` routes: revisions
+  persist version/diff/roe/requester/decision; submission supersedes the
+  previously approved revision immediately (invalidation at submission, per
+  acceptance) and audits every mutation. Decisions enforce reviewer role +
+  `requireIndependentActor` (self-review refused server-side).
+- Assets: operator adds/imports stay `pending`; `in_scope` classification is
+  refused (409) unless an approved revision's diff covers the identifier (or
+  the engagement's own authorized target). Narrowing (out_of_scope) is always
+  allowed. Graph-observed assets (ticket 06) are untouched by these writes.
+- Edited ROE windows/emergency contacts persist on the revision; the approved
+  revision feeds runtime readiness through `roeWindowAllows` (consumed by 09).
+- Tests: `server/tests/t08-scope.test.ts` (4) — submit/approve/supersede,
+  self-review + role refusal, pending-until-approved asset flow, foreign 404 +
+  malformed windows. Web: Scope & ROE tab wired into project detail.
+- Named gap: no live runtime smoke in this slice (its consumers land in 09's
+  preflight/execute gate and 18's deployment probe).
