@@ -20,38 +20,21 @@ import type { ComponentType, ReactNode } from 'react'
 import { Ban, CheckCircle2, CircleDashed, Clock, HelpCircle, Layers, Loader2, PauseCircle, RotateCcw, ShieldQuestion, Users, XCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { BRANCH_LABEL, BRANCH_TERMINAL } from '../data'
-import type { Agent, Branch, BranchState, Db } from '../data'
+import type { Agent, Branch, BranchState } from '../data'
 import { BranchReadError, useBranch, useBranchGroup, useBranchGroups, useCancelBranch, useReassignBranch, useRetryBranch } from '../features/branches/query'
+import { useAllocation, useAssetRef, useFanoutCard } from '../features/branches/projection'
 import type { BranchCounts, BranchRow } from '../features/branches/service'
 import type { BranchGroup } from '../domain/entities'
 import { go, useRoute } from '../router/navigate'
-import { useCan, useDb } from '../state/console'
+import { useCan } from '../state/console'
 import { useToastStore } from '../state/stores'
 import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, Gated, IdLink, Kpi, Modal, Mono, PageHeader, SearchBox, Segmented, Select, Table, Textarea, Timeline, cx } from '../ui'
 import { tz } from './g-common'
 
 /* ───────── shared helpers ───────── */
-/* Ticket 67: the fanout derivations moved here from the legacy store — this
-   surface is their only consumer, so the store no longer exports them. */
-function allocation(db: Db, projectId: string) {
-  const mine = db.agents.filter((a) => a.projectId === projectId)
-  const pool = db.agents.filter((a) => !a.projectId && (a.status === 'online' || a.status === 'idle'))
-  const all = [...mine, ...pool]
-  const conn = (a: Agent) => a.status === 'online' || a.status === 'idle'
-  const busy = all.filter((a) => conn(a) && a.op)
-  const avail = all.filter((a) => conn(a) && !a.op)
-  const disc = all.filter((a) => !conn(a))
-  return { all, mine, pool, busy, avail, disc, total: all.length, connected: all.filter(conn).length, capacity: avail.length }
-}
-function groupSummary(db: Db, groupId: string) {
-  const bs = db.branches.filter((b) => b.groupId === groupId)
-  const n = (st: BranchState) => bs.filter((b) => b.state === st).length
-  const done = n('completed'), failed = n('failed')
-  const open = bs.filter((b) => !BRANCH_TERMINAL.includes(b.state)).length
-  const missing = bs.length - done - failed - n('cancelled') - n('blocked')
-  const overall = open > 0 ? (n('unknown') + n('paused') > 0 ? 'Degraded — branches paused or unknown' : 'In progress') : failed + n('blocked') > 0 ? 'Partially Completed' : 'Completed'
-  return { bs, total: bs.length, running: n('running'), done, failed, waiting: n('waiting_approval'), queued: n('queued'), paused: n('paused'), unknown: n('unknown'), missing, open, overall, evidence: bs.reduce((a, b) => a + b.evidence.length, 0) }
-}
+/* Ticket 67: the fanout derivations (group counts, allocation context, asset
+   refs) live in the branches feature's typed projections
+   (src/features/branches/projection.ts) — this surface renders them. */
 const TONE: Record<string, string> = {
   ok: 'text-ok bg-ok-soft border-ok/30', warn: 'text-warn bg-warn-soft border-warn/30', bad: 'text-bad bg-bad-soft border-bad/30',
   cyan: 'text-cyan bg-info-soft border-cyan/30', neutral: 'text-muted bg-subtle border-line',
@@ -73,7 +56,6 @@ const isConn = (a?: Agent) => !!a && (a.status === 'online' || a.status === 'idl
 const APPROVAL_LABEL: Record<Branch['approval'], string> = { none: 'Not required', pending: 'Pending', approved: 'Approved', denied: 'Denied' }
 
 function useLinks() {
-  const db = useDb()
   return {
     agent: (id: string) => <IdLink onClick={() => go('agent', { id })}>{id}</IdLink>,
     op: (id: string) => <IdLink onClick={() => go('operation', { id })}>{id}</IdLink>,
@@ -81,19 +63,20 @@ function useLinks() {
     tl: (id: string) => <IdLink onClick={() => go('ai-trace', { id })}>{id}</IdLink>,
     branch: (id: string) => <IdLink onClick={() => go('ai-branch', { id })}>{id}</IdLink>,
     plan: (id: string) => <IdLink onClick={() => go('ai-plan', { id })}>{id}</IdLink>,
-    target: (name: string) => {
-      const a = db.assets.find((x) => x.name === name || x.ident === name)
-      return a ? <IdLink onClick={() => go('asset', { id: a.id })}>{name}</IdLink> : <Mono>{name}</Mono>
-    },
+    target: (name: string) => <TargetLink name={name} />,
   }
+}
+
+/** Deep link to an asset by target name; plain mono text when the name is not in the asset inventory. */
+export function TargetLink({ name }: { name: string }) {
+  const a = useAssetRef(name)
+  return a ? <IdLink onClick={() => go('asset', { id: a.id })}>{name}</IdLink> : <Mono>{name}</Mono>
 }
 
 /* ───────── Compact card ───────── */
 export function FanOutCard({ groupId }: { groupId: string }) {
-  const db = useDb()
-  const g = db.branchGroups.find((x) => x.id === groupId)
-  if (!g) return <Card><div className="text-sm text-muted">Branch group {groupId} was not found.</div></Card>
-  const s = groupSummary(db, groupId)
+  const { group: g, summary: s } = useFanoutCard(groupId)
+  if (!g || !s) return <Card><div className="text-sm text-muted">Branch group {groupId} was not found.</div></Card>
   const degraded = s.paused + s.unknown > 0
   return (
     <Card>
@@ -118,13 +101,12 @@ export function FanOutCard({ groupId }: { groupId: string }) {
 /* ───────── Allocation view ───────── */
 type AllocFilter = 'all' | 'connected' | 'busy' | 'available' | 'disc'
 export function AllocationView({ projectId }: { projectId: string }) {
-  const db = useDb()
   const L = useLinks()
   const [f, setF] = useState<AllocFilter>('all')
-  const al = allocation(db, projectId)
+  const al = useAllocation(projectId)
   const conn = al.all.filter(isConn)
   const lists: Record<AllocFilter, Agent[]> = { all: al.all, connected: conn, busy: al.busy, available: al.avail, disc: al.disc }
-  const maxC = Math.max(2, ...db.branchGroups.filter((g) => g.projectId === projectId).map((g) => g.maxConcurrency))
+  const maxC = al.maxConcurrency
   const parallel = Math.min(al.capacity, maxC)
   const pick = (k: AllocFilter) => setF(f === k ? 'all' : k)
   const list = lists[f]
@@ -150,7 +132,7 @@ export function AllocationView({ projectId }: { projectId: string }) {
           {list.map((a) => {
             const c = isConn(a)
             const shared = !a.projectId
-            const brs = db.branches.filter((b) => b.agent === a.id && !BRANCH_TERMINAL.includes(b.state))
+            const brs = al.openByAgent[a.id] ?? []
             const state = !c ? 'Disconnected' : a.op ? 'Busy' : shared ? 'Available · Shared pool' : 'Available'
             const tone = !c ? 'bad' : a.op ? 'cyan' : 'ok'
             return (

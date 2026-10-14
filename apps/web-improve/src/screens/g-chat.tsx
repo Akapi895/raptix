@@ -15,14 +15,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ListTree, PanelRight, Plus, Sparkles } from 'lucide-react'
 import { useServices } from '../state/services'
-import { eligibility } from '../features/operations/preflight'
 import { actorRef } from '../auth/persona'
 import { useQueryScope } from '../state/keys'
 import { createChatHandlers } from '../features/aichat/handlers'
 import { ChatReadError, useConversationList } from '../features/aichat/query'
+import { useProjectEligibility } from '../features/operations/views'
 import { sendChat } from '../features/demo/runtime'
 import { go, useRoute } from '../router/navigate'
-import { useActiveProject, useDb, useReadOnly } from '../state/console'
+import { useActiveProject, useReadOnly } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { Banner, Button, Drawer, Empty, PageHeader } from '../ui'
@@ -35,10 +35,9 @@ const readOpen = () => { try { return window.localStorage.getItem(LS_OPEN) !== '
 
 export function AiOperator() {
   /* Ticket 67 wave 7: the legacy store reads leave the context — the console
-     read seam (db/project/readOnly), the router module (route/go), the shared
-     authorities (pid/aiMode/toast/guard) and the demo runtime's sendChat (the
-     A.sendChat delegate). */
-  const db = useDb()
+     read seam (project/readOnly), the router module (route/go), the shared
+     authorities (pid/aiMode/toast/guard), the plans feature's eligibility
+     projection and the demo runtime's sendChat (the A.sendChat delegate). */
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
   const route = useRoute()
@@ -48,6 +47,7 @@ export function AiOperator() {
   const toast = useToastStore((s) => s.toast)
   const services = useServices()
   const scope = useQueryScope()
+  const el = useProjectEligibility(pid)
   const vw = useViewportW()
   const wide = vw >= 1280
   const rail = useResizable('raptix.ai.railW', RAIL)
@@ -91,7 +91,7 @@ export function AiOperator() {
     )
   }
   const ro = readOnly(pid)
-  const locked = conv && conv.mode !== 'observe' && eligibility(db, pid).kind === 'locked' && !ro
+  const locked = conv && conv.mode !== 'observe' && el.kind === 'locked' && !ro
   const showCtx = wide && ctxOpen
   return (
     <>
