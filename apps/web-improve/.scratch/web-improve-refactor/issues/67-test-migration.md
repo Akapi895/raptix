@@ -116,3 +116,22 @@ existing Vite config-loader warning and two jsdom document-navigation notices.
   direct orbidden handler refusal; pending-asset selection is asserted as
   an upfront draft-creation refusal followed by success after approval.
 - Typecheck exit 0; all five touched test files lint with zero diagnostics.
+
+## T2 closure/plan batch (Batch D)
+
+- closure/service.test.tsx migrated: the completion-percentage probe now
+  folds the canonical snapshot; the console/governance cases mount
+  CloseTab/TeamTab through useDb/useMe and assert the four-eyes
+  confirm dialog via useSessionStore; the bridge case restates the legacy
+  store observation as the canonical snapshot (typed request observed by
+  the authority, direct confirmation closes the project). 15/15 pass.
+- plans/bridge.test.tsx migrated: console-entry and idempotence cases run
+  createOperationFromPlanTransaction; MyTasks/console refetch proof runs
+  through the hash router inside mountServices; selectProject replaces
+  setPid. 7/7 pass.
+- plans/service.test.tsx migrated: the approval-expiry execution gate is
+  asserted through createOperationFromPlanTransaction (returns the pinned
+  OP-014 before the deadline, refuses with ailure.message containing
+  expired at/after it); the admin decision runs through plans.decide with
+  an explicit Dana actor. 11/11 pass (33 across the three-file run).
+- Typecheck exit 0; all three touched files lint with zero diagnostics.

@@ -16,14 +16,12 @@
  * operations console refetch, legacy console entry → typed operations read).
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { createHashRouter, RouterProvider } from 'react-router'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
-import { createConsoleServices } from '../../domain/service-factory'
+import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, ChangeSet, RequestContext } from '../../domain/service'
+import { selectProject } from '../../router/navigate'
+import { mountServices } from '../../test/helpers'
 import { pauseOperation, resumeOperation, runOperationPreflight, startOperation, stopOperation } from '../operations/service'
 import { DAY_MS } from './service'
 import { createOperationFromPlanTransaction } from './bridge'
@@ -39,37 +37,14 @@ const CASEY: ActorRef = { id: 'Casey Nguyen (Client)', role: 'viewer' }
 let corrSeq = 0
 const ctx = (actor: ActorRef, projectId = 'all'): RequestContext => ({ actor, projectId, corr: `corr-${++corrSeq}` })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
-/** Mounts the providers (optionally the My Tasks inbox + operations console) with a probe. */
+/** Mounts the providers (optionally the My Tasks inbox + operations console). */
 function mountConsole(me = 'Alex Morgan', withScreens = false) {
   window.location.hash = withScreens ? '#/tasks' : ''
-  let store!: Store
-  let svc!: ConsoleServices
-  let client!: QueryClient
-  const router = withScreens
-    ? createHashRouter([{ path: '*', element: <><Probe ready={(s, v, q) => { store = s; svc = v; client = q }} /><MyTasks /><routes.operations /></> }])
-    : undefined
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, q) => { store = s; svc = v; client = q }} />
-        {router ? <RouterProvider router={router} /> : null}
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    client: () => client,
-    as(name: string) { act(() => { store.setMe(name) }) },
-    run: <T,>(fn: () => T): T => { let out!: T; act(() => { out = fn() }); return out },
-    unmount: view.unmount,
+  if (withScreens) {
+    const router = createHashRouter([{ path: '*', element: <><MyTasks /><routes.operations /></> }])
+    return mountServices(<RouterProvider router={router} />, me)
   }
+  return mountServices(null, me)
 }
 
 /** Approves a fresh revision of PL-021 (Taylor requests, Pat decides); returns the approved plan id. */
@@ -195,21 +170,21 @@ describe('the operation API keeps the binding honest (ticket 40)', () => {
 describe('bridge proof both directions (ticket 40)', () => {
   it('the typed bridge is observed by the legacy store; the legacy console entry is observed by the typed read', async () => {
     const h = mountConsole()
-    // Legacy → typed: the console entry binds PL-024; the typed operations read observes it.
+    // Console entry → typed: the console entry binds PL-024; the typed operations read observes it.
     await act(async () => { await approveRevisedPlan(h.svc()) })
-    h.run(() => { h.store().A.executePlan('PL-024') })
+    h.run(() => { expect(createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR, 'RT-2026-014'), 'PL-024').ok).toBe(true) })
     const typed = await h.svc().operations(TAYLOR, 'all').list(ctx(TAYLOR), {})
     expect(typed.ok).toBe(true)
     if (typed.ok) {
       expect(typed.data.items.find((it) => it.op.id === 'OP-017')?.planLabel).toBe('PL-024 v1.3')
       expect(typed.data.readyPlans.some((p) => p.id === 'PL-024')).toBe(false)
     }
-    // Typed → legacy: the bridge binds the next revision; the store projection observes it.
+    // Typed → console: the bridge binds the next revision; the canonical snapshot observes it.
     await act(async () => { await approveRevisedPlan(h.svc(), ['Narrow the scope']) })
     let bridged!: Awaited<ReturnType<ReturnType<ConsoleServices['plansBridge']>['createOperation']>>
     await act(async () => { bridged = await h.svc().plansBridge(TAYLOR, 'all').createOperation(ctx(TAYLOR), 'PL-025') })
     expect(bridged.ok).toBe(true)
-    const d = h.store().db
+    const d = h.db()
     expect(d.operations.find((o) => o.id === (bridged.ok ? bridged.data.opId : ''))!.planId).toBe('PL-025')
     expect(d.plans.find((p) => p.id === 'PL-025')!.opId).toBe(bridged.ok ? bridged.data.opId : '')
     h.unmount()
@@ -218,7 +193,7 @@ describe('bridge proof both directions (ticket 40)', () => {
   it('a bridge commit refetches My Tasks and the operations console — the linked draft appears without a reload', async () => {
     const h = mountConsole('Alex Morgan', true)
     await screen.findByText(/All \(4\)/)
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('button', { name: 'All 2' })).toBeInTheDocument())
     // The revision enters review; the inbox observes the ChangeSet…
     await act(async () => { await h.svc().plans(TAYLOR, 'all').revise(ctx(TAYLOR), 'PL-021', ['Add an approval gate to step 3']) })
@@ -230,26 +205,26 @@ describe('bridge proof both directions (ticket 40)', () => {
     await act(async () => { await h.svc().plansBridge(TAYLOR, 'all').createOperation(ctx(TAYLOR), 'PL-024') })
     await waitFor(() => expect(screen.getByRole('button', { name: 'All 3' })).toBeInTheDocument())
     expect(screen.getByText(/PL-024 v1\.3/)).toBeInTheDocument()
-    expect(h.store().db.operations.find((o) => o.id === 'OP-017')!.planId).toBe('PL-024')
+    expect(h.db().operations.find((o) => o.id === 'OP-017')!.planId).toBe('PL-024')
     h.unmount()
   })
 
   it('the console bridge entry creates the correctly linked draft and the ready banner clears', async () => {
     const h = mountConsole('Alex Morgan', true)
     await screen.findByText(/All \(4\)/)
-    h.run(() => h.store().setPid('RT-2026-014'))
+    h.run(() => selectProject('RT-2026-014'))
     await waitFor(() => expect(screen.getByRole('button', { name: 'All 2' })).toBeInTheDocument())
     await act(async () => { await approveRevisedPlan(h.svc()) })
     expect(await screen.findByText(/approved plan ready for an operation/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Create Operation from plan' }))
     await waitFor(() => expect(screen.queryByText(/approved plan ready for an operation/)).not.toBeInTheDocument())
     await waitFor(() => expect(screen.getByRole('button', { name: 'All 3' })).toBeInTheDocument())
-    const d = h.store().db
+    const d = h.db()
     expect(d.operations.find((o) => o.id === 'OP-017')).toMatchObject({ status: 'draft', planId: 'PL-024' })
     expect(d.plans.find((p) => p.id === 'PL-024')!.opId).toBe('OP-017')
     // A second click is idempotent — no duplicate.
-    h.run(() => { h.store().A.executePlan('PL-024') })
-    expect(h.store().db.operations.filter((o) => o.planId === 'PL-024')).toHaveLength(1)
+    h.run(() => { expect(createOperationFromPlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR, 'RT-2026-014'), 'PL-024').ok).toBe(true) })
+    expect(h.db().operations.filter((o) => o.planId === 'PL-024')).toHaveLength(1)
     h.unmount()
   })
 })
