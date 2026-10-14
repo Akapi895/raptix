@@ -30,6 +30,12 @@ export function readRequestProject(services: ConsoleServices, actor: ActorRef, i
   return request && projectAccessible(db.projects.find((p) => p.id === request.projectId), actor) ? request.projectId : undefined
 }
 
+/** Narrow existence/project lookup for access-request decision handlers; the transaction re-derives every gate. */
+export function readSessionRequestMeta(services: ConsoleServices, id: string): { id: string; projectId: string } | undefined {
+  const r = services.authority.snapshot().sessionRequests.find((x) => x.id === id)
+  return r ? { id: r.id, projectId: r.projectId } : undefined
+}
+
 export function useRenewalSessions(): { sessions: Session[] } { return useServiceProjection(readRenewalSessions) }
 
 /** The actor's derived C2 permission for one session, from recorded grants only. */
