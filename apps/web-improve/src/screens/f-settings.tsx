@@ -3,6 +3,7 @@ import { AlertTriangle, Bell, CheckCircle2, CircleHelp, Clock, Download, KeyRoun
 import { useServices } from '../state/services'
 import { useDirty } from '../state/session'
 import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
 import { signOut } from '../auth/persona'
 import { USERS, TECHNIQUES, type Integration, type Policy, type Retention, type Role, type DetectState } from '../data'
 import { OrgReadError, useAudit, useIntegrationWrites, useIntegrations, useOrgMembers, useOrgProfile, useOrgWrites, usePolicies, usePolicyWrites, useRetention, useRetentionWrites } from '../features/settings/query'
@@ -12,7 +13,6 @@ import { go, navRawRoute, useRoute } from '../router/navigate'
 import { useAccessible, useDb, useMe } from '../state/console'
 import { useAuthStore, useThemeStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { stamp } from '../domain/demo-clock'
 
 type TabId = 'org' | 'users' | 'integrations' | 'policies' | 'retention' | 'templates' | 'detection' | 'audit' | 'notifications' | 'security'
 const ROLES: Role[] = ['admin', 'manager', 'operator', 'reviewer', 'analyst', 'viewer']
@@ -166,7 +166,7 @@ function UsersPanel({ read }: { read: OrgMembersRead }) {
   /* The legacy raw `A.audit` entries, mirrored exactly: one 'legacy' commit
      through the one authority (these simulated actions never touch data). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const writes = useOrgWrites()
   const admin = read.canEdit
   const [view, setView] = useState<'users' | 'roles' | 'invites'>('users')
@@ -276,7 +276,7 @@ function IntegrationsPanel({ read }: { read: IntegrationsRead }) {
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const writes = useIntegrationWrites()
   const admin = read.canEdit
   const [reauth, setReauth] = useState<string | null>(null)
@@ -342,7 +342,7 @@ function ApprovalMatrix() {
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const [cmp, setCmp] = useState<string | null>(null)
   const c = APPROVAL_MATRIX.find((x) => x.id === cmp)
   const admin = me.role === 'admin'
@@ -398,7 +398,7 @@ function PolicyListPanel({ read }: { read: PoliciesRead }) {
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const writes = usePolicyWrites()
   const admin = read.canEdit
   const why = 'Only Organization Admins can enable or disable policies. Ask an admin to request the change.'
@@ -628,7 +628,7 @@ function AuditPanel({ read, F, set, clear }: { read: AuditRead; F: typeof AUDIT_
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const { q, actor, act, proj, res, origin } = F
   const [sel, setSel] = useState<string | null>(null)
   const [more, setMore] = useState(false)

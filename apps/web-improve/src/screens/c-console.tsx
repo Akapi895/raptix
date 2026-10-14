@@ -7,7 +7,7 @@ import { useCan, useDb, useMe } from '../state/console'
 import { useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore, type LogLine } from '../state/session'
 import { hhmm, stamp } from '../domain/demo-clock'
-import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
 import { computePreflightChecks, preflightPass } from '../features/operations/preflight'
 import { completeOperation, pauseOperation, resumeOperation, stopOperation } from '../features/operations/service'
 import { fastForward, loseAgent, restoreAgent } from '../features/demo/runtime'
@@ -700,7 +700,7 @@ export function TimelineTab({ op }: { op: Operation }) {
      store helper's exact row shape (the RT-2026-014 SS/AR corr rule, the demo
      stamp, the override-aware persona). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const [lvl, setLvl] = useState('')
   const [ag, setAg] = useState('')
   const [pick, setPick] = useState<string | null>(null)
