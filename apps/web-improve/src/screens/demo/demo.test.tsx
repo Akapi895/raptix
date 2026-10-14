@@ -82,11 +82,19 @@ async function until(probe: () => boolean, what: string) {
 }
 
 describe('walkthrough panel (ticket 61c)', () => {
-  it('launching a guide renders the panel with guide id, persona and step state', () => {
+  /** Settles the lazy walkthrough-panel chunk under fake timers (findBy's polling timer is faked). */
+  const panelUp = async () => {
+    for (let i = 0; i < 80 && screen.queryByLabelText('Demo walkthrough') === null; i++) {
+      await act(async () => { await vi.advanceTimersByTimeAsync(25); await realYield() })
+    }
+  }
+
+  it('launching a guide renders the panel with guide id, persona and step state', async () => {
     mountApp('#/command-center')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
+    await panelUp()
     expect(screen.getByLabelText('Demo walkthrough')).toBeInTheDocument()
     expect(screen.getByText('Demo walkthrough · E2E-03')).toBeInTheDocument()
     expect(screen.getByText('Step 1/3')).toBeInTheDocument()
@@ -94,20 +102,22 @@ describe('walkthrough panel (ticket 61c)', () => {
     expect(screen.getByText('Alex Morgan', { selector: 'span' })).toBeInTheDocument()
   })
 
-  it('launching a guide from a signed-out state enters the app and shows the panel', () => {
+  it('launching a guide from a signed-out state enters the app and shows the panel', async () => {
     mountApp('#/command-center')
     const seam = jumpSeam()
     expect(signedOut()).toBe(true)
     start(seam, 'E2E-03')
     expect(useAuthStore.getState().authed).toBe(true)
+    await panelUp()
     expect(screen.getByLabelText('Demo walkthrough')).toBeInTheDocument()
   })
 
-  it('Prev/Next move between steps and the last step offers Finish', () => {
+  it('Prev/Next move between steps and the last step offers Finish', async () => {
     mountApp('#/command-center')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
+    await panelUp()
     expect(screen.getByRole('button', { name: 'Prev' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /Next/ }))
     expect(screen.getByText('Step 2/3')).toBeInTheDocument()
@@ -119,11 +129,12 @@ describe('walkthrough panel (ticket 61c)', () => {
     expect(screen.queryByLabelText('Demo walkthrough')).not.toBeInTheDocument()
   })
 
-  it('every control is a keyboard-operable named button (focus reaches the panel actions)', () => {
+  it('every control is a keyboard-operable named button (focus reaches the panel actions)', async () => {
     mountApp('#/command-center')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
+    await panelUp()
     for (const name of [/Next/, 'Go to this screen', 'Collapse walkthrough', 'End walkthrough']) {
       const btn = screen.getByRole('button', { name })
       expect(btn.tabIndex).toBe(0)
@@ -132,32 +143,35 @@ describe('walkthrough panel (ticket 61c)', () => {
     }
   })
 
-  it("opening the next step's screen auto-advances the guide", () => {
+  it("opening the next step's screen auto-advances the guide", async () => {
     mountApp('#/command-center')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
+    await panelUp()
     expect(screen.getByText('Step 1/3')).toBeInTheDocument()
     act(() => { go('preflight', { id: 'OP-DRAFT-017' }) })
     expect(screen.getByText('Step 2/3')).toBeInTheDocument()
   })
 
-  it('collapse reduces the panel to a pill and expanding restores it', () => {
+  it('collapse reduces the panel to a pill and expanding restores it', async () => {
     mountApp('#/command-center')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
+    await panelUp()
     fireEvent.click(screen.getByRole('button', { name: 'Collapse walkthrough' }))
     expect(screen.getByRole('button', { name: 'Expand demo walkthrough' })).toHaveTextContent('Demo E2E-03 · Step 1/3')
     fireEvent.click(screen.getByRole('button', { name: 'Expand demo walkthrough' }))
     expect(screen.getByLabelText('Demo walkthrough')).toBeInTheDocument()
   })
 
-  it('the WF-F simulated actions drive the agent disconnect and restore through the kit', () => {
+  it('the WF-F simulated actions drive the agent disconnect and restore through the kit', async () => {
     const h = mountApp('#/command-center')
     const seam = jumpSeam()
     signIn()
     start(seam, 'WF-F')
+    await panelUp()
     expect(screen.getByText('Step 1/6')).toBeInTheDocument()
     expect(h.db().agents.find((a) => a.id === 'AG-008')!.status).not.toBe('lost')
     fireEvent.click(screen.getByRole('button', { name: 'Simulated action: Simulate AG-008 disconnect' }))
@@ -170,11 +184,12 @@ describe('walkthrough panel (ticket 61c)', () => {
     expect(screen.getByText('Simulated: AG-008 restored. Demo data only.')).toBeInTheDocument()
   })
 
-  it('ending the walkthrough clears the guide state', () => {
+  it('ending the walkthrough clears the guide state', async () => {
     mountApp('#/command-center')
     const seam = jumpSeam()
     signIn()
     start(seam, 'E2E-03')
+    await panelUp()
     fireEvent.click(screen.getByRole('button', { name: 'End walkthrough' }))
     expect(screen.queryByLabelText('Demo walkthrough')).not.toBeInTheDocument()
   })
