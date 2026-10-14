@@ -42,6 +42,11 @@ export function resetNavStores(): number {
   return ++mountEpoch
 }
 
+/** Captures the current provider epoch for transitional navigation closures. */
+export function navigationEpoch(): number {
+  return mountEpoch
+}
+
 /** Synchronous route read for non-component callers (the store's login/setPid). */
 export function currentRoute(): Route {
   return useNavStore.getState().route
