@@ -14,11 +14,11 @@
  * leakage; conversation read scope semantics.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { selectProject } from '../../router/navigate'
+import { resetDemo, sendChat, stopChat } from '../demo/runtime'
+import { requestPlanReviewTransaction } from '../plans/service'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Db } from '../../data'
 import { AiOperator } from '../../screens/g-chat'
@@ -27,31 +27,9 @@ import { getConversation, listConversations } from './service'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
-
 /** Mounts the providers (optionally with the AI workspace screen) and a probe. */
 function mountChat(me = 'Sam Patel', withScreen = false) {
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        {withScreen ? <AiOperator /> : null}
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    /** Runs a mutation (store action or service call) inside act() so the store projection flushes. */
-    run: <T,>(fn: () => T): T => { let out!: T; act(() => { out = fn() }); return out },
-    unmount: view.unmount,
-  }
+  return mountServices(withScreen ? <AiOperator /> : null, me)
 }
 
 const sam = (): ActorRef => ({ id: 'Sam Patel', role: 'manager' })
@@ -76,13 +54,13 @@ describe('AI chat on typed services (ticket 38)', () => {
     const sent = h.run(() => chat.send(ctx(sam()), convId, 'Plan a validation run for the in-scope cloud assets.'))
     expect(sent.ok).toBe(true)
     // The legacy store projection (rail, thread, history consumers) observes the write.
-    const conv = h.store().db.conversations.find((c) => c.id === convId)!
+    const conv = h.db().conversations.find((c) => c.id === convId)!
     expect(conv.messages).toHaveLength(1)
     expect(conv.messages[0]).toMatchObject({ role: 'user', text: 'Plan a validation run for the in-scope cloud assets.' })
     expect(conv.title.startsWith('Plan a validation run')).toBe(true)
     const responded = h.run(() => chat.respond(ctx(sam()), convId, 'Plan a validation run for the in-scope cloud assets.'))
     expect(responded.ok).toBe(true)
-    const d = h.store().db
+    const d = h.db()
     expect(d.conversations.find((c) => c.id === convId)!.messages).toHaveLength(2)
     expect(d.conversations.find((c) => c.id === convId)!.messages[1]!.planId).toBe(d.plans[0]!.id)
     h.unmount()
@@ -93,7 +71,7 @@ describe('AI chat on typed services (ticket 38)', () => {
     const svc = h.svc()
     expect(h.run(() => svc.chat(sam(), 'RT-2026-015').respond(ctx(sam(), 'RT-2026-015'), 'CV-015-01', 'Plan a validation run for the in-scope cloud assets.')).ok).toBe(true)
     expect(h.run(() => svc.chat(sam(), 'RT-2026-017').respond(ctx(sam(), 'RT-2026-017'), 'CV-017-01', 'Plan a discovery run for the lab hosts.')).ok).toBe(true)
-    const d = h.store().db
+    const d = h.db()
     const fromChat = d.plans.filter((p) => (p.conversationId === 'CV-015-01' || p.conversationId === 'CV-017-01') && p.id !== 'PL-022')
     expect(fromChat).toHaveLength(2) // one per conversation above
     expect(fromChat.map((p) => p.status).sort()).toEqual(['draft', 'proposed'])
@@ -110,11 +88,11 @@ describe('AI chat on typed services (ticket 38)', () => {
     expect(Object.keys(chat).sort()).toEqual(['create', 'get', 'list', 'respond', 'send', 'setMode', 'setPinned', 'stop'])
     const created = h.run(() => chat.create(ctx(sam(), 'RT-2026-015'), 'RT-2026-015', 'execution'))
     const convId = created.ok ? created.data.id : ''
-    const before = executionShape(h.store().db)
+    const before = executionShape(h.db())
     const res = h.run(() => chat.respond(ctx(sam()), convId, 'Execute the approved plan right now.'))
     expect(res.ok).toBe(true)
     expect(res.ok && res.data.messages.at(-1)!.text).toContain('no approved plan waiting to run')
-    expect(executionShape(h.store().db)).toBe(before) // nothing execution-shaped changed
+    expect(executionShape(h.db())).toBe(before) // nothing execution-shaped changed
     h.unmount()
   })
 
@@ -123,11 +101,11 @@ describe('AI chat on typed services (ticket 38)', () => {
     const chat = h.svc().chat(sam(), 'RT-2026-015')
     const created = h.run(() => chat.create(ctx(sam(), 'RT-2026-015'), 'RT-2026-015', 'observe'))
     const convId = created.ok ? created.data.id : ''
-    const before = executionShape(h.store().db)
+    const before = executionShape(h.db())
     const res = h.run(() => chat.setMode(ctx(sam()), convId, 'execution'))
     expect(res.ok).toBe(true)
-    expect(h.store().db.conversations.find((c) => c.id === convId)!.mode).toBe('execution')
-    expect(executionShape(h.store().db)).toBe(before)
+    expect(h.db().conversations.find((c) => c.id === convId)!.mode).toBe('execution')
+    expect(executionShape(h.db())).toBe(before)
     // A non-member cannot even address the conversation to flip its mode.
     const riley: ActorRef = { id: 'Riley Brooks', role: 'analyst' }
     const denied = h.run(() => h.svc().chat(riley, 'all').setMode(ctx(riley), convId, 'execution'))
@@ -138,12 +116,15 @@ describe('AI chat on typed services (ticket 38)', () => {
 
   it('stop cancels the pending response and records the stop; no late response is applied', async () => {
     const h = mountChat()
-    const convId = h.run(() => h.store().A.createConversation('RT-2026-015', 'propose'))
-    h.run(() => h.store().A.sendChat(convId, 'Plan a validation run for the in-scope cloud assets.'))
-    expect(h.store().db.conversations.find((c) => c.id === convId)!.messages).toHaveLength(1)
-    h.run(() => h.store().A.stopChat(convId))
+    const created = h.run(() => h.svc().chat(sam(), 'RT-2026-015').create(ctx(sam(), 'RT-2026-015'), 'RT-2026-015', 'propose'))
+    expect(created.ok).toBe(true)
+    if (!created.ok) throw new Error(created.failure.message)
+    const convId = created.data.id
+    h.run(() => sendChat(convId, 'Plan a validation run for the in-scope cloud assets.'))
+    expect(h.db().conversations.find((c) => c.id === convId)!.messages).toHaveLength(1)
+    h.run(() => stopChat(convId))
     await act(async () => { await new Promise((r) => setTimeout(r, 1100)) })
-    const messages = h.store().db.conversations.find((c) => c.id === convId)!.messages
+    const messages = h.db().conversations.find((c) => c.id === convId)!.messages
     expect(messages).toHaveLength(2)
     expect(messages[1]).toMatchObject({ role: 'system', text: 'Response generation stopped by Sam Patel.' })
     h.unmount()
@@ -151,12 +132,15 @@ describe('AI chat on typed services (ticket 38)', () => {
 
   it('a late response lands in the conversation it was sent to, never in the newly selected project', async () => {
     const h = mountChat()
-    const convId = h.run(() => h.store().A.createConversation('RT-2026-015', 'propose'))
-    h.run(() => h.store().A.sendChat(convId, 'Plan a validation run for the in-scope cloud assets.'))
-    const before14 = JSON.stringify(h.store().db.conversations.filter((c) => c.projectId === 'RT-2026-014').map((c) => c.messages.length))
-    h.run(() => h.store().setPid('RT-2026-014')) // switch while the response is pending
+    const created = h.run(() => h.svc().chat(sam(), 'RT-2026-015').create(ctx(sam(), 'RT-2026-015'), 'RT-2026-015', 'propose'))
+    expect(created.ok).toBe(true)
+    if (!created.ok) throw new Error(created.failure.message)
+    const convId = created.data.id
+    h.run(() => sendChat(convId, 'Plan a validation run for the in-scope cloud assets.'))
+    const before14 = JSON.stringify(h.db().conversations.filter((c) => c.projectId === 'RT-2026-014').map((c) => c.messages.length))
+    h.run(() => selectProject('RT-2026-014')) // switch while the response is pending
     await act(async () => { await new Promise((r) => setTimeout(r, 1100)) })
-    const d = h.store().db
+    const d = h.db()
     expect(d.conversations.find((c) => c.id === convId)!.messages.at(-1)!.role).toBe('ai')
     expect(d.conversations.find((c) => c.id === convId)!.projectId).toBe('RT-2026-015')
     expect(JSON.stringify(d.conversations.filter((c) => c.projectId === 'RT-2026-014').map((c) => c.messages.length))).toBe(before14)
@@ -165,22 +149,25 @@ describe('AI chat on typed services (ticket 38)', () => {
 
   it('demo reset disposes a pending response: the reseeded dataset is never touched by it', async () => {
     const h = mountChat()
-    const convId = h.run(() => h.store().A.createConversation('RT-2026-015', 'propose'))
-    h.run(() => h.store().A.sendChat(convId, 'Plan a validation run for the in-scope cloud assets.'))
-    h.run(() => h.store().resetDemo())
+    const created = h.run(() => h.svc().chat(sam(), 'RT-2026-015').create(ctx(sam(), 'RT-2026-015'), 'RT-2026-015', 'propose'))
+    expect(created.ok).toBe(true)
+    if (!created.ok) throw new Error(created.failure.message)
+    const convId = created.data.id
+    h.run(() => sendChat(convId, 'Plan a validation run for the in-scope cloud assets.'))
+    h.run(() => resetDemo())
     await act(async () => { await new Promise((r) => setTimeout(r, 1100)) })
-    expect(h.store().db.conversations.find((c) => c.id === 'CV-014-03')!.messages).toHaveLength(12)
-    expect(h.store().db.conversations.find((c) => c.id === convId)).toBeUndefined()
+    expect(h.db().conversations.find((c) => c.id === 'CV-014-03')!.messages).toHaveLength(12)
+    expect(h.db().conversations.find((c) => c.id === convId)).toBeUndefined()
     h.unmount()
   })
 
   it('out-of-scope requests produce blocked proposals without cross-project data leakage', () => {
     const h = mountChat()
     const chat = h.svc().chat(sam(), 'RT-2026-014')
-    const tools = h.store().db.toolEvents.length
+    const tools = h.db().toolEvents.length
     const out = h.run(() => chat.respond(ctx(sam(), 'RT-2026-014'), 'CV-014-01', 'Scan prod-payments-db too.'))
     expect(out.ok).toBe(true)
-    const d = h.store().db
+    const d = h.db()
     expect(d.toolEvents).toHaveLength(tools + 1)
     expect(d.toolEvents[0]).toMatchObject({ state: 'denied', target: 'prod-payments-db' })
     expect(d.audit[0]!.action).toBe('Blocked tool call')
@@ -197,11 +184,11 @@ describe('AI chat on typed services (ticket 38)', () => {
 
   it('observe mode stays read-only at the handler: an answer, no plan and no tool event', () => {
     const h = mountChat()
-    const before = executionShape(h.store().db)
+    const before = executionShape(h.db())
     const res = h.run(() => h.svc().chat(sam(), 'RT-2026-014').respond(ctx(sam(), 'RT-2026-014'), 'CV-014-01', 'Plan an assessment for me.'))
     expect(res.ok).toBe(true)
     expect(res.ok && res.data.messages.at(-1)!.text).toContain('Observe mode — read-only')
-    expect(executionShape(h.store().db)).toBe(before)
+    expect(executionShape(h.db())).toBe(before)
     h.unmount()
   })
 
@@ -209,8 +196,8 @@ describe('AI chat on typed services (ticket 38)', () => {
     const h = mountChat()
     const res = h.run(() => h.svc().chat(sam(), 'RT-2026-015').respond(ctx(sam(), 'RT-2026-015'), 'CV-015-01', 'Plan a validation run for the in-scope cloud assets.'))
     const planId = res.ok ? res.data.messages.at(-1)!.planId! : ''
-    h.run(() => h.store().A.requestPlanApproval(planId))
-    const d = h.store().db
+    h.run(() => { expect(requestPlanReviewTransaction(h.svc().authority, h.svc().clock, ctx(sam(), 'RT-2026-015'), planId).ok).toBe(true) })
+    const d = h.db()
     expect(d.plans.find((p) => p.id === planId)!.status).toBe('in_review')
     expect(d.conversations.find((c) => c.id === 'CV-015-01')!.messages.at(-1)!.text).toContain('sent to Pat Kim for approval')
     expect(d.notices.some((n) => n.text.includes(`${planId} needs review`))).toBe(true)
@@ -259,7 +246,7 @@ describe('AI workspace rendering (ticket 38)', () => {
   it('renders Observe/Propose/Execution as display-only modes; execution mode enables no execution control', async () => {
     window.location.hash = '#/ai-operator'
     const h = mountChat('Sam Patel', true)
-    h.run(() => h.store().setPid('RT-2026-015'))
+    h.run(() => selectProject('RT-2026-015'))
     await waitFor(() => expect(screen.getByText('Cloud configuration validation')).toBeInTheDocument())
     const group = screen.getByRole('radiogroup', { name: 'Conversation mode' })
     expect(within(group).getByRole('radio', { name: 'Observe' })).toBeInTheDocument()
