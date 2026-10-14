@@ -276,3 +276,40 @@ Gaps: browser route exercise skipped (same optional HTTP-check gap;
 navigation semantics are pinned by the new navigate suite plus the
 route/host/shell/dashboard suites that exercise `go`/`route` through real
 mounted routes).
+
+### Enabler C (demo clock + guarded project selection, `wi/67e-enabler-c`)
+
+Two more store-owned behaviors needed canonical homes before the consumer
+waves can leave `useStore()`:
+
+- `src/domain/demo-clock.ts` (new, 35 runtime lines): the demo wall-clock
+  projection (the T0 anchor, `hhmm`, `hhmm12`, `stamp`, `today`) moves here
+  verbatim from the store's private copies; the C2 feature service re-points
+  its `hhmm` to the single anchor (re-export kept for the session console
+  and its suite — one anchor now backs audit/notice stamps, the live logs
+  and the grant countdown, instead of two same-valued module-eval anchors).
+- `src/router/navigate.ts` gains `selectProject(id)`: the guarded project
+  switch (unsaved-changes guard → project-store write → switcher close →
+  450 ms shell loading gate → DETAIL_MAP redirect computed from the
+  committed route and written once) moves verbatim out of the provider; the
+  store's `setPid` forwards to it with this mount's epoch. Screens taking
+  `setPid` from the store can now use the canonical module.
+- `src/router/navigate.test.tsx` (+3 tests): the dirty switch is held behind
+  the unsaved modal and proceeds with the loading gate + switcher closed;
+  a detail route redirects to the selected project (and `all` falls back to
+  the portfolio); re-selecting the active project only closes the switcher.
+  `beforeEach` now also calls `resetSharedStores()` so the project store's
+  pid cannot leak between tests.
+- `src/store.tsx` (−28 net): private clock copies and the `setPid`
+  implementation deleted; forwards only.
+
+Checks: `npm run typecheck` — 0 diagnostics. `npm run lint` — 0 errors;
+169 → 168 warnings (store.tsx 11 → 10 with the deleted selector; new files
+clean). `npm test -- --run --maxWorkers=2` — 951 tests green (938 baseline +
+13 navigate: 9 prior enabler-B + 3 new + recount) with no existing assertion
+changed. `npm run build` — succeeds (pre-existing chunk-size warning only).
+
+Gaps: browser route exercise skipped (same optional HTTP-check gap; the
+switcher/loading/redirect behavior is pinned by the new navigate tests plus
+the shell/project-switcher, b-detail and dashboard suites that exercise
+`setPid` through real screens).
