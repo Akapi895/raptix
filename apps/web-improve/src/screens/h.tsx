@@ -2,7 +2,9 @@ import { useEffect, useState, type ComponentType } from 'react'
 import { Activity, ClipboardCheck, Download, Eye, Lock, OctagonX, Radio, RadioTower, ShieldAlert, SlidersHorizontal, TerminalSquare, TriangleAlert } from 'lucide-react'
 import { useServices } from '../state/services'
 import { go, useRoute } from '../router/navigate'
-import { useAccessible, useCan, useDb, useMe } from '../state/console'
+import { useAccessible, useCan, useMe } from '../state/console'
+import { useStopRead } from '../features/estop/projection'
+import { useRenewalSessions, readRequestProject } from '../features/c2/projection'
 import { useProjectStore, useToastStore } from '../state/stores'
 import { decideSessionRequestTransaction } from '../features/c2/grants'
 import { Banner, Button, Card, CardHeader, DescList, Drawer, Empty, Field, FilterBar, Gated, IdLink, Kpi, Mono, PageHeader, PageSkeleton, Person, Progress, SearchBox, Segmented, Select, Skeleton, Status, Table, Tabs, Textarea, Timeline, Pager, DemoTag, Modal, cx } from '../ui'
@@ -23,7 +25,7 @@ const short = (t: string) => t.replace('Oct 13, 2026, ', '')
    ticket 46 moves the deadline lifecycle into the service. Request/grant
    decisions and termination keep the legacy bridge until 46. */
 function C2Overview() {
-  const db = useDb()
+  const db = useStopRead()
   const route = useRoute()
   const pid = useProjectStore((s) => s.pid)
   useGrantWatch()
@@ -194,7 +196,7 @@ function Sessions({ all }: { all: boolean }) {
 
 function Requests({ all }: { all: boolean }) {
   const services = useServices()
-  const db = useDb()
+  const db = useRenewalSessions()
   const me = useMe()
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
@@ -211,9 +213,10 @@ function Requests({ all }: { all: boolean }) {
      the request lookup resolves from the one authority at call time (the
      store's dbRef semantics) and the typed result bridges back to the legacy Res. */
   const decideSessionRequest = (id: string, decision: 'approved' | 'rejected' | 'changes', note: string, minutes?: number) => {
-    const r = services.authority.snapshot().sessionRequests.find((x) => x.id === id)
-    if (!r) return { ok: false as const, error: `Access request ${id} does not exist.` }
-    const res = decideSessionRequestTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: r.projectId, corr: 'legacy' }, { requestId: id, decision, note, minutes })
+    const actor = { id: me.name, role: me.role }
+    const projectId = readRequestProject(services, actor, id)
+    if (!projectId) return { ok: false as const, error: `Access request ${id} does not exist.` }
+    const res = decideSessionRequestTransaction(services.authority, services.clock, { actor, projectId, corr: 'legacy' }, { requestId: id, decision, note, minutes })
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
   }
   const submit = () => {

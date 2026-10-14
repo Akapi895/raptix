@@ -14,10 +14,9 @@
  * the same publication. Request/grant mutations live in the feature-local
  * transactions (./grants, ticket 46) behind the legacy action bridge.
  */
-import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getGrantWatch } from './service'
-import type { Db } from '../../data'
+import { readGrantWatch } from './projection'
+import { useServiceProjection } from '../../state/projection'
 import { actorRef } from '../../auth/persona'
 import { useServices } from '../../state/services'
 import { consoleKeys, useQueryScope, type QueryScope } from '../../state/keys'
@@ -144,23 +143,5 @@ export function useC2Session(id?: string) {
 
 /** Expiry alerts observe typed snapshots synchronously, without a Query fetch gap. */
 export function useC2GrantWatch(): C2GrantWatchRead | undefined {
-  const services = useServices()
-  const scope = useQueryScope()
-  const subscribe = useCallback((changed: () => void) => services.subscribe((cs) => {
-    if (cs.corr === 'reset' || cs.entities.some((e) => ['session', 'operation', 'project'].includes(e.kind))) changed()
-  }), [services])
-  const snapshot = useMemo(() => {
-    let previous: Db | undefined
-    let read: C2GrantWatchRead | undefined
-    return (): C2GrantWatchRead | undefined => {
-      const db = services.authority.snapshot()
-      if (db !== previous) {
-        previous = db
-        const res = getGrantWatch(db, ctxOf(scope, 'grant-watch'))
-        read = res.ok ? res.data : undefined
-      }
-      return read
-    }
-  }, [services, scope])
-  return useSyncExternalStore(subscribe, snapshot)
+  return useServiceProjection(readGrantWatch)
 }

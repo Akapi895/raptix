@@ -7,8 +7,8 @@ import { useProjectStore, useToastStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { emergencyStop, terminateSession } from '../features/demo/runtime'
 import { expireGrantTransaction, requestSessionAccessTransaction, revokeGrantTransaction, sessionCommandTransaction } from '../features/c2/grants'
-import { ROLE_LABEL } from '../auth/policy'
-import { stamp } from '../domain/demo-clock'
+import { recordAudit } from '../features/audit/service'
+import { readSessionProject } from '../features/c2/projection'
 import type { Session } from '../data'
 import { C2ReadError, useC2GrantWatch, useC2Session, useC2Sessions } from '../features/c2/query'
 import { hhmm } from '../features/c2/service'
@@ -153,9 +153,7 @@ export function useRevoke(): ((s: Session, user: string) => void) & { retry: (s:
   const perform = (s: Session, user: string, reason: string) => {
     if (sim.failNext) {
       setSim({ failNext: false, fails: [...sim.fails.filter((f) => !(f.sessionId === s.id && f.user === user)), { sessionId: s.id, user, reason }] })
-      services.authority.commit('legacy', (d) => {
-        d.audit.unshift({ corr: s.projectId === 'RT-2026-014' && /^(SS|AR)-/.test(s.id) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action: 'Revocation failed', obj: s.id, projectId: s.projectId, result: 'Failed', reason: 'Revoke not acknowledged — grant may still be active' })
-      })
+      recordAudit(services, { actor: { id: me.name, role: me.role }, projectId: s.projectId, corr: 'legacy' }, { action: 'Revocation failed', obj: s.id, result: 'Failed', reason: 'Revoke not acknowledged — grant may still be active' })
       toast(`Revocation failed — ${user} may still have access to ${s.id}.`, 'bad')
       return
     }
@@ -348,16 +346,16 @@ export function Console(): ReactElement {
      session lookup resolves from the one authority at call time (the store's
      dbRef semantics) and the typed result bridges back to the legacy Res. */
   const command = (sessionId: string, label: string) => {
-    const x = services.authority.snapshot().sessions.find((y) => y.id === sessionId)
-    if (!x) return { ok: false as const, error: `Session ${sessionId} does not exist.` }
-    const res = sessionCommandTransaction(services.authority, services.clock, { actor: { id: me.name, role: me.role }, projectId: x.projectId, corr: 'legacy' }, { sessionId, label })
+    const actor = { id: me.name, role: me.role }
+    const projectId = readSessionProject(services, actor, sessionId)
+    if (!projectId) return { ok: false as const, error: `Session ${sessionId} does not exist.` }
+    const res = sessionCommandTransaction(services.authority, services.clock, { actor, projectId, corr: 'legacy' }, { sessionId, label })
     return res.ok ? { ok: true as const } : { ok: false as const, error: res.failure.message }
   }
   /* The legacy raw `A.expireGrant` entry, mirrored — the idempotent
      single-grant expiry through the canonical transaction. */
   const expireGrant = (sessionId: string, user: string) => {
-    const x = services.authority.snapshot().sessions.find((y) => y.id === sessionId)
-    if (x) expireGrantTransaction(services.authority, services.clock, 'legacy', sessionId, user)
+    expireGrantTransaction(services.authority, services.clock, 'legacy', sessionId, user)
   }
   if (detail.isPending) return <div aria-busy="true" aria-label="Loading console"><PageSkeleton /></div>
   if (detail.isError || !detail.data) {
