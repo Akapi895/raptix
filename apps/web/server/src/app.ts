@@ -28,6 +28,7 @@ import { registerGovernanceRoutes } from './http/routes/governance.routes.js';
 import { registerFindingsWorkflowRoutes } from './http/routes/findings-workflow.routes.js';
 import { registerReportsRoutes } from './http/routes/reports.routes.js';
 import { registerC2GrantRoutes } from './http/routes/c2-grants.routes.js';
+import { registerFleetRoutes } from './http/routes/fleet.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
@@ -46,6 +47,7 @@ import type { GovernanceService } from './services/governance-service.js';
 import type { FindingsWorkflowService } from './services/findings-workflow-service.js';
 import type { ReportsService } from './services/reports-service.js';
 import type { C2GrantsService } from './services/c2-grants-service.js';
+import type { FleetService } from './services/fleet-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -76,6 +78,7 @@ export interface AppOptions {
   readonly findingsWorkflow?: FindingsWorkflowService;
   readonly reportsService?: ReportsService;
   readonly c2Grants?: C2GrantsService;
+  readonly fleetService?: FleetService;
   /** Runtime cancel bridge for emergency stops (operation scope). */
   readonly cancelRun?: (threadId: string, runId: string | null) => Promise<string>;
   /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
@@ -160,6 +163,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.findingsWorkflow) registerFindingsWorkflowRoutes(app, options.findingsWorkflow, identity);
   if (options.reportsService) registerReportsRoutes(app, options.reportsService, identity);
   if (options.c2Grants) registerC2GrantRoutes(app, options.c2Grants, identity);
+  if (options.fleetService) registerFleetRoutes(app, options.fleetService, identity);
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;

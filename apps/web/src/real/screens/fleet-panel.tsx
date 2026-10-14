@@ -1,0 +1,142 @@
+/**
+ * Real agent fleet/fanout panel (integration ticket 13). Three identities
+ * stay distinct: assistant graph catalog IDs (not endpoint health), bound
+ * runtime threads and checkpoint-provenance subagent branches. Missing
+ * runtime data renders as unknown — no heartbeat is fabricated. Branch-level
+ * retry/reassign/cancel and allocation have no runtime action contract and
+ * are surfaced as recorded exclusions (D1/D2); run-level cancel reuses the
+ * ticket 05 cancel API.
+ */
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Ban, Bot, Loader2 } from 'lucide-react'
+import type { ReactElement } from 'react'
+import { fetchFleet, cancelRun } from '../api'
+import { Banner, Button, Card, CardHeader, Empty, Skeleton, Status } from '../../ui'
+
+const STATE_LABEL: Record<string, string> = { running: 'running', ended: 'ended', unknown: 'unknown' }
+
+export function RealFleetPanel({ engagementId }: { engagementId: string }): ReactElement {
+  const client = useQueryClient()
+  const fleet = useQuery({
+    queryKey: ['real', 'fleet', engagementId],
+    queryFn: () => fetchFleet(engagementId),
+  })
+  const cancel = useMutation({
+    mutationFn: (input: { threadId: string; runId: string }) => cancelRun(engagementId, input.threadId, input.runId),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['real', 'fleet', engagementId] }),
+  })
+  const cancelError = cancel.error instanceof Error ? cancel.error.message : null
+
+  if (fleet.isPending) {
+    return <Card><CardHeader title="Agent fleet" /><div className="p-4"><Skeleton className="h-24" /></div></Card>
+  }
+  if (fleet.isError || !fleet.data) {
+    return <Empty icon={Bot} title="Fleet data is unavailable" action={<Button onClick={() => void fleet.refetch()}>Retry</Button>}>
+      {fleet.error instanceof Error ? fleet.error.message : 'The fleet read failed.'}
+    </Empty>
+  }
+  const view = fleet.data
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader title="Assistant graph catalog" sub={`Source: ${view.sources.agents} — catalog identity only; no endpoint health or heartbeat exists at this layer`} />
+        <div className="p-4">
+          {view.agents.length === 0 ? (
+            <p className="text-sm text-muted">No assistant graphs are configured for this deployment.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-2">
+              {view.agents.map((a) => (
+                <li key={a.graphId} className="rounded-lg border border-line px-3 py-1 font-mono text-xs">{a.graphId}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title={`Bound threads (${view.counts.threads}${view.counts.threadsTruncated ? '+, truncated' : ''})`} sub={`Source: ${view.sources.threads} — raw runtime thread status; ${view.counts.activeRuns} active run(s)`} />
+        <div className="p-4">
+          {view.threads.length === 0 ? (
+            <p className="text-sm text-muted">No threads are bound to this engagement yet. Start one from Operations.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted">
+                  <th className="pb-2">Thread</th>
+                  <th className="pb-2">Kind</th>
+                  <th className="pb-2">Assistant</th>
+                  <th className="pb-2">Runtime status</th>
+                  <th className="pb-2">Active run</th>
+                </tr>
+              </thead>
+              <tbody>
+                {view.threads.map((t) => (
+                  <tr key={t.threadId} className="border-t border-line">
+                    <td className="py-2 pr-3 font-mono text-xs">{t.threadId}</td>
+                    <td className="py-2 pr-3 text-xs">{t.kind ?? '—'}</td>
+                    <td className="py-2 pr-3 font-mono text-xs">{t.assistantId ?? '—'}</td>
+                    <td className="py-2 pr-3"><Status kind="gate" value={t.rawStatus === 'busy' ? 'pending' : t.rawStatus === 'error' ? 'failed' : t.rawStatus === null ? 'pending' : 'passed'} size="sm" label={t.rawStatus ?? 'unknown'} /></td>
+                    <td className="py-2 text-xs">
+                      {t.activeRunId !== null ? (
+                        <span className="flex items-center gap-2">
+                          <span className="font-mono">{t.activeRunId}</span>
+                          <Button variant="secondary" icon={Ban} disabled={cancel.isPending} onClick={() => cancel.mutate({ threadId: t.threadId, runId: t.activeRunId! })}>
+                            {cancel.isPending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : null}
+                            Cancel
+                          </Button>
+                        </span>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title={`Subagent branches (${view.counts.branches}; ${view.counts.runningBranches} running)`} sub={`Source: ${view.sources.branches} — observed start/end pairing from durable checkpoint transcripts`} />
+        <div className="p-4">
+          {view.branches.length === 0 ? (
+            <p className="text-sm text-muted">No subagent invocations recorded in the checkpoint transcripts yet.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted">
+                  <th className="pb-2">Thread</th>
+                  <th className="pb-2">Agent</th>
+                  <th className="pb-2">State</th>
+                  <th className="pb-2">Outcome</th>
+                  <th className="pb-2">Started</th>
+                  <th className="pb-2">Ended</th>
+                </tr>
+              </thead>
+              <tbody>
+                {view.branches.map((b) => (
+                  <tr key={`${b.threadId}::${b.key}`} className="border-t border-line">
+                    <td className="py-2 pr-3 font-mono text-xs">{b.threadId}</td>
+                    <td className="py-2 pr-3 font-mono text-xs">{b.agent}</td>
+                    <td className="py-2 pr-3"><Status kind="gate" value={b.state === 'running' ? 'pending' : b.state === 'ended' ? 'passed' : 'pending'} size="sm" label={STATE_LABEL[b.state] ?? b.state} /></td>
+                    <td className="py-2 pr-3 text-xs">{b.outcome ?? '—'}</td>
+                    <td className="py-2 pr-3 text-xs">{b.startedAt !== null ? b.startedAt.replace('T', ' ').slice(0, 16) + 'Z' : '—'}</td>
+                    <td className="py-2 text-xs">{b.endedAt !== null ? b.endedAt.replace('T', ' ').slice(0, 16) + 'Z' : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </Card>
+
+      <Banner tone="warn" title="Branch-level controls are excluded by decision (D1/D2)">
+        The runtime exposes run-level cancel only. Branch retry, reassign, branch cancel and agent allocation/grouping have no runtime action contract, so they render as unavailable instead of fabricated controls. Available: {view.excludedActions.join(', ')}.
+      </Banner>
+
+      {cancelError !== null && <p className="text-sm text-bad" role="alert">{cancelError}</p>}
+    </div>
+  )
+}
