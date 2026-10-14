@@ -1,207 +1,126 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import 'tailwindcss';
 
-/* Exclude the nested @raptix/web-raptix-server API package (Node code +
-   generated Prisma client) from Tailwind source scanning; server code is
-   not browser UI and its class names must not pollute the stylesheet. */
-@source not '../server';
-
-@theme {
-  --color-brand: #DC2626;
-  --color-brand-hover: #B91C1C;
-  --color-brand-dim: rgba(220,38,38,0.08);
-  --color-bg: #F8FAFC;
-  --color-surface: #FFFFFF;
-  --color-surface-elevated: #F1F5F9;
-  --color-border: #E2E8F0;
-  --color-border-subtle: #F1F5F9;
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94A3B8;
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-info: #2563EB;
-  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-family-mono: 'JetBrains Mono', ui-monospace, monospace;
+:root {
+  --c-bg: #F6F7F9;
+  --c-side: #FFFFFF;
+  --c-panel: #FFFFFF;
+  --c-hover: #F3F4F6;
+  --c-line: #E5E7EB;
+  --c-fg: #111827;
+  --c-muted: #4B5563;
+  --c-neutral: #6B7280;
+  --c-accent: #C62828;
+  --c-accent-hover: #A61F1F;
+  --c-accent-press: #8E1B1B;
+  --c-accent-fg: #FFFFFF;
+  --c-cyan: #1D4ED8;
+  /* Chart category color (dashboard "high" severity). Legible on both the
+     light page and the dark panels, so it is defined once like the console
+     tokens; no .dark override. */
+  --c-orange: #F2894F;
+  --c-ok: #15803D;
+  --c-warn: #A16207;
+  --c-bad: #B91C1C;
+  --c-accent-soft: #FDECEC;
+  --c-accent-line: #F4C7C7;
+  --c-ok-soft: #DCFCE7;
+  --c-warn-soft: #FEF3C7;
+  --c-bad-soft: #FEE2E2;
+  --c-info-soft: #DBEAFE;
+  --c-subtle: #F9FAFB;
+  --c-console-bg: #101820;
+  --c-console-panel: #17232E;
+  --c-console-fg: #E5EDF5;
+  --c-console-muted: #9FB0C0;
+  --c-console-line: #2A3A4A;
+  /* The console is a fixed-dark surface in both themes, so its accents keep
+     the dark-theme values (ticket 63 audit: these tokens were referenced as
+     text-console-info/warn/bad but never registered). */
+  --c-console-info: #6EA0FF;
+  --c-console-warn: #FBBF24;
+  --c-console-bad: #F87171;
+  --c-focus: #DC2626;
+  color-scheme: light;
+}
+:root.dark {
+  --c-bg: #0F1115;
+  --c-side: #171A20;
+  --c-panel: #171A20;
+  --c-hover: #20242C;
+  --c-line: #2A2F39;
+  --c-fg: #F3F4F6;
+  --c-muted: #B4BAC6;
+  --c-neutral: #8F97A6;
+  --c-accent: #E5484D;
+  --c-accent-hover: #F26166;
+  --c-accent-press: #CF3A3F;
+  --c-cyan: #6EA0FF;
+  --c-ok: #4ADE80;
+  --c-warn: #FBBF24;
+  --c-bad: #F87171;
+  --c-accent-soft: #3A1B1E;
+  --c-accent-line: #6B2A2E;
+  --c-ok-soft: #12301D;
+  --c-warn-soft: #33270A;
+  --c-bad-soft: #3B1719;
+  --c-info-soft: #14284D;
+  --c-subtle: #13161B;
+  --c-focus: #F87171;
+  color-scheme: dark;
 }
 
-* {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  box-sizing: border-box;
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-side: var(--c-side);
+  --color-panel: var(--c-panel);
+  --color-hover: var(--c-hover);
+  --color-line: var(--c-line);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-accent-press: var(--c-accent-press);
+  --color-cyan: var(--c-cyan);
+  --color-orange: var(--c-orange);
+  --color-ok: var(--c-ok);
+  --color-warn: var(--c-warn);
+  --color-bad: var(--c-bad);
+  --color-neutral: var(--c-neutral);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-line: var(--c-accent-line);
+  --color-ok-soft: var(--c-ok-soft);
+  --color-warn-soft: var(--c-warn-soft);
+  --color-bad-soft: var(--c-bad-soft);
+  --color-info-soft: var(--c-info-soft);
+  --color-subtle: var(--c-subtle);
+  --color-console: var(--c-console-bg);
+  --color-console-panel: var(--c-console-panel);
+  --color-console-fg: var(--c-console-fg);
+  --color-console-muted: var(--c-console-muted);
+  --color-console-line: var(--c-console-line);
+  --color-console-info: var(--c-console-info);
+  --color-console-warn: var(--c-console-warn);
+  --color-console-bad: var(--c-console-bad);
+  --font-sans: 'Inter', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+html, body, #root { height: 100%; }
 body {
-  background-color: #F8FAFC;
-  color: #0F172A;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
+:focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; border-radius: 6px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--c-line); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
 
-code, pre, .font-mono {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-}
-
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 2px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
-}
-
-.scrollbar-none {
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-
-/* ── App shell compatibility (web-raptix App/Sidebar/Header only) ──
-   Tokens match the source shell (sidebar 240 / header 60). The 900px
-   breakpoint below stays in sync with App's matchMedia('(max-width: 900px)')
-   mobile switch — CSS vars cannot be used inside media queries. */
-:root {
-  --shell-sidebar-w: 240px;
-  --shell-header-h: 60px;
-}
-
-.app-shell-content {
-  margin-left: var(--shell-sidebar-w);
-}
-
-.app-shell-main {
-  padding-top: var(--shell-header-h);
-}
-
-.app-shell-header {
-  left: var(--shell-sidebar-w);
-  height: var(--shell-header-h);
-  background-color: #FFFFFF;
-  border-bottom: 1px solid #E2E8F0;
-  padding: 0 20px;
-  gap: 16px;
-}
-
-.app-shell-header--mobile {
-  left: 0;
-}
-
-.app-shell-sidebar {
-  width: var(--shell-sidebar-w);
-}
-
-.app-shell-sidebar--static {
-  transform: none;
-}
-
-.app-shell-sidebar--open {
-  transform: translateX(0);
-}
-
-.app-shell-sidebar--closed {
-  transform: translateX(-100%);
-}
-
-.app-shell-sidebar-overlay {
-  background-color: rgba(15, 23, 42, 0.45);
-}
-
-/* Narrow viewport: content spans full width; desktop-only header
-   controls (crumbs, search, bell) are hidden — search has no data
-   source. Toggle + label + DEMO + HITL stay fitted. */
-@media (max-width: 900px) {
-  .app-shell-content {
-    margin-left: 0;
-  }
-
-  .app-shell-header {
-    left: 0;
-    padding: 0 12px;
-    gap: 10px;
-  }
-
-  .app-shell-header__search,
-  .app-shell-header__bell,
-  .app-shell-header__desktop-crumb {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .app-shell-header__hitl-text,
-  .app-shell-header__avatar { display: none; }
-}
-
-/* ── Page containment ────────────────────────────────────────
-   HEAD App wraps every screen in .visual-page (min-width 0,
-   full height). Wide consoles, maps and tables additionally use
-   .visual-page--wide: on narrow viewports they pan horizontally
-   instead of being squeezed by the narrower shell. */
-.visual-page {
-  min-width: 0;
-  height: 100%;
-}
-
-.visual-page--wide {
-  min-width: 0;
-  height: 100%;
-}
-
-@media (max-width: 900px) {
-  .visual-page--wide {
-    min-width: 960px;
-    overflow-x: auto;
-  }
-}
-
-/* ── Keyboard focus / reduced motion / dialog helpers ────────
-   Kept for the shared Dialog primitive and copied modal wrappers
-   (u-dialog-panel / u-dialog-body), tab rows (u-tabstrip) and
-   bounded wide tables (u-table-scroll). */
-
-:focus-visible {
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-.u-dialog-panel {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  max-width: calc(100vw - 2rem);
-}
-
-.u-dialog-body {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.u-tabstrip {
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  -webkit-overflow-scrolling: touch;
-}
-
-.u-table-scroll {
-  max-width: 100%;
-  overflow: auto;
-  scrollbar-width: thin;
-}
+html, body, #root { overflow: hidden; }
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+.tnum { font-variant-numeric: tabular-nums; }

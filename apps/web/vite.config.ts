@@ -1,11 +1,11 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { fileURLToPath, URL } from 'node:url'
+import path from 'node:path'
 
-// Standalone production config. Figma Make preview tooling lives in
-// `.figma/` and is intentionally not part of this pipeline — production
-// builds must not read `.figma/` configuration.
+// Canonical production config for the new console. Figma Make preview tooling
+// was removed with the cutover (ticket 02, R01): production builds never read
+// `.figma/` and need no site configuration.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
+        '@': path.resolve(__dirname, './src'),
       },
     },
     server: {

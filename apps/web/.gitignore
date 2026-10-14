@@ -19,12 +19,4 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
-
-test-results/
-test-results-real/
-playwright-report/
-test-results-findings/
-test-results-graph/
-test-results-logs/
-test-results-core/
-test-results-deployed/
+.ua/

@@ -5,7 +5,6 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["vite/client", "react", "react-dom"],
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
@@ -16,9 +15,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "types": ["node"],
     "strict": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "server"]
+  "include": ["src", "tests", "vite.config.ts", "vitest.config.ts"]
 }
