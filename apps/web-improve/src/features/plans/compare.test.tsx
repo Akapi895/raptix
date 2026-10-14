@@ -14,10 +14,10 @@
  * the typed decide handler (bridge both directions).
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { go } from '../../router/navigate'
+import { requestPlanReviewTransaction, revisePlanTransaction } from './service'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { seed } from '../../data'
@@ -32,31 +32,10 @@ const RILEY: ActorRef = { id: 'Riley Brooks', role: 'analyst' }
 let corrSeq = 0
 const ctx = (actor: ActorRef, projectId = 'all'): RequestContext => ({ actor, projectId, corr: `corr-${++corrSeq}` })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices()!)
-  return null
-}
-
 /** Mounts the providers with the compare route for PL-021 and a probe. */
 function mountCompare(me = 'Taylor Chen') {
   window.location.hash = '#/ai-plan-compare/PL-021'
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        <AiPlanCompare />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: <T,>(fn: () => T): T => { let out!: T; act(() => { out = fn() }); return out },
-    unmount: view.unmount,
-  }
+  return mountServices(<AiPlanCompare />, me)
 }
 
 describe('plan compare read model (ticket 42)', () => {
@@ -123,24 +102,24 @@ describe('plan compare read model (ticket 42)', () => {
 })
 
 describe('compare route on the typed read (ticket 42)', () => {
-  it('renders the derived pair and refetches on plan commits — legacy actions and the typed handler (bridge both directions)', async () => {
+  it('keeps the pinned pair stable and refetches review decisions on the new revision', async () => {
     const h = mountCompare('Taylor Chen')
     // The seeded pair renders from the typed read; PL-021 is the approved re-approved version.
     await waitFor(() => expect(screen.getAllByText('PL-020').length).toBeGreaterThan(0))
     expect(screen.getAllByText('v1.1').length).toBeGreaterThan(0)
     expect(screen.getByText(/was re-approved/)).toBeInTheDocument()
     // A legacy store revision creates PL-024; the pinned pair for PL-021 does not drift.
-    h.run(() => { h.store().A.revisePlan('PL-021', ['Add an approval gate to step 3'], 'tighten gates') })
-    await waitFor(() => expect(h.store().db.plans.some((p) => p.id === 'PL-024')).toBe(true))
+    h.run(() => { expect(revisePlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021', ['Add an approval gate to step 3'], 'tighten gates').ok).toBe(true) })
+    await waitFor(() => expect(h.db().plans.some((p) => p.id === 'PL-024')).toBe(true))
     expect(screen.getAllByText('PL-020').length).toBeGreaterThan(0)
     expect(screen.queryByText('PL-024')).toBeNull()
     // Direct compare link preserves plan identity: opening the revision's own compare.
-    h.run(() => { h.store().go('ai-plan-compare', { id: 'PL-024' }) })
+    h.run(() => { go('ai-plan-compare', { id: 'PL-024' }) })
     await waitFor(() => expect(screen.getAllByText('PL-024').length).toBeGreaterThan(0))
     expect(screen.getAllByText('v1.3').length).toBeGreaterThan(0)
     expect(screen.getByText('Approval required')).toBeInTheDocument()
     // Legacy → typed: a store action commits; the Query-backed view refetches without a reload.
-    h.run(() => { h.store().A.requestPlanApproval('PL-024') })
+    h.run(() => { expect(requestPlanReviewTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-024').ok).toBe(true) })
     await waitFor(() => expect(screen.getByText('In Review')).toBeInTheDocument())
     // Typed → legacy: the typed decide handler commits; the same view refetches.
     await act(async () => { await h.svc().plans(PAT, 'all').decide(ctx(PAT), 'PL-024', 'approved', 'Within ROE') })
@@ -150,16 +129,7 @@ describe('compare route on the typed read (ticket 42)', () => {
 
   it('the compare route renders the refusal state for a plan with no revision to compare', async () => {
     window.location.hash = '#/ai-plan-compare/PL-023'
-    let store!: Store
-    render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <Probe ready={(s) => { store = s }} />
-          <AiPlanCompare />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    act(() => { store.setMe('Taylor Chen') })
+    mountServices(<AiPlanCompare />, 'Taylor Chen')
     await waitFor(() => expect(screen.getByText('No revision to compare')).toBeInTheDocument())
     expect(screen.getByText(/no previous or later revision/)).toBeInTheDocument()
     expect(screen.queryByText(/Loading comparison/)).toBeNull()

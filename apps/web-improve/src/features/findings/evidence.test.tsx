@@ -10,10 +10,10 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type ComponentType } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { selectProject } from '../../router/navigate'
+import { useProjectStore } from '../../state/stores'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/e'
 import { seed } from '../../data'
@@ -21,38 +21,15 @@ import { getEvidence, listEvidence } from './service'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); window.location.hash = '' })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  const store = useStore()
-  ready(store, useServices())
-  return null
-}
-
 /** Mounts the providers, optionally rendering the evidence route matching the current hash. */
 function mountEvidence(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
   const screenFor = (): ComponentType =>
     window.location.hash.startsWith('#/evidence-inspector/') ? routes['evidence-inspector'] : routes.evidence
-  const ui = (withScreens: boolean) => {
+  const h = mountServices(null, me)
+  return { ...h, show: () => {
     const Screen = screenFor()
-    return (
-      <StoreProvider>
-        <ConsoleProviders>
-          <Probe ready={(s, v) => { store = s; svc = v }} />
-          {withScreens ? <Screen /> : null}
-        </ConsoleProviders>
-      </StoreProvider>
-    )
-  }
-  const view = render(ui(false))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    show: () => view.rerender(ui(true)),
-    unmount: view.unmount,
-  }
+    h.show(<Screen />)
+  } }
 }
 
 describe('evidence list + inspector (ticket 33)', () => {
@@ -107,13 +84,13 @@ describe('evidence list + inspector (ticket 33)', () => {
     const h = mountEvidence('Sam Patel') // manager — reaches both projects
     h.show()
     await waitFor(() => expect(screen.getByText('evidence-027.png')).toBeInTheDocument())
-    h.run(() => h.store().setPid('RT-2026-015')) // 'evidence' is not a redirecting detail route
+    h.run(() => selectProject('RT-2026-015')) // 'evidence' is not a redirecting detail route
     await waitFor(() => expect(screen.getByText('Evidence EV-014-02 belongs to another project')).toBeInTheDocument())
     expect(screen.getByText(/content from RT-2026-014 is not shown in this context/)).toBeInTheDocument()
     expect(screen.queryByText('evidence-027.png')).not.toBeInTheDocument()
     expect(screen.queryByText('Content masked by default')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Switch to RT-2026-014' }))
-    await waitFor(() => expect(h.store().pid).toBe('RT-2026-014'))
+    await waitFor(() => expect(useProjectStore.getState().pid).toBe('RT-2026-014'))
     await waitFor(() => expect(screen.getByText('evidence-027.png')).toBeInTheDocument(), { timeout: 3000 })
     h.unmount()
   })
@@ -155,7 +132,7 @@ describe('evidence list + inspector (ticket 33)', () => {
     window.location.hash = '#/evidence'
     const h = mountEvidence('Riley Brooks')
     h.show()
-    h.run(() => h.store().setPid('RT-2026-015')) // Riley is not a member
+    h.run(() => selectProject('RT-2026-015')) // Riley is not a member
     await waitFor(() => expect(screen.getByText('Could not load evidence')).toBeInTheDocument())
     expect(screen.getByText('Evidence for this project is not available for your account.')).toBeInTheDocument()
     expect(screen.queryByText('iam-review.json')).not.toBeInTheDocument()

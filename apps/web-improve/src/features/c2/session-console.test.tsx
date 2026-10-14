@@ -10,14 +10,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.useFakeTimers()
-const { act, cleanup, fireEvent, render, screen } = await import('@testing-library/react')
-const { ConsoleProviders } = await import('../../state/query')
-const { StoreProvider, useServices, useStore } = await import('../../store')
+const { act, cleanup, fireEvent, screen } = await import('@testing-library/react')
+const { mountServices } = await import('../../test/helpers')
+const { go, selectProject } = await import('../../router/navigate')
 const { routes } = await import('../../screens/h')
 const { sessionCommandTransaction } = await import('./grants')
 
-type Store = import('../../store').Store
-type ConsoleServices = import('../../domain/service-factory').ConsoleServices
 
 afterEach(() => {
   cleanup()
@@ -25,28 +23,10 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  const store = useStore()
-  const services = useServices()
-  ready(store, services)
-  return null
-}
-
 function mountConsole(me = 'Taylor Chen') {
-  let store!: Store
-  let svc!: ConsoleServices
   window.location.hash = '#/c2'
   const Screen = routes['c2-console']
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        <Screen />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { store: () => store, svc: () => svc, unmount: view.unmount }
+  return mountServices(<Screen />, me)
 }
 
 /** Fires React Query's setTimeout(0) notifications and flushes the fetch microtasks (0ms — never advances the demo clock). */
@@ -60,11 +40,11 @@ async function until(check: () => boolean) {
 describe('console command path (ticket 47)', () => {
   it('a safe action commits command history through the grant-enforced transaction and the typed read renders it', async () => {
     const h = mountConsole()
-    act(() => { h.store().setPid('RT-2026-014'); h.store().go('c2-console', { id: 'SS-041' }) })
+    act(() => { selectProject('RT-2026-014'); go('c2-console', { id: 'SS-041' }) })
     // The rendered deadline (typed read) and the real command handler are separate concerns:
     // the countdown here, the transaction boundary at the commit below.
     await until(() => screen.queryByText(/Expires in 33 min/) !== null)
-    const userLines = () => h.store().db.sessions.find((s) => s.id === 'SS-041')!.transcript.filter((l) => l.who === 'user')
+    const userLines = () => h.db().sessions.find((s) => s.id === 'SS-041')!.transcript.filter((l) => l.who === 'user')
     expect(userLines().length).toBe(2)
     fireEvent.click(screen.getByRole('button', { name: 'Show host summary' }))
     expect(screen.getAllByText(/Busy — command in progress/).length).toBeGreaterThan(0)
@@ -79,15 +59,15 @@ describe('console command path (ticket 47)', () => {
 
   it('a typed command commit reaches the mounted console through the bridge without a reload', async () => {
     const h = mountConsole()
-    act(() => { h.store().setPid('RT-2026-014'); h.store().go('c2-console', { id: 'SS-041' }) })
+    act(() => { selectProject('RT-2026-014'); go('c2-console', { id: 'SS-041' }) })
     await until(() => screen.queryByText('Interactive Session') !== null)
-    const before = h.store().db.sessions.find((s) => s.id === 'SS-041')!.transcript.length
+    const before = h.db().sessions.find((s) => s.id === 'SS-041')!.transcript.length
     act(() => {
       const r = sessionCommandTransaction(h.svc().authority, h.svc().clock, { actor: { id: 'Taylor Chen', role: 'operator' }, projectId: 'RT-2026-014', corr: 'typed' }, { sessionId: 'SS-041', label: 'Show network interfaces (simulated)' })
       expect(r.ok).toBe(true)
     })
     await until(() => screen.queryAllByText('[simulated] Show network interfaces (simulated)').length > 0)
-    expect(h.store().db.sessions.find((s) => s.id === 'SS-041')!.transcript.length).toBe(before + 2)
+    expect(h.db().sessions.find((s) => s.id === 'SS-041')!.transcript.length).toBe(before + 2)
     h.unmount()
   })
 })

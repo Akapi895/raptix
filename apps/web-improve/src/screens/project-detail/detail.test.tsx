@@ -12,17 +12,20 @@
  * change bridge, and the shell files contain no legacy database reader
  * (source assertion), including the viewer redaction banner.
  */
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHashRouter, RouterProvider } from 'react-router'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { seed } from '../../data'
 import { setActiveRouter } from '../../router/active'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
 import type { ActorRef } from '../../domain/service'
 import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
-import { ConsoleProviders } from '../../state/query'
+import { resetSharedStores, useProjectStore } from '../../state/stores'
+import { resetSessionStores, useSessionStore } from '../../state/session'
+import { resetNavStores, selectProject } from '../../router/navigate'
+import { stamp } from '../../domain/demo-clock'
+import { mountServices } from '../../test/helpers'
 import { ProjectPage } from '../b-detail'
 import { detailFor, projectDetailForScope } from './service'
 import { aggregateFor } from '../dashboard/service'
@@ -30,42 +33,34 @@ import { readiness, completion, eligibility } from '../dashboard/domain'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); setActiveRouter(null); window.location.hash = '' })
 
+beforeEach(() => {
+  window.location.hash = ''
+  resetSharedStores()
+  resetSessionStores()
+  resetNavStores()
+})
+
 const ALEX: ActorRef = { id: 'Alex Morgan', role: 'manager' }
 const RILEY: ActorRef = { id: 'Riley Brooks', role: 'analyst' }
 
 let lastView: { unmount(): void } | null = null
 
-/** Mounts the detail page for a hash deep link inside the store + Query + a hash router. */
+/** Mounts the detail page for a hash deep link inside Services + Query + a hash router. */
 function mountProject(hash: string, opts: { me?: string; wire?: (svc: ConsoleServices) => void } = {}) {
   lastView?.unmount()
   window.location.hash = hash
-  let store!: Store
-  function StoreCapture() { store = useStore(); return null }
-  const wired = new WeakSet<ConsoleServices>()
+  resetNavStores()
   const router = createHashRouter([
-    // Wire capture lives inside the router element so tests can intercept
-    // forScope before the detail read creates its scope-bound service.
-    { path: '*', element: <><StoreCapture /><WireCapture ready={(svc) => { if (opts.wire && !wired.has(svc)) { wired.add(svc); opts.wire(svc) } }} /><ProjectPage /></>, errorElement: <div />, hydrateFallbackElement: null },
+    { path: '*', element: <ProjectPage />, errorElement: <div />, hydrateFallbackElement: null },
   ])
-  // The detail page navigates through the store, which forwards to the active
-  // data router — the same single-writer wiring the real App installs.
+  // The detail page navigates through the canonical navigate seam, which
+  // forwards to the active data router — the same single-writer wiring the
+  // real App installs. `wire` runs once at services capture, before the
+  // detail read creates its scope-bound service.
   setActiveRouter(router)
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <RouterProvider router={router} />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  lastView = view
-  const me = opts.me
-  if (me && me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { view, store: () => store }
-}
-
-function WireCapture({ ready }: { ready: (svc: ConsoleServices) => void }) {
-  ready(useServices())
-  return null
+  const h = mountServices(<RouterProvider router={router} />, opts.me, opts.wire)
+  lastView = h
+  return h
 }
 
 describe('overview readiness/completion reuse the dashboard domain functions', () => {
@@ -108,12 +103,12 @@ describe('overview readiness/completion reuse the dashboard domain functions', (
 
 describe('deep links and blocked states', () => {
   it('a direct detail URL selects the correct project, tab and switcher scope', async () => {
-    const h = mountProject('#/project/RT-2026-015?tab=operations')
+    mountProject('#/project/RT-2026-015?tab=operations')
     expect(await screen.findByText('Cloud Security Assessment')).toBeInTheDocument()
     expect(await screen.findByText('OP-015')).toBeInTheDocument()
     expect(screen.queryByText('OP-014')).not.toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /Operations/ })).toHaveAttribute('aria-selected', 'true')
-    await waitFor(() => expect(h.store().pid).toBe('RT-2026-015'))
+    await waitFor(() => expect(useProjectStore.getState().pid).toBe('RT-2026-015'))
   })
 
   it('a project outside the actor scope and an unknown id expose no record content', async () => {
@@ -193,9 +188,9 @@ describe('tab state, aliases and guards', () => {
   })
 
   it('switching scope projects preserves the tab and selects the new project', async () => {
-    const h = mountProject('#/project/RT-2026-014?tab=findings')
+    mountProject('#/project/RT-2026-014?tab=findings')
     await screen.findByText('Internal Red Team Q4')
-    act(() => { h.store().setPid('RT-2026-016') })
+    act(() => { selectProject('RT-2026-016') })
     expect(await screen.findByText('Retail Perimeter Review')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /Findings/ })).toHaveAttribute('aria-selected', 'true')
     expect(await screen.findByText('No findings yet')).toBeInTheDocument()
@@ -203,13 +198,13 @@ describe('tab state, aliases and guards', () => {
   })
 
   it('a dirty form holds tab navigation behind the unsaved-changes guard', async () => {
-    const h = mountProject('#/project/RT-2026-014')
+    mountProject('#/project/RT-2026-014')
     await screen.findByText('Internal Red Team Q4')
-    act(() => { h.store().setDirty(true) })
+    act(() => { useSessionStore.getState().setDirty(true) })
     fireEvent.click(screen.getByRole('tab', { name: /Operations/ }))
-    expect(h.store().unsaved).not.toBeNull()
+    expect(useSessionStore.getState().unsaved).not.toBeNull()
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
-    act(() => { h.store().unsaved!.next() })
+    act(() => { useSessionStore.getState().unsaved!.next() })
     expect(await screen.findByRole('tab', { name: /Operations/ })).toHaveAttribute('aria-selected', 'true')
   })
 })
@@ -240,7 +235,7 @@ describe('scope and team panels on the typed read', () => {
     await screen.findByText('Internal Red Team Q4')
     fireEvent.change(screen.getByLabelText('Role of Taylor Chen'), { target: { value: 'reviewer' } })
     await waitFor(() => {
-      const member = h.store().db.projects.find((p) => p.id === 'RT-2026-014')!.members.find((m) => m.user === 'Taylor Chen')
+      const member = h.db().projects.find((p) => p.id === 'RT-2026-014')!.members.find((m) => m.user === 'Taylor Chen')
       expect(member?.role).toBe('reviewer')
     })
   })
@@ -351,10 +346,14 @@ describe('secondary panels on the typed detail read (ticket 23)', () => {
     const h = mountProject('#/project/RT-2026-014?tab=evidence')
     await screen.findByText('Internal Red Team Q4')
     expect(await screen.findByText('accounts-output.txt')).toBeInTheDocument()
-    // The legacy action commits through the shared transaction bridge; the
-    // published ChangeSet refetches the detail view, so the panel updates.
+    // The canonical commit publishes a ChangeSet through the shared bridge;
+    // the detail view refetches, so the panel updates.
     act(() => {
-      h.store().A.addEvidence({ name: 'bridge-probe.bin', kind: 'Binary', source: 'Probe', projectId: 'RT-2026-014', sensitive: false })
+      h.svc().authority.commit('evidence-probe', (d) => {
+        const id = 'EV-' + (400 + d.evidence.length + 1)
+        d.evidence.push({ id, name: 'bridge-probe.bin', kind: 'Binary', source: 'Probe', at: stamp(), by: 'Alex Morgan', projectId: 'RT-2026-014', sensitive: false })
+        d.audit.unshift({ corr: 'evidence-probe', id: 'AU-' + ++d.counters.audit, at: stamp(), actor: 'Alex Morgan', role: 'Manager', action: 'Uploaded evidence', obj: id, projectId: 'RT-2026-014', result: 'Success', reason: '' })
+      })
     })
     expect(await screen.findByText('bridge-probe.bin')).toBeInTheDocument()
   })

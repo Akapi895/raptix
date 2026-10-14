@@ -22,14 +22,15 @@
  * sensitive-evidence masking applied at the handler.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
+import { stamp } from '../../domain/demo-clock'
 import type { ActorRef, RequestContext, ServiceResult } from '../../domain/service'
+import { ROLE_LABEL } from '../../auth/policy'
+import { useMe, type Persona } from '../../state/console'
+import { useSessionStore } from '../../state/session'
+import { mountServices } from '../../test/helpers'
 import { getOrgMembers, getOrgProfile, inviteMember, setMemberRole, setMemberStatus, updateOrgProfile, getIntegrations, getPolicies, setIntegrationConnection, setPolicyEnabled, updateIntegrationKey, getRetention, getAudit, updateRetention, setRetentionHold, deleteRetentionData, auditCorr, type OrgProfile } from './service'
 import { useIntegrations, useOrgMembers, useOrgProfile, usePolicies } from './query'
 import { routes } from '../../screens/f'
@@ -176,89 +177,71 @@ describe('organization members handler (ticket 56)', () => {
   })
 })
 
-/* ───────────── bridge harness (legacy store + services, one authority) ───────────── */
-function BridgeProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
+/* ───────────── bridge harness (canonical persona + services, one authority) ───────────── */
+let lastMe: Persona | null = null
+function MeProbe() {
+  lastMe = useMe()
   return null
 }
 function mountBridge(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <BridgeProbe ready={(s, v) => { store = s; svc = v }} />
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return mountServices(<MeProbe />, me)
+}
+
+/** Mirrors the store's audited action: one 'legacy' commit with the same row shape. */
+function legacyAudit(h: ReturnType<typeof mountServices>, action: string, obj: string, projectId: string, result = 'Success', reason = '') {
+  h.svc().authority.commit('legacy', (d) => {
+    d.audit.unshift({ id: 'AU-' + ++d.counters.audit, at: stamp(), actor: 'Dana Whitfield', role: ROLE_LABEL.admin, action, obj, projectId, result, reason })
+  })
 }
 
 describe('bridge both directions for organization settings', () => {
-  it('a service profile save is observed by the legacy consumer and the audit history (new → legacy)', async () => {
+  it('a service profile save is observed by the canonical snapshot and the audit history (new → canonical)', async () => {
     const h = mountBridge('Dana Whitfield')
     let res!: ServiceResult<OrgProfile>
     await act(async () => {
       res = await h.svc().settings(dana, 'all').updateProfile(ctxOf(dana, 'all', 'svc'), { name: 'Bridged Org (Demo)' })
     })
     expect(res.ok).toBe(true)
-    expect(h.store().db.org.profile.name).toBe('Bridged Org (Demo)')
-    expect(h.store().db).toBe(h.svc().authority.snapshot())
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Updated organization settings', obj: 'ORG' })
+    expect(h.db().org.profile.name).toBe('Bridged Org (Demo)')
+    expect(h.db()).toBe(h.svc().authority.snapshot())
+    expect(h.db().audit[0]).toMatchObject({ action: 'Updated organization settings', obj: 'ORG' })
     h.unmount()
   })
 
   it('a committed member role change reaches the persona projection — the switcher lands on the new role', async () => {
     const h = mountBridge('Taylor Chen')
-    expect(h.store().me.role).toBe('operator')
+    expect(lastMe!.role).toBe('operator')
     await act(async () => {
       await h.svc().settings(dana, 'all').setMemberRole(ctxOf(dana, 'all', 'svc'), 'Taylor Chen', 'reviewer', 'Promoted in settings')
     })
     // The current persona's identity reflects the member change immediately.
-    expect(h.store().me.role).toBe('reviewer')
+    expect(lastMe!.role).toBe('reviewer')
     // ...and it survives a persona round-trip through the switcher.
-    h.run(() => h.store().setMe('Casey Nguyen (Client)'))
-    h.run(() => h.store().setMe('Taylor Chen'))
-    expect(h.store().me.role).toBe('reviewer')
+    h.as('Casey Nguyen (Client)')
+    h.as('Taylor Chen')
+    expect(lastMe!.role).toBe('reviewer')
     h.unmount()
   })
 
-  it('a legacy project mutation refetches the typed members view without a reload (legacy → new)', async () => {
+  it('a canonical project mutation refetches the typed members view without a reload (legacy → new)', async () => {
     window.location.hash = '#/settings'
-    const Probe = () => {
-      const store = useStore()
-      const services = useServices()
-      const qc = useQueryClient()
-      void qc
-      ready0.store = store
-      ready0.svc = services
-      return <OrgViews />
-    }
-    const ready0 = { store: null as Store | null, svc: null as ConsoleServices | null }
-    const view = render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <Probe />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    const h = { store: () => ready0.store!, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+    const h = mountServices(<OrgViews />)
     await waitFor(() => expect(screen.getByTestId('riley-projects')).toHaveTextContent('RT-2026-014'))
     expect(screen.getByTestId('riley-projects')).not.toHaveTextContent('RT-2026-015')
-    // Legacy action (projects domain): adds Riley to RT-2026-015 — the org
+    // Canonical commit (projects domain): adds Riley to RT-2026-015 — the org
     // members view refetches through the bridge and shows the membership.
-    const p = h.store().db.projects.find((x) => x.id === 'RT-2026-015')!
-    h.run(() => h.store().A.updateProject('RT-2026-015', { members: [...p.members, { user: 'Riley Brooks', role: 'analyst', since: 'Oct 14, 2026' }] }))
+    h.run(() => {
+      h.svc().authority.commit('legacy', (d) => {
+        const p = d.projects.find((x) => x.id === 'RT-2026-015')!
+        p.members = [...p.members, { user: 'Riley Brooks', role: 'analyst', since: 'Oct 14, 2026' }]
+      })
+    })
     await waitFor(() => expect(screen.getByTestId('riley-projects')).toHaveTextContent('RT-2026-015'))
     h.unmount()
   })
 })
 
 /** Renders the typed org views for the bridge probes. */
-function OrgProbe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return <OrgViews />
-}
-
 function OrgViews() {  const q = useOrgProfile()
   const m = useOrgMembers()
   return (
@@ -274,18 +257,7 @@ function OrgViews() {  const q = useOrgProfile()
 
 describe('org Query views (invalidation through the ChangeSet bridge)', () => {
   function mountOrg(me = 'Dana Whitfield') {
-    let store!: Store
-    let svc!: ConsoleServices
-    let qc!: QueryClient
-    const view = render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <OrgProbe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-    return { store: () => store, svc: () => svc, qc: () => qc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+    return mountServices(<OrgViews />, me)
   }
 
   it('a profile save invalidates the org views: the probe shows the committed name without a reload', async () => {
@@ -317,30 +289,8 @@ describe('org Query views (invalidation through the ChangeSet bridge)', () => {
 })
 
 /* ───────────── migrated settings screen (org tab wiring) ───────────── */
-function ScreenProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
 function mountScreenRoute(me = 'Dana Whitfield') {
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = (node: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <ScreenProbe ready={(s, v) => { store = s; svc = v }} />
-        {node}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(null))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    show: (node: React.ReactNode) => view.rerender(ui(node)),
-    unmount: view.unmount,
-  }
+  return mountServices(null, me)
 }
 
 describe('settings org tab on the typed service (ticket 56)', () => {
@@ -354,8 +304,8 @@ describe('settings org tab on the typed service (ticket 56)', () => {
     const save = screen.getByRole('button', { name: 'Save' })
     expect(save).toBeEnabled()
     await act(async () => { fireEvent.click(save) })
-    await waitFor(() => expect(h.store().db.org.profile.name).toBe('Acme Demonstration (Demo)'))
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Updated organization settings', obj: 'ORG', actor: 'Dana Whitfield' })
+    await waitFor(() => expect(h.db().org.profile.name).toBe('Acme Demonstration (Demo)'))
+    expect(h.db().audit[0]).toMatchObject({ action: 'Updated organization settings', obj: 'ORG', actor: 'Dana Whitfield' })
     await waitFor(() => expect((screen.getByLabelText('Organization name *') as HTMLInputElement).value).toBe('Acme Demonstration (Demo)'))
     h.unmount()
   })
@@ -450,10 +400,6 @@ describe('policy configuration handler (ticket 57)', () => {
 })
 
 describe('bridge for integrations and policies (ticket 57)', () => {
-  function IntProbe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-    ready(useStore(), useServices(), useQueryClient())
-    return <IntViews />
-  }
   function IntViews() {
     const q = useIntegrations()
     const p = usePolicies()
@@ -466,60 +412,40 @@ describe('bridge for integrations and policies (ticket 57)', () => {
     )
   }
   function mountInt(me = 'Dana Whitfield') {
-    let store!: Store
-    let svc!: ConsoleServices
-    const view = render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <IntProbe ready={(s, v) => { store = s; svc = v }} />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-    return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+    return mountServices(<IntViews />, me)
   }
 
-  it('a legacy integration toggle refetches the typed registry and the SIEM indicator (legacy → new)', async () => {
+  it('a canonical integration toggle refetches the typed registry and the SIEM indicator (write → new)', async () => {
     const h = mountInt('Dana Whitfield')
     await waitFor(() => expect(screen.getByTestId('siem-status')).toHaveTextContent('connected'))
-    h.run(() => h.store().A.toggleIntegration('IN-1'))
+    h.run(() => { expect(setIntegrationConnection(h.svc().authority, h.svc().clock, ctxOf(dana, 'all', 'legacy-toggle'), 'IN-1', 'disconnect', 'Legacy toggle (simulated)').ok).toBe(true) })
     await waitFor(() => expect(screen.getByTestId('siem-status')).toHaveTextContent('disconnected'))
     expect(screen.getByTestId('siem-banner')).toHaveTextContent('SIEM down')
     h.unmount()
   })
 
-  it('a legacy policy toggle refetches the typed policy list (legacy → new)', async () => {
+  it('a canonical policy toggle refetches the typed policy list (write → new)', async () => {
     const h = mountInt('Dana Whitfield')
     await waitFor(() => expect(screen.getByTestId('pl5')).toHaveTextContent('off'))
-    h.run(() => h.store().A.togglePolicy('PL-5'))
+    h.run(() => { expect(setPolicyEnabled(h.svc().authority, h.svc().clock, ctxOf(dana, 'all', 'legacy-toggle'), 'PL-5', true, '').ok).toBe(true) })
     await waitFor(() => expect(screen.getByTestId('pl5')).toHaveTextContent('enabled'))
     h.unmount()
   })
 
-  it('a typed settings write updates the cross-console analysis indicator (new → legacy consumer)', async () => {
+  it('a typed settings write updates the cross-console analysis indicator (new → canonical consumer)', async () => {
     window.location.hash = '#/analysis?tab=matrix'
-    let store!: Store
-    let svc!: ConsoleServices
     const Analysis = analysisRoutes.analysis
-    const view = render(
-      <StoreProvider>
-        <ConsoleProviders>
-          <BridgeProbe ready={(s, v) => { store = s; svc = v }} />
-          <Analysis />
-        </ConsoleProviders>
-      </StoreProvider>,
-    )
-    act(() => { store.setMe('Taylor Chen') })
+    const h = mountServices(<><MeProbe /><Analysis /></>, 'Taylor Chen')
     await waitFor(() => expect(screen.getByRole('button', { name: /T1078/ })).toHaveTextContent('Executed & Not Detected'))
     await act(async () => {
-      await svc.settings(dana, 'all').setIntegrationConnection(ctxOf(dana, 'all', 'svc'), 'IN-1', 'disconnect', 'Maintenance window (simulated)')
+      await h.svc().settings(dana, 'all').setIntegrationConnection(ctxOf(dana, 'all', 'svc'), 'IN-1', 'disconnect', 'Maintenance window (simulated)')
     })
     // The analysis screen's indicator flips from the settings-side write.
     await waitFor(() => expect(screen.getByText('Detection integration unavailable')).toBeInTheDocument())
-    // ...and the legacy store observed the same commit through the one authority.
-    expect(store.db.integrations.find((i) => i.id === 'IN-1')!.status).toBe('disconnected')
-    expect(store.db.audit[0]).toMatchObject({ action: 'Disconnected integration', obj: 'IN-1' })
-    view.unmount()
+    // ...and the canonical snapshot observed the same commit through the one authority.
+    expect(h.db().integrations.find((i) => i.id === 'IN-1')!.status).toBe('disconnected')
+    expect(h.db().audit[0]).toMatchObject({ action: 'Disconnected integration', obj: 'IN-1' })
+    h.unmount()
   })
 })
 
@@ -720,7 +646,7 @@ describe('unified audit history for legacy and migrated paths (ticket 58)', () =
     })
     expect(res.ok).toBe(true)
     // Legacy path: the store's audited action commits through the same authority.
-    h.run(() => h.store().A.audit('Legacy probe action', 'X-1', 'RT-2026-014', 'Success', 'committed by the legacy seam'))
+    h.run(() => legacyAudit(h, 'Legacy probe action', 'X-1', 'RT-2026-014', 'Success', 'committed by the legacy seam'))
     const read = getAudit(h.svc().authority.snapshot(), ctxOf(dana, 'all', 'read'), {})
     expect(read.ok).toBe(true)
     if (read.ok) {
@@ -770,8 +696,8 @@ describe('settings retention and audit tabs on the typed service (ticket 58)', (
     expect(period.value).toBe('24 months')
     fireEvent.change(period, { target: { value: '18 months' } })
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Save' })) })
-    await waitFor(() => expect(h.store().db.retention.find((r) => r.id === 'RP-1')!.period).toBe('18 months'))
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Updated retention policy (simulated)', obj: 'RP-1' })
+    await waitFor(() => expect(h.db().retention.find((r) => r.id === 'RP-1')!.period).toBe('18 months'))
+    expect(h.db().audit[0]).toMatchObject({ action: 'Updated retention policy (simulated)', obj: 'RP-1' })
     // Reset restores the committed values into the form.
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
     const period2 = screen.getByLabelText(/Retention period/) as HTMLInputElement
@@ -785,10 +711,10 @@ describe('settings retention and audit tabs on the typed service (ticket 58)', (
     // precedes the table in the DOM).
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Place legal hold' })[0]).toBeEnabled())
     fireEvent.click(screen.getAllByRole('button', { name: 'Place legal hold' })[0])
-    expect(h.store().confirmState).not.toBeNull()
-    await act(async () => { h.store().confirmState!.onConfirm('Litigation hold (simulated)') })
-    await waitFor(() => expect(h.store().db.org.holds).toEqual(['RP-3']))
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Placed legal hold (simulated)', obj: 'RP-3' })
+    expect(useSessionStore.getState().confirmState).not.toBeNull()
+    await act(async () => { useSessionStore.getState().confirmState!.onConfirm('Litigation hold (simulated)') })
+    await waitFor(() => expect(h.db().org.holds).toEqual(['RP-3']))
+    expect(h.db().audit[0]).toMatchObject({ action: 'Placed legal hold (simulated)', obj: 'RP-3' })
     expect(screen.getByText('Legal hold')).toBeInTheDocument()
     h.unmount()
   })
@@ -800,7 +726,7 @@ describe('settings retention and audit tabs on the typed service (ticket 58)', (
     await waitFor(() => expect(screen.getByText('Requested interactive session access')).toBeInTheDocument())
     expect(screen.getByText('8 records')).toBeInTheDocument()
     // Legacy actions append rows; the ChangeSet bridge refetches the typed view.
-    for (let i = 1; i <= 6; i++) h.run(() => h.store().A.audit(`Legacy probe ${i}`, 'X-1', 'RT-2026-014', 'Success', 'committed by the legacy seam'))
+    for (let i = 1; i <= 6; i++) h.run(() => legacyAudit(h, `Legacy probe ${i}`, 'X-1', 'RT-2026-014', 'Success', 'committed by the legacy seam'))
     await waitFor(() => expect(screen.getByText('Page 1 of 2')).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
     await waitFor(() => expect(screen.getByText('Closed project')).toBeInTheDocument())

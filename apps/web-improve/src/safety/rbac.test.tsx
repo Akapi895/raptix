@@ -1,12 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 import { seed, USERS } from '../data'
 import type { Role } from '../data'
-import { canAccessProject } from '../store'
+import { can, canAccessProject, readOnlyContext } from '../auth/policy'
 import type { CanAction } from '../domain/permissions'
-import { mountStore } from '../test/helpers'
-
-afterEach(cleanup)
 
 const PERSONA: Record<Role, string> = {
   admin: 'Dana Whitfield', manager: 'Alex Morgan', operator: 'Taylor Chen', reviewer: 'Pat Kim', analyst: 'Riley Brooks', viewer: 'Casey Nguyen (Client)',
@@ -33,36 +29,30 @@ describe('RBAC baseline: 6 roles × 19 actions (documented role policy)', () => 
 
   for (const role of Object.keys(PERSONA) as Role[]) {
     it(`grants exactly the documented ${role} permissions and denies the other actions`, () => {
-      const h = mountStore(PERSONA[role])
       for (const a of ACTIONS) {
-        expect(h.store().can(a), `${role} → ${a}`).toBe(GRANTED[role].includes(a))
+        expect(can({ id: PERSONA[role], role }, a), `${role} → ${a}`).toBe(GRANTED[role].includes(a))
       }
-      h.unmount()
     })
   }
 })
 
 describe('closed and cancelled projects are read-only (four-eyes context)', () => {
   it('on a closed project every action is denied except reopen (admin) and viewSensitive', () => {
-    const h = mountStore('Dana Whitfield')
+    const closed = seed().projects.find((p) => p.id === 'RT-2026-009')!
     for (const a of ACTIONS) {
       const expected = a === 'reopen' || a === 'viewSensitive'
-      expect(h.store().can(a, 'RT-2026-009'), `admin/closed → ${a}`).toBe(expected)
+      expect(can({ id: 'Dana Whitfield', role: 'admin' }, a, closed), `admin/closed → ${a}`).toBe(expected)
     }
-    h.unmount()
-    const m = mountStore('Alex Morgan')
-    for (const a of ACTIONS) expect(m.store().can(a, 'RT-2026-009'), `manager/closed → ${a}`).toBe(a === 'viewSensitive')
-    m.unmount()
+    for (const a of ACTIONS) expect(can({ id: 'Alex Morgan', role: 'manager' }, a, closed), `manager/closed → ${a}`).toBe(a === 'viewSensitive')
   })
 
   it('a cancelled project behaves like a closed one', () => {
-    const h = mountStore('Alex Morgan')
-    h.run(() => h.store().A.updateProject('RT-2026-016', { status: 'cancelled' }))
+    const cancelled = { ...seed().projects.find((p) => p.id === 'RT-2026-016')!, status: 'cancelled' as const }
+    const manager = { id: 'Alex Morgan', role: 'manager' as const }
     for (const a of ACTIONS) {
-      expect(h.store().can(a, 'RT-2026-016'), `manager/cancelled → ${a}`).toBe(a === 'viewSensitive')
+      expect(can(manager, a, cancelled), `manager/cancelled → ${a}`).toBe(a === 'viewSensitive')
     }
-    expect(h.store().readOnly('RT-2026-016')).toBe(true)
-    h.unmount()
+    expect(readOnlyContext(cancelled, manager)).toBe(true)
   })
 })
 
@@ -87,11 +77,10 @@ describe('project membership (canAccessProject policy)', () => {
   })
 
   it('read-only mode applies to closed projects and the viewer role', () => {
-    const h = mountStore('Taylor Chen')
-    expect(h.store().readOnly('RT-2026-014')).toBe(false)
-    expect(h.store().readOnly('RT-2026-009')).toBe(true)
-    h.as('Casey Nguyen (Client)')
-    expect(h.store().readOnly('RT-2026-014')).toBe(true)
-    h.unmount()
+    const active = db.projects.find((p) => p.id === 'RT-2026-014')!
+    const closed = db.projects.find((p) => p.id === 'RT-2026-009')!
+    expect(readOnlyContext(active, { id: 'Taylor Chen', role: 'operator' })).toBe(false)
+    expect(readOnlyContext(closed, { id: 'Taylor Chen', role: 'operator' })).toBe(true)
+    expect(readOnlyContext(active, { id: 'Casey Nguyen (Client)', role: 'viewer' })).toBe(true)
   })
 })

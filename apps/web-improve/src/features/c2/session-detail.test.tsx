@@ -10,11 +10,9 @@
  * handler tests and ./session-console.test.tsx for the mounted command path.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { go, selectProject } from '../../router/navigate'
 import type { RequestContext } from '../../domain/service'
 import { routes } from '../../screens/h'
 import { seed } from '../../data'
@@ -24,43 +22,18 @@ import { getSessionDetail } from './service'
 beforeEach(() => { window.location.hash = '' })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, qc: QueryClient) => void }) {
-  const store = useStore()
-  const services = useServices()
-  const qc = useQueryClient()
-  ready(store, services, qc)
-  return null
-}
-
 function mountSession(hash: string, me = 'Alex Morgan', pid?: string) {
-  let store!: Store
-  let svc!: ConsoleServices
-  let qc!: QueryClient
   /* setPid must run while the route is NOT a detail page: its redirect branch
      writes location.hash inside a state updater, which lands after go()'s write. */
   window.location.hash = pid ? '#/c2' : hash
   const key = hash.startsWith('#/c2-console') ? 'c2-console' : 'c2-session'
   const Screen = routes[key]
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => { store = s; svc = v; qc = c }} />
-        <Screen />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
+  const h = mountServices(<Screen />, me)
   if (pid) {
     const m = /^#\/([a-z0-9-]+)\/([^?]+)/.exec(hash)
-    act(() => { store.setPid(pid); if (m) store.go(m[1], { id: m[2] }) })
+    act(() => { selectProject(pid); if (m) go(m[1], { id: m[2] }) })
   }
-  return {
-    store: () => store,
-    svc: () => svc,
-    qc: () => qc,
-    run: (fn: () => unknown) => act(fn),
-    unmount: view.unmount,
-  }
+  return h
 }
 
 const opCtx = (projectId = 'RT-2026-014'): RequestContext => ({ actor: { id: 'Alex Morgan', role: 'manager' }, projectId, corr: 'test' })

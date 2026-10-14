@@ -1,25 +1,27 @@
 /**
- * Ticket 06: the shared permission policy and auth actions are the one
- * authorization authority. The 6-role × 19-action matrix (plus
- * viewer/member/non-member and closed/cancelled contexts) is decided by
- * `policy.ts`, the legacy store forwards to it, the service-backed
- * membership view agrees with it, persona sign-in/switch/sign-out are
- * observed by legacy and shared surfaces alike, and no UI mode can flip an
- * authorization decision. Ticket 02's baseline expectations are preserved
- * through the documented tables below (same values, new execution site).
+ * Ticket 06: the shared permission policy is the one authorization authority.
+ * The 6-role × 19-action matrix (plus viewer/member/non-member and
+ * closed/cancelled contexts) is decided by `policy.ts`, the console read seam
+ * (src/state/console.ts) derives the same decisions from the one database
+ * authority, persona sign-in/switch/sign-out are observed by the shared auth
+ * store, and no UI mode can flip an authorization decision. Ticket 02's
+ * baseline expectations are preserved through the documented tables below
+ * (same values, new execution site).
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { seed, USERS, type Role } from '../data'
-import { canAccessProject, StoreProvider, useStore } from '../store'
 import { Login } from '../screens/a-login'
-import { mountStore } from '../test/helpers'
+import { mountServices } from '../test/helpers'
+import { ServicesProvider } from '../state/services'
 import { useAuthStore, useUiStore } from '../state/stores'
+import { useCan, useDb, useReadOnly, useScoped } from '../state/console'
+import { selectProject } from '../router/navigate'
 import { createConsoleServices } from '../domain/service-factory'
 import type { CanAction } from '../domain/permissions'
 import { accessibleProjectIds, listProjectMemberships } from './membership'
 import { actorRef, signIn, signOut, switchPersona } from './persona'
-import { can, projectAccessible, readOnlyContext, ROLE_ACTIONS } from './policy'
+import { can, canAccessProject, projectAccessible, readOnlyContext, ROLE_ACTIONS } from './policy'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 
@@ -45,6 +47,19 @@ const GRANTED: Record<Role, CanAction[]> = {
 const db = seed()
 const projectRef = (id: string) => db.projects.find((p) => p.id === id)
 
+/* The console read seam probe: captures the authority-derived derivations the
+   components consume (the store context's replacement). */
+let latest!: {
+  can: (a: CanAction, projectId?: string) => boolean
+  readOnly: (projectId?: string) => boolean
+  scoped: <T extends { projectId: string }>(arr: T[]) => T[]
+  db: ReturnType<typeof seed>
+}
+function ConsoleProbe() {
+  latest = { can: useCan(), readOnly: useReadOnly(), scoped: useScoped(), db: useDb() }
+  return null
+}
+
 describe('permission policy: 6 roles × 19 actions (documented role policy)', () => {
   it('covers the full 19-action surface', () => {
     expect(new Set(Object.values(ROLE_ACTIONS).flat())).toEqual(new Set(ACTIONS))
@@ -64,11 +79,11 @@ describe('permission policy: 6 roles × 19 actions (documented role policy)', ()
     })
   }
 
-  it('the legacy store forwards the same decisions (execution-site equivalence)', () => {
-    const h = mountStore('Taylor Chen')
-    for (const a of ACTIONS) expect(h.store().can(a), `operator → ${a}`).toBe(can(actorRef('Taylor Chen'), a))
+  it('the console permission seam forwards the same decisions (execution-site equivalence)', () => {
+    const h = mountServices(<ConsoleProbe />, 'Taylor Chen')
+    for (const a of ACTIONS) expect(latest.can(a), `operator → ${a}`).toBe(can(actorRef('Taylor Chen'), a))
     h.as('Dana Whitfield')
-    for (const a of ACTIONS) expect(h.store().can(a), `admin → ${a}`).toBe(can(actorRef('Dana Whitfield'), a))
+    for (const a of ACTIONS) expect(latest.can(a), `admin → ${a}`).toBe(can(actorRef('Dana Whitfield'), a))
     h.unmount()
   })
 })
@@ -82,20 +97,20 @@ describe('viewer/member/non-member and closed/cancelled contexts', () => {
     for (const a of ACTIONS) expect(can(riley, a, projectRef('RT-2026-014')), `analyst/member → ${a}`).toBe(GRANTED.analyst.includes(a))
   })
 
-  it('the store forwards non-member denial for explicit ids and the active project', () => {
-    const h = mountStore('Taylor Chen')
-    expect(h.store().can('run', 'PT-2026-006')).toBe(false)
-    expect(h.store().can('run', 'RT-2026-014')).toBe(true)
-    h.run(() => h.store().setPid('RT-2026-014'))
-    expect(h.store().can('run')).toBe(true)
+  it('the console seam forwards non-member denial for explicit ids and the active project', () => {
+    const h = mountServices(<ConsoleProbe />, 'Taylor Chen')
+    expect(latest.can('run', 'PT-2026-006')).toBe(false)
+    expect(latest.can('run', 'RT-2026-014')).toBe(true)
+    h.run(() => selectProject('RT-2026-014'))
+    expect(latest.can('run')).toBe(true)
     h.unmount()
   })
 
   it('a non-member project never leaks into scoped reads in specific-project mode (ledger gap G-12 closed)', () => {
-    const h = mountStore('Riley Brooks')
-    expect(h.store().scoped(h.store().db.findings).map((f) => f.id)).toEqual(['FD-011', 'FD-012'])
-    h.run(() => h.store().setPid('RT-2026-015'))
-    expect(h.store().scoped(h.store().db.findings)).toEqual([])
+    const h = mountServices(<ConsoleProbe />, 'Riley Brooks')
+    expect(latest.scoped(latest.db.findings).map((f) => f.id)).toEqual(['FD-011', 'FD-012'])
+    h.run(() => selectProject('RT-2026-015'))
+    expect(latest.scoped(latest.db.findings)).toEqual([])
     h.unmount()
   })
 
@@ -106,11 +121,18 @@ describe('viewer/member/non-member and closed/cancelled contexts', () => {
     for (const a of ACTIONS) expect(can(alex, a, projectRef('RT-2026-009')), `manager/closed → ${a}`).toBe(a === 'viewSensitive')
   })
 
-  it('a cancelled project behaves like a closed one (store projection)', () => {
-    const h = mountStore('Alex Morgan')
-    h.run(() => h.store().A.updateProject('RT-2026-016', { status: 'cancelled' }))
-    for (const a of ACTIONS) expect(h.store().can(a, 'RT-2026-016'), `manager/cancelled → ${a}`).toBe(a === 'viewSensitive')
-    expect(h.store().readOnly('RT-2026-016')).toBe(true)
+  it('a cancelled project behaves like a closed one (authority projection)', () => {
+    const h = mountServices(<ConsoleProbe />)
+    h.run(() => {
+      // Fixture-style state staging: the cancelled status exists only to
+      // exercise the read-side projection against the seeded demo data.
+      h.svc().authority.commit('fixture-cancel', (d) => {
+        const p = d.projects.find((x) => x.id === 'RT-2026-016')!
+        p.status = 'cancelled'
+      })
+    })
+    for (const a of ACTIONS) expect(latest.can(a, 'RT-2026-016'), `manager/cancelled → ${a}`).toBe(a === 'viewSensitive')
+    expect(latest.readOnly('RT-2026-016')).toBe(true)
     h.unmount()
   })
 
@@ -167,56 +189,51 @@ describe('service-backed membership view', () => {
 })
 
 describe('auth actions: persona login/select/logout consistency', () => {
-  it('sign-in, persona switch and sign-out are observed by legacy and shared surfaces alike', () => {
-    const h = mountStore()
-    expect(h.store().me.name).toBe('Alex Morgan')
-    expect(h.store().authed).toBe(false)
+  it('sign-in, persona switch and sign-out are observed by the shared auth surface and drive the permission seam', () => {
+    const h = mountServices(<ConsoleProbe />)
+    expect(useAuthStore.getState().meName).toBe('Alex Morgan')
+    expect(useAuthStore.getState().authed).toBe(false)
     act(() => { signIn('Taylor Chen', 'Cyber Range Training — Sandbox') })
-    expect(h.store().me.name).toBe('Taylor Chen')
     expect(useAuthStore.getState().meName).toBe('Taylor Chen')
-    expect(h.store().org).toBe('Cyber Range Training — Sandbox')
     expect(useAuthStore.getState().org).toBe('Cyber Range Training — Sandbox')
-    expect(h.store().authed).toBe(true)
     expect(useAuthStore.getState().authed).toBe(true)
     act(() => { switchPersona('Pat Kim') })
-    expect(h.store().me.name).toBe('Pat Kim')
     expect(useAuthStore.getState().meName).toBe('Pat Kim')
-    expect(h.store().can('approve')).toBe(true)
-    expect(h.store().can('run')).toBe(false)
+    expect(latest.can('approve')).toBe(true)
+    expect(latest.can('run')).toBe(false)
     act(() => { signOut() })
-    expect(h.store().authed).toBe(false)
     expect(useAuthStore.getState().authed).toBe(false)
     h.unmount()
   })
 
   it('UI modes and panels never flip authorization decisions', () => {
-    const h = mountStore('Casey Nguyen (Client)')
-    const before = ACTIONS.map((a) => h.store().can(a, 'RT-2026-014'))
+    const h = mountServices(<ConsoleProbe />, 'Casey Nguyen (Client)')
+    const before = ACTIONS.map((a) => latest.can(a, 'RT-2026-014'))
     act(() => {
       useUiStore.getState().setAiMode('execution')
       useUiStore.getState().setSwitcherOpen(true)
       useUiStore.getState().setCopilotOpen(true, { kind: 'findings', label: 'Findings' })
       useUiStore.getState().setNoticesOpen(true)
     })
-    expect(ACTIONS.map((a) => h.store().can(a, 'RT-2026-014'))).toEqual(before)
-    expect(h.store().can('run', 'RT-2026-014')).toBe(false)
+    expect(ACTIONS.map((a) => latest.can(a, 'RT-2026-014'))).toEqual(before)
+    expect(latest.can('run', 'RT-2026-014')).toBe(false)
     h.as('Taylor Chen')
-    expect(h.store().can('approve', 'RT-2026-014')).toBe(false)
+    expect(latest.can('approve', 'RT-2026-014')).toBe(false)
     h.unmount()
   })
 })
 
 describe('login screen stays wired through the auth actions', () => {
   it('the demo persona picker signs the selected persona in', () => {
-    function Probe() {
-      const { authed, me } = useStore()
-      return <div data-testid="probe">{String(authed)}:{me.name}</div>
+    function AuthProbe() {
+      const { authed, meName } = useAuthStore()
+      return <div data-testid="probe">{String(authed)}:{meName}</div>
     }
     render(
-      <StoreProvider>
+      <ServicesProvider>
         <Login />
-        <Probe />
-      </StoreProvider>,
+        <AuthProbe />
+      </ServicesProvider>,
     )
     fireEvent.click(screen.getByRole('button', { name: /Pat Kim/ }))
     expect(screen.getByTestId('probe').textContent).toBe('true:Pat Kim')

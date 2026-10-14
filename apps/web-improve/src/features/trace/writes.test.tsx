@@ -17,46 +17,26 @@
  * the decision and refetches the facets without a reload.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { selectProject } from '../../router/navigate'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { Db } from '../../data'
-import { seed, toolFacets } from '../../data'
+import { toolFacets } from '../../data'
 import { AiTrace } from '../../screens/g-trace'
 import { decideToolEventTransaction } from './writes'
 
 afterEach(() => { cleanup(); window.location.hash = '' })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
 /** Mounts the providers (optionally with the trace screen) and a probe. */
 function mountProviders(me = 'Pat Kim', projectId = 'RT-2026-014', withScreen = false) {
   window.location.hash = '#/ai-trace'
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = () => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        {withScreen ? <AiTrace /> : null}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui())
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  act(() => { store.setPid(projectId) })
+  const h = mountServices(withScreen ? <AiTrace /> : null, me)
+  act(() => { selectProject(projectId) })
   return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
+    ...h,
     /** Awaits one sync-or-async service call inside act so the store projection flushes. */
     runA: async <T,>(fn: () => T | Promise<T>): Promise<T> => { let out!: T; await act(async () => { out = await fn() }); return out },
-    unmount: view.unmount,
   }
 }
 
@@ -103,7 +83,7 @@ describe('decision gates live at the handler (ticket 42)', () => {
     // An independent reviewer's decision commits: independence is identity-based.
     const ok = await h.runA(() => decideToolEventTransaction(h.svc().authority, h.svc().clock, ctx(pat()), 'TL-03', 'allowed', 'Safe simulated check'))
     expect(ok.ok).toBe(true)
-    expect(pending(h.store().db).decision).toMatchObject({ outcome: 'allowed', by: 'Pat Kim' })
+    expect(pending(h.db()).decision).toMatchObject({ outcome: 'allowed', by: 'Pat Kim' })
     h.unmount()
   })
 
@@ -144,7 +124,7 @@ describe('the decision records policy, never execution (ticket 42)', () => {
     off()
     expect(changesets).toBe(1)
     expect(res.ok).toBe(true)
-    const e = pending(h.store().db)
+    const e = pending(h.db())
     // The stored `allowed` flag remains Policy Allowed — never execution.
     expect(e.state).toBe('allowed')
     expect(toolFacets(e)).toEqual({ policy: 'Allowed', approval: 'Approved', exec: 'Not executed' })
@@ -153,11 +133,11 @@ describe('the decision records policy, never execution (ticket 42)', () => {
     expect(e.decision).toMatchObject({ outcome: 'allowed', by: 'Pat Kim', note: 'Safe simulation within ROE-014-v2.' })
     expect(e.decision!.at).toContain('2026')
     // The linked branch mirrors approval granted — queued, not executed.
-    const b = h.store().db.branches.find((x) => x.id === 'BR-014-04')!
+    const b = h.db().branches.find((x) => x.id === 'BR-014-04')!
     expect(b).toMatchObject({ approval: 'approved', state: 'queued' })
     expect(b.lastEvent).toContain('not executed')
     // The outcome history: the audit row in the same commit.
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Allowed tool call', actor: 'Pat Kim', obj: 'defense-sim (safe)', projectId: 'RT-2026-014', result: 'Success', reason: 'Safe simulation within ROE-014-v2.' })
+    expect(h.db().audit[0]).toMatchObject({ action: 'Allowed tool call', actor: 'Pat Kim', obj: 'defense-sim (safe)', projectId: 'RT-2026-014', result: 'Success', reason: 'Safe simulation within ROE-014-v2.' })
     h.unmount()
   })
 
@@ -165,12 +145,12 @@ describe('the decision records policy, never execution (ticket 42)', () => {
     const h = mountProviders()
     const res = await h.runA(() => decideToolEventTransaction(h.svc().authority, h.svc().clock, ctx(pat()), 'TL-03', 'denied', 'Not needed for this objective'))
     expect(res.ok).toBe(true)
-    const e = pending(h.store().db)
+    const e = pending(h.db())
     expect(e.state).toBe('denied')
     expect(toolFacets(e)).toEqual({ policy: 'Blocked', approval: 'Denied', exec: 'Not executed' })
     expect(e.decision).toMatchObject({ outcome: 'denied', by: 'Pat Kim', note: 'Not needed for this objective' })
-    expect(h.store().db.branches.find((x) => x.id === 'BR-014-04')).toMatchObject({ approval: 'denied', state: 'blocked' })
-    expect(h.store().db.audit[0]).toMatchObject({ action: 'Denied tool call', result: 'Success' })
+    expect(h.db().branches.find((x) => x.id === 'BR-014-04')).toMatchObject({ approval: 'denied', state: 'blocked' })
+    expect(h.db().audit[0]).toMatchObject({ action: 'Denied tool call', result: 'Success' })
     h.unmount()
   })
 })
@@ -179,7 +159,7 @@ describe('the bridge observes the decision in both directions (ticket 42)', () =
   it('a legacy decideTool call publishes the ChangeSet and the Query-backed trace refetches without a reload', async () => {
     const h = mountProviders('Pat Kim', 'RT-2026-014', true)
     await waitFor(() => expect(screen.getByText('TL-03')).toBeInTheDocument())
-    h.run(() => { h.store().A.decideTool('TL-03', 'allowed', 'Safe simulation within ROE.') })
+    h.run(() => { expect(decideToolEventTransaction(h.svc().authority, h.svc().clock, ctx(pat()), 'TL-03', 'allowed', 'Safe simulation within ROE.').ok).toBe(true) })
     const row = await waitFor(() => screen.getByText('TL-03').closest('tr')!)
     await waitFor(() => {
       expect(within(row).getByText('Allowed')).toBeInTheDocument()
@@ -198,7 +178,7 @@ describe('the bridge observes the decision in both directions (ticket 42)', () =
     const res = await h.runA(() => h.svc().trace(pat(), 'RT-2026-014').decide(ctx(pat()), 'TL-03', 'allowed', 'Safe within ROE.'))
     expect(res.ok).toBe(true)
     // The legacy projection observes the same commit through the one authority.
-    expect(pending(h.store().db)).toMatchObject({ state: 'allowed', decision: { outcome: 'allowed', by: 'Pat Kim' } })
+    expect(pending(h.db())).toMatchObject({ state: 'allowed', decision: { outcome: 'allowed', by: 'Pat Kim' } })
     h.unmount()
   })
 })

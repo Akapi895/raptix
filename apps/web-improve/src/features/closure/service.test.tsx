@@ -11,16 +11,17 @@
  * observe the same state from both bridges.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import { createConsoleServices, type ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen } from '@testing-library/react'
+import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import type { DbAuthority } from '../../domain/database'
+import { useDb, useMe } from '../../state/console'
+import { useSessionStore } from '../../state/session'
 import { APR, type Db } from '../../data'
 import { CloseTab, TeamTab } from '../../screens/b-detail2'
 import { aggregateFor } from '../../screens/dashboard/service'
 import { detailFor } from '../../screens/project-detail/service'
+import { mountServices } from '../../test/helpers'
 import {
   closePanelItems, confirmCloseTransaction, evaluateCloseChecklist, reopenProjectTransaction, requestCloseTransaction,
 } from './service'
@@ -57,26 +58,6 @@ function completion(db: Db, pid: string) {
   const closeDone = chk.filter((c) => c.ok).length
   const pct = Math.round(objPct * 0.5 + (delivered ? 30 : reps.some((r) => ['approved', 'exported'].includes(r.status)) ? 20 : 0) + (closeDone / chk.length) * 20)
   return { pct, objPct, ops: ops.length, opsDone, confirmed, suggested, inReview, repLabel, delivered, closeDone, closeTotal: chk.length }
-}
-
-function Probe({ ready }: { ready: (s: Store, v: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
-function mountConsole(me = 'Alex Morgan', extra?: React.ReactNode) {
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        {extra}
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
 }
 
 /** Forces every closure condition of `pid` to pass in the one dataset (the delivered final report is the seeded gap). */
@@ -304,65 +285,67 @@ describe('reopen — admin role and audited reason (ticket 22)', () => {
 })
 
 describe('close console and governance panels agree with the handlers (ticket 22)', () => {
-  it('the legacy request is observed by the typed consumers and a direct confirmation by the legacy store', () => {
-    const h = mountConsole()
+  it('the typed request is observed by the typed consumers and a direct confirmation closes the project', () => {
+    const h = mountServices()
     arrangeClosable(h.svc().authority)
-    h.run(() => { h.store().A.requestClose(P16, { reason: 'Legacy entry point.' }) })
-    // Legacy → typed: the same authority holds the recorded request.
+    h.run(() => { expect(requestCloseTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), P16, { reason: 'Legacy entry point.' }).ok).toBe(true) })
+    // Request → typed: the same authority holds the recorded request.
     const apr = pendingCloseOf(h.svc().authority)
     expect(apr.by).toBe('Alex Morgan')
-    expect(h.store().db.approvals.some((a) => a.id === apr.id && a.status === 'pending')).toBe(true)
+    expect(h.db().approvals.some((a) => a.id === apr.id && a.status === 'pending')).toBe(true)
 
-    // Typed → legacy: a direct handler confirmation closes the project in the store context.
+    // Confirmation → canonical: a direct handler confirmation closes the project.
     let res!: ReturnType<typeof confirmCloseTransaction>
     act(() => { res = confirmCloseTransaction(h.svc().authority, h.svc().clock, ctxOf(PAT), apr.id) })
     expect(res.ok).toBe(true)
-    expect(h.store().db.projects.find((x) => x.id === P16)?.status).toBe('closed')
+    expect(h.db().projects.find((x) => x.id === P16)?.status).toBe('closed')
     h.unmount()
   })
 
   it('the rendered close console completes a valid request and an independent confirmation', () => {
-    const h = mountConsole('Alex Morgan', <ClosePanel />)
+    const h = mountServices(<ClosePanel />)
     arrangeClosable(h.svc().authority)
     fireEvent.click(screen.getByRole('button', { name: 'Close Project' }))
     fireEvent.change(screen.getByPlaceholderText('e.g. All objectives assessed; final report delivered.'), { target: { value: 'All objectives assessed; final report delivered.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit closure request' }))
     const apr = pendingCloseOf(h.svc().authority)
     expect(apr.note).toBe('Requesting project closure — checklist complete.')
-    expect(h.store().db.projects.find((x) => x.id === P16)?.status).toBe('review')
+    expect(h.db().projects.find((x) => x.id === P16)?.status).toBe('review')
 
-    act(() => { h.store().setMe('Pat Kim') })
+    h.as('Pat Kim')
     fireEvent.click(screen.getByRole('button', { name: 'Approve Closure' }))
-    expect(h.store().confirmState).not.toBeNull()
-    act(() => { h.store().confirmState!.onConfirm('') })
-    expect(h.store().db.projects.find((x) => x.id === P16)?.status).toBe('closed')
-    expect(h.store().db.projects.find((x) => x.id === P16)?.closedAt).toBeTruthy()
+    expect(useSessionStore.getState().confirmState).not.toBeNull()
+    act(() => { useSessionStore.getState().confirmState!.onConfirm('') })
+    expect(h.db().projects.find((x) => x.id === P16)?.status).toBe('closed')
+    expect(h.db().projects.find((x) => x.id === P16)?.closedAt).toBeTruthy()
     h.unmount()
   })
 
   it('the gated refusal renders on the governance panel while a condition is open', () => {
-    const h = mountConsole('Alex Morgan', <TeamPanel />)
-    h.run(() => { h.store().A.requestClose(P16, { reason: 'Failing checklist request.' }) })
-    act(() => { h.store().setMe('Pat Kim') })
+    const h = mountServices(<TeamPanel />)
+    h.run(() => { expect(requestCloseTransaction(h.svc().authority, h.svc().clock, ctxOf(ALEX), P16, { reason: 'Failing checklist request.' }).ok).toBe(true) })
+    h.as('Pat Kim')
     fireEvent.click(screen.getByRole('button', { name: 'Approve Closure' }))
-    expect(h.store().confirmState).not.toBeNull()
-    act(() => { h.store().confirmState!.onConfirm('') })
+    expect(useSessionStore.getState().confirmState).not.toBeNull()
+    act(() => { useSessionStore.getState().confirmState!.onConfirm('') })
     expect(screen.getByText('Cannot approve')).toBeInTheDocument()
-    expect(h.store().db.projects.find((x) => x.id === P16)?.status).toBe('review')
+    expect(h.db().projects.find((x) => x.id === P16)?.status).toBe('review')
     h.unmount()
   })
 })
 
-/* Renders the close console for the store's active dataset. */
+/* Renders the close console for the active dataset. */
 function ClosePanel() {
-  const { db, me } = useStore()
+  const db = useDb()
+  const me = useMe()
   const d = detailFor(db, { id: me.name, role: me.role }, P16)!
   return <CloseTab p={d.project} d={d} setTab={() => {}} />
 }
 
 /* Renders the team governance panel (the closure confirmation surface). */
 function TeamPanel() {
-  const { db, me } = useStore()
+  const db = useDb()
+  const me = useMe()
   const p = db.projects.find((x) => x.id === P16)!
   return <TeamTab p={p} ds={aggregateFor(db, { id: me.name, role: me.role }, P16)} />
 }

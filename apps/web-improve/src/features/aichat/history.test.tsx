@@ -17,10 +17,10 @@
  * empty states.
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { mountServices } from '../../test/helpers'
+import { selectProject } from '../../router/navigate'
+import { revisePlanTransaction } from '../plans/service'
 import { createConsoleServices } from '../../domain/service-factory'
 import type { ActorRef, RequestContext } from '../../domain/service'
 import { seed } from '../../data'
@@ -34,32 +34,12 @@ const RILEY: ActorRef = { id: 'Riley Brooks', role: 'analyst' }
 let corrSeq = 0
 const ctx = (actor: ActorRef, projectId = 'all'): RequestContext => ({ actor, projectId, corr: `corr-${++corrSeq}` })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
 /** Mounts the providers with the history route for one persona/project scope. */
 function mountHistory(me = 'Taylor Chen', projectId = 'RT-2026-014') {
   window.location.hash = '#/ai-history'
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v) => { store = s; svc = v }} />
-        <AiHistory />
-      </ConsoleProviders>
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  act(() => { store.setPid(projectId) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    unmount: view.unmount,
-  }
+  const h = mountServices(<AiHistory />, me)
+  act(() => { selectProject(projectId) })
+  return h
 }
 
 describe('history read model scope (ticket 42)', () => {
@@ -188,7 +168,7 @@ describe('history screen on the typed read (ticket 42)', () => {
     fireEvent.click(within(row()).getByRole('button', { name: 'Unpin Plan internal discovery' }))
     await waitFor(() => expect(within(row()).getByRole('button', { name: 'Pin Plan internal discovery' })).toBeInTheDocument())
     // A legacy revision commits; the archive refetches — the revision's audit row names the new plan.
-    h.run(() => { h.store().A.revisePlan('PL-021', ['Add an approval gate to step 3'], 'tighten gates') })
+    h.run(() => { expect(revisePlanTransaction(h.svc().authority, h.svc().clock, ctx(TAYLOR), 'PL-021', ['Add an approval gate to step 3'], 'tighten gates').ok).toBe(true) })
     await waitFor(() => expect(screen.getByRole('tab', { name: /AI Audit/ })).toBeInTheDocument())
     fireEvent.click(screen.getByRole('tab', { name: /AI Audit/ }))
     await waitFor(() => expect(screen.getAllByText('PL-024').length).toBeGreaterThan(0))

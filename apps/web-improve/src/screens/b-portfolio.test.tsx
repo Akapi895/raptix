@@ -9,15 +9,19 @@
  */
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { QueryClient, useQueryClient } from '@tanstack/react-query'
-import { StoreProvider, useServices, useStore, type ProjectDraft, type Store } from '../store'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import type { ProjectDraft } from '../features/wizard/draft'
+import { createProjectTransaction } from '../features/wizard/service'
 import type { ConsoleServices } from '../domain/service-factory'
 import { createConsoleServices } from '../domain/service-factory'
+import type { ActorRef, RequestContext } from '../domain/service'
 import type { Role } from '../domain/entities'
-import { ConsoleProviders } from '../state/query'
-import { ProjectPortfolio } from './b-portfolio'
+import { useDb } from '../state/console'
+import { useToastStore } from '../state/stores'
+import { selectProject } from '../router/navigate'
 import { createPortfolioHandlers } from './portfolio-handlers'
+import { mountServices } from '../test/helpers'
+import { ProjectPortfolio } from './b-portfolio'
 
 afterEach(() => {
   cleanup()
@@ -26,36 +30,26 @@ afterEach(() => {
   Reflect.deleteProperty(window.URL, 'revokeObjectURL')
 })
 
-function Probe({ ready }: { ready: (s: Store, svc: ConsoleServices, client: QueryClient) => void }) {
-  ready(useStore(), useServices(), useQueryClient())
-  return null
-}
+const ALEX: ActorRef = { id: 'Alex Morgan', role: 'manager' }
+let corrSeq = 0
+const ctxOf = (): RequestContext => ({ actor: ALEX, projectId: '', corr: `pf-${++corrSeq}` })
 
-/** Legacy consumer observing the one dataset — the "legacy view" of the bridge proof. */
-function LegacyPinProbe({ id }: { id: string }) {
-  const p = useStore().db.projects.find((x) => x.id === id)
+/** Typed consumer observing the one dataset — the canonical view of the bridge proof. */
+function PinProbe({ id }: { id: string }) {
+  const p = useDb().projects.find((x) => x.id === id)
   return <p data-testid="legacy-pin">{p ? `${p.id}:${p.pinned}` : 'missing'}</p>
 }
 
 function mountPortfolio({ me, wire, extra }: { me?: string; wire?: (svc: ConsoleServices) => void; extra?: ReactNode } = {}) {
-  let store!: Store
-  let svc!: ConsoleServices
-  let client!: QueryClient
-  const wired = new WeakSet<ConsoleServices>()
-  const view = render(
-    <StoreProvider>
-      <ConsoleProviders>
-        <Probe ready={(s, v, c) => {
-          store = s; svc = v; client = c
-          if (wire && !wired.has(v)) { wired.add(v); wire(v) }
-        }} />
-        {extra}
-        <ProjectPortfolio />
-      </ConsoleProviders>
-    </StoreProvider>,
+  const view = mountServices(
+    <>
+      {extra}
+      <ProjectPortfolio />
+    </>,
+    me,
+    wire,
   )
-  if (me && me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { store: () => store, svc: () => svc, client: () => client, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return { svc: view.svc, db: view.db, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
 }
 
 const draft = (id: string): ProjectDraft => ({
@@ -102,8 +96,8 @@ describe('search, filters and pagination', () => {
     expect(screen.queryByText('RT-2026-016')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
 
-    for (const id of ['RT-2026-018', 'RT-2026-019', 'RT-2026-020']) h.run(() => { h.store().A.createProject(draft(id), true) })
-    h.run(() => { h.store().setPid('all') })
+    for (const id of ['RT-2026-018', 'RT-2026-019', 'RT-2026-020']) h.run(() => { expect(createProjectTransaction(h.svc().authority, h.svc().clock, ctxOf(), draft(id), true).ok).toBe(true) })
+    h.run(() => { selectProject('all') })
     expect(await screen.findByText('RT-2026-020')).toBeInTheDocument()
     expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
@@ -121,7 +115,7 @@ describe('CSV export', () => {
     const h = mountPortfolio()
     await screen.findByText('RT-2026-014')
     fireEvent.click(screen.getByRole('button', { name: 'Export List' }))
-    expect(h.store().toasts.some((t) => t.text === 'Exported 6 projects (demo data)')).toBe(true)
+    expect(useToastStore.getState().toasts.some((t) => t.text === 'Exported 6 projects (demo data)')).toBe(true)
     expect((await blobs[0].text())).toContain('Project ID')
     expect(await blobs[0].text()).toContain('RT-2026-016')
 
@@ -137,17 +131,18 @@ describe('CSV export', () => {
 
 describe('pinning and the bidirectional legacy bridge', () => {
   it('a service pin updates the legacy view; a legacy edit refetches the new list', async () => {
-    const h = mountPortfolio({ extra: <LegacyPinProbe id="RT-2026-014" /> })
+    const h = mountPortfolio({ extra: <PinProbe id="RT-2026-014" /> })
     expect(await screen.findByLabelText('Pinned')).toBeInTheDocument()
     expect(screen.getByTestId('legacy-pin')).toHaveTextContent('RT-2026-014:true')
 
     openRowMenu('RT-2026-014')
     fireEvent.click(screen.getByRole('menuitem', { name: 'Unpin' }))
     await waitFor(() => expect(screen.getByTestId('legacy-pin')).toHaveTextContent('RT-2026-014:false'))
-    expect(h.store().toasts.some((t) => t.text === 'Unpinned RT-2026-014')).toBe(true)
+    expect(useToastStore.getState().toasts.some((t) => t.text === 'Unpinned RT-2026-014')).toBe(true)
     await waitFor(() => expect(screen.queryByLabelText('Pinned')).not.toBeInTheDocument())
 
-    h.run(() => { h.store().A.updateProject('RT-2026-014', { pinned: true }) })
+    const repin = await act(async () => createPortfolioHandlers(h.svc(), ALEX, 'all').setPinned('RT-2026-014', true))
+    expect(repin).toMatchObject({ ok: true })
     await waitFor(() => expect(screen.getByTestId('legacy-pin')).toHaveTextContent('RT-2026-014:true'))
     expect(await screen.findByLabelText('Pinned')).toBeInTheDocument()
   })
@@ -155,9 +150,9 @@ describe('pinning and the bidirectional legacy bridge', () => {
   it('a legacy-created project appears in the new portfolio (bridge direction 1)', async () => {
     const h = mountPortfolio()
     await screen.findByText('RT-2026-014')
-    h.run(() => { h.store().A.createProject(draft('RT-2026-018'), true) })
+    h.run(() => { expect(createProjectTransaction(h.svc().authority, h.svc().clock, ctxOf(), draft('RT-2026-018'), true).ok).toBe(true) })
     expect(await screen.findByText('RT-2026-018')).toBeInTheDocument()
-    expect(h.store().db.projects.some((p) => p.id === 'RT-2026-018')).toBe(true)
+    expect(h.db().projects.some((p) => p.id === 'RT-2026-018')).toBe(true)
   })
 })
 
@@ -188,7 +183,7 @@ describe('loading, error and delayed-response isolation', () => {
   it('switching projects cancels the stale aggregate read; the late response never widens the view', async () => {
     let resolveAll!: () => void
     const gate = new Promise<void>((r) => { resolveAll = r })
-    const h = mountPortfolio({
+    mountPortfolio({
       wire: (svc) => {
         const orig = svc.forScope.bind(svc)
         vi.spyOn(svc, 'forScope').mockImplementation((actor, project) => {
@@ -200,7 +195,7 @@ describe('loading, error and delayed-response isolation', () => {
     })
     expect(screen.getByLabelText('Loading projects')).toBeInTheDocument()
 
-    h.run(() => { h.store().setPid('RT-2026-014') })
+    act(() => { selectProject('RT-2026-014') })
     expect(await screen.findByText('RT-2026-014')).toBeInTheDocument()
     expect(screen.queryByText('RT-2026-015')).not.toBeInTheDocument()
     expect(screen.getByText('1 records')).toBeInTheDocument()
@@ -228,7 +223,7 @@ describe('loading, error and delayed-response isolation', () => {
     fail = false
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByText('RT-2026-014')).toBeInTheDocument()
-    expect(h.store().db.projects.length).toBe(6)
+    expect(h.db().projects.length).toBe(6)
   })
 })
 

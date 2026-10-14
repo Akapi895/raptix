@@ -13,11 +13,11 @@
  * a legacy `saveReportSection` refetches the migrated editor.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ConsoleProviders } from '../../state/query'
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { useProjectStore } from '../../state/stores'
-import { StoreProvider, useServices, useStore, type Store } from '../../store'
-import type { ConsoleServices } from '../../domain/service-factory'
+import { mountServices } from '../../test/helpers'
+import { go } from '../../router/navigate'
+import { useSessionStore } from '../../state/session'
 import { createDatabaseAuthority } from '../../domain/database'
 import { MockClock } from '../../domain/clock'
 import type { ActorRef, RequestContext } from '../../domain/service'
@@ -146,10 +146,6 @@ describe('report section writes (ticket 35)', () => {
 })
 
 /* ───────────── screen harness ───────────── */
-function ScreenProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
 /**
  * Mounts the providers with a probe; the store route parses `window.location.hash`
  * at mount, so set the deep link before `mountScreenRoute`. `pid` writes the raw
@@ -157,26 +153,9 @@ function ScreenProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => voi
  * list). `show` mounts screens into the same tree.
  */
 function mountScreenRoute(me = 'Alex Morgan', pid?: string) {
-  let store!: Store
-  let svc!: ConsoleServices
-  const ui = (node: React.ReactNode) => (
-    <StoreProvider>
-      <ConsoleProviders>
-        <ScreenProbe ready={(s, v) => { store = s; svc = v }} />
-        {node}
-      </ConsoleProviders>
-    </StoreProvider>
-  )
-  const view = render(ui(null))
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
+  const h = mountServices(null, me)
   if (pid) act(() => { useProjectStore.getState().setPid(pid) })
-  return {
-    store: () => store,
-    svc: () => svc,
-    run: (fn: () => unknown) => act(fn),
-    show: (node: React.ReactNode) => view.rerender(ui(node)),
-    unmount: view.unmount,
-  }
+  return h
 }
 
 const Editor = routes.report as React.ComponentType
@@ -189,10 +168,10 @@ describe('report editor screen (ticket 35)', () => {
     h.show(<Editor />)
     const box = (await screen.findByLabelText('Content of section Cover Page')) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: 'Typed by the migrated editor.' } })
-    await waitFor(() => expect(h.store().dirty).toBe(true))
+    await waitFor(() => expect(useSessionStore.getState().dirty).toBe(true))
     // The typed write commits and the legacy store (one data authority) observes the same section.
-    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-014')!.sections.find((s) => s.id === 'cover')!.body).toBe('Typed by the migrated editor.'), { timeout: 3000 })
-    await waitFor(() => expect(h.store().dirty).toBe(false), { timeout: 3000 })
+    await waitFor(() => expect(h.db().reports.find((r) => r.id === 'REP-014')!.sections.find((s) => s.id === 'cover')!.body).toBe('Typed by the migrated editor.'), { timeout: 3000 })
+    await waitFor(() => expect(useSessionStore.getState().dirty).toBe(false), { timeout: 3000 })
     h.unmount()
   })
 
@@ -220,12 +199,12 @@ describe('report editor screen (ticket 35)', () => {
     h.show(<Editor />)
     const box = (await screen.findByLabelText('Content of section Cover Page')) as HTMLTextAreaElement
     fireEvent.change(box, { target: { value: 'Guarded draft.' } })
-    await waitFor(() => expect(h.store().dirty).toBe(true))
-    h.run(() => { h.store().go('reports') })
-    expect(h.store().unsaved).not.toBeNull()
-    expect(h.store().unsaved?.save).toBeTypeOf('function')
-    h.run(() => { h.store().unsaved!.save!() })
-    await waitFor(() => expect(h.store().db.reports.find((r) => r.id === 'REP-014')!.sections.find((s) => s.id === 'cover')!.body).toBe('Guarded draft.'), { timeout: 3000 })
+    await waitFor(() => expect(useSessionStore.getState().dirty).toBe(true))
+    h.run(() => { go('reports') })
+    expect(useSessionStore.getState().unsaved).not.toBeNull()
+    expect(useSessionStore.getState().unsaved?.save).toBeTypeOf('function')
+    h.run(() => { useSessionStore.getState().unsaved!.save!() })
+    await waitFor(() => expect(h.db().reports.find((r) => r.id === 'REP-014')!.sections.find((s) => s.id === 'cover')!.body).toBe('Guarded draft.'), { timeout: 3000 })
     h.unmount()
   })
 
@@ -237,13 +216,13 @@ describe('report editor screen (ticket 35)', () => {
     fireEvent.change(screen.getByLabelText('New section title'), { target: { value: 'Threat Intel' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
     await waitFor(() => expect(screen.getAllByText('Threat Intel').length).toBeGreaterThan(0))
-    const sectionsOf = () => h.store().db.reports.find((r) => r.id === 'REP-014')!.sections
+    const sectionsOf = () => h.db().reports.find((r) => r.id === 'REP-014')!.sections
     expect(sectionsOf().at(-1)).toMatchObject({ title: 'Threat Intel' })
     fireEvent.click(screen.getByRole('button', { name: 'Move Threat Intel up' }))
     await waitFor(() => expect(sectionsOf().at(-2)).toMatchObject({ title: 'Threat Intel' }))
     fireEvent.click(screen.getByRole('button', { name: 'Remove Threat Intel' }))
-    expect(h.store().confirmState).not.toBeNull()
-    h.run(() => { h.store().confirmState!.onConfirm('') })
+    expect(useSessionStore.getState().confirmState).not.toBeNull()
+    h.run(() => { useSessionStore.getState().confirmState!.onConfirm('') })
     await waitFor(() => expect(screen.queryByText('Threat Intel')).not.toBeInTheDocument())
     expect(sectionsOf().some((s) => s.title === 'Threat Intel')).toBe(false)
     h.unmount()
@@ -267,7 +246,7 @@ describe('report editor screen (ticket 35)', () => {
     h.show(<Editor />)
     const box = (await screen.findByLabelText('Content of section Cover Page')) as HTMLTextAreaElement
     expect(box.value).toContain('Security Assessment Report')
-    h.run(() => { h.store().A.saveReportSection('REP-014', 'cover', 'Legacy bridge edit.') })
+    h.run(() => { expect(saveReportSection(h.svc().authority, h.svc().clock, ctxOf(alex, P14), 'REP-014', 'cover', 'Legacy bridge edit.').ok).toBe(true) })
     await waitFor(() => expect((screen.getByLabelText('Content of section Cover Page') as HTMLTextAreaElement).value).toBe('Legacy bridge edit.'))
     h.unmount()
   })

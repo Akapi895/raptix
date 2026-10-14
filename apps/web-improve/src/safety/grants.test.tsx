@@ -2,9 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen } from '@testing-library/react'
 
 vi.useFakeTimers()
-const { mountScreen } = await import('../test/helpers')
+const { mountServices } = await import('../test/helpers')
 const { hhmm } = await import('../features/c2/service')
+const { expireGrantTransaction } = await import('../features/c2/grants')
 const { minutesUntil, useGrantWatch, Console } = await import('../screens/h-session')
+const { go, selectProject } = await import('../router/navigate')
+const { useToastStore } = await import('../state/stores')
 
 afterEach(() => {
   cleanup()
@@ -35,13 +38,15 @@ describe('grant countdown against the simulated clock (requirement 50)', () => {
   })
 
   it('a live grant survives several 15-second watch ticks and shows its remaining time', async () => {
-    // setPid must run while the route is NOT a detail page: its redirect branch
-    // writes location.hash inside a state updater, which lands after go()'s write.
+    // selectProject must run while the route is NOT a detail page: its guarded
+    // redirect would retarget the route away from the section we navigate to
+    // next. The order below mirrors the console's own flow: pick the project
+    // from the switcher, then open the session detail route.
     window.location.hash = '#/c2'
-    const view = mountScreen(Console, 'Taylor Chen')
+    const view = mountServices(Console, 'Taylor Chen')
     act(() => {
-      view.store().setPid('RT-2026-014')
-      view.store().go('c2-console', { id: 'SS-041' })
+      selectProject('RT-2026-014')
+      go('c2-console', { id: 'SS-041' })
     })
     await until(() => screen.queryByText(/Expires in 33 min/) !== null)
     act(() => {
@@ -56,10 +61,10 @@ describe('grant countdown against the simulated clock (requirement 50)', () => {
 describe('grant expiry (requirement 50/51 baseline: enforced by the mounted useGrantWatch)', () => {
   it('the watch removes the grant at the deadline and the console locks its input', async () => {
     window.location.hash = '#/c2'
-    const view = mountScreen(Console, 'Taylor Chen')
+    const view = mountServices(Console, 'Taylor Chen')
     act(() => {
-      view.store().setPid('RT-2026-014')
-      view.store().go('c2-console', { id: 'SS-041' })
+      selectProject('RT-2026-014')
+      go('c2-console', { id: 'SS-041' })
     })
     await until(() => screen.queryByRole('button', { name: 'Show host summary' }) !== null)
     act(() => {
@@ -71,39 +76,38 @@ describe('grant expiry (requirement 50/51 baseline: enforced by the mounted useG
   })
 
   it('expiry revokes the grant, expires the approved request, records the transcript line and warns the holder', () => {
-    const view = mountScreen(GrantWatchProbe, 'Taylor Chen')
-    const h = view.store()
-    expect(h.db.sessions.find((s) => s.id === 'SS-041')!.grants.map((g) => g.user)).toEqual(['Taylor Chen'])
+    const view = mountServices(GrantWatchProbe, 'Taylor Chen')
+    expect(view.db().sessions.find((s) => s.id === 'SS-041')!.grants.map((g) => g.user)).toEqual(['Taylor Chen'])
     act(() => {
       vi.advanceTimersByTime(1_980_000)
     })
-    const d = view.store().db
+    const d = view.db()
     expect(d.sessions.find((s) => s.id === 'SS-041')!.grants).toEqual([])
     expect(d.sessionRequests.find((r) => r.id === 'AR-011')?.status).toBe('expired')
     expect(d.sessions.find((s) => s.id === 'SS-041')!.transcript.some((l) => l.text === 'Interactive grant for Taylor Chen expired.')).toBe(true)
-    expect(view.store().toasts.some((t) => t.text.includes('Your interactive grant on SS-041 expired'))).toBe(true)
+    expect(useToastStore.getState().toasts.some((t) => t.text.includes('Your interactive grant on SS-041 expired'))).toBe(true)
     view.unmount()
   })
 
   it('an in-flight command rechecks access before committing output (requirement 113 deadline semantics)', async () => {
     window.location.hash = '#/c2'
-    const view = mountScreen(Console, 'Taylor Chen')
+    const view = mountServices(Console, 'Taylor Chen')
     act(() => {
-      view.store().setPid('RT-2026-014')
-      view.store().go('c2-console', { id: 'SS-041' })
+      selectProject('RT-2026-014')
+      go('c2-console', { id: 'SS-041' })
     })
     await until(() => screen.queryByRole('button', { name: 'Show host summary' }) !== null)
-    const userLines = () => view.store().db.sessions.find((s) => s.id === 'SS-041')!.transcript.filter((l) => l.who === 'user').length
+    const userLines = () => view.db().sessions.find((s) => s.id === 'SS-041')!.transcript.filter((l) => l.who === 'user').length
     expect(userLines()).toBe(2)
     fireEvent.click(screen.getByRole('button', { name: 'Show host summary' }))
     expect(screen.getAllByText(/Busy — command in progress/).length).toBeGreaterThan(0)
     act(() => {
-      view.store().A.expireGrant('SS-041', 'Taylor Chen')
+      expireGrantTransaction(view.svc().authority, view.svc().clock, 'legacy', 'SS-041', 'Taylor Chen')
     })
     act(() => {
       vi.advanceTimersByTime(2500)
     })
-    expect(view.store().toasts.some((t) => t.text === 'Command interrupted — access changed while it was running.')).toBe(true)
+    expect(useToastStore.getState().toasts.some((t) => t.text === 'Command interrupted — access changed while it was running.')).toBe(true)
     expect(userLines()).toBe(2)
     view.unmount()
   })
@@ -111,13 +115,13 @@ describe('grant expiry (requirement 50/51 baseline: enforced by the mounted useG
 
 describe('useGrantWatch scope', () => {
   it('a non-holder sees grants expire too, without a personal warning', () => {
-    const view = mountScreen(GrantWatchProbe, 'Alex Morgan')
+    const view = mountServices(GrantWatchProbe, 'Alex Morgan')
     act(() => {
       vi.advanceTimersByTime(1_980_000)
     })
-    const d = view.store().db
+    const d = view.db()
     expect(d.sessions.find((s) => s.id === 'SS-041')!.grants).toEqual([])
-    expect(view.store().toasts.some((t) => t.text.includes('Your interactive grant'))).toBe(false)
+    expect(useToastStore.getState().toasts.some((t) => t.text.includes('Your interactive grant'))).toBe(false)
     view.unmount()
   })
 })
