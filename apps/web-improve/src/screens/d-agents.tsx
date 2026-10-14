@@ -12,7 +12,7 @@ import { useAccessible, useCan, useDb, useMe, useScoped } from '../state/console
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 import { stamp } from '../domain/demo-clock'
-import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
 import { loseAgent, restoreAgent } from '../features/demo/runtime'
 import { submitApprovalTransaction } from '../features/approvals/service'
 import { setAgentStatusTransaction } from '../features/agents/writes'
@@ -276,7 +276,7 @@ function FailurePanel({ a }: { a: Agent }) {
      one 'legacy' commit each through the one authority (the typed draft
      update adds role gates and audit rows this path does not take). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const updateOperation = (id: string, dr: OpPatch) =>
     services.authority.commit('legacy', (d) => {
       const o = d.operations.find((x) => x.id === id)!
@@ -679,7 +679,7 @@ function AgentDetail() {
   const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   /* The legacy `A.audit` entry, mirrored exactly: one 'legacy' commit with the store helper's exact row shape. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const detail = useAgentDetail(route.id)
   const read = detail.data
   const tab = route.tab || 'overview'

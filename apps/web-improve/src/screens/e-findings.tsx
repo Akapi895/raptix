@@ -4,6 +4,7 @@ import { canAccessProject } from '../auth/policy'
 import { useDirty } from '../state/session'
 import { useServices } from '../state/services'
 import { ROLE_LABEL } from '../auth/policy'
+import { recordAudit } from '../features/audit/service'
 import { sevLabel, addFindingCommentTransaction } from '../features/findings/service'
 import { setReportFindingsLegacyTransaction } from '../features/reports/service'
 import { TECHNIQUES, type Finding, type FindingStatus, type Severity } from '../data'
@@ -16,7 +17,6 @@ import { go, useRoute } from '../router/navigate'
 import { useAccessible, useActiveProject, useCan, useDb, useMe, useReadOnly } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
-import { stamp } from '../domain/demo-clock'
 
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low', 'info']
 const STATUSES: FindingStatus[] = ['draft', 'review', 'returned', 'confirmed', 'remediation', 'retest', 'resolved']
@@ -77,7 +77,7 @@ function useAiActions() {
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority (the typed dismiss path has no audit row). */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const dismissed: Record<string, string> = (persistFilters['fd-dismissed'] as Record<string, string> | undefined) || {}
   const why = (f: Finding) => (readOnly(f.projectId) ? 'Project is read-only.' : !can('createFinding', f.projectId) ? `The ${ROLE_LABEL[me.role]} role cannot verify or dismiss AI suggestions. An Analyst or Operator can.` : '')
   const verify = (f: Finding) => confirm({
@@ -978,7 +978,7 @@ function EvidenceInspector() {
   /* The legacy raw `A.audit` entry, mirrored exactly: one 'legacy' commit
      through the one authority. */
   const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
-    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
+    recordAudit(services, { actor: { id: me.name, role: me.role }, projectId, corr: 'legacy' }, { action, obj, result, reason })
   const toggle = () => {
     if (!orig) {
       confirm({ title: 'View original content?', confirmLabel: 'View original', body: 'Original (unmasked) content will be shown on screen. This access is recorded in the review log (simulated).', onConfirm: () => { setOrig(true); setLog((l) => [{ at: 'Just now (UTC+7)', text: `${me.name} viewed original content` }, ...l]); audit('Viewed original evidence', ev.ref, ev.projectId) } })
