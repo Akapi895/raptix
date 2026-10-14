@@ -38,7 +38,7 @@ export function useAssetList(query: AssetListQuery) {
   return useQuery({
     queryKey: assetKeys.list(scope, query),
     queryFn: async (): Promise<AssetListRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .assets(actor, scope.project)
         .list({ actor, projectId: scope.project, corr: 'assets-list' }, query)
@@ -56,7 +56,7 @@ export function useAssetDetail(id?: string) {
   return useQuery({
     queryKey: assetKeys.detail(scope, id || ''),
     queryFn: async (): Promise<AssetDetailRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .assets(actor, scope.project)
         .get({ actor, projectId: scope.project, corr: 'asset-detail' }, id || '')
@@ -74,7 +74,7 @@ export function useAssetScope() {
   return useQuery({
     queryKey: assetKeys.scope(scope),
     queryFn: async (): Promise<AssetScopeRead> => {
-      const actor = actorRef(scope.actor)
+      const actor = actorRef(scope.actor, scope.role)
       const res = await services
         .assets(actor, scope.project)
         .scope({ actor, projectId: scope.project, corr: 'assets-scope' })
