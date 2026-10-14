@@ -6,12 +6,13 @@
  * (run twice). See execution.md "One data authority during migration".
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, render } from '@testing-library/react'
+import { act, cleanup } from '@testing-library/react'
 import { seed, type Project, type Role } from '../data'
-import { StoreProvider, useServices, useStore, type Store } from '../store'
+import { mountServices } from '../test/helpers'
+import { resetDemo, terminateSession } from '../features/demo/runtime'
 import { changeAssetScopeTransaction } from '../features/assets/writes'
 import { DEMO_ANCHOR, formatDemoInstant, parseDemoInstant } from './clock'
-import { createConsoleServices, type ConsoleServices } from './service-factory'
+import { createConsoleServices } from './service-factory'
 import type { ActorRef, ChangeSet, RequestContext, ServiceResult } from './service'
 
 afterEach(() => { cleanup(); vi.useRealTimers() })
@@ -20,22 +21,9 @@ let corrSeq = 0
 const actor = (id: string, role: Role): ActorRef => ({ id, role })
 const ctxOf = (a: ActorRef, projectId: string): RequestContext => ({ actor: a, projectId, corr: `corr-${++corrSeq}` })
 
-function BridgeProbe({ ready }: { ready: (s: Store, svc: ConsoleServices) => void }) {
-  ready(useStore(), useServices())
-  return null
-}
-
-/** Mounts the legacy store and captures both the context value and its service factory. */
+/** Mounts the canonical lifecycle for transaction and reset integration. */
 function mountBridge(me = 'Alex Morgan') {
-  let store!: Store
-  let svc!: ConsoleServices
-  const view = render(
-    <StoreProvider>
-      <BridgeProbe ready={(s, v) => { store = s; svc = v }} />
-    </StoreProvider>,
-  )
-  if (me !== 'Alex Morgan') act(() => { store.setMe(me) })
-  return { store: () => store, svc: () => svc, run: (fn: () => unknown) => act(fn), unmount: view.unmount }
+  return mountServices(null, me)
 }
 
 describe('clock: demo anchor, absolute instants, expiry normalization', () => {
@@ -129,25 +117,26 @@ describe('authority: one seed, atomic commits, published identities', () => {
   })
 })
 
-describe('bridge: legacy context and services share the one authority', () => {
-  it('a service mutation is observed by the legacy consumer; both hold one dataset', async () => {
+describe('canonical services and authority integration', () => {
+  it('a service mutation is visible in a subsequent scoped read', async () => {
     const view = mountBridge()
     const svc = view.svc()
-    expect(view.store().db.projects.find((p) => p.id === 'RT-2026-014')!.pinned).toBe(true)
+    expect(view.db().projects.find((p) => p.id === 'RT-2026-014')!.pinned).toBe(true)
     let res!: ServiceResult<Project>
     await act(async () => { res = await svc.forScope(actor('Alex Morgan', 'manager'), 'RT-2026-014')
       .update(ctxOf(actor('Alex Morgan', 'manager'), 'RT-2026-014'), 'RT-2026-014', { pinned: false }) })
     expect(res.ok).toBe(true)
-    expect(view.store().db.projects.find((p) => p.id === 'RT-2026-014')!.pinned).toBe(false)
-    expect(view.store().db).toBe(svc.authority.snapshot())
+    expect(view.db().projects.find((p) => p.id === 'RT-2026-014')!.pinned).toBe(false)
+    const read = await svc.forScope(actor('Alex Morgan', 'manager'), 'RT-2026-014').get(ctxOf(actor('Alex Morgan', 'manager'), 'RT-2026-014'), 'RT-2026-014')
+    expect(read.ok && read.data.pinned).toBe(false)
     view.unmount()
   })
 
-  it('a legacy-context mutation is observed by a service subscriber with coherent ids/counters', () => {
+  it('an asset transaction publishes coherent identities, counters and audited scope', () => {
     const view = mountBridge()
     const seen: ChangeSet[] = []
     const stop = view.svc().subscribe((cs) => seen.push(cs))
-    const auditBefore = view.store().db.counters.audit
+    const auditBefore = view.db().counters.audit
     // Ticket 51: the delegated scope change commits the flip and its audit in
     // ONE ChangeSet (the transaction owns the atomicity). Ticket 65 retired
     // the zero-caller A.setAssetScope wrapper; the legacy-context entry is
@@ -156,8 +145,8 @@ describe('bridge: legacy context and services share the one authority', () => {
     expect(seen.map((cs) => cs.corr)).toEqual(['legacy'])
     expect(seen[0].entities).toContainEqual({ kind: 'asset', id: 'AS-0141', projectId: 'RT-2026-014' })
     expect(seen[0].entities.some((e) => e.kind === 'audit')).toBe(true)
-    expect(view.store().db.counters.audit).toBe(auditBefore + 1)
-    expect(view.svc().authority.snapshot().counters).toBe(view.store().db.counters)
+    expect(view.db().counters.audit).toBe(auditBefore + 1)
+    expect(view.db().assets.find((a) => a.id === 'AS-0141')?.scope).toBe('out')
     stop()
     view.unmount()
   })
@@ -195,7 +184,7 @@ describe('bridge: legacy context and services share the one authority', () => {
       .update(ctxOf(casey, 'RT-2026-014'), 'RT-2026-014', { pinned: true }) })
     expect(res).toEqual({ ok: false, failure: expect.objectContaining({ kind: 'forbidden' }) })
     expect(seen).toEqual([])
-    expect(view.store().db.projects.find((p) => p.id === 'RT-2026-014')!.pinned).toBe(true)
+    expect(view.db().projects.find((p) => p.id === 'RT-2026-014')!.pinned).toBe(true)
     view.unmount()
   })
 
@@ -239,12 +228,12 @@ describe('bridge: legacy context and services share the one authority', () => {
     let fired = 0
     const stop = svc.subscribe((cs) => { if (cs.corr === 'reset') resets++ })
     svc.schedule(svc.clock.now() + 5_000, () => { fired++ })
-    view.run(() => { view.store().resetDemo() })
-    view.run(() => { view.store().resetDemo('e2e01') })
+    view.run(() => { resetDemo() })
+    view.run(() => { resetDemo('e2e01') })
     expect(resets).toBe(2)
-    expect(view.store().db).toBe(svc.authority.snapshot())
+    expect(view.db().projects.map((p) => p.id)).toEqual(seed('e2e01').projects.map((p) => p.id))
     expect(JSON.stringify(svc.authority.snapshot())).toBe(JSON.stringify(seed('e2e01')))
-    view.run(() => { view.store().resetDemo() })
+    view.run(() => { resetDemo() })
     expect(JSON.stringify(svc.authority.snapshot())).toBe(JSON.stringify(seed()))
     svc.clock.advance(60_000)
     expect(fired).toBe(0)
@@ -253,15 +242,15 @@ describe('bridge: legacy context and services share the one authority', () => {
     view.unmount()
   })
 
-  it('demo reset disposes pending dataset-bound store timers (reset run twice)', () => {
+  it('repeated demo reset disposes pending dataset-bound session timers', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const view = mountBridge()
-    view.run(() => { view.store().A.terminateSession('SS-041', 'demo') })
-    expect(view.store().db.sessions.find((s) => s.id === 'SS-041')!.state).toBe('revoking')
-    view.run(() => { view.store().resetDemo() })
-    view.run(() => { view.store().resetDemo() })
+    view.run(() => { terminateSession('SS-041', 'demo') })
+    expect(view.db().sessions.find((s) => s.id === 'SS-041')!.state).toBe('revoking')
+    view.run(() => { resetDemo() })
+    view.run(() => { resetDemo() })
     act(() => { vi.advanceTimersByTime(5_000) })
-    const s = view.store().db.sessions.find((x) => x.id === 'SS-041')!
+    const s = view.db().sessions.find((x) => x.id === 'SS-041')!
     expect(s.state).toBe('connected')
     expect(s.grants.map((g) => g.user)).toEqual(['Taylor Chen'])
     view.unmount()
