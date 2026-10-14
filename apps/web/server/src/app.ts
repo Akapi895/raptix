@@ -31,6 +31,7 @@ import { registerC2GrantRoutes } from './http/routes/c2-grants.routes.js';
 import { registerFleetRoutes } from './http/routes/fleet.routes.js';
 import { registerLibraryRoutes } from './http/routes/library.routes.js';
 import { registerInboxRoutes } from './http/routes/inbox.routes.js';
+import { registerWorkspaceSettingsRoutes, registerAuditRoutes } from './http/routes/workspace.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
@@ -52,6 +53,8 @@ import type { C2GrantsService } from './services/c2-grants-service.js';
 import type { FleetService } from './services/fleet-service.js';
 import type { LibraryService } from './services/library-service.js';
 import type { InboxService } from './services/inbox-service.js';
+import type { WorkspaceSettingsService } from './services/workspace-settings-service.js';
+import type { AuditService } from './services/audit-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -85,6 +88,8 @@ export interface AppOptions {
   readonly fleetService?: FleetService;
   readonly libraryService?: LibraryService;
   readonly inboxService?: InboxService;
+  readonly workspaceSettings?: WorkspaceSettingsService;
+  readonly auditService?: AuditService;
   /** Runtime cancel bridge for emergency stops (operation scope). */
   readonly cancelRun?: (threadId: string, runId: string | null) => Promise<string>;
   /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
@@ -172,6 +177,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.fleetService) registerFleetRoutes(app, options.fleetService, identity);
   if (options.libraryService) registerLibraryRoutes(app, options.libraryService, identity);
   if (options.inboxService) registerInboxRoutes(app, options.inboxService, identity);
+  if (options.workspaceSettings) registerWorkspaceSettingsRoutes(app, options.workspaceSettings, identity);
+  if (options.auditService) registerAuditRoutes(app, options.auditService, identity);
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;

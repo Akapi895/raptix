@@ -13,7 +13,7 @@ import { requireEngagementAccess, requireIndependentActor, type ActorContext, ty
  */
 
 const MIN_REQUEST: MemberRole = 'operator';
-const MAX_GRANT_TTL_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_MAX_GRANT_TTL_MS = 24 * 60 * 60 * 1000;
 
 export interface C2GrantView {
   readonly id: string;
@@ -31,22 +31,39 @@ export interface C2GrantView {
 export interface C2GrantsView {
   readonly engagementId: string;
   readonly grants: C2GrantView[];
-  readonly maxGrantHours: 24;
+  readonly maxGrantHours: number;
   readonly source: 'db';
 }
 
 export class C2GrantsService {
-  public constructor(private readonly db: PrismaClient) {}
+  /**
+   * @param maxGrantHours  Ticket 16 consumer hook: the workspace policy
+   *   `policy.c2_grant_max_hours` loader. Absent/failed loads fall back to
+   *   the 24h default — a settings outage never widens or breaks the grant path.
+   */
+  public constructor(private readonly db: PrismaClient, private readonly maxGrantHours?: () => Promise<number | null>) {}
 
   private ctx(actorId: string): ActorContext {
     return { db: this.db, actorId, multiUser: true };
+  }
+
+  private async maxTtlMs(): Promise<number> {
+    if (this.maxGrantHours === undefined) return DEFAULT_MAX_GRANT_TTL_MS;
+    try {
+      const hours = await this.maxGrantHours();
+      if (hours === null || !Number.isFinite(hours) || hours <= 0) return DEFAULT_MAX_GRANT_TTL_MS;
+      return hours * 60 * 60 * 1000;
+    } catch {
+      return DEFAULT_MAX_GRANT_TTL_MS;
+    }
   }
 
   public async list(actorId: string, engagementId: string): Promise<C2GrantsView> {
     await requireEngagementAccess(this.ctx(actorId), engagementId, 'viewer');
     await this.sweep(engagementId);
     const rows = await this.db.c2Grant.findMany({ where: { engagementId }, orderBy: { createdAt: 'desc' } });
-    return { engagementId, grants: rows.map((r) => this.toView(r)), maxGrantHours: 24, source: 'db' };
+    const maxHours = Math.round((await this.maxTtlMs()) / (60 * 60 * 1000));
+    return { engagementId, grants: rows.map((r) => this.toView(r)), maxGrantHours: maxHours, source: 'db' };
   }
 
   public async request(actorId: string, engagementId: string, input: unknown): Promise<C2GrantView> {
@@ -59,7 +76,10 @@ export class C2GrantsService {
     const expiresAt = typeof body.expiresAt === 'string' ? Date.parse(body.expiresAt) : Number.NaN;
     if (Number.isNaN(expiresAt)) throw new ProjectApiError(400, 'expiresAt (ISO-8601) is required.');
     if (expiresAt <= Date.now()) throw new ProjectApiError(400, 'expiresAt must be in the future.');
-    if (expiresAt > Date.now() + MAX_GRANT_TTL_MS) throw new ProjectApiError(400, 'expiresAt may not exceed 24 hours.');
+    const maxTtlMs = await this.maxTtlMs();
+    if (expiresAt > Date.now() + maxTtlMs) {
+      throw new ProjectApiError(400, `expiresAt may not exceed ${Math.round(maxTtlMs / (60 * 60 * 1000))} hours (the workspace policy.c2_grant_max_hours setting).`);
+    }
     const open = await this.db.c2Grant.findFirst({ where: { engagementId, sessionId, actorId, status: 'requested' } });
     if (open !== null) throw new ProjectApiError(409, 'An identical grant request is already pending review.');
     const row = await this.db.c2Grant.create({

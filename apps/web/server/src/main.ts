@@ -36,6 +36,8 @@ import { C2GrantsService } from './services/c2-grants-service.js';
 import { FleetService } from './services/fleet-service.js';
 import { LibraryService } from './services/library-service.js';
 import { InboxService } from './services/inbox-service.js';
+import { WorkspaceSettingsService } from './services/workspace-settings-service.js';
+import { AuditService } from './services/audit-service.js';
 import { ensureBootstrapAdmin } from './http/routes/auth.routes.js';
 
 let closing = false;
@@ -109,7 +111,9 @@ async function main(): Promise<void> {
   const exportService = dbClient && env.workspacePath ? new ExportService(dbClient, env.workspacePath) : undefined;
   const settingsService = dbClient ? new SettingsService(dbClient, getLocalIdentity()) : undefined;
   const campaignsService = dbClient ? new CampaignService(dbClient, env.gophish ? new GoPhishClient(env.gophish) : undefined, env.evilginx ? new EvilginxClient(env.evilginx) : undefined) : undefined;
-  const c2Grants = dbClient ? new C2GrantsService(dbClient) : undefined;
+  const workspaceSettings = dbClient ? new WorkspaceSettingsService(dbClient, env.authMode === 'multi') : undefined;
+  const c2Grants = dbClient ? new C2GrantsService(dbClient, workspaceSettings ? () => workspaceSettings.maxGrantHours() : undefined) : undefined;
+  const auditService = dbClient ? new AuditService(dbClient) : undefined;
   const c2Service = dbClient ? new C2Service(dbClient, env.sliver ? new SliverClient(env.sliver) : undefined, c2Grants?.assertCommandAuthorized.bind(c2Grants)) : undefined;
   const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
   const membersService = dbClient ? new MembersService(dbClient, env.authMode === 'multi') : undefined;
@@ -142,6 +146,8 @@ async function main(): Promise<void> {
   fleetService,
   libraryService,
   inboxService,
+  workspaceSettings,
+  auditService,
   vaultService,
   membersService,
   scopeService,

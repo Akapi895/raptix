@@ -26,6 +26,7 @@ import { RealWorkspace } from '../real/screens/workspace'
 import { RealAssets } from '../real/screens/assets-panel'
 import { RealLibrary } from '../real/screens/library'
 import { RealCommandCenter } from '../real/screens/command-center'
+import { RealSettings } from '../real/screens/settings'
 import { RealHeaderNotices } from '../real/screens/notices-bell'
 import { RealLogin } from '../real/screens/login'
 import { Button } from '../ui'
@@ -46,6 +47,7 @@ const REAL_PAGES: Record<string, ComponentType | undefined> = {
   assets: RealAssets,
   playbooks: RealLibrary,
   'command-center': RealCommandCenter,
+  settings: RealSettings,
   login: RealLogin,
 }
 

@@ -21,6 +21,8 @@ import {
   isTimelineView,
   isGraphView,
   isAssetsView,
+  isVaultView,
+  isVaultRevealView,
   type CapabilitiesDocument,
   type Capability,
   type ProjectViewModel,
@@ -38,6 +40,9 @@ import {
   type TimelineView,
   type GraphView,
   type AssetsView,
+  type VaultView,
+  type VaultSecretView,
+  type VaultRevealView,
 } from '@raptix/web-contracts'
 import { apiFetch, ApiTransportError, setCsrfToken } from './transport'
 
@@ -878,4 +883,111 @@ export function markAllNoticesRead(): Promise<{ updated: number }> {
   return apiFetch('/notices/read-all', (v): v is { updated: number } =>
     typeof v === 'object' && v !== null && typeof (v as { updated?: unknown }).updated === 'number',
   { method: 'POST', body: {} })
+}
+
+/* ───────────── Workspace settings, audit and vault (integration ticket 16) ───────────── */
+
+export interface WorkspaceSettingView {
+  key: string
+  kind: string
+  value: number
+  version: number
+  updatedBy: string | null
+  updatedAt: string | null
+  consumer: string | null
+  enforcement: string
+  description: string
+}
+
+export interface WorkspaceSettingsView {
+  settings: WorkspaceSettingView[]
+  source: 'db'
+}
+
+function isWorkspaceSettingsView(v: unknown): v is WorkspaceSettingsView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as WorkspaceSettingsView
+  return Array.isArray(doc.settings) && doc.settings.every((s) => typeof s.key === 'string' && typeof s.value === 'number' && typeof s.version === 'number') && doc.source === 'db'
+}
+
+export function fetchWorkspaceSettings(): Promise<WorkspaceSettingsView> {
+  return apiFetch('/workspace/settings', isWorkspaceSettingsView)
+}
+
+export interface SaveSettingInput { value: number; expectedVersion: number; reason: string }
+
+export function saveWorkspaceSetting(key: string, input: SaveSettingInput): Promise<WorkspaceSettingView> {
+  return apiFetch(`/workspace/settings/${encodeURIComponent(key)}`, (v): v is WorkspaceSettingView =>
+    typeof v === 'object' && v !== null && typeof (v as WorkspaceSettingView).key === 'string' && typeof (v as WorkspaceSettingView).version === 'number',
+  { method: 'PUT', body: input })
+}
+
+export interface AuditEntryView {
+  id: string
+  engagementId: string | null
+  actorId: string | null
+  action: string
+  targetType: string | null
+  targetId: string | null
+  reason: string | null
+  createdAt: string
+  source: 'web' | 'vault'
+}
+
+export interface AuditView {
+  engagementId: string | null
+  entries: AuditEntryView[]
+  total: number
+  truncated: boolean
+  actors: string[]
+  actions: string[]
+  source: 'db'
+}
+
+function isAuditView(v: unknown): v is AuditView {
+  if (typeof v !== 'object' || v === null) return false
+  const doc = v as AuditView
+  return Array.isArray(doc.entries) && doc.entries.every((e) => typeof e.id === 'string' && typeof e.action === 'string' && (e.source === 'web' || e.source === 'vault')) && typeof doc.total === 'number' && doc.source === 'db'
+}
+
+export interface AuditQueryInput { action?: string; actor?: string; q?: string; limit?: number }
+
+function auditQueryString(query: AuditQueryInput): string {
+  const params = new URLSearchParams()
+  if (query.action) params.set('action', query.action)
+  if (query.actor) params.set('actor', query.actor)
+  if (query.q) params.set('q', query.q)
+  if (query.limit !== undefined) params.set('limit', String(query.limit))
+  const s = params.toString()
+  return s.length > 0 ? `?${s}` : ''
+}
+
+export function fetchWorkspaceAudit(query: AuditQueryInput = {}): Promise<AuditView> {
+  return apiFetch(`/audit${auditQueryString(query)}`, isAuditView)
+}
+
+export function fetchEngagementAudit(engagementId: string, query: AuditQueryInput = {}): Promise<AuditView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/audit${auditQueryString(query)}`, (v): v is AuditView => isAuditView(v) && v.engagementId === engagementId)
+}
+
+export function fetchVault(engagementId: string): Promise<VaultView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets`, owned(engagementId, isVaultView))
+}
+
+export interface CreateVaultSecretInput { kind: string; label: string; plaintext: string }
+
+export function createVaultSecret(engagementId: string, input: CreateVaultSecretInput): Promise<VaultSecretView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets`, (v): v is VaultSecretView =>
+    typeof v === 'object' && v !== null && typeof (v as VaultSecretView).id === 'string' && typeof (v as VaultSecretView).revealCount === 'number',
+  { method: 'POST', body: input })
+}
+
+export function revealVaultSecret(engagementId: string, secretId: string): Promise<VaultRevealView> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets/${encodeURIComponent(secretId)}/reveal`, isVaultRevealView, { method: 'POST', body: {} })
+}
+
+export function revokeVaultSecret(engagementId: string, secretId: string): Promise<{ ok: true }> {
+  return apiFetch(`/engagements/${encodeURIComponent(engagementId)}/vault/secrets/${encodeURIComponent(secretId)}`, (v): v is { ok: true } =>
+    typeof v === 'object' && v !== null && (v as { ok?: unknown }).ok === true,
+  { method: 'DELETE' })
 }
