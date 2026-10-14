@@ -2,7 +2,7 @@
 
 **What to build:** Remove residual Context/store/hash-router/UI forwarding infrastructure after all screen consumers are gone; keep the canonical database/services/providers as the final architecture.
 **Blocked by:** 66.
-**Status:** in-progress — batch 1 (the dead legacy core) and the continuation batches 2–6 (the enumerated residual helpers/labels/re-exports) landed on `wi/67-retirelegacy` / `wi/67b-retirelegacy`; the remaining live Context seam (`useStore` ×106 files, `StoreProvider` ×61) and its live delegating `A.*` entries are enumerated below and need further per-feature batches.
+**Status:** in-progress — runtime contraction verified on `wi/67-final` (base `22cc7dd`); zero runtime imports of `store.tsx`. The Context projection remains test-only: 62 test files plus `src/test/helpers.tsx` import it directly, and five additional tests depend on that helper. Test migration, typed-read/raw-write debt and final diagnostic/browser gates remain open. Earlier wave inventories below are historical.
 **Owner:** Final core contraction.
 **Contract:** [execution.md](../execution.md).
 
@@ -935,3 +935,217 @@ Gaps: browser route exercise skipped (optional HTTP-check gap per AGENTS.md
 surfaces are pinned by the ai-operator query, ai-history pin, plan
 compare/trace writes, branches and workers suites exercising them through
 real mounted routes, and `npm run build` covers the module graph).
+
+### Final runtime contraction (`wi/67-final`, base `22cc7dd`)
+
+Parent 67 stays **in-progress**. The requested runtime scope is implemented;
+the acceptance criterion prohibiting old-store reads in tests is not satisfied.
+The bounded split ledger is [67-final-runtime.md](67-final-runtime.md).
+
+#### Canonical ownership and observed regressions
+
+- `1e53712`: `src/state/services.tsx` owns the sole mounted services factory,
+  shared/session/navigation initialization, clock advancement, ticker and log
+  rebuild. `StoreProvider` wraps this provider and only projects its authority
+  for transitional tests; it does not create a second authority. Unmount stops
+  intervals and disposes factory lifecycle resources; effect replay retains the
+  same authority during StrictMode's synchronous cleanup/setup.
+- `d54249e`, `803a8bf`, `2728b42`, `e07c38b`: canonical service imports in four
+  <=10-file batches. `00960cc` moves `useDirty` into session state; `1052479`
+  moves the membership adapter into auth policy and `ProjectDraft` into the
+  wizard contract. The zero-caller analysis `Store` type export is retired.
+- `e4ed846` (RED, exit 1) → `5d48e60` (GREEN): the delayed-command rendered
+  transcript regression reproduces the wave-8 symptom beside `useMe`'s
+  synchronous subscription. A diagnostic extra 1 ms advance delivered the
+  missing update. The default Query `setTimeout(0)` notification is deferred
+  beyond the fake timer's current tick; this is notification scheduling, not
+  evidence of a permanently detached React subscription. Query notifications
+  now use the supported microtask scheduler; the assertion remains unchanged.
+  This supersedes wave 8's permanent-subscription-desync diagnosis.
+- `1d3b59e`: the five `h-session.tsx` `useStore` sites are gone. Request and
+  revocation run the existing typed transactions; termination uses demo runtime.
+  Approvers, related operation, last reviewer and stop state come from the
+  typed session model. The first asynchronous grant-watch iteration failed the
+  existing immediate warning assertion. A scoped, unpaginated typed feature
+  projection now preserves synchronous expiry alerts without exposing `Db` to
+  the screen; it listens only for session/operation/project changes and reset.
+  App mounts `ServicesProvider`, not `StoreProvider`.
+- `1120e90` (RED, exit 1) → `c5f48d5` (GREEN): an old AI response could clear a
+  new mount's busy flag. Runtime cleanup cancels its captured pending timers.
+- `fe7996f` (RED, exit 1) → `736f73d` (GREEN): resetting twice between clock
+  ticks could charge pre-reset elapsed time to a new deadline and fire it early.
+  `97d7919` (RED, exit 1) → `fb53ab0` (GREEN): countdown display retained its
+  pre-reset anchor. Both elapsed accounting and display anchor now reset with
+  the dataset. `8842324` observes this through `MockClock.onReset`, not a second
+  service ChangeSet subscription. A full run caught the extra subscription;
+  the existing exactly-one-Query-bridge teardown assertion is unchanged and
+  passes with this lifecycle separation.
+- `f494680`: the dead test-harness `useDirty` forward is removed; the file is
+  explicitly test-only. All existing test assertions remain intact.
+
+#### Final checks, observed on runtime tip `8842324`
+
+Run inside `C:\Users\tuanp\AppData\Local\Temp\opencode\raptix-wt\67-final\apps\web-improve`
+with Node 24.18.0 and npm (this app is not a root workspace):
+
+| Command | Observed exit | Evidence |
+|---|---:|---|
+| `npm install` | 0 | 256 packages added, audit reports 0 vulnerabilities; no manifest/lockfile diff |
+| `npm run typecheck` | 0 | 0 diagnostics |
+| `npm run lint` | 0 | 0 errors; 163 warnings, base 164 |
+| `npm test -- --maxWorkers=2` | 0 | 959 tests / 74 files pass; 85.47 s final full run |
+| `npm run build` | 0 | 2216 modules; production build succeeds |
+| Baseline/current ESLint API audit + import census + per-commit budget audit | 0 | Every touched file checked; 124 → 123 warnings in touched files; **0 new diagnostics** |
+| `git diff 22cc7dd..HEAD --check` | 0 | No whitespace errors |
+
+The prior full run exited 1 on the extra reset subscription; it was fixed,
+not retried away or suppressed. Four new regressions each failed before their
+fix. Focused C2/grant tests pass unchanged. Existing Vite native-config warnings,
+the >500 kB chunk warning and jsdom's two unsupported document-navigation
+messages remain; none were suppressed. The 163 lint warnings still block the
+spec's final zero-diagnostic gate (ticket 69).
+
+Real composition smoke: a temporary RTL probe imported the actual `App` and
+mounted it under `StrictMode` at `#/c2-console/SS-041`, selected Taylor Chen
+through the login quick-pick, selected RT-2026-014, clicked **Show host summary**
+and observed `[simulated] Show host summary` after the real command timer. It
+then switched the persona to Casey Nguyen (Client), observed command controls
+removed and **Console not available** rendered. `npm test -- --maxWorkers=2
+src/test/ticket67-smoke.test.tsx` passed (exit 0, 1 test); the temporary probe was
+removed after execution. This exercises actual App/router/providers/services,
+not a mocked authority. Browser/viewport interaction remains a gap: no browser
+control tool is exposed in this session; no optional temporary server was started.
+
+#### Exact remaining test-only surface
+
+Grep of static imports, dynamic imports and import types: **66 import lines /
+63 files**, all test-only. There are **zero runtime imports**, including type
+imports, of `store.tsx`; the production App graph does not reach the legacy
+projection. `src/store.tsx` is 762 lines and still exposes `StoreProvider`,
+`useStore`, `Store` and canonical forwards for `useServices`, `canAccessProject`
+and `ProjectDraft`. It has no `useDirty` export or lifecycle authority.
+
+| Symbol imported from store | Importing files |
+|---|---:|
+| `StoreProvider` | 60 |
+| `useStore` | 60 |
+| `useServices` (canonical forward) | 49 |
+| `Store` type | 57 |
+| `canAccessProject` (policy forward) | 2 |
+| `ProjectDraft` (wizard forward) | 2 |
+| `useDirty` | 0 |
+
+Exact direct-import files, paths relative to `src/`:
+
+```text
+auth/auth.test.tsx
+domain/bridge.test.tsx
+features/agents/query.test.tsx
+features/agents/writes.test.tsx
+features/aichat/history.test.tsx
+features/aichat/query.test.tsx
+features/analysis/coverage.test.tsx
+features/analysis/path.test.tsx
+features/approvals/service.test.tsx
+features/assets/query.test.tsx
+features/assets/writes.test.tsx
+features/branches/branches.test.tsx
+features/c2/grants.test.tsx
+features/c2/service.test.tsx
+features/c2/session-console.test.tsx
+features/c2/session-detail.test.tsx
+features/closure/service.test.tsx
+features/copilot/drawer.test.tsx
+features/estop/service.test.tsx
+features/estop/ui.test.tsx
+features/findings/evidence.test.tsx
+features/findings/query.test.tsx
+features/findings/writes.test.tsx
+features/library/query.test.tsx
+features/library/review.test.tsx
+features/notices/service.test.tsx
+features/operations/lifecycle.test.tsx
+features/operations/preflight.test.tsx
+features/operations/query.test.tsx
+features/operations/workspace.test.tsx
+features/operations/write.test.tsx
+features/plans/bridge.test.tsx
+features/plans/compare.test.tsx
+features/plans/service.test.tsx
+features/reports/editor.test.tsx
+features/reports/query.test.tsx
+features/reports/review.test.tsx
+features/results/results.test.tsx
+features/settings/service.test.tsx
+features/trace/trace.test.tsx
+features/trace/writes.test.tsx
+features/wizard/wizard.test.tsx
+features/workers/workers.test.tsx
+router/navigate.test.tsx
+router/routes.test.tsx
+safety/closure-facets.test.tsx
+safety/isolation.test.tsx
+safety/preflight.test.tsx
+safety/rbac.test.tsx
+screens/a11y-audit.test.tsx
+screens/b-portfolio.test.tsx
+screens/dark-theme-audit.test.tsx
+screens/dashboard/dashboard.test.tsx
+screens/demo/demo.test.tsx
+screens/project-detail/detail.test.tsx
+screens/responsive-audit.test.tsx
+screens/system/system.test.tsx
+screens/tasks/tasks.test.tsx
+shell/shell.test.tsx
+state/console.test.tsx
+state/query-bridge.test.tsx
+test/helpers.tsx
+ui/composed.test.tsx
+```
+
+Five further test files import the legacy helper without importing store directly:
+`safety/ai-proposals.test.tsx`, `safety/emergency-stop.test.tsx`,
+`safety/grants.test.tsx`, `state/session.test.tsx`, `state/stores.test.tsx`.
+Thus **67 test files plus one helper** still depend directly/indirectly on the
+test-only bridge. The two newly added regression suites use canonical providers.
+
+#### Runtime residual debt and next leaves
+
+Removing store imports is **not** execution §48 / ADR-0067 compliance. The
+generic `state/console.ts` `useDb` bridge still exposes the complete database;
+108 reference lines across 28 runtime files (including its definition) remain.
+`useMe`/project/policy helpers themselves still subscribe through this bridge.
+Prior consumer waves mirrored old raw mutations rather than routing every
+write to typed handlers. Direct screen commits remain at **20 sites / 9 files**
+(`b-detail2`, `c-console`, `c-results`, `d-agents`, `d-library`, `e-findings`,
+`f-settings`, `f`, `h-session`), plus **1 site** in `shell/header.tsx`.
+The h-session simulated revocation-failure audit is the former raw audit entry,
+not a newly enforced typed command. Typed canonical feature transactions also
+use the authority internally; those legitimate uses are not this debt census.
+
+Proposed sequential follow-ups, each split before editing if >400 runtime
+changed lines / >10 files:
+
+1. Migrate test helpers to `ServicesProvider` + `ConsoleProviders` and explicit
+   persona/project/session/router controls. Replace `A.*` setup with existing
+   real typed handlers and service reads; retain invariant outcomes and refusal
+   assertions. Keep transitional duality tests until their consumers migrate.
+2. Repoint the 49 test `useServices` imports and two policy/two draft forwards in
+   <=10-file mechanical batches. Migrate safety/domain tests first, then feature
+   Query tests, then route/shell/audit tests; retire unused Store fields/actions
+   incrementally, counting deletions. Final 762-line bridge removal needs several
+   bounded deletion leaves, not one exempt mega-deletion.
+3. Build narrow typed synchronous identity and project-policy projections:
+   override-aware persona/role, accessible project summaries, addressed project
+   membership/locked state. Capture actor/project explicitly, subscribe only to
+   relevant ChangeSet identities, and scope Query keys/cancellation by committed
+   role. Retain synchronous guard behavior while eliminating generic `useDb`.
+4. Replace component raw audit/notice/project/evidence/operation mirrors with
+   typed feature transactions owning validation, authorization, attribution and
+   atomic publication. Preserve tested refusal/log/toast behavior rather than
+   renaming the raw bridge. C2's scoped synchronous expiry projection is a real
+   narrowed model, but is not a claim that all entity reads now obey async Query
+   contracts. Resolve the remaining display-clock date-rollover formatter debt
+   independently (service deadlines already use absolute instants).
+5. Finish ticket 69's zero diagnostics and browser route/viewport/dark/accessibility
+   evidence, then evaluate parent 67 completion. No completion status is asserted here.
