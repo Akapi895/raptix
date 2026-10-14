@@ -1,12 +1,18 @@
 import { useEffect, useState, type ComponentType } from 'react'
 import { AlertTriangle, Copy, Download, Eye, FileText, History, Lock, Plus, Rocket, Send, Upload } from 'lucide-react'
-import { useStore } from '../store'
+import { useServices } from '../store'
+import { ROLE_LABEL } from '../auth/policy'
 import type { Template } from '../data'
 import { Banner, Button, Card, Drawer, Empty, FilterBar, IdLink, Kpi, Mono, PageHeader, Pager, SearchBox, Select, Skeleton, Status, Table, Tabs, cx } from '../ui'
 import { reportChecks, type NoFind } from '../features/reports/service'
 import { ReportReadError, useDeliveryHistory, useReportList, useTemplates } from '../features/reports/query'
 import { ReportNew, ReportEditor, ReportPreview, ReportReview, AiExclusion } from './f-report'
 import { SettingsPage } from './f-settings'
+import { go, useRoute } from '../router/navigate'
+import { useCan, useDb, useMe } from '../state/console'
+import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
+import { useSessionStore } from '../state/session'
+import { stamp } from '../domain/demo-clock'
 
 const PRIMARY: Record<string, { label: string; page: string; icon: typeof FileText }> = {
   draft: { label: 'Edit draft', page: 'report', icon: FileText },
@@ -27,7 +33,11 @@ function ReadError({ error, retry }: { error: unknown; retry: () => void }) {
 }
 
 function ReportsPage() {
-  const { route, go, pid, can, me, setSwitcherOpen } = useStore()
+  const route = useRoute()
+  const pid = useProjectStore((s) => s.pid)
+  const can = useCan()
+  const me = useMe()
+  const setSwitcherOpen = useUiStore((s) => s.setSwitcherOpen)
   const tab = route.tab || 'list'
   // Tab badges come from the typed reads; the ChangeSet bridge keeps every
   // tab live (a legacy export or status change refetches without a reload).
@@ -57,7 +67,12 @@ function ReportsPage() {
 }
 
 function ReportList() {
-  const { go, pid, persistFilters, setFilter, can, me, db } = useStore()
+  const pid = useProjectStore((s) => s.pid)
+  const persistFilters = useSessionStore((s) => s.persistFilters)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  const can = useCan()
+  const me = useMe()
+  const db = useDb()
   const [more, setMore] = useState(false)
   const [page, setPage] = useState(1)
   const nfAll = (persistFilters.repNoFind || {}) as Record<string, NoFind>
@@ -124,7 +139,14 @@ function ReportList() {
 }
 
 function Templates() {
-  const { go, me, toast, A, setFilter } = useStore()
+  const services = useServices()
+  const me = useMe()
+  const toast = useToastStore((s) => s.toast)
+  const setFilter = useSessionStore((s) => s.setFilter)
+  /* The legacy raw `A.audit` entries, mirrored exactly: one 'legacy' commit
+     through the one authority (these simulated actions never touch data). */
+  const audit = (action: string, obj: string, projectId: string, result = 'Success', reason = '') =>
+    services.authority.commit('legacy', (d) => { d.audit.unshift({ corr: projectId === 'RT-2026-014' && /^(SS|AR)-/.test(obj) ? 'COR-014-01' : undefined, id: 'AU-' + ++d.counters.audit, at: stamp(), actor: me.name, role: ROLE_LABEL[me.role], action, obj, projectId, result, reason }) })
   const tpls = useTemplates()
   const [sel, setSel] = useState<Template | null>(null)
   const admin = me.role === 'admin'
@@ -138,7 +160,7 @@ function Templates() {
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted">{templates.length} templates. Draft templates can be tried but cannot be used for formal delivery.</p>
-        <Button icon={Plus} disabled={!admin} title={admin ? undefined : why} onClick={() => { sim('Create template'); A.audit('Created report template (simulated)', 'TP-new', '') }}>Create template</Button>
+        <Button icon={Plus} disabled={!admin} title={admin ? undefined : why} onClick={() => { sim('Create template'); audit('Created report template (simulated)', 'TP-new', '') }}>Create template</Button>
       </div>
       {!admin && <p className="-mt-2 mb-4 flex items-center gap-1.5 text-xs text-muted"><Lock size={12} />{why}</p>}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -165,8 +187,8 @@ function Templates() {
         ))}
       </div>
       <Drawer open={!!sel} onClose={() => setSel(null)} title={sel?.name} footer={sel && <>
-        <Button icon={Copy} disabled={!admin} title={admin ? undefined : why} onClick={() => { sim('Duplicate template'); A.audit('Duplicated report template (simulated)', sel.id, '') }}>Duplicate</Button>
-        <Button icon={Upload} disabled={!admin || sel.status === 'published'} title={!admin ? why : sel.status === 'published' ? 'Template is already published' : undefined} onClick={() => { sim('Publish template'); A.audit('Published report template (simulated)', sel.id, '') }}>Publish</Button>
+        <Button icon={Copy} disabled={!admin} title={admin ? undefined : why} onClick={() => { sim('Duplicate template'); audit('Duplicated report template (simulated)', sel.id, '') }}>Duplicate</Button>
+        <Button icon={Upload} disabled={!admin || sel.status === 'published'} title={!admin ? why : sel.status === 'published' ? 'Template is already published' : undefined} onClick={() => { sim('Publish template'); audit('Published report template (simulated)', sel.id, '') }}>Publish</Button>
         <Button variant="primary" onClick={() => { use(sel) }}>{sel.status === 'published' ? 'Use template' : 'Try in Draft'}</Button>
       </>}>
         {sel && <div className="space-y-5">
@@ -181,7 +203,9 @@ function Templates() {
 }
 
 function Exports() {
-  const { go, me, can, toast } = useStore()
+  const me = useMe()
+  const can = useCan()
+  const toast = useToastStore((s) => s.toast)
   const [st, setSt] = useState('')
   const [page, setPage] = useState(1)
   const q = useDeliveryHistory({ status: st || undefined, page: page > 1 ? page : undefined })
