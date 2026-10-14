@@ -4,11 +4,12 @@ import { useDirty } from '../state/session'
 import { sevLabel } from '../features/findings/service'
 import type { Finding, Report } from '../data'
 import { Banner, Button, Card, CardHeader, Check, Drawer, Empty, Field, Input, Mono, PageHeader, PersonaHint, Segmented, Select, Sev, Skeleton, Status, Stepper, Table, Textarea, Timeline, cx, useGuard } from '../ui'
-import { closureEvidence, reportChecks, type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead } from '../features/reports/service'
+import { type NoFind, type RCheck, type ReportEditorRead, type ReportReviewRead } from '../features/reports/service'
+import { useReportValidation, useReportSourceCounts, useReportExclusions } from '../features/reports/projection'
 import { ReportReadError, useDraftOptions, useReportEditor, useReportReview, useReportWrites } from '../features/reports/query'
 import type { ServiceResult } from '../domain/service'
 import { go, useRoute } from '../router/navigate'
-import { useActiveProject, useCan, useDb, useMe, useScoped } from '../state/console'
+import { useActiveProject, useCan, useMe } from '../state/console'
 import { useProjectStore, useToastStore, useUiStore } from '../state/stores'
 import { useSessionStore } from '../state/session'
 
@@ -24,9 +25,7 @@ function useNoFind(id: string): [NoFind | undefined, (v: NoFind) => void] {
 
 /** AI-suggested findings are never part of a formal report */
 export function AiExclusion({ projectId }: { projectId?: string }) {
-  const db = useDb()
-  const scoped = useScoped<Finding>()
-  const ai = (projectId ? db.findings.filter((f) => f.projectId === projectId) : scoped(db.findings)).filter((f) => f.status === 'ai_suggested')
+  const { findings: ai } = useReportExclusions(projectId)
   if (!ai.length) return null
   return (
     <Banner tone="info" title={`Excluded from the formal report: ${ai.map((f) => f.id).join(', ')}`} action={<Button size="sm" onClick={() => go('finding', { id: ai[0].id })}>Open {ai[0].id}</Button>}>
@@ -102,7 +101,7 @@ function ReportHead({ r, sub, actions, tab }: { r: Report; sub?: ReactNode; acti
  * `go` (dirty cleared first — the unsaved guard must not hold the redirect).
  */
 export function ReportNew() {
-  const db = useDb()
+  const counts = useReportSourceCounts()
   const pid = useProjectStore((s) => s.pid)
   const project = useActiveProject()
   const me = useMe()
@@ -245,8 +244,8 @@ export function ReportNew() {
             <CardHeader title="Source data" sub="Preview of the data that will be pulled into the draft." />
             <div className="space-y-3">
               {([
-                ['obj', `Objectives (${project.objectives.length})`], ['scope', `Scope & ROE ${project.roeVersion}`], ['ops', `Operations (${db.operations.filter((x) => x.projectId === project.id).length})`],
-                ['find', `Verified findings (${fs.filter((f) => f.reportable).length})`], ['ev', `Redacted evidence (${db.evidence.filter((x) => x.projectId === project.id).length})`], ['cov', 'Coverage charts'],
+                ['obj', `Objectives (${project.objectives.length})`], ['scope', `Scope & ROE ${project.roeVersion}`], ['ops', `Operations (${counts.operations})`],
+                ['find', `Verified findings (${fs.filter((f) => f.reportable).length})`], ['ev', `Redacted evidence (${counts.evidence})`], ['cov', 'Coverage charts'],
               ] as [keyof typeof src, string][]).map(([k, l]) => <div key={k}><Check checked={src[k]} onChange={(v) => setSrc({ ...src, [k]: v })} label={l} disabled={locked} /></div>)}
             </div>
             {fs.some((f) => !f.reportable) && <p className="mt-3 flex items-start gap-1.5 text-xs text-warn"><AlertTriangle size={13} className="mt-0.5 shrink-0" />{fs.filter((f) => !f.reportable).length} finding(s) are not verified and will not be imported automatically.</p>}
@@ -312,7 +311,7 @@ const SUGGEST = (title: string, client: string, roe: string) => `AI draft sugges
  * unsaved-changes guard.
  */
 function EditorInner({ d }: { d: ReportEditorRead }) {
-  const db = useDb()
+  const validation = useReportValidation()
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
   const confirm = useSessionStore((s) => s.confirm)
@@ -382,7 +381,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
   const removeSection = (s: { id: string; title: string }) =>
     confirm({ title: `Remove section "${s.title}"?`, body: 'The section and its text are removed from this report. This cannot be undone.', confirmLabel: 'Remove section', danger: true, onConfirm: () => runWrite(() => writes.removeSection(r.id, s.id)) })
   const merged: Report = { ...r, sections: r.sections.map((s) => ({ ...s, body: drafts[s.id] ?? s.body })) }
-  const checks = reportChecks(db, merged, nf)
+  const checks = validation.checks(merged, nf)
   const blocking = checks.filter((c) => c.state === 'fail')
   const lastReturn = [...r.reviews].reverse().find((x) => x.action === 'Changes requested')
   const submitBlock = !editable ? (lockMsg || 'Cannot submit.') : blocking.length ? `Cannot submit yet: ${blocking.map((c) => c.label).join('; ')}.` : ''
@@ -513,7 +512,7 @@ function EditorInner({ d }: { d: ReportEditorRead }) {
             <CardHeader title="Report variant" sub="Standard reports list confirmed findings." />
             <Segmented value={nf?.on ? 'nf' : 'std'} onChange={(v) => editable && setNf({ on: v === 'nf', note: nf?.note || '' })} options={[{ id: 'std', label: 'Standard' }, { id: 'nf', label: 'No-findings closure' }]} />
             {!editable && <p className="mt-2 text-xs text-muted">The variant can only change while the report is a draft or returned.</p>}
-            {nf?.on && (() => { const ce = closureEvidence(db, r.projectId); return (
+            {nf?.on && (() => { const ce = validation.closure(r.projectId); return (
               <div className="mt-3 space-y-2 text-sm">
                 <Field label="Closure justification" hint="Why nothing was confirmed. Required (20+ characters)."><Textarea className="min-h-20" value={nf.note} readOnly={!editable} onChange={(e) => setNf({ on: true, note: e.target.value })} /></Field>
                 <ul className="space-y-1 text-xs">
@@ -589,7 +588,7 @@ export function ReportPreview() {
 }
 
 function PreviewInner({ d }: { d: ReportEditorRead }) {
-  const db = useDb()
+  const validation = useReportValidation()
   const me = useMe()
   const can = useCan()
   const toast = useToastStore((s) => s.toast)
@@ -601,7 +600,7 @@ function PreviewInner({ d }: { d: ReportEditorRead }) {
   const [mode, setMode] = useState<'desktop' | 'pdf'>('desktop')
   const [pg, setPg] = useState(1)
   const [nf] = useNoFind(r.id)
-  const checks = reportChecks(db, r, nf)
+  const checks = validation.checks(r, nf)
   const blocking = checks.filter((c) => c.state === 'fail')
   const finalOk = ['approved', 'exported', 'delivered'].includes(r.status)
   const canExport = finalOk && r.status !== 'delivered' && me.role !== 'viewer' && me.role !== 'operator' && !g.ro
